@@ -3,57 +3,9 @@ import math
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QHBoxLayout
 from PyQt5.QtCore import Qt, QPointF, QRectF, QLineF
 
-from attach_mode import AttachMode, Strand
+from attach_mode import AttachMode, Strand, AttachedStrand
 from move_mode import MoveMode
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QPolygonF
-class AttachedStrand:
-    def __init__(self, start, end, width, angle):
-        self.start = start
-        self.end = end
-        self.width = width
-        self.angle = angle
-        self.attached_strands = []
-
-    def update_shape(self):
-        self.end = self.calculate_end()
-        self.update_side_line()
-
-    def update_start(self, new_start):
-        delta = new_start - self.start
-        self.start = new_start
-        self.end += delta
-        self.update_shape()
-        for attached in self.attached_strands:
-            attached.update_start(self.end)
-
-    def move_end(self, new_end):
-        self.end = new_end
-        self.length = (self.end - self.start).manhattanLength()
-        self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
-        self.update_shape()
-
-
-    def draw(self, painter):
-        path = QPainterPath()
-        path.moveTo(self.start)
-        path.lineTo(self.end)
-        
-        painter.setPen(QPen(Qt.black, 2))
-        painter.setBrush(QBrush(QColor('purple')))
-        painter.drawPath(path)
-
-    def contains(self, point):
-        line = QLineF(self.start, self.end)
-        normal = line.normalVector()
-        normal.setLength(self.width / 2)
-
-        p1 = line.p1() + normal.p2() - normal.p1()
-        p2 = line.p2() + normal.p2() - normal.p1()
-        p3 = line.p2() - (normal.p2() - normal.p1())
-        p4 = line.p1() - (normal.p2() - normal.p1())
-
-        polygon = QPolygonF([p1, p2, p3, p4])
-        return polygon.containsPoint(point, Qt.OddEvenFill)
 
 class StrandDrawingCanvas(QWidget):
     def __init__(self, parent=None):
@@ -78,6 +30,7 @@ class StrandDrawingCanvas(QWidget):
 
         for strand in self.strands:
             strand.draw(painter)
+            self.draw_attached_strands(painter, strand.attached_strands)
 
         if self.current_strand:
             self.current_strand.draw(painter)
@@ -86,6 +39,11 @@ class StrandDrawingCanvas(QWidget):
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))
             painter.drawRect(self.current_mode.selected_rectangle)
+
+    def draw_attached_strands(self, painter, attached_strands):
+        for strand in attached_strands:
+            strand.draw(painter)
+            self.draw_attached_strands(painter, strand.attached_strands)
 
     def mousePressEvent(self, event):
         self.current_mode.mousePressEvent(event)
@@ -126,6 +84,18 @@ class StrandDrawingCanvas(QWidget):
         for strand in reversed(self.strands):  # Check from top to bottom
             if strand.contains(pos):
                 return strand
+            attached_strand = self.get_attached_strand_at_position(strand.attached_strands, pos)
+            if attached_strand:
+                return attached_strand
+        return None
+
+    def get_attached_strand_at_position(self, attached_strands, pos):
+        for strand in reversed(attached_strands):
+            if strand.contains(pos):
+                return strand
+            sub_attached = self.get_attached_strand_at_position(strand.attached_strands, pos)
+            if sub_attached:
+                return sub_attached
         return None
 
     def set_strand_width(self, width):

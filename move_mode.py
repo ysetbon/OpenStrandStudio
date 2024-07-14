@@ -34,10 +34,8 @@ class MoveMode:
         for strand in self.canvas.strands:
             if self.try_move_strand(strand, pos):
                 return
-            if hasattr(strand, 'attached_strands'):
-                for attached_strand in strand.attached_strands:
-                    if self.try_move_strand(attached_strand, pos):
-                        return
+            if self.try_move_attached_strands(strand.attached_strands, pos):
+                return
 
     def try_move_strand(self, strand, pos):
         start_rect = self.get_end_rectangle(strand, 0)
@@ -51,6 +49,14 @@ class MoveMode:
             return True
         return False
 
+    def try_move_attached_strands(self, attached_strands, pos):
+        for attached_strand in attached_strands:
+            if self.try_move_strand(attached_strand, pos):
+                return True
+            if self.try_move_attached_strands(attached_strand.attached_strands, pos):
+                return True
+        return False
+
     def start_movement(self, strand, side, rect):
         self.moving_side = side
         self.moving_point = rect.center()
@@ -59,14 +65,15 @@ class MoveMode:
         self.is_moving = True
 
     def get_end_rectangle(self, strand, side):
+        half_width = strand.width
         if side == 0:
             center = strand.start
+            return QRectF(center.x() - half_width, center.y() - half_width , strand.width*2, strand.width*2)
         else:
             center = strand.end
+            return QRectF(center.x() - half_width, center.y() - half_width,strand.width*2, strand.width*2)
+        
 
-        half_width = strand.width / 2
-        return QRectF(center.x() - half_width, center.y() - half_width,
-                      strand.width, strand.width)
 
     def update_strand_position(self, new_pos):
         if not self.affected_strand:
@@ -74,6 +81,9 @@ class MoveMode:
 
         delta = new_pos - self.moving_point
         self.moving_point = new_pos
+
+        old_start = self.affected_strand.start
+        old_end = self.affected_strand.end
 
         if isinstance(self.affected_strand, AttachedStrand):
             if self.moving_side == 0:
@@ -87,13 +97,19 @@ class MoveMode:
                 self.affected_strand.end += delta
             self.affected_strand.update_shape()
         
-        # Update attached strands if this is a main strand
-        if hasattr(self.affected_strand, 'attached_strands'):
-            for attached in self.affected_strand.attached_strands:
-                attached.update_start(self.affected_strand.end)
-
+        self.update_attached_strands(self.affected_strand, old_start, old_end)
+        
         self.selected_rectangle.translate(delta)
         self.canvas.update()
+
+    def update_attached_strands(self, strand, old_start, old_end):
+        if hasattr(strand, 'attached_strands'):
+            for attached in strand.attached_strands:
+                if attached.start == old_start:
+                    attached.update_start(strand.start)
+                elif attached.start == old_end:
+                    attached.update_start(strand.end)
+                self.update_attached_strands(attached, attached.start, attached.end)
 
     def find_parent_strand(self, attached_strand):
         for strand in self.canvas.strands:

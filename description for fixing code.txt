@@ -1,0 +1,33 @@
+Based on your description and the code analysis, it seems the issue with selecting the sides of subsequent attachment strands in your application could be related to how selection and movement events are managed for attached strands compared to the main strand. Let's explore this more systematically:
+
+### Issue Summary
+The application allows users to select and move the endpoints of strands. While this functionality works correctly for the first attachment strand, subsequent attached strands do not behave as expected. Users cannot select or properly move the sides of these additional attached strands.
+
+### Potential Causes
+1. **Selection Handling:** The `MoveMode` class may not be accurately detecting mouse events for later attached strands. This could be due to how bounding rectangles or selection criteria are defined and checked.
+
+2. **Event Propagation:** The methods in `MoveMode` may not properly handle events for strands beyond the first attachment. If the application doesn't correctly identify and update the state for all attached strands, it will fail to respond to user inputs as expected.
+
+3. **Strand Updates:** When a strand is moved, its new position needs to propagate correctly to all attached strands. This includes updating both their start and end points based on their relative positioning. If these updates are not happening correctly or recursively, it can result in incorrect behavior.
+
+4. **Recursive Updating Logic:** There seems to be a lack of or incorrect implementation of recursive updating in the movement and positioning logic for attached strands. When an attached strand is moved, all further attached strands should also adjust their positions accordingly.
+
+### Suggestions for Handling the Issue
+To address the above potential causes, here are some specific suggestions:
+
+1. **Improve Selection Logic:**
+   - Verify and possibly refine the logic used in `MoveMode` to detect whether a click is within the bounds of a strand, particularly for attached strands. This involves checking the bounding rectangles or hit test areas defined for each strand and ensuring they accurately reflect the strand's position and dimensions.
+
+2. **Enhance Recursive Movement Handling:**
+   - Ensure that when an attached strand is moved, all dependent strands (i.e., strands attached to it) are also updated. This may involve implementing a recursive function that traverses through all attached strands and updates their positions based on the movement of their parent strand.
+
+3. **Review and Adjust Event Propagation:**
+   - Check how mouse events are propagated through the strand objects. Ensure that events intended for attached strands are not being incorrectly consumed or blocked by parent strands or other UI elements.
+
+4. **Debugging and Logging:**
+   - Implement additional logging at key points within the event handling and movement update methods. This can help you trace the flow of execution and identify where the process deviates from expected behavior.
+
+5. **Unit Testing:**
+   - Consider writing unit tests for the functionality of moving and selecting strands. This can help ensure that each part of your application behaves as expected independently before integrating them.
+
+By exploring these areas and implementing the suggested improvements, you should be able to resolve the issues with handling attached strands in your application, ensuring consistent behavior across all interactions.

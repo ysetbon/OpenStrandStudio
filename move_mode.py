@@ -1,6 +1,8 @@
 # move_mode.py
 
-from PyQt5.QtCore import QPointF, QRectF
+from PyQt5.QtCore import QPointF, QRectF, QPoint
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QApplication
 import math
 from attach_mode import AttachedStrand
 
@@ -12,15 +14,21 @@ class MoveMode:
         self.affected_strand = None
         self.moving_side = None
         self.selected_rectangle = None
+        self.last_update_pos = None
+        self.accumulated_delta = QPointF(0, 0)
 
     def mousePressEvent(self, event):
         pos = event.pos()
         self.handle_strand_movement(pos)
+        if self.is_moving:
+            self.last_update_pos = pos
+            self.accumulated_delta = QPointF(0, 0)
 
     def mouseMoveEvent(self, event):
         if self.is_moving and self.moving_point:
             new_pos = event.pos()
             self.update_strand_position(new_pos)
+            self.last_update_pos = new_pos
 
     def mouseReleaseEvent(self, event):
         self.is_moving = False
@@ -28,6 +36,8 @@ class MoveMode:
         self.affected_strand = None
         self.moving_side = None
         self.selected_rectangle = None
+        self.last_update_pos = None
+        self.accumulated_delta = QPointF(0, 0)
         self.canvas.update()
 
     def handle_strand_movement(self, pos):
@@ -63,44 +73,61 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = rect
         self.is_moving = True
+        self.update_cursor_position(self.moving_point)
 
     def get_end_rectangle(self, strand, side):
-        half_width = strand.width
+        half_width = strand.width 
         if side == 0:
             center = strand.start
-            return QRectF(center.x() - half_width, center.y() - half_width , strand.width*2, strand.width*2)
         else:
             center = strand.end
-            return QRectF(center.x() - half_width, center.y() - half_width,strand.width*2, strand.width*2)
-        
-
+        return QRectF(center.x() - half_width, center.y() - half_width, strand.width*2, strand.width*2)
 
     def update_strand_position(self, new_pos):
         if not self.affected_strand:
             return
-
-        delta = new_pos - self.moving_point
-        self.moving_point = new_pos
-
-        old_start = self.affected_strand.start
-        old_end = self.affected_strand.end
-
-        if isinstance(self.affected_strand, AttachedStrand):
-            if self.moving_side == 0:
-                self.affected_strand.update_start(self.affected_strand.start + delta)
-            else:
-                self.affected_strand.move_end(self.affected_strand.end + delta)
-        else:
-            if self.moving_side == 0:
-                self.affected_strand.start += delta
-            else:
-                self.affected_strand.end += delta
-            self.affected_strand.update_shape()
         
-        self.update_attached_strands(self.affected_strand, old_start, old_end)
-        
-        self.selected_rectangle.translate(delta)
-        self.canvas.update()
+        delta = new_pos - self.last_update_pos
+        self.accumulated_delta += delta
+
+        # Check if accumulated movement is greater than or equal to 5 pixels
+        if abs(self.accumulated_delta.x()) >= 15 or abs(self.accumulated_delta.y()) >= 15:
+            rounded_delta = QPointF(
+                round(self.accumulated_delta.x() / 15) * 15,
+                round(self.accumulated_delta.y() / 15) * 15
+            )
+            
+            old_start = self.affected_strand.start
+            old_end = self.affected_strand.end
+
+            if isinstance(self.affected_strand, AttachedStrand):
+                if self.moving_side == 0:
+                    self.affected_strand.update_start(self.affected_strand.start + rounded_delta)
+                else:
+                    self.affected_strand.move_end(self.affected_strand.end + rounded_delta)
+            else:
+                if self.moving_side == 0:
+                    self.affected_strand.start += rounded_delta
+                else:
+                    self.affected_strand.end += rounded_delta
+                self.affected_strand.update_shape()
+            
+            self.update_attached_strands(self.affected_strand, old_start, old_end)
+            
+            # Update the selected rectangle
+            if self.moving_side == 0:
+                new_center = self.affected_strand.start
+            else:
+                new_center = self.affected_strand.end
+            self.selected_rectangle.moveCenter(new_center)
+            
+            # Subtract the rounded delta from accumulated delta
+            self.accumulated_delta -= rounded_delta
+            
+            self.canvas.update()
+
+        # Always update the cursor position
+        self.update_cursor_position(new_pos)
 
     def update_attached_strands(self, strand, old_start, old_end):
         if hasattr(strand, 'attached_strands'):
@@ -125,3 +152,9 @@ class MoveMode:
         strand.end += delta
         for attached in strand.attached_strands:
             self.update_strand_chain(attached, delta)
+
+    def update_cursor_position(self, pos):
+        if isinstance(pos, QPointF):
+            pos = pos.toPoint()
+        global_pos = self.canvas.mapToGlobal(pos)
+        QCursor.setPos(global_pos)

@@ -88,8 +88,8 @@ class AttachedStrand:
         self.angle = math.degrees(math.atan2(dy, dx))
         self.length = max(self.min_length, math.hypot(dx, dy))
         
-        self.angle = round(self.angle / 10) * 10
-        self.length = round(self.length / 10) * 10
+        self.angle = round(self.angle / 5) * 5
+        self.length = round(self.length / 15) * 15
         self.end = self.calculate_end()
         self.update_side_line()
 
@@ -177,16 +177,23 @@ class AttachMode:
 
     def mousePressEvent(self, event):
         if self.canvas.is_first_strand:
-            self.canvas.current_strand = Strand(event.pos(), event.pos(), self.canvas.strand_width, self.canvas.strand_color, self.canvas.stroke_color, self.canvas.stroke_width)
+                start_pos = event.pos()
+                end_pos = self.round_to_grid(start_pos)
+                self.canvas.current_strand = Strand(start_pos, end_pos, self.canvas.strand_width, 
+                                                    self.canvas.strand_color, self.canvas.stroke_color, 
+                                                    self.canvas.stroke_width)
         elif not self.is_attaching:
             self.handle_strand_attachment(event.pos())
-
     def mouseMoveEvent(self, event):
         if self.canvas.is_first_strand and self.canvas.current_strand:
-            self.canvas.current_strand.end = event.pos()
+            end_pos = self.round_to_grid(event.pos())
+            self.canvas.current_strand.end = end_pos
             self.canvas.current_strand.update_shape()
         elif self.is_attaching and self.canvas.current_strand:
             self.canvas.current_strand.update(event.pos())
+
+    def round_to_grid(self, pos):
+        return QPointF(round(pos.x() / 15) * 15, round(pos.y() / 15) * 15)
 
     def mouseReleaseEvent(self, event):
         if self.canvas.is_first_strand:
@@ -198,7 +205,7 @@ class AttachMode:
             self.canvas.current_strand = None
 
     def handle_strand_attachment(self, pos):
-        circle_radius = self.canvas.strand_width / 2
+        circle_radius = self.canvas.strand_width*2
 
         for strand in self.canvas.strands:
             if self.try_attach_to_strand(strand, pos, circle_radius):

@@ -1,10 +1,11 @@
 # move_mode.py
 
-from PyQt5.QtCore import QPointF, QRectF, QPoint
+from PyQt5.QtCore import QPointF, QRectF
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 from attach_mode import AttachedStrand
+
 
 class MoveMode:
     def __init__(self, canvas):
@@ -16,6 +17,12 @@ class MoveMode:
         self.selected_rectangle = None
         self.last_update_pos = None
         self.accumulated_delta = QPointF(0, 0)
+
+    def update_cursor_position(self, pos):
+        if isinstance(pos, QPointF):
+            pos = pos.toPoint()
+        global_pos = self.canvas.mapToGlobal(pos)
+        QCursor.setPos(global_pos)
 
     def mousePressEvent(self, event):
         pos = event.pos()
@@ -90,21 +97,35 @@ class MoveMode:
         delta = new_pos - self.last_update_pos
         self.accumulated_delta += delta
 
-        # Check if accumulated movement is greater than or equal to 5 pixels
-        if abs(self.accumulated_delta.x()) >= 15 or abs(self.accumulated_delta.y()) >= 15:
+        # Calculate the current angle of the accumulated delta
+        current_angle = math.degrees(math.atan2(self.accumulated_delta.y(), self.accumulated_delta.x()))
+        
+        # Round the current angle to the nearest 5 degrees
+        rounded_angle = round(current_angle / 10) * 10
+        rounded_angle = rounded_angle % 360
+
+        # Calculate the magnitude of the accumulated delta
+        magnitude = self.accumulated_delta.manhattanLength()
+
+        # Only update if the magnitude is significant (e.g., > 5 pixels)
+        if magnitude > 10:
+            # Calculate the new delta based on the rounded angle and magnitude
             rounded_delta = QPointF(
-                round(self.accumulated_delta.x() / 15) * 15,
-                round(self.accumulated_delta.y() / 15) * 15
+                magnitude * math.cos(math.radians(rounded_angle)),
+                magnitude * math.sin(math.radians(rounded_angle))
             )
-            
+
             old_start = self.affected_strand.start
             old_end = self.affected_strand.end
 
             if isinstance(self.affected_strand, AttachedStrand):
                 if self.moving_side == 0:
-                    self.affected_strand.update_start(self.affected_strand.start + rounded_delta)
+                    new_start = self.affected_strand.start + rounded_delta
+                    self.affected_strand.update_start(new_start)
+                    self.affected_strand.update(self.affected_strand.end)
                 else:
-                    self.affected_strand.move_end(self.affected_strand.end + rounded_delta)
+                    new_end = self.affected_strand.end + rounded_delta
+                    self.affected_strand.move_end(new_end)
             else:
                 if self.moving_side == 0:
                     self.affected_strand.start += rounded_delta
@@ -121,8 +142,8 @@ class MoveMode:
                 new_center = self.affected_strand.end
             self.selected_rectangle.moveCenter(new_center)
             
-            # Subtract the rounded delta from accumulated delta
-            self.accumulated_delta -= rounded_delta
+            # Reset the accumulated delta
+            self.accumulated_delta = QPointF(0, 0)
             
             self.canvas.update()
 
@@ -152,9 +173,3 @@ class MoveMode:
         strand.end += delta
         for attached in strand.attached_strands:
             self.update_strand_chain(attached, delta)
-
-    def update_cursor_position(self, pos):
-        if isinstance(pos, QPointF):
-            pos = pos.toPoint()
-        global_pos = self.canvas.mapToGlobal(pos)
-        QCursor.setPos(global_pos)

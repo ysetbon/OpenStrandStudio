@@ -64,7 +64,6 @@ class Strand:
         self.update_shape()
         for attached_strand in self.attached_strands:
             attached_strand.update_start(self.start if side == 0 else self.end)
-
 class AttachedStrand:
     def __init__(self, parent, start_point):
         self.parent = parent
@@ -85,11 +84,17 @@ class AttachedStrand:
     def update(self, mouse_pos):
         dx = mouse_pos.x() - self.start.x()
         dy = mouse_pos.y() - self.start.y()
-        self.angle = math.degrees(math.atan2(dy, dx))
+        raw_angle = math.degrees(math.atan2(dy, dx))
+        
+        # Round the angle to the nearest 5 degrees
+        self.angle = round(raw_angle / 5) * 5
+        
+        # Ensure the angle is between 0 and 360 degrees
+        self.angle = self.angle % 360
+        
+        # Calculate length without rounding to 25-pixel increments
         self.length = max(self.min_length, math.hypot(dx, dy))
         
-        self.angle = round(self.angle / 5) * 5
-        self.length = round(self.length / 15) * 15
         self.end = self.calculate_end()
         self.update_side_line()
 
@@ -99,7 +104,7 @@ class AttachedStrand:
             self.start.x() + self.length * math.cos(angle_rad),
             self.start.y() + self.length * math.sin(angle_rad)
         )
-
+    
     def update_side_line(self):
         perpendicular_angle = self.angle + 90
         perpendicular_dx = math.cos(math.radians(perpendicular_angle)) * self.width / 2
@@ -169,40 +174,57 @@ class AttachedStrand:
         self.length = (self.end - self.start).manhattanLength()
         self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
         self.update_side_line()
-
 class AttachMode:
     def __init__(self, canvas):
         self.canvas = canvas
         self.is_attaching = False
+        self.start_pos = None
 
     def mousePressEvent(self, event):
         if self.canvas.is_first_strand:
-                start_pos = event.pos()
-                end_pos = self.round_to_grid(start_pos)
-                self.canvas.current_strand = Strand(start_pos, end_pos, self.canvas.strand_width, 
-                                                    self.canvas.strand_color, self.canvas.stroke_color, 
-                                                    self.canvas.stroke_width)
+            self.start_pos = event.pos()  # No longer rounding to grid
+            self.canvas.current_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width, 
+                                                self.canvas.strand_color, self.canvas.stroke_color, 
+                                                self.canvas.stroke_width)
         elif not self.is_attaching:
             self.handle_strand_attachment(event.pos())
+
     def mouseMoveEvent(self, event):
         if self.canvas.is_first_strand and self.canvas.current_strand:
-            end_pos = self.round_to_grid(event.pos())
-            self.canvas.current_strand.end = end_pos
-            self.canvas.current_strand.update_shape()
+            end_pos = event.pos()
+            self.update_first_strand(end_pos)
         elif self.is_attaching and self.canvas.current_strand:
             self.canvas.current_strand.update(event.pos())
 
-    def round_to_grid(self, pos):
-        return QPointF(round(pos.x() / 15) * 15, round(pos.y() / 15) * 15)
-
     def mouseReleaseEvent(self, event):
         if self.canvas.is_first_strand:
-            self.canvas.strands.append(self.canvas.current_strand)
-            self.canvas.current_strand = None
-            self.canvas.is_first_strand = False
+            if self.canvas.current_strand.start != self.canvas.current_strand.end:
+                self.canvas.strands.append(self.canvas.current_strand)
+                self.canvas.current_strand = None
+                self.canvas.is_first_strand = False
         else:
             self.is_attaching = False
             self.canvas.current_strand = None
+
+    def update_first_strand(self, end_pos):
+        dx = end_pos.x() - self.start_pos.x()
+        dy = end_pos.y() - self.start_pos.y()
+        
+        # Calculate angle and round it to the nearest 5 degrees
+        angle = math.degrees(math.atan2(dy, dx))
+        rounded_angle = round(angle / 5) * 5
+        rounded_angle = rounded_angle % 360
+
+        # Calculate length without rounding to 25-pixel increments
+        length = max(25, math.hypot(dx, dy))  # Ensure minimum length of 25
+
+        # Calculate new end position based on rounded angle and exact length
+        new_x = self.start_pos.x() + length * math.cos(math.radians(rounded_angle))
+        new_y = self.start_pos.y() + length * math.sin(math.radians(rounded_angle))
+        new_end = QPointF(new_x, new_y)
+
+        self.canvas.current_strand.end = new_end
+        self.canvas.current_strand.update_shape()
 
     def handle_strand_attachment(self, pos):
         circle_radius = self.canvas.strand_width*2

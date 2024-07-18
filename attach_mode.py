@@ -12,8 +12,12 @@ class Strand:
         self.stroke_width = stroke_width
         self.attached_strands = []
         self.has_circles = [False, False]
+        self.is_first_strand = False
+        self.is_start_side = True
         self.update_shape()
-
+        self.update_side_line()
+      
+     
     def update_shape(self):
         angle = math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x())
         perpendicular = angle + math.pi / 2
@@ -34,6 +38,18 @@ class Strand:
         path.closeSubpath()
         return path
 
+    def update_side_line(self):
+        angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
+        perpendicular_angle = angle + 90
+        perpendicular_dx = math.cos(math.radians(perpendicular_angle)) * self.width / 2
+        perpendicular_dy = math.sin(math.radians(perpendicular_angle)) * self.width / 2
+        perpendicular_dx_stroke = math.cos(math.radians(perpendicular_angle)) * self.stroke_width * 2
+        perpendicular_dy_stroke = math.sin(math.radians(perpendicular_angle)) * self.stroke_width * 2
+        
+        self.side_line_start = QPointF(self.start.x() + perpendicular_dx - perpendicular_dx_stroke, 
+                                       self.start.y() + perpendicular_dy - perpendicular_dy_stroke)
+        self.side_line_end = QPointF(self.start.x() - perpendicular_dx + perpendicular_dx_stroke, 
+                                     self.start.y() - perpendicular_dy + perpendicular_dy_stroke)
     def draw(self, painter):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
@@ -50,6 +66,11 @@ class Strand:
         painter.setBrush(QBrush(self.color))
         painter.drawPath(self.get_path())
 
+        # Draw the purple side line only if it's not the start side of a first strand
+        if not (self.is_first_strand and self.is_start_side):
+            painter.setPen(QPen(QColor('purple'), self.stroke_width * 3))
+            painter.drawLine(self.side_line_start, self.side_line_end)
+
         for attached_strand in self.attached_strands:
             attached_strand.draw(painter)
 
@@ -61,6 +82,7 @@ class Strand:
         else:
             self.end = new_pos
         self.update_shape()
+        self.update_side_line()
         for attached_strand in self.attached_strands:
             attached_strand.update_start(self.start if side == 0 else self.end)
 
@@ -75,25 +97,29 @@ class AttachedStrand(Strand):
         self.update_end()
         self.update_side_line()
 
-    def update(self, mouse_pos):
-        dx = mouse_pos.x() - self.start.x()
-        dy = mouse_pos.y() - self.start.y()
-        raw_angle = math.degrees(math.atan2(dy, dx))
-        self.angle = round(raw_angle / 5) * 5
-        self.angle = self.angle % 360
-        self.length = max(self.min_length, math.hypot(dx, dy))
-        self.update_end()
+    def update_start(self, new_start):
+        delta = new_start - self.start
+        self.start = new_start
+        self.end += delta
+        self.update_shape()
         self.update_side_line()
 
-    def update_end(self):
-        angle_rad = math.radians(self.angle)
-        self.end = QPointF(
-            self.start.x() + self.length * math.cos(angle_rad),
-            self.start.y() + self.length * math.sin(angle_rad)
-        )
+    def update(self, new_end):
+        old_end = self.end
+        self.end = new_end
+        self.length = math.hypot(self.end.x() - self.start.x(), self.end.y() - self.start.y())
+        self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
         self.update_shape()
+        self.update_side_line()
+        # Update the parent's side line as well
+        self.parent.update_side_line()
+        # Update attached strands
+        for attached in self.attached_strands:
+            if attached.start == old_end:
+                attached.update_start(self.end)
 
     def update_side_line(self):
+        self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
         perpendicular_angle = self.angle + 90
         perpendicular_dx = math.cos(math.radians(perpendicular_angle)) * self.width / 2
         perpendicular_dy = math.sin(math.radians(perpendicular_angle)) * self.width / 2
@@ -105,36 +131,13 @@ class AttachedStrand(Strand):
         self.side_line_end = QPointF(self.start.x() - perpendicular_dx + perpendicular_dx_stroke, 
                                      self.start.y() - perpendicular_dy + perpendicular_dy_stroke)
 
-    def draw(self, painter):
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        for i, has_circle in enumerate(self.has_circles):
-            if has_circle:
-                circle_radius = self.width / 2
-                center = self.start if i == 0 else self.end
-                painter.setBrush(QBrush(self.color))
-                painter.setPen(QPen(self.stroke_color, self.stroke_width))
-                painter.drawEllipse(center, circle_radius, circle_radius)
-
-        painter.setPen(QPen(self.stroke_color, self.stroke_width))
-        painter.setBrush(QBrush(self.color))
-        painter.drawPath(self.get_path())
-
-        painter.setPen(QPen(QColor('purple'), self.stroke_width * 3))
-        painter.drawLine(self.side_line_start, self.side_line_end)
-
-        for attached_strand in self.attached_strands:
-            attached_strand.draw(painter)
-
-        painter.restore()
-
-    def update_start(self, new_start):
-        delta = new_start - self.start
-        self.start = new_start
-        self.end += delta
+    def update_end(self):
+        angle_rad = math.radians(self.angle)
+        self.end = QPointF(
+            self.start.x() + self.length * math.cos(angle_rad),
+            self.start.y() + self.length * math.sin(angle_rad)
+        )
         self.update_shape()
-        self.update_side_line()
 
 class AttachMode(QObject):
     strand_created = pyqtSignal(object)
@@ -159,9 +162,11 @@ class AttachMode(QObject):
     def mousePressEvent(self, event):
         if self.canvas.is_first_strand:
             self.start_pos = event.pos()
-            self.canvas.current_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width, 
-                                                self.canvas.strand_color, self.canvas.stroke_color, 
-                                                self.canvas.stroke_width)
+            new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width, 
+                                self.canvas.strand_color, self.canvas.stroke_color, 
+                                self.canvas.stroke_width)
+            new_strand.is_first_strand = True
+            self.canvas.current_strand = new_strand
         elif self.canvas.selected_strand and not self.is_attaching:
             self.handle_strand_attachment(event.pos())
 
@@ -197,6 +202,7 @@ class AttachMode(QObject):
 
         self.canvas.current_strand.end = new_end
         self.canvas.current_strand.update_shape()
+        self.canvas.current_strand.update_side_line()
 
     def try_attach_to_strand(self, strand, pos, circle_radius):
         distance_to_start = (pos - strand.start).manhattanLength()
@@ -215,6 +221,8 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         new_strand = AttachedStrand(parent_strand, attach_point)
+        new_strand.is_first_strand = False  # Reset for attached strands
+        new_strand.is_start_side = False    # Reset for attached strands
         parent_strand.attached_strands.append(new_strand)
         parent_strand.has_circles[side] = True  # Mark this side as attached
         self.canvas.current_strand = new_strand

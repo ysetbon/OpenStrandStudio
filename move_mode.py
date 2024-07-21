@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QPointF, QRectF
+from PyQt5.QtCore import QPointF, QRectF, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
@@ -14,6 +14,11 @@ class MoveMode:
         self.selected_rectangle = None
         self.last_update_pos = None
         self.accumulated_delta = QPointF(0, 0)
+        self.last_snapped_pos = None
+        self.target_pos = None
+        self.move_timer = QTimer()
+        self.move_timer.timeout.connect(self.gradual_move)
+        self.move_speed = 1  # Grid units per step
 
     def update_cursor_position(self, pos):
         if isinstance(pos, QPointF):
@@ -27,12 +32,15 @@ class MoveMode:
         if self.is_moving:
             self.last_update_pos = pos
             self.accumulated_delta = QPointF(0, 0)
+            self.last_snapped_pos = self.canvas.snap_to_grid(pos)
+            self.target_pos = self.last_snapped_pos
 
     def mouseMoveEvent(self, event):
         if self.is_moving and self.moving_point:
             new_pos = event.pos()
-            self.update_strand_position(new_pos)
-            self.last_update_pos = new_pos
+            self.target_pos = self.canvas.snap_to_grid(new_pos)
+            if not self.move_timer.isActive():
+                self.move_timer.start(16)  # ~60 FPS
 
     def mouseReleaseEvent(self, event):
         self.is_moving = False
@@ -42,7 +50,34 @@ class MoveMode:
         self.selected_rectangle = None
         self.last_update_pos = None
         self.accumulated_delta = QPointF(0, 0)
+        self.last_snapped_pos = None
+        self.target_pos = None
+        self.move_timer.stop()
         self.canvas.update()
+
+    def gradual_move(self):
+        if not self.is_moving or not self.target_pos or not self.last_snapped_pos:
+            self.move_timer.stop()
+            return
+
+        dx = self.target_pos.x() - self.last_snapped_pos.x()
+        dy = self.target_pos.y() - self.last_snapped_pos.y()
+
+        step_x = min(abs(dx), self.move_speed * self.canvas.grid_size) * (1 if dx > 0 else -1)
+        step_y = min(abs(dy), self.move_speed * self.canvas.grid_size) * (1 if dy > 0 else -1)
+
+        new_x = self.last_snapped_pos.x() + step_x
+        new_y = self.last_snapped_pos.y() + step_y
+
+        new_pos = self.canvas.snap_to_grid(QPointF(new_x, new_y))
+
+        if new_pos != self.last_snapped_pos:
+            self.update_strand_position(new_pos)
+            self.update_cursor_position(new_pos)
+            self.last_snapped_pos = new_pos
+
+        if new_pos == self.target_pos:
+            self.move_timer.stop()
 
     def handle_strand_movement(self, pos):
         for strand in self.canvas.strands:
@@ -77,40 +112,22 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = rect
         self.is_moving = True
-        self.update_cursor_position(self.moving_point)
+        snapped_pos = self.canvas.snap_to_grid(self.moving_point)
+        self.update_cursor_position(snapped_pos)
+        self.last_snapped_pos = snapped_pos
+        self.target_pos = snapped_pos
 
     def get_end_rectangle(self, strand, side):
-        half_width = strand.width
         center = strand.start if side == 0 else strand.end
-        return QRectF(center.x() - half_width, center.y() - half_width, strand.width*2, strand.width*2)
+        return QRectF(center.x() - strand.width, center.y() - strand.width, strand.width*2, strand.width*2)
 
     def update_strand_position(self, new_pos):
         if not self.affected_strand:
             return
 
-        delta = new_pos - self.last_update_pos
-        self.accumulated_delta += delta
-
-        current_angle = math.degrees(math.atan2(self.accumulated_delta.y(), self.accumulated_delta.x()))
-        rounded_angle = round(current_angle / 10) * 10
-        rounded_angle = rounded_angle % 360
-
-        magnitude = self.accumulated_delta.manhattanLength()
-
-        if magnitude > 25:
-            rounded_delta = QPointF(
-                magnitude * math.cos(math.radians(rounded_angle)),
-                magnitude * math.sin(math.radians(rounded_angle))
-            )
-
-            self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
-
-            self.selected_rectangle.moveCenter(new_pos)
-            self.accumulated_delta = QPointF(0, 0)
-            self.canvas.update()
-
-        self.update_cursor_position(new_pos)
-        self.last_update_pos = new_pos
+        self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
+        self.selected_rectangle.moveCenter(new_pos)
+        self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
         old_start, old_end = strand.start, strand.end

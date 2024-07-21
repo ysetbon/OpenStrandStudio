@@ -28,13 +28,23 @@ class StrandDrawingCanvas(QWidget):
         self.layer_panel = None
         self.selected_strand = None
         self.last_selected_strand_index = None
+        self.strand_colors = {}
+        self.grid_size = 15  # Size of each grid square in pixels
+
     def set_layer_panel(self, layer_panel):
         self.layer_panel = layer_panel
+        self.layer_panel.color_changed.connect(self.on_color_changed)
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), Qt.white)
+        
+        # Draw grid
+        painter.setPen(QPen(QColor(200, 200, 200), 1))  # Light gray color for grid
+        for x in range(0, self.width(), self.grid_size):
+            painter.drawLine(x, 0, x, self.height())
+        for y in range(0, self.height(), self.grid_size):
+            painter.drawLine(0, y, self.width(), y)
 
         for index, strand in enumerate(self.strands):
             if index == self.selected_strand_index:
@@ -72,14 +82,27 @@ class StrandDrawingCanvas(QWidget):
         painter.restore()
         strand.draw(painter)
 
+    def on_color_changed(self, set_number, color):
+        self.strand_colors[set_number] = color
+        for strand in self.strands:
+            if isinstance(strand, Strand) and strand.set_number == set_number:
+                strand.set_color(color)
+                self.update_attached_strands_color(strand, color)
+        self.update()
+
+    def update_attached_strands_color(self, parent_strand, color):
+        for attached_strand in parent_strand.attached_strands:
+            attached_strand.set_color(color)
+            self.update_attached_strands_color(attached_strand, color)
+
     def select_strand(self, index):
         if 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
             self.selected_strand_index = index
-            self.last_selected_strand_index = index  # Store the last selected index
+            self.last_selected_strand_index = index
             self.is_first_strand = False
-            if self.layer_panel.get_selected_layer() != index:
-                self.layer_panel.select_layer(index)
+            if self.layer_panel and self.layer_panel.get_selected_layer() != index:
+                self.layer_panel.select_layer(index, emit_signal=False)
             self.current_mode = self.attach_mode
             self.current_mode.is_attaching = False
             self.current_strand = None
@@ -90,18 +113,32 @@ class StrandDrawingCanvas(QWidget):
 
     def on_strand_created(self, strand):
         if strand not in self.strands:
+            if isinstance(strand, AttachedStrand):
+                # For attached strands, use the parent's set number
+                set_number = strand.parent.set_number
+            elif self.selected_strand:
+                # For new strands in an existing set, use the selected strand's set number
+                set_number = self.selected_strand.set_number
+            else:
+                # For new strands in a new set, use the next set number
+                set_number = max(self.strand_colors.keys(), default=0) + 1
+
+            strand.set_number = set_number
+            
+            if set_number not in self.strand_colors:
+                self.strand_colors[set_number] = QColor('purple')
+            
+            strand.set_color(self.strand_colors[set_number])
             self.add_strand(strand)
+            
             if self.layer_panel:
-                if self.is_first_strand:
-                    self.layer_panel.add_layer_button()
-                    self.select_strand(0)
-                    self.is_first_strand = False
-                else:
-                    self.layer_panel.add_layer_button()
-                    self.select_strand(len(self.strands) - 1)
+                self.layer_panel.add_layer_button(set_number)
+                self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
+            
+            if not isinstance(strand, AttachedStrand):
+                self.select_strand(len(self.strands) - 1)
 
     def mousePressEvent(self, event):
-        print(f"StrandDrawingCanvas: mousePressEvent, current mode: {self.current_mode.__class__.__name__}")
         self.current_mode.mousePressEvent(event)
         self.update()
 
@@ -118,7 +155,6 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def set_mode(self, mode):
-        print(f"StrandDrawingCanvas: set_mode called with mode {mode}")
         if mode == "attach":
             self.current_mode = self.attach_mode
             self.setCursor(Qt.ArrowCursor)
@@ -138,6 +174,12 @@ class StrandDrawingCanvas(QWidget):
         self.is_first_strand = True
         self.selected_strand_index = None
         self.update()
+
+    def snap_to_grid(self, point):
+        return QPointF(
+            round(point.x() / self.grid_size) * self.grid_size,
+            round(point.y() / self.grid_size) * self.grid_size
+        )
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -178,56 +220,72 @@ class MainWindow(QMainWindow):
 
         self.canvas.set_layer_panel(self.layer_panel)
         self.layer_panel.new_strand_requested.connect(self.create_new_strand)
-        self.layer_panel.strand_selected.connect(self.select_strand)
+        self.layer_panel.strand_selected.connect(lambda idx: self.select_strand(idx, emit_signal=False))
         self.layer_panel.deselect_all_requested.connect(self.deselect_all_strands)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
+        self.layer_panel.color_changed.connect(self.canvas.on_color_changed)
 
+        self.current_mode = "attach"
         self.set_attach_mode()
 
     def set_attach_mode(self):
-        print("MainWindow: set_attach_mode called")
         self.canvas.set_mode("attach")
         self.attach_button.setEnabled(False)
         self.move_button.setEnabled(True)
-        # Restore the last selected strand
+        self.current_mode = "attach"
         if self.canvas.last_selected_strand_index is not None:
             self.select_strand(self.canvas.last_selected_strand_index)
 
     def set_move_mode(self):
-        print("MainWindow: set_move_mode called")
         self.canvas.set_mode("move")
         self.attach_button.setEnabled(True)
         self.move_button.setEnabled(False)
-        # Store the current selected strand index before clearing it
+        self.current_mode = "move"
         self.canvas.last_selected_strand_index = self.canvas.selected_strand_index
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
         self.canvas.update()
 
     def create_new_strand(self):
-        print("MainWindow: create_new_strand called")
         new_strand = Strand(QPointF(100, 100), QPointF(200, 200), self.canvas.strand_width)
-        new_strand.is_first_strand = True  # Mark this as the first strand of its set
-        new_strand.is_start_side = True    # Ensure the start side is marked
+        new_strand.is_first_strand = True
+        new_strand.is_start_side = True
+        
+        # Always create a new set number for a new strand
+        set_number = max(self.canvas.strand_colors.keys(), default=0) + 1
+        
+        new_strand.set_number = set_number
+        
+        # Set the color for the new strand
+        if set_number not in self.canvas.strand_colors:
+            self.canvas.strand_colors[set_number] = QColor('purple')
+        new_strand.set_color(self.canvas.strand_colors[set_number])
+        
         self.canvas.add_strand(new_strand)
-        self.layer_panel.start_new_set()
-        self.layer_panel.add_layer_button()
+        self.layer_panel.add_layer_button(set_number)
         self.select_strand(len(self.canvas.strands) - 1)
-
-    def select_strand(self, index):
-        print(f"MainWindow: select_strand called with index {index}")
+        
+        if self.current_mode == "move":
+            self.set_move_mode()
+        else:
+            self.set_attach_mode()
+            
+    def select_strand(self, index, emit_signal=True):
         if self.canvas.selected_strand_index != index:
             self.canvas.select_strand(index)
-            self.layer_panel.select_layer(index)
+            if emit_signal:
+                self.layer_panel.select_layer(index, emit_signal=False)
         self.canvas.is_first_strand = False
 
     def deselect_all_strands(self):
-        print("MainWindow: deselect_all_strands called")
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
         self.canvas.update()
-        self.set_attach_mode()
+        if self.current_mode == "move":
+            self.set_move_mode()
+        else:
+            self.set_attach_mode()
 
     def start_resize(self, event):
         self.resize_start = event.pos()

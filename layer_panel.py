@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QMenu, QAction, QColorDialog
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QPainter
 from functools import partial
@@ -33,31 +33,53 @@ class SplitterHandle(QWidget):
         super().resizeEvent(event)
 
 class NumberedLayerButton(QPushButton):
-    def __init__(self, set_number, count, parent=None):
+    color_changed = pyqtSignal(int, QColor)
+
+    def __init__(self, set_number, count, color=QColor('purple'), parent=None):
         super().__init__(parent)
         self.set_number = set_number
         self.count = count
         self.setFixedSize(40, 30)
         self.setText(f"{set_number}_{count}")
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: white;
+        self.setCheckable(True)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
+        self.set_color(color)
+
+    def show_context_menu(self, pos):
+        context_menu = QMenu(self)
+        change_color_action = QAction("Change Color", self)
+        change_color_action.triggered.connect(self.change_color)
+        context_menu.addAction(change_color_action)
+        context_menu.exec_(self.mapToGlobal(pos))
+
+    def change_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.set_color(color)
+            self.color_changed.emit(self.set_number, color)
+
+    def set_color(self, color):
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {color.name()};
                 border: 1px solid black;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-            }
-            QPushButton:checked {
-                background-color: lightblue;
-            }
+                color: white;
+            }}
+            QPushButton:hover {{
+                background-color: {color.lighter().name()};
+            }}
+            QPushButton:checked {{
+                background-color: {color.darker().name()};
+            }}
         """)
-        self.setCheckable(True)
 
 class LayerPanel(QWidget):
-    new_strand_requested = pyqtSignal()
+    new_strand_requested = pyqtSignal(int, QColor)  # Emit set number and color
     strand_selected = pyqtSignal(int)
     deselect_all_requested = pyqtSignal()
+    color_changed = pyqtSignal(int, QColor)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -68,7 +90,6 @@ class LayerPanel(QWidget):
         self.handle = SplitterHandle(self)
         self.layout.addWidget(self.handle)
 
-        # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
@@ -76,11 +97,10 @@ class LayerPanel(QWidget):
         self.scroll_layout.setAlignment(Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
         
-        # Add buttons at the bottom
         button_layout = QHBoxLayout()
         self.add_new_strand_button = QPushButton("Add New Strand")
         self.add_new_strand_button.setStyleSheet("background-color: lightgreen;")
-        self.add_new_strand_button.clicked.connect(self.new_strand_requested.emit)
+        self.add_new_strand_button.clicked.connect(self.request_new_strand)
         
         self.deselect_all_button = QPushButton("Deselect All")
         self.deselect_all_button.setStyleSheet("background-color: lightyellow;")
@@ -89,32 +109,52 @@ class LayerPanel(QWidget):
         button_layout.addWidget(self.add_new_strand_button)
         button_layout.addWidget(self.deselect_all_button)
         
-        # Assemble the layout
         self.layout.addWidget(self.scroll_area)
         self.layout.addLayout(button_layout)
         
         self.layer_buttons = []
         self.current_set = 1
-        self.current_count = 0
+        self.set_counts = {1: 0}
+        self.set_colors = {1: QColor('purple')}
 
-    def add_layer_button(self):
-        self.current_count += 1
-        index = len(self.layer_buttons)
-        button = NumberedLayerButton(self.current_set, self.current_count)
-        button.clicked.connect(partial(self.select_layer, index))
+    def request_new_strand(self):
+        self.start_new_set()
+        new_color = QColor('purple')
+        self.new_strand_requested.emit(self.current_set, new_color)
+
+    def add_layer_button(self, set_number=None):
+        if set_number is None:
+            set_number = self.current_set
+        
+        if set_number not in self.set_counts:
+            self.set_counts[set_number] = 0
+        
+        self.set_counts[set_number] += 1
+        count = self.set_counts[set_number]
+        
+        color = self.set_colors.get(set_number, QColor('purple'))
+        button = NumberedLayerButton(set_number, count, color)
+        button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
+        button.color_changed.connect(self.on_color_changed)
         self.scroll_layout.insertWidget(0, button)
         self.layer_buttons.append(button)
-        self.select_layer(index)
+        self.select_layer(len(self.layer_buttons) - 1)
+        
+        # Update the current_set if a higher set number is encountered
+        if set_number > self.current_set:
+            self.current_set = set_number
 
-    def select_layer(self, index):
+    def select_layer(self, index, emit_signal=True):
         for i, button in enumerate(self.layer_buttons):
             button.setChecked(i == index)
-        print(f"Layer {index} selected")
-        self.strand_selected.emit(index)
+        if emit_signal:
+            self.strand_selected.emit(index)
 
     def start_new_set(self):
-        self.current_set += 1
-        self.current_count = 0
+        self.current_set = max(self.set_counts.keys(), default=0) + 1
+        self.set_counts[self.current_set] = 0
+        new_color = QColor('purple')
+        self.set_colors[self.current_set] = new_color
 
     def clear_selection(self):
         for button in self.layer_buttons:
@@ -128,8 +168,15 @@ class LayerPanel(QWidget):
 
     def deselect_all(self):
         self.clear_selection()
-        self.deselect_all_requested.emit()  # Emit signal to notify of deselection
+        self.deselect_all_requested.emit()
+
+    def on_color_changed(self, set_number, color):
+        self.set_colors[set_number] = color
+        for button in self.layer_buttons:
+            if button.set_number == set_number:
+                button.set_color(color)
+        self.color_changed.emit(set_number, color)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.handle.updateSize()  # Ensure the handle updates its size
+        self.handle.updateSize()

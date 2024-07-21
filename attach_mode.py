@@ -10,14 +10,19 @@ class Strand:
         self.color = color
         self.stroke_color = stroke_color
         self.stroke_width = stroke_width
+        self.side_line_color = QColor('purple')
         self.attached_strands = []
         self.has_circles = [False, False]
         self.is_first_strand = False
         self.is_start_side = True
+        self.set_number = None
         self.update_shape()
         self.update_side_line()
-      
-     
+
+    def set_color(self, new_color):
+        self.color = new_color
+        self.side_line_color = new_color
+
     def update_shape(self):
         angle = math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x())
         perpendicular = angle + math.pi / 2
@@ -50,6 +55,7 @@ class Strand:
                                        self.start.y() + perpendicular_dy - perpendicular_dy_stroke)
         self.side_line_end = QPointF(self.start.x() - perpendicular_dx + perpendicular_dx_stroke, 
                                      self.start.y() - perpendicular_dy + perpendicular_dy_stroke)
+
     def draw(self, painter):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
@@ -66,9 +72,8 @@ class Strand:
         painter.setBrush(QBrush(self.color))
         painter.drawPath(self.get_path())
 
-        # Draw the purple side line only if it's not the start side of a first strand
         if not (self.is_first_strand and self.is_start_side):
-            painter.setPen(QPen(QColor('purple'), self.stroke_width * 3))
+            painter.setPen(QPen(self.side_line_color, self.stroke_width * 3))
             painter.drawLine(self.side_line_start, self.side_line_end)
 
         for attached_strand in self.attached_strands:
@@ -97,6 +102,9 @@ class AttachedStrand(Strand):
         self.update_end()
         self.update_side_line()
 
+    def set_color(self, new_color):
+        self.color = new_color
+        self.side_line_color = new_color
     def update_start(self, new_start):
         delta = new_start - self.start
         self.start = new_start
@@ -117,19 +125,6 @@ class AttachedStrand(Strand):
         for attached in self.attached_strands:
             if attached.start == old_end:
                 attached.update_start(self.end)
-
-    def update_side_line(self):
-        self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
-        perpendicular_angle = self.angle + 90
-        perpendicular_dx = math.cos(math.radians(perpendicular_angle)) * self.width / 2
-        perpendicular_dy = math.sin(math.radians(perpendicular_angle)) * self.width / 2
-        perpendicular_dx_stroke = math.cos(math.radians(perpendicular_angle)) * self.stroke_width * 2
-        perpendicular_dy_stroke = math.sin(math.radians(perpendicular_angle)) * self.stroke_width * 2
-        
-        self.side_line_start = QPointF(self.start.x() + perpendicular_dx - perpendicular_dx_stroke, 
-                                       self.start.y() + perpendicular_dy - perpendicular_dy_stroke)
-        self.side_line_end = QPointF(self.start.x() - perpendicular_dx + perpendicular_dx_stroke, 
-                                     self.start.y() - perpendicular_dy + perpendicular_dy_stroke)
 
     def update_end(self):
         angle_rad = math.radians(self.angle)
@@ -221,6 +216,8 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         new_strand = AttachedStrand(parent_strand, attach_point)
+        new_strand.set_color(parent_strand.color)  # Inherit parent's color
+        new_strand.set_number = parent_strand.set_number  # Inherit parent's set number
         new_strand.is_first_strand = False  # Reset for attached strands
         new_strand.is_start_side = False    # Reset for attached strands
         parent_strand.attached_strands.append(new_strand)

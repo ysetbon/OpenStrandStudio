@@ -29,7 +29,8 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand = None
         self.last_selected_strand_index = None
         self.strand_colors = {}
-        self.grid_size = 15  # Size of each grid square in pixels
+        self.grid_size = 30  # Size of each grid square in pixels
+        self.show_grid = True  # New attribute to control grid visibility
 
     def set_layer_panel(self, layer_panel):
         self.layer_panel = layer_panel
@@ -39,12 +40,13 @@ class StrandDrawingCanvas(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw grid
-        painter.setPen(QPen(QColor(200, 200, 200), 1))  # Light gray color for grid
-        for x in range(0, self.width(), self.grid_size):
-            painter.drawLine(x, 0, x, self.height())
-        for y in range(0, self.height(), self.grid_size):
-            painter.drawLine(0, y, self.width(), y)
+        # Draw grid only if show_grid is True
+        if self.show_grid:
+            painter.setPen(QPen(QColor(200, 200, 200), 1))  # Light gray color for grid
+            for x in range(0, self.width(), self.grid_size):
+                painter.drawLine(x, 0, x, self.height())
+            for y in range(0, self.height(), self.grid_size):
+                painter.drawLine(0, y, self.width(), y)
 
         for index, strand in enumerate(self.strands):
             if index == self.selected_strand_index:
@@ -114,13 +116,10 @@ class StrandDrawingCanvas(QWidget):
     def on_strand_created(self, strand):
         if strand not in self.strands:
             if isinstance(strand, AttachedStrand):
-                # For attached strands, use the parent's set number
                 set_number = strand.parent.set_number
             elif self.selected_strand:
-                # For new strands in an existing set, use the selected strand's set number
                 set_number = self.selected_strand.set_number
             else:
-                # For new strands in a new set, use the next set number
                 set_number = max(self.strand_colors.keys(), default=0) + 1
 
             strand.set_number = set_number
@@ -181,6 +180,10 @@ class StrandDrawingCanvas(QWidget):
             round(point.y() / self.grid_size) * self.grid_size
         )
 
+    def toggle_grid(self):
+        self.show_grid = not self.show_grid
+        self.update()
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -194,8 +197,10 @@ class MainWindow(QMainWindow):
         button_layout = QHBoxLayout()
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Sides Mode")
+        self.toggle_grid_button = QPushButton("Toggle Grid")  # New button
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
+        button_layout.addWidget(self.toggle_grid_button)  # Add the new button to the layout
 
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel()
@@ -224,6 +229,7 @@ class MainWindow(QMainWindow):
         self.layer_panel.deselect_all_requested.connect(self.deselect_all_strands)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
+        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)  # Connect the new button
         self.layer_panel.color_changed.connect(self.canvas.on_color_changed)
 
         self.current_mode = "attach"
@@ -252,12 +258,10 @@ class MainWindow(QMainWindow):
         new_strand.is_first_strand = True
         new_strand.is_start_side = True
         
-        # Always create a new set number for a new strand
         set_number = max(self.canvas.strand_colors.keys(), default=0) + 1
         
         new_strand.set_number = set_number
         
-        # Set the color for the new strand
         if set_number not in self.canvas.strand_colors:
             self.canvas.strand_colors[set_number] = QColor('purple')
         new_strand.set_color(self.canvas.strand_colors[set_number])

@@ -94,7 +94,7 @@ class LayerPanel(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_layout.setAlignment(Qt.AlignBottom)
+        self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
         
         button_layout = QHBoxLayout()
@@ -136,7 +136,16 @@ class LayerPanel(QWidget):
         button = NumberedLayerButton(set_number, count, color)
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
-        self.scroll_layout.insertWidget(0, button)
+        
+        # Create a horizontal layout for centering the button
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setAlignment(Qt.AlignHCenter)
+        button_layout.addWidget(button)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Insert the button container at the appropriate position
+        self.scroll_layout.insertWidget(0, button_container)
         self.layer_buttons.append(button)
         self.select_layer(len(self.layer_buttons) - 1)
         

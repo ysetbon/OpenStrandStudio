@@ -1,9 +1,10 @@
-from PyQt5.QtGui import QPainter, QPen, QColor, QBrush, QPainterPath
-from PyQt5.QtCore import Qt, QPointF, pyqtSignal, QObject
+from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject
+from PyQt5.QtGui import QCursor, QPainter, QPen, QColor, QBrush, QPainterPath
+from PyQt5.QtWidgets import QWidget
 import math
 
 class Strand:
-    def __init__(self, start, end, width, color=QColor('purple'), stroke_color=Qt.black, stroke_width=5):
+    def __init__(self, start, end, width, color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=5):
         self.start = start
         self.end = end
         self.width = width
@@ -81,16 +82,6 @@ class Strand:
 
         painter.restore()
 
-    def move_side(self, side, new_pos):
-        if side == 0:
-            self.start = new_pos
-        else:
-            self.end = new_pos
-        self.update_shape()
-        self.update_side_line()
-        for attached_strand in self.attached_strands:
-            attached_strand.update_start(self.start if side == 0 else self.end)
-
 class AttachedStrand(Strand):
     def __init__(self, parent, start_point):
         super().__init__(start_point, start_point, parent.width, parent.color, parent.stroke_color, parent.stroke_width)
@@ -102,9 +93,6 @@ class AttachedStrand(Strand):
         self.update_end()
         self.update_side_line()
 
-    def set_color(self, new_color):
-        self.color = new_color
-        self.side_line_color = new_color
     def update_start(self, new_start):
         delta = new_start - self.start
         self.start = new_start
@@ -119,9 +107,7 @@ class AttachedStrand(Strand):
         self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
         self.update_shape()
         self.update_side_line()
-        # Update the parent's side line as well
         self.parent.update_side_line()
-        # Update attached strands
         for attached in self.attached_strands:
             if attached.start == old_end:
                 attached.update_start(self.end)
@@ -142,6 +128,13 @@ class AttachMode(QObject):
         self.canvas = canvas
         self.is_attaching = False
         self.start_pos = None
+        self.current_end = None
+        self.target_pos = None
+        self.last_snapped_pos = None
+        self.accumulated_delta = QPointF(0, 0)
+        self.move_timer = QTimer()
+        self.move_timer.timeout.connect(self.gradual_move)
+        self.move_speed = 1  # Grid units per step
 
     def mouseReleaseEvent(self, event):
         if self.canvas.is_first_strand:
@@ -153,17 +146,93 @@ class AttachMode(QObject):
                 self.strand_created.emit(self.canvas.current_strand)
             self.is_attaching = False
         self.canvas.current_strand = None
+        self.move_timer.stop()
+        self.start_pos = None
+        self.current_end = None
+        self.target_pos = None
+        self.last_snapped_pos = None
+        self.accumulated_delta = QPointF(0, 0)
 
     def mousePressEvent(self, event):
         if self.canvas.is_first_strand:
-            self.start_pos = event.pos()
+            self.start_pos = self.canvas.snap_to_grid(event.pos())
             new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width, 
                                 self.canvas.strand_color, self.canvas.stroke_color, 
                                 self.canvas.stroke_width)
             new_strand.is_first_strand = True
             self.canvas.current_strand = new_strand
+            self.current_end = self.start_pos
+            self.last_snapped_pos = self.start_pos
         elif self.canvas.selected_strand and not self.is_attaching:
             self.handle_strand_attachment(event.pos())
+
+    def mouseMoveEvent(self, event):
+        if self.canvas.is_first_strand and self.canvas.current_strand:
+            self.target_pos = self.canvas.snap_to_grid(event.pos())
+            if not self.move_timer.isActive():
+                self.move_timer.start(16)  # ~60 FPS
+        elif self.is_attaching and self.canvas.current_strand:
+            self.target_pos = self.canvas.snap_to_grid(event.pos())
+            if not self.move_timer.isActive():
+                self.move_timer.start(16)  # ~60 FPS
+
+    def gradual_move(self):
+        if not self.target_pos or not self.last_snapped_pos:
+            self.move_timer.stop()
+            return
+
+        dx = self.target_pos.x() - self.last_snapped_pos.x()
+        dy = self.target_pos.y() - self.last_snapped_pos.y()
+
+        step_x = min(abs(dx), self.move_speed * self.canvas.grid_size) * (1 if dx > 0 else -1)
+        step_y = min(abs(dy), self.move_speed * self.canvas.grid_size) * (1 if dy > 0 else -1)
+
+        new_x = self.last_snapped_pos.x() + step_x
+        new_y = self.last_snapped_pos.y() + step_y
+
+        new_pos = self.canvas.snap_to_grid(QPointF(new_x, new_y))
+
+        if new_pos != self.last_snapped_pos:
+            self.update_strand_position(new_pos)
+            self.update_cursor_position(new_pos)
+            self.last_snapped_pos = new_pos
+
+        if new_pos == self.target_pos:
+            self.move_timer.stop()
+
+    def update_strand_position(self, new_pos):
+        if self.canvas.is_first_strand:
+            self.update_first_strand(new_pos)
+        elif self.is_attaching:
+            self.canvas.current_strand.update(new_pos)
+        self.canvas.update()
+
+    def update_first_strand(self, end_pos):
+        if not self.canvas.current_strand:
+            return
+
+        dx = end_pos.x() - self.start_pos.x()
+        dy = end_pos.y() - self.start_pos.y()
+        
+        angle = math.degrees(math.atan2(dy, dx))
+        rounded_angle = round(angle / 45) * 45
+        rounded_angle = rounded_angle % 360
+
+        length = max(self.canvas.grid_size, math.hypot(dx, dy))
+
+        new_x = self.start_pos.x() + length * math.cos(math.radians(rounded_angle))
+        new_y = self.start_pos.y() + length * math.sin(math.radians(rounded_angle))
+        new_end = self.canvas.snap_to_grid(QPointF(new_x, new_y))
+
+        self.canvas.current_strand.end = new_end
+        self.canvas.current_strand.update_shape()
+        self.canvas.current_strand.update_side_line()
+
+    def update_cursor_position(self, pos):
+        if isinstance(pos, QPointF):
+            pos = pos.toPoint()
+        global_pos = self.canvas.mapToGlobal(pos)
+        QCursor.setPos(global_pos)
 
     def handle_strand_attachment(self, pos):
         circle_radius = self.canvas.strand_width * 1.1
@@ -173,31 +242,6 @@ class AttachMode(QObject):
                 return
             if self.try_attach_to_attached_strands(self.canvas.selected_strand.attached_strands, pos, circle_radius):
                 return
-
-    def mouseMoveEvent(self, event):
-        if self.canvas.is_first_strand and self.canvas.current_strand:
-            end_pos = event.pos()
-            self.update_first_strand(end_pos)
-        elif self.is_attaching and self.canvas.current_strand:
-            self.canvas.current_strand.update(event.pos())
-
-    def update_first_strand(self, end_pos):
-        dx = end_pos.x() - self.start_pos.x()
-        dy = end_pos.y() - self.start_pos.y()
-        
-        angle = math.degrees(math.atan2(dy, dx))
-        rounded_angle = round(angle / 5) * 5
-        rounded_angle = rounded_angle % 360
-
-        length = max(25, math.hypot(dx, dy))
-
-        new_x = self.start_pos.x() + length * math.cos(math.radians(rounded_angle))
-        new_y = self.start_pos.y() + length * math.sin(math.radians(rounded_angle))
-        new_end = QPointF(new_x, new_y)
-
-        self.canvas.current_strand.end = new_end
-        self.canvas.current_strand.update_shape()
-        self.canvas.current_strand.update_side_line()
 
     def try_attach_to_strand(self, strand, pos, circle_radius):
         distance_to_start = (pos - strand.start).manhattanLength()
@@ -216,21 +260,21 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         new_strand = AttachedStrand(parent_strand, attach_point)
-        new_strand.set_color(parent_strand.color)  # Inherit parent's color
-        new_strand.set_number = parent_strand.set_number  # Inherit parent's set number
-        new_strand.is_first_strand = False  # Reset for attached strands
-        new_strand.is_start_side = False    # Reset for attached strands
+        new_strand.set_color(parent_strand.color)
+        new_strand.set_number = parent_strand.set_number
+        new_strand.is_first_strand = False
+        new_strand.is_start_side = False
         parent_strand.attached_strands.append(new_strand)
-        parent_strand.has_circles[side] = True  # Mark this side as attached
+        parent_strand.has_circles[side] = True
         self.canvas.current_strand = new_strand
         self.is_attaching = True
+        self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)
+        self.target_pos = self.last_snapped_pos
 
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         for attached_strand in attached_strands:
             if self.try_attach_to_strand(attached_strand, pos, circle_radius):
                 return True
-
             if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
                 return True
-
         return False

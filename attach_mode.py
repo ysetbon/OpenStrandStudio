@@ -298,36 +298,33 @@ class MaskedStrand(Strand):
         self.update_shape()
 
     def update_shape(self):
+        print("Updating shape")
         self.start = self.first_selected_strand.start
         self.end = self.first_selected_strand.end
         super().update_shape()
 
     def get_mask_path(self):
-        # Get the path of the first selected strand including its stroke
         path1 = QPainterPath(self.first_selected_strand.get_path())
         stroker1 = QPainterPathStroker()
         stroker1.setWidth(self.first_selected_strand.stroke_width)
         path1 = stroker1.createStroke(path1).united(path1)
 
-        # Get the path of the second selected strand including its stroke
         path2 = QPainterPath(self.second_selected_strand.get_path())
         stroker2 = QPainterPathStroker()
         stroker2.setWidth(self.second_selected_strand.stroke_width * 2)
         path2 = stroker2.createStroke(path2).united(path2)
 
-        # Return the intersection of the two paths
         return path1.intersected(path2)
+
 
     def draw(self, painter):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-
         temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        # Determine which strand to draw
         def get_set_numbers(strand):
             if isinstance(strand.set_number, str):
                 return [int(n) for n in strand.set_number.split('_')]
@@ -336,17 +333,27 @@ class MaskedStrand(Strand):
         set_numbers1 = get_set_numbers(self.first_selected_strand)
         set_numbers2 = get_set_numbers(self.second_selected_strand)
         
+        print(f"First selected strand set number: {self.first_selected_strand.set_number}")
+        print(f"Second selected strand set number: {self.second_selected_strand.set_number}")
+        print(f"Set numbers1: {set_numbers1}")
+        print(f"Set numbers2: {set_numbers2}")
+        
         if set_numbers1[0] == set_numbers2[0]:
-            # If they share the same first number, draw the first selected strand
-            strand_to_draw =  self.first_selected_strand
-            print("same strand")
+            print(f"Shared first number. Expected to draw first strand.")
+            strand_to_draw = self.first_selected_strand
         else:
-            # If they don't share the same first number, draw the first selected strand
+            print(f"Different first number. Expected to draw second strand.")
             strand_to_draw = self.first_selected_strand
 
-        strand_to_draw.draw(temp_painter)
+        print(f"Strand to draw set number: {strand_to_draw.set_number}")
+        # Draw the stroke line
+        temp_painter.setPen(QPen(strand_to_draw.stroke_color, strand_to_draw.width+strand_to_draw.stroke_width))
+        temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
+        # Draw a simple line for testing purposes
         
-        print(f"Drawing masked strand: {self.set_number}, drawn strand: {strand_to_draw.set_number}")
+        temp_painter.setPen(QPen(QBrush(strand_to_draw.color), strand_to_draw.width-strand_to_draw.stroke_width))
+        temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
+       
 
         mask_path = self.get_mask_path()
         inverse_path = QPainterPath()
@@ -361,6 +368,10 @@ class MaskedStrand(Strand):
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
         painter.restore()
+
+        # Additional debug print statement
+        print(f"Drawing masked strand: {self.set_number}, drawn strand: {strand_to_draw}")
+
 
     def update(self, new_end):
         self.first_selected_strand.update(new_end)
@@ -380,6 +391,7 @@ class MaskedStrand(Strand):
 
     # Add this method to handle potential attribute access
     def __getattr__(self, name):
+        print(f"Accessing attribute {name}")
         if name in ['top_left', 'bottom_left', 'top_right', 'bottom_right']:
             return getattr(self.first_selected_strand, name)
         raise AttributeError(f"'MaskedStrand' object has no attribute '{name}'")

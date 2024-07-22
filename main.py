@@ -1,8 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QSplitter
 from PyQt5.QtCore import Qt, QPointF, pyqtSignal, QObject
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QPainterPathStroker
-from attach_mode import AttachMode, Strand, AttachedStrand
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QPainterPathStroker, QImage
+from attach_mode import AttachMode, Strand, AttachedStrand, MaskedStrand
 from move_mode import MoveMode
 from layer_panel import LayerPanel
 
@@ -12,7 +12,7 @@ class StrandDrawingCanvas(QWidget):
         self.setMinimumSize(700, 700)
         self.strands = []
         self.current_strand = None
-        self.strand_width = 80
+        self.strand_width = 60
         self.strand_color = QColor('purple')
         self.stroke_color = Qt.black
         self.stroke_width = 5
@@ -29,8 +29,8 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand = None
         self.last_selected_strand_index = None
         self.strand_colors = {}
-        self.grid_size = 30  # Size of each grid square in pixels
-        self.show_grid = True  # New attribute to control grid visibility
+        self.grid_size = 30
+        self.show_grid = True
 
     def set_layer_panel(self, layer_panel):
         self.layer_panel = layer_panel
@@ -40,9 +40,8 @@ class StrandDrawingCanvas(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw grid only if show_grid is True
         if self.show_grid:
-            painter.setPen(QPen(QColor(200, 200, 200), 1))  # Light gray color for grid
+            painter.setPen(QPen(QColor(200, 200, 200), 1))
             for x in range(0, self.width(), self.grid_size):
                 painter.drawLine(x, 0, x, self.height())
             for y in range(0, self.height(), self.grid_size):
@@ -63,31 +62,61 @@ class StrandDrawingCanvas(QWidget):
             painter.drawRect(self.current_mode.selected_rectangle)
 
     def draw_highlighted_strand(self, painter, strand):
+        if isinstance(strand, MaskedStrand):
+            self.draw_highlighted_masked_strand(painter, strand)
+        else:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+
+            def set_highlight_pen(width_adjustment=0):
+                pen = QPen(self.highlight_color, self.highlight_width + width_adjustment)
+                pen.setJoinStyle(Qt.MiterJoin)
+                pen.setCapStyle(Qt.SquareCap)
+                painter.setPen(pen)
+
+            set_highlight_pen()
+            painter.drawPath(strand.get_path())
+
+            set_highlight_pen(0.5)
+            for i, has_circle in enumerate(strand.has_circles):
+                if has_circle:
+                    center = strand.start if i == 0 else strand.end
+                    painter.drawEllipse(center, strand.width / 2, strand.width / 2)
+
+            painter.restore()
+            strand.draw(painter)
+
+    def draw_highlighted_masked_strand(self, painter, masked_strand):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        def set_highlight_pen(width_adjustment=0):
-            pen = QPen(self.highlight_color, self.highlight_width + width_adjustment)
-            pen.setJoinStyle(Qt.MiterJoin)
-            pen.setCapStyle(Qt.SquareCap)
-            painter.setPen(pen)
+        temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        set_highlight_pen()
-        painter.drawPath(strand.get_path())
+        masked_strand.draw(temp_painter)
 
-        set_highlight_pen(0.5)
-        for i, has_circle in enumerate(strand.has_circles):
-            if has_circle:
-                center = strand.start if i == 0 else strand.end
-                painter.drawEllipse(center, strand.width / 2, strand.width / 2)
+        highlight_pen = QPen(self.highlight_color, self.stroke_width+4)
+        highlight_pen.setJoinStyle(Qt.MiterJoin)
+        highlight_pen.setCapStyle(Qt.SquareCap)
+        temp_painter.setPen(highlight_pen)
+        temp_painter.drawPath(masked_strand.get_mask_path())
+
+        temp_painter.end()
+
+        painter.drawImage(0, 0, temp_image)
 
         painter.restore()
-        strand.draw(painter)
 
-    def on_color_changed(self, set_number, color):
+    def update_color_for_set(self, set_number, color):
         self.strand_colors[set_number] = color
         for strand in self.strands:
-            if isinstance(strand, Strand) and strand.set_number == set_number:
+            if isinstance(strand, MaskedStrand):
+                if strand.set_number.startswith(f"{set_number}_"):
+                    strand.set_color(color)
+                    self.update_attached_strands_color(strand, color)
+            elif isinstance(strand, Strand) and strand.set_number == set_number:
                 strand.set_color(color)
                 self.update_attached_strands_color(strand, color)
         self.update()
@@ -96,6 +125,9 @@ class StrandDrawingCanvas(QWidget):
         for attached_strand in parent_strand.attached_strands:
             attached_strand.set_color(color)
             self.update_attached_strands_color(attached_strand, color)
+
+    def on_color_changed(self, set_number, color):
+        self.update_color_for_set(set_number, color)
 
     def select_strand(self, index):
         if 0 <= index < len(self.strands):
@@ -197,10 +229,10 @@ class MainWindow(QMainWindow):
         button_layout = QHBoxLayout()
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Sides Mode")
-        self.toggle_grid_button = QPushButton("Toggle Grid")  # New button
+        self.toggle_grid_button = QPushButton("Toggle Grid")
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
-        button_layout.addWidget(self.toggle_grid_button)  # Add the new button to the layout
+        button_layout.addWidget(self.toggle_grid_button)
 
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel()
@@ -229,25 +261,58 @@ class MainWindow(QMainWindow):
         self.layer_panel.deselect_all_requested.connect(self.deselect_all_strands)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
-        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)  # Connect the new button
-        self.layer_panel.color_changed.connect(self.canvas.on_color_changed)
+        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
+        self.layer_panel.color_changed.connect(self.handle_color_change)
+        self.layer_panel.masked_layer_created.connect(self.create_masked_layer)
 
         self.current_mode = "attach"
         self.set_attach_mode()
 
+    def handle_color_change(self, set_number, color):
+        self.canvas.update_color_for_set(set_number, color)
+        self.layer_panel.update_colors_for_set(set_number, color)
+
+    def create_masked_layer(self, layer1_index, layer2_index):
+        layer1 = self.canvas.strands[layer1_index]
+        layer2 = self.canvas.strands[layer2_index]
+        
+        # Create MaskedStrand with layers in the order they were selected
+        masked_strand = MaskedStrand(layer1, layer2)
+        self.canvas.add_strand(masked_strand)
+        
+        button = self.layer_panel.add_masked_layer_button(layer1_index, layer2_index)
+        button.color_changed.connect(self.handle_color_change)
+        
+        print(f"Created masked layer: {masked_strand.set_number}")
+        
+        self.canvas.update()
+        self.update_mode(self.current_mode)
+
+    def update_mode(self, mode):
+        self.current_mode = mode
+        self.canvas.set_mode(mode)
+        if mode == "attach":
+            self.attach_button.setEnabled(False)
+            self.move_button.setEnabled(True)
+        else:  # move mode
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(False)
+
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+        self.layer_panel.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        super().keyReleaseEvent(event)
+        self.layer_panel.keyReleaseEvent(event)
+
     def set_attach_mode(self):
-        self.canvas.set_mode("attach")
-        self.attach_button.setEnabled(False)
-        self.move_button.setEnabled(True)
-        self.current_mode = "attach"
+        self.update_mode("attach")
         if self.canvas.last_selected_strand_index is not None:
             self.select_strand(self.canvas.last_selected_strand_index)
 
     def set_move_mode(self):
-        self.canvas.set_mode("move")
-        self.attach_button.setEnabled(True)
-        self.move_button.setEnabled(False)
-        self.current_mode = "move"
+        self.update_mode("move")
         self.canvas.last_selected_strand_index = self.canvas.selected_strand_index
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
@@ -270,26 +335,25 @@ class MainWindow(QMainWindow):
         self.layer_panel.add_layer_button(set_number)
         self.select_strand(len(self.canvas.strands) - 1)
         
-        if self.current_mode == "move":
-            self.set_move_mode()
-        else:
-            self.set_attach_mode()
-            
+        # Maintain the current mode
+        self.update_mode(self.current_mode)
     def select_strand(self, index, emit_signal=True):
-        if self.canvas.selected_strand_index != index:
-            self.canvas.select_strand(index)
-            if emit_signal:
-                self.layer_panel.select_layer(index, emit_signal=False)
-        self.canvas.is_first_strand = False
+            if self.canvas.selected_strand_index != index:
+                self.canvas.select_strand(index)
+                if emit_signal:
+                    self.layer_panel.select_layer(index, emit_signal=False)
+            self.canvas.is_first_strand = False
+            
+            # Maintain the current mode when selecting a strand
+            self.update_mode(self.current_mode)
 
     def deselect_all_strands(self):
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
         self.canvas.update()
-        if self.current_mode == "move":
-            self.set_move_mode()
-        else:
-            self.set_attach_mode()
+        
+        # Maintain the current mode when deselecting all strands
+        self.update_mode(self.current_mode)
 
     def start_resize(self, event):
         self.resize_start = event.pos()

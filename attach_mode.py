@@ -2,6 +2,8 @@ from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject
 from PyQt5.QtGui import QCursor, QPainter, QPen, QColor, QBrush, QPainterPath
 from PyQt5.QtWidgets import QWidget
 import math
+from PyQt5.QtGui import QPainterPath, QPainter, QColor, QPen, QBrush
+from PyQt5.QtCore import QPointF
 
 class Strand:
     def __init__(self, start, end, width, color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=5):
@@ -238,10 +240,13 @@ class AttachMode(QObject):
         circle_radius = self.canvas.strand_width * 1.1
 
         if self.canvas.selected_strand:
-            if self.try_attach_to_strand(self.canvas.selected_strand, pos, circle_radius):
-                return
-            if self.try_attach_to_attached_strands(self.canvas.selected_strand.attached_strands, pos, circle_radius):
-                return
+            if not isinstance(self.canvas.selected_strand, MaskedStrand):
+                if self.try_attach_to_strand(self.canvas.selected_strand, pos, circle_radius):
+                    return
+                if self.try_attach_to_attached_strands(self.canvas.selected_strand.attached_strands, pos, circle_radius):
+                    return
+            else:
+                print("Cannot attach to a masked strand layer.")
 
     def try_attach_to_strand(self, strand, pos, circle_radius):
         distance_to_start = (pos - strand.start).manhattanLength()
@@ -278,3 +283,103 @@ class AttachMode(QObject):
             if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
                 return True
         return False
+
+from PyQt5.QtGui import QPainterPath, QPainter, QColor, QPen, QBrush, QPainterPathStroker, QImage
+from PyQt5.QtCore import QPointF, Qt, QRectF, QSize
+class MaskedStrand(Strand):
+    def __init__(self, first_selected_strand, second_selected_strand):
+        self.first_selected_strand = first_selected_strand
+        self.second_selected_strand = second_selected_strand
+        super().__init__(first_selected_strand.start, first_selected_strand.end, first_selected_strand.width)
+        self.set_number = f"{first_selected_strand.set_number}_{second_selected_strand.set_number}"
+        self.color = first_selected_strand.color
+        self.stroke_color = first_selected_strand.stroke_color
+        self.stroke_width = first_selected_strand.stroke_width
+        self.update_shape()
+
+    def update_shape(self):
+        self.start = self.first_selected_strand.start
+        self.end = self.first_selected_strand.end
+        super().update_shape()
+
+    def get_mask_path(self):
+        # Get the path of the first selected strand including its stroke
+        path1 = QPainterPath(self.first_selected_strand.get_path())
+        stroker1 = QPainterPathStroker()
+        stroker1.setWidth(self.first_selected_strand.stroke_width)
+        path1 = stroker1.createStroke(path1).united(path1)
+
+        # Get the path of the second selected strand including its stroke
+        path2 = QPainterPath(self.second_selected_strand.get_path())
+        stroker2 = QPainterPathStroker()
+        stroker2.setWidth(self.second_selected_strand.stroke_width * 2)
+        path2 = stroker2.createStroke(path2).united(path2)
+
+        # Return the intersection of the two paths
+        return path1.intersected(path2)
+
+    def draw(self, painter):
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Determine which strand to draw
+        def get_set_numbers(strand):
+            if isinstance(strand.set_number, str):
+                return [int(n) for n in strand.set_number.split('_')]
+            return [strand.set_number]
+
+        set_numbers1 = get_set_numbers(self.first_selected_strand)
+        set_numbers2 = get_set_numbers(self.second_selected_strand)
+        
+        if set_numbers1[0] == set_numbers2[0]:
+            # If they share the same first number, draw the first selected strand
+            strand_to_draw =  self.first_selected_strand
+            print("same strand")
+        else:
+            # If they don't share the same first number, draw the first selected strand
+            strand_to_draw = self.first_selected_strand
+
+        strand_to_draw.draw(temp_painter)
+        
+        print(f"Drawing masked strand: {self.set_number}, drawn strand: {strand_to_draw.set_number}")
+
+        mask_path = self.get_mask_path()
+        inverse_path = QPainterPath()
+        inverse_path.addRect(QRectF(temp_image.rect()))
+        inverse_path = inverse_path.subtracted(mask_path)
+
+        temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
+        temp_painter.setBrush(Qt.transparent)
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.drawPath(inverse_path)
+
+        temp_painter.end()
+        painter.drawImage(0, 0, temp_image)
+        painter.restore()
+
+    def update(self, new_end):
+        self.first_selected_strand.update(new_end)
+        self.second_selected_strand.update(new_end)
+        self.update_shape()
+
+    def set_color(self, new_color):
+        self.color = new_color
+        self.first_selected_strand.set_color(new_color)
+
+    # Override these methods to ensure they use the intersected path
+    def get_top_left(self):
+        return self.get_mask_path().boundingRect().topLeft()
+
+    def get_bottom_right(self):
+        return self.get_mask_path().boundingRect().bottomRight()
+
+    # Add this method to handle potential attribute access
+    def __getattr__(self, name):
+        if name in ['top_left', 'bottom_left', 'top_right', 'bottom_right']:
+            return getattr(self.first_selected_strand, name)
+        raise AttributeError(f"'MaskedStrand' object has no attribute '{name}'")

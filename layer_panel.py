@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QMenu, QAction, QColorDialog, QLabel
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QPainter, QPen
+from PyQt5.QtGui import QColor, QPainter, QPen, QFont, QPainterPath, QBrush
 from functools import partial
-from PyQt5.QtGui import QPainterPath, QFont
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QColor, QPainter, QPen, QFont, QPainterPath, QBrush, QFontMetrics
 
 class SplitterHandle(QWidget):
     def __init__(self, parent=None):
@@ -15,10 +17,7 @@ class SplitterHandle(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(200, 200, 200))  # Light gray color
-        font = painter.font()
-        font.setBold(True)
-        font.setPointSize(10)  # Set the font size to 8 points
-        painter.setFont(font)
+
     def updateSize(self):
         if self.parent():
             self.setFixedWidth(self.parent().width())
@@ -36,12 +35,26 @@ class SplitterHandle(QWidget):
         self.updateSize()
         super().resizeEvent(event)
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.setCursor(Qt.SplitHCursor)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.setCursor(Qt.SplitHCursor)
+
+    def enterEvent(self, event):
+        self.setCursor(Qt.SplitHCursor)
+
+    def leaveEvent(self, event):
+        self.unsetCursor()
+
 class NumberedLayerButton(QPushButton):
     color_changed = pyqtSignal(int, QColor)
 
     def __init__(self, text, count, color=QColor('purple'), parent=None):
         super().__init__(parent)
-        self.setText(text)
+        self._text = text  # Store the text privately
         self.count = count
         self.setFixedSize(100, 30)  # Increased width to accommodate longer names
         self.setCheckable(True)
@@ -49,8 +62,14 @@ class NumberedLayerButton(QPushButton):
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.color = color
         self.border_color = None
+        self.masked_mode = False
         self.set_color(color)
+    def setText(self, text):
+        self._text = text
+        self.update()  # Trigger a repaint
 
+    def text(self):
+        return self._text
     def set_color(self, color):
         self.color = color
         self.update_style()
@@ -106,6 +125,7 @@ class NumberedLayerButton(QPushButton):
             self.set_color(color)
             self.color_changed.emit(int(self.text().split('_')[0]), color)
 
+
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
@@ -115,23 +135,43 @@ class NumberedLayerButton(QPushButton):
         font.setBold(True)
         font.setPointSize(10)  # Set the font size to 10 points
 
-        text = self.text()
+        text = self._text
         rect = self.rect()
+
+        # Calculate the center position for the text
+        fm = QFontMetrics(font)
+        text_width = fm.horizontalAdvance(text)  # Use horizontalAdvance for Qt5
+        text_height = fm.height()
+        x = (rect.width() - text_width) / 2
+        y = (rect.height() + text_height) / 2 - fm.descent()
 
         # Create a path for the text
         path = QPainterPath()
-        path.addText(rect.center().x() - painter.fontMetrics().width(text) / 2,
-                    rect.center().y() + painter.fontMetrics().ascent() / 2, font, text)
+        path.addText(x, y, font, text)
 
-        # Draw the stroke
+        # Draw the stroke (black outline)
         painter.setPen(QPen(Qt.black, 4, Qt.SolidLine))
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
 
-        # Draw the text fill
+        # Draw the text fill (white)
         painter.setPen(Qt.NoPen)
         painter.setBrush(Qt.white)
         painter.drawPath(path)
+
+    def set_masked_mode(self, masked):
+        self.masked_mode = masked
+        if masked:
+            self.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: gray;
+                    border: none;
+                    font-weight: bold;
+                }}
+            """)
+        else:
+            self.restore_original_style()
+        self.update()
 
 class LayerPanel(QWidget):
     new_strand_requested = pyqtSignal(int, QColor)
@@ -140,12 +180,16 @@ class LayerPanel(QWidget):
     color_changed = pyqtSignal(int, QColor)
     masked_layer_created = pyqtSignal(int, int)
     draw_names_requested = pyqtSignal(bool)  # Emit with the toggle state
+    masked_mode_entered = pyqtSignal()
+    masked_mode_exited = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        
+        self.last_selected_index = None  # Add this line to store the last selected index
+       
         self.handle = SplitterHandle(self)
         self.layout.addWidget(self.handle)
 
@@ -181,8 +225,6 @@ class LayerPanel(QWidget):
         self.set_counts = {1: 0}
         self.set_colors = {1: QColor('purple')}
       
-
-
         self.masked_mode = False
         self.first_masked_layer = None
         self.notification_label = QLabel()
@@ -204,14 +246,18 @@ class LayerPanel(QWidget):
     def enter_masked_mode(self):
         self.masked_mode = True
         self.first_masked_layer = None
+        self.last_selected_index = self.get_selected_layer()
         for button in self.layer_buttons:
-            button.setStyleSheet(f"background-color: gray; color: white;")
+            button.set_masked_mode(True)
+            button.setChecked(False)
+        self.masked_mode_entered.emit()
 
     def exit_masked_mode(self):
         self.masked_mode = False
         self.first_masked_layer = None
         for button in self.layer_buttons:
-            button.restore_original_style()
+            button.set_masked_mode(False)
+        self.masked_mode_exited.emit()
         self.notification_label.clear()
 
     def select_layer(self, index, emit_signal=True):
@@ -222,6 +268,7 @@ class LayerPanel(QWidget):
                 button.setChecked(i == index)
             if emit_signal:
                 self.strand_selected.emit(index)
+            self.last_selected_index = index  # Update the last selected index
 
     def handle_masked_layer_selection(self, index):
         if self.first_masked_layer is None:
@@ -260,8 +307,6 @@ class LayerPanel(QWidget):
         new_strand_index = self.set_counts[self.current_set] + 1
         new_strand_name = f"{new_strand_number}_{new_strand_index}"
         self.new_strand_requested.emit(new_strand_number, new_color)
-        
-  
 
     def add_layer_button(self, set_number=None):
         if set_number is None:

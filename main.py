@@ -32,7 +32,10 @@ class StrandDrawingCanvas(QWidget):
         self.grid_size = 30
         self.show_grid = True
         self.should_draw_names = False  # Initialize here to avoid AttributeError
-
+    def deselect_all_strands(self):
+        self.selected_strand = None
+        self.selected_strand_index = None
+        self.update()  # Force a redraw
     def set_layer_panel(self, layer_panel):
         self.layer_panel = layer_panel
         self.layer_panel.draw_names_requested.connect(self.toggle_name_drawing)
@@ -337,7 +340,7 @@ class MainWindow(QMainWindow):
         self.canvas.set_layer_panel(self.layer_panel)
         self.layer_panel.new_strand_requested.connect(self.create_new_strand)
         self.layer_panel.strand_selected.connect(lambda idx: self.select_strand(idx, emit_signal=False))
-        self.layer_panel.deselect_all_requested.connect(self.deselect_all_strands)
+        self.layer_panel.deselect_all_requested.connect(self.canvas.deselect_all_strands)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
         self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
@@ -346,6 +349,10 @@ class MainWindow(QMainWindow):
 
         self.current_mode = "attach"
         self.set_attach_mode()
+        
+        # Add these new connections
+        self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
+        self.layer_panel.masked_mode_exited.connect(self.restore_selection)
 
     def handle_color_change(self, set_number, color):
         self.canvas.update_color_for_set(set_number, color)
@@ -355,7 +362,6 @@ class MainWindow(QMainWindow):
         layer1 = self.canvas.strands[layer1_index]
         layer2 = self.canvas.strands[layer2_index]
         
-        # Create MaskedStrand with layers in the order they were selected
         masked_strand = MaskedStrand(layer1, layer2)
         self.canvas.add_strand(masked_strand)
         
@@ -366,6 +372,10 @@ class MainWindow(QMainWindow):
         
         self.canvas.update()
         self.update_mode(self.current_mode)
+
+    def restore_selection(self):
+        if self.layer_panel.last_selected_index is not None:
+            self.select_strand(self.layer_panel.last_selected_index)
 
     def update_mode(self, mode):
         self.current_mode = mode
@@ -410,31 +420,21 @@ class MainWindow(QMainWindow):
             self.canvas.strand_colors[set_number] = QColor('purple')
         new_strand.set_color(self.canvas.strand_colors[set_number])
         
-        # Set the layer name for the new strand
         new_strand.layer_name = f"{set_number}_1"
         
         self.canvas.add_strand(new_strand)
         self.layer_panel.add_layer_button(set_number)
         self.select_strand(len(self.canvas.strands) - 1)
         
-        # Maintain the current mode
         self.update_mode(self.current_mode)
-    def select_strand(self, index, emit_signal=True):
-            if self.canvas.selected_strand_index != index:
-                self.canvas.select_strand(index)
-                if emit_signal:
-                    self.layer_panel.select_layer(index, emit_signal=False)
-            self.canvas.is_first_strand = False
-            
-            # Maintain the current mode when selecting a strand
-            self.update_mode(self.current_mode)
 
-    def deselect_all_strands(self):
-        self.canvas.selected_strand = None
-        self.canvas.selected_strand_index = None
-        self.canvas.update()
+    def select_strand(self, index, emit_signal=True):
+        if self.canvas.selected_strand_index != index:
+            self.canvas.select_strand(index)
+            if emit_signal:
+                self.layer_panel.select_layer(index, emit_signal=False)
+        self.canvas.is_first_strand = False
         
-        # Maintain the current mode when deselecting all strands
         self.update_mode(self.current_mode)
 
     def start_resize(self, event):
@@ -451,7 +451,7 @@ class MainWindow(QMainWindow):
     def stop_resize(self, event):
         if hasattr(self, 'resize_start'):
             del self.resize_start
-
+            
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()

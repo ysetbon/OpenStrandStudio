@@ -5,6 +5,8 @@ from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QPainterPa
 from attach_mode import AttachMode, Strand, AttachedStrand, MaskedStrand
 from move_mode import MoveMode
 from layer_panel import LayerPanel
+from PyQt5.QtGui import QIcon
+import os
 
 class StrandDrawingCanvas(QWidget):
     def __init__(self, parent=None):
@@ -301,8 +303,12 @@ class StrandDrawingCanvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Strand Drawing Tool")
+        self.setWindowTitle("OpenStrand Studio")
         self.setMinimumSize(900, 900)
+        # Set the window icon
+        icon_path = r"C:\Users\YonatanSetbon\.vscode\lanyard_program_beta\box_stitch.ico"
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)

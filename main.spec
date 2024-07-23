@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['box_stitch.ico'],
+    icon=['C:\\Users\\YonatanSetbon\\.vscode\\lanyard_program_beta\\box_stitch.ico'],
 )

@@ -115,7 +115,7 @@ class LayerPanel(QWidget):
     deselect_all_requested = pyqtSignal()
     color_changed = pyqtSignal(int, QColor)
     masked_layer_created = pyqtSignal(int, int)
-
+    draw_names_requested = pyqtSignal(bool)  # Emit with the toggle state
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
@@ -140,7 +140,12 @@ class LayerPanel(QWidget):
         self.deselect_all_button = QPushButton("Deselect All")
         self.deselect_all_button.setStyleSheet("background-color: lightyellow;")
         self.deselect_all_button.clicked.connect(self.deselect_all)
-        
+
+        self.draw_names_button = QPushButton("Draw Names")
+        self.draw_names_button.clicked.connect(self.request_draw_names)
+        self.should_draw_names = False  # Track the toggle state
+
+        button_layout.addWidget(self.draw_names_button)               
         button_layout.addWidget(self.add_new_strand_button)
         button_layout.addWidget(self.deselect_all_button)
         
@@ -151,12 +156,18 @@ class LayerPanel(QWidget):
         self.current_set = 1
         self.set_counts = {1: 0}
         self.set_colors = {1: QColor('purple')}
+      
+
 
         self.masked_mode = False
         self.first_masked_layer = None
         self.notification_label = QLabel()
         self.notification_label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.notification_label)
+
+    def request_draw_names(self):
+        self.should_draw_names = not self.should_draw_names
+        self.draw_names_requested.emit(self.should_draw_names)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Control:
@@ -221,7 +232,12 @@ class LayerPanel(QWidget):
     def request_new_strand(self):
         self.start_new_set()
         new_color = QColor('purple')
-        self.new_strand_requested.emit(self.current_set, new_color)
+        new_strand_number = self.current_set
+        new_strand_index = self.set_counts[self.current_set] + 1
+        new_strand_name = f"{new_strand_number}_{new_strand_index}"
+        self.new_strand_requested.emit(new_strand_number, new_color)
+        
+  
 
     def add_layer_button(self, set_number=None):
         if set_number is None:

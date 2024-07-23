@@ -21,6 +21,7 @@ class Strand:
         self.set_number = None
         self.update_shape()
         self.update_side_line()
+        self.layer_name = ""  # Initialize with a default empty string
 
     def set_color(self, new_color):
         self.color = new_color

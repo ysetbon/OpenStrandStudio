@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QSplitter
-from PyQt5.QtCore import Qt, QPointF, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal, QObject  # Included QRectF here
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QPainterPathStroker, QImage
 from attach_mode import AttachMode, Strand, AttachedStrand, MaskedStrand
 from move_mode import MoveMode
@@ -31,15 +31,24 @@ class StrandDrawingCanvas(QWidget):
         self.strand_colors = {}
         self.grid_size = 30
         self.show_grid = True
+        self.should_draw_names = False  # Initialize here to avoid AttributeError
 
     def set_layer_panel(self, layer_panel):
         self.layer_panel = layer_panel
-        self.layer_panel.color_changed.connect(self.on_color_changed)
+        self.layer_panel.draw_names_requested.connect(self.toggle_name_drawing)
 
+    def toggle_name_drawing(self, should_draw):
+        self.should_draw_names = should_draw
+        self.update()  # Redraw the canvas to reflect name drawing state
+
+    def enable_name_drawing(self):
+        self.should_draw_names = True
+        self.update()  # Forces the canvas to redraw
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
+        # Draw the grid
         if self.show_grid:
             painter.setPen(QPen(QColor(200, 200, 200), 1))
             for x in range(0, self.width(), self.grid_size):
@@ -47,19 +56,56 @@ class StrandDrawingCanvas(QWidget):
             for y in range(0, self.height(), self.grid_size):
                 painter.drawLine(0, y, self.width(), y)
 
-        for index, strand in enumerate(self.strands):
-            if index == self.selected_strand_index:
-                self.draw_highlighted_strand(painter, strand)
+        # Draw each strand appropriately
+        for strand in self.strands:
+            if strand == self.selected_strand:
+                self.draw_highlighted_strand(painter, strand)  # Draw with highlighting if selected
             else:
-                strand.draw(painter)
+                strand.draw(painter)  # Normal draw call
 
+            if self.should_draw_names:
+                self.draw_strand_label(painter, strand)
+
+        # Draw any currently manipulated strand
         if self.current_strand:
             self.current_strand.draw(painter)
 
+        # Draw a rectangle around the move mode's selected rectangle if applicable
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))
             painter.drawRect(self.current_mode.selected_rectangle)
+
+
+    def draw_strand_label(self, painter, strand):
+        text = getattr(strand, 'layer_name', "Unnamed Layer")  # Fallback to "Unnamed Layer" if not set
+
+        mid_point = (strand.start + strand.end) / 2
+        font = painter.font()
+        font.setPointSize(12)  # Adjust font size as needed
+        painter.setFont(font)
+
+        # Calculate text width and height to center it around the midpoint
+        metrics = painter.fontMetrics()
+        text_width = metrics.width(text)
+        text_height = metrics.height()
+
+        # Create a QRect centered around the midpoint for the text
+        text_rect = QRectF(mid_point.x() - text_width / 2, mid_point.y() - text_height / 2, text_width, text_height)
+
+        # Draw text as path for stroking
+        text_path = QPainterPath()
+        text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
+
+        # Draw the outline using a thicker white pen
+        painter.setPen(QPen(Qt.white, 4, Qt.SolidLine))  # White outline
+        painter.drawPath(text_path)
+
+        # Draw the text with a thinner black pen
+        painter.setPen(QPen(Qt.black, 1, Qt.SolidLine))  # Black text color
+        painter.fillPath(text_path, QBrush(Qt.black))  # Fill the path with black color
+        painter.drawPath(text_path)
+
 
     def draw_highlighted_strand(self, painter, strand):
         if isinstance(strand, MaskedStrand):
@@ -146,28 +192,63 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = None
 
     def on_strand_created(self, strand):
-        if strand not in self.strands:
-            if isinstance(strand, AttachedStrand):
-                set_number = strand.parent.set_number
-            elif self.selected_strand:
-                set_number = self.selected_strand.set_number
-            else:
-                set_number = max(self.strand_colors.keys(), default=0) + 1
+        # Determine the set number for the new strand
+        if isinstance(strand, AttachedStrand):
+            set_number = strand.parent.set_number
+        elif self.selected_strand:
+            set_number = self.selected_strand.set_number
+        else:
+            # If no strand is selected and it's a new strand, increment the set number
+            set_number = max(self.strand_colors.keys(), default=0) + 1
 
-            strand.set_number = set_number
-            
-            if set_number not in self.strand_colors:
-                self.strand_colors[set_number] = QColor('purple')
-            
-            strand.set_color(self.strand_colors[set_number])
-            self.add_strand(strand)
-            
-            if self.layer_panel:
-                self.layer_panel.add_layer_button(set_number)
-                self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
-            
-            if not isinstance(strand, AttachedStrand):
-                self.select_strand(len(self.strands) - 1)
+        strand.set_number = set_number
+
+        # Set color from existing set or default to a predefined color if not set
+        if set_number not in self.strand_colors:
+            self.strand_colors[set_number] = QColor('purple')
+        strand.set_color(self.strand_colors[set_number])
+
+        # Add strand to the canvas
+        self.strands.append(strand)
+
+        # Update or add the layer button in the layer panel
+        if self.layer_panel:
+            # This assumes there is a method in LayerPanel to handle the creation of new layer buttons
+            self.layer_panel.add_layer_button(set_number)
+            # Assuming LayerPanel emits a signal when the color changes which is connected back to the canvas
+            self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
+
+        # Get the selected layer's index to assign the correct layer name
+        selected_layer_index = self.layer_panel.get_selected_layer()
+        if selected_layer_index is not None:
+            layer_button = self.layer_panel.layer_buttons[selected_layer_index]
+            strand.layer_name = layer_button.text()  # Ensure the strand gets the name from the UI
+
+        # Select the strand in the interface if it's a primary strand and not an attached type
+        if not isinstance(strand, AttachedStrand):
+            self.select_strand(len(self.strands) - 1)
+
+        # Trigger a canvas update to redraw all strands including the new one
+        self.update()
+
+
+    def add_strand(self, strand):
+        # Add a new strand to the list of strands
+        self.strands.append(strand)
+        self.update()  # Redraw the canvas
+
+    def select_strand(self, index):
+        # Deselect all other strands
+        for s in self.strands:
+            s.is_selected = False
+        # Select the new strand
+        self.strands[index].is_selected = True
+        self.selected_strand = self.strands[index]
+        self.selected_strand_index = index
+        self.update()  # Redraw the canvas
+
+
+
 
     def mousePressEvent(self, event):
         self.current_mode.mousePressEvent(event)
@@ -181,9 +262,7 @@ class StrandDrawingCanvas(QWidget):
         self.current_mode.mouseReleaseEvent(event)
         self.update()
 
-    def add_strand(self, strand):
-        self.strands.append(strand)
-        self.update()
+
 
     def set_mode(self, mode):
         if mode == "attach":

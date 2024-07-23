@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBo
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QPainter, QPen
 from functools import partial
+from PyQt5.QtGui import QPainterPath, QFont
 
 class SplitterHandle(QWidget):
     def __init__(self, parent=None):
@@ -14,7 +15,10 @@ class SplitterHandle(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(200, 200, 200))  # Light gray color
-
+        font = painter.font()
+        font.setBold(True)
+        font.setPointSize(10)  # Set the font size to 8 points
+        painter.setFont(font)
     def updateSize(self):
         if self.parent():
             self.setFixedWidth(self.parent().width())
@@ -59,7 +63,7 @@ class NumberedLayerButton(QPushButton):
         style = f"""
             QPushButton {{
                 background-color: {self.color.name()};
-                color: white;
+                border: none;
                 font-weight: bold;
             }}
             QPushButton:hover {{
@@ -104,10 +108,30 @@ class NumberedLayerButton(QPushButton):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        if self.border_color:
-            painter = QPainter(self)
-            painter.setPen(QPen(self.border_color, 2))
-            painter.drawRect(self.rect().adjusted(1, 1, -1, -1))
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        font = QFont(painter.font())
+        font.setBold(True)
+        font.setPointSize(10)  # Set the font size to 10 points
+
+        text = self.text()
+        rect = self.rect()
+
+        # Create a path for the text
+        path = QPainterPath()
+        path.addText(rect.center().x() - painter.fontMetrics().width(text) / 2,
+                    rect.center().y() + painter.fontMetrics().ascent() / 2, font, text)
+
+        # Draw the stroke
+        painter.setPen(QPen(Qt.black, 4, Qt.SolidLine))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawPath(path)
+
+        # Draw the text fill
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(Qt.white)
+        painter.drawPath(path)
 
 class LayerPanel(QWidget):
     new_strand_requested = pyqtSignal(int, QColor)

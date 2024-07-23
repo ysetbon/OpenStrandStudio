@@ -78,7 +78,8 @@ class StrandDrawingCanvas(QWidget):
 
 
     def draw_strand_label(self, painter, strand):
-        text = getattr(strand, 'layer_name', "Unnamed Layer")  # Fallback to "Unnamed Layer" if not set
+        # Use the layer_name attribute if it exists, otherwise fall back to a default
+        text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
 
         mid_point = (strand.start + strand.end) / 2
         font = painter.font()
@@ -98,14 +99,13 @@ class StrandDrawingCanvas(QWidget):
         text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
 
         # Draw the outline using a thicker white pen
-        painter.setPen(QPen(Qt.white, 4, Qt.SolidLine))  # White outline
+        painter.setPen(QPen(Qt.white, 6, Qt.SolidLine))  # White outline
         painter.drawPath(text_path)
 
         # Draw the text with a thinner black pen
-        painter.setPen(QPen(Qt.black, 1, Qt.SolidLine))  # Black text color
+        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Black text color
         painter.fillPath(text_path, QBrush(Qt.black))  # Fill the path with black color
         painter.drawPath(text_path)
-
 
     def draw_highlighted_strand(self, painter, strand):
         if isinstance(strand, MaskedStrand):
@@ -409,6 +409,9 @@ class MainWindow(QMainWindow):
         if set_number not in self.canvas.strand_colors:
             self.canvas.strand_colors[set_number] = QColor('purple')
         new_strand.set_color(self.canvas.strand_colors[set_number])
+        
+        # Set the layer name for the new strand
+        new_strand.layer_name = f"{set_number}_1"
         
         self.canvas.add_strand(new_strand)
         self.layer_panel.add_layer_button(set_number)

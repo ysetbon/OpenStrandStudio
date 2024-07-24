@@ -2,9 +2,8 @@
 # OpenStrand Studio
 
 ![Box Stitch Screenshot](https://github.com/ysetbon/OpenStrandStudio/blob/main/images%20examples/box%20stitch%20screenshot.png)
-![Box Stitch](https://github.com/ysetbon/OpenStrandStudio/blob/main/images%20examples/box%20stitch.png)
-![Hexagon](https://github.com/ysetbon/OpenStrandStudio/blob/main/images%20examples/hexagon1.png)
 ![Random Example](https://github.com/ysetbon/OpenStrandStudio/blob/main/images%20examples/random%20example.png)
+![Hexagon](https://github.com/ysetbon/OpenStrandStudio/blob/main/images%20examples/hexagon1.png)
 
 OpenStrand Studio is an interactive tool for creating and manipulating strand-based designs. It provides a canvas where users can draw, connect, and modify strands to create complex patterns or structures. The software offers various modes for attaching, moving, and customizing strands, making it versatile for different design needs.
 

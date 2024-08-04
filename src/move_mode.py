@@ -147,18 +147,19 @@ class MoveMode:
         """
         for i, strand in enumerate(self.canvas.strands):
             if not self.lock_mode_active or i not in self.locked_layers:
-                if self.try_move_strand(strand, pos):
+                if self.try_move_strand(strand, pos, i):
                     return
                 if self.try_move_attached_strands(strand.attached_strands, pos):
                     return
 
-    def try_move_strand(self, strand, pos):
+    def try_move_strand(self, strand, pos, strand_index):
         """
         Try to move a strand if the position is within its end rectangles.
 
         Args:
             strand (Strand): The strand to try moving.
             pos (QPointF): The position to check.
+            strand_index (int): The index of the strand in the canvas's strand list.
 
         Returns:
             bool: True if the strand was moved, False otherwise.
@@ -166,10 +167,10 @@ class MoveMode:
         start_rect = self.get_end_rectangle(strand, 0)
         end_rect = self.get_end_rectangle(strand, 1)
 
-        if start_rect.contains(pos):
+        if start_rect.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_rect)
             return True
-        elif end_rect.contains(pos):
+        elif end_rect.contains(pos) and self.can_move_side(strand, 1, strand_index):
             self.start_movement(strand, 1, end_rect)
             return True
         return False
@@ -186,11 +187,39 @@ class MoveMode:
             bool: True if an attached strand was moved, False otherwise.
         """
         for attached_strand in attached_strands:
-            if self.try_move_strand(attached_strand, pos):
+            if self.try_move_strand(attached_strand, pos, self.canvas.strands.index(attached_strand)):
                 return True
             if self.try_move_attached_strands(attached_strand.attached_strands, pos):
                 return True
         return False
+
+    def can_move_side(self, strand, side, strand_index):
+        """
+        Check if the side of a strand can be moved.
+
+        Args:
+            strand (Strand): The strand to check.
+            side (int): Which side of the strand to check (0 for start, 1 for end).
+            strand_index (int): The index of the strand in the canvas's strand list.
+
+        Returns:
+            bool: True if the side can be moved, False otherwise.
+        """
+        if not self.lock_mode_active:
+            return True
+        
+        # Check if the strand itself is locked
+        if strand_index in self.locked_layers:
+            return False
+        
+        # Check if the side is shared with a locked strand
+        point = strand.start if side == 0 else strand.end
+        for i, other_strand in enumerate(self.canvas.strands):
+            if i in self.locked_layers:
+                if point == other_strand.start or point == other_strand.end:
+                    return False
+        
+        return True
 
     def start_movement(self, strand, side, rect):
         """

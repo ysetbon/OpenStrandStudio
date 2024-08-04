@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon
+from PyQt5.QtCore import Qt, pyqtSignal, QRect
+from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -28,6 +28,7 @@ class NumberedLayerButton(QPushButton):
         self.masked_mode = False
         self.locked = False
         self.selectable = False
+        self.attachable = False  # Property to indicate if strand can be attached
         self.set_color(color)
 
     def setText(self, text):
@@ -89,6 +90,16 @@ class NumberedLayerButton(QPushButton):
         self.selectable = selectable
         self.update_style()
 
+    def set_attachable(self, attachable):
+        """
+        Set whether the button represents a strand that can be attached to.
+
+        Args:
+            attachable (bool): Whether the strand can be attached to.
+        """
+        self.attachable = attachable
+        self.update_style()
+
     def update_style(self):
         """Update the button's style based on its current state."""
         style = f"""
@@ -120,7 +131,7 @@ class NumberedLayerButton(QPushButton):
 
     def paintEvent(self, event):
         """
-        Custom paint event to draw the button with centered text and an orange lock icon if needed.
+        Custom paint event to draw the button with centered text and icons as needed.
 
         Args:
             event (QPaintEvent): The paint event.
@@ -171,6 +182,21 @@ class NumberedLayerButton(QPushButton):
             else:
                 painter.setPen(QColor(255, 165, 0))  # Orange color
                 painter.drawText(rect, Qt.AlignCenter, "🔒")
+
+        # Draw green indicator with black stroke if attachable
+        if self.attachable:
+            green_color = QColor("#3BA424")  # Green color
+            black_color = QColor(Qt.black)  # Black color for stroke
+            
+            # Draw black stroke
+            painter.setPen(QPen(black_color, 2))  # 2-pixel black stroke
+            painter.setBrush(Qt.NoBrush)  # No fill for the stroke
+            painter.drawRect(QRect(rect.width() - 9, 0, 9, rect.height()))
+            
+            # Draw green fill
+            painter.setPen(Qt.NoPen)  # No pen for the fill
+            painter.setBrush(green_color)
+            painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
 
     def show_context_menu(self, pos):
         """

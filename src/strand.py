@@ -185,12 +185,12 @@ class MaskedStrand(Strand):
         """Get the path representing the masked area."""
         path1 = QPainterPath(self.first_selected_strand.get_path())
         stroker1 = QPainterPathStroker()
-        stroker1.setWidth(self.first_selected_strand.stroke_width)
+        stroker1.setWidth(self.first_selected_strand.stroke_width+1)
         path1 = stroker1.createStroke(path1).united(path1)
 
         path2 = QPainterPath(self.second_selected_strand.get_path())
         stroker2 = QPainterPathStroker()
-        stroker2.setWidth(self.second_selected_strand.stroke_width * 2)
+        stroker2.setWidth(self.second_selected_strand.stroke_width+1)
         path2 = stroker2.createStroke(path2).united(path2)
 
         return path1.intersected(path2)

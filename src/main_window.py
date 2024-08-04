@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
 
         # Create canvas and layer panel
         self.canvas = StrandDrawingCanvas()
-        self.layer_panel = LayerPanel()
+        self.layer_panel = LayerPanel(self.canvas)
 
         # Modify the Lock Layers button to be orange and bold
         self.layer_panel.lock_layers_button.setStyleSheet("""

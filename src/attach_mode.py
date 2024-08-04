@@ -155,16 +155,22 @@ class AttachMode(QObject):
         """Handle the attachment of a new strand to an existing one."""
         circle_radius = self.canvas.strand_width * 1.1
 
-        if self.canvas.selected_strand:
-            if not isinstance(self.canvas.selected_strand, MaskedStrand):
-                # Try to attach to the selected strand
-                if self.try_attach_to_strand(self.canvas.selected_strand, pos, circle_radius):
-                    return
-                # If that fails, try to attach to any of its attached strands
-                if self.try_attach_to_attached_strands(self.canvas.selected_strand.attached_strands, pos, circle_radius):
-                    return
+        for strand in self.canvas.strands:
+            if not isinstance(strand, MaskedStrand):
+                # Check if the strand has any free sides
+                if self.has_free_side(strand):
+                    # Try to attach to the strand
+                    if self.try_attach_to_strand(strand, pos, circle_radius):
+                        return
+                    # If that fails, try to attach to any of its attached strands
+                    if self.try_attach_to_attached_strands(strand.attached_strands, pos, circle_radius):
+                        return
             else:
                 print("Cannot attach to a masked strand layer.")
+
+    def has_free_side(self, strand):
+        """Check if the strand has any free sides for attachment."""
+        return not all(strand.has_circles)
 
     def try_attach_to_strand(self, strand, pos, circle_radius):
         """Try to attach a new strand to either end of an existing strand."""
@@ -196,11 +202,18 @@ class AttachMode(QObject):
         self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)
         self.target_pos = self.last_snapped_pos
 
+        # Update the layer name for the new strand
+        if self.canvas.layer_panel:
+            set_number = parent_strand.set_number
+            count = len([s for s in self.canvas.strands if s.set_number == set_number]) + 1
+            new_strand.layer_name = f"{set_number}_{count}"
+
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         """Recursively try to attach to any of the attached strands."""
         for attached_strand in attached_strands:
-            if self.try_attach_to_strand(attached_strand, pos, circle_radius):
-                return True
-            if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
-                return True
+            if self.has_free_side(attached_strand):
+                if self.try_attach_to_strand(attached_strand, pos, circle_radius):
+                    return True
+                if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
+                    return True
         return False

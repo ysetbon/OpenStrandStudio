@@ -20,7 +20,7 @@ class StrandDrawingCanvas(QWidget):
         """Initialize all properties used in the StrandDrawingCanvas."""
         self.strands = []  # List to store all strands
         self.current_strand = None  # Currently active strand
-        self.strand_width = 60  # Width of strands
+        self.strand_width = 55  # Width of strands
         self.strand_color = QColor('purple')  # Default color for strands
         self.stroke_color = Qt.black  # Color for strand outlines
         self.stroke_width = 5  # Width of strand outlines
@@ -209,18 +209,30 @@ class StrandDrawingCanvas(QWidget):
         self.strands.append(strand)
 
         if self.layer_panel:
+            set_number = strand.set_number
+            count = len([s for s in self.strands if s.set_number == set_number])
+            strand.layer_name = f"{set_number}_{count}"
             self.layer_panel.add_layer_button(set_number)
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
 
-        selected_layer_index = self.layer_panel.get_selected_layer()
-        if selected_layer_index is not None:
-            layer_button = self.layer_panel.layer_buttons[selected_layer_index]
-            strand.layer_name = layer_button.text()
-
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
-
+        
         self.update()
+        
+        # Notify LayerPanel that a new strand was added
+        if self.layer_panel:
+            self.layer_panel.update_attachable_states()
+
+    def attach_strand(self, parent_strand, new_strand):
+        """Attach a new strand to a parent strand."""
+        parent_strand.attached_strands.append(new_strand)
+        new_strand.parent = parent_strand
+        self.strands.append(new_strand)
+        
+        # Notify LayerPanel that a strand was attached
+        if self.layer_panel:
+            self.layer_panel.on_strand_attached()
 
     def add_strand(self, strand):
         """Add a strand to the canvas."""

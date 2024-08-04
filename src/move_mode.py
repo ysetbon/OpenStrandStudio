@@ -1,15 +1,18 @@
-# Import necessary modules from PyQt5
 from PyQt5.QtCore import QPointF, QRectF, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 
-# Import the AttachedStrand class from the strand module
 from strand import AttachedStrand
 
 class MoveMode:
     def __init__(self, canvas):
-        """Initialize the MoveMode with a reference to the canvas."""
+        """
+        Initialize the MoveMode.
+
+        Args:
+            canvas (StrandDrawingCanvas): The canvas this mode operates on.
+        """
         self.canvas = canvas
         self.initialize_properties()
         self.setup_timer()
@@ -26,21 +29,44 @@ class MoveMode:
         self.last_snapped_pos = None  # Last position snapped to grid
         self.target_pos = None  # Target position for gradual movement
         self.move_speed = 1  # Speed of movement in grid units per step
+        self.locked_layers = set()  # Set of locked layer indices
+        self.lock_mode_active = False  # Flag to indicate if lock mode is active
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
         self.move_timer = QTimer()
         self.move_timer.timeout.connect(self.gradual_move)
 
+    def set_locked_layers(self, locked_layers, lock_mode_active):
+        """
+        Set the locked layers and lock mode state.
+
+        Args:
+            locked_layers (set): Set of indices of locked layers.
+            lock_mode_active (bool): Whether lock mode is active.
+        """
+        self.locked_layers = locked_layers
+        self.lock_mode_active = lock_mode_active
+
     def update_cursor_position(self, pos):
-        """Update the cursor position to match the strand end point."""
+        """
+        Update the cursor position to match the strand end point.
+
+        Args:
+            pos (QPointF): The new position for the cursor.
+        """
         if isinstance(pos, QPointF):
             pos = pos.toPoint()
         global_pos = self.canvas.mapToGlobal(pos)
         QCursor.setPos(global_pos)
 
     def mousePressEvent(self, event):
-        """Handle mouse press events."""
+        """
+        Handle mouse press events.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         pos = event.pos()
         self.handle_strand_movement(pos)
         if self.is_moving:
@@ -50,7 +76,12 @@ class MoveMode:
             self.target_pos = self.last_snapped_pos
 
     def mouseMoveEvent(self, event):
-        """Handle mouse move events."""
+        """
+        Handle mouse move events.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         if self.is_moving and self.moving_point:
             new_pos = event.pos()
             self.target_pos = self.canvas.snap_to_grid(new_pos)
@@ -58,7 +89,12 @@ class MoveMode:
                 self.move_timer.start(16)  # ~60 FPS
 
     def mouseReleaseEvent(self, event):
-        """Handle mouse release events."""
+        """
+        Handle mouse release events.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         # Reset all properties
         self.is_moving = False
         self.moving_point = None
@@ -103,15 +139,30 @@ class MoveMode:
             self.move_timer.stop()
 
     def handle_strand_movement(self, pos):
-        """Handle the movement of strands."""
-        for strand in self.canvas.strands:
-            if self.try_move_strand(strand, pos):
-                return
-            if self.try_move_attached_strands(strand.attached_strands, pos):
-                return
+        """
+        Handle the movement of strands.
+
+        Args:
+            pos (QPointF): The position of the mouse click.
+        """
+        for i, strand in enumerate(self.canvas.strands):
+            if not self.lock_mode_active or i not in self.locked_layers:
+                if self.try_move_strand(strand, pos):
+                    return
+                if self.try_move_attached_strands(strand.attached_strands, pos):
+                    return
 
     def try_move_strand(self, strand, pos):
-        """Try to move a strand if the position is within its end rectangles."""
+        """
+        Try to move a strand if the position is within its end rectangles.
+
+        Args:
+            strand (Strand): The strand to try moving.
+            pos (QPointF): The position to check.
+
+        Returns:
+            bool: True if the strand was moved, False otherwise.
+        """
         start_rect = self.get_end_rectangle(strand, 0)
         end_rect = self.get_end_rectangle(strand, 1)
 
@@ -124,7 +175,16 @@ class MoveMode:
         return False
 
     def try_move_attached_strands(self, attached_strands, pos):
-        """Recursively try to move attached strands."""
+        """
+        Recursively try to move attached strands.
+
+        Args:
+            attached_strands (list): List of attached strands to check.
+            pos (QPointF): The position to check.
+
+        Returns:
+            bool: True if an attached strand was moved, False otherwise.
+        """
         for attached_strand in attached_strands:
             if self.try_move_strand(attached_strand, pos):
                 return True
@@ -133,7 +193,14 @@ class MoveMode:
         return False
 
     def start_movement(self, strand, side, rect):
-        """Start the movement of a strand."""
+        """
+        Start the movement of a strand.
+
+        Args:
+            strand (Strand): The strand to move.
+            side (int): Which side of the strand to move (0 for start, 1 for end).
+            rect (QRectF): The rectangle representing the movable area.
+        """
         self.moving_side = side
         self.moving_point = rect.center()
         self.affected_strand = strand
@@ -145,12 +212,26 @@ class MoveMode:
         self.target_pos = snapped_pos
 
     def get_end_rectangle(self, strand, side):
-        """Get the rectangle representing the end point of a strand."""
+        """
+        Get the rectangle representing the end point of a strand.
+
+        Args:
+            strand (Strand): The strand to get the rectangle for.
+            side (int): Which side of the strand (0 for start, 1 for end).
+
+        Returns:
+            QRectF: The rectangle representing the movable area of the strand end.
+        """
         center = strand.start if side == 0 else strand.end
         return QRectF(center.x() - strand.width, center.y() - strand.width, strand.width*2, strand.width*2)
 
     def update_strand_position(self, new_pos):
-        """Update the position of the affected strand."""
+        """
+        Update the position of the affected strand.
+
+        Args:
+            new_pos (QPointF): The new position for the strand end.
+        """
         if not self.affected_strand:
             return
 
@@ -159,7 +240,14 @@ class MoveMode:
         self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
-        """Move the strand and update all attached strands."""
+        """
+        Move the strand and update all attached strands.
+
+        Args:
+            strand (Strand): The strand to move.
+            new_pos (QPointF): The new position for the strand end.
+            moving_side (int): Which side of the strand is being moved (0 for start, 1 for end).
+        """
         old_start, old_end = strand.start, strand.end
         if moving_side == 0:
             strand.start = new_pos
@@ -179,7 +267,12 @@ class MoveMode:
             strand.parent.update_side_line()
 
     def update_parent_strands(self, strand):
-        """Recursively update parent strands."""
+        """
+        Recursively update parent strands.
+
+        Args:
+            strand (Strand): The strand whose parents need updating.
+        """
         if isinstance(strand, AttachedStrand):
             parent = self.find_parent_strand(strand)
             if parent:
@@ -193,7 +286,14 @@ class MoveMode:
                 self.update_parent_strands(parent)
 
     def update_all_attached_strands(self, strand, old_start, old_end):
-        """Recursively update all attached strands."""
+        """
+        Recursively update all attached strands.
+
+        Args:
+            strand (Strand): The strand whose attached strands need updating.
+            old_start (QPointF): The old start position of the strand.
+            old_end (QPointF): The old end position of the strand.
+        """
         for attached in strand.attached_strands:
             if attached.start == old_start:
                 attached.start = strand.start
@@ -205,7 +305,15 @@ class MoveMode:
             self.update_all_attached_strands(attached, attached.start, attached.end)
 
     def find_parent_strand(self, attached_strand):
-        """Find the parent strand of an attached strand."""
+        """
+        Find the parent strand of an attached strand.
+
+        Args:
+            attached_strand (AttachedStrand): The attached strand to find the parent for.
+
+        Returns:
+            Strand: The parent strand, or None if not found.
+        """
         for strand in self.canvas.strands:
             if attached_strand in strand.attached_strands:
                 return strand
@@ -215,7 +323,16 @@ class MoveMode:
         return None
 
     def find_parent_in_attached(self, strand, target):
-        """Recursively find the parent strand in attached strands."""
+        """
+        Recursively find the parent strand in attached strands.
+
+        Args:
+            strand (Strand): The strand to search in.
+            target (AttachedStrand): The attached strand to find the parent for.
+
+        Returns:
+            Strand: The parent strand, or None if not found.
+        """
         for attached in strand.attached_strands:
             if attached == target:
                 return strand

@@ -1,16 +1,15 @@
-# Import necessary modules from PyQt5
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSplitter
 from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QIcon, QColor
 import os
 
-# Import custom widgets and classes
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, MaskedStrand
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        """Initialize the main window of the application."""
         super().__init__()
         self.setWindowTitle("OpenStrand Studio")
         self.setMinimumSize(900, 900)  # Set minimum window size
@@ -43,6 +42,64 @@ class MainWindow(QMainWindow):
         # Create canvas and layer panel
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel()
+
+        # Modify the Lock Layers button to be orange and bold
+        self.layer_panel.lock_layers_button.setStyleSheet("""
+            QPushButton {
+                background-color: orange;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: darkorange;
+            }
+            QPushButton:pressed {
+                background-color: #FF8C00;
+            }
+        """)
+
+        # Modify the Draw Names button to be light purple and bold
+        self.layer_panel.draw_names_button.setStyleSheet("""
+            QPushButton {
+                background-color: #E6E6FA;  /* Light purple */
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #D8BFD8;  /* Slightly darker purple */
+            }
+            QPushButton:pressed {
+                background-color: #DDA0DD;  /* Even darker purple */
+            }
+        """)
+
+        # Modify the Add New Strand button to be bold
+        self.layer_panel.add_new_strand_button.setStyleSheet("""
+            QPushButton {
+                background-color: lightgreen;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #90EE90;
+            }
+            QPushButton:pressed {
+                background-color: #32CD32;
+            }
+        """)
+
+        # Modify the Deselect All button to be bold
+        self.layer_panel.deselect_all_button.setStyleSheet("""
+            QPushButton {
+                background-color: lightyellow;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #FFFFE0;
+            }
+            QPushButton:pressed {
+                background-color: #FAFAD2;
+            }
+        """)
 
         # Create splitter for resizable panels
         self.splitter = QSplitter(Qt.Horizontal)
@@ -84,14 +141,27 @@ class MainWindow(QMainWindow):
         self.layer_panel.masked_layer_created.connect(self.create_masked_layer)
         self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
         self.layer_panel.masked_mode_exited.connect(self.restore_selection)
+        self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
 
     def handle_color_change(self, set_number, color):
-        """Handle color change for a strand set."""
+        """
+        Handle color change for a strand set.
+
+        Args:
+            set_number (int): The set number of the strand.
+            color (QColor): The new color for the strand set.
+        """
         self.canvas.update_color_for_set(set_number, color)
         self.layer_panel.update_colors_for_set(set_number, color)
 
     def create_masked_layer(self, layer1_index, layer2_index):
-        """Create a masked layer from two existing layers."""
+        """
+        Create a masked layer from two existing layers.
+
+        Args:
+            layer1_index (int): The index of the first layer.
+            layer2_index (int): The index of the second layer.
+        """
         layer1 = self.canvas.strands[layer1_index]
         layer2 = self.canvas.strands[layer2_index]
         
@@ -112,7 +182,12 @@ class MainWindow(QMainWindow):
             self.select_strand(self.layer_panel.last_selected_index)
 
     def update_mode(self, mode):
-        """Update the current mode (attach or move)."""
+        """
+        Update the current mode (attach or move).
+
+        Args:
+            mode (str): The new mode to set ("attach" or "move").
+        """
         self.current_mode = mode
         self.canvas.set_mode(mode)
         if mode == "attach":
@@ -123,12 +198,22 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(False)
 
     def keyPressEvent(self, event):
-        """Handle key press events."""
+        """
+        Handle key press events.
+
+        Args:
+            event (QKeyEvent): The key event.
+        """
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        """Handle key release events."""
+        """
+        Handle key release events.
+
+        Args:
+            event (QKeyEvent): The key release event.
+        """
         super().keyReleaseEvent(event)
         self.layer_panel.keyReleaseEvent(event)
 
@@ -169,7 +254,13 @@ class MainWindow(QMainWindow):
         self.update_mode(self.current_mode)
 
     def select_strand(self, index, emit_signal=True):
-        """Select a strand by its index."""
+        """
+        Select a strand by its index.
+
+        Args:
+            index (int): The index of the strand to select.
+            emit_signal (bool): Whether to emit the selection signal.
+        """
         if self.canvas.selected_strand_index != index:
             self.canvas.select_strand(index)
             if emit_signal:
@@ -179,11 +270,21 @@ class MainWindow(QMainWindow):
         self.update_mode(self.current_mode)
 
     def start_resize(self, event):
-        """Start resizing the splitter."""
+        """
+        Start resizing the splitter.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         self.resize_start = event.pos()
 
     def do_resize(self, event):
-        """Perform resizing of the splitter."""
+        """
+        Perform resizing of the splitter.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         if hasattr(self, 'resize_start'):
             delta = event.pos().x() - self.resize_start.x()
             sizes = self.splitter.sizes()
@@ -192,6 +293,21 @@ class MainWindow(QMainWindow):
             self.splitter.setSizes(sizes)
 
     def stop_resize(self, event):
-        """Stop resizing the splitter."""
+        """
+        Stop resizing the splitter.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         if hasattr(self, 'resize_start'):
             del self.resize_start
+
+    def update_locked_layers(self, locked_layers, lock_mode_active):
+        """
+        Update the locked layers in the canvas's move mode.
+
+        Args:
+            locked_layers (set): Set of indices of locked layers.
+            lock_mode_active (bool): Whether lock mode is active.
+        """
+        self.canvas.move_mode.set_locked_layers(locked_layers, lock_mode_active)

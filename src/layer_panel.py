@@ -1,36 +1,35 @@
-# Import necessary modules from PyQt5
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QLabel
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from functools import partial
 
-# Import custom widgets
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
 
 class LayerPanel(QWidget):
-    # Define custom signals for various events
-    new_strand_requested = pyqtSignal(int, QColor)  # Signal emitted when a new strand is requested
-    strand_selected = pyqtSignal(int)  # Signal emitted when a strand is selected
-    deselect_all_requested = pyqtSignal()  # Signal emitted when deselection of all strands is requested
-    color_changed = pyqtSignal(int, QColor)  # Signal emitted when a strand's color is changed
-    masked_layer_created = pyqtSignal(int, int)  # Signal emitted when a masked layer is created
-    draw_names_requested = pyqtSignal(bool)  # Signal emitted when drawing of names is requested
-    masked_mode_entered = pyqtSignal()  # Signal emitted when masked mode is entered
-    masked_mode_exited = pyqtSignal()  # Signal emitted when masked mode is exited
+    # Custom signals for various events
+    new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
+    strand_selected = pyqtSignal(int)  # Signal when a strand is selected (index)
+    deselect_all_requested = pyqtSignal()  # Signal to deselect all strands
+    color_changed = pyqtSignal(int, QColor)  # Signal when a strand's color is changed (set number, new color)
+    masked_layer_created = pyqtSignal(int, int)  # Signal when a masked layer is created (layer1 index, layer2 index)
+    draw_names_requested = pyqtSignal(bool)  # Signal to toggle drawing of strand names
+    masked_mode_entered = pyqtSignal()  # Signal when masked mode is entered
+    masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
+    lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change (locked layers set, lock mode state)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        self.last_selected_index = None  # Store the index of the last selected layer
-       
+        self.last_selected_index = None  # Stores the index of the last selected layer
+        
         # Create and add the splitter handle
         self.handle = SplitterHandle(self)
         self.layout.addWidget(self.handle)
 
-        # Create a scrollable area for layer buttons
+        # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
@@ -38,32 +37,37 @@ class LayerPanel(QWidget):
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
         
-        # Create a layout for control buttons
-        button_layout = QHBoxLayout()
+        # Create bottom panel for control buttons
+        bottom_panel = QWidget()
+        bottom_layout = QHBoxLayout(bottom_panel)
+        bottom_layout.setContentsMargins(5, 5, 5, 5)
         
-        # Create "Add New Strand" button
+        # Create and set up control buttons
+        self.draw_names_button = QPushButton("Draw Names")
+        self.draw_names_button.clicked.connect(self.request_draw_names)
+        self.should_draw_names = False
+        
         self.add_new_strand_button = QPushButton("Add New Strand")
         self.add_new_strand_button.setStyleSheet("background-color: lightgreen;")
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
         
-        # Create "Deselect All" button
         self.deselect_all_button = QPushButton("Deselect All")
         self.deselect_all_button.setStyleSheet("background-color: lightyellow;")
         self.deselect_all_button.clicked.connect(self.deselect_all)
 
-        # Create "Draw Names" button
-        self.draw_names_button = QPushButton("Draw Names")
-        self.draw_names_button.clicked.connect(self.request_draw_names)
-        self.should_draw_names = False
-
-        # Add buttons to the button layout
-        button_layout.addWidget(self.draw_names_button)               
-        button_layout.addWidget(self.add_new_strand_button)
-        button_layout.addWidget(self.deselect_all_button)
+        self.lock_layers_button = QPushButton("Lock Layers")
+        self.lock_layers_button.setCheckable(True)
+        self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
         
-        # Add scroll area and button layout to the main layout
+        # Add buttons to bottom panel
+        bottom_layout.addWidget(self.draw_names_button)
+        bottom_layout.addWidget(self.add_new_strand_button)
+        bottom_layout.addWidget(self.deselect_all_button)
+        bottom_layout.addWidget(self.lock_layers_button)
+        
+        # Add scroll area and bottom panel to main layout
         self.layout.addWidget(self.scroll_area)
-        self.layout.addLayout(button_layout)
+        self.layout.addWidget(bottom_panel)
         
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
@@ -75,13 +79,18 @@ class LayerPanel(QWidget):
         self.masked_mode = False
         self.first_masked_layer = None
         
-        # Create a label for notifications
+        # Create notification label
         self.notification_label = QLabel()
         self.notification_label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.notification_label)
 
+        # Initialize lock mode variables
+        self.lock_mode = False
+        self.locked_layers = set()
+        self.previously_locked_layers = set()
+
     def request_draw_names(self):
-        """Toggle the drawing of names and emit the corresponding signal."""
+        """Toggle the drawing of strand names and emit the corresponding signal."""
         self.should_draw_names = not self.should_draw_names
         self.draw_names_requested.emit(self.should_draw_names)
 
@@ -96,7 +105,7 @@ class LayerPanel(QWidget):
             self.exit_masked_mode()
 
     def enter_masked_mode(self):
-        """Enter masked mode, updating UI and emitting relevant signal."""
+        """Enter masked mode, update UI, and emit relevant signal."""
         self.masked_mode = True
         self.first_masked_layer = None
         self.last_selected_index = self.get_selected_layer()
@@ -106,7 +115,7 @@ class LayerPanel(QWidget):
         self.masked_mode_entered.emit()
 
     def exit_masked_mode(self):
-        """Exit masked mode, updating UI and emitting relevant signal."""
+        """Exit masked mode, update UI, and emit relevant signal."""
         self.masked_mode = False
         self.first_masked_layer = None
         for button in self.layer_buttons:
@@ -114,15 +123,46 @@ class LayerPanel(QWidget):
         self.masked_mode_exited.emit()
         self.notification_label.clear()
 
+    def toggle_lock_mode(self):
+        """Toggle lock mode on/off and update UI accordingly."""
+        self.lock_mode = self.lock_layers_button.isChecked()
+        if self.lock_mode:
+            self.lock_layers_button.setText("Exit Lock Mode")
+            self.notification_label.setText("Select layers to lock/unlock")
+            self.locked_layers = self.previously_locked_layers.copy()
+        else:
+            self.lock_layers_button.setText("Lock Layers")
+            self.notification_label.setText("Exited lock mode")
+            self.previously_locked_layers = self.locked_layers.copy()
+            self.locked_layers.clear()
+
+        self.update_layer_buttons_lock_state()
+        self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+
+    def update_layer_buttons_lock_state(self):
+        """Update the lock state of all layer buttons."""
+        for i, button in enumerate(self.layer_buttons):
+            if isinstance(button, NumberedLayerButton):
+                button.set_locked(i in self.locked_layers)
+                button.set_selectable(self.lock_mode)
+
     def select_layer(self, index, emit_signal=True):
         """
-        Select a layer by index.
+        Handle layer selection based on current mode (normal, masked, or lock).
         
-        If in masked mode, handle masked layer selection.
-        Otherwise, update button states and emit selection signal.
+        Args:
+            index (int): The index of the layer to select.
+            emit_signal (bool): Whether to emit the selection signal.
         """
         if self.masked_mode:
             self.handle_masked_layer_selection(index)
+        elif self.lock_mode:
+            if index in self.locked_layers:
+                self.locked_layers.remove(index)
+            else:
+                self.locked_layers.add(index)
+            self.update_layer_buttons_lock_state()
+            self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
         else:
             for i, button in enumerate(self.layer_buttons):
                 button.setChecked(i == index)
@@ -131,12 +171,7 @@ class LayerPanel(QWidget):
             self.last_selected_index = index
 
     def handle_masked_layer_selection(self, index):
-        """
-        Handle the selection of layers in masked mode.
-        
-        If it's the first selection, mark it.
-        If it's the second selection, create a masked layer.
-        """
+        """Handle the selection of layers in masked mode."""
         if self.first_masked_layer is None:
             self.first_masked_layer = index
             self.layer_buttons[index].darken_color()
@@ -148,11 +183,7 @@ class LayerPanel(QWidget):
             self.exit_masked_mode()
 
     def create_masked_layer(self, layer1, layer2):
-        """
-        Create a masked layer from two selected layers.
-        
-        Check if the masked layer already exists, if not, create it and emit signal.
-        """
+        """Create a new masked layer from two selected layers."""
         masked_layer_name = f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}"
         if any(button.text() == masked_layer_name for button in self.layer_buttons):
             self.notification_label.setText(f"Masked layer {masked_layer_name} already exists")
@@ -162,11 +193,7 @@ class LayerPanel(QWidget):
         self.notification_label.setText(f"Created new masked layer: {masked_layer_name}")
 
     def add_masked_layer_button(self, layer1, layer2):
-        """
-        Add a button for a newly created masked layer.
-        
-        Return the created button.
-        """
+        """Add a new button for a masked layer."""
         button = NumberedLayerButton(f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}", 0)
         button.set_color(self.layer_buttons[layer1].color)
         button.set_border_color(self.layer_buttons[layer2].color)
@@ -177,11 +204,7 @@ class LayerPanel(QWidget):
         return button
 
     def request_new_strand(self):
-        """
-        Request the creation of a new strand.
-        
-        Start a new set and emit signal with new strand details.
-        """
+        """Request the creation of a new strand."""
         self.start_new_set()
         new_color = QColor('purple')
         new_strand_number = self.current_set
@@ -190,11 +213,7 @@ class LayerPanel(QWidget):
         self.new_strand_requested.emit(new_strand_number, new_color)
 
     def add_layer_button(self, set_number=None):
-        """
-        Add a new layer button for the given set number.
-        
-        If no set number is provided, use the current set.
-        """
+        """Add a new layer button for the given set number."""
         if set_number is None:
             set_number = self.current_set
         
@@ -223,7 +242,7 @@ class LayerPanel(QWidget):
             self.current_set = set_number
 
     def start_new_set(self):
-        """Start a new set by incrementing the current set number."""
+        """Start a new set of strands."""
         self.current_set = max(self.set_counts.keys(), default=0) + 1
         self.set_counts[self.current_set] = 0
         self.set_colors[self.current_set] = QColor('purple')
@@ -246,11 +265,7 @@ class LayerPanel(QWidget):
         self.deselect_all_requested.emit()
 
     def on_color_changed(self, set_number, color):
-        """
-        Handle color change for a set.
-        
-        Update the color in set_colors, update UI, and emit color_changed signal.
-        """
+        """Handle color change for a set of strands."""
         self.set_colors[set_number] = color
         self.update_colors_for_set(set_number, color)
         self.color_changed.emit(set_number, color)

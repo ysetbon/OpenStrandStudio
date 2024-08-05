@@ -142,6 +142,9 @@ class MainWindow(QMainWindow):
         self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
         self.layer_panel.masked_mode_exited.connect(self.restore_selection)
         self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
+        
+        # Connect the new strand_deleted signal
+        self.layer_panel.strand_deleted.connect(self.delete_strand)
 
     def handle_color_change(self, set_number, color):
         """
@@ -268,6 +271,20 @@ class MainWindow(QMainWindow):
         self.canvas.is_first_strand = False
         
         self.update_mode(self.current_mode)
+
+    def delete_strand(self, index):
+        """
+        Delete a strand and update the canvas and layer panel.
+
+        Args:
+            index (int): The index of the strand to delete.
+        """
+        if 0 <= index < len(self.canvas.strands):
+            strand = self.canvas.strands[index]
+            self.canvas.remove_strand(strand)
+            self.layer_panel.refresh()
+            self.canvas.update()
+            self.update_mode(self.current_mode)
 
     def start_resize(self, event):
         """

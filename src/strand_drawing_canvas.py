@@ -1,9 +1,7 @@
-# Import necessary modules from PyQt5
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage
 
-# Import custom modes and strand classes
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from strand import Strand, AttachedStrand, MaskedStrand
@@ -209,11 +207,13 @@ class StrandDrawingCanvas(QWidget):
         self.strands.append(strand)
 
         if self.layer_panel:
-            set_number = strand.set_number
+            set_number = int(strand.set_number) if isinstance(strand.set_number, str) else strand.set_number
+            self.layer_panel.add_layer_button(set_number)
             count = len([s for s in self.strands if s.set_number == set_number])
             strand.layer_name = f"{set_number}_{count}"
-            self.layer_panel.add_layer_button(set_number)
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
+            # Ensure correct numbering after adding a new strand
+            self.layer_panel.update_after_deletion(set_number)
 
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
@@ -282,10 +282,64 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def remove_strand(self, strand):
-        """Remove a strand from the canvas."""
         if strand in self.strands:
-            self.strands.remove(strand)
+            set_number, strand_number = map(int, strand.layer_name.split('_'))
+            strands_to_remove = []
+            
+            # If it's a main strand (x_1), remove all related strands
+            if strand_number == 1:
+                strands_to_remove = [s for s in self.strands if 
+                    isinstance(s, Strand) and s.layer_name.startswith(f"{set_number}_")]
+            else:
+                strands_to_remove = [strand]
+                # Remove the strand from its parent's attached_strands list if it's an attached strand
+                for parent_strand in self.strands:
+                    if strand in parent_strand.attached_strands:
+                        parent_strand.attached_strands.remove(strand)
+                        parent_strand.has_circles[1] = False  # Assume it's attached to the end
+                        break
+            
+            # Remove masks related to the strand(s) being removed
+            masks_to_remove = [s for s in self.strands if 
+                isinstance(s, MaskedStrand) and 
+                any(strand.layer_name.startswith(f"{set_number}_") for strand in [s.first_selected_strand, s.second_selected_strand])]
+            
+            strands_to_remove.extend(masks_to_remove)
+            
+            # Store indices of strands to be removed
+            indices_to_remove = sorted([self.strands.index(s) for s in strands_to_remove if s in self.strands], reverse=True)
+            
+            for s in strands_to_remove:
+                if s in self.strands:
+                    self.strands.remove(s)
+            
+            # Update selection if the removed strand was selected
+            if self.selected_strand in strands_to_remove:
+                self.selected_strand = None
+                self.selected_strand_index = None
+            
             self.update()
+            
+            # Notify LayerPanel to update only the affected set
+            if self.layer_panel:
+                self.layer_panel.update_after_deletion(set_number)
+
+
+    def remove_attached_strands(self, parent_strand):
+        """Recursively remove all attached strands."""
+        attached_strands = parent_strand.attached_strands.copy()  # Create a copy to iterate over
+        for attached_strand in attached_strands:
+            if attached_strand in self.strands:
+                self.strands.remove(attached_strand)
+                self.remove_attached_strands(attached_strand)
+        parent_strand.attached_strands.clear()  # Clear the list of attached strands
+
+    def find_parent_strand(self, attached_strand):
+        """Find the parent strand of an attached strand."""
+        for strand in self.strands:
+            if attached_strand in strand.attached_strands:
+                return strand
+        return None
 
     def clear_strands(self):
         """Clear all strands from the canvas."""
@@ -303,6 +357,135 @@ class StrandDrawingCanvas(QWidget):
         )
 
     def toggle_grid(self):
-        """Toggle the visibility of the grid."""
-        self.show_grid = not self.show_grid
+            """Toggle the visibility of the grid."""
+            self.show_grid = not self.show_grid
+            self.update()
+
+    def set_grid_size(self, size):
+        """Set the size of the grid cells."""
+        self.grid_size = size
         self.update()
+
+    def get_strand_at_position(self, pos):
+        """Get the strand at the given position."""
+        for strand in reversed(self.strands):  # Check from top to bottom
+            if strand.get_path().contains(pos):
+                return strand
+        return None
+
+    def get_strand_index(self, strand):
+        """Get the index of a given strand."""
+        try:
+            return self.strands.index(strand)
+        except ValueError:
+            return -1
+
+    def move_strand_to_front(self, strand):
+        """Move a strand to the front (top) of the drawing order."""
+        if strand in self.strands:
+            self.strands.remove(strand)
+            self.strands.append(strand)
+            self.update()
+
+    def move_strand_to_back(self, strand):
+        """Move a strand to the back (bottom) of the drawing order."""
+        if strand in self.strands:
+            self.strands.remove(strand)
+            self.strands.insert(0, strand)
+            self.update()
+
+    def get_bounding_rect(self):
+        """Get the bounding rectangle of all strands."""
+        if not self.strands:
+            return QRectF()
+
+        min_x = min_y = float('inf')
+        max_x = max_y = float('-inf')
+
+        for strand in self.strands:
+            rect = strand.get_path().boundingRect()
+            min_x = min(min_x, rect.left())
+            min_y = min(min_y, rect.top())
+            max_x = max(max_x, rect.right())
+            max_y = max(max_y, rect.bottom())
+
+        return QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
+
+    def zoom_to_fit(self):
+        """Zoom and center the view to fit all strands."""
+        rect = self.get_bounding_rect()
+        if not rect.isNull():
+            self.fitInView(rect, Qt.KeepAspectRatio)
+            self.update()
+
+    def export_to_image(self, file_path):
+        """Export the current canvas to an image file."""
+        image = QImage(self.size(), QImage.Format_ARGB32)
+        image.fill(Qt.white)
+
+        painter = QPainter(image)
+        self.render(painter)
+        painter.end()
+
+        image.save(file_path)
+
+    def import_from_data(self, data):
+        """Import strands from serialized data."""
+        self.clear_strands()
+        for strand_data in data:
+            strand = Strand.from_dict(strand_data)
+            self.add_strand(strand)
+        self.update()
+
+    def export_to_data(self):
+        """Export strands to serializable data."""
+        return [strand.to_dict() for strand in self.strands]
+
+    def undo_last_action(self):
+        """Undo the last action performed on the canvas."""
+        # This method would require implementing an action history system
+        pass
+
+    def redo_last_action(self):
+        """Redo the last undone action on the canvas."""
+        # This method would require implementing an action history system
+        pass
+
+    def set_strand_width(self, width):
+        """Set the width for new strands."""
+        self.strand_width = width
+
+    def set_default_strand_color(self, color):
+        """Set the default color for new strands."""
+        self.strand_color = color
+
+    def set_highlight_color(self, color):
+        """Set the highlight color for selected strands."""
+        self.highlight_color = color
+        self.update()
+
+    def toggle_snap_to_grid(self):
+        """Toggle snap-to-grid functionality."""
+        self.snap_to_grid_enabled = not self.snap_to_grid_enabled
+
+    def get_strand_count(self):
+        """Get the total number of strands on the canvas."""
+        return len(self.strands)
+
+    def get_selected_strand(self):
+        """Get the currently selected strand."""
+        return self.selected_strand
+
+    def clear_selection(self):
+        """Clear the current strand selection."""
+        self.selected_strand = None
+        self.selected_strand_index = None
+        self.update()
+
+    def refresh_canvas(self):
+        """Refresh the entire canvas, updating all strands."""
+        for strand in self.strands:
+            strand.update_shape()
+        self.update()
+
+# End of StrandDrawingCanvas class

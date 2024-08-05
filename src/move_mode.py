@@ -3,7 +3,7 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 
-from strand import AttachedStrand
+from strand import Strand, AttachedStrand
 
 class MoveMode:
     def __init__(self, canvas):
@@ -110,7 +110,7 @@ class MoveMode:
 
     def gradual_move(self):
         """Perform gradual movement of the strand end point."""
-        if not self.is_moving or not self.target_pos or not self.last_snapped_pos:
+        if not self.is_moving or not self.target_pos or not self.last_snapped_pos or getattr(self.affected_strand, 'deleted', False):
             self.move_timer.stop()
             return
 
@@ -146,7 +146,7 @@ class MoveMode:
             pos (QPointF): The position of the mouse click.
         """
         for i, strand in enumerate(self.canvas.strands):
-            if not self.lock_mode_active or i not in self.locked_layers:
+            if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 if self.try_move_strand(strand, pos, i):
                     return
                 if self.try_move_attached_strands(strand.attached_strands, pos):
@@ -187,10 +187,11 @@ class MoveMode:
             bool: True if an attached strand was moved, False otherwise.
         """
         for attached_strand in attached_strands:
-            if self.try_move_strand(attached_strand, pos, self.canvas.strands.index(attached_strand)):
-                return True
-            if self.try_move_attached_strands(attached_strand.attached_strands, pos):
-                return True
+            if not getattr(attached_strand, 'deleted', False):
+                if self.try_move_strand(attached_strand, pos, self.canvas.strands.index(attached_strand)):
+                    return True
+                if self.try_move_attached_strands(attached_strand.attached_strands, pos):
+                    return True
         return False
 
     def can_move_side(self, strand, side, strand_index):
@@ -369,3 +370,24 @@ class MoveMode:
             if parent:
                 return parent
         return None
+
+    def cleanup_deleted_strands(self):
+        """Remove deleted strands and update references after strand deletion."""
+        # Remove deleted strands from the canvas
+        self.canvas.strands = [strand for strand in self.canvas.strands if not getattr(strand, 'deleted', False)]
+        
+        # Update attached strands for remaining strands
+        for strand in self.canvas.strands:
+            if isinstance(strand, Strand):
+                strand.attached_strands = [attached for attached in strand.attached_strands if not getattr(attached, 'deleted', False)]
+        
+        # Clear selection if the selected strand was deleted
+        if self.affected_strand and getattr(self.affected_strand, 'deleted', False):
+            self.affected_strand = None
+            self.is_moving = False
+            self.moving_point = None
+            self.moving_side = None
+            self.selected_rectangle = None
+        
+        # Update the canvas
+        self.canvas.update()

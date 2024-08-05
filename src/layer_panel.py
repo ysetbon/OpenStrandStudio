@@ -17,6 +17,7 @@ class LayerPanel(QWidget):
     masked_mode_entered = pyqtSignal()  # Signal when masked mode is entered
     masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
     lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change (locked layers set, lock mode state)
+    strand_deleted = pyqtSignal(int)  # New signal for strand deletion
 
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
@@ -40,7 +41,7 @@ class LayerPanel(QWidget):
         
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
-        bottom_layout = QHBoxLayout(bottom_panel)
+        bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
         
         # Create and set up control buttons
@@ -48,23 +49,29 @@ class LayerPanel(QWidget):
         self.draw_names_button.clicked.connect(self.request_draw_names)
         self.should_draw_names = False
         
+        self.lock_layers_button = QPushButton("Lock Layers")
+        self.lock_layers_button.setCheckable(True)
+        self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
+        
         self.add_new_strand_button = QPushButton("Add New Strand")
         self.add_new_strand_button.setStyleSheet("background-color: lightgreen;")
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
+        
+        self.delete_strand_button = QPushButton("Delete Strand")
+        self.delete_strand_button.setStyleSheet("background-color: #FF6B6B;")
+        self.delete_strand_button.clicked.connect(self.request_delete_strand)
+        self.delete_strand_button.setEnabled(False)
         
         self.deselect_all_button = QPushButton("Deselect All")
         self.deselect_all_button.setStyleSheet("background-color: lightyellow;")
         self.deselect_all_button.clicked.connect(self.deselect_all)
 
-        self.lock_layers_button = QPushButton("Lock Layers")
-        self.lock_layers_button.setCheckable(True)
-        self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
-        
-        # Add buttons to bottom panel
+        # Add buttons to bottom panel in the desired order
         bottom_layout.addWidget(self.draw_names_button)
-        bottom_layout.addWidget(self.add_new_strand_button)
-        bottom_layout.addWidget(self.deselect_all_button)
         bottom_layout.addWidget(self.lock_layers_button)
+        bottom_layout.addWidget(self.add_new_strand_button)
+        bottom_layout.addWidget(self.delete_strand_button)
+        bottom_layout.addWidget(self.deselect_all_button)
         
         # Add scroll area and bottom panel to main layout
         self.layout.addWidget(self.scroll_area)
@@ -190,6 +197,7 @@ class LayerPanel(QWidget):
             if emit_signal:
                 self.strand_selected.emit(index)
             self.last_selected_index = index
+        self.update_layer_button_states()
 
     def handle_masked_layer_selection(self, index):
         """Handle the selection of layers in masked mode."""
@@ -233,10 +241,42 @@ class LayerPanel(QWidget):
         new_strand_name = f"{new_strand_number}_{new_strand_index}"
         self.new_strand_requested.emit(new_strand_number, new_color)
 
+    def request_delete_strand(self):
+        """Request the deletion of the selected strand."""
+        selected_index = self.get_selected_layer()
+        if selected_index is not None and self.layer_buttons[selected_index].attachable:
+            self.strand_deleted.emit(selected_index)
+            self.remove_layer_button(selected_index)
+            self.update_after_deletion(selected_index)
+
+    def remove_layer_button(self, index):
+        """Remove a layer button at the specified index."""
+        if 0 <= index < len(self.layer_buttons):
+            button = self.layer_buttons.pop(index)
+            button.setParent(None)
+            button.deleteLater()
+            self.scroll_layout.removeWidget(button)
+
+    def update_after_deletion(self, deleted_set_number):
+        # Renumber only the strands in the affected set
+        strands_in_set = [s for s in self.canvas.strands if s.set_number == deleted_set_number]
+        for i, strand in enumerate(strands_in_set, start=1):
+            new_name = f"{deleted_set_number}_{i}"
+            strand.layer_name = new_name
+            button = self.get_layer_button(self.canvas.strands.index(strand))
+            if button:
+                button.setText(new_name)
+
+        self.update_layer_button_states()
+        self.update_attachable_states()
+
     def add_layer_button(self, set_number=None):
         """Add a new layer button for the given set number."""
         if set_number is None:
             set_number = self.current_set
+        
+        # Ensure set_number is an integer
+        set_number = int(set_number) if isinstance(set_number, str) else set_number
         
         if set_number not in self.set_counts:
             self.set_counts[set_number] = 0
@@ -263,29 +303,41 @@ class LayerPanel(QWidget):
             self.current_set = set_number
 
         # Update attachable states after adding a new button
-        self.update_attachable_states()
+        self.update_layer_button_states()
 
-    def update_attachable_states(self):
-        """Update the attachable state of all layer buttons based on strand connections."""
+    def update_layer_button_states(self):
+        """Update the states of all layer buttons."""
         for i, button in enumerate(self.layer_buttons):
-            if i < len(self.canvas.strands):
-                strand = self.canvas.strands[i]
-                # A strand is attachable if it has any free end (not connected to another strand)
-                is_attachable = not all(strand.has_circles)
-                button.set_attachable(is_attachable)
-            else:
-                button.set_attachable(False)
+            is_attachable = i < len(self.canvas.strands) and any(not circle for circle in self.canvas.strands[i].has_circles)
+            button.set_attachable(is_attachable)
+        
+        selected_index = self.get_selected_layer()
+        if selected_index is not None and selected_index < len(self.layer_buttons):
+            self.delete_strand_button.setEnabled(self.layer_buttons[selected_index].attachable)
+        else:
+            self.delete_strand_button.setEnabled(False)
+
 
     def on_strand_attached(self):
         """Called when a strand is attached to another strand."""
-        self.update_attachable_states()
+        self.update_layer_button_states()
 
     def start_new_set(self):
         """Start a new set of strands."""
         self.current_set = max(self.set_counts.keys(), default=0) + 1
         self.set_counts[self.current_set] = 0
         self.set_colors[self.current_set] = QColor('purple')
+    def delete_strand(self, index):
+        """
+        Delete a strand and update the canvas and layer panel.
 
+        Args:
+            index (int): The index of the strand to delete.
+        """
+        if 0 <= index < len(self.canvas.strands):
+            strand = self.canvas.strands[index]
+            self.canvas.remove_strand(strand)
+            self.canvas.update()
     def clear_selection(self):
         """Clear the selection of all layer buttons."""
         for button in self.layer_buttons:
@@ -314,52 +366,29 @@ class LayerPanel(QWidget):
         self.color_changed.emit(set_number, color)
 
     def update_colors_for_set(self, set_number, color):
-            """Update the color of all buttons belonging to a specific set."""
-            for button in self.layer_buttons:
-                if isinstance(button, NumberedLayerButton):
-                    if button.text().startswith(f"{set_number}_") or button.text().split('_')[0] == str(set_number):
-                        button.set_color(color)
+        """Update the color of all buttons belonging to a specific set."""
+        for button in self.layer_buttons:
+            if isinstance(button, NumberedLayerButton):
+                if button.text().startswith(f"{set_number}_") or button.text().split('_')[0] == str(set_number):
+                    button.set_color(color)
 
     def resizeEvent(self, event):
         """Handle resize events by updating the size of the splitter handle."""
         super().resizeEvent(event)
         self.handle.updateSize()
 
-    def update_attachable_states(self):
-        """Update the attachable state of all layer buttons based on strand connections."""
-        for i, button in enumerate(self.layer_buttons):
-            if i < len(self.canvas.strands):
-                strand = self.canvas.strands[i]
-                # A strand is attachable if it has any free end (not connected to another strand)
-                is_attachable = not all(strand.has_circles)
-                button.set_attachable(is_attachable)
-            else:
-                button.set_attachable(False)
-
-    def on_strand_attached(self):
-        """Called when a strand is attached to another strand."""
-        self.update_attachable_states()
-
-    def update_layer_button_states(self):
-        """Update the states of all layer buttons."""
-        self.update_layer_buttons_lock_state()
-        self.update_attachable_states()
-
     def on_strand_created(self, strand):
         """Handle the creation of a new strand."""
         self.add_layer_button(strand.set_number)
         self.update_layer_button_states()
 
-    def on_strand_deleted(self, index):
-        """Handle the deletion of a strand."""
-        if 0 <= index < len(self.layer_buttons):
-            button = self.layer_buttons.pop(index)
-            button.setParent(None)
-            button.deleteLater()
-            self.update_layer_button_states()
+    def on_strands_deleted(self, indices):
+        """Handle the deletion of multiple strands from the canvas."""
+        for index in indices:
+            self.remove_layer_button(index)
+        self.update_layer_button_states()
 
     def update_layer_names(self):
-        """Update the names of all layer buttons to match the strands."""
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
@@ -400,5 +429,28 @@ class LayerPanel(QWidget):
             self.scroll_layout.insertWidget(i, button)
         
         self.update_layer_button_states()
+
+    def update_attachable_states(self):
+        """Update the attachable state of all layer buttons based on strand connections."""
+        for i, button in enumerate(self.layer_buttons):
+            if i < len(self.canvas.strands):
+                strand = self.canvas.strands[i]
+                # A strand is attachable if it has any free end (not connected to another strand)
+                is_attachable = not all(strand.has_circles)
+                button.set_attachable(is_attachable)
+            else:
+                button.set_attachable(False)
+
+    def update_layer_button_states(self):
+        """Update the states of all layer buttons."""
+        for i, button in enumerate(self.layer_buttons):
+            is_attachable = i < len(self.canvas.strands) and any(not circle for circle in self.canvas.strands[i].has_circles)
+            button.set_attachable(is_attachable)
+        
+        selected_index = self.get_selected_layer()
+        if selected_index is not None and selected_index < len(self.layer_buttons):
+            self.delete_strand_button.setEnabled(self.layer_buttons[selected_index].attachable)
+        else:
+            self.delete_strand_button.setEnabled(False)
 
 # End of LayerPanel class

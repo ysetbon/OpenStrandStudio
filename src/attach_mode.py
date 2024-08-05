@@ -1,10 +1,8 @@
-# Import necessary modules from PyQt5
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 
-# Import custom Strand classes
 from strand import Strand, AttachedStrand, MaskedStrand
 
 class AttachMode(QObject):
@@ -12,6 +10,7 @@ class AttachMode(QObject):
     strand_created = pyqtSignal(object)
 
     def __init__(self, canvas):
+        """Initialize the AttachMode."""
         super().__init__()
         self.canvas = canvas
         self.initialize_properties()
@@ -156,7 +155,7 @@ class AttachMode(QObject):
         circle_radius = self.canvas.strand_width * 1.1
 
         for strand in self.canvas.strands:
-            if not isinstance(strand, MaskedStrand):
+            if not isinstance(strand, MaskedStrand) and strand in self.canvas.strands:
                 # Check if the strand has any free sides
                 if self.has_free_side(strand):
                     # Try to attach to the strand
@@ -165,7 +164,7 @@ class AttachMode(QObject):
                     # If that fails, try to attach to any of its attached strands
                     if self.try_attach_to_attached_strands(strand.attached_strands, pos, circle_radius):
                         return
-            else:
+            elif isinstance(strand, MaskedStrand):
                 print("Cannot attach to a masked strand layer.")
 
     def has_free_side(self, strand):
@@ -211,9 +210,27 @@ class AttachMode(QObject):
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         """Recursively try to attach to any of the attached strands."""
         for attached_strand in attached_strands:
-            if self.has_free_side(attached_strand):
+            if attached_strand in self.canvas.strands and self.has_free_side(attached_strand):
                 if self.try_attach_to_strand(attached_strand, pos, circle_radius):
                     return True
                 if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
                     return True
         return False
+
+    def cleanup_deleted_strands(self):
+        """Remove deleted strands and update references after strand deletion."""
+        # Remove deleted strands from the canvas
+        self.canvas.strands = [strand for strand in self.canvas.strands if not getattr(strand, 'deleted', False)]
+        
+        # Update attached strands for remaining strands
+        for strand in self.canvas.strands:
+            if isinstance(strand, Strand):
+                strand.attached_strands = [attached for attached in strand.attached_strands if not getattr(attached, 'deleted', False)]
+        
+        # Clear selection if the selected strand was deleted
+        if self.canvas.selected_strand and getattr(self.canvas.selected_strand, 'deleted', False):
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+        
+        # Update the canvas
+        self.canvas.update()

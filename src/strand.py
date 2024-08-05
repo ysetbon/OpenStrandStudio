@@ -28,11 +28,20 @@ class Strand:
         self.has_circles = [False, False]  # Flags for circles at start and end
         self.is_first_strand = False
         self.is_start_side = True
-        self.set_number = None
         self.update_shape()
         self.update_side_line()
         self.layer_name = ""
+        self._set_number = None  # Initialize _set_number
+    @property
+    def set_number(self):
+        """Getter for set_number, always returns an integer."""
+        return self._set_number
 
+    @set_number.setter
+    def set_number(self, value):
+        """Setter for set_number, stores the value as an integer."""
+        self._set_number = int(value) if value is not None else None
+       
     def set_color(self, new_color):
         """Set the color of the strand and its side line."""
         self.color = new_color
@@ -104,6 +113,12 @@ class Strand:
 
         painter.restore()
 
+    def remove_attached_strands(self):
+        """Recursively remove all attached strands."""
+        for attached_strand in self.attached_strands:
+            attached_strand.remove_attached_strands()
+        self.attached_strands.clear()
+
 class AttachedStrand(Strand):
     """
     Represents a strand attached to another strand.
@@ -168,7 +183,7 @@ class MaskedStrand(Strand):
         self.first_selected_strand = first_selected_strand
         self.second_selected_strand = second_selected_strand
         super().__init__(first_selected_strand.start, first_selected_strand.end, first_selected_strand.width)
-        self.set_number = f"{first_selected_strand.set_number}_{second_selected_strand.set_number}"
+        self.set_number = int(f"{first_selected_strand.set_number}{second_selected_strand.set_number}")
         self.color = first_selected_strand.color
         self.stroke_color = first_selected_strand.stroke_color
         self.stroke_width = first_selected_strand.stroke_width
@@ -176,7 +191,6 @@ class MaskedStrand(Strand):
 
     def update_shape(self):
         """Update the shape of the masked strand."""
-        print("Updating shape")
         self.start = self.first_selected_strand.start
         self.end = self.first_selected_strand.end
         super().update_shape()
@@ -205,26 +219,16 @@ class MaskedStrand(Strand):
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
         def get_set_numbers(strand):
-            if isinstance(strand.set_number, str):
-                return [int(n) for n in strand.set_number.split('_')]
-            return [strand.set_number]
+            return [int(n) for n in str(strand.set_number).split('_')]
 
         set_numbers1 = get_set_numbers(self.first_selected_strand)
         set_numbers2 = get_set_numbers(self.second_selected_strand)
         
-        print(f"First selected strand set number: {self.first_selected_strand.set_number}")
-        print(f"Second selected strand set number: {self.second_selected_strand.set_number}")
-        print(f"Set numbers1: {set_numbers1}")
-        print(f"Set numbers2: {set_numbers2}")
-        
         if set_numbers1[0] == set_numbers2[0]:
-            print(f"Shared first number. Expected to draw first strand.")
             strand_to_draw = self.first_selected_strand
         else:
-            print(f"Different first number. Expected to draw second strand.")
             strand_to_draw = self.first_selected_strand
 
-        print(f"Strand to draw set number: {strand_to_draw.set_number}")
         # Draw the stroke line
         temp_painter.setPen(QPen(strand_to_draw.stroke_color, strand_to_draw.width+strand_to_draw.stroke_width))
         temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
@@ -246,9 +250,6 @@ class MaskedStrand(Strand):
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
         painter.restore()
-
-        # Additional debug print statement
-        print(f"Drawing masked strand: {self.set_number}, drawn strand: {strand_to_draw}")
 
     def update(self, new_end):
         """Update both selected strands with the new end point."""
@@ -274,7 +275,11 @@ class MaskedStrand(Strand):
         Custom attribute getter to handle certain attributes.
         This is called when an attribute is not found in the normal places.
         """
-        print(f"Accessing attribute {name}")
         if name in ['top_left', 'bottom_left', 'top_right', 'bottom_right']:
             return getattr(self.first_selected_strand, name)
         raise AttributeError(f"'MaskedStrand' object has no attribute '{name}'")
+
+    def remove_attached_strands(self):
+        """Recursively remove all attached strands from both selected strands."""
+        self.first_selected_strand.remove_attached_strands()
+        self.second_selected_strand.remove_attached_strands()

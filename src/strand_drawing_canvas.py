@@ -88,34 +88,42 @@ class StrandDrawingCanvas(QWidget):
             painter.drawLine(0, y, self.width(), y)
 
     def draw_strand_label(self, painter, strand):
+        """Draw the label for a strand."""
         if isinstance(strand, MaskedStrand):
             mask_path = strand.get_mask_path()
             center = mask_path.boundingRect().center()
         else:
             center = (strand.start + strand.end) / 2
 
-        text = strand.layer_name
+        text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
         font = painter.font()
-        font.setPointSize(12)
+        font.setPointSize(12)  # You can adjust this value to change the font size
         painter.setFont(font)
 
-        metrics = QFontMetrics(font)
+        metrics = painter.fontMetrics()
         text_width = metrics.width(text)
         text_height = metrics.height()
 
         text_rect = QRectF(center.x() - text_width / 2, center.y() - text_height / 2, text_width, text_height)
 
+        text_path = QPainterPath()
+        text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
+
         if isinstance(strand, MaskedStrand):
             painter.setClipPath(mask_path)
 
-        painter.setPen(QPen(Qt.white, 3))
-        painter.drawText(text_rect, Qt.AlignCenter, text)
-        painter.setPen(QPen(Qt.black, 1))
-        painter.drawText(text_rect, Qt.AlignCenter, text)
+        # Draw white outline
+        painter.setPen(QPen(Qt.white, 6, Qt.SolidLine))
+        painter.drawPath(text_path)
+
+        # Draw black text
+        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+        painter.fillPath(text_path, QBrush(Qt.black))
+        painter.drawPath(text_path)
 
         if isinstance(strand, MaskedStrand):
             painter.setClipping(False)
-
+            
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
         if isinstance(strand, MaskedStrand):

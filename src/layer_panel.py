@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBo
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from functools import partial
-
+import logging
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
 
@@ -244,10 +244,18 @@ class LayerPanel(QWidget):
     def request_delete_strand(self):
         """Request the deletion of the selected strand."""
         selected_index = self.get_selected_layer()
-        if selected_index is not None and self.layer_buttons[selected_index].attachable:
-            self.strand_deleted.emit(selected_index)
-            self.remove_layer_button(selected_index)
-            self.update_after_deletion(selected_index)
+        logging.info(f"Selected index for deletion: {selected_index}")
+        
+        if selected_index is not None and 0 <= selected_index < len(self.layer_buttons):
+            button = self.layer_buttons[selected_index]
+            if button.attachable:
+                strand_name = button.text()
+                logging.info(f"Deleting strand: {strand_name}")
+                self.strand_deleted.emit(selected_index)
+            else:
+                logging.info(f"Button at index {selected_index} is not attachable")
+        else:
+            logging.warning(f"Invalid selected index: {selected_index}")
 
     def remove_layer_button(self, index):
         """Remove a layer button at the specified index."""
@@ -257,37 +265,135 @@ class LayerPanel(QWidget):
             button.deleteLater()
             self.scroll_layout.removeWidget(button)
 
-    def update_after_deletion(self, deleted_set_number):
-        # Renumber only the strands in the affected set
-        strands_in_set = [s for s in self.canvas.strands if s.set_number == deleted_set_number]
-        for i, strand in enumerate(strands_in_set, start=1):
-            new_name = f"{deleted_set_number}_{i}"
-            strand.layer_name = new_name
-            button = self.get_layer_button(self.canvas.strands.index(strand))
-            if button:
-                button.setText(new_name)
+
+
+    def update_masked_layers(self, deleted_set_number):
+        for button in self.layer_buttons[:]:  # Create a copy of the list to iterate over
+            parts = button.text().split('_')
+            if len(parts) > 2:  # This is a masked layer
+                if str(deleted_set_number) in parts:
+                    # Remove this masked layer button
+                    index = self.layer_buttons.index(button)
+                    self.remove_layer_button(index)
+
+
+    def update_after_deletion(self, deleted_set_number, indices_to_remove, is_main_strand):
+        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, indices_to_remove={indices_to_remove}, is_main_strand={is_main_strand}")
+        # Sort the removed indices in descending order to avoid index shifting issues
+        indices_to_remove.sort(reverse=True)
+        
+        # Remove the corresponding buttons
+        for index in indices_to_remove:
+            if 0 <= index < len(self.layer_buttons):
+                button = self.layer_buttons.pop(index)
+                button.setParent(None)
+                button.deleteLater()
+                self.scroll_layout.removeWidget(button)
+                logging.info(f"Removed button at index {index}")
+        
+        if is_main_strand:
+            # Update set counts and colors
+            if deleted_set_number in self.set_counts:
+                del self.set_counts[deleted_set_number]
+                logging.info(f"Deleted set count for set {deleted_set_number}")
+            if deleted_set_number in self.set_colors:
+                del self.set_colors[deleted_set_number]
+                logging.info(f"Deleted set color for set {deleted_set_number}")
+            
+            # Decrement set numbers greater than the deleted set
+            for i, button in enumerate(self.layer_buttons):
+                parts = button.text().split('_')
+                set_number = int(parts[0])
+                if set_number > deleted_set_number:
+                    new_set_number = set_number - 1
+                    new_text = f"{new_set_number}_{parts[1]}"
+                    button.setText(new_text)
+                    button.set_color(self.set_colors.get(new_set_number, QColor('purple')))
+                    logging.info(f"Updated button text: {button.text()}")
+            
+            self.set_counts = {k if k < deleted_set_number else k - 1: v for k, v in self.set_counts.items()}
+            self.set_colors = {k if k < deleted_set_number else k - 1: v for k, v in self.set_colors.items()}
+            
+            self.current_set = max(self.set_counts.keys(), default=0)
+            logging.info(f"Updated current_set to {self.current_set}")
+        else:
+            # For non-main strands, just update the count for the set
+            if deleted_set_number in self.set_counts:
+                self.set_counts[deleted_set_number] -= 1
+                logging.info(f"Decremented set count for set {deleted_set_number}")
+            
+            # Update the numbering only for the affected set
+            self.update_button_numbering_for_set(deleted_set_number)
+        
+        # Update masked layers
+        self.update_masked_layers(deleted_set_number)
 
         self.update_layer_button_states()
         self.update_attachable_states()
+        logging.info("Finished update_after_deletion")
 
-    def add_layer_button(self, set_number=None):
-        """Add a new layer button for the given set number."""
-        if set_number is None:
-            set_number = self.current_set
-        
+    def update_button_numbering_for_set(self, set_number):
+        logging.info(f"Starting update_button_numbering_for_set: set_number={set_number}")
+        count = 1
+        for button in self.layer_buttons:
+            if button.text().startswith(f"{set_number}_"):
+                new_text = f"{set_number}_{count}"
+                if button.text() != new_text:
+                    logging.info(f"Updated button text from {button.text()} to {new_text}")
+                    button.setText(new_text)
+                count += 1
+        logging.info("Finished update_button_numbering_for_set")        
+
+    def update_layer_buttons_after_deletion(self, deleted_set_number, indices_to_remove):
+        # Remove buttons for deleted strands
+        for index in sorted(indices_to_remove, reverse=True):
+            if 0 <= index < len(self.layer_buttons):
+                button = self.layer_buttons.pop(index)
+                button.setParent(None)
+                button.deleteLater()
+                self.scroll_layout.removeWidget(button)
+
+        # Update remaining buttons
+        for i, button in enumerate(self.layer_buttons):
+            parts = button.text().split('_')
+            set_number = int(parts[0])
+            
+            if set_number == deleted_set_number:
+                # Update the numbering for the affected set
+                new_number = i + 1 - sum(1 for b in self.layer_buttons[:i] if int(b.text().split('_')[0]) != deleted_set_number)
+                new_text = f"{set_number}_{new_number}"
+                button.setText(new_text)
+            elif set_number > deleted_set_number:
+                # Decrement set numbers greater than the deleted set
+                new_set_number = set_number - 1
+                new_text = f"{new_set_number}_{parts[1]}"
+                button.setText(new_text)
+                button.set_color(self.set_colors.get(new_set_number, QColor('purple')))
+
+        self.update_layer_button_states()
+
+    def add_layer_button(self, set_number, count=None):
+        logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
         # Ensure set_number is an integer
         set_number = int(set_number) if isinstance(set_number, str) else set_number
         
         if set_number not in self.set_counts:
             self.set_counts[set_number] = 0
+            logging.info(f"Initialized set count for set {set_number}")
         
-        self.set_counts[set_number] += 1
-        count = self.set_counts[set_number]
+        if count is None:
+            self.set_counts[set_number] += 1
+            count = self.set_counts[set_number]
+            logging.info(f"Incremented set count for set {set_number} to {count}")
+        else:
+            self.set_counts[set_number] = max(self.set_counts[set_number], count)
+            logging.info(f"Updated set count for set {set_number} to {self.set_counts[set_number]}")
         
         color = self.set_colors.get(set_number, QColor('purple'))
         button = NumberedLayerButton(f"{set_number}_{count}", count, color)
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
+        logging.info(f"Created new button: {button.text()}")
         
         button_container = QWidget()
         button_layout = QHBoxLayout(button_container)
@@ -298,12 +404,15 @@ class LayerPanel(QWidget):
         self.scroll_layout.insertWidget(0, button_container)
         self.layer_buttons.append(button)
         self.select_layer(len(self.layer_buttons) - 1)
+        logging.info(f"Added button to layer_buttons, total buttons: {len(self.layer_buttons)}")
         
         if set_number > self.current_set:
             self.current_set = set_number
+            logging.info(f"Updated current_set to {self.current_set}")
 
         # Update attachable states after adding a new button
         self.update_layer_button_states()
+        logging.info("Finished add_layer_button")
 
     def update_layer_button_states(self):
         """Update the states of all layer buttons."""
@@ -388,26 +497,51 @@ class LayerPanel(QWidget):
             self.remove_layer_button(index)
         self.update_layer_button_states()
 
-    def update_layer_names(self):
+    def update_layer_names(self, affected_set_number=None):
+        logging.info(f"Starting update_layer_names: affected_set_number={affected_set_number}")
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
-                button.setText(strand.layer_name)
+                if affected_set_number is None or strand.set_number == affected_set_number:
+                    button.setText(strand.layer_name)
+                    logging.info(f"Updated layer name for strand {i} to {button.text()}")
         self.update_layer_button_states()
+        logging.info("Finished update_layer_names")
+
 
     def refresh(self):
-        """Refresh the entire layer panel."""
-        # Clear existing buttons
-        for button in self.layer_buttons:
+        logging.info("Starting refresh of layer panel")
+        
+        # Remove buttons for strands that no longer exist
+        buttons_to_remove = []
+        for i, button in enumerate(self.layer_buttons):
+            if i >= len(self.canvas.strands) or button.text() != self.canvas.strands[i].layer_name:
+                buttons_to_remove.append(i)
+        
+        # Remove buttons in reverse order to avoid index issues
+        for index in reversed(buttons_to_remove):
+            button = self.layer_buttons.pop(index)
             button.setParent(None)
             button.deleteLater()
-        self.layer_buttons.clear()
-
-        # Recreate buttons for all strands
-        for strand in self.canvas.strands:
-            self.add_layer_button(strand.set_number)
-
+            self.scroll_layout.removeWidget(button)
+            logging.info(f"Removed button for {button.text()}")
+        
+        # Update remaining buttons and add new ones if necessary
+        for i, strand in enumerate(self.canvas.strands):
+            if i < len(self.layer_buttons):
+                # Update existing button
+                button = self.layer_buttons[i]
+                if button.text() != strand.layer_name:
+                    button.setText(strand.layer_name)
+                    logging.info(f"Updated button text to {strand.layer_name}")
+            else:
+                # Add new button
+                self.add_layer_button(strand.set_number, int(strand.layer_name.split('_')[1]))
+                logging.info(f"Added new button for {strand.layer_name}")
+        
+        # Update button states
         self.update_layer_button_states()
+        logging.info("Finished refreshing layer panel")
 
     def get_layer_button(self, index):
         """Get the layer button at the specified index."""

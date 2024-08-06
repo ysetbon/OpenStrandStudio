@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage
-
+import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from strand import Strand, AttachedStrand, MaskedStrand
@@ -191,6 +191,12 @@ class StrandDrawingCanvas(QWidget):
 
     def on_strand_created(self, strand):
         """Handle the creation of a new strand."""
+        logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
+        
+        if hasattr(strand, 'is_being_deleted') and strand.is_being_deleted:
+            logging.info("Strand is being deleted, skipping button creation")
+            return
+
         if isinstance(strand, AttachedStrand):
             set_number = strand.parent.set_number
         elif self.selected_strand:
@@ -208,12 +214,18 @@ class StrandDrawingCanvas(QWidget):
 
         if self.layer_panel:
             set_number = int(strand.set_number) if isinstance(strand.set_number, str) else strand.set_number
-            self.layer_panel.add_layer_button(set_number)
             count = len([s for s in self.strands if s.set_number == set_number])
             strand.layer_name = f"{set_number}_{count}"
+            
+            # Only add a new button if it's a genuinely new strand, not during deletion
+            if not hasattr(strand, 'is_being_deleted'):
+                logging.info(f"Adding new layer button for set {set_number}, count {count}")
+                self.layer_panel.add_layer_button(set_number, count)
+            else:
+                logging.info(f"Updating layer names for set {set_number}")
+                self.layer_panel.update_layer_names(set_number)
+            
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
-            # Ensure correct numbering after adding a new strand
-            self.layer_panel.update_after_deletion(set_number)
 
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
@@ -223,16 +235,37 @@ class StrandDrawingCanvas(QWidget):
         # Notify LayerPanel that a new strand was added
         if self.layer_panel:
             self.layer_panel.update_attachable_states()
-
+        
+        logging.info("Finished on_strand_created")
     def attach_strand(self, parent_strand, new_strand):
         """Attach a new strand to a parent strand."""
         parent_strand.attached_strands.append(new_strand)
         new_strand.parent = parent_strand
+        
+        # Set the set_number for the new strand
+        new_strand.set_number = parent_strand.set_number
+        
+        # Append the new strand to the strands list
         self.strands.append(new_strand)
         
-        # Notify LayerPanel that a strand was attached
+        # Calculate the correct count for the new strand
+        count = len([s for s in self.strands if s.set_number == new_strand.set_number])
+        new_strand.layer_name = f"{new_strand.set_number}_{count}"
+        
+        # Set the color for the new strand
+        if new_strand.set_number in self.strand_colors:
+            new_strand.set_color(self.strand_colors[new_strand.set_number])
+        
+        # Update the layer panel
         if self.layer_panel:
+            if not hasattr(new_strand, 'is_being_deleted'):
+                self.layer_panel.add_layer_button(new_strand.set_number, count)
+            else:
+                self.layer_panel.update_layer_names(new_strand.set_number)
             self.layer_panel.on_strand_attached()
+        
+        # Update the canvas
+        self.update()
 
     def add_strand(self, strand):
         """Add a strand to the canvas."""
@@ -282,48 +315,142 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def remove_strand(self, strand):
-        if strand in self.strands:
-            set_number, strand_number = map(int, strand.layer_name.split('_'))
-            strands_to_remove = []
-            
-            # If it's a main strand (x_1), remove all related strands
-            if strand_number == 1:
-                strands_to_remove = [s for s in self.strands if 
-                    isinstance(s, Strand) and s.layer_name.startswith(f"{set_number}_")]
-            else:
-                strands_to_remove = [strand]
-                # Remove the strand from its parent's attached_strands list if it's an attached strand
-                for parent_strand in self.strands:
-                    if strand in parent_strand.attached_strands:
-                        parent_strand.attached_strands.remove(strand)
-                        parent_strand.has_circles[1] = False  # Assume it's attached to the end
-                        break
-            
-            # Remove masks related to the strand(s) being removed
-            masks_to_remove = [s for s in self.strands if 
-                isinstance(s, MaskedStrand) and 
-                any(strand.layer_name.startswith(f"{set_number}_") for strand in [s.first_selected_strand, s.second_selected_strand])]
-            
-            strands_to_remove.extend(masks_to_remove)
-            
-            # Store indices of strands to be removed
-            indices_to_remove = sorted([self.strands.index(s) for s in strands_to_remove if s in self.strands], reverse=True)
-            
-            for s in strands_to_remove:
-                if s in self.strands:
-                    self.strands.remove(s)
-            
-            # Update selection if the removed strand was selected
-            if self.selected_strand in strands_to_remove:
-                self.selected_strand = None
-                self.selected_strand_index = None
-            
-            self.update()
-            
-            # Notify LayerPanel to update only the affected set
-            if self.layer_panel:
-                self.layer_panel.update_after_deletion(set_number)
+        logging.info(f"Starting remove_strand for: {strand.layer_name}")
+        if strand not in self.strands:
+            logging.warning(f"Strand {strand.layer_name} not found in self.strands")
+            return
 
+        set_number, strand_number = map(int, strand.layer_name.split('_')[:2])
+        is_main_strand = strand_number == 1
+
+        # Collect all strands to be removed
+        strands_to_remove = []
+        masks_to_remove = []
+
+        for s in self.strands:
+            if is_main_strand:
+                # Remove all strands in the same set and related masks
+                if self.is_related_strand(s, set_number):
+                    strands_to_remove.append(s)
+                elif isinstance(s, MaskedStrand) and (
+                    self.is_related_strand(s.first_selected_strand, set_number) or
+                    self.is_related_strand(s.second_selected_strand, set_number)
+                ):
+                    masks_to_remove.append(s)
+            else:
+                # Remove only this specific strand and its masks
+                if s == strand:
+                    strands_to_remove.append(s)
+                elif isinstance(s, MaskedStrand) and (
+                    s.first_selected_strand == strand or s.second_selected_strand == strand
+                ):
+                    masks_to_remove.append(s)
+
+        # Remove collected strands and masks
+        for s in strands_to_remove + masks_to_remove:
+            if s in self.strands:
+                self.strands.remove(s)
+                logging.info(f"Removed strand: {s.layer_name}")
+
+                # Update selection if the removed strand was selected
+                if self.selected_strand == s:
+                    self.selected_strand = None
+                    self.selected_strand_index = None
+                    logging.info("Cleared selected strand")
+
+        # Update parent strand's attached_strands list and circle if the removed strand is an AttachedStrand
+        if isinstance(strand, AttachedStrand):
+            parent = self.find_parent_strand(strand)
+            if parent:
+                # Remove the strand from the parent's attached_strands list
+                parent.attached_strands.remove(strand)
+                logging.info(f"Removed {strand.layer_name} from parent {parent.layer_name}'s attached strands")
+                
+                # Remove the circle from the parent strand
+                if strand.start == parent.start:
+                    parent.has_circles[0] = False
+                elif strand.start == parent.end:
+                    parent.has_circles[1] = False
+                logging.info(f"Removed circle from parent {parent.layer_name}")
+
+        # Update layer names only for the affected set if it's not a main strand
+        if not is_main_strand:
+            self.update_layer_names_for_set(set_number)
+        else:
+            self.update_set_numbers(set_number)
+
+        # Refresh the layer panel
+        if self.layer_panel:
+            logging.info("Refreshing layer panel")
+            self.layer_panel.refresh()
+
+        self.update()
+        logging.info("Finished remove_strand")
+
+    def update_layer_names_for_set(self, set_number):
+        logging.info(f"Updating layer names for set {set_number}")
+        count = 1
+        for strand in self.strands:
+            if strand.set_number == set_number:
+                new_name = f"{set_number}_{count}"
+                if strand.layer_name != new_name:
+                    logging.info(f"Updated strand name from {strand.layer_name} to {new_name}")
+                    strand.layer_name = new_name
+                count += 1
+        if self.layer_panel:
+            self.layer_panel.update_layer_names(set_number)
+    def update_set_numbers(self, deleted_set_number):
+            logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
+            for strand in self.strands:
+                if strand.set_number > deleted_set_number:
+                    strand.set_number -= 1
+                    logging.info(f"Updated strand {strand.layer_name}'s set number to {strand.set_number}")
+            
+            # Update the strand_colors dictionary
+            self.strand_colors = {k - 1 if k > deleted_set_number else k: v for k, v in self.strand_colors.items()}
+            logging.info(f"Updated strand_colors: {self.strand_colors}")
+            
+            # Update the layer panel if it exists
+            if self.layer_panel:
+                logging.info("Updating LayerPanel set numbers")
+                self.layer_panel.refresh()
+            
+            # Update layer names for all strands
+            self.update_layer_names()
+            logging.info("Finished update_set_numbers")
+    def update_layer_names(self):
+        logging.info("Starting update_layer_names")
+        set_counts = {}
+        affected_set_number = None
+        for strand in self.strands:
+            set_number = strand.set_number
+            if set_number not in set_counts:
+                set_counts[set_number] = 0
+            set_counts[set_number] += 1
+            new_name = f"{set_number}_{set_counts[set_number]}"
+            if new_name != strand.layer_name:
+                affected_set_number = set_number
+                strand.layer_name = new_name
+            logging.info(f"Updated layer name: {strand.layer_name}")
+        
+        # Update the layer panel if it exists, but only for the affected set
+        if self.layer_panel and affected_set_number is not None:
+            logging.info(f"Updating LayerPanel for affected set: {affected_set_number}")
+            self.layer_panel.update_layer_names(affected_set_number)
+        logging.info("Finished update_layer_names")
+    def is_related_strand(self, strand, set_number):
+        layer_name = strand.layer_name
+        parts = layer_name.split('_')
+        
+        # Direct relationship: starts with set_number_
+        if parts[0] == str(set_number):
+            return True
+        
+        # Check for masked layers involving the set_number
+        if len(parts) > 2 and str(set_number) in parts:
+            return True
+        
+        return False
 
     def remove_attached_strands(self, parent_strand):
         """Recursively remove all attached strands."""
@@ -357,9 +484,9 @@ class StrandDrawingCanvas(QWidget):
         )
 
     def toggle_grid(self):
-            """Toggle the visibility of the grid."""
-            self.show_grid = not self.show_grid
-            self.update()
+        """Toggle the visibility of the grid."""
+        self.show_grid = not self.show_grid
+        self.update()
 
     def set_grid_size(self, size):
         """Set the size of the grid cells."""

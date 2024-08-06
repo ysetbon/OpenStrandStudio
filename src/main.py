@@ -1,6 +1,9 @@
 # Import the sys module to access system-specific parameters and functions
 import sys
 
+# Import logging module for logging configuration
+import logging
+
 # Import QApplication from PyQt5.QtWidgets, which manages the GUI application's control flow and main settings
 from PyQt5.QtWidgets import QApplication
 
@@ -9,6 +12,9 @@ from main_window import MainWindow
 
 # This conditional checks if the script is being run directly (as opposed to being imported)
 if __name__ == '__main__':
+    # Set up logging configuration
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
     # Create a new QApplication instance
     # sys.argv is passed to allow command line arguments to control the application
     app = QApplication(sys.argv)

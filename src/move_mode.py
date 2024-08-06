@@ -3,8 +3,7 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 
-from strand import Strand, AttachedStrand
-
+from strand import Strand, AttachedStrand, MaskedStrand
 class MoveMode:
     def __init__(self, canvas):
         """
@@ -270,14 +269,6 @@ class MoveMode:
         self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
-        """
-        Move the strand and update all attached strands.
-
-        Args:
-            strand (Strand): The strand to move.
-            new_pos (QPointF): The new position for the strand end.
-            moving_side (int): Which side of the strand is being moved (0 for start, 1 for end).
-        """
         old_start, old_end = strand.start, strand.end
         if moving_side == 0:
             strand.start = new_pos
@@ -295,6 +286,16 @@ class MoveMode:
         # If it's an AttachedStrand, update its parent's side line
         if isinstance(strand, AttachedStrand):
             strand.parent.update_side_line()
+
+        # If it's a MaskedStrand, update both selected strands
+        if isinstance(strand, MaskedStrand):
+            if strand.first_selected_strand:
+                strand.first_selected_strand.update(new_pos)
+            if strand.second_selected_strand:
+                strand.second_selected_strand.update(new_pos)
+
+        # Force a redraw of the canvas
+        self.canvas.update()
 
     def update_parent_strands(self, strand):
         """

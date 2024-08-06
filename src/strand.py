@@ -221,7 +221,6 @@ class MaskedStrand(Strand):
         return path1.intersected(path2)
 
     def draw(self, painter):
-        """Draw the masked strand on the given painter."""
         if not self.first_selected_strand and not self.second_selected_strand:
             return  # Don't draw if both referenced strands have been deleted
 

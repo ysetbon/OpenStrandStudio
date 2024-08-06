@@ -42,30 +42,42 @@ class StrandDrawingCanvas(QWidget):
         self.move_mode = MoveMode(self)
         self.current_mode = self.attach_mode  # Set initial mode to attach
 
+
     def paintEvent(self, event):
-        """Handle paint events to draw the canvas contents."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
         if self.show_grid:
             self.draw_grid(painter)
 
+        # Draw regular strands first
         for strand in self.strands:
-            if strand == self.selected_strand:
-                self.draw_highlighted_strand(painter, strand)
-            else:
-                strand.draw(painter)
+            if not isinstance(strand, MaskedStrand):
+                if strand == self.selected_strand:
+                    self.draw_highlighted_strand(painter, strand)
+                else:
+                    strand.draw(painter)
 
-            if self.should_draw_names:
-                self.draw_strand_label(painter, strand)
+        # Draw masked strands on top
+        for strand in self.strands:
+            if isinstance(strand, MaskedStrand):
+                if strand == self.selected_strand:
+                    self.draw_highlighted_strand(painter, strand)
+                else:
+                    strand.draw(painter)
 
         if self.current_strand:
             self.current_strand.draw(painter)
+
+        if self.should_draw_names:
+            for strand in self.strands:
+                self.draw_strand_label(painter, strand)
 
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))
             painter.drawRect(self.current_mode.selected_rectangle)
+
 
     def draw_grid(self, painter):
         """Draw the grid on the canvas."""
@@ -76,28 +88,33 @@ class StrandDrawingCanvas(QWidget):
             painter.drawLine(0, y, self.width(), y)
 
     def draw_strand_label(self, painter, strand):
-        """Draw the label for a strand."""
-        text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
-        mid_point = (strand.start + strand.end) / 2
+        if isinstance(strand, MaskedStrand):
+            mask_path = strand.get_mask_path()
+            center = mask_path.boundingRect().center()
+        else:
+            center = (strand.start + strand.end) / 2
+
+        text = strand.layer_name
         font = painter.font()
         font.setPointSize(12)
         painter.setFont(font)
 
-        metrics = painter.fontMetrics()
+        metrics = QFontMetrics(font)
         text_width = metrics.width(text)
         text_height = metrics.height()
 
-        text_rect = QRectF(mid_point.x() - text_width / 2, mid_point.y() - text_height / 2, text_width, text_height)
+        text_rect = QRectF(center.x() - text_width / 2, center.y() - text_height / 2, text_width, text_height)
 
-        text_path = QPainterPath()
-        text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
+        if isinstance(strand, MaskedStrand):
+            painter.setClipPath(mask_path)
 
-        painter.setPen(QPen(Qt.white, 6, Qt.SolidLine))
-        painter.drawPath(text_path)
+        painter.setPen(QPen(Qt.white, 3))
+        painter.drawText(text_rect, Qt.AlignCenter, text)
+        painter.setPen(QPen(Qt.black, 1))
+        painter.drawText(text_rect, Qt.AlignCenter, text)
 
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-        painter.fillPath(text_path, QBrush(Qt.black))
-        painter.drawPath(text_path)
+        if isinstance(strand, MaskedStrand):
+            painter.setClipping(False)
 
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
@@ -172,21 +189,29 @@ class StrandDrawingCanvas(QWidget):
 
     def update_color_for_set(self, set_number, color):
         """Update the color for a set of strands."""
+        logging.info(f"Updating color for set {set_number} to {color.name()}")
         self.strand_colors[set_number] = color
         for strand in self.strands:
             if isinstance(strand, MaskedStrand):
-                if strand.set_number.startswith(f"{set_number}_"):
+                # For masked strands, only update if the set_number is the first part
+                mask_parts = strand.layer_name.split('_')
+                if mask_parts[0] == str(set_number):
                     strand.set_color(color)
+                    logging.info(f"Updated color for masked strand: {strand.layer_name}")
+            elif isinstance(strand, Strand):
+                # For regular strands, only update if the set_number matches exactly
+                if strand.set_number == set_number:
+                    strand.set_color(color)
+                    logging.info(f"Updated color for strand: {strand.layer_name}")
                     self.update_attached_strands_color(strand, color)
-            elif isinstance(strand, Strand) and strand.set_number == set_number:
-                strand.set_color(color)
-                self.update_attached_strands_color(strand, color)
         self.update()
+        logging.info(f"Finished updating color for set {set_number}")
 
     def update_attached_strands_color(self, parent_strand, color):
         """Recursively update the color of attached strands."""
         for attached_strand in parent_strand.attached_strands:
             attached_strand.set_color(color)
+            logging.info(f"Updated color for attached strand: {attached_strand.layer_name}")
             self.update_attached_strands_color(attached_strand, color)
 
     def on_strand_created(self, strand):
@@ -327,23 +352,15 @@ class StrandDrawingCanvas(QWidget):
         strands_to_remove = []
         masks_to_remove = []
 
-        for s in self.strands:
-            if isinstance(s, MaskedStrand):
-                mask_parts = s.layer_name.split('_')
-                if is_main_strand:
-                    # For main strand (s_1), remove masks s_x_y_z and x_y_s_z
-                    if str(set_number) in mask_parts:
-                        masks_to_remove.append(s)
-                else:
-                    # For attached strand (x_y), remove masks x_y_z_w and z_w_x_y
-                    if f"{set_number}_{strand_number}" in s.layer_name:
-                        masks_to_remove.append(s)
-            elif is_main_strand:
-                # Remove all strands in the same set
-                if s.set_number == set_number:
-                    strands_to_remove.append(s)
-            elif s == strand:
-                strands_to_remove.append(s)
+        if is_main_strand:
+            # For main strand (s_1), remove all s_x strands and related masks
+            strands_to_remove = [s for s in self.strands if s.set_number == set_number]
+            masks_to_remove = [s for s in self.strands if isinstance(s, MaskedStrand) and str(set_number) in s.layer_name.split('_')]
+        else:
+            # For attached strand (x_y), only remove if it has available sides
+            if any(not circle for circle in strand.has_circles):
+                strands_to_remove = [strand]
+                masks_to_remove = [s for s in self.strands if isinstance(s, MaskedStrand) and f"{set_number}_{strand_number}" in s.layer_name]
 
         # Remove collected strands and masks
         for s in strands_to_remove + masks_to_remove:
@@ -357,20 +374,7 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = None
             logging.info("Cleared selected strand")
 
-        # Update parent strand's attached_strands list and circle if the removed strand is an AttachedStrand
-        if isinstance(strand, AttachedStrand):
-            parent = self.find_parent_strand(strand)
-            if parent:
-                parent.attached_strands.remove(strand)
-                logging.info(f"Removed {strand.layer_name} from parent {parent.layer_name}'s attached strands")
-                
-                if strand.start == parent.start:
-                    parent.has_circles[0] = False
-                elif strand.start == parent.end:
-                    parent.has_circles[1] = False
-                logging.info(f"Removed circle from parent {parent.layer_name}")
-
-        # Update layer names and set numbers
+        # Update set numbers and layer names
         if is_main_strand:
             self.update_set_numbers(set_number)
         else:
@@ -384,6 +388,21 @@ class StrandDrawingCanvas(QWidget):
         self.update()
         logging.info("Finished remove_strand")
 
+    def update_set_numbers(self, deleted_set_number):
+        logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
+        for strand in self.strands:
+            if strand.set_number > deleted_set_number:
+                strand.set_number -= 1
+                strand.layer_name = f"{strand.set_number}_{strand.layer_name.split('_')[1]}"
+                logging.info(f"Updated strand {strand.layer_name}'s set number to {strand.set_number}")
+        
+        # Update the strand_colors dictionary
+        self.strand_colors = {k - 1 if k > deleted_set_number else k: v for k, v in self.strand_colors.items()}
+        logging.info(f"Updated strand_colors: {self.strand_colors}")
+        
+        # Update layer names for all strands
+        self.update_layer_names()
+
     def update_layer_names_for_set(self, set_number):
         logging.info(f"Updating layer names for set {set_number}")
         count = 1
@@ -396,29 +415,25 @@ class StrandDrawingCanvas(QWidget):
                 count += 1
         if self.layer_panel:
             self.layer_panel.update_layer_names(set_number)
+
     def update_set_numbers(self, deleted_set_number):
-            logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
-            for strand in self.strands:
-                if strand.set_number > deleted_set_number:
-                    strand.set_number -= 1
-                    logging.info(f"Updated strand {strand.layer_name}'s set number to {strand.set_number}")
-            
-            # Update the strand_colors dictionary
-            self.strand_colors = {k - 1 if k > deleted_set_number else k: v for k, v in self.strand_colors.items()}
-            logging.info(f"Updated strand_colors: {self.strand_colors}")
-            
-            # Update the layer panel if it exists
-            if self.layer_panel:
-                logging.info("Updating LayerPanel set numbers")
-                self.layer_panel.refresh()
-            
-            # Update layer names for all strands
-            self.update_layer_names()
-            logging.info("Finished update_set_numbers")
+        logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
+        for strand in self.strands:
+            if strand.set_number > deleted_set_number:
+                strand.set_number -= 1
+                strand.layer_name = f"{strand.set_number}_{strand.layer_name.split('_')[1]}"
+                logging.info(f"Updated strand {strand.layer_name}'s set number to {strand.set_number}")
+        
+        # Update the strand_colors dictionary
+        self.strand_colors = {k - 1 if k > deleted_set_number else k: v for k, v in self.strand_colors.items()}
+        logging.info(f"Updated strand_colors: {self.strand_colors}")
+        
+        # Update layer names for all strands
+        self.update_layer_names()
+
     def update_layer_names(self):
         logging.info("Starting update_layer_names")
         set_counts = {}
-        affected_set_number = None
         for strand in self.strands:
             set_number = strand.set_number
             if set_number not in set_counts:
@@ -426,15 +441,15 @@ class StrandDrawingCanvas(QWidget):
             set_counts[set_number] += 1
             new_name = f"{set_number}_{set_counts[set_number]}"
             if new_name != strand.layer_name:
-                affected_set_number = set_number
+                logging.info(f"Updated layer name from {strand.layer_name} to {new_name}")
                 strand.layer_name = new_name
-            logging.info(f"Updated layer name: {strand.layer_name}")
         
-        # Update the layer panel if it exists, but only for the affected set
-        if self.layer_panel and affected_set_number is not None:
-            logging.info(f"Updating LayerPanel for affected set: {affected_set_number}")
-            self.layer_panel.update_layer_names(affected_set_number)
+        # Update the layer panel for all sets
+        if self.layer_panel:
+            logging.info("Updating LayerPanel for all sets")
+            self.layer_panel.refresh()
         logging.info("Finished update_layer_names")
+
     def is_related_strand(self, strand, set_number):
         layer_name = strand.layer_name
         parts = layer_name.split('_')

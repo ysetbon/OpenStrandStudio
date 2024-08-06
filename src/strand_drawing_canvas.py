@@ -323,61 +323,58 @@ class StrandDrawingCanvas(QWidget):
         set_number, strand_number = map(int, strand.layer_name.split('_')[:2])
         is_main_strand = strand_number == 1
 
-        # Collect all strands to be removed
+        # Collect all strands and masks to be removed
         strands_to_remove = []
         masks_to_remove = []
 
         for s in self.strands:
-            if is_main_strand:
-                # Remove all strands in the same set and related masks
-                if self.is_related_strand(s, set_number):
+            if isinstance(s, MaskedStrand):
+                mask_parts = s.layer_name.split('_')
+                if is_main_strand:
+                    # For main strand (s_1), remove masks s_x_y_z and x_y_s_z
+                    if str(set_number) in mask_parts:
+                        masks_to_remove.append(s)
+                else:
+                    # For attached strand (x_y), remove masks x_y_z_w and z_w_x_y
+                    if f"{set_number}_{strand_number}" in s.layer_name:
+                        masks_to_remove.append(s)
+            elif is_main_strand:
+                # Remove all strands in the same set
+                if s.set_number == set_number:
                     strands_to_remove.append(s)
-                elif isinstance(s, MaskedStrand) and (
-                    self.is_related_strand(s.first_selected_strand, set_number) or
-                    self.is_related_strand(s.second_selected_strand, set_number)
-                ):
-                    masks_to_remove.append(s)
-            else:
-                # Remove only this specific strand and its masks
-                if s == strand:
-                    strands_to_remove.append(s)
-                elif isinstance(s, MaskedStrand) and (
-                    s.first_selected_strand == strand or s.second_selected_strand == strand
-                ):
-                    masks_to_remove.append(s)
+            elif s == strand:
+                strands_to_remove.append(s)
 
         # Remove collected strands and masks
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
-                logging.info(f"Removed strand: {s.layer_name}")
+                logging.info(f"Removed {'mask' if isinstance(s, MaskedStrand) else 'strand'}: {s.layer_name}")
 
-                # Update selection if the removed strand was selected
-                if self.selected_strand == s:
-                    self.selected_strand = None
-                    self.selected_strand_index = None
-                    logging.info("Cleared selected strand")
+        # Update selection if the removed strand was selected
+        if self.selected_strand in strands_to_remove + masks_to_remove:
+            self.selected_strand = None
+            self.selected_strand_index = None
+            logging.info("Cleared selected strand")
 
         # Update parent strand's attached_strands list and circle if the removed strand is an AttachedStrand
         if isinstance(strand, AttachedStrand):
             parent = self.find_parent_strand(strand)
             if parent:
-                # Remove the strand from the parent's attached_strands list
                 parent.attached_strands.remove(strand)
                 logging.info(f"Removed {strand.layer_name} from parent {parent.layer_name}'s attached strands")
                 
-                # Remove the circle from the parent strand
                 if strand.start == parent.start:
                     parent.has_circles[0] = False
                 elif strand.start == parent.end:
                     parent.has_circles[1] = False
                 logging.info(f"Removed circle from parent {parent.layer_name}")
 
-        # Update layer names only for the affected set if it's not a main strand
-        if not is_main_strand:
-            self.update_layer_names_for_set(set_number)
-        else:
+        # Update layer names and set numbers
+        if is_main_strand:
             self.update_set_numbers(set_number)
+        else:
+            self.update_layer_names_for_set(set_number)
 
         # Refresh the layer panel
         if self.layer_panel:

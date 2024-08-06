@@ -5,7 +5,7 @@ from functools import partial
 import logging
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
-
+from strand import MaskedStrand
 class LayerPanel(QWidget):
     # Custom signals for various events
     new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
@@ -534,13 +534,31 @@ class LayerPanel(QWidget):
                 if button.text() != strand.layer_name:
                     button.setText(strand.layer_name)
                     logging.info(f"Updated button text to {strand.layer_name}")
+                
+                # Update button color
+                if isinstance(strand, MaskedStrand):
+                    button.set_color(strand.first_selected_strand.color)
+                    button.set_border_color(strand.second_selected_strand.color)
+                else:
+                    button.set_color(self.set_colors.get(strand.set_number, QColor('purple')))
             else:
                 # Add new button
-                self.add_layer_button(strand.set_number, int(strand.layer_name.split('_')[1]))
+                if isinstance(strand, MaskedStrand):
+                    button = self.add_masked_layer_button(
+                        self.canvas.strands.index(strand.first_selected_strand),
+                        self.canvas.strands.index(strand.second_selected_strand)
+                    )
+                else:
+                    self.add_layer_button(strand.set_number, int(strand.layer_name.split('_')[1]))
                 logging.info(f"Added new button for {strand.layer_name}")
         
         # Update button states
         self.update_layer_button_states()
+        
+        # Ensure the correct button is selected
+        if self.canvas.selected_strand_index is not None:
+            self.select_layer(self.canvas.selected_strand_index, emit_signal=False)
+        
         logging.info("Finished refreshing layer panel")
 
     def get_layer_button(self, index):

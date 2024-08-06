@@ -7,16 +7,6 @@ class Strand:
     Represents a basic strand in the application.
     """
     def __init__(self, start, end, width, color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=5):
-        """
-        Initialize a Strand object.
-
-        :param start: Starting point of the strand
-        :param end: Ending point of the strand
-        :param width: Width of the strand
-        :param color: Color of the strand (default: purple)
-        :param stroke_color: Color of the strand's outline (default: black)
-        :param stroke_width: Width of the strand's outline (default: 5)
-        """
         self.start = start
         self.end = end
         self.width = width
@@ -32,6 +22,7 @@ class Strand:
         self.update_side_line()
         self.layer_name = ""
         self._set_number = None  # Initialize _set_number
+
     @property
     def set_number(self):
         """Getter for set_number, always returns an integer."""
@@ -124,12 +115,6 @@ class AttachedStrand(Strand):
     Represents a strand attached to another strand.
     """
     def __init__(self, parent, start_point):
-        """
-        Initialize an AttachedStrand object.
-
-        :param parent: The parent strand this strand is attached to
-        :param start_point: The starting point of this attached strand
-        """
         super().__init__(start_point, start_point, parent.width, parent.color, parent.stroke_color, parent.stroke_width)
         self.parent = parent
         self.angle = 0
@@ -174,43 +159,72 @@ class MaskedStrand(Strand):
     Represents a strand that is a result of masking two other strands.
     """
     def __init__(self, first_selected_strand, second_selected_strand):
-        """
-        Initialize a MaskedStrand object.
-
-        :param first_selected_strand: The first strand used in masking
-        :param second_selected_strand: The second strand used in masking
-        """
         self.first_selected_strand = first_selected_strand
         self.second_selected_strand = second_selected_strand
+        self._attached_strands = []  # Private attribute to store attached strands
+        self._has_circles = [False, False]  # Private attribute for has_circles
         super().__init__(first_selected_strand.start, first_selected_strand.end, first_selected_strand.width)
         self.set_number = int(f"{first_selected_strand.set_number}{second_selected_strand.set_number}")
         self.color = first_selected_strand.color
         self.stroke_color = first_selected_strand.stroke_color
         self.stroke_width = first_selected_strand.stroke_width
+        self.layer_name = f"{first_selected_strand.layer_name}_{second_selected_strand.layer_name}"
         self.update_shape()
+
+    @property
+    def attached_strands(self):
+        """Get all attached strands from both selected strands."""
+        attached = self._attached_strands.copy()
+        if self.first_selected_strand:
+            attached.extend(self.first_selected_strand.attached_strands)
+        if self.second_selected_strand:
+            attached.extend(self.second_selected_strand.attached_strands)
+        return attached
+
+    @property
+    def has_circles(self):
+        """Get the circle status from both selected strands."""
+        circles = self._has_circles.copy()
+        if self.first_selected_strand:
+            circles = [a or b for a, b in zip(circles, self.first_selected_strand.has_circles)]
+        if self.second_selected_strand:
+            circles = [a or b for a, b in zip(circles, self.second_selected_strand.has_circles)]
+        return circles
 
     def update_shape(self):
         """Update the shape of the masked strand."""
-        self.start = self.first_selected_strand.start
-        self.end = self.first_selected_strand.end
+        if self.first_selected_strand:
+            self.start = self.first_selected_strand.start
+            self.end = self.first_selected_strand.end
+        elif self.second_selected_strand:
+            self.start = self.second_selected_strand.start
+            self.end = self.second_selected_strand.end
         super().update_shape()
 
     def get_mask_path(self):
         """Get the path representing the masked area."""
-        path1 = QPainterPath(self.first_selected_strand.get_path())
-        stroker1 = QPainterPathStroker()
-        stroker1.setWidth(self.first_selected_strand.stroke_width+1)
-        path1 = stroker1.createStroke(path1).united(path1)
+        path1 = QPainterPath()
+        path2 = QPainterPath()
 
-        path2 = QPainterPath(self.second_selected_strand.get_path())
-        stroker2 = QPainterPathStroker()
-        stroker2.setWidth(self.second_selected_strand.stroke_width+1)
-        path2 = stroker2.createStroke(path2).united(path2)
+        if self.first_selected_strand:
+            path1 = QPainterPath(self.first_selected_strand.get_path())
+            stroker1 = QPainterPathStroker()
+            stroker1.setWidth(self.first_selected_strand.stroke_width+1)
+            path1 = stroker1.createStroke(path1).united(path1)
+
+        if self.second_selected_strand:
+            path2 = QPainterPath(self.second_selected_strand.get_path())
+            stroker2 = QPainterPathStroker()
+            stroker2.setWidth(self.second_selected_strand.stroke_width+1)
+            path2 = stroker2.createStroke(path2).united(path2)
 
         return path1.intersected(path2)
 
     def draw(self, painter):
         """Draw the masked strand on the given painter."""
+        if not self.first_selected_strand and not self.second_selected_strand:
+            return  # Don't draw if both referenced strands have been deleted
+
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
@@ -218,25 +232,17 @@ class MaskedStrand(Strand):
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        def get_set_numbers(strand):
-            return [int(n) for n in str(strand.set_number).split('_')]
+        strand_to_draw = self.first_selected_strand or self.second_selected_strand
 
-        set_numbers1 = get_set_numbers(self.first_selected_strand)
-        set_numbers2 = get_set_numbers(self.second_selected_strand)
+        if strand_to_draw:
+            # Draw the stroke line
+            temp_painter.setPen(QPen(strand_to_draw.stroke_color, strand_to_draw.width+strand_to_draw.stroke_width))
+            temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
+            
+            # Draw the main line
+            temp_painter.setPen(QPen(QBrush(strand_to_draw.color), strand_to_draw.width-strand_to_draw.stroke_width))
+            temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
         
-        if set_numbers1[0] == set_numbers2[0]:
-            strand_to_draw = self.first_selected_strand
-        else:
-            strand_to_draw = self.first_selected_strand
-
-        # Draw the stroke line
-        temp_painter.setPen(QPen(strand_to_draw.stroke_color, strand_to_draw.width+strand_to_draw.stroke_width))
-        temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
-        
-        # Draw the main line
-        temp_painter.setPen(QPen(QBrush(strand_to_draw.color), strand_to_draw.width-strand_to_draw.stroke_width))
-        temp_painter.drawLine(strand_to_draw.start, strand_to_draw.end)
-       
         mask_path = self.get_mask_path()
         inverse_path = QPainterPath()
         inverse_path.addRect(QRectF(temp_image.rect()))
@@ -253,14 +259,17 @@ class MaskedStrand(Strand):
 
     def update(self, new_end):
         """Update both selected strands with the new end point."""
-        self.first_selected_strand.update(new_end)
-        self.second_selected_strand.update(new_end)
+        if self.first_selected_strand:
+            self.first_selected_strand.update(new_end)
+        if self.second_selected_strand:
+            self.second_selected_strand.update(new_end)
         self.update_shape()
 
     def set_color(self, new_color):
         """Set the color of the masked strand and the first selected strand."""
         self.color = new_color
-        self.first_selected_strand.set_color(new_color)
+        if self.first_selected_strand:
+            self.first_selected_strand.set_color(new_color)
 
     def get_top_left(self):
         """Get the top-left point of the masked path's bounding rectangle."""
@@ -270,16 +279,34 @@ class MaskedStrand(Strand):
         """Get the bottom-right point of the masked path's bounding rectangle."""
         return self.get_mask_path().boundingRect().bottomRight()
 
+    def remove_attached_strands(self):
+        """Recursively remove all attached strands from both selected strands."""
+        self._attached_strands.clear()
+        if self.first_selected_strand:
+            self.first_selected_strand.remove_attached_strands()
+        if self.second_selected_strand:
+            self.second_selected_strand.remove_attached_strands()
+
     def __getattr__(self, name):
         """
         Custom attribute getter to handle certain attributes.
         This is called when an attribute is not found in the normal places.
         """
-        if name in ['top_left', 'bottom_left', 'top_right', 'bottom_right']:
+        if name == 'attached_strands':
+            return self.attached_strands
+        if self.first_selected_strand and hasattr(self.first_selected_strand, name):
             return getattr(self.first_selected_strand, name)
+        elif self.second_selected_strand and hasattr(self.second_selected_strand, name):
+            return getattr(self.second_selected_strand, name)
         raise AttributeError(f"'MaskedStrand' object has no attribute '{name}'")
 
-    def remove_attached_strands(self):
-        """Recursively remove all attached strands from both selected strands."""
-        self.first_selected_strand.remove_attached_strands()
-        self.second_selected_strand.remove_attached_strands()
+    def __setattr__(self, name, value):
+        """
+        Custom attribute setter to handle 'attached_strands' and 'has_circles'.
+        """
+        if name == 'attached_strands':
+            self._attached_strands = value
+        elif name == 'has_circles':
+            self._has_circles = value
+        else:
+            super().__setattr__(name, value)

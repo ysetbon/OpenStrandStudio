@@ -5,7 +5,7 @@ import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from strand import Strand, AttachedStrand, MaskedStrand
-
+from PyQt5.QtCore import QTimer
 class StrandDrawingCanvas(QWidget):
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -123,7 +123,7 @@ class StrandDrawingCanvas(QWidget):
 
         if isinstance(strand, MaskedStrand):
             painter.setClipping(False)
-            
+
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
         if isinstance(strand, MaskedStrand):
@@ -347,57 +347,154 @@ class StrandDrawingCanvas(QWidget):
             self.setCursor(Qt.OpenHandCursor)
         self.update()
 
+    def force_redraw(self):
+        """Force a complete redraw of the canvas."""
+        self.update()
+        QTimer.singleShot(0, self.update)  # Schedule another update on the next event loop
+
+
     def remove_strand(self, strand):
         logging.info(f"Starting remove_strand for: {strand.layer_name}")
+
+        # Check if the strand is in the list of strands
         if strand not in self.strands:
             logging.warning(f"Strand {strand.layer_name} not found in self.strands")
             return
 
+        # Extract the set number and strand number
         set_number, strand_number = map(int, strand.layer_name.split('_')[:2])
+
+        # Determine if it's a main strand
         is_main_strand = strand_number == 1
 
-        # Collect all strands and masks to be removed
-        strands_to_remove = []
-        masks_to_remove = []
+        if not is_main_strand:
+            # Logic for removing an attached strand
+            self.strands.remove(strand)
+            logging.info(f"Removed attached strand: {strand.layer_name}")
 
-        if is_main_strand:
-            # For main strand (s_1), remove all s_x strands and related masks
-            strands_to_remove = [s for s in self.strands if s.set_number == set_number]
-            masks_to_remove = [s for s in self.strands if isinstance(s, MaskedStrand) and str(set_number) in s.layer_name.split('_')]
+            # Update the parent strand to remove this attached strand
+            parent_strand = self.find_parent_strand(strand)
+            if parent_strand:
+                parent_strand.attached_strands.remove(strand)
+                logging.info(f"Updated parent strand: {parent_strand.layer_name}, remaining attached strands: {[s.layer_name for s in parent_strand.attached_strands]}")
+
+                # Remove the circle associated with this attached strand from the parent strand
+                self.remove_parent_circle(parent_strand, strand)
+
+            # Remove related masked layers specifically associated with the attached strand
+            masked_layers_before = len(self.strands)
+            self.strands = [s for s in self.strands if not (isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand))]
+            masked_layers_removed = masked_layers_before - len(self.strands)
+            logging.info(f"Removed related masked layers. Total masked layers removed: {masked_layers_removed}")
+
         else:
-            # For attached strand (x_y), only remove if it has available sides
-            if any(not circle for circle in strand.has_circles):
-                strands_to_remove = [strand]
-                masks_to_remove = [s for s in self.strands if isinstance(s, MaskedStrand) and f"{set_number}_{strand_number}" in s.layer_name]
+            # Logic for removing a main strand and its related strands
+            strands_to_remove = [strand] + self.get_all_attached_strands(strand) + self.get_all_related_masked_strands(strand)
+            logging.info(f"Main strand identified. Preparing to remove main strand and related strands: {[s.layer_name for s in strands_to_remove]}")
 
-        # Remove collected strands and masks
-        for s in strands_to_remove + masks_to_remove:
-            if s in self.strands:
-                self.strands.remove(s)
-                logging.info(f"Removed {'mask' if isinstance(s, MaskedStrand) else 'strand'}: {s.layer_name}")
+            for s in strands_to_remove:
+                if s in self.strands:
+                    self.strands.remove(s)
+                    logging.info(f"Removed strand: {s.layer_name}")
+
+                    # Remove associated circles
+                    self.remove_strand_circles(s)
+
+            # Remove all masked layers related to this strand
+            self.remove_related_masked_layers(strand)
+
+            # Update layer names for the affected set
+            self.update_layer_names_for_set(set_number)
+
+            # Update set numbers for higher sets
+            self.update_set_numbers_after_main_strand_deletion(set_number)
 
         # Update selection if the removed strand was selected
-        if self.selected_strand in strands_to_remove + masks_to_remove:
+        if self.selected_strand == strand:
             self.selected_strand = None
             self.selected_strand_index = None
             logging.info("Cleared selected strand")
-
-        # Update set numbers and layer names
-        if is_main_strand:
-            self.update_set_numbers(set_number)
-        else:
-            self.update_layer_names_for_set(set_number)
 
         # Refresh the layer panel
         if self.layer_panel:
             logging.info("Refreshing layer panel")
             self.layer_panel.refresh()
 
+        # Force a complete redraw of the canvas
         self.update()
+
+        # Schedule another update to ensure all changes are reflected
+        QTimer.singleShot(0, self.update)
+
         logging.info("Finished remove_strand")
 
-    def update_set_numbers(self, deleted_set_number):
-        logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
+    def remove_related_masked_layers(self, strand):
+        """
+        Remove all masked layers associated with the given main strand and its attachments.
+        """
+        masked_layers_before = len(self.strands)
+        self.strands = [s for s in self.strands if not (isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand))]
+        masked_layers_removed = masked_layers_before - len(self.strands)
+        logging.info(f"Removed related masked layers. Total masked layers removed: {masked_layers_removed}")
+        
+    def remove_strand_circles(self, strand):
+        """
+        Remove any circles associated with the given strand.
+        """
+        if hasattr(strand, 'has_circles'):
+            if strand.has_circles[0]:
+                strand.has_circles[0] = False
+                logging.info(f"Removed start circle for strand: {strand.layer_name}")
+            if strand.has_circles[1]:
+                strand.has_circles[1] = False
+                logging.info(f"Removed end circle for strand: {strand.layer_name}")
+
+    def get_all_related_masked_strands(self, strand):
+        """
+        Get all masked strands that involve the given strand.
+        This includes masks directly involving the main strand or any of its attached strands.
+        """
+        related_masked_strands = []
+        for s in self.strands:
+            if isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand):
+                related_masked_strands.append(s)
+        return related_masked_strands
+
+    def remove_parent_circle(self, parent_strand, attached_strand):
+        """
+        Remove the circle associated with the attached strand from the parent strand.
+        """
+        if parent_strand.end == attached_strand.start:
+            parent_strand.has_circles[1] = False
+            logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
+        elif parent_strand.start == attached_strand.end:
+            parent_strand.has_circles[0] = False
+            logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
+
+    def is_strand_involved_in_mask(self, masked_strand, strand):
+        """
+        Check if a given strand is involved in the masked strand's layer name.
+        """
+        # Adjust logic to accurately reflect how masks are named
+        masked_parts = masked_strand.layer_name.split('_')
+        return any(part == strand.layer_name for part in masked_parts) or strand.layer_name in masked_strand.layer_name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def update_set_numbers_after_main_strand_deletion(self, deleted_set_number):
+        logging.info(f"Updating set numbers after deleting main strand of set {deleted_set_number}")
         for strand in self.strands:
             if strand.set_number > deleted_set_number:
                 strand.set_number -= 1
@@ -422,7 +519,30 @@ class StrandDrawingCanvas(QWidget):
                     strand.layer_name = new_name
                 count += 1
         if self.layer_panel:
-            self.layer_panel.update_layer_names(set_number)
+            self.layer_panel.update_layer_names(set_number)  
+
+    def get_all_attached_strands(self, strand):
+        attached = []
+        for attached_strand in strand.attached_strands:
+            attached.append(attached_strand)
+            attached.extend(self.get_all_attached_strands(attached_strand))
+        return attached
+    def update_set_numbers(self, deleted_set_number):
+        logging.info(f"Updating set numbers after deleting set {deleted_set_number}")
+        for strand in self.strands:
+            if strand.set_number > deleted_set_number:
+                strand.set_number -= 1
+                strand.layer_name = f"{strand.set_number}_{strand.layer_name.split('_')[1]}"
+                logging.info(f"Updated strand {strand.layer_name}'s set number to {strand.set_number}")
+        
+        # Update the strand_colors dictionary
+        self.strand_colors = {k - 1 if k > deleted_set_number else k: v for k, v in self.strand_colors.items()}
+        logging.info(f"Updated strand_colors: {self.strand_colors}")
+        
+        # Update layer names for all strands
+        self.update_layer_names()
+
+
 
     def update_set_numbers(self, deleted_set_number):
         logging.info(f"Updating set numbers after deleting set {deleted_set_number}")

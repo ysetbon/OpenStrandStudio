@@ -7,6 +7,8 @@ from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, MaskedStrand
 
+import logging  # Import the logging module
+
 class MainWindow(QMainWindow):
     def __init__(self):
         """Initialize the main window of the application."""
@@ -274,17 +276,29 @@ class MainWindow(QMainWindow):
 
     def delete_strand(self, index):
         """
-        Delete a strand and update the canvas and layer panel.
+        Delete a strand from the canvas and update the UI accordingly.
 
         Args:
-            index (int): The index of the strand to delete.
+            index (int): The index of the strand to be deleted.
         """
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
-            self.canvas.remove_strand(strand)
+
+            logging.info(f"Deleting strand: {strand.layer_name}")
+            self.canvas.remove_strand(strand)  # Remove the strand from the canvas
+
+            # Refresh the layer panel to reflect changes
             self.layer_panel.refresh()
-            self.canvas.update()
+
+            # Ensure correct state of the canvas
+            self.canvas.force_redraw()
+
+            # Optionally deselect any selection if needed
+            self.canvas.clear_selection()
+
+            # Update the mode to maintain consistency
             self.update_mode(self.current_mode)
+
 
     def start_resize(self, event):
         """

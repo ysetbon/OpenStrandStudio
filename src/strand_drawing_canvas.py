@@ -414,8 +414,10 @@ class StrandDrawingCanvas(QWidget):
 
         # Extract the set number and strand number
         set_number, strand_number = map(int, strand.layer_name.split('_')[:2])
+        
         if strand == self.newest_strand:
             self.newest_strand = None
+        
         # Determine if it's a main strand
         is_main_strand = strand_number == 1
 
@@ -512,16 +514,23 @@ class StrandDrawingCanvas(QWidget):
                 related_masked_strands.append(s)
         return related_masked_strands
 
+
     def remove_parent_circle(self, parent_strand, attached_strand):
         """
         Remove the circle associated with the attached strand from the parent strand.
         """
         if parent_strand.end == attached_strand.start:
-            parent_strand.has_circles[1] = False
-            logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
-        elif parent_strand.start == attached_strand.end:
-            parent_strand.has_circles[0] = False
-            logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
+            # Check if there are other strands attached to the end
+            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.end]
+            if not other_attachments:
+                parent_strand.has_circles[1] = False
+                logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
+        elif parent_strand.start == attached_strand.start:
+            # Check if there are other strands attached to the start
+            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.start]
+            if not other_attachments:
+                parent_strand.has_circles[0] = False
+                logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
 
     def is_strand_involved_in_mask(self, masked_strand, strand):
         """

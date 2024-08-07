@@ -34,6 +34,7 @@ class StrandDrawingCanvas(QWidget):
         self.grid_size = 30  # Size of grid cells
         self.show_grid = True  # Flag to show/hide grid
         self.should_draw_names = False  # Flag to show/hide strand names
+        self.newest_strand = None  # Track the most recently created strand
 
     def setup_modes(self):
         """Set up attach and move modes."""
@@ -50,29 +51,37 @@ class StrandDrawingCanvas(QWidget):
         if self.show_grid:
             self.draw_grid(painter)
 
-        # Draw regular strands first
+        # Draw all strands except the newest one
         for strand in self.strands:
-            if not isinstance(strand, MaskedStrand):
+            if strand != self.newest_strand:
                 if strand == self.selected_strand:
-                    self.draw_highlighted_strand(painter, strand)
+                    if isinstance(strand, MaskedStrand):
+                        self.draw_highlighted_masked_strand(painter, strand)
+                    else:
+                        self.draw_highlighted_strand(painter, strand)
                 else:
                     strand.draw(painter)
 
-        # Draw masked strands on top
-        for strand in self.strands:
-            if isinstance(strand, MaskedStrand):
-                if strand == self.selected_strand:
-                    self.draw_highlighted_strand(painter, strand)
+        # Draw the newest strand last (on top of everything else)
+        if self.newest_strand:
+            if self.newest_strand == self.selected_strand:
+                if isinstance(self.newest_strand, MaskedStrand):
+                    self.draw_highlighted_masked_strand(painter, self.newest_strand)
                 else:
-                    strand.draw(painter)
+                    self.draw_highlighted_strand(painter, self.newest_strand)
+            else:
+                self.newest_strand.draw(painter)
 
+        # Draw the current strand being created (if any)
         if self.current_strand:
             self.current_strand.draw(painter)
 
+        # Draw strand labels if enabled
         if self.should_draw_names:
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
+        # Draw selection rectangle in move mode (if applicable)
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))
@@ -227,9 +236,10 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
         
         if hasattr(strand, 'is_being_deleted') and strand.is_being_deleted:
-            logging.info("Strand is being deleted, skipping button creation")
+            logging.info("Strand is being deleted, skipping creation process")
             return
 
+        # Determine the set number for the new strand
         if isinstance(strand, AttachedStrand):
             set_number = strand.parent.set_number
         elif self.selected_strand:
@@ -239,18 +249,23 @@ class StrandDrawingCanvas(QWidget):
 
         strand.set_number = set_number
 
+        # Assign color to the new strand
         if set_number not in self.strand_colors:
             self.strand_colors[set_number] = QColor('purple')
         strand.set_color(self.strand_colors[set_number])
 
+        # Add the new strand to the strands list
         self.strands.append(strand)
+        
+        # Set this as the newest strand to ensure it's drawn on top
+        self.newest_strand = strand
 
+        # Update layer panel
         if self.layer_panel:
             set_number = int(strand.set_number) if isinstance(strand.set_number, str) else strand.set_number
             count = len([s for s in self.strands if s.set_number == set_number])
             strand.layer_name = f"{set_number}_{count}"
             
-            # Only add a new button if it's a genuinely new strand, not during deletion
             if not hasattr(strand, 'is_being_deleted'):
                 logging.info(f"Adding new layer button for set {set_number}, count {count}")
                 self.layer_panel.add_layer_button(set_number, count)
@@ -260,6 +275,7 @@ class StrandDrawingCanvas(QWidget):
             
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
 
+        # Select the new strand if it's not an attached strand
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
         
@@ -270,6 +286,8 @@ class StrandDrawingCanvas(QWidget):
             self.layer_panel.update_attachable_states()
         
         logging.info("Finished on_strand_created")
+
+
     def attach_strand(self, parent_strand, new_strand):
         """Attach a new strand to a parent strand."""
         parent_strand.attached_strands.append(new_strand)
@@ -280,6 +298,9 @@ class StrandDrawingCanvas(QWidget):
         
         # Append the new strand to the strands list
         self.strands.append(new_strand)
+        
+        # Set this as the newest strand to ensure it's drawn on top
+        self.newest_strand = new_strand
         
         # Calculate the correct count for the new strand
         count = len([s for s in self.strands if s.set_number == new_strand.set_number])
@@ -299,7 +320,37 @@ class StrandDrawingCanvas(QWidget):
         
         # Update the canvas
         self.update()
+        
+        logging.info(f"Attached new strand: {new_strand.layer_name} to parent: {parent_strand.layer_name}")
 
+    def move_strand_to_top(self, strand):
+        """Move a strand to the top of the drawing order and update the layer panel."""
+        if strand in self.strands:
+            # Remove the strand from its current position
+            self.strands.remove(strand)
+            # Add the strand to the end of the list (top of the drawing order)
+            self.strands.append(strand)
+            
+            # Update the layer panel to reflect the new order
+            if self.layer_panel:
+                # Get the current index of the strand in the layer panel
+                current_index = self.layer_panel.layer_buttons.index(
+                    next(button for button in self.layer_panel.layer_buttons if button.text() == strand.layer_name)
+                )
+                
+                # Move the corresponding button to the top of the layer panel
+                button = self.layer_panel.layer_buttons.pop(current_index)
+                self.layer_panel.layer_buttons.insert(0, button)
+                
+                # Refresh the layer panel UI
+                self.layer_panel.refresh()
+            
+            # Update the canvas
+            self.update()
+            
+            logging.info(f"Moved strand {strand.layer_name} to top")
+        else:
+            logging.warning(f"Attempted to move non-existent strand to top: {strand.layer_name}")
     def add_strand(self, strand):
         """Add a strand to the canvas."""
         self.strands.append(strand)
@@ -363,7 +414,8 @@ class StrandDrawingCanvas(QWidget):
 
         # Extract the set number and strand number
         set_number, strand_number = map(int, strand.layer_name.split('_')[:2])
-
+        if strand == self.newest_strand:
+            self.newest_strand = None
         # Determine if it's a main strand
         is_main_strand = strand_number == 1
 

@@ -253,6 +253,7 @@ class MainWindow(QMainWindow):
         new_strand.layer_name = f"{set_number}_1"
         
         self.canvas.add_strand(new_strand)
+        self.canvas.newest_strand = new_strand  # Set as the newest strand
         self.layer_panel.add_layer_button(set_number)
         self.select_strand(len(self.canvas.strands) - 1)
         

@@ -44,26 +44,28 @@ class LayerPanel(QWidget):
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
         
-        # Create and set up control buttons
+# In the __init__ method of LayerPanel class
+
         self.draw_names_button = QPushButton("Draw Names")
+        self.draw_names_button.setStyleSheet("font-weight: bold; background-color: #E6E6FA;")
         self.draw_names_button.clicked.connect(self.request_draw_names)
-        self.should_draw_names = False
-        
+
         self.lock_layers_button = QPushButton("Lock Layers")
+        self.lock_layers_button.setStyleSheet("font-weight: bold; background-color: orange;")
         self.lock_layers_button.setCheckable(True)
         self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
-        
+
         self.add_new_strand_button = QPushButton("Add New Strand")
-        self.add_new_strand_button.setStyleSheet("background-color: lightgreen;")
+        self.add_new_strand_button.setStyleSheet("font-weight: bold; background-color: lightgreen;")
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
-        
-        self.delete_strand_button = QPushButton("Delete Strand")
-        self.delete_strand_button.setStyleSheet("background-color: #FF6B6B;")
+
+        self.delete_strand_button = QPushButton("Delete Strand (beta)")
+        self.delete_strand_button.setStyleSheet("font-weight: bold; background-color: #FF6B6B;")
         self.delete_strand_button.clicked.connect(self.request_delete_strand)
         self.delete_strand_button.setEnabled(False)
-        
+
         self.deselect_all_button = QPushButton("Deselect All")
-        self.deselect_all_button.setStyleSheet("background-color: lightyellow;")
+        self.deselect_all_button.setStyleSheet("font-weight: bold; background-color: lightyellow;")
         self.deselect_all_button.clicked.connect(self.deselect_all)
 
         # Add buttons to bottom panel in the desired order

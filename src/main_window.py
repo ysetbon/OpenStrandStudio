@@ -20,10 +20,11 @@ class MainWindow(QMainWindow):
         self.current_mode = "attach"  # Set initial mode to "attach"
         self.set_attach_mode()  # Set the initial mode
 
+
     def setup_ui(self):
         """Set up the user interface of the main window."""
         # Set the window icon
-        icon_path = r"C:\Users\YonatanSetbon\.vscode\lanyard_program_beta\box_stitch.ico"
+        icon_path = r"C:\Users\YonatanSetbon\.vscode\openStrand\src\box_stitch.ico"
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 

@@ -51,37 +51,30 @@ class StrandDrawingCanvas(QWidget):
         if self.show_grid:
             self.draw_grid(painter)
 
-        # Draw all strands except the newest one
+        # Create a temporary image for all strands
+        temp_image = QImage(self.size(), QImage.Format_ARGB32_Premultiplied)
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw all strands in their current order
         for strand in self.strands:
-            if strand != self.newest_strand:
-                if strand == self.selected_strand:
-                    if isinstance(strand, MaskedStrand):
-                        self.draw_highlighted_masked_strand(painter, strand)
-                    else:
-                        self.draw_highlighted_strand(painter, strand)
-                else:
-                    strand.draw(painter)
-
-        # Draw the newest strand last (on top of everything else)
-        if self.newest_strand:
-            if self.newest_strand == self.selected_strand:
-                if isinstance(self.newest_strand, MaskedStrand):
-                    self.draw_highlighted_masked_strand(painter, self.newest_strand)
-                else:
-                    self.draw_highlighted_strand(painter, self.newest_strand)
+            if strand == self.selected_strand:
+                self.draw_highlighted_strand(temp_painter, strand)
             else:
-                self.newest_strand.draw(painter)
+                strand.draw(temp_painter)
 
-        # Draw the current strand being created (if any)
+        # Draw the temporary image with all strands onto the main painter
+        temp_painter.end()
+        painter.drawImage(0, 0, temp_image)
+
         if self.current_strand:
             self.current_strand.draw(painter)
 
-        # Draw strand labels if enabled
         if self.should_draw_names:
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
-        # Draw selection rectangle in move mode (if applicable)
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))

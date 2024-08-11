@@ -27,5 +27,5 @@ if __name__ == '__main__':
     window.show()
     
     # Start the application's event loop and provide an exit code when it's done
-    # sys.exit() ensures a clean exit and returns the exit code to the OS
+    # sys.exit() ensures a clean exit and returns the exit code to the OS.
     sys.exit(app.exec_())

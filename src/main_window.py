@@ -285,23 +285,53 @@ class MainWindow(QMainWindow):
         """
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
-
             logging.info(f"Deleting strand: {strand.layer_name}")
-            self.canvas.remove_strand(strand)  # Remove the strand from the canvas
 
-            # Refresh the layer panel to reflect changes
-            self.layer_panel.refresh()
+            # Get the set number of the strand being deleted
+            set_number = strand.set_number
+
+            # Check if this is a main strand (i.e., the first strand in its set)
+            is_main_strand = strand.layer_name.split('_')[1] == '1'
+
+            # Prepare a list of strands to remove
+            strands_to_remove = [strand]
+
+            # If it's a main strand, we need to remove all strands in the set
+            if is_main_strand:
+                strands_to_remove.extend([s for s in self.canvas.strands if s.set_number == set_number and s != strand])
+
+            # Delete the selected strand and its related strands
+            for s in strands_to_remove:
+                self.canvas.remove_strand(s)
+
+            # Delete all masks that use the deleted strand or its attached strands
+            masks_to_delete = [s for s in self.canvas.strands if isinstance(s, MaskedStrand) and 
+                            (s.first_selected_strand.set_number == set_number or 
+                                s.second_selected_strand.set_number == set_number)]
+
+            for mask in masks_to_delete:
+                self.canvas.remove_strand(mask)
+                logging.info(f"Deleting mask: {mask.layer_name}")
+
+            # Collect indices of removed strands
+            removed_indices = []
+            for i, s in enumerate(self.canvas.strands):
+                if s in strands_to_remove or s in masks_to_delete:
+                    removed_indices.append(i)
+
+            # Update the layer panel
+            self.layer_panel.update_after_deletion(set_number, removed_indices, is_main_strand)
 
             # Ensure correct state of the canvas
             self.canvas.force_redraw()
 
-            # Optionally deselect any selection if needed
+            # Clear any selection
             self.canvas.clear_selection()
 
             # Update the mode to maintain consistency
             self.update_mode(self.current_mode)
 
-
+            logging.info("Finished deleting strand and updating UI")
     def start_resize(self, event):
         """
         Start resizing the splitter.

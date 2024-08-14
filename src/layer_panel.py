@@ -6,6 +6,7 @@ import logging
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
 from strand import MaskedStrand
+
 class LayerPanel(QWidget):
     # Custom signals for various events
     new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
@@ -44,8 +45,6 @@ class LayerPanel(QWidget):
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
         
-# In the __init__ method of LayerPanel class
-
         self.draw_names_button = QPushButton("Draw Names")
         self.draw_names_button.setStyleSheet("font-weight: bold; background-color: #E6E6FA;")
         self.draw_names_button.clicked.connect(self.request_draw_names)
@@ -98,6 +97,9 @@ class LayerPanel(QWidget):
         self.lock_mode = False
         self.locked_layers = set()
         self.previously_locked_layers = set()
+
+        # Initialize should_draw_names attribute
+        self.should_draw_names = False
 
     def request_draw_names(self):
         """Toggle the drawing of strand names and emit the corresponding signal."""
@@ -270,8 +272,6 @@ class LayerPanel(QWidget):
             button.deleteLater()
             self.scroll_layout.removeWidget(button)
 
-
-
     def update_masked_layers(self, deleted_set_number):
         for button in self.layer_buttons[:]:  # Create a copy of the list to iterate over
             parts = button.text().split('_')
@@ -281,14 +281,12 @@ class LayerPanel(QWidget):
                     index = self.layer_buttons.index(button)
                     self.remove_layer_button(index)
 
-
-    def update_after_deletion(self, deleted_set_number, indices_to_remove, is_main_strand):
-        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, indices_to_remove={indices_to_remove}, is_main_strand={is_main_strand}")
-        # Sort the removed indices in descending order to avoid index shifting issues
-        indices_to_remove.sort(reverse=True)
+    def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand):
+        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={len(strands_removed)}, is_main_strand={is_main_strand}")
         
         # Remove the corresponding buttons
-        for index in indices_to_remove:
+        indices_to_remove = [i for i, button in enumerate(self.layer_buttons) if button.text().split('_')[0] == str(deleted_set_number)]
+        for index in sorted(indices_to_remove, reverse=True):
             if 0 <= index < len(self.layer_buttons):
                 button = self.layer_buttons.pop(index)
                 button.setParent(None)
@@ -305,37 +303,27 @@ class LayerPanel(QWidget):
                 del self.set_colors[deleted_set_number]
                 logging.info(f"Deleted set color for set {deleted_set_number}")
             
-            # Decrement set numbers greater than the deleted set
-            for i, button in enumerate(self.layer_buttons):
-                parts = button.text().split('_')
-                set_number = int(parts[0])
-                if set_number > deleted_set_number:
-                    new_set_number = set_number - 1
-                    new_text = f"{new_set_number}_{parts[1]}"
-                    button.setText(new_text)
-                    button.set_color(self.set_colors.get(new_set_number, QColor('purple')))
-                    logging.info(f"Updated button text: {button.text()}")
-            
-            self.set_counts = {k if k < deleted_set_number else k - 1: v for k, v in self.set_counts.items()}
-            self.set_colors = {k if k < deleted_set_number else k - 1: v for k, v in self.set_colors.items()}
-            
-            self.current_set = max(self.set_counts.keys(), default=0)
+            # Update the current set to the highest remaining set number
+            if self.set_counts:
+                self.current_set = max(self.set_counts.keys())
+            else:
+                self.current_set = 0
             logging.info(f"Updated current_set to {self.current_set}")
         else:
             # For non-main strands, just update the count for the set
             if deleted_set_number in self.set_counts:
-                self.set_counts[deleted_set_number] -= 1
-                logging.info(f"Decremented set count for set {deleted_set_number}")
+                self.set_counts[deleted_set_number] -= len(strands_removed)
+                logging.info(f"Updated set count for set {deleted_set_number} to {self.set_counts[deleted_set_number]}")
             
             # Update the numbering only for the affected set
             self.update_button_numbering_for_set(deleted_set_number)
         
-        # Update masked layers
-        self.update_masked_layers(deleted_set_number)
+        # Do not update masked layers here
 
         self.update_layer_button_states()
         self.update_attachable_states()
         logging.info("Finished update_after_deletion")
+
 
     def update_button_numbering_for_set(self, set_number):
         logging.info(f"Starting update_button_numbering_for_set: set_number={set_number}")
@@ -439,7 +427,6 @@ class LayerPanel(QWidget):
         else:
             self.delete_strand_button.setEnabled(False)
 
-
     def on_strand_attached(self):
         """Called when a strand is attached to another strand."""
         self.update_layer_button_states()
@@ -449,6 +436,7 @@ class LayerPanel(QWidget):
         self.current_set = max(self.set_counts.keys(), default=0) + 1
         self.set_counts[self.current_set] = 0
         self.set_colors[self.current_set] = QColor('purple')
+
     def delete_strand(self, index):
         """
         Delete a strand and update the canvas and layer panel.
@@ -460,6 +448,7 @@ class LayerPanel(QWidget):
             strand = self.canvas.strands[index]
             self.canvas.remove_strand(strand)
             self.canvas.update()
+
     def clear_selection(self):
         """Clear the selection of all layer buttons."""
         for button in self.layer_buttons:
@@ -508,7 +497,7 @@ class LayerPanel(QWidget):
 
     def on_strands_deleted(self, indices):
         """Handle the deletion of multiple strands from the canvas."""
-        for index in indices:
+        for index in sorted(indices, reverse=True):
             self.remove_layer_button(index)
         self.update_layer_button_states()
 
@@ -537,8 +526,7 @@ class LayerPanel(QWidget):
         
         # Add buttons for all current strands
         for i, strand in enumerate(self.canvas.strands):
-            parts = strand.layer_name.split('_')
-            set_number = int(parts[0])
+            set_number = strand.set_number
             
             if set_number not in self.set_counts:
                 self.set_counts[set_number] = 0
@@ -569,7 +557,6 @@ class LayerPanel(QWidget):
         self.current_set = max(self.set_counts.keys(), default=0)
         
         logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
-
     def get_layer_button(self, index):
         """Get the layer button at the specified index."""
         if 0 <= index < len(self.layer_buttons):

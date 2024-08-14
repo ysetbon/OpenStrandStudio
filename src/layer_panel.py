@@ -282,11 +282,10 @@ class LayerPanel(QWidget):
                     self.remove_layer_button(index)
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand):
-        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={len(strands_removed)}, is_main_strand={is_main_strand}")
+        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}")
         
         # Remove the corresponding buttons
-        indices_to_remove = [i for i, button in enumerate(self.layer_buttons) if button.text().split('_')[0] == str(deleted_set_number)]
-        for index in sorted(indices_to_remove, reverse=True):
+        for index in sorted(strands_removed, reverse=True):
             if 0 <= index < len(self.layer_buttons):
                 button = self.layer_buttons.pop(index)
                 button.setParent(None)
@@ -314,11 +313,12 @@ class LayerPanel(QWidget):
             if deleted_set_number in self.set_counts:
                 self.set_counts[deleted_set_number] -= len(strands_removed)
                 logging.info(f"Updated set count for set {deleted_set_number} to {self.set_counts[deleted_set_number]}")
-            
-            # Update the numbering only for the affected set
-            self.update_button_numbering_for_set(deleted_set_number)
         
-        # Do not update masked layers here
+        # Update the numbering for the affected set
+        self.update_button_numbering_for_set(deleted_set_number)
+        
+        # Update masked layers
+        self.update_masked_layers(deleted_set_number)
 
         self.update_layer_button_states()
         self.update_attachable_states()

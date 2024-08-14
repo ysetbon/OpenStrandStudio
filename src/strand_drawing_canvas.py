@@ -439,22 +439,6 @@ class StrandDrawingCanvas(QWidget):
         return related_masked_strands
 
 
-    def remove_parent_circle(self, parent_strand, attached_strand):
-        """
-        Remove the circle associated with the attached strand from the parent strand.
-        """
-        if parent_strand.end == attached_strand.start:
-            # Check if there are other strands attached to the end
-            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.end]
-            if not other_attachments:
-                parent_strand.has_circles[1] = False
-                logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
-        elif parent_strand.start == attached_strand.start:
-            # Check if there are other strands attached to the start
-            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.start]
-            if not other_attachments:
-                parent_strand.has_circles[0] = False
-                logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
 
 
 
@@ -487,6 +471,18 @@ class StrandDrawingCanvas(QWidget):
             return True
         
         return False
+    def update_layer_names_for_attached_strand_deletion(self, set_number):
+        logging.info(f"Updating layer names for attached strand deletion in set {set_number}")
+        count = 1
+        for strand in self.strands:
+            if strand.set_number == set_number and isinstance(strand, AttachedStrand):
+                new_name = f"{set_number}_{count + 1}"  # +1 because main strand is always _1
+                if strand.layer_name != new_name:
+                    logging.info(f"Updated strand name from {strand.layer_name} to {new_name}")
+                    strand.layer_name = new_name
+                count += 1
+        if self.layer_panel:
+            self.layer_panel.update_layer_names(set_number)
 
     def remove_attached_strands(self, parent_strand):
         """Recursively remove all attached strands."""
@@ -498,7 +494,6 @@ class StrandDrawingCanvas(QWidget):
         parent_strand.attached_strands.clear()  # Clear the list of attached strands
 
     def find_parent_strand(self, attached_strand):
-        """Find the parent strand of an attached strand."""
         for strand in self.strands:
             if attached_strand in strand.attached_strands:
                 return strand
@@ -651,7 +646,6 @@ class StrandDrawingCanvas(QWidget):
             strand.update_shape()
         self.update()
 
-
     def remove_strand(self, strand):
         logging.info(f"Starting remove_strand for: {strand.layer_name}")
 
@@ -661,23 +655,36 @@ class StrandDrawingCanvas(QWidget):
 
         set_number = strand.set_number
         is_main_strand = strand.layer_name.split('_')[1] == '1'
+        is_attached_strand = isinstance(strand, AttachedStrand)
 
         if self.newest_strand == strand:
             self.newest_strand = None
 
-        # Collect all strands to remove
+        # Collect strands to remove
         strands_to_remove = [strand]
         if is_main_strand:
             strands_to_remove.extend(self.get_all_attached_strands(strand))
 
-        # Collect all masks to remove
-        masks_to_remove = [
-            s for s in self.strands 
-            if isinstance(s, MaskedStrand) and 
-            any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove)
-        ]
+        # Collect masks to remove
+        masks_to_remove = []
+        for s in self.strands:
+            if isinstance(s, MaskedStrand):
+                if is_attached_strand:
+                    # For attached strands, only remove masks directly involving this strand
+                    if strand.layer_name in s.layer_name:
+                        masks_to_remove.append(s)
+                else:
+                    # For main strands, remove all related masks
+                    if any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove):
+                        masks_to_remove.append(s)
 
-        # Remove all collected strands and masks
+        # Collect indices before removing strands
+        indices_to_remove = []
+        for s in strands_to_remove + masks_to_remove:
+            if s in self.strands:
+                indices_to_remove.append(self.strands.index(s))
+
+        # Remove collected strands and masks
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
@@ -691,17 +698,50 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = None
             logging.info("Cleared selected strand")
 
+        # Update parent strand's attached_strands list and remove circle if it's an attached strand
+        if is_attached_strand:
+            parent_strand = self.find_parent_strand(strand)
+            if parent_strand:
+                parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
+                logging.info(f"Updated parent strand {parent_strand.layer_name} attached_strands list")
+                self.remove_parent_circle(parent_strand, strand)
+
         # Update layer names and set numbers
-        self.update_layer_names_for_set(set_number)
         if is_main_strand:
+            self.update_layer_names_for_set(set_number)
             self.update_set_numbers_after_main_strand_deletion(set_number)
+        elif is_attached_strand:
+            self.update_layer_names_for_attached_strand_deletion(set_number)
 
         # Force a complete redraw of the canvas
         self.update()
         QTimer.singleShot(0, self.update)
 
+        # Update the layer panel
+        if self.layer_panel:
+            self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
+
         logging.info("Finished remove_strand")
         return True
+
+    def remove_parent_circle(self, parent_strand, attached_strand):
+        """
+        Remove the circle associated with the attached strand from the parent strand.
+        """
+        if parent_strand.end == attached_strand.start:
+            # Check if there are other strands attached to the end
+            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.end]
+            if not other_attachments:
+                parent_strand.has_circles[1] = False
+                logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
+        elif parent_strand.start == attached_strand.start:
+            # Check if there are other strands attached to the start
+            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.start]
+            if not other_attachments:
+                parent_strand.has_circles[0] = False
+                logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
+
+
 
     def remove_main_strand(self, strand, set_number):
         logging.info(f"Removing main strand and related strands for set {set_number}")

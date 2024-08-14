@@ -277,9 +277,12 @@ class LayerPanel(QWidget):
             parts = button.text().split('_')
             if len(parts) > 2:  # This is a masked layer
                 if str(deleted_set_number) in parts:
-                    # Remove this masked layer button
-                    index = self.layer_buttons.index(button)
-                    self.remove_layer_button(index)
+                    # Check if all components of this masked layer still exist
+                    component_exists = all(any(self.canvas.strands[i].layer_name.startswith(p) for i in range(len(self.canvas.strands))) for p in parts[:2])
+                    if not component_exists:
+                        # Remove this masked layer button
+                        index = self.layer_buttons.index(button)
+                        self.remove_layer_button(index)
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand):
         logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}")
@@ -329,13 +332,19 @@ class LayerPanel(QWidget):
         logging.info(f"Starting update_button_numbering_for_set: set_number={set_number}")
         count = 1
         for button in self.layer_buttons:
-            if button.text().startswith(f"{set_number}_"):
-                new_text = f"{set_number}_{count}"
-                if button.text() != new_text:
-                    logging.info(f"Updated button text from {button.text()} to {new_text}")
-                    button.setText(new_text)
-                count += 1
-        logging.info("Finished update_button_numbering_for_set")        
+            button_text = button.text()
+            parts = button_text.split('_')
+            if parts[0] == str(set_number):
+                if len(parts) == 2:  # Regular strand
+                    new_text = f"{set_number}_{count}"
+                    if button_text != new_text:
+                        logging.info(f"Updated button text from {button_text} to {new_text}")
+                        button.setText(new_text)
+                    count += 1
+                else:  # Masked layer
+                    logging.info(f"Skipping renumbering for masked layer: {button_text}")
+        logging.info("Finished update_button_numbering_for_set")
+    
 
     def update_layer_buttons_after_deletion(self, deleted_set_number, indices_to_remove):
         # Remove buttons for deleted strands

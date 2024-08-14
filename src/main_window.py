@@ -5,7 +5,7 @@ import os
 
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
-from strand import Strand, MaskedStrand
+from strand import Strand, AttachedStrand, MaskedStrand
 
 import logging  # Import the logging module
 
@@ -287,37 +287,29 @@ class MainWindow(QMainWindow):
             strand = self.canvas.strands[index]
             logging.info(f"Deleting strand: {strand.layer_name}")
 
-            # Get the set number of the strand being deleted
             set_number = strand.set_number
-
-            # Check if this is a main strand (i.e., the first strand in its set)
             is_main_strand = strand.layer_name.split('_')[1] == '1'
+            is_attached_strand = isinstance(strand, AttachedStrand)
 
-            # Prepare a list of strands to remove
             strands_to_remove = [strand]
-
-            # If it's a main strand, we need to remove all strands in the set
             if is_main_strand:
                 strands_to_remove.extend([s for s in self.canvas.strands if s.set_number == set_number and s != strand])
 
-            # Delete the selected strand and its related strands
-            for s in strands_to_remove:
+            # Delete masks that are directly related to the deleted strand
+            masks_to_delete = []
+            for s in self.canvas.strands:
+                if isinstance(s, MaskedStrand):
+                    if strand.layer_name in s.layer_name.split('_'):
+                        masks_to_delete.append(s)
+                        logging.info(f"Marking mask for deletion: {s.layer_name}")
+
+            # Remove the strands and masks
+            for s in strands_to_remove + masks_to_delete:
                 self.canvas.remove_strand(s)
+                logging.info(f"Removed strand/mask: {s.layer_name}")
 
-            # Delete all masks that use the deleted strand or its attached strands
-            masks_to_delete = [s for s in self.canvas.strands if isinstance(s, MaskedStrand) and 
-                            (s.first_selected_strand.set_number == set_number or 
-                                s.second_selected_strand.set_number == set_number)]
-
-            for mask in masks_to_delete:
-                self.canvas.remove_strand(mask)
-                logging.info(f"Deleting mask: {mask.layer_name}")
-
-            # Collect indices of removed strands
-            removed_indices = []
-            for i, s in enumerate(self.canvas.strands):
-                if s in strands_to_remove or s in masks_to_delete:
-                    removed_indices.append(i)
+            # Collect indices of removed strands and masks
+            removed_indices = [i for i, s in enumerate(self.canvas.strands) if s in strands_to_remove + masks_to_delete]
 
             # Update the layer panel
             self.layer_panel.update_after_deletion(set_number, removed_indices, is_main_strand)

@@ -670,8 +670,9 @@ class StrandDrawingCanvas(QWidget):
         for s in self.strands:
             if isinstance(s, MaskedStrand):
                 if is_attached_strand:
-                    # For attached strands, only remove masks directly involving this strand
-                    if strand.layer_name in s.layer_name:
+                    # For attached strands, only remove masks that exclusively involve this strand
+                    mask_parts = s.layer_name.split('_')
+                    if len(mask_parts) == 4 and f"{strand.set_number}_{strand.layer_name.split('_')[1]}" in mask_parts:
                         masks_to_remove.append(s)
                 else:
                     # For main strands, remove all related masks

@@ -1,31 +1,30 @@
-# Import the sys module to access system-specific parameters and functions
 import sys
-
-# Import logging module for logging configuration
+import os
 import logging
-
-# Import QApplication from PyQt5.QtWidgets, which manages the GUI application's control flow and main settings
 from PyQt5.QtWidgets import QApplication
-
-# Import the MainWindow class from the main_window module (assumes main_window.py is in the same directory)
+from PyQt5.QtGui import QIcon
 from main_window import MainWindow
 
-# This conditional checks if the script is being run directly (as opposed to being imported)
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 if __name__ == '__main__':
-    # Set up logging configuration
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     
-    # Create a new QApplication instance
-    # sys.argv is passed to allow command line arguments to control the application
     app = QApplication(sys.argv)
     
-    # Create an instance of the MainWindow class
-    # This will set up the main GUI window of the application
-    window = MainWindow()
+    # Set the icon for the entire application
+    app_icon = resource_path("box_stitch.ico")
+    app.setWindowIcon(QIcon(app_icon))
     
-    # Make the main window visible
+    window = MainWindow()
     window.show()
     
-    # Start the application's event loop and provide an exit code when it's done
-    # sys.exit() ensures a clean exit and returns the exit code to the OS.
     sys.exit(app.exec_())

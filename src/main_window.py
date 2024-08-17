@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.set_attach_mode()
 
     def setup_ui(self):
-        icon_path = r"C:\Users\YonatanSetbon\.vscode\openStrand\src\box_stitch.ico"
+        icon_path = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico"
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 

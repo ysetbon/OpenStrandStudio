@@ -158,18 +158,26 @@ class MaskedStrand(Strand):
     """
     Represents a strand that is a result of masking two other strands.
     """
-    def __init__(self, first_selected_strand, second_selected_strand):
+    def __init__(self, first_selected_strand, second_selected_strand, set_number=None):
         self.first_selected_strand = first_selected_strand
         self.second_selected_strand = second_selected_strand
         self._attached_strands = []  # Private attribute to store attached strands
         self._has_circles = [False, False]  # Private attribute for has_circles
-        super().__init__(first_selected_strand.start, first_selected_strand.end, first_selected_strand.width)
-        self.set_number = int(f"{first_selected_strand.set_number}{second_selected_strand.set_number}")
-        self.color = first_selected_strand.color
-        self.stroke_color = first_selected_strand.stroke_color
-        self.stroke_width = first_selected_strand.stroke_width
-        self.layer_name = f"{first_selected_strand.layer_name}_{second_selected_strand.layer_name}"
-        self.update_shape()
+        
+        if first_selected_strand:
+            super().__init__(first_selected_strand.start, first_selected_strand.end, first_selected_strand.width)
+            self.color = first_selected_strand.color
+            self.stroke_color = first_selected_strand.stroke_color
+            self.stroke_width = first_selected_strand.stroke_width
+            self.layer_name = f"{first_selected_strand.layer_name}_{second_selected_strand.layer_name}"
+            if set_number is None:
+                self.set_number = int(f"{first_selected_strand.set_number}{second_selected_strand.set_number}")
+            else:
+                self.set_number = set_number
+        else:
+            # Temporary initialization
+            super().__init__(QPointF(0, 0), QPointF(1, 1), 1)
+            self.set_number = set_number
 
     @property
     def attached_strands(self):

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSplitter
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSplitter, QFileDialog
 from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QIcon, QColor
 import os
@@ -6,6 +6,7 @@ import os
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, AttachedStrand, MaskedStrand
+from save_load_manager import save_strands, load_strands, apply_loaded_strands
 
 import logging
 
@@ -33,10 +34,14 @@ class MainWindow(QMainWindow):
         self.move_button = QPushButton("Move Mode")
         self.toggle_grid_button = QPushButton("Toggle Grid")
         self.angle_adjust_button = QPushButton("Angle Adjust Mode")
+        self.save_button = QPushButton("Save")
+        self.load_button = QPushButton("Load")
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
         button_layout.addWidget(self.toggle_grid_button)
         button_layout.addWidget(self.angle_adjust_button)
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.load_button)
 
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
@@ -134,6 +139,9 @@ class MainWindow(QMainWindow):
         self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
         self.layer_panel.strand_deleted.connect(self.delete_strand)
 
+        self.save_button.clicked.connect(self.save_project)
+        self.load_button.clicked.connect(self.load_project)
+
     def handle_color_change(self, set_number, color):
         self.canvas.update_color_for_set(set_number, color)
         self.layer_panel.update_colors_for_set(set_number, color)
@@ -180,7 +188,10 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)
         if event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
-            self.toggle_angle_adjust_mode()
+            if self.canvas.selected_strand and not isinstance(self.canvas.selected_strand, MaskedStrand):
+                self.toggle_angle_adjust_mode()
+            elif self.canvas.selected_strand and isinstance(self.canvas.selected_strand, MaskedStrand):
+                print("Angle adjustment is not available for masked layers.")
         elif self.canvas.is_angle_adjusting:
             self.canvas.angle_adjust_mode.handle_key_press(event)
 
@@ -202,6 +213,10 @@ class MainWindow(QMainWindow):
 
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
+            if isinstance(self.canvas.selected_strand, MaskedStrand):
+                print("Angle adjustment is not available for masked layers.")
+                return
+            
             if self.canvas.is_angle_adjusting:
                 # Exit angle adjust mode
                 self.canvas.angle_adjust_mode.confirm_adjustment()
@@ -298,3 +313,16 @@ class MainWindow(QMainWindow):
 
     def update_locked_layers(self, locked_layers, lock_mode_active):
         self.canvas.move_mode.set_locked_layers(locked_layers, lock_mode_active)
+
+    def save_project(self):
+        filename, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "JSON Files (*.json)")
+        if filename:
+            save_strands(self.canvas.strands, filename)
+            logging.info(f"Project saved to {filename}")
+
+    def load_project(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "Load Project", "", "JSON Files (*.json)")
+        if filename:
+            loaded_strands = load_strands(filename, self.canvas)
+            apply_loaded_strands(self.canvas, loaded_strands)
+            logging.info(f"Project loaded from {filename}")

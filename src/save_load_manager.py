@@ -87,8 +87,7 @@ def load_strands(filename, canvas):
         strand.stroke_width = strand_data["stroke_width"]
         strand.has_circles = strand_data["has_circles"]
         strand.layer_name = strand_data["layer_name"]
-        if strand_data["type"] != "MaskedStrand":  # We've already set this for MaskedStrand
-            strand.set_number = strand_data["set_number"]
+        strand.set_number = strand_data["set_number"]
         strand.is_first_strand = strand_data["is_first_strand"]
         strand.is_start_side = strand_data["is_start_side"]
         
@@ -125,10 +124,15 @@ def load_strands(filename, canvas):
                 strand.update_side_line()
     
     return strands
+
 def apply_loaded_strands(canvas, strands):
     canvas.strands = strands
-    if strands:  # Check if strands list is not empty
-        canvas.update_color_for_set(strands[0].set_number, strands[0].color)
+    canvas.strand_colors = {}  # Reset the strand colors dictionary
+    for strand in strands:
+        canvas.strand_colors[strand.set_number] = strand.color
+        canvas.update_color_for_set(strand.set_number, strand.color)
+    
+    if strands:
         canvas.newest_strand = strands[-1]
     canvas.is_first_strand = False
     canvas.update()

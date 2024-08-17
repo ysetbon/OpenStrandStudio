@@ -7,46 +7,57 @@ from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, AttachedStrand, MaskedStrand
 
-import logging  # Import the logging module
+import logging
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        """Initialize the main window of the application."""
         super().__init__()
         self.setWindowTitle("OpenStrand Studio")
-        self.setMinimumSize(900, 900)  # Set minimum window size
-        self.setup_ui()  # Setup the user interface
-        self.setup_connections()  # Setup signal connections
-        self.current_mode = "attach"  # Set initial mode to "attach"
-        self.set_attach_mode()  # Set the initial mode
-
+        self.setMinimumSize(900, 900)
+        self.setup_ui()
+        self.setup_connections()
+        self.current_mode = "attach"
+        self.set_attach_mode()
 
     def setup_ui(self):
-        """Set up the user interface of the main window."""
-        # Set the window icon
         icon_path = r"C:\Users\YonatanSetbon\.vscode\openStrand\src\box_stitch.ico"
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
-        # Create central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
 
-        # Create button layout and buttons
         button_layout = QHBoxLayout()
         self.attach_button = QPushButton("Attach Mode")
-        self.move_button = QPushButton("Move Sides Mode")
+        self.move_button = QPushButton("Move Mode")
         self.toggle_grid_button = QPushButton("Toggle Grid")
+        self.angle_adjust_button = QPushButton("Angle Adjust Mode")
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
         button_layout.addWidget(self.toggle_grid_button)
+        button_layout.addWidget(self.angle_adjust_button)
 
-        # Create canvas and layer panel
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
 
-        # Modify the Lock Layers button to be orange and bold
+        self.setup_button_styles()
+
+        self.splitter = QSplitter(Qt.Horizontal)
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.addLayout(button_layout)
+        left_layout.addWidget(self.canvas)
+        self.splitter.addWidget(left_widget)
+        self.splitter.addWidget(self.layer_panel)
+
+        self.splitter.setHandleWidth(0)
+        main_layout.addWidget(self.splitter)
+
+        left_widget.setMinimumWidth(200)
+        self.layer_panel.setMinimumWidth(100)
+
+    def setup_button_styles(self):
         self.layer_panel.lock_layers_button.setStyleSheet("""
             QPushButton {
                 background-color: orange;
@@ -61,22 +72,20 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Modify the Draw Names button to be light purple and bold
         self.layer_panel.draw_names_button.setStyleSheet("""
             QPushButton {
-                background-color: #E6E6FA;  /* Light purple */
+                background-color: #E6E6FA;
                 color: black;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #D8BFD8;  /* Slightly darker purple */
+                background-color: #D8BFD8;
             }
             QPushButton:pressed {
-                background-color: #DDA0DD;  /* Even darker purple */
+                background-color: #DDA0DD;
             }
         """)
 
-        # Modify the Add New Strand button to be bold
         self.layer_panel.add_new_strand_button.setStyleSheet("""
             QPushButton {
                 background-color: lightgreen;
@@ -90,7 +99,6 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Modify the Deselect All button to be bold
         self.layer_panel.deselect_all_button.setStyleSheet("""
             QPushButton {
                 background-color: lightyellow;
@@ -104,70 +112,33 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Create splitter for resizable panels
-        self.splitter = QSplitter(Qt.Horizontal)
-        left_widget = QWidget()
-        left_layout = QVBoxLayout(left_widget)
-        left_layout.addLayout(button_layout)
-        left_layout.addWidget(self.canvas)
-        self.splitter.addWidget(left_widget)
-        self.splitter.addWidget(self.layer_panel)
-
-        # Set splitter properties
-        self.splitter.setHandleWidth(0)
-        main_layout.addWidget(self.splitter)
-
-        # Set minimum widths for widgets
-        left_widget.setMinimumWidth(200)
-        self.layer_panel.setMinimumWidth(100)
-
     def setup_connections(self):
-        """Set up signal connections between widgets."""
-        # Connect splitter handle events
         self.layer_panel.handle.mousePressEvent = self.start_resize
         self.layer_panel.handle.mouseMoveEvent = self.do_resize
         self.layer_panel.handle.mouseReleaseEvent = self.stop_resize
 
-        # Connect canvas and layer panel
         self.canvas.set_layer_panel(self.layer_panel)
         self.layer_panel.new_strand_requested.connect(self.create_new_strand)
         self.layer_panel.strand_selected.connect(lambda idx: self.select_strand(idx, emit_signal=False))
         self.layer_panel.deselect_all_requested.connect(self.canvas.deselect_all_strands)
 
-        # Connect button clicks
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
         self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
+        self.angle_adjust_button.clicked.connect(self.toggle_angle_adjust_mode)
 
-        # Connect other signals
         self.layer_panel.color_changed.connect(self.handle_color_change)
         self.layer_panel.masked_layer_created.connect(self.create_masked_layer)
         self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
         self.layer_panel.masked_mode_exited.connect(self.restore_selection)
         self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
-        
-        # Connect the new strand_deleted signal
         self.layer_panel.strand_deleted.connect(self.delete_strand)
 
     def handle_color_change(self, set_number, color):
-        """
-        Handle color change for a strand set.
-
-        Args:
-            set_number (int): The set number of the strand.
-            color (QColor): The new color for the strand set.
-        """
         self.canvas.update_color_for_set(set_number, color)
         self.layer_panel.update_colors_for_set(set_number, color)
 
     def create_masked_layer(self, layer1_index, layer2_index):
-        """
-        Create a masked layer from two existing layers.
-
-        Args:
-            layer1_index (int): The index of the first layer.
-            layer2_index (int): The index of the second layer.
-        """
         layer1 = self.canvas.strands[layer1_index]
         layer2 = self.canvas.strands[layer2_index]
         
@@ -177,68 +148,73 @@ class MainWindow(QMainWindow):
         button = self.layer_panel.add_masked_layer_button(layer1_index, layer2_index)
         button.color_changed.connect(self.handle_color_change)
         
-        print(f"Created masked layer: {masked_strand.set_number}")
+        logging.info(f"Created masked layer: {masked_strand.set_number}")
         
         self.canvas.update()
         self.update_mode(self.current_mode)
 
     def restore_selection(self):
-        """Restore the last selected strand after exiting masked mode."""
         if self.layer_panel.last_selected_index is not None:
             self.select_strand(self.layer_panel.last_selected_index)
 
     def update_mode(self, mode):
-        """
-        Update the current mode (attach or move).
-
-        Args:
-            mode (str): The new mode to set ("attach" or "move").
-        """
         self.current_mode = mode
         self.canvas.set_mode(mode)
         if mode == "attach":
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
-        else:  # move mode
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(False)
+        elif mode == "move":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(False)
+        elif mode == "angle_adjust":
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
 
     def keyPressEvent(self, event):
-        """
-        Handle key press events.
-
-        Args:
-            event (QKeyEvent): The key event.
-        """
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)
+        if event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+            self.toggle_angle_adjust_mode()
+        elif self.canvas.is_angle_adjusting:
+            self.canvas.angle_adjust_mode.handle_key_press(event)
 
     def keyReleaseEvent(self, event):
-        """
-        Handle key release events.
-
-        Args:
-            event (QKeyEvent): The key release event.
-        """
         super().keyReleaseEvent(event)
         self.layer_panel.keyReleaseEvent(event)
 
     def set_attach_mode(self):
-        """Set the application to attach mode."""
         self.update_mode("attach")
         if self.canvas.last_selected_strand_index is not None:
             self.select_strand(self.canvas.last_selected_strand_index)
 
     def set_move_mode(self):
-        """Set the application to move mode."""
         self.update_mode("move")
         self.canvas.last_selected_strand_index = self.canvas.selected_strand_index
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
         self.canvas.update()
 
+    def toggle_angle_adjust_mode(self):
+        if self.canvas.selected_strand:
+            if self.canvas.is_angle_adjusting:
+                # Exit angle adjust mode
+                self.canvas.angle_adjust_mode.confirm_adjustment()
+                self.update_mode(self.current_mode)
+            else:
+                # Enter angle adjust mode
+                self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
+                self.update_mode("angle_adjust")
+            self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
+
     def create_new_strand(self):
-        """Create a new strand and add it to the canvas."""
+        if self.canvas.is_angle_adjusting:
+            self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
         new_strand = Strand(QPointF(100, 100), QPointF(200, 200), self.canvas.strand_width)
         new_strand.is_first_strand = True
         new_strand.is_start_side = True
@@ -254,20 +230,15 @@ class MainWindow(QMainWindow):
         new_strand.layer_name = f"{set_number}_1"
         
         self.canvas.add_strand(new_strand)
-        self.canvas.newest_strand = new_strand  # Set as the newest strand
+        self.canvas.newest_strand = new_strand
         self.layer_panel.add_layer_button(set_number)
         self.select_strand(len(self.canvas.strands) - 1)
         
         self.update_mode(self.current_mode)
 
     def select_strand(self, index, emit_signal=True):
-        """
-        Select a strand by its index.
-
-        Args:
-            index (int): The index of the strand to select.
-            emit_signal (bool): Whether to emit the selection signal.
-        """
+        if self.canvas.is_angle_adjusting:
+            self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
         if self.canvas.selected_strand_index != index:
             self.canvas.select_strand(index)
             if emit_signal:
@@ -277,12 +248,6 @@ class MainWindow(QMainWindow):
         self.update_mode(self.current_mode)
 
     def delete_strand(self, index):
-        """
-        Delete a strand from the canvas and update the UI accordingly.
-
-        Args:
-            index (int): The index of the strand to be deleted.
-        """
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
             logging.info(f"Deleting strand: {strand.layer_name}")
@@ -295,7 +260,6 @@ class MainWindow(QMainWindow):
             if is_main_strand:
                 strands_to_remove.extend([s for s in self.canvas.strands if s.set_number == set_number and s != strand])
 
-            # Delete masks that are directly related to the deleted strand
             masks_to_delete = []
             for s in self.canvas.strands:
                 if isinstance(s, MaskedStrand):
@@ -303,43 +267,24 @@ class MainWindow(QMainWindow):
                         masks_to_delete.append(s)
                         logging.info(f"Marking mask for deletion: {s.layer_name}")
 
-            # Remove the strands and masks
             for s in strands_to_remove + masks_to_delete:
                 self.canvas.remove_strand(s)
                 logging.info(f"Removed strand/mask: {s.layer_name}")
 
-            # Collect indices of removed strands and masks
             removed_indices = [i for i, s in enumerate(self.canvas.strands) if s in strands_to_remove + masks_to_delete]
 
-            # Update the layer panel
             self.layer_panel.update_after_deletion(set_number, removed_indices, is_main_strand)
 
-            # Ensure correct state of the canvas
             self.canvas.force_redraw()
-
-            # Clear any selection
             self.canvas.clear_selection()
-
-            # Update the mode to maintain consistency
             self.update_mode(self.current_mode)
 
             logging.info("Finished deleting strand and updating UI")
-    def start_resize(self, event):
-        """
-        Start resizing the splitter.
 
-        Args:
-            event (QMouseEvent): The mouse event.
-        """
+    def start_resize(self, event):
         self.resize_start = event.pos()
 
     def do_resize(self, event):
-        """
-        Perform resizing of the splitter.
-
-        Args:
-            event (QMouseEvent): The mouse event.
-        """
         if hasattr(self, 'resize_start'):
             delta = event.pos().x() - self.resize_start.x()
             sizes = self.splitter.sizes()
@@ -348,21 +293,8 @@ class MainWindow(QMainWindow):
             self.splitter.setSizes(sizes)
 
     def stop_resize(self, event):
-        """
-        Stop resizing the splitter.
-
-        Args:
-            event (QMouseEvent): The mouse event.
-        """
         if hasattr(self, 'resize_start'):
             del self.resize_start
 
     def update_locked_layers(self, locked_layers, lock_mode_active):
-        """
-        Update the locked layers in the canvas's move mode.
-
-        Args:
-            locked_layers (set): Set of indices of locked layers.
-            lock_mode_active (bool): Whether lock mode is active.
-        """
         self.canvas.move_mode.set_locked_layers(locked_layers, lock_mode_active)

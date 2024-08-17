@@ -6,6 +6,7 @@ from attach_mode import AttachMode
 from move_mode import MoveMode
 from strand import Strand, AttachedStrand, MaskedStrand
 from PyQt5.QtCore import QTimer
+from angle_adjust_mode import AngleAdjustMode
 class StrandDrawingCanvas(QWidget):
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -35,7 +36,7 @@ class StrandDrawingCanvas(QWidget):
         self.show_grid = True  # Flag to show/hide grid
         self.should_draw_names = False  # Flag to show/hide strand names
         self.newest_strand = None  # Track the most recently created strand
-
+        self.is_angle_adjusting = False  # Add this line
     def setup_modes(self):
         """Set up attach and move modes."""
         self.attach_mode = AttachMode(self)
@@ -79,6 +80,10 @@ class StrandDrawingCanvas(QWidget):
             painter.setBrush(QBrush(self.selection_color))
             painter.setPen(QPen(Qt.red, 2))
             painter.drawRect(self.current_mode.selected_rectangle)
+
+        # Draw the angle adjustment visualization if in angle adjust mode
+        if hasattr(self, 'is_angle_adjusting') and self.is_angle_adjusting and hasattr(self, 'angle_adjust_mode'):
+            self.angle_adjust_mode.draw(painter)
 
 
     def draw_grid(self, painter):
@@ -843,7 +848,16 @@ class StrandDrawingCanvas(QWidget):
             logging.info("Updating LayerPanel for all sets")
             self.layer_panel.refresh()
         logging.info("Finished update_layer_names")
-
+    def toggle_angle_adjust_mode(self, strand):
+        if not hasattr(self, 'angle_adjust_mode'):
+            self.angle_adjust_mode = AngleAdjustMode(self)
+        
+        self.is_angle_adjusting = not self.is_angle_adjusting
+        if self.is_angle_adjusting:
+            self.angle_adjust_mode.activate(strand)
+        else:
+            self.angle_adjust_mode.confirm_adjustment()
+        self.update()
 
 
 # End of StrandDrawingCanvas class

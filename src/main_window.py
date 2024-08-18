@@ -263,53 +263,59 @@ class MainWindow(QMainWindow):
         self.update_mode(self.current_mode)
 
     def delete_strand(self, index):
-        """
-        Delete a strand from the canvas and update the UI accordingly.
-
-        Args:
-            index (int): The index of the strand to be deleted.
-        """
         if 0 <= index < len(self.canvas.strands):
-            strand = self.canvas.strands[index]
-            logging.info(f"Deleting strand: {strand.layer_name}")
+            strand_to_delete = self.canvas.strands[index]
+            strand_name = strand_to_delete.layer_name
+            logging.info(f"Attempting to delete strand: {strand_name}")
 
-            set_number = strand.set_number
-            is_main_strand = strand.layer_name.split('_')[1] == '1'
-            is_attached_strand = isinstance(strand, AttachedStrand)
+            # Find the correct strand in the canvas based on the layer name
+            strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
+            
+            if strand_index is not None:
+                strand = self.canvas.strands[strand_index]
+                logging.info(f"Deleting strand: {strand.layer_name}")
 
-            strands_to_remove = [strand]
-            if is_main_strand:
-                strands_to_remove.extend([s for s in self.canvas.strands if s.set_number == set_number and s != strand])
+                set_number = strand.set_number
+                is_main_strand = strand.layer_name.split('_')[1] == '1'
+                is_attached_strand = isinstance(strand, AttachedStrand)
 
-            # Delete masks that are directly related to the deleted strand
-            masks_to_delete = []
-            for s in self.canvas.strands:
-                if isinstance(s, MaskedStrand):
-                    if strand.layer_name in s.layer_name.split('_'):
-                        masks_to_delete.append(s)
-                        logging.info(f"Marking mask for deletion: {s.layer_name}")
+                strands_to_remove = [strand]
+                if is_main_strand:
+                    strands_to_remove.extend([s for s in self.canvas.strands if s.set_number == set_number and s != strand])
 
-            # Remove the strands and masks
-            for s in strands_to_remove + masks_to_delete:
-                self.canvas.remove_strand(s)
-                logging.info(f"Removed strand/mask: {s.layer_name}")
+                # Delete masks that are directly related to the deleted strand
+                masks_to_delete = []
+                for s in self.canvas.strands:
+                    if isinstance(s, MaskedStrand):
+                        if strand.layer_name in s.layer_name.split('_'):
+                            masks_to_delete.append(s)
+                            logging.info(f"Marking mask for deletion: {s.layer_name}")
 
-            # Collect indices of removed strands and masks
-            removed_indices = [i for i, s in enumerate(self.canvas.strands) if s in strands_to_remove + masks_to_delete]
+                # Remove the strands and masks
+                for s in strands_to_remove + masks_to_delete:
+                    self.canvas.remove_strand(s)
+                    logging.info(f"Removed strand/mask: {s.layer_name}")
 
-            # Update the layer panel
-            self.layer_panel.update_after_deletion(set_number, removed_indices, is_main_strand)
+                # Collect indices of removed strands and masks
+                removed_indices = [i for i, s in enumerate(self.canvas.strands) if s in strands_to_remove + masks_to_delete]
 
-            # Ensure correct state of the canvas
-            self.canvas.force_redraw()
+                # Update the layer panel without renumbering
+                self.layer_panel.update_after_deletion(set_number, removed_indices, is_main_strand, renumber=False)
 
-            # Clear any selection
-            self.canvas.clear_selection()
+                # Ensure correct state of the canvas
+                self.canvas.force_redraw()
 
-            # Update the mode to maintain consistency
-            self.update_mode(self.current_mode)
+                # Clear any selection
+                self.canvas.clear_selection()
 
-            logging.info("Finished deleting strand and updating UI")
+                # Update the mode to maintain consistency
+                self.update_mode(self.current_mode)
+
+                logging.info("Finished deleting strand and updating UI")
+            else:
+                logging.warning(f"Strand {strand_name} not found in canvas strands")
+        else:
+            logging.warning(f"Invalid strand index: {index}")
 
     def start_resize(self, event):
         self.resize_start = event.pos()

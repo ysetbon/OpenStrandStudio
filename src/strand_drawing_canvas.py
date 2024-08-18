@@ -478,14 +478,7 @@ class StrandDrawingCanvas(QWidget):
         return False
     def update_layer_names_for_attached_strand_deletion(self, set_number):
         logging.info(f"Updating layer names for attached strand deletion in set {set_number}")
-        count = 1
-        for strand in self.strands:
-            if strand.set_number == set_number and isinstance(strand, AttachedStrand):
-                new_name = f"{set_number}_{count + 1}"  # +1 because main strand is always _1
-                if strand.layer_name != new_name:
-                    logging.info(f"Updated strand name from {strand.layer_name} to {new_name}")
-                    strand.layer_name = new_name
-                count += 1
+        # Do nothing here to keep original names
         if self.layer_panel:
             self.layer_panel.update_layer_names(set_number)
 
@@ -675,12 +668,13 @@ class StrandDrawingCanvas(QWidget):
         for s in self.strands:
             if isinstance(s, MaskedStrand):
                 if is_attached_strand:
-                    # For attached strands, only remove masks that exclusively involve this strand
+                    # For attached strands, remove masks that involve this strand at either start or end
                     mask_parts = s.layer_name.split('_')
-                    if len(mask_parts) == 4 and f"{strand.set_number}_{strand.layer_name.split('_')[1]}" in mask_parts:
+                    if len(mask_parts) == 4 and (strand.layer_name == mask_parts[0] + '_' + mask_parts[1] or 
+                                                strand.layer_name == mask_parts[2] + '_' + mask_parts[3]):
                         masks_to_remove.append(s)
                 else:
-                    # For main strands, remove only masks related to this strand and its attachments
+                    # For main strands, remove masks related to this strand and its attachments
                     if any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove):
                         masks_to_remove.append(s)
 
@@ -787,22 +781,18 @@ class StrandDrawingCanvas(QWidget):
 
     def update_layer_names_for_set(self, set_number):
         logging.info(f"Updating layer names for set {set_number}")
-        count = 1
-        for strand in self.strands:
-            if strand.set_number == set_number:
-                new_name = f"{set_number}_{count}"
-                if strand.layer_name != new_name:
-                    logging.info(f"Updated strand name from {strand.layer_name} to {new_name}")
-                    strand.layer_name = new_name
-                count += 1
+        # Do nothing here, as we want to keep original names
         if self.layer_panel:
             self.layer_panel.update_layer_names(set_number)
             
     def is_strand_involved_in_mask(self, masked_strand, strand):
         if isinstance(masked_strand, MaskedStrand):
+            mask_parts = masked_strand.layer_name.split('_')
+            strand_name = strand.layer_name
             return (masked_strand.first_selected_strand == strand or
                     masked_strand.second_selected_strand == strand or
-                    strand.layer_name in masked_strand.layer_name)
+                    strand_name == mask_parts[0] + '_' + mask_parts[1] or
+                    strand_name == mask_parts[2] + '_' + mask_parts[3])
         return False
 
     def get_all_attached_strands(self, strand):

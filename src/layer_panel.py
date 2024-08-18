@@ -247,22 +247,20 @@ class LayerPanel(QWidget):
 
     def request_delete_strand(self):
         """Request the deletion of the selected strand."""
-        selected_index = self.get_selected_layer()
-        logging.info(f"Selected index for deletion: {selected_index}")
-        
-        if selected_index is not None and 0 <= selected_index < len(self.layer_buttons):
-            button = self.layer_buttons[selected_index]
-            strand = self.canvas.strands[selected_index]
-            is_main_strand = strand.layer_name.split('_')[1] == '1'
+        selected_button = next((button for button in self.layer_buttons if button.isChecked()), None)
+        if selected_button:
+            strand_name = selected_button.text()
+            logging.info(f"Selected strand for deletion: {strand_name}")
             
-            if is_main_strand or button.attachable:
-                strand_name = button.text()
-                logging.info(f"Deleting strand: {strand_name}")
-                self.strand_deleted.emit(selected_index)
+            # Find the corresponding strand in the canvas
+            strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
+            
+            if strand_index is not None:
+                self.strand_deleted.emit(strand_index)
             else:
-                logging.info(f"Button at index {selected_index} is not deletable")
+                logging.warning(f"Strand {strand_name} not found in canvas strands")
         else:
-            logging.warning(f"Invalid selected index: {selected_index}")
+            logging.warning("No strand selected for deletion")
 
     def remove_layer_button(self, index):
         """Remove a layer button at the specified index."""
@@ -272,20 +270,42 @@ class LayerPanel(QWidget):
             button.deleteLater()
             self.scroll_layout.removeWidget(button)
 
-    def update_masked_layers(self, deleted_set_number):
-        for button in self.layer_buttons[:]:  # Create a copy of the list to iterate over
-            parts = button.text().split('_')
-            if len(parts) > 2:  # This is a masked layer
-                if str(deleted_set_number) in parts:
-                    # Check if all components of this masked layer still exist
-                    component_exists = all(any(self.canvas.strands[i].layer_name.startswith(p) for i in range(len(self.canvas.strands))) for p in parts[:2])
-                    if not component_exists:
-                        # Remove this masked layer button
-                        index = self.layer_buttons.index(button)
-                        self.remove_layer_button(index)
+    def update_masked_layers(self, deleted_set_number, strands_removed):
+        logging.info(f"Updating masked layers for set {deleted_set_number}")
+        buttons_to_remove = []
+        for i, button in enumerate(self.layer_buttons):
+            button_text = button.text()
+            parts = button_text.split('_')
+            if len(parts) == 4:  # This is a masked layer
+                should_remove = False
+                # Check if the mask involves the deleted set number
+                if str(deleted_set_number) in [parts[0], parts[2]]:
+                    should_remove = True
+                # Check if the mask involves any of the removed strands
+                for strand_index in strands_removed:
+                    if strand_index < len(self.canvas.strands):
+                        removed_strand = self.canvas.strands[strand_index]
+                        removed_strand_name = removed_strand.layer_name
+                        # Check if the removed strand is at the start or end of the mask name
+                        if button_text.startswith(removed_strand_name) or button_text.endswith(removed_strand_name):
+                            should_remove = True
+                            break
+                if should_remove:
+                    buttons_to_remove.append(i)
+                    logging.info(f"Marking masked layer for removal: {button_text}")
 
-    def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand):
-        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}")
+        # Remove the marked buttons
+        for index in sorted(buttons_to_remove, reverse=True):
+            button = self.layer_buttons.pop(index)
+            button.setParent(None)
+            button.deleteLater()
+            self.scroll_layout.removeWidget(button)
+            logging.info(f"Removed masked layer button: {button.text()}")
+
+        logging.info("Finished updating masked layers")
+
+    def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand, renumber=False):
+        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}, renumber={renumber}")
 
         # Remove the corresponding buttons
         for index in sorted(strands_removed, reverse=True):
@@ -312,22 +332,12 @@ class LayerPanel(QWidget):
                 self.current_set = 0
             logging.info(f"Updated current_set to {self.current_set}")
 
-            # Renumber all remaining sets
-            self.renumber_sets()
-        else:
-            # For non-main strands, update the count for the set
-            if deleted_set_number in self.set_counts:
-                self.set_counts[deleted_set_number] -= len(strands_removed)
-                logging.info(f"Updated set count for set {deleted_set_number} to {self.set_counts[deleted_set_number]}")
-
-            # Update the numbering for the affected set
-            self.update_button_numbering_for_set(deleted_set_number)
-
         # Update masked layers
-        self.update_masked_layers(deleted_set_number)
+        self.update_masked_layers(deleted_set_number, strands_removed)
 
         # Clear selection if the deleted strand was selected
-        if self.get_selected_layer() in strands_removed:
+        selected_layer = self.get_selected_layer()
+        if selected_layer is not None and selected_layer in strands_removed:
             self.clear_selection()
             logging.info("Cleared selection due to deleted strand")
 
@@ -359,17 +369,14 @@ class LayerPanel(QWidget):
 
     def update_button_numbering_for_set(self, set_number):
         logging.info(f"Starting update_button_numbering_for_set: set_number={set_number}")
-        count = 1
         for button in self.layer_buttons:
             button_text = button.text()
             parts = button_text.split('_')
             if parts[0] == str(set_number):
                 if len(parts) == 2:  # Regular strand
-                    new_text = f"{set_number}_{count}"
-                    if button_text != new_text:
-                        logging.info(f"Updated button text from {button_text} to {new_text}")
-                        button.setText(new_text)
-                    count += 1
+                    # Keep the original number, don't increment
+                    new_text = button_text
+                    logging.info(f"Kept original button text: {new_text}")
                 else:  # Masked layer
                     logging.info(f"Skipping renumbering for masked layer: {button_text}")
         logging.info("Finished update_button_numbering_for_set")
@@ -538,15 +545,15 @@ class LayerPanel(QWidget):
         for index in sorted(indices, reverse=True):
             self.remove_layer_button(index)
         self.update_layer_button_states()
-
     def update_layer_names(self, affected_set_number=None):
         logging.info(f"Starting update_layer_names: affected_set_number={affected_set_number}")
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
                 if affected_set_number is None or strand.set_number == affected_set_number:
+                    # Keep the original layer name
                     button.setText(strand.layer_name)
-                    logging.info(f"Updated layer name for strand {i} to {button.text()}")
+                    logging.info(f"Kept original layer name for strand {i}: {button.text()}")
         self.update_layer_button_states()
         logging.info("Finished update_layer_names")
 

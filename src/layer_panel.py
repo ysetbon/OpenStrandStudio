@@ -286,7 +286,7 @@ class LayerPanel(QWidget):
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand):
         logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}")
-        
+
         # Remove the corresponding buttons
         for index in sorted(strands_removed, reverse=True):
             if 0 <= index < len(self.layer_buttons):
@@ -295,7 +295,7 @@ class LayerPanel(QWidget):
                 button.deleteLater()
                 self.scroll_layout.removeWidget(button)
                 logging.info(f"Removed button at index {index}")
-        
+
         if is_main_strand:
             # Update set counts and colors
             if deleted_set_number in self.set_counts:
@@ -304,28 +304,57 @@ class LayerPanel(QWidget):
             if deleted_set_number in self.set_colors:
                 del self.set_colors[deleted_set_number]
                 logging.info(f"Deleted set color for set {deleted_set_number}")
-            
+
             # Update the current set to the highest remaining set number
             if self.set_counts:
                 self.current_set = max(self.set_counts.keys())
             else:
                 self.current_set = 0
             logging.info(f"Updated current_set to {self.current_set}")
+
+            # Renumber all remaining sets
+            self.renumber_sets()
         else:
-            # For non-main strands, just update the count for the set
+            # For non-main strands, update the count for the set
             if deleted_set_number in self.set_counts:
                 self.set_counts[deleted_set_number] -= len(strands_removed)
                 logging.info(f"Updated set count for set {deleted_set_number} to {self.set_counts[deleted_set_number]}")
-        
-        # Update the numbering for the affected set
-        self.update_button_numbering_for_set(deleted_set_number)
-        
+
+            # Update the numbering for the affected set
+            self.update_button_numbering_for_set(deleted_set_number)
+
         # Update masked layers
         self.update_masked_layers(deleted_set_number)
 
+        # Clear selection if the deleted strand was selected
+        if self.get_selected_layer() in strands_removed:
+            self.clear_selection()
+            logging.info("Cleared selection due to deleted strand")
+
         self.update_layer_button_states()
         self.update_attachable_states()
+        
+        # Refresh the entire panel to ensure consistency
+        self.refresh()
+        
         logging.info("Finished update_after_deletion")
+
+    def renumber_sets(self):
+        new_set_numbers = {}
+        new_count = 1
+        for button in self.layer_buttons:
+            old_set_number = int(button.text().split('_')[0])
+            if old_set_number not in new_set_numbers:
+                new_set_numbers[old_set_number] = new_count
+                new_count += 1
+            new_set_number = new_set_numbers[old_set_number]
+            button.setText(f"{new_set_number}_{button.text().split('_')[1]}")
+        
+        # Update set_counts and set_colors
+        self.set_counts = {new_set_numbers[k]: v for k, v in self.set_counts.items() if k in new_set_numbers}
+        self.set_colors = {new_set_numbers[k]: v for k, v in self.set_colors.items() if k in new_set_numbers}
+        
+        logging.info(f"Renumbered sets: {new_set_numbers}")
 
 
     def update_button_numbering_for_set(self, set_number):

@@ -680,9 +680,13 @@ class StrandDrawingCanvas(QWidget):
                     if len(mask_parts) == 4 and f"{strand.set_number}_{strand.layer_name.split('_')[1]}" in mask_parts:
                         masks_to_remove.append(s)
                 else:
-                    # For main strands, remove all related masks
+                    # For main strands, remove only masks related to this strand and its attachments
                     if any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove):
                         masks_to_remove.append(s)
+
+        # Log strands and masks to be removed
+        logging.info(f"Strands to be removed: {[s.layer_name for s in strands_to_remove]}")
+        logging.info(f"Masks to be removed: {[m.layer_name for m in masks_to_remove]}")
 
         # Collect indices before removing strands
         indices_to_remove = []
@@ -694,7 +698,7 @@ class StrandDrawingCanvas(QWidget):
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
-                logging.info(f"Removed strand: {s.layer_name}")
+                logging.info(f"Removed strand/mask: {s.layer_name}")
                 if not isinstance(s, MaskedStrand):
                     self.remove_strand_circles(s)
 

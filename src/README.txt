@@ -49,4 +49,38 @@ We're excited to introduce new features to enhance your design experience:
 
 Note: The delete function is in beta.
 
+------
+
+## Version 1.02 (Released: 8/18/2024)
+
+We're thrilled to announce further improvements and new features in this update:
+
+### Improvements and New Features:
+
+1. Delete Option Enhancement:
+   - Fixed issues with the delete functionality
+   - More reliable and consistent strand deletion
+
+2. Angle Adjust Mode:
+   - New mode for precise angle adjustments of strands
+   - Easily fine-tune the angles of your designs
+
+3. Save and Load Functionality:
+   - Now you can save your projects and load them later
+   - Seamlessly continue your work across sessions
+
+### How to Use:
+
+- Angle Adjust Mode: Select a strand and enter this mode to adjust its angle
+- Save: Click the 'Save' button to store your current project
+- Load: Use the 'Load' button to open a previously saved project
+
+These updates aim to provide a smoother, more flexible design experience. The improved delete option, new angle adjustment capabilities, and project persistence features should significantly enhance your workflow in OpenStrand Studio.
+
 Enjoy creating with OpenStrand Studio!
+
+------
+
+**HIGHLIGHTED FEATURE:**
+
+> **Sample Projects: Download and load sample projects from the provided folder to explore different design techniques and possibilities**

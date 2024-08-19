@@ -724,10 +724,15 @@ class StrandDrawingCanvas(QWidget):
         # Update the layer panel
         if self.layer_panel:
             self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
+            self.update_layer_panel_colors()  # Add this line
 
         logging.info("Finished remove_strand")
         return True
-
+    def update_layer_panel_colors(self):
+        if self.layer_panel:
+            for strand in self.strands:
+                if isinstance(strand, MaskedStrand):
+                    self.layer_panel.update_masked_strand_color(strand.layer_name, strand.color)
     def remove_parent_circle(self, parent_strand, attached_strand):
         """
         Remove the circle associated with the attached strand from the parent strand.

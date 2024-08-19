@@ -577,17 +577,23 @@ class LayerPanel(QWidget):
                 self.set_counts[set_number] = 0
             self.set_counts[set_number] += 1
             
-            button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], self.canvas.strand_colors.get(set_number, QColor('purple')))
+            # Use the strand's actual color
+            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number, QColor('purple'))
+            
+            button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], strand_color)
             button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
             button.color_changed.connect(self.on_color_changed)
             
             if isinstance(strand, MaskedStrand):
                 button.set_border_color(strand.second_selected_strand.color)
+                # Ensure masked strand color is correct
+                if strand.first_selected_strand:
+                    button.set_color(strand.first_selected_strand.color)
             
             self.scroll_layout.insertWidget(0, button)
             self.layer_buttons.append(button)
             
-            logging.info(f"Added button for strand: {strand.layer_name}")
+            logging.info(f"Added button for strand: {strand.layer_name} with color {strand_color.name()}")
         
         # Update button states
         self.update_layer_button_states()
@@ -602,6 +608,13 @@ class LayerPanel(QWidget):
         self.current_set = max(self.set_counts.keys(), default=0)
         
         logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
+
+    def update_masked_strand_color(self, layer_name, color):
+        for button in self.layer_buttons:
+            if button.text() == layer_name:
+                button.set_color(color)
+                logging.info(f"Updated color for masked strand button: {layer_name} to {color.name()}")
+                break    
     def get_layer_button(self, index):
         """Get the layer button at the specified index."""
         if 0 <= index < len(self.layer_buttons):

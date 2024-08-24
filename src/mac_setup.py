@@ -5,7 +5,7 @@ from setuptools import setup
 
 # Define constants
 APP_NAME = "OpenStrand Studio"
-APP_VERSION = "1.02"
+APP_VERSION = "1.03"
 APP_PUBLISHER = "Yonatan Setbon"
 APP_CONTACT = "ysetbon@gmail.com"
 APP_COMMENTS = "The program is brought to you by Yonatan Setbon, you can contact me at ysetbon@gmail.com"

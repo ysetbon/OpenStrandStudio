@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self.setup_connections()
         self.current_mode = "attach"
         self.set_attach_mode()
-
+        self.selected_strand = None  # Add this line
     def setup_ui(self):
         icon_path = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico"
         if os.path.exists(icon_path):
@@ -37,6 +37,8 @@ class MainWindow(QMainWindow):
         self.save_button = QPushButton("Save")
         self.load_button = QPushButton("Load")
         self.save_image_button = QPushButton("Save as Image")  # New button
+        self.select_strand_button = QPushButton("Select Strand")
+        button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
         button_layout.addWidget(self.toggle_grid_button)
@@ -159,7 +161,9 @@ class MainWindow(QMainWindow):
         self.save_button.clicked.connect(self.save_project)
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)  # Connect new button
-
+        self.select_strand_button.clicked.connect(self.set_select_mode)
+        
+        self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
     def save_canvas_as_image(self):
             """Save the entire canvas as a PNG image with transparent background, including all layers and masks."""
             filename, _ = QFileDialog.getSaveFileName(self, "Save Canvas as Image", "", "PNG Files (*.png)")
@@ -234,24 +238,49 @@ class MainWindow(QMainWindow):
         if self.layer_panel.last_selected_index is not None:
             self.select_strand(self.layer_panel.last_selected_index)
 
+    def set_select_mode(self):
+        self.update_mode("select")
+        self.canvas.set_mode("select")
+        
     def update_mode(self, mode):
+        if self.current_mode == "select" and mode != "select":
+            self.canvas.exit_select_mode()  # This is correct
+        
         self.current_mode = mode
         self.canvas.set_mode(mode)
-        if mode == "attach":
+        
+        if mode == "select":
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(False)
+            self.select_strand_button.setEnabled(False)
+        elif mode == "attach":
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(False)
+            self.select_strand_button.setEnabled(True)
         elif mode == "move":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(False)
+            self.select_strand_button.setEnabled(True)
         elif mode == "angle_adjust":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
+            self.select_strand_button.setEnabled(True)
+
+        # Remove this part to avoid recursion
+        # if self.canvas.selected_strand_index is not None:
+        #     self.select_strand(self.canvas.selected_strand_index, emit_signal=False)
+
+        # Instead, update the canvas selection directly if needed
+        if self.canvas.selected_strand_index is not None:
+            self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
@@ -323,13 +352,25 @@ class MainWindow(QMainWindow):
     def select_strand(self, index, emit_signal=True):
         if self.canvas.is_angle_adjusting:
             self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
-        if self.canvas.selected_strand_index != index:
+        
+        if index is None or index == -1:
+            self.canvas.clear_selection()
+            if emit_signal:
+                self.layer_panel.clear_selection()
+        elif self.canvas.selected_strand_index != index:
             self.canvas.select_strand(index)
             if emit_signal:
                 self.layer_panel.select_layer(index, emit_signal=False)
-        self.canvas.is_first_strand = False
         
-        self.update_mode(self.current_mode)
+        self.canvas.is_first_strand = False
+        # Don't call update_mode here to avoid recursion
+
+    def handle_canvas_strand_selection(self, index):
+        self.select_strand(index, emit_signal=True)
+        # Update the mode after selection, if necessary
+        if self.current_mode == "select":
+            self.update_mode("attach")  # or any other appropriate mode
+
 
     def delete_strand(self, index):
             if 0 <= index < len(self.canvas.strands):

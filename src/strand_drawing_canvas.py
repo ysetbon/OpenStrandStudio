@@ -7,13 +7,18 @@ from move_mode import MoveMode
 from strand import Strand, AttachedStrand, MaskedStrand
 from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
+from PyQt5.QtCore import pyqtSignal
+
 class StrandDrawingCanvas(QWidget):
+    strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
+
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
         self.initialize_properties()
         self.setup_modes()
+        self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
 
     def initialize_properties(self):
         """Initialize all properties used in the StrandDrawingCanvas."""
@@ -48,6 +53,15 @@ class StrandDrawingCanvas(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+    # Draw highlight for selected strand
+        if self.selected_strand:
+            painter.save()
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            painter.setBrush(self.highlight_color)
+            painter.setPen(Qt.NoPen)
+            painter.drawPath(self.selected_strand.get_path())
+            painter.restore()
+
 
         if self.show_grid:
             self.draw_grid(painter)
@@ -355,8 +369,7 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def select_strand(self, index):
-        """Select a strand by index."""
-        if 0 <= index < len(self.strands):
+        if index is not None and 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
             self.selected_strand_index = index
             self.last_selected_strand_index = index
@@ -366,14 +379,18 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode = self.attach_mode
             self.current_mode.is_attaching = False
             self.current_strand = None
-            self.update()
+            self.strand_selected.emit(index)  # Emit the signal here
         else:
             self.selected_strand = None
             self.selected_strand_index = None
+            self.strand_selected.emit(-1)  # Emit -1 for deselection
+        self.update()
 
     def mousePressEvent(self, event):
-        """Handle mouse press events."""
-        self.current_mode.mousePressEvent(event)
+        if self.current_mode == "select":
+            self.handle_strand_selection(event.pos())
+        else:
+            self.current_mode.mousePressEvent(event)
         self.update()
 
     def mouseMoveEvent(self, event):
@@ -387,13 +404,16 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def set_mode(self, mode):
-        """Set the current mode (attach or move)."""
+        """Set the current mode (attach, move, or select)."""
         if mode == "attach":
             self.current_mode = self.attach_mode
             self.setCursor(Qt.ArrowCursor)
         elif mode == "move":
             self.current_mode = self.move_mode
             self.setCursor(Qt.OpenHandCursor)
+        elif mode == "select":
+            self.current_mode = "select"  # We'll handle select mode directly in this class
+            self.setCursor(Qt.PointingHandCursor)  # Use a pointing hand cursor for select mode
         self.update()
 
     def force_redraw(self):
@@ -858,5 +878,43 @@ class StrandDrawingCanvas(QWidget):
             self.angle_adjust_mode.confirm_adjustment()
         self.update()
 
+    def handle_strand_selection(self, pos):
+        strands_at_point = self.find_strands_at_point(pos)
+        
+        # Filter out masked strands if there are non-masked strands at the same point
+        non_masked_strands = [s for s in strands_at_point if not isinstance(s, MaskedStrand)]
+        if non_masked_strands:
+            strands_at_point = non_masked_strands
 
+        if strands_at_point:
+            # Select the first non-masked strand, or the first strand if all are masked
+            selected_strand = strands_at_point[0]
+            index = self.strands.index(selected_strand)
+            self.select_strand(index)
+            self.strand_selected.emit(index)
+        else:
+            # Deselect if clicking on an empty area
+            self.select_strand(None)
+            self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
+
+    def find_strands_at_point(self, pos):
+        return [strand for strand in self.strands if strand.get_path().contains(pos)]
+    
+    def exit_select_mode(self):
+        """Exit the select mode and reset any select mode-specific states."""
+        if self.current_mode == "select":
+            self.current_mode = self.attach_mode  # or any default mode you prefer
+            self.setCursor(Qt.ArrowCursor)  # Reset cursor to default
+            # Optionally, you might want to clear the selection here
+            # self.clear_selection()
+        self.update()
+    def highlight_selected_strand(self, index):
+        """Highlight the selected strand."""
+        if index is not None and 0 <= index < len(self.strands):
+            self.selected_strand = self.strands[index]
+            self.selected_strand_index = index
+        else:
+            self.selected_strand = None
+            self.selected_strand_index = None
+        self.update()  # Trigger a repaint to show the highlight
 # End of StrandDrawingCanvas class

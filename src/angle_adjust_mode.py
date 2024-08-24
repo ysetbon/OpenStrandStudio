@@ -20,6 +20,21 @@ class AngleAdjustMode:
         self.max_length = math.ceil(self.initial_length * 2 / 10) * 10  # Round up to nearest multiple of 10
         self.prompt_for_adjustments()
 
+    def mousePressEvent(self, event):
+        if self.active_strand:
+            self.prompt_for_adjustments()
+        else:
+            # If no strand is active, we might want to select one or do nothing
+            pass
+
+    def mouseMoveEvent(self, event):
+        # For now, we'll just pass as we don't need any specific behavior
+        pass
+
+    def mouseReleaseEvent(self, event):
+        # For now, we'll just pass as we don't need any specific behavior
+        pass
+
     def prompt_for_adjustments(self):
         if not self.active_strand:
             return

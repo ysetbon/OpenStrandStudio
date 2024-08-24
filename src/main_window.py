@@ -7,7 +7,7 @@ from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, AttachedStrand, MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
-
+from mask_mode import MaskMode
 import logging
 
 class MainWindow(QMainWindow):
@@ -38,6 +38,8 @@ class MainWindow(QMainWindow):
         self.load_button = QPushButton("Load")
         self.save_image_button = QPushButton("Save as Image")  # New button
         self.select_strand_button = QPushButton("Select Strand")
+        self.mask_button = QPushButton("Mask Mode")
+        button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
@@ -162,8 +164,20 @@ class MainWindow(QMainWindow):
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)  # Connect new button
         self.select_strand_button.clicked.connect(self.set_select_mode)
-        
+
+        self.mask_button.clicked.connect(self.set_mask_mode)
+        self.canvas.mask_created.connect(self.handle_mask_created)
+
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
+
+    def set_mask_mode(self):
+        self.update_mode("mask")
+        self.canvas.set_mode("mask")
+
+    def handle_mask_created(self, strand1, strand2):
+        self.create_masked_layer(self.canvas.strands.index(strand1), self.canvas.strands.index(strand2))
+
+
     def save_canvas_as_image(self):
             """Save the entire canvas as a PNG image with transparent background, including all layers and masks."""
             filename, _ = QFileDialog.getSaveFileName(self, "Save Canvas as Image", "", "PNG Files (*.png)")
@@ -244,7 +258,7 @@ class MainWindow(QMainWindow):
         
     def update_mode(self, mode):
         if self.current_mode == "select" and mode != "select":
-            self.canvas.exit_select_mode()  # This is correct
+            self.canvas.exit_select_mode()
         
         self.current_mode = mode
         self.canvas.set_mode(mode)
@@ -255,30 +269,36 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(False)
+            self.mask_button.setEnabled(True)
         elif mode == "attach":
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
         elif mode == "move":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
         elif mode == "angle_adjust":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)
             self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
             self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
+        elif mode == "mask":
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(False)
+            self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(False)
 
-        # Remove this part to avoid recursion
-        # if self.canvas.selected_strand_index is not None:
-        #     self.select_strand(self.canvas.selected_strand_index, emit_signal=False)
-
-        # Instead, update the canvas selection directly if needed
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
 
@@ -292,6 +312,8 @@ class MainWindow(QMainWindow):
                 print("Angle adjustment is not available for masked layers.")
         elif self.canvas.is_angle_adjusting:
             self.canvas.angle_adjust_mode.handle_key_press(event)
+        elif event.key() == Qt.Key_M and event.modifiers() == Qt.ControlModifier:
+            self.set_mask_mode()
 
     def keyReleaseEvent(self, event):
         super().keyReleaseEvent(event)

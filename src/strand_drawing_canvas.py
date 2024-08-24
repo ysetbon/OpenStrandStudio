@@ -1,17 +1,17 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage
 import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
+from mask_mode import MaskMode  # Add this import
 from strand import Strand, AttachedStrand, MaskedStrand
 from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
-from PyQt5.QtCore import pyqtSignal
 
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
-
+    mask_created = pyqtSignal(object, object)  # Add this signal
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
@@ -42,26 +42,41 @@ class StrandDrawingCanvas(QWidget):
         self.should_draw_names = False  # Flag to show/hide strand names
         self.newest_strand = None  # Track the most recently created strand
         self.is_angle_adjusting = False  # Add this line
+        self.mask_mode_active = False
+        self.mask_selected_strands = []
+
     def setup_modes(self):
-        """Set up attach and move modes."""
+        """Set up attach, move, and mask modes."""
+        # Attach mode setup
         self.attach_mode = AttachMode(self)
         self.attach_mode.strand_created.connect(self.on_strand_created)
+
+        # Move mode setup
         self.move_mode = MoveMode(self)
-        self.current_mode = self.attach_mode  # Set initial mode to attach
+
+        # Mask mode setup
+        self.mask_mode = MaskMode(self)
+        self.mask_mode.mask_created.connect(self.create_masked_layer)
+
+        # Angle adjust mode setup (if used)
+        self.angle_adjust_mode = AngleAdjustMode(self)
+
+        # Set initial mode to attach
+        self.current_mode = self.attach_mode
+
+        # Connect mode-specific signals (if any)
+        # For example:
+        # self.move_mode.strand_moved.connect(self.on_strand_moved)
+        # self.angle_adjust_mode.angle_adjusted.connect(self.on_angle_adjusted)
+
+        # Initialize mode-specific properties
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
 
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-    # Draw highlight for selected strand
-        if self.selected_strand:
-            painter.save()
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.setBrush(self.highlight_color)
-            painter.setPen(Qt.NoPen)
-            painter.drawPath(self.selected_strand.get_path())
-            painter.restore()
-
 
         if self.show_grid:
             self.draw_grid(painter)
@@ -99,7 +114,44 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'is_angle_adjusting') and self.is_angle_adjusting and hasattr(self, 'angle_adjust_mode'):
             self.angle_adjust_mode.draw(painter)
 
+        # Draw mask mode selections
+        if self.current_mode == self.mask_mode:
+            for strand in self.mask_mode.selected_strands:
+                self.draw_highlighted_strand(painter, strand)
 
+    def create_masked_layer(self, strand1, strand2):
+        # Check if a masked layer already exists for these strands
+        if self.mask_exists(strand1, strand2):
+            logging.info(f"Masked layer for {strand1.layer_name} and {strand2.layer_name} already exists.")
+            return
+
+        masked_strand = MaskedStrand(strand1, strand2)
+        self.add_strand(masked_strand)
+        
+        if self.layer_panel:
+            button = self.layer_panel.add_masked_layer_button(
+                self.strands.index(strand1),
+                self.strands.index(strand2)
+            )
+            button.color_changed.connect(self.handle_color_change)
+        
+        self.update()
+        self.mask_created.emit(strand1, strand2)
+
+    def mask_exists(self, strand1, strand2):
+        for strand in self.strands:
+            if isinstance(strand, MaskedStrand):
+                if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2) or \
+                   (strand.first_selected_strand == strand2 and strand.second_selected_strand == strand1):
+                    return True
+        return False
+    
+    def handle_color_change(self, set_number, color):
+        """Handle color change for a set of strands."""
+        self.update_color_for_set(set_number, color)
+        if self.layer_panel:
+            self.layer_panel.update_colors_for_set(set_number, color)
+        self.update()
     def draw_grid(self, painter):
         """Draw the grid on the canvas."""
         painter.setPen(QPen(QColor(200, 200, 200), 1))
@@ -389,6 +441,8 @@ class StrandDrawingCanvas(QWidget):
     def mousePressEvent(self, event):
         if self.current_mode == "select":
             self.handle_strand_selection(event.pos())
+        elif self.current_mode == self.mask_mode:
+            self.mask_mode.handle_mouse_press(event)  # Changed to handle_mouse_press
         else:
             self.current_mode.mousePressEvent(event)
         self.update()
@@ -404,7 +458,21 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def set_mode(self, mode):
-        """Set the current mode (attach, move, or select)."""
+        """
+        Set the current mode of the canvas.
+        
+        Args:
+            mode (str): The mode to set. Can be "attach", "move", "select", "mask", or "angle_adjust".
+        """
+        # Deactivate the current mode if it has a deactivate method
+        if hasattr(self.current_mode, 'deactivate'):
+            self.current_mode.deactivate()
+
+        # Reset any mode-specific flags
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
+
+        # Set the new mode
         if mode == "attach":
             self.current_mode = self.attach_mode
             self.setCursor(Qt.ArrowCursor)
@@ -412,9 +480,33 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode = self.move_mode
             self.setCursor(Qt.OpenHandCursor)
         elif mode == "select":
-            self.current_mode = "select"  # We'll handle select mode directly in this class
-            self.setCursor(Qt.PointingHandCursor)  # Use a pointing hand cursor for select mode
+            self.current_mode = "select"  # This is a string, not an object
+            self.setCursor(Qt.PointingHandCursor)
+        elif mode == "mask":
+            self.current_mode = self.mask_mode
+            self.mask_mode.activate()
+            self.mask_mode_active = True
+            self.setCursor(Qt.CrossCursor)
+        elif mode == "angle_adjust":
+            self.current_mode = self.angle_adjust_mode
+            self.is_angle_adjusting = True
+            self.setCursor(Qt.SizeAllCursor)
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        # If the new mode has an activate method, call it
+        if hasattr(self.current_mode, 'activate'):
+            self.current_mode.activate()
+
+        # Clear any existing selection if switching to a different mode
+        if mode != "select":
+            self.clear_selection()
+
+        # Update the canvas
         self.update()
+
+        # Log the mode change
+        logging.info(f"Canvas mode changed to: {mode}")
 
     def force_redraw(self):
         """Force a complete redraw of the canvas."""
@@ -722,6 +814,9 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = None
             logging.info("Cleared selected strand")
 
+        # Clear mask mode selection if active
+        if self.current_mode == self.mask_mode:
+            self.mask_mode.clear_selection()
         # Update parent strand's attached_strands list and remove circle if it's an attached strand
         if is_attached_strand:
             parent_strand = self.find_parent_strand(strand)
@@ -886,27 +981,31 @@ class StrandDrawingCanvas(QWidget):
         if non_masked_strands:
             strands_at_point = non_masked_strands
 
-        if strands_at_point:
-            # Select the first non-masked strand, or the first strand if all are masked
+        if len(strands_at_point) == 1:
             selected_strand = strands_at_point[0]
             index = self.strands.index(selected_strand)
-            self.select_strand(index)
-            self.strand_selected.emit(index)
+            
+            if self.current_mode == self.mask_mode:
+                self.mask_mode.handle_strand_selection(selected_strand)
+            else:
+                self.select_strand(index)
+                self.strand_selected.emit(index)
         else:
-            # Deselect if clicking on an empty area
-            self.select_strand(None)
-            self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
+            # Deselect if clicking on an empty area or multiple strands
+            if self.current_mode == self.mask_mode:
+                self.mask_mode.clear_selection()
+            else:
+                self.select_strand(None)
+                self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
+
 
     def find_strands_at_point(self, pos):
         return [strand for strand in self.strands if strand.get_path().contains(pos)]
     
     def exit_select_mode(self):
-        """Exit the select mode and reset any select mode-specific states."""
-        if self.current_mode == "select":
-            self.current_mode = self.attach_mode  # or any default mode you prefer
-            self.setCursor(Qt.ArrowCursor)  # Reset cursor to default
-            # Optionally, you might want to clear the selection here
-            # self.clear_selection()
+        if self.current_mode == "select" or self.current_mode == self.mask_mode:
+            self.current_mode = self.attach_mode
+            self.setCursor(Qt.ArrowCursor)
         self.update()
     def highlight_selected_strand(self, index):
         """Highlight the selected strand."""

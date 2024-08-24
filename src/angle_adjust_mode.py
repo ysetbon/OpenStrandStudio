@@ -197,11 +197,24 @@ class AngleAdjustMode:
         if self.active_strand:
             self.active_strand.update_shape()
             self.active_strand.update_side_line()
-            # Ensure the strand remains selected
-            strand_index = self.canvas.strands.index(self.active_strand)
-            self.canvas.select_strand(strand_index)
+            
+            # Get the index of the active strand
+            active_strand_index = self.canvas.strands.index(self.active_strand)
+            
+            # Deactivate the angle adjust mode
+            self.canvas.is_angle_adjusting = False
+            
+            # Reselect the strand
+            self.canvas.select_strand(active_strand_index)
+            
+            # Ensure the layer panel selection is updated
+            if self.canvas.layer_panel:
+                self.canvas.layer_panel.select_layer(active_strand_index, emit_signal=False)
+            
+            # Emit the strand_selected signal
+            self.canvas.strand_selected.emit(active_strand_index)
+        
         self.active_strand = None
-        self.canvas.is_angle_adjusting = False  # Add this line
         self.canvas.update()
 
     def cancel_adjustment(self):

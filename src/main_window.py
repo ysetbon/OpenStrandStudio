@@ -139,20 +139,18 @@ class MainWindow(QMainWindow):
         """)
 
     def setup_connections(self):
+        # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize
         self.layer_panel.handle.mouseMoveEvent = self.do_resize
         self.layer_panel.handle.mouseReleaseEvent = self.stop_resize
 
+        # Set layer panel for canvas
         self.canvas.set_layer_panel(self.layer_panel)
+
+        # Layer panel connections
         self.layer_panel.new_strand_requested.connect(self.create_new_strand)
         self.layer_panel.strand_selected.connect(lambda idx: self.select_strand(idx, emit_signal=False))
         self.layer_panel.deselect_all_requested.connect(self.canvas.deselect_all_strands)
-
-        self.attach_button.clicked.connect(self.set_attach_mode)
-        self.move_button.clicked.connect(self.set_move_mode)
-        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
-        self.angle_adjust_button.clicked.connect(self.toggle_angle_adjust_mode)
-
         self.layer_panel.color_changed.connect(self.handle_color_change)
         self.layer_panel.masked_layer_created.connect(self.create_masked_layer)
         self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
@@ -160,22 +158,65 @@ class MainWindow(QMainWindow):
         self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
         self.layer_panel.strand_deleted.connect(self.delete_strand)
 
+        # Button connections
+        self.attach_button.clicked.connect(self.set_attach_mode)
+        self.move_button.clicked.connect(self.set_move_mode)
+        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
+        self.angle_adjust_button.clicked.connect(self.toggle_angle_adjust_mode)
         self.save_button.clicked.connect(self.save_project)
         self.load_button.clicked.connect(self.load_project)
-        self.save_image_button.clicked.connect(self.save_canvas_as_image)  # Connect new button
+        self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
-
         self.mask_button.clicked.connect(self.set_mask_mode)
-        self.canvas.mask_created.connect(self.handle_mask_created)
 
+        # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
+
+        # Disconnect any existing connections for mask_created
+        try:
+            self.canvas.mask_created.disconnect(self.handle_mask_created)
+        except TypeError:
+            # This exception will be raised if there was no connection, which is fine
+            pass
+
+        # Reconnect mask_created signal
+        self.canvas.mask_created.connect(self.handle_mask_created)
 
     def set_mask_mode(self):
         self.update_mode("mask")
         self.canvas.set_mode("mask")
 
     def handle_mask_created(self, strand1, strand2):
-        self.create_masked_layer(self.canvas.strands.index(strand1), self.canvas.strands.index(strand2))
+        """
+        Handle the creation of a mask between two strands.
+        This method is called when the mask_created signal is emitted.
+
+        Args:
+            strand1 (Strand): The first strand in the mask.
+            strand2 (Strand): The second strand in the mask.
+        """
+        logging.info(f"Received mask_created signal for {strand1.layer_name} and {strand2.layer_name}")
+
+        # Verify that both strands exist in the canvas
+        if strand1 not in self.canvas.strands or strand2 not in self.canvas.strands:
+            logging.error("One or both strands are not in the canvas. Cannot create mask.")
+            return
+
+        # Check if a mask already exists for these strands
+        if self.canvas.mask_exists(strand1, strand2):
+            logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}. Skipping creation.")
+            return
+
+        # Update UI or perform any other necessary actions
+        self.update_mode(self.current_mode)  # Refresh the current mode
+        
+        # You might want to update the layer panel or other UI elements here
+        if self.layer_panel:
+            self.layer_panel.refresh()
+
+        logging.info(f"Processed mask creation for {strand1.layer_name} and {strand2.layer_name}")
+
+        # Note: The actual creation of the masked strand is now handled in the StrandDrawingCanvas class
 
 
     def save_canvas_as_image(self):
@@ -340,12 +381,16 @@ class MainWindow(QMainWindow):
             if self.canvas.is_angle_adjusting:
                 # Exit angle adjust mode
                 self.canvas.angle_adjust_mode.confirm_adjustment()
+                # The strand should still be selected at this point
                 self.update_mode(self.current_mode)
             else:
                 # Enter angle adjust mode
                 self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
                 self.update_mode("angle_adjust")
             self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
+        else:
+            print("No strand selected. Please select a strand before adjusting its angle.")
+            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def create_new_strand(self):
         if self.canvas.is_angle_adjusting:

@@ -120,14 +120,27 @@ class StrandDrawingCanvas(QWidget):
                 self.draw_highlighted_strand(painter, strand)
 
     def create_masked_layer(self, strand1, strand2):
+        """
+        Create a masked layer from two selected strands.
+
+        Args:
+            strand1 (Strand): The first strand to be masked.
+            strand2 (Strand): The second strand to be masked.
+        """
+        logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
+
         # Check if a masked layer already exists for these strands
         if self.mask_exists(strand1, strand2):
             logging.info(f"Masked layer for {strand1.layer_name} and {strand2.layer_name} already exists.")
             return
 
+        # Create the new masked strand
         masked_strand = MaskedStrand(strand1, strand2)
+        
+        # Add the new masked strand to the canvas
         self.add_strand(masked_strand)
         
+        # Update the layer panel if it exists
         if self.layer_panel:
             button = self.layer_panel.add_masked_layer_button(
                 self.strands.index(strand1),
@@ -135,14 +148,39 @@ class StrandDrawingCanvas(QWidget):
             )
             button.color_changed.connect(self.handle_color_change)
         
+        # Set the color of the masked strand
+        # You might want to adjust this based on your color scheme
+        masked_strand.set_color(strand1.color)
+        
+        # Update the masked strand's layer name
+        masked_strand.layer_name = f"{strand1.layer_name}_{strand2.layer_name}"
+        
+        # Log the creation of the masked layer
+        logging.info(f"Created masked layer: {masked_strand.layer_name}")
+        
+        # Clear any existing selection
+        self.clear_selection()
+        
+        # Move the new masked strand to the top of the drawing order
+        self.move_strand_to_top(masked_strand)
+        
+        # Force a redraw of the canvas
         self.update()
-        self.mask_created.emit(strand1, strand2)
+        
+        # Emit a signal if needed (e.g., to update other parts of the UI)
+        # self.mask_created.emit(masked_strand)  # Uncomment if you have this signal
+        
+        # If you're using an undo stack, you might want to add this action to it
+        # self.undo_stack.push(CreateMaskCommand(self, strand1, strand2, masked_strand))
+        
+        # Return the new masked strand in case it's needed
+        return masked_strand
 
     def mask_exists(self, strand1, strand2):
         for strand in self.strands:
             if isinstance(strand, MaskedStrand):
                 if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2) or \
-                   (strand.first_selected_strand == strand2 and strand.second_selected_strand == strand1):
+                (strand.first_selected_strand == strand2 and strand.second_selected_strand == strand1):
                     return True
         return False
     
@@ -484,7 +522,6 @@ class StrandDrawingCanvas(QWidget):
             self.setCursor(Qt.PointingHandCursor)
         elif mode == "mask":
             self.current_mode = self.mask_mode
-            self.mask_mode.activate()
             self.mask_mode_active = True
             self.setCursor(Qt.CrossCursor)
         elif mode == "angle_adjust":
@@ -495,7 +532,8 @@ class StrandDrawingCanvas(QWidget):
             raise ValueError(f"Unknown mode: {mode}")
 
         # If the new mode has an activate method, call it
-        if hasattr(self.current_mode, 'activate'):
+        # For angle_adjust mode, we'll activate it separately with the selected strand
+        if hasattr(self.current_mode, 'activate') and mode != "angle_adjust":
             self.current_mode.activate()
 
         # Clear any existing selection if switching to a different mode

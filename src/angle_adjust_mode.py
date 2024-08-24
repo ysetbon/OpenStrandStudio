@@ -219,12 +219,13 @@ class AngleAdjustMode:
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False
             
-            # Reselect the strand
-            self.canvas.select_strand(active_strand_index)
-            
             # Ensure the layer panel selection is updated
             if self.canvas.layer_panel:
-                self.canvas.layer_panel.select_layer(active_strand_index, emit_signal=False)
+                self.canvas.layer_panel.deselect_all()
+                self.canvas.layer_panel.update()  # Force a repaint of the layer panel
+            
+            # Reselect the strand in the canvas (but not in the layer panel)
+            self.canvas.select_strand(active_strand_index, update_layer_panel=False)
             
             # Emit the strand_selected signal
             self.canvas.strand_selected.emit(active_strand_index)

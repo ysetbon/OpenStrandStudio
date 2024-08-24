@@ -458,13 +458,13 @@ class StrandDrawingCanvas(QWidget):
         self.strands.append(strand)
         self.update()
 
-    def select_strand(self, index):
+    def select_strand(self, index, update_layer_panel=True):
         if index is not None and 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
             self.selected_strand_index = index
             self.last_selected_strand_index = index
             self.is_first_strand = False
-            if self.layer_panel and self.layer_panel.get_selected_layer() != index:
+            if update_layer_panel and self.layer_panel and self.layer_panel.get_selected_layer() != index:
                 self.layer_panel.select_layer(index, emit_signal=False)
             self.current_mode = self.attach_mode
             self.current_mode.is_attaching = False

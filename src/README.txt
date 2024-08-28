@@ -81,6 +81,16 @@ Enjoy creating with OpenStrand Studio!
 
 ------
 
+## version 1.03 (Released 8/25/2024)
+
+New Features:
+
+1. Save Image Button: Export designs as image files.
+2. Mask Mode Button: Quick access to masking functionality.
+3. Select Strand Button: Improved strand selection tool.
+4. Angle Adjustment Update: Strands automatically deselect after angle adjustment.
+
+------
 **HIGHLIGHTED FEATURE:**
 
 > **Sample Projects: Download and load sample projects from the provided folder to explore different design techniques and possibilities**

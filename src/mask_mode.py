@@ -49,7 +49,6 @@ class MaskMode(QObject):
         if len(self.selected_strands) == 2:
             strand1, strand2 = self.selected_strands
             logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
-            # Check if a masked layer already exists for these strands
             if not self.mask_exists(strand1, strand2):
                 self.mask_created.emit(strand1, strand2)
                 logging.info(f"Mask created for {strand1.layer_name} and {strand2.layer_name}")
@@ -61,8 +60,7 @@ class MaskMode(QObject):
     def mask_exists(self, strand1, strand2):
         for strand in self.canvas.strands:
             if isinstance(strand, MaskedStrand):
-                if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2) or \
-                   (strand.first_selected_strand == strand2 and strand.second_selected_strand == strand1):
+                if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2):
                     return True
         return False
 

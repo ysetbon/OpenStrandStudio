@@ -339,6 +339,12 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(False)
+        elif mode == "new_strand":
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(False)
+            self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(False)
 
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
@@ -395,40 +401,15 @@ class MainWindow(QMainWindow):
     def create_new_strand(self):
         if self.canvas.is_angle_adjusting:
             self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
-        new_strand = Strand(QPointF(100, 100), QPointF(200, 200), self.canvas.strand_width)
-        new_strand.is_first_strand = True
-        new_strand.is_start_side = True
         
         set_number = max(self.canvas.strand_colors.keys(), default=0) + 1
         
-        new_strand.set_number = set_number
-        
         if set_number not in self.canvas.strand_colors:
             self.canvas.strand_colors[set_number] = QColor('purple')
-        new_strand.set_color(self.canvas.strand_colors[set_number])
         
-        new_strand.layer_name = f"{set_number}_1"
+        self.canvas.start_new_strand_mode(set_number)
         
-        self.canvas.add_strand(new_strand)
-        new_strand_index = len(self.canvas.strands) - 1
-        
-        # Set both selected_strand and newest_strand
-        self.canvas.selected_strand = new_strand
-        self.canvas.newest_strand = new_strand
-        self.canvas.selected_strand_index = new_strand_index
-        
-        # Add and select the new strand in the layer panel
-        self.layer_panel.add_layer_button(set_number)
-        self.layer_panel.select_layer(new_strand_index, emit_signal=False)
-        
-        # Update the mode and force a redraw
-        self.update_mode(self.current_mode)
-        self.canvas.update()  # Force a redraw of the canvas
-        
-        # Emit the strand selection signal
-        self.canvas.strand_selected.emit(new_strand_index)
-        
-        logging.info(f"Created new strand: {new_strand.layer_name}, index: {new_strand_index}")
+        logging.info(f"Ready to create new main strand for set: {set_number}")
 
     def select_strand(self, index, emit_signal=True):
         if self.canvas.is_angle_adjusting:

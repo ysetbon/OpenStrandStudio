@@ -19,6 +19,15 @@ class StrandDrawingCanvas(QWidget):
         self.initialize_properties()
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
+        
+        # Add these new attributes
+        self.is_drawing_new_strand = False
+        self.new_strand_set_number = None
+        self.new_strand_start_point = None
+        self.new_strand_end_point = None
+        self.stroke_color = Qt.black
+        self.strand_width = 55  # Width of strands
+        self.stroke_width = 5  # Width of the black outline
 
     def initialize_properties(self):
         """Initialize all properties used in the StrandDrawingCanvas."""
@@ -44,7 +53,14 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False  # Add this line
         self.mask_mode_active = False
         self.mask_selected_strands = []
-
+    def start_new_strand_mode(self, set_number):
+        self.new_strand_set_number = set_number
+        self.new_strand_start_point = None
+        self.new_strand_end_point = None
+        self.is_drawing_new_strand = True
+        self.setCursor(Qt.CrossCursor)
+        # Keep the current mode, don't set it to None
+        logging.info(f"Entered new strand mode for set: {set_number}")
     def setup_modes(self):
         """Set up attach, move, and mask modes."""
         # Attach mode setup
@@ -111,7 +127,7 @@ class StrandDrawingCanvas(QWidget):
 
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
-            painter.setPen(QPen(Qt.red, 2))
+            painter.setPen(QPen(Qt.red, 5))
             painter.drawRect(self.current_mode.selected_rectangle)
 
         # Draw the angle adjustment visualization if in angle adjust mode
@@ -123,9 +139,22 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
 
+        # Draw the new strand being created
+        if self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
+            # Determine the color for the new strand
+            if self.new_strand_set_number in self.strand_colors:
+                strand_color = self.strand_colors[self.new_strand_set_number]
+            else:
+                # If it's the first strand (no existing colors), use the default color
+                strand_color = QColor('purple')
+
+     
+            # Draw the colored strand
+            painter.setPen(QPen(QColor('black'),self.stroke_width, Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin))
+            painter.drawLine(self.new_strand_start_point, self.new_strand_end_point)
+
         logging.info(f"Paint event completed. Selected strand: {self.selected_strand.layer_name if self.selected_strand else 'None'}, "
                      f"Newest strand: {self.newest_strand.layer_name if self.newest_strand else 'None'}")
-
     def create_masked_layer(self, strand1, strand2):
         """
         Create a masked layer from two selected strands.
@@ -486,30 +515,68 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Selected strand index: {index}")
 
     def mousePressEvent(self, event):
-        if self.current_mode == "select":
+        if self.is_drawing_new_strand:
+            self.new_strand_start_point = event.pos()
+        elif self.current_mode == "select":
             self.handle_strand_selection(event.pos())
         elif self.current_mode == self.mask_mode:
-            self.mask_mode.handle_mouse_press(event)  # Changed to handle_mouse_press
-        else:
+            self.mask_mode.handle_mouse_press(event)
+        elif self.current_mode:
             self.current_mode.mousePressEvent(event)
         self.update()
 
     def mouseMoveEvent(self, event):
-        """Handle mouse move events."""
-        self.current_mode.mouseMoveEvent(event)
-        self.update()
+        if self.is_drawing_new_strand and self.new_strand_start_point:
+            self.new_strand_end_point = event.pos()
+            self.update()
+        elif self.current_mode:
+            self.current_mode.mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        """Handle mouse release events."""
-        self.current_mode.mouseReleaseEvent(event)
+        if self.is_drawing_new_strand and self.new_strand_start_point:
+            self.new_strand_end_point = event.pos()
+            self.finalize_new_strand()
+        elif self.current_mode:
+            self.current_mode.mouseReleaseEvent(event)
         self.update()
 
+
+
+    def finalize_new_strand(self):
+        if self.new_strand_start_point and self.new_strand_end_point:
+            new_strand = Strand(self.new_strand_start_point, self.new_strand_end_point, self.strand_width)
+            new_strand.set_number = self.new_strand_set_number
+            new_strand.set_color(self.strand_colors[self.new_strand_set_number])
+            new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
+            new_strand.is_first_strand = True
+            new_strand.is_start_side = True
+            
+            self.add_strand(new_strand)
+            new_strand_index = len(self.strands) - 1
+            
+            self.selected_strand = new_strand
+            self.newest_strand = new_strand
+            self.selected_strand_index = new_strand_index
+            
+            self.is_drawing_new_strand = False
+            self.new_strand_start_point = None
+            self.new_strand_end_point = None
+            self.setCursor(Qt.ArrowCursor)
+            
+            # Emit signals or call methods to update UI
+            self.strand_selected.emit(new_strand_index)
+            if hasattr(self, 'layer_panel'):
+                self.layer_panel.on_strand_created(new_strand)
+            
+            logging.info(f"Created new main strand: {new_strand.layer_name}, index: {new_strand_index}")
+        else:
+            logging.warning("Attempted to finalize new strand without valid start and end points")
     def set_mode(self, mode):
         """
         Set the current mode of the canvas.
         
         Args:
-            mode (str): The mode to set. Can be "attach", "move", "select", "mask", or "angle_adjust".
+            mode (str): The mode to set. Can be "attach", "move", "select", "mask", "angle_adjust", "new_strand", or "new_strand".
         """
         # Deactivate the current mode if it has a deactivate method
         if hasattr(self.current_mode, 'deactivate'):
@@ -518,6 +585,7 @@ class StrandDrawingCanvas(QWidget):
         # Reset any mode-specific flags
         self.is_angle_adjusting = False
         self.mask_mode_active = False
+        self.is_drawing_new_strand = False
 
         # Set the new mode
         if mode == "attach":
@@ -537,6 +605,10 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode = self.angle_adjust_mode
             self.is_angle_adjusting = True
             self.setCursor(Qt.SizeAllCursor)
+        elif mode == "new_strand":
+            self.is_drawing_new_strand = True
+            self.current_mode = None  # or you could set it to a default mode like self.attach_mode
+            self.setCursor(Qt.CrossCursor)
         else:
             raise ValueError(f"Unknown mode: {mode}")
 

@@ -6,6 +6,51 @@ import logging
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
 from strand import MaskedStrand
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QLabel,
+                             QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+from group_layers import GroupPanel
+from group_layers import GroupLayerManager
+from PyQt5.QtWidgets import QSplitter
+class LayerPanel(QWidget):
+    # Custom signals for various events
+    new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
+    strand_selected = pyqtSignal(int)  # Signal when a strand is selected (index)
+    deselect_all_requested = pyqtSignal()  # Signal to deselect all strands
+    color_changed = pyqtSignal(int, QColor)  # Signal when a strand's color is changed (set number, new color)
+    masked_layer_created = pyqtSignal(int, int)  # Signal when a masked layer is created (layer1 index, layer2 index)
+    draw_names_requested = pyqtSignal(bool)  # Signal to toggle drawing of strand names
+    masked_mode_entered = pyqtSignal()  # Signal when masked mode is entered
+    masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
+    lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change (locked layers set, lock mode state)
+    strand_deleted = pyqtSignal(int)  # New signal for strand deletion
+
+
+
+class LayerSelectionDialog(QDialog):
+    def __init__(self, layers, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Layers for Group")
+        self.layout = QVBoxLayout(self)
+        
+        self.layer_list = QListWidget()
+        for layer in layers:
+            item = QListWidgetItem(layer)
+            item.setCheckState(Qt.Unchecked)
+            self.layer_list.addItem(item)
+        
+        self.layout.addWidget(self.layer_list)
+        
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        self.layout.addWidget(self.button_box)
+
+    def get_selected_layers(self):
+        return [self.layer_list.item(i).text() for i in range(self.layer_list.count()) 
+                if self.layer_list.item(i).checkState() == Qt.Checked]
+
 
 class LayerPanel(QWidget):
     # Custom signals for various events
@@ -23,14 +68,18 @@ class LayerPanel(QWidget):
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
-        self.layout = QVBoxLayout(self)
+        self.layout = QHBoxLayout(self)  # Change to QHBoxLayout for side-by-side panels
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None  # Stores the index of the last selected layer
         
+        # Create left panel (existing layer panel)
+        self.left_panel = QWidget()
+        self.left_layout = QVBoxLayout(self.left_panel)
+        
         # Create and add the splitter handle
         self.handle = SplitterHandle(self)
-        self.layout.addWidget(self.handle)
+        self.left_layout.addWidget(self.handle)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
@@ -74,9 +123,28 @@ class LayerPanel(QWidget):
         bottom_layout.addWidget(self.delete_strand_button)
         bottom_layout.addWidget(self.deselect_all_button)
         
-        # Add scroll area and bottom panel to main layout
-        self.layout.addWidget(self.scroll_area)
-        self.layout.addWidget(bottom_panel)
+        # Add scroll area and bottom panel to left layout
+        self.left_layout.addWidget(self.scroll_area)
+        self.left_layout.addWidget(bottom_panel)
+
+        # Create right panel (group panel)
+        self.right_panel = QWidget()
+        self.right_layout = QVBoxLayout(self.right_panel)
+        
+        # Create GroupLayerManager
+        self.group_layer_manager = GroupLayerManager(self)
+        
+        # Add only the create_group_button and group_panel to right layout
+        self.right_layout.addWidget(self.group_layer_manager.create_group_button)
+        self.right_layout.addWidget(self.group_layer_manager.group_panel)
+
+        # Create a splitter to allow resizing between left and right panels
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.addWidget(self.left_panel)
+        self.splitter.addWidget(self.right_panel)
+        
+        # Add splitter to main layout
+        self.layout.addWidget(self.splitter)
         
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
@@ -91,7 +159,7 @@ class LayerPanel(QWidget):
         # Create notification label
         self.notification_label = QLabel()
         self.notification_label.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.notification_label)
+        self.left_layout.addWidget(self.notification_label)
 
         # Initialize lock mode variables
         self.lock_mode = False
@@ -100,6 +168,70 @@ class LayerPanel(QWidget):
 
         # Initialize should_draw_names attribute
         self.should_draw_names = False
+
+        # Initialize group-related variables
+        self.groups = {}
+
+    def create_group(self):
+        group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
+        if ok and group_name:
+            layers = [button.text() for button in self.layer_buttons]
+            dialog = LayerSelectionDialog(layers, self)
+            if dialog.exec_():
+                selected_layers = dialog.get_selected_layers()
+                for layer in selected_layers:
+                    self.right_panel.add_layer_to_group(layer, group_name)
+
+
+
+    def request_draw_names(self):
+        self.should_draw_names = not self.should_draw_names
+        self.draw_names_requested.emit(self.should_draw_names)
+
+    def create_group(self):
+        group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
+        if ok and group_name:
+            layers = [button.text() for button in self.layer_buttons]
+            dialog = LayerSelectionDialog(layers, self)
+            if dialog.exec_():
+                selected_layers = dialog.get_selected_layers()
+                for layer in selected_layers:
+                    self.right_panel.add_layer_to_group(layer, group_name)
+
+    def add_group(self, group_name, layers):
+        group_widget = QWidget()
+        group_layout = QVBoxLayout(group_widget)
+        group_label = QLabel(group_name)
+        group_layout.addWidget(group_label)
+        
+        for layer in layers:
+            layer_label = QLabel(layer)
+            group_layout.addWidget(layer_label)
+        
+        self.group_scroll_layout.addWidget(group_widget)
+        self.groups[group_name] = layers
+        
+        # Update the group display
+        self.update_group_display(group_name)
+
+    def update_group_display(self, group_name):
+        if group_name in self.groups:
+            group_widget = self.group_scroll_layout.itemAt(list(self.groups.keys()).index(group_name)).widget()
+            group_layout = group_widget.layout()
+            
+            # Update the group label
+            group_label = group_layout.itemAt(0).widget()
+            group_label.setText(f"{group_name} ({len(self.groups[group_name])})")
+            
+            # Clear existing layer labels
+            for i in reversed(range(group_layout.count())):
+                if i > 0:  # Keep the group label
+                    group_layout.itemAt(i).widget().setParent(None)
+            
+            # Add updated layer labels
+            for layer in self.groups[group_name]:
+                layer_label = QLabel(layer)
+                group_layout.addWidget(layer_label)
 
     def request_draw_names(self):
         """Toggle the drawing of strand names and emit the corresponding signal."""
@@ -610,6 +742,9 @@ class LayerPanel(QWidget):
         
         # Update the current set
         self.current_set = max(self.set_counts.keys(), default=0)
+        
+        # Refresh the GroupLayerManager
+        self.group_layer_manager.refresh()
         
         logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
 

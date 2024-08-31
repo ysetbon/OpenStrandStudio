@@ -321,7 +321,8 @@ class StrandDrawingCanvas(QWidget):
     def set_layer_panel(self, layer_panel):
         """Set the layer panel and connect signals."""
         self.layer_panel = layer_panel
-        self.layer_panel.draw_names_requested.connect(self.toggle_name_drawing)
+        if hasattr(self.layer_panel, 'draw_names_requested'):
+            self.layer_panel.draw_names_requested.connect(self.toggle_name_drawing)
 
     def toggle_name_drawing(self, should_draw):
         """Toggle the drawing of strand names."""

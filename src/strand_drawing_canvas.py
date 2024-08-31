@@ -90,6 +90,10 @@ class StrandDrawingCanvas(QWidget):
         # Draw all strands in their current order
         for strand in self.strands:
             if strand == self.selected_strand:
+                logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
+                self.draw_highlighted_strand(temp_painter, strand)
+            elif strand == self.newest_strand:
+                logging.info(f"Drawing highlighted newest strand: {strand.layer_name}")
                 self.draw_highlighted_strand(temp_painter, strand)
             else:
                 strand.draw(temp_painter)
@@ -118,6 +122,9 @@ class StrandDrawingCanvas(QWidget):
         if self.current_mode == self.mask_mode:
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
+
+        logging.info(f"Paint event completed. Selected strand: {self.selected_strand.layer_name if self.selected_strand else 'None'}, "
+                     f"Newest strand: {self.newest_strand.layer_name if self.newest_strand else 'None'}")
 
     def create_masked_layer(self, strand1, strand2):
         """
@@ -459,7 +466,7 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def select_strand(self, index, update_layer_panel=True):
-        if index is not None and 0 <= index < len(self.strands):
+        if 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
             self.selected_strand_index = index
             self.last_selected_strand_index = index
@@ -470,11 +477,13 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode.is_attaching = False
             self.current_strand = None
             self.strand_selected.emit(index)  # Emit the signal here
+            self.highlight_selected_strand(index)
         else:
             self.selected_strand = None
             self.selected_strand_index = None
             self.strand_selected.emit(-1)  # Emit -1 for deselection
-        self.update()
+        self.update()  # Force a redraw
+        logging.info(f"Selected strand index: {index}")
 
     def mousePressEvent(self, event):
         if self.current_mode == "select":

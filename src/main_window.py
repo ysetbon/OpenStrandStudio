@@ -410,11 +410,25 @@ class MainWindow(QMainWindow):
         new_strand.layer_name = f"{set_number}_1"
         
         self.canvas.add_strand(new_strand)
-        self.canvas.newest_strand = new_strand
-        self.layer_panel.add_layer_button(set_number)
-        self.select_strand(len(self.canvas.strands) - 1)
+        new_strand_index = len(self.canvas.strands) - 1
         
+        # Set both selected_strand and newest_strand
+        self.canvas.selected_strand = new_strand
+        self.canvas.newest_strand = new_strand
+        self.canvas.selected_strand_index = new_strand_index
+        
+        # Add and select the new strand in the layer panel
+        self.layer_panel.add_layer_button(set_number)
+        self.layer_panel.select_layer(new_strand_index, emit_signal=False)
+        
+        # Update the mode and force a redraw
         self.update_mode(self.current_mode)
+        self.canvas.update()  # Force a redraw of the canvas
+        
+        # Emit the strand selection signal
+        self.canvas.strand_selected.emit(new_strand_index)
+        
+        logging.info(f"Created new strand: {new_strand.layer_name}, index: {new_strand_index}")
 
     def select_strand(self, index, emit_signal=True):
         if self.canvas.is_angle_adjusting:

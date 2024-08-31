@@ -516,6 +516,7 @@ class LayerPanel(QWidget):
             self.update_layer_buttons_lock_state()
             self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
         self.deselect_all_requested.emit()
+        self.canvas.deselect_all_strands()  # Add this line to deselect strands in the canvas
         self.update()  # Force a repaint of the entire panel
 
     def on_color_changed(self, set_number, color):

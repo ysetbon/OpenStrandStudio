@@ -108,9 +108,6 @@ class StrandDrawingCanvas(QWidget):
             if strand == self.selected_strand:
                 logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                 self.draw_highlighted_strand(temp_painter, strand)
-            elif strand == self.newest_strand:
-                logging.info(f"Drawing highlighted newest strand: {strand.layer_name}")
-                self.draw_highlighted_strand(temp_painter, strand)
             else:
                 strand.draw(temp_painter)
 
@@ -336,11 +333,6 @@ class StrandDrawingCanvas(QWidget):
         self.should_draw_names = True
         self.update()
 
-    def deselect_all_strands(self):
-        """Deselect all strands."""
-        self.selected_strand = None
-        self.selected_strand_index = None
-        self.update()
 
     def update_color_for_set(self, set_number, color):
         """Update the color for a set of strands."""
@@ -495,7 +487,7 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def select_strand(self, index, update_layer_panel=True):
-        if 0 <= index < len(self.strands):
+        if index is not None and 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
             self.selected_strand_index = index
             self.last_selected_strand_index = index
@@ -505,14 +497,19 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode = self.attach_mode
             self.current_mode.is_attaching = False
             self.current_strand = None
-            self.strand_selected.emit(index)  # Emit the signal here
-            self.highlight_selected_strand(index)
+            self.strand_selected.emit(index)
         else:
             self.selected_strand = None
             self.selected_strand_index = None
             self.strand_selected.emit(-1)  # Emit -1 for deselection
         self.update()  # Force a redraw
         logging.info(f"Selected strand index: {index}")
+
+    def deselect_all_strands(self):
+        """Deselect all strands."""
+        self.selected_strand = None
+        self.selected_strand_index = None
+        self.update()
 
     def mousePressEvent(self, event):
         if self.is_drawing_new_strand:

@@ -188,15 +188,23 @@ class LayerPanel(QWidget):
         self.should_draw_names = not self.should_draw_names
         self.draw_names_requested.emit(self.should_draw_names)
 
+
     def create_group(self):
         group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
         if ok and group_name:
-            layers = [button.text() for button in self.layer_buttons]
+            # Filter out masked layers
+            layers = [button.text() for button in self.layer_buttons if not self.is_masked_layer(button)]
             dialog = LayerSelectionDialog(layers, self)
             if dialog.exec_():
                 selected_layers = dialog.get_selected_layers()
                 for layer in selected_layers:
-                    self.right_panel.add_layer_to_group(layer, group_name)
+                    self.group_layer_manager.group_panel.add_layer_to_group(layer, group_name)
+
+    def is_masked_layer(self, button):
+        # Check if the button text follows the masked layer naming convention
+        index = self.layer_buttons.index(button)
+        return isinstance(self.canvas.strands[index], MaskedStrand)
+
 
     def add_group(self, group_name, layers):
         group_widget = QWidget()

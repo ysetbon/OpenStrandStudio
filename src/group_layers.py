@@ -17,6 +17,20 @@ class GroupedLayerTree(QTreeWidget):
         self.groups = {}
         self.setAcceptDrops(True)
 
+    def update_layer(self, index, layer_name, color):
+        # Check if the layer is in any group
+        for group_name, group_info in self.groups.items():
+            if layer_name in group_info['layers']:
+                # Update the layer in the group
+                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
+                if group_widget:
+                    group_widget.update_layer(layer_name, color)
+                return
+        
+        # If the layer is not in any group, it might be a new layer
+        # You can decide how to handle new layers here, for example:
+        # self.add_layer_to_default_group(layer_name, color)
+
     def add_layer(self, layer_name, color):
         item = QTreeWidgetItem(self, [layer_name])
         item.setData(0, Qt.UserRole, "layer")
@@ -121,6 +135,24 @@ class CollapsibleGroupWidget(QWidget):
     def update_group_display(self):
         self.group_button.setText(f"{self.group_name} ({len(self.layers)})")
 
+    def update_layer(self, index, layer_name, color):
+        # Check if the layer is in any group
+        for group_name, group_info in self.groups.items():
+            if layer_name in group_info['layers']:
+                # Update the layer in the group
+                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
+                if group_widget:
+                    group_widget.update_layer(layer_name, color)
+                return
+        
+        # If the layer is not in any group, it might be a new layer
+        # You can decide how to handle new layers here, for example:
+        # self.add_layer_to_default_group(layer_name, color)
+        
+        # If the layer is not in any group, it might be a new layer
+        # You can decide how to handle new layers here, for example:
+        # self.add_layer_to_default_group(layer_name, color)
+
 class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
 
@@ -170,6 +202,31 @@ class GroupPanel(QWidget):
         if group_name in self.groups:
             self.groups[group_name].update_group_display()
 
+    def clear(self):
+        # Remove all widgets from the scroll layout
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+        
+        # Clear the groups dictionary
+        self.groups.clear()
+
+    def update_layer(self, index, layer_name, color):
+        # Check if the layer is in any group
+        for group_name, group_info in self.groups.items():
+            if layer_name in group_info['layers']:
+                # Update the layer in the group
+                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
+                if group_widget:
+                    group_widget.update_layer(layer_name, color)
+                return
+        
+        # If the layer is not in any group, it might be a new layer
+        # You can decide how to handle new layers here, for example:
+        # self.add_layer_to_default_group(layer_name, color)
+
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -178,9 +235,11 @@ class LayerSelectionDialog(QDialog):
         
         self.layer_list = QListWidget()
         for layer in layers:
-            item = QListWidgetItem(layer)
-            item.setCheckState(Qt.Unchecked)
-            self.layer_list.addItem(item)
+            # Exclude masked layers (those with names following the pattern x_y_z_w)
+            if len(layer.split('_')) != 4:
+                item = QListWidgetItem(layer)
+                item.setCheckState(Qt.Unchecked)
+                self.layer_list.addItem(item)
         
         self.layout.addWidget(self.layer_list)
         

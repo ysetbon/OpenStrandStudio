@@ -178,7 +178,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 
 class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
-    move_group_started = pyqtSignal(str)  # New signal
+    move_group_started = pyqtSignal(str, list)  # New signal
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -237,6 +237,70 @@ class GroupPanel(QWidget):
         group_name, ok = QInputDialog.getText(self, "Add to Group", "Enter group name:")
         if ok and group_name:
             self.add_layer_to_group(strand_id, group_name)
+
+    def start_group_move(self, group_name):
+        if group_name in self.groups:
+            layers = self.groups[group_name]['layers']
+            dialog = GroupMoveDialog(self)
+            dialog.move_updated.connect(lambda dx, dy: self.update_group_move(group_name, layers, dx, dy))
+            dialog.exec_()
+        else:
+            logging.warning(f"Attempted to move non-existent group: {group_name}")
+
+    def update_group_move(self, group_name, layers, dx, dy):
+        self.move_group_started.emit(group_name, layers)
+        if hasattr(self, 'canvas'):
+            self.canvas.move_group(dx, dy)
+
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
+from PyQt5.QtCore import Qt, pyqtSignal
+
+class GroupMoveDialog(QDialog):
+    move_updated = pyqtSignal(int, int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Move Group Strands")
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+
+        # dx slider
+        dx_layout = QHBoxLayout()
+        dx_layout.addWidget(QLabel("dx:"))
+        self.dx_slider = QSlider(Qt.Horizontal)
+        self.dx_slider.setRange(-100, 100)
+        self.dx_slider.setValue(0)
+        self.dx_slider.valueChanged.connect(self.update_move)
+        dx_layout.addWidget(self.dx_slider)
+        self.dx_value = QLabel("0")
+        dx_layout.addWidget(self.dx_value)
+        layout.addLayout(dx_layout)
+
+        # dy slider
+        dy_layout = QHBoxLayout()
+        dy_layout.addWidget(QLabel("dy:"))
+        self.dy_slider = QSlider(Qt.Horizontal)
+        self.dy_slider.setRange(-100, 100)
+        self.dy_slider.setValue(0)
+        self.dy_slider.valueChanged.connect(self.update_move)
+        dy_layout.addWidget(self.dy_slider)
+        self.dy_value = QLabel("0")
+        dy_layout.addWidget(self.dy_value)
+        layout.addLayout(dy_layout)
+
+        # OK button
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        layout.addWidget(ok_button)
+
+    def update_move(self):
+        dx = self.dx_slider.value()
+        dy = self.dy_slider.value()
+        self.dx_value.setText(str(dx))
+        self.dy_value.setText(str(dy))
+        self.move_updated.emit(dx, dy)
 
 def create_group(self, group_name, layers_data):
     group_widget = CollapsibleGroupWidget(group_name, self)
@@ -467,18 +531,20 @@ class GroupLayerManager:
     def move_group_strands(self, group_name, dx, dy):
         if group_name in self.group_panel.groups:
             group_data = self.group_panel.groups[group_name]
+            updated_strands = []
             for i, strand_data in enumerate(group_data['strands']):
                 strand_data['start'] += QPointF(dx, dy)
                 strand_data['end'] += QPointF(dx, dy)
                 
-                # Update the actual strand in the canvas
                 layer_name = group_data['layers'][i]
                 layer_index = self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
                 strand = self.canvas.strands[layer_index]
                 strand.start = strand_data['start']
                 strand.end = strand_data['end']
+                updated_strands.append(strand)
             
-            self.canvas.update()
+            # Update the canvas with the modified strands
+            self.canvas.update_strands(updated_strands)
 
     def start_group_move(self, group_name):
         if self.canvas:

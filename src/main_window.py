@@ -182,6 +182,14 @@ class MainWindow(QMainWindow):
         # Reconnect mask_created signal
         self.canvas.mask_created.connect(self.handle_mask_created)
 
+        # Connect the canvas to the group layer manager
+        self.layer_panel.group_layer_manager.canvas = self.canvas
+
+        # Connect group operation signal
+        self.layer_panel.group_layer_manager.group_panel.group_operation.connect(
+            self.layer_panel.group_layer_manager.on_group_operation
+        )
+
     def set_mask_mode(self):
         self.update_mode("mask")
         self.canvas.set_mode("mask")

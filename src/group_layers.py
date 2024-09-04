@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
-                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea)
+                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
 from PyQt5.QtCore import QMimeData, QPoint
@@ -80,9 +80,10 @@ class GroupedLayerTree(QTreeWidget):
         return -1
 
 class CollapsibleGroupWidget(QWidget):
-    def __init__(self, group_name, parent=None):
+    def __init__(self, group_name, group_panel, parent=None):
         super().__init__(parent)
         self.group_name = group_name
+        self.group_panel = group_panel
         self.is_collapsed = False
         self.layers = []  # Store layer names
         self.setup_ui()
@@ -104,6 +105,8 @@ class CollapsibleGroupWidget(QWidget):
             }
         """)
         self.group_button.clicked.connect(self.toggle_collapse)
+        self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.group_button.customContextMenuRequested.connect(self.show_context_menu)
         self.layout.addWidget(self.group_button)
 
         # Content (layer buttons)
@@ -112,6 +115,17 @@ class CollapsibleGroupWidget(QWidget):
         self.content_layout.setContentsMargins(5, 0, 0, 0)
         self.content_layout.setSpacing(2)
         self.layout.addWidget(self.content)
+
+    def show_context_menu(self, position):
+        context_menu = QMenu(self)
+        move_action = context_menu.addAction("Move Group")
+        delete_action = context_menu.addAction("Delete Group")
+        
+        action = context_menu.exec_(self.group_button.mapToGlobal(position))
+        if action == move_action:
+            self.group_panel.start_move_mode(self.group_name)
+        elif action == delete_action:
+            self.group_panel.delete_group(self.group_name)
 
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
@@ -155,6 +169,7 @@ class CollapsibleGroupWidget(QWidget):
 
 class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
+    move_group_started = pyqtSignal(str)  # New signal
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -187,20 +202,21 @@ class GroupPanel(QWidget):
             self.add_layer_to_group(strand_id, group_name)
 
     def create_group(self, group_name):
-        group_widget = CollapsibleGroupWidget(group_name)
+        group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)
-        self.groups[group_name] = group_widget
+        self.groups[group_name] = {'widget': group_widget, 'layers': []}
 
     def add_layer_to_group(self, layer_name, group_name):
         if group_name not in self.groups:
             self.create_group(group_name)
         
-        self.groups[group_name].add_layer(layer_name)
-        self.groups[group_name].update_group_display()
+        self.groups[group_name]['layers'].append(layer_name)
+        self.groups[group_name]['widget'].add_layer(layer_name)
+        self.groups[group_name]['widget'].update_group_display()
 
     def update_group_display(self, group_name):
         if group_name in self.groups:
-            self.groups[group_name].update_group_display()
+            self.groups[group_name]['widget'].update_group_display()
 
     def clear(self):
         # Remove all widgets from the scroll layout
@@ -222,10 +238,17 @@ class GroupPanel(QWidget):
                 if group_widget:
                     group_widget.update_layer(layer_name, color)
                 return
-        
-        # If the layer is not in any group, it might be a new layer
-        # You can decide how to handle new layers here, for example:
-        # self.add_layer_to_default_group(layer_name, color)
+
+    def start_move_mode(self, group_name):
+        self.move_group_started.emit(group_name)
+        self.group_operation.emit("prepare_move", group_name, self.groups[group_name]['layers'])
+
+    def delete_group(self, group_name):
+        if group_name in self.groups:
+            self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
+            group_widget = self.groups.pop(group_name)['widget']
+            self.scroll_layout.removeWidget(group_widget)
+            group_widget.deleteLater()
 
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
@@ -255,7 +278,7 @@ class LayerSelectionDialog(QDialog):
 class GroupLayerManager:
     def __init__(self, layer_panel):
         self.layer_panel = layer_panel
-        self.canvas = layer_panel.canvas
+        self.canvas = None
         
         # Create the tree but don't add it to any layout
         self.tree = GroupedLayerTree(layer_panel)
@@ -269,7 +292,7 @@ class GroupLayerManager:
         # Remove all references to adding the tree to any layout
         # The tree will still exist but won't be visible or take up any space
 
-        # ... (rest of the existing code)
+        # ... (rest of the code)
 
     def add_strand_to_group(self, group_name, strand_id):
         if group_name not in self.groups:
@@ -306,6 +329,8 @@ class GroupLayerManager:
             self.rotate_group(group_name, layer_indices)
         elif operation == "move":
             self.move_group(group_name, layer_indices)
+        elif operation == "delete":
+            self.delete_group(group_name, layer_indices)
 
     def rotate_group(self, group_name, layer_indices):
         # Calculate the center point of all strands in the group
@@ -328,6 +353,21 @@ class GroupLayerManager:
             strand = self.canvas.strands[i]
             strand.move(offset)
 
+        self.canvas.update()
+
+    def delete_group(self, group_name, layer_indices):
+        # Remove layers from the group
+        for layer_index in layer_indices:
+            self.layer_panel.delete_layer(layer_index)
+        
+        # Remove the group from the tree
+        root = self.tree.invisibleRootItem()
+        for i in range(root.childCount()):
+            if root.child(i).text(0) == group_name:
+                root.removeChild(root.child(i))
+                break
+
+        # Update the canvas
         self.canvas.update()
 
     def add_layer(self, layer_name, color):
@@ -365,3 +405,8 @@ class GroupLayerManager:
             self.group_panel.create_group(group_name)
             for layer_index in layer_indices:
                 self.group_panel.add_layer_to_group(layer_index, group_name)
+
+    def start_group_move(self, group_name):
+        if self.canvas:
+            layers = self.group_panel.groups[group_name]['layers']
+            self.canvas.start_group_move(group_name, layers)

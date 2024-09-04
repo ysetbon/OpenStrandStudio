@@ -8,7 +8,7 @@ from mask_mode import MaskMode  # Add this import
 from strand import Strand, AttachedStrand, MaskedStrand
 from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
-
+from PyQt5.QtWidgets import QWidget, QMenu, QAction
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     mask_created = pyqtSignal(object, object)  # Add this signal
@@ -28,6 +28,29 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_color = Qt.black
         self.strand_width = 55  # Width of strands
         self.stroke_width = 5  # Width of the black outline
+        self.group_layer_manager = None
+        
+        # Add new attributes for group moving
+        self.moving_group = False
+        self.move_group_name = None
+        self.move_group_layers = None
+        self.move_start_pos = None
+
+    def start_group_move(self, group_name, layers):
+        self.moving_group = True
+        self.move_group_name = group_name
+        self.move_group_layers = layers
+        self.move_start_pos = None
+        self.setCursor(Qt.OpenHandCursor)
+
+    def set_group_layer_manager(self, manager):
+        self.group_layer_manager = manager
+
+    def mousePressEvent(self, event):
+        if self.group_layer_manager and self.group_layer_manager.move_mode:
+            self.group_layer_manager.start_group_move(event.pos())
+        else:
+            super().mousePressEvent(event)
 
     def initialize_properties(self):
         """Initialize all properties used in the StrandDrawingCanvas."""
@@ -513,7 +536,10 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
-        if self.is_drawing_new_strand:
+        if self.moving_group:
+            self.move_start_pos = event.pos()
+            self.setCursor(Qt.ClosedHandCursor)
+        elif self.is_drawing_new_strand:
             self.new_strand_start_point = event.pos()
         elif self.current_mode == "select":
             self.handle_strand_selection(event.pos())
@@ -524,19 +550,32 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def mouseMoveEvent(self, event):
-        if self.is_drawing_new_strand and self.new_strand_start_point:
+        if self.moving_group and self.move_start_pos:
+            dx = event.pos().x() - self.move_start_pos.x()
+            dy = event.pos().y() - self.move_start_pos.y()
+            self.move_group(dx, dy)
+            self.move_start_pos = event.pos()
+        elif self.is_drawing_new_strand and self.new_strand_start_point:
             self.new_strand_end_point = event.pos()
             self.update()
         elif self.current_mode:
             self.current_mode.mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if self.is_drawing_new_strand and self.new_strand_start_point:
+        if self.moving_group:
+            self.moving_group = False
+            self.move_group_name = None
+            self.move_group_layers = None
+            self.move_start_pos = None
+            self.setCursor(Qt.ArrowCursor)
+        elif self.is_drawing_new_strand and self.new_strand_start_point:
             self.new_strand_end_point = event.pos()
             self.finalize_new_strand()
         elif self.current_mode:
             self.current_mode.mouseReleaseEvent(event)
         self.update()
+
+
 
 
 
@@ -1133,4 +1172,51 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand = None
             self.selected_strand_index = None
         self.update()  # Trigger a repaint to show the highlight
+
+    def start_group_move(self, group_name, layers):
+        self.moving_group = True
+        self.move_group_name = group_name
+        self.move_group_layers = layers
+        self.move_start_pos = None
+        self.setCursor(Qt.OpenHandCursor)
+    def find_strand_by_name(self, layer_name):
+        for strand in self.strands:
+            if strand.layer_name == layer_name:
+                return strand
+        return None
+
+    def start_group_move(self, group_name, layers):
+        self.moving_group = True
+        self.move_group_name = group_name
+        self.move_group_layers = layers
+        self.move_start_pos = None
+        self.setCursor(Qt.OpenHandCursor)
+
+    def move_group(self, dx, dy):
+        for layer_name in self.move_group_layers:
+            strand = self.find_strand_by_name(layer_name)
+            if strand:
+                self.move_strand(strand, dx, dy)
+        self.update()
+
+    def move_strand(self, strand, dx, dy):
+        strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
+        strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
+        strand.update_shape()
+        strand.update_side_line()
+        for attached_strand in strand.attached_strands:
+            self.move_strand(attached_strand, dx, dy)
+    def move_group(self, dx, dy):
+        for layer_name in self.move_group_layers:
+            strand = self.find_strand_by_name(layer_name)
+            if strand:
+                self.move_strand(strand, dx, dy)
+        self.update()
+    def move_strand(self, strand, dx, dy):
+        strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
+        strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
+        strand.update_shape()
+        strand.update_side_line()
+        for attached_strand in strand.attached_strands:
+            self.move_strand(attached_strand, dx, dy)
 # End of StrandDrawingCanvas class

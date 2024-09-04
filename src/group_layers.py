@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDi
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
 from PyQt5.QtCore import QMimeData, QPoint
-
+from PyQt5.QtCore import QPointF
 class GroupedLayerTree(QTreeWidget):
     layer_selected = pyqtSignal(int)
     group_created = pyqtSignal(str)
@@ -119,13 +119,17 @@ class CollapsibleGroupWidget(QWidget):
     def show_context_menu(self, position):
         context_menu = QMenu(self)
         move_action = context_menu.addAction("Move Group")
+        move_strands_action = context_menu.addAction("Move Group Strands")
         delete_action = context_menu.addAction("Delete Group")
         
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
         if action == move_action:
             self.group_panel.start_move_mode(self.group_name)
+        elif action == move_strands_action:
+            self.group_panel.start_group_move(self.group_name)
         elif action == delete_action:
             self.group_panel.delete_group(self.group_name)
+
 
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
@@ -167,6 +171,11 @@ class CollapsibleGroupWidget(QWidget):
         # You can decide how to handle new layers here, for example:
         # self.add_layer_to_default_group(layer_name, color)
 
+import logging
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QInputDialog
+from PyQt5.QtCore import pyqtSignal, Qt, QPointF
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+
 class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
     move_group_started = pyqtSignal(str)  # New signal
@@ -189,6 +198,34 @@ class GroupPanel(QWidget):
         self.scroll_area.setWidget(self.scroll_content)
         self.layout.addWidget(self.scroll_area)
 
+    def create_group(self, group_name, layers_data):
+        group_widget = CollapsibleGroupWidget(group_name, self)
+        self.scroll_layout.addWidget(group_widget)
+        self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
+
+        logging.info(f"Creating group: {group_name}")
+        logging.info("Strands in the group:")
+
+        for layer_name, strand_data in layers_data:
+            self.add_layer_to_group(layer_name, group_name, strand_data)
+            
+            start = strand_data['start']
+            end = strand_data['end']
+            logging.info(f"  Layer: {layer_name}")
+            logging.info(f"    Start: ({start.x():.2f}, {start.y():.2f})")
+            logging.info(f"    End: ({end.x():.2f}, {end.y():.2f})")
+
+        logging.info(f"Group {group_name} created with {len(layers_data)} strands.")
+
+    def add_layer_to_group(self, layer_name, group_name, strand_data):
+        if group_name not in self.groups:
+            return  # Group doesn't exist, can't add layer
+
+        self.groups[group_name]['layers'].append(layer_name)
+        self.groups[group_name]['strands'].append(strand_data)
+        self.groups[group_name]['widget'].add_layer(layer_name)
+        self.groups[group_name]['widget'].update_group_display()
+
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasFormat("application/x-strand-data"):
             event.acceptProposedAction()
@@ -201,54 +238,66 @@ class GroupPanel(QWidget):
         if ok and group_name:
             self.add_layer_to_group(strand_id, group_name)
 
-    def create_group(self, group_name):
-        group_widget = CollapsibleGroupWidget(group_name, self)
-        self.scroll_layout.addWidget(group_widget)
-        self.groups[group_name] = {'widget': group_widget, 'layers': []}
+def create_group(self, group_name, layers_data):
+    group_widget = CollapsibleGroupWidget(group_name, self)
+    self.scroll_layout.addWidget(group_widget)
+    self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
 
-    def add_layer_to_group(self, layer_name, group_name):
-        if group_name not in self.groups:
-            self.create_group(group_name)
-        
-        self.groups[group_name]['layers'].append(layer_name)
-        self.groups[group_name]['widget'].add_layer(layer_name)
+    for layer_name, strand_data in layers_data:
+        self.add_layer_to_group(layer_name, group_name, strand_data)
+
+def create_group(self, group_name, layers_data):
+    group_widget = CollapsibleGroupWidget(group_name, self)
+    self.scroll_layout.addWidget(group_widget)
+    self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
+
+    for layer_name, strand_data in layers_data:
+        self.add_layer_to_group(layer_name, group_name, strand_data)
+
+def add_layer_to_group(self, layer_name, group_name, strand_data):
+    if group_name not in self.groups:
+        return  # Group doesn't exist, can't add layer
+
+    self.groups[group_name]['layers'].append(layer_name)
+    self.groups[group_name]['strands'].append(strand_data)
+    self.groups[group_name]['widget'].add_layer(layer_name)
+    self.groups[group_name]['widget'].update_group_display()
+
+def update_group_display(self, group_name):
+    if group_name in self.groups:
         self.groups[group_name]['widget'].update_group_display()
 
-    def update_group_display(self, group_name):
-        if group_name in self.groups:
-            self.groups[group_name]['widget'].update_group_display()
+def clear(self):
+    # Remove all widgets from the scroll layout
+    for i in reversed(range(self.scroll_layout.count())):
+        widget = self.scroll_layout.itemAt(i).widget()
+        if widget is not None:
+            widget.setParent(None)
+            widget.deleteLater()
+    
+    # Clear the groups dictionary
+    self.groups.clear()
 
-    def clear(self):
-        # Remove all widgets from the scroll layout
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
-                widget.setParent(None)
-                widget.deleteLater()
-        
-        # Clear the groups dictionary
-        self.groups.clear()
+def update_layer(self, index, layer_name, color):
+    # Check if the layer is in any group
+    for group_name, group_info in self.groups.items():
+        if layer_name in group_info['layers']:
+            # Update the layer in the group
+            group_widget = self.findChild(CollapsibleGroupWidget, group_name)
+            if group_widget:
+                group_widget.update_layer(layer_name, color)
+            return
 
-    def update_layer(self, index, layer_name, color):
-        # Check if the layer is in any group
-        for group_name, group_info in self.groups.items():
-            if layer_name in group_info['layers']:
-                # Update the layer in the group
-                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
-                if group_widget:
-                    group_widget.update_layer(layer_name, color)
-                return
+def start_move_mode(self, group_name):
+    self.move_group_started.emit(group_name)
+    self.group_operation.emit("prepare_move", group_name, self.groups[group_name]['layers'])
 
-    def start_move_mode(self, group_name):
-        self.move_group_started.emit(group_name)
-        self.group_operation.emit("prepare_move", group_name, self.groups[group_name]['layers'])
-
-    def delete_group(self, group_name):
-        if group_name in self.groups:
-            self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
-            group_widget = self.groups.pop(group_name)['widget']
-            self.scroll_layout.removeWidget(group_widget)
-            group_widget.deleteLater()
+def delete_group(self, group_name):
+    if group_name in self.groups:
+        self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
+        group_widget = self.groups.pop(group_name)['widget']
+        self.scroll_layout.removeWidget(group_widget)
+        group_widget.deleteLater()
 
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
@@ -284,7 +333,7 @@ class GroupLayerManager:
         self.tree = GroupedLayerTree(layer_panel)
         self.tree.hide()  # Hide the tree completely
 
-        self.group_panel = GroupPanel(layer_panel)
+        self.group_panel = GroupPanel()
         
         self.create_group_button = QPushButton("Create Group")
         self.create_group_button.clicked.connect(self.create_group)
@@ -311,10 +360,19 @@ class GroupLayerManager:
             if dialog.exec_():
                 selected_layers = dialog.get_selected_layers()
                 self.tree.add_group(group_name)
-                self.group_panel.create_group(group_name)
+                
+                layers_data = []
                 for layer in selected_layers:
-                    self.group_panel.add_layer_to_group(layer, group_name)
-                self.group_panel.update_group_display(group_name)
+                    layer_index = self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer))
+                    if layer_index < len(self.canvas.strands):
+                        strand = self.canvas.strands[layer_index]
+                        strand_data = {
+                            'start': QPointF(strand.start),
+                            'end': QPointF(strand.end)
+                        }
+                        layers_data.append((layer, strand_data))
+                
+                self.group_panel.create_group(group_name, layers_data)
 
     def on_group_created(self, group_name):
         # You can add any additional logic here when a group is created
@@ -334,8 +392,8 @@ class GroupLayerManager:
 
     def rotate_group(self, group_name, layer_indices):
         # Calculate the center point of all strands in the group
-        center_x = sum(self.canvas.strands[i].start_point.x() + self.canvas.strands[i].end_point.x() for i in layer_indices) / (2 * len(layer_indices))
-        center_y = sum(self.canvas.strands[i].start_point.y() + self.canvas.strands[i].end_point.y() for i in layer_indices) / (2 * len(layer_indices))
+        center_x = sum(self.canvas.strands[i].start.x() + self.canvas.strands[i].end.x() for i in layer_indices) / (2 * len(layer_indices))
+        center_y = sum(self.canvas.strands[i].start.y() + self.canvas.strands[i].end.y() for i in layer_indices) / (2 * len(layer_indices))
         center = QPoint(center_x, center_y)
 
         # Rotate all strands in the group
@@ -406,7 +464,22 @@ class GroupLayerManager:
             for layer_index in layer_indices:
                 self.group_panel.add_layer_to_group(layer_index, group_name)
 
+    def move_group_strands(self, group_name, dx, dy):
+        if group_name in self.group_panel.groups:
+            group_data = self.group_panel.groups[group_name]
+            for i, strand_data in enumerate(group_data['strands']):
+                strand_data['start'] += QPointF(dx, dy)
+                strand_data['end'] += QPointF(dx, dy)
+                
+                # Update the actual strand in the canvas
+                layer_name = group_data['layers'][i]
+                layer_index = self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
+                strand = self.canvas.strands[layer_index]
+                strand.start = strand_data['start']
+                strand.end = strand_data['end']
+            
+            self.canvas.update()
+
     def start_group_move(self, group_name):
         if self.canvas:
-            layers = self.group_panel.groups[group_name]['layers']
-            self.canvas.start_group_move(group_name, layers)
+            self.canvas.start_group_move(group_name, self.move_group_strands)

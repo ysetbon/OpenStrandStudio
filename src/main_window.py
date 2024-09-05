@@ -9,17 +9,29 @@ from strand import Strand, AttachedStrand, MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 import logging
-
+from group_layers import GroupLayerManager
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("OpenStrand Studio")
         self.setMinimumSize(900, 900)
+        self.canvas = StrandDrawingCanvas()
+        self.layer_panel = LayerPanel(self.canvas)
+        # The GroupLayerManager is now initialized inside LayerPanel, so we don't need to do it here
         self.setup_ui()
         self.setup_connections()
         self.current_mode = "attach"
         self.set_attach_mode()
-        self.selected_strand = None  # Add this line
+        self.selected_strand = None
+
+        self.layer_panel.group_layer_manager.set_canvas(self.canvas)
+        self.canvas.set_group_layer_manager(self.layer_panel.group_layer_manager)
+        logging.info(f"Canvas set in MainWindow: {self.canvas}")
+
+        # Connect group operation signal
+        self.layer_panel.group_layer_manager.group_panel.group_operation.connect(
+            self.layer_panel.group_layer_manager.on_group_operation
+        )
     def setup_ui(self):
         icon_path = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico"
         if os.path.exists(icon_path):
@@ -51,7 +63,7 @@ class MainWindow(QMainWindow):
 
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
-
+        
         self.setup_button_styles()
 
         self.splitter = QSplitter(Qt.Horizontal)
@@ -67,6 +79,12 @@ class MainWindow(QMainWindow):
 
         left_widget.setMinimumWidth(200)
         self.layer_panel.setMinimumWidth(100)
+
+
+        # Connect group operation signal
+        self.layer_panel.group_layer_manager.group_panel.group_operation.connect(
+            self.layer_panel.group_layer_manager.on_group_operation
+        )
 
     def setup_button_styles(self):
         self.layer_panel.lock_layers_button.setStyleSheet("""
@@ -356,7 +374,6 @@ class MainWindow(QMainWindow):
 
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
-
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)

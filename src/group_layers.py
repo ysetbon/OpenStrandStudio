@@ -4,18 +4,22 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
 from PyQt5.QtCore import QMimeData, QPoint
 from PyQt5.QtCore import QPointF
+from strand_drawing_canvas import StrandDrawingCanvas   
 class GroupedLayerTree(QTreeWidget):
     layer_selected = pyqtSignal(int)
     group_created = pyqtSignal(str)
     layer_moved = pyqtSignal(int, str)  # layer index, group name
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(5)
-        self.groups = {}
-        self.setAcceptDrops(True)
+    def __init__(self, layer_panel, canvas=None):
+        super().__init__()  # Call the superclass constructor
+        self.layer_panel = layer_panel
+        self.canvas = canvas
+        self.group_panel = GroupPanel(canvas=self.canvas)
+        
+        if self.canvas:
+            logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
+        else:
+            logging.warning("GroupLayerManager initialized without a canvas")
 
     def update_layer(self, index, layer_name, color):
         # Check if the layer is in any group
@@ -118,18 +122,13 @@ class CollapsibleGroupWidget(QWidget):
 
     def show_context_menu(self, position):
         context_menu = QMenu(self)
-        move_action = context_menu.addAction("Move Group")
         move_strands_action = context_menu.addAction("Move Group Strands")
-        delete_action = context_menu.addAction("Delete Group")
         
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
-        if action == move_action:
-            self.group_panel.start_move_mode(self.group_name)
-        elif action == move_strands_action:
-            self.group_panel.start_group_move(self.group_name)
-        elif action == delete_action:
-            self.group_panel.delete_group(self.group_name)
 
+        if action == move_strands_action:
+            self.group_panel.start_group_move(self.group_name)
+ 
 
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
@@ -180,7 +179,7 @@ class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
     move_group_started = pyqtSignal(str, list)  # New signal
 
-    def __init__(self, parent=None):
+    def __init__(self, canvas=None, parent=None):
         super().__init__(parent)
         self.setStyleSheet("background-color: white;")
         self.layout = QVBoxLayout(self)
@@ -188,6 +187,11 @@ class GroupPanel(QWidget):
         self.layout.setSpacing(5)
         self.groups = {}
         self.setAcceptDrops(True)
+        self.canvas = canvas
+        if self.canvas:
+            logging.info(f"Canvas set on GroupPanel during initialization: {self.canvas}")
+        else:
+            logging.warning("GroupPanel initialized without a canvas")
 
         # Add a scroll area to contain the groups
         self.scroll_area = QScrollArea(self)
@@ -202,7 +206,7 @@ class GroupPanel(QWidget):
         group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)
         self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
-
+        logging.info(f"Group '{group_name}' created with layers: {layers_data}")
         logging.info(f"Creating group: {group_name}")
         logging.info("Strands in the group:")
 
@@ -238,29 +242,46 @@ class GroupPanel(QWidget):
         if ok and group_name:
             self.add_layer_to_group(strand_id, group_name)
 
+    def set_canvas(self, canvas):
+        self.canvas = canvas
+        logging.info(f"Canvas set on GroupPanel: {self.canvas}")
+
     def start_group_move(self, group_name):
         if group_name in self.groups:
-            layers = self.groups[group_name]['layers']
-            dialog = GroupMoveDialog(self)
-            dialog.move_updated.connect(lambda dx, dy: self.update_group_move(group_name, layers, dx, dy))
+            dialog = GroupMoveDialog(group_name, self)
+            dialog.move_updated.connect(self.update_group_move)
+            dialog.move_finished.connect(self.finish_group_move)
             dialog.exec_()
         else:
             logging.warning(f"Attempted to move non-existent group: {group_name}")
 
-    def update_group_move(self, group_name, layers, dx, dy):
-        self.move_group_started.emit(group_name, layers)
-        if hasattr(self, 'canvas'):
-            self.canvas.move_group(dx, dy)
+    def update_group_move(self, group_name, total_dx, total_dy):
+        logging.info(f"GroupPanel: Updating group move for '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
+        if self.canvas:
+            self.canvas.move_group(group_name, total_dx, total_dy)
+        else:
+            logging.error("Canvas not properly connected to GroupPanel")
+
+    def finish_group_move(self, group_name):
+        logging.info(f"GroupPanel: Finishing group move for '{group_name}'")
+        if self.canvas:
+            self.canvas.reset_group_move(group_name)
+        else:
+            logging.error("Canvas not properly connected to GroupPanel")
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
 
 class GroupMoveDialog(QDialog):
-    move_updated = pyqtSignal(int, int)
+    move_updated = pyqtSignal(str, int, int)
+    move_finished = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, group_name, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Move Group Strands")
+        self.group_name = group_name
+        self.setWindowTitle(f"Move Group Strands: {group_name}")
+        self.total_dx = 0
+        self.total_dy = 0
         self.setup_ui()
 
     def setup_ui(self):
@@ -270,9 +291,9 @@ class GroupMoveDialog(QDialog):
         dx_layout = QHBoxLayout()
         dx_layout.addWidget(QLabel("dx:"))
         self.dx_slider = QSlider(Qt.Horizontal)
-        self.dx_slider.setRange(-100, 100)
+        self.dx_slider.setRange(-600, 600)
         self.dx_slider.setValue(0)
-        self.dx_slider.valueChanged.connect(self.update_move)
+        self.dx_slider.valueChanged.connect(self.update_dx)
         dx_layout.addWidget(self.dx_slider)
         self.dx_value = QLabel("0")
         dx_layout.addWidget(self.dx_value)
@@ -282,9 +303,9 @@ class GroupMoveDialog(QDialog):
         dy_layout = QHBoxLayout()
         dy_layout.addWidget(QLabel("dy:"))
         self.dy_slider = QSlider(Qt.Horizontal)
-        self.dy_slider.setRange(-100, 100)
+        self.dy_slider.setRange(-600, 600)
         self.dy_slider.setValue(0)
-        self.dy_slider.valueChanged.connect(self.update_move)
+        self.dy_slider.valueChanged.connect(self.update_dy)
         dy_layout.addWidget(self.dy_slider)
         self.dy_value = QLabel("0")
         dy_layout.addWidget(self.dy_value)
@@ -292,15 +313,24 @@ class GroupMoveDialog(QDialog):
 
         # OK button
         ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
+        ok_button.clicked.connect(self.on_ok_clicked)
         layout.addWidget(ok_button)
 
-    def update_move(self):
-        dx = self.dx_slider.value()
-        dy = self.dy_slider.value()
-        self.dx_value.setText(str(dx))
-        self.dy_value.setText(str(dy))
-        self.move_updated.emit(dx, dy)
+    def update_dx(self):
+        new_dx = self.dx_slider.value()
+        self.total_dx = new_dx
+        self.dx_value.setText(str(self.total_dx))
+        self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+
+    def update_dy(self):
+        new_dy = self.dy_slider.value()
+        self.total_dy = new_dy
+        self.dy_value.setText(str(self.total_dy))
+        self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+
+    def on_ok_clicked(self):
+        self.move_finished.emit(self.group_name)
+        self.accept()
 
 def create_group(self, group_name, layers_data):
     group_widget = CollapsibleGroupWidget(group_name, self)
@@ -310,13 +340,6 @@ def create_group(self, group_name, layers_data):
     for layer_name, strand_data in layers_data:
         self.add_layer_to_group(layer_name, group_name, strand_data)
 
-def create_group(self, group_name, layers_data):
-    group_widget = CollapsibleGroupWidget(group_name, self)
-    self.scroll_layout.addWidget(group_widget)
-    self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
-
-    for layer_name, strand_data in layers_data:
-        self.add_layer_to_group(layer_name, group_name, strand_data)
 
 def add_layer_to_group(self, layer_name, group_name, strand_data):
     if group_name not in self.groups:
@@ -389,23 +412,31 @@ class LayerSelectionDialog(QDialog):
                 if self.layer_list.item(i).checkState() == Qt.Checked]
 
 class GroupLayerManager:
-    def __init__(self, layer_panel):
+    def __init__(self, layer_panel, canvas=None):
         self.layer_panel = layer_panel
-        self.canvas = None
-        
-        # Create the tree but don't add it to any layout
-        self.tree = GroupedLayerTree(layer_panel)
+        self.canvas = canvas
+        self.group_panel = GroupPanel(canvas=self.canvas)
+        self.tree = GroupedLayerTree(layer_panel, canvas=self.canvas)
         self.tree.hide()  # Hide the tree completely
-
-        self.group_panel = GroupPanel()
         
+        if self.canvas:
+            logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
+        else:
+            logging.warning("GroupLayerManager initialized without a canvas")
+
         self.create_group_button = QPushButton("Create Group")
         self.create_group_button.clicked.connect(self.create_group)
 
-        # Remove all references to adding the tree to any layout
-        # The tree will still exist but won't be visible or take up any space
+    def set_canvas(self, canvas):
+        self.canvas = canvas
+        self.group_panel.set_canvas(canvas)
+        logging.info(f"Canvas set on GroupLayerManager: {self.canvas}")
 
-        # ... (rest of the code)
+    def move_group_strands(self, group_name, dx, dy):
+        if self.canvas:
+            self.canvas.move_group(group_name, dx, dy)
+        else:
+            logging.error("Canvas not set in GroupLayerManager")
 
     def add_strand_to_group(self, group_name, strand_id):
         if group_name not in self.groups:
@@ -447,26 +478,8 @@ class GroupLayerManager:
         self.group_panel.add_layer_to_group(layer_name, group_name)
 
     def on_group_operation(self, operation, group_name, layer_indices):
-        if operation == "rotate":
-            self.rotate_group(group_name, layer_indices)
-        elif operation == "move":
+        if operation == "move":
             self.move_group(group_name, layer_indices)
-        elif operation == "delete":
-            self.delete_group(group_name, layer_indices)
-
-    def rotate_group(self, group_name, layer_indices):
-        # Calculate the center point of all strands in the group
-        center_x = sum(self.canvas.strands[i].start.x() + self.canvas.strands[i].end.x() for i in layer_indices) / (2 * len(layer_indices))
-        center_y = sum(self.canvas.strands[i].start.y() + self.canvas.strands[i].end.y() for i in layer_indices) / (2 * len(layer_indices))
-        center = QPoint(center_x, center_y)
-
-        # Rotate all strands in the group
-        angle = 45  # You can adjust this or make it user-input
-        for i in layer_indices:
-            strand = self.canvas.strands[i]
-            strand.rotate(angle, center)
-
-        self.canvas.update()
 
     def move_group(self, group_name, layer_indices):
         # Move all strands in the group
@@ -475,21 +488,6 @@ class GroupLayerManager:
             strand = self.canvas.strands[i]
             strand.move(offset)
 
-        self.canvas.update()
-
-    def delete_group(self, group_name, layer_indices):
-        # Remove layers from the group
-        for layer_index in layer_indices:
-            self.layer_panel.delete_layer(layer_index)
-        
-        # Remove the group from the tree
-        root = self.tree.invisibleRootItem()
-        for i in range(root.childCount()):
-            if root.child(i).text(0) == group_name:
-                root.removeChild(root.child(i))
-                break
-
-        # Update the canvas
         self.canvas.update()
 
     def add_layer(self, layer_name, color):

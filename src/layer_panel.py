@@ -132,7 +132,7 @@ class LayerPanel(QWidget):
         self.right_layout = QVBoxLayout(self.right_panel)
         
         # Create GroupLayerManager
-        self.group_layer_manager = GroupLayerManager(self)
+        self.group_layer_manager = GroupLayerManager(self, canvas=self.canvas)
         
         # Add only the create_group_button and group_panel to right layout
         self.right_layout.addWidget(self.group_layer_manager.create_group_button)

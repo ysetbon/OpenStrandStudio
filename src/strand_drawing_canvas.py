@@ -36,6 +36,49 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = None
         self.move_start_pos = None
 
+    def move_group(self, group_name, total_dx, total_dy):
+        logging.info(f"Moving group '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
+        
+        if self.group_layer_manager is None:
+            logging.error("group_layer_manager not set in StrandDrawingCanvas")
+            return
+
+        group_data = self.group_layer_manager.group_panel.groups.get(group_name)
+        
+        if group_data:
+            for layer_name in group_data['layers']:
+                strand = self.find_strand_by_name(layer_name)
+                if strand:
+                    # Store original positions if not already stored
+                    if not hasattr(strand, 'original_start'):
+                        strand.original_start = QPointF(strand.start)
+                        strand.original_end = QPointF(strand.end)
+                    
+                    # Move the strand based on original position plus total movement
+                    strand.start = QPointF(strand.original_start.x() + total_dx, strand.original_start.y() + total_dy)
+                    strand.end = QPointF(strand.original_end.x() + total_dx, strand.original_end.y() + total_dy)
+                    strand.update_shape()
+                    strand.update_side_line()
+                    logging.info(f"Moved strand '{layer_name}' to new position: start={strand.start}, end={strand.end}")
+            
+            # Force a redraw of the canvas
+            self.update()
+        else:
+            logging.warning(f"No group data found for group '{group_name}'")
+
+    def reset_group_move(self, group_name):
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            group_data = self.group_layer_manager.group_panel.groups.get(group_name)
+            if group_data:
+                for layer_name in group_data['layers']:
+                    strand = self.find_strand_by_name(layer_name)
+                    if strand:
+                        if hasattr(strand, 'original_start'):
+                            del strand.original_start
+                            del strand.original_end
+        logging.info(f"Reset group move for '{group_name}'")
+
+
     def start_group_move(self, group_name, layers):
         self.moving_group = True
         self.move_group_name = group_name
@@ -43,8 +86,7 @@ class StrandDrawingCanvas(QWidget):
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
 
-    def set_group_layer_manager(self, manager):
-        self.group_layer_manager = manager
+
 
     def mousePressEvent(self, event):
         if self.group_layer_manager and self.group_layer_manager.move_mode:
@@ -114,6 +156,7 @@ class StrandDrawingCanvas(QWidget):
 
 
     def paintEvent(self, event):
+        super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -126,8 +169,10 @@ class StrandDrawingCanvas(QWidget):
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
+        logging.info(f"Painting {len(self.strands)} strands")
         # Draw all strands in their current order
         for strand in self.strands:
+            logging.info(f"Drawing strand '{strand.layer_name}' at ({strand.start.x()}, {strand.start.y()}) to ({strand.end.x()}, {strand.end.y()})")
             if strand == self.selected_strand:
                 logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                 self.draw_highlighted_strand(temp_painter, strand)
@@ -664,11 +709,6 @@ class StrandDrawingCanvas(QWidget):
         # Log the mode change
         logging.info(f"Canvas mode changed to: {mode}")
 
-    def force_redraw(self):
-        """Force a complete redraw of the canvas."""
-        self.update()
-        QTimer.singleShot(0, self.update)  # Schedule another update on the next event loop
-
 
 
     def is_strand_involved_in_mask(self, masked_strand, strand):
@@ -1173,50 +1213,53 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = None
         self.update()  # Trigger a repaint to show the highlight
 
-    def start_group_move(self, group_name, layers):
-        self.moving_group = True
-        self.move_group_name = group_name
-        self.move_group_layers = layers
-        self.move_start_pos = None
-        self.setCursor(Qt.OpenHandCursor)
+
+    def force_redraw(self):
+        """Force a complete redraw of the canvas."""
+        logging.info("Forcing redraw of the canvas")
+        self.update()
+        QTimer.singleShot(0, self.update())  # Schedule another update on the next event loop
+
+    def set_group_layer_manager(self, group_layer_manager):
+        self.group_layer_manager = group_layer_manager
+        logging.info(f"GroupLayerManager set on StrandDrawingCanvas: {self.group_layer_manager}")
+
+    def move_group_strands(self, group_name, dx, dy):
+        logging.info(f"Moving group '{group_name}' by dx={dx}, dy={dy}")
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            group_data = self.group_layer_manager.group_panel.groups.get(group_name)
+            if group_data:
+                for layer_name in group_data['layers']:
+                    strand = self.find_strand_by_name(layer_name)
+                    if strand:
+                        # Store the original points if not already stored
+                        if not hasattr(strand, 'original_start'):
+                            strand.original_start = QPointF(strand.start)
+                            strand.original_end = QPointF(strand.end)
+                        
+                        # Move the strand based on the original points plus cumulative movement
+                        strand.start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
+                        strand.end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
+                        
+                        strand.update_shape()
+                        if hasattr(strand, 'update_side_line'):
+                            strand.update_side_line()
+                        logging.info(f"Moved strand '{layer_name}' to new position: start={strand.start}, end={strand.end}")
+                
+                # Force a redraw of the canvas
+                self.update()
+            else:
+                logging.warning(f"No group data found for group '{group_name}'")
+        else:
+            logging.error("GroupLayerManager not properly connected to StrandDrawingCanvas")
+
+
+
+
     def find_strand_by_name(self, layer_name):
         for strand in self.strands:
             if strand.layer_name == layer_name:
                 return strand
         return None
 
-    def start_group_move(self, group_name, layers):
-        self.moving_group = True
-        self.move_group_name = group_name
-        self.move_group_layers = layers
-        self.move_start_pos = None
-        self.setCursor(Qt.OpenHandCursor)
-
-    def move_group(self, dx, dy):
-        for layer_name in self.move_group_layers:
-            strand = self.find_strand_by_name(layer_name)
-            if strand:
-                self.move_strand(strand, dx, dy)
-        self.update()
-
-    def move_strand(self, strand, dx, dy):
-        strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
-        strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
-        strand.update_shape()
-        strand.update_side_line()
-        for attached_strand in strand.attached_strands:
-            self.move_strand(attached_strand, dx, dy)
-    def move_group(self, dx, dy):
-        for layer_name in self.move_group_layers:
-            strand = self.find_strand_by_name(layer_name)
-            if strand:
-                self.move_strand(strand, dx, dy)
-        self.update()
-    def move_strand(self, strand, dx, dy):
-        strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
-        strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
-        strand.update_shape()
-        strand.update_side_line()
-        for attached_strand in strand.attached_strands:
-            self.move_strand(attached_strand, dx, dy)
 # End of StrandDrawingCanvas class

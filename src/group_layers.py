@@ -279,6 +279,7 @@ class GroupMoveDialog(QDialog):
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
         self.group_name = group_name
+        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         self.setWindowTitle(f"Move Group Strands: {group_name}")
         self.total_dx = 0
         self.total_dy = 0
@@ -311,6 +312,11 @@ class GroupMoveDialog(QDialog):
         dy_layout.addWidget(self.dy_value)
         layout.addLayout(dy_layout)
 
+        # Add a new button for snapping to grid
+        self.snap_to_grid_button = QPushButton("Snap to Grid")
+        self.snap_to_grid_button.clicked.connect(self.snap_to_grid)
+        layout.addWidget(self.snap_to_grid_button)
+
         # OK button
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.on_ok_clicked)
@@ -329,6 +335,14 @@ class GroupMoveDialog(QDialog):
         self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
 
     def on_ok_clicked(self):
+        self.move_finished.emit(self.group_name)
+        self.accept()
+
+    def snap_to_grid(self):
+        if self.canvas:
+            self.canvas.snap_group_to_grid(self.group_name)
+        self.move_finished.emit(self.group_name)
+        self.accept()
         self.move_finished.emit(self.group_name)
         self.accept()
 

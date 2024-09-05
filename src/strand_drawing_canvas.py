@@ -86,7 +86,20 @@ class StrandDrawingCanvas(QWidget):
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
 
-
+    def snap_group_to_grid(self, group_name):
+        if self.group_layer_manager:
+            group_data = self.group_layer_manager.group_panel.groups.get(group_name)
+            if group_data:
+                for layer_name in group_data['layers']:
+                    strand = self.find_strand_by_name(layer_name)
+                    if strand:
+                        # Snap both start and end points to the nearest grid intersection
+                        strand.start = self.snap_to_grid(strand.start)
+                        strand.end = self.snap_to_grid(strand.end)
+                        strand.update_shape()
+                        if hasattr(strand, 'update_side_line'):
+                            strand.update_side_line()
+                self.update()
 
     def mousePressEvent(self, event):
         if self.group_layer_manager and self.group_layer_manager.move_mode:

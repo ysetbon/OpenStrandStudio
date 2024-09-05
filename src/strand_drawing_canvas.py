@@ -9,6 +9,8 @@ from strand import Strand, AttachedStrand, MaskedStrand
 from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
+import math
+
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     mask_created = pyqtSignal(object, object)  # Add this signal
@@ -38,6 +40,79 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = None
         self.move_start_pos = None
         
+        self.groups = {}  # Add this line to initialize the groups attribute
+        self.rotating_group = None
+        self.rotation_center = None
+        self.original_strand_positions = {}
+
+    def start_group_rotation(self, group_name):
+        if group_name in self.groups:
+            self.rotating_group = group_name
+            group_data = self.groups[group_name]
+            self.rotation_center = self.calculate_group_center(group_data['strands'])
+            self.original_strand_positions = {
+                strand: {'start': QPointF(strand.start), 'end': QPointF(strand.end)}
+                for strand in group_data['strands']
+            }
+            logging.info(f"Started rotation for group '{group_name}'")
+        else:
+            logging.warning(f"Attempted to rotate non-existent group: {group_name}")
+
+    def rotate_group(self, group_name, angle):
+        if group_name in self.groups and self.rotating_group == group_name:
+            group_data = self.groups[group_name]
+            
+            for strand in group_data['strands']:
+                original_pos = self.original_strand_positions[strand]
+                strand.start = self.rotate_point(original_pos['start'], self.rotation_center, angle)
+                strand.end = self.rotate_point(original_pos['end'], self.rotation_center, angle)
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+            
+            self.update()
+        else:
+            logging.warning(f"Attempted to rotate non-existent or inactive group: {group_name}")
+
+
+    def rotate_point(self, point, center, angle):
+        angle_rad = math.radians(angle)
+        s = math.sin(angle_rad)
+        c = math.cos(angle_rad)
+
+        translated_x = point.x() - center.x()
+        translated_y = point.y() - center.y()
+
+        rotated_x = translated_x * c - translated_y * s
+        rotated_y = translated_x * s + translated_y * c
+
+        new_x = rotated_x + center.x()
+        new_y = rotated_y + center.y()
+
+        return QPointF(new_x, new_y)
+
+    def rotate_strand(self, strand, center, angle):
+        strand.start = self.rotate_point(strand.start, center, angle)
+        strand.end = self.rotate_point(strand.end, center, angle)
+
+    def calculate_group_center(self, strands):
+        all_points = []
+        for strand in strands:
+            all_points.extend([strand.start, strand.end])
+        
+        center_x = sum(point.x() for point in all_points) / len(all_points)
+        center_y = sum(point.y() for point in all_points) / len(all_points)
+        return QPointF(center_x, center_y)
+    def finish_group_rotation(self, group_name):
+        if self.rotating_group == group_name:
+            self.rotating_group = None
+            self.rotation_center = None
+            self.original_strand_positions.clear()
+            logging.info(f"Finished rotation for group '{group_name}'")
+            self.update()
+        else:
+            logging.warning(f"Attempted to finish rotation for inactive group: {group_name}")
+                
     def create_strand(self, start, end, set_number):
         new_strand = Strand(start, end, self.strand_width, self.strand_color, self.stroke_color, self.stroke_width)
         new_strand.set_number = set_number
@@ -1429,5 +1504,18 @@ class StrandDrawingCanvas(QWidget):
             if strand.layer_name == layer_name:
                 return strand
         return None
+
+
+    def apply_group_rotation(self, group_name):
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            for strand in group_data['strands']:
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+            self.update()
+
+
+
 
 # End of StrandDrawingCanvas class

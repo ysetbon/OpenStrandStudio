@@ -82,6 +82,9 @@ class GroupedLayerTree(QTreeWidget):
             if parent.child(i) == item:
                 return index + i + 1
         return -1
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, 
+                             QListWidgetItem, QMenu, QSizePolicy)
+from PyQt5.QtCore import Qt, pyqtSignal
 
 class CollapsibleGroupWidget(QWidget):
     def __init__(self, group_name, group_panel, parent=None):
@@ -95,7 +98,7 @@ class CollapsibleGroupWidget(QWidget):
     def setup_ui(self):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(2)
+        self.layout.setSpacing(0)
 
         # Header (group name button)
         self.group_button = QPushButton(self.group_name)
@@ -103,7 +106,7 @@ class CollapsibleGroupWidget(QWidget):
             QPushButton {
                 background-color: #f0f0f0;
                 border: 1px solid #d0d0d0;
-                border-radius: 5px;
+                border-radius: 0px;
                 padding: 5px;
                 text-align: left;
             }
@@ -113,55 +116,80 @@ class CollapsibleGroupWidget(QWidget):
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
         self.layout.addWidget(self.group_button)
 
-        # Content (layer buttons)
+        # Content (layer list)
         self.content = QWidget()
         self.content_layout = QVBoxLayout(self.content)
-        self.content_layout.setContentsMargins(5, 0, 0, 0)
-        self.content_layout.setSpacing(2)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(0)
         self.layout.addWidget(self.content)
 
         # Add QListWidget for layers
         self.layers_list = QListWidget()
+        self.layers_list.setStyleSheet("""
+            QListWidget {
+                border: none;
+                background-color: white;
+            }
+            QListWidget::item {
+                padding: 2px;
+            }
+        """)
         self.content_layout.addWidget(self.layers_list)
+
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
 
     def show_context_menu(self, position):
         context_menu = QMenu(self)
         move_strands_action = context_menu.addAction("Move Group Strands")
+        rotate_strands_action = context_menu.addAction("Rotate Group Strands")
         
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
 
         if action == move_strands_action:
             self.group_panel.start_group_move(self.group_name)
- 
+        elif action == rotate_strands_action:
+            self.group_panel.start_group_rotation(self.group_name)
+
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
         self.content.setVisible(not self.is_collapsed)
+        self.update_size()
 
     def add_layer(self, layer_name):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
-            self.layers_list.addItem(layer_name)
+            item = QListWidgetItem(layer_name)
+            self.layers_list.addItem(item)
+            self.update_size()
+
+    def update_size(self):
+        if not self.is_collapsed:
+            total_height = self.group_button.sizeHint().height()
+            total_height += self.layers_list.sizeHintForRow(0) * self.layers_list.count()
+            self.setFixedHeight(total_height)
+        else:
+            self.setFixedHeight(self.group_button.sizeHint().height())
+        self.update_group_display()
 
     def update_group_display(self):
         self.group_button.setText(f"{self.group_name} ({len(self.layers)})")
 
-    def update_layer(self, index, layer_name, color):
-        # Check if the layer is in any group
-        for group_name, group_info in self.groups.items():
-            if layer_name in group_info['layers']:
-                # Update the layer in the group
-                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
-                if group_widget:
-                    group_widget.update_layer(layer_name, color)
-                return
-        
-        # If the layer is not in any group, it might be a new layer
-        # You can decide how to handle new layers here, for example:
-        # self.add_layer_to_default_group(layer_name, color)
-        
-        # If the layer is not in any group, it might be a new layer
-        # You can decide how to handle new layers here, for example:
-        # self.add_layer_to_default_group(layer_name, color)
+    def update_layer(self, layer_name, color):
+        for i in range(self.layers_list.count()):
+            item = self.layers_list.item(i)
+            if item.text() == layer_name:
+                # Update the color of the layer item
+                item.setForeground(color)
+                break
+
+    def remove_layer(self, layer_name):
+        if layer_name in self.layers:
+            self.layers.remove(layer_name)
+            for i in range(self.layers_list.count()):
+                if self.layers_list.item(i).text() == layer_name:
+                    self.layers_list.takeItem(i)
+                    break
+            self.update_size()
 
 import logging
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QInputDialog
@@ -277,6 +305,33 @@ class GroupPanel(QWidget):
         if group_name in self.groups:
             group_widget = self.groups[group_name]['widget']
             group_widget.update_group_display()
+
+    def start_group_rotation(self, group_name):
+        if group_name in self.groups:
+            if self.canvas:
+                self.canvas.start_group_rotation(group_name)
+                dialog = GroupRotateDialog(group_name, self)
+                dialog.rotation_updated.connect(self.update_group_rotation)
+                dialog.rotation_finished.connect(self.finish_group_rotation)
+                dialog.exec_()
+            else:
+                logging.error("Canvas not properly connected to GroupPanel")
+        else:
+            logging.warning(f"Attempted to rotate non-existent group: {group_name}")
+
+    def update_group_rotation(self, group_name, angle):
+        logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
+        if self.canvas:
+            self.canvas.rotate_group(group_name, angle)
+        else:
+            logging.error("Canvas not properly connected to GroupPanel")
+
+    def finish_group_rotation(self, group_name):
+        logging.info(f"GroupPanel: Finishing group rotation for '{group_name}'")
+        if self.canvas:
+            self.canvas.finish_group_rotation(group_name)
+        else:
+            logging.error("Canvas not properly connected to GroupPanel")
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -447,6 +502,7 @@ class GroupLayerManager:
             logging.info("Connecting canvas signals to GroupLayerManager")
             self.canvas.attach_mode.strand_attached.connect(self.on_strand_attached)
             self.canvas.strand_created.connect(self.on_strand_created)
+            self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         else:
             logging.warning("Canvas not provided to GroupLayerManager")
 
@@ -456,6 +512,7 @@ class GroupLayerManager:
     def set_canvas(self, canvas):
         self.canvas = canvas
         self.group_panel.set_canvas(canvas)
+        self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         logging.info(f"Canvas set on GroupLayerManager: {self.canvas}")
 
     def on_strand_created(self, new_strand):
@@ -498,6 +555,11 @@ class GroupLayerManager:
                 
                 # Force a refresh of the group panel
                 self.group_panel.update()
+
+                # Update canvas groups
+                if self.canvas and group_name in self.canvas.groups:
+                    self.canvas.groups[group_name]['strands'].append(strand)
+                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
             else:
                 logging.info(f"Strand {strand.layer_name} already in group {group_name}")
         else:
@@ -526,6 +588,14 @@ class GroupLayerManager:
                             layers_data.append((sub_layer, strand_data))
                 
                 self.group_panel.create_group(group_name, layers_data)
+                
+                # Initialize the group in canvas.groups
+                self.canvas.groups[group_name] = {'strands': [], 'layers': []}
+                for sub_layer, _ in layers_data:
+                    strand = self.canvas.find_strand_by_name(sub_layer)
+                    if strand:
+                        self.canvas.groups[group_name]['strands'].append(strand)
+                        self.canvas.groups[group_name]['layers'].append(sub_layer)
 
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
@@ -546,6 +616,13 @@ class GroupLayerManager:
     def on_layer_moved(self, layer_index, group_name):
         layer_name = self.layer_panel.layer_buttons[layer_index].text()
         self.group_panel.add_layer_to_group(layer_name, group_name)
+        
+        # Update canvas groups
+        if self.canvas and group_name in self.canvas.groups:
+            strand = self.canvas.find_strand_by_name(layer_name)
+            if strand:
+                self.canvas.groups[group_name]['strands'].append(strand)
+                self.canvas.groups[group_name]['layers'].append(layer_name)
 
     def on_group_operation(self, operation, group_name, layer_indices):
         if operation == "move":
@@ -568,6 +645,8 @@ class GroupLayerManager:
         self.group_panel.groups.clear()
         for i in reversed(range(self.group_panel.scroll_layout.count())): 
             self.group_panel.scroll_layout.itemAt(i).widget().setParent(None)
+        if self.canvas:
+            self.canvas.groups.clear()
 
     def update_layer_color(self, index, color):
         item = self.tree.topLevelItem(index)
@@ -642,3 +721,53 @@ class GroupLayerManager:
             
             for layer_name, strand_data in new_layers_data:
                 self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
+                
+                # Update canvas groups
+                if self.canvas and group_name in self.canvas.groups:
+                    strand = self.canvas.find_strand_by_name(layer_name)
+                    if strand:
+                        self.canvas.groups[group_name]['strands'].append(strand)
+                        self.canvas.groups[group_name]['layers'].append(layer_name)
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
+from PyQt5.QtCore import Qt, pyqtSignal
+
+class GroupRotateDialog(QDialog):
+    rotation_updated = pyqtSignal(str, float)
+    rotation_finished = pyqtSignal(str)
+
+    def __init__(self, group_name, parent=None):
+        super().__init__(parent)
+        self.group_name = group_name
+        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
+        self.setWindowTitle(f"Rotate Group Strands: {group_name}")
+        self.angle = 0
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+
+        # Angle slider
+        angle_layout = QHBoxLayout()
+        angle_layout.addWidget(QLabel("Angle:"))
+        self.angle_slider = QSlider(Qt.Horizontal)
+        self.angle_slider.setRange(-180, 180)
+        self.angle_slider.setValue(0)
+        self.angle_slider.valueChanged.connect(self.update_angle)
+        angle_layout.addWidget(self.angle_slider)
+        self.angle_value = QLabel("0°")
+        angle_layout.addWidget(self.angle_value)
+        layout.addLayout(angle_layout)
+
+        # OK button
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.on_ok_clicked)
+        layout.addWidget(ok_button)
+
+    def update_angle(self):
+        self.angle = self.angle_slider.value()
+        self.angle_value.setText(f"{self.angle}°")
+        self.rotation_updated.emit(self.group_name, self.angle)
+
+    def on_ok_clicked(self):
+        self.rotation_finished.emit(self.group_name)
+        self.accept()

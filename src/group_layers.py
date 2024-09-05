@@ -28,7 +28,7 @@ class GroupedLayerTree(QTreeWidget):
                 # Update the layer in the group
                 group_widget = self.findChild(CollapsibleGroupWidget, group_name)
                 if group_widget:
-                    group_widget.update_layer(layer_name, color)
+                    group_widget.update_layer(index, layer_name, color)
                 return
         
         # If the layer is not in any group, it might be a new layer
@@ -332,6 +332,25 @@ class GroupPanel(QWidget):
             self.canvas.finish_group_rotation(group_name)
         else:
             logging.error("Canvas not properly connected to GroupPanel")
+
+    def clear(self):
+        # Remove all widgets from the scroll layout
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+        
+        # Clear the groups dictionary
+        self.groups.clear()
+
+    def update_layer(self, index, layer_name, color):
+        # Update the layer information in the groups
+        for group_name, group_info in self.groups.items():
+            if index in group_info['layers']:
+                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
+                if group_widget:
+                    group_widget.update_layer(index, layer_name, color)
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal

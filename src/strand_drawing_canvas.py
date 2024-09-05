@@ -1358,7 +1358,7 @@ class StrandDrawingCanvas(QWidget):
         """Force a complete redraw of the canvas."""
         logging.info("Forcing redraw of the canvas")
         self.update()
-        QTimer.singleShot(0, self.update())  # Schedule another update on the next event loop
+        QTimer.singleShot(0, self.update)  # Schedule another update on the next event loop
 
     def set_group_layer_manager(self, group_layer_manager):
         self.group_layer_manager = group_layer_manager

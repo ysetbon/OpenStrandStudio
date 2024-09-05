@@ -8,6 +8,7 @@ from strand import Strand, AttachedStrand, MaskedStrand
 class AttachMode(QObject):
     # Signal emitted when a new strand is created
     strand_created = pyqtSignal(object)
+    strand_attached = pyqtSignal(object, object)  # New signal: parent_strand, new_strand
 
     def __init__(self, canvas):
         """Initialize the AttachMode."""
@@ -206,6 +207,9 @@ class AttachMode(QObject):
             set_number = parent_strand.set_number
             count = len([s for s in self.canvas.strands if s.set_number == set_number]) + 1
             new_strand.layer_name = f"{set_number}_{count}"
+
+        # Emit the new signal
+        self.strand_attached.emit(parent_strand, new_strand)
 
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         """Recursively try to attach to any of the attached strands."""

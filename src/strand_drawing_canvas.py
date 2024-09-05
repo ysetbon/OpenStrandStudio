@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import QWidget, QMenu, QAction
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     mask_created = pyqtSignal(object, object)  # Add this signal
+    strand_created = pyqtSignal(object)
+
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
@@ -35,7 +37,16 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_name = None
         self.move_group_layers = None
         self.move_start_pos = None
-
+        
+    def create_strand(self, start, end, set_number):
+        new_strand = Strand(start, end, self.strand_width, self.strand_color, self.stroke_color, self.stroke_width)
+        new_strand.set_number = set_number
+        new_strand.layer_name = f"{set_number}_{len([s for s in self.strands if s.set_number == set_number]) + 1}"
+        self.strands.append(new_strand)
+        logging.info(f"Created new strand: {new_strand.layer_name}")
+        self.strand_created.emit(new_strand)
+        return new_strand
+    
     def move_group(self, group_name, total_dx, total_dy):
         logging.info(f"Moving group '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
         
@@ -46,25 +57,58 @@ class StrandDrawingCanvas(QWidget):
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
         
         if group_data:
+            updated_strands = set()
+            
             for layer_name in group_data['layers']:
                 strand = self.find_strand_by_name(layer_name)
                 if strand:
-                    # Store original positions if not already stored
                     if not hasattr(strand, 'original_start'):
                         strand.original_start = QPointF(strand.start)
                         strand.original_end = QPointF(strand.end)
                     
-                    # Move the strand based on original position plus total movement
                     strand.start = QPointF(strand.original_start.x() + total_dx, strand.original_start.y() + total_dy)
                     strand.end = QPointF(strand.original_end.x() + total_dx, strand.original_end.y() + total_dy)
+                    
                     strand.update_shape()
-                    strand.update_side_line()
-                    logging.info(f"Moved strand '{layer_name}' to new position: start={strand.start}, end={strand.end}")
-            
+                    if hasattr(strand, 'update_side_line'):
+                        strand.update_side_line()
+                    updated_strands.add(strand)
+                    logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+
+                    # Find and update attached strands
+                    attached_strands = self.find_attached_strands(strand)
+                    for attached_strand in attached_strands:
+                        if attached_strand not in updated_strands:
+                            self.update_attached_point(attached_strand, strand, total_dx, total_dy)
+                            updated_strands.add(attached_strand)
+
             # Force a redraw of the canvas
             self.update()
         else:
             logging.warning(f"No group data found for group '{group_name}'")
+
+
+
+    def find_attached_strands(self, strand):
+        attached = []
+        for other_strand in self.strands:
+            if other_strand != strand:
+                if self.is_strand_attached(strand, other_strand):
+                    attached.append(other_strand)
+        return attached
+
+    def is_strand_attached(self, strand1, strand2):
+        return (strand1.start == strand2.start or
+                strand1.start == strand2.end or
+                strand1.end == strand2.start or
+                strand1.end == strand2.end)
+
+ 
+
+
+
+
+
 
     def reset_group_move(self, group_name):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
@@ -78,6 +122,12 @@ class StrandDrawingCanvas(QWidget):
                             del strand.original_end
         logging.info(f"Reset group move for '{group_name}'")
 
+    def update_strands(self, strands):
+        for strand in strands:
+            strand.update_shape()
+            if hasattr(strand, 'update_side_line'):
+                strand.update_side_line()
+        self.update()
 
     def start_group_move(self, group_name, layers):
         self.moving_group = True
@@ -85,6 +135,8 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = layers
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
+
+
 
     def snap_group_to_grid(self, group_name):
         if self.group_layer_manager:
@@ -1242,29 +1294,132 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
             if group_data:
+                updated_strands = set()
+                group_strands = []
+                original_points = {}
+                affected_strands = []
+
+                # First pass: Collect all points of group strands
                 for layer_name in group_data['layers']:
                     strand = self.find_strand_by_name(layer_name)
                     if strand:
-                        # Store the original points if not already stored
-                        if not hasattr(strand, 'original_start'):
-                            strand.original_start = QPointF(strand.start)
-                            strand.original_end = QPointF(strand.end)
+                        group_strands.append(strand)
+                        original_points[strand.start] = QPointF(strand.start)
+                        original_points[strand.end] = QPointF(strand.end)
+
+                # Second pass: Move group strands and update all connected strands
+                for strand in self.strands:
+                    if strand in group_strands:
+                        self.move_strand_and_update(strand, dx, dy, updated_strands)
+                        affected_strands.append(strand)
+                    else:
+                        # Check if this strand is connected to any group strand
+                        start_updated = False
+                        end_updated = False
                         
-                        # Move the strand based on the original points plus cumulative movement
-                        strand.start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
-                        strand.end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
+                        for original_point, new_point in original_points.items():
+                            if self.points_are_close(strand.start, original_point):
+                                strand.start = QPointF(new_point.x() + dx, new_point.y() + dy)
+                                start_updated = True
+                            if self.points_are_close(strand.end, original_point):
+                                strand.end = QPointF(new_point.x() + dx, new_point.y() + dy)
+                                end_updated = True
                         
-                        strand.update_shape()
-                        if hasattr(strand, 'update_side_line'):
-                            strand.update_side_line()
-                        logging.info(f"Moved strand '{layer_name}' to new position: start={strand.start}, end={strand.end}")
-                
+                        if start_updated or end_updated:
+                            strand.update_shape()
+                            if hasattr(strand, 'update_side_line'):
+                                strand.update_side_line()
+                            updated_strands.add(strand)
+                            affected_strands.append(strand)
+                            logging.info(f"Updated connected strand '{strand.layer_name}' that shares points with group strands")
+
+                # Update group_layers with new positions of all affected strands
+                for strand in affected_strands:
+                    strand_data = {
+                        'start': QPointF(strand.start),
+                        'end': QPointF(strand.end)
+                    }
+                    group_data['strands'][group_data['layers'].index(strand.layer_name)] = strand_data
+
+                # Update the group panel
+                self.group_layer_manager.group_panel.update_group(group_name, group_data)
+
                 # Force a redraw of the canvas
                 self.update()
             else:
                 logging.warning(f"No group data found for group '{group_name}'")
         else:
             logging.error("GroupLayerManager not properly connected to StrandDrawingCanvas")
+
+
+
+    def points_are_close(self, point1, point2):
+        tolerance = self.strand_width if hasattr(self, 'strand_width') else 10  # Default to 10 if strand_width is not defined
+        return (abs(point1.x() - point2.x()) < tolerance and
+                abs(point1.y() - point2.y()) < tolerance)
+
+    def move_strand_and_update(self, strand, dx, dy, updated_strands):
+        if not hasattr(strand, 'original_start'):
+            strand.original_start = QPointF(strand.start)
+            strand.original_end = QPointF(strand.end)
+        
+        # Calculate new positions based on original positions
+        new_start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
+        new_end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
+        
+        # Only update if the position has actually changed
+        if strand.start != new_start or strand.end != new_end:
+            strand.start = new_start
+            strand.end = new_end
+            
+            strand.update_shape()
+            if hasattr(strand, 'update_side_line'):
+                strand.update_side_line()
+            updated_strands.add(strand)
+            logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+        else:
+            logging.info(f"Strand '{strand.layer_name}' position unchanged")
+
+    def points_are_close(self, point1, point2):
+        tolerance = self.strand_width if hasattr(self, 'strand_width') else 10  # Default to 10 if strand_width is not defined
+        return (abs(point1.x() - point2.x()) < tolerance and
+                abs(point1.y() - point2.y()) < tolerance)
+
+
+
+
+
+
+
+
+
+
+
+
+    def update_non_group_attached_strands(self, strand, dx, dy, updated_strands, group_layers):
+        attached_strands = self.find_attached_strands(strand)
+        for attached_strand in attached_strands:
+            if attached_strand not in updated_strands and attached_strand.layer_name not in group_layers:
+                self.update_attached_point(attached_strand, strand, dx, dy)
+                updated_strands.add(attached_strand)
+                logging.info(f"Updated non-group attached strand '{attached_strand.layer_name}'")
+
+    def update_attached_point(self, attached_strand, moved_strand, dx, dy):
+        if not hasattr(attached_strand, 'original_start'):
+            attached_strand.original_start = QPointF(attached_strand.start)
+            attached_strand.original_end = QPointF(attached_strand.end)
+
+        if attached_strand.start == moved_strand.start or attached_strand.start == moved_strand.end:
+            attached_strand.start = QPointF(attached_strand.original_start.x() + dx, attached_strand.original_start.y() + dy)
+        if attached_strand.end == moved_strand.start or attached_strand.end == moved_strand.end:
+            attached_strand.end = QPointF(attached_strand.original_end.x() + dx, attached_strand.original_end.y() + dy)
+        
+        attached_strand.update_shape()
+        if hasattr(attached_strand, 'update_side_line'):
+            attached_strand.update_side_line()
+        logging.info(f"Updated attached strand '{attached_strand.layer_name}' to match moved strand '{moved_strand.layer_name}'")
+
+
 
 
 

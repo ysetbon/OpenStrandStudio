@@ -1,9 +1,10 @@
 import sys
 import os
 import logging
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QIcon
 from main_window import MainWindow
+from group_layers import GroupLayerManager
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """

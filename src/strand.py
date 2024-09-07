@@ -208,7 +208,11 @@ class MaskedStrand(Strand):
             self.start = self.second_selected_strand.start
             self.end = self.second_selected_strand.end
         super().update_shape()
-
+    def update_position_from_parents(self):
+        if hasattr(self, 'first_selected_strand') and hasattr(self, 'second_selected_strand'):
+            self.start = self.first_selected_strand.start
+            self.end = self.second_selected_strand.end
+            # Do not call update_shape() or update_side_line() here, as they will be called separately
     def get_mask_path(self):
         """Get the path representing the masked area."""
         path1 = QPainterPath()

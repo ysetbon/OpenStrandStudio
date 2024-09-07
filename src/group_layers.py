@@ -306,6 +306,12 @@ class GroupPanel(QWidget):
         else:
             logging.error("Canvas not properly connected to GroupPanel")
 
+    def snap_to_grid(self):
+        if self.canvas:
+            self.canvas.snap_group_to_grid(self.group_name)
+        self.move_finished.emit(self.group_name)
+        self.accept()
+
     def update_group(self, group_name, group_data):
         if group_name in self.groups:
             self.groups[group_name] = group_data
@@ -362,6 +368,8 @@ class GroupPanel(QWidget):
                 group_widget = self.findChild(CollapsibleGroupWidget, group_name)
                 if group_widget:
                     group_widget.update_layer(index, layer_name, color)
+
+
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -435,8 +443,6 @@ class GroupMoveDialog(QDialog):
     def snap_to_grid(self):
         if self.canvas:
             self.canvas.snap_group_to_grid(self.group_name)
-        self.move_finished.emit(self.group_name)
-        self.accept()
         self.move_finished.emit(self.group_name)
         self.accept()
 

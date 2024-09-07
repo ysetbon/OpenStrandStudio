@@ -186,16 +186,53 @@ class StrandDrawingCanvas(QWidget):
 
 
     def reset_group_move(self, group_name):
-        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
-            group_data = self.group_layer_manager.group_panel.groups.get(group_name)
-            if group_data:
-                for layer_name in group_data['layers']:
-                    strand = self.find_strand_by_name(layer_name)
-                    if strand:
-                        if hasattr(strand, 'original_start'):
-                            del strand.original_start
-                            del strand.original_end
-        logging.info(f"Reset group move for '{group_name}'")
+        if group_name in self.groups:
+            for strand in self.groups[group_name]['strands']:
+                if hasattr(strand, 'original_start'):
+                    del strand.original_start
+                if hasattr(strand, 'original_end'):
+                    del strand.original_end
+        self.update()
+
+    def snap_group_to_grid(self, group_name):
+        if group_name not in self.groups:
+            return
+
+        grid_size = 10  # Adjust this value to change the grid size
+        group_strands = self.groups[group_name]['strands']
+
+        # Calculate the average position of all non-masked strands in the group
+        non_masked_strands = [strand for strand in group_strands if not isinstance(strand, MaskedStrand)]
+        if not non_masked_strands:
+            return  # No non-masked strands to snap
+
+        avg_x = sum(strand.start.x() for strand in non_masked_strands) / len(non_masked_strands)
+        avg_y = sum(strand.start.y() for strand in non_masked_strands) / len(non_masked_strands)
+
+        # Calculate the offset to the nearest grid point
+        offset_x = round(avg_x / grid_size) * grid_size - avg_x
+        offset_y = round(avg_y / grid_size) * grid_size - avg_y
+
+        # Move all non-masked strands in the group
+        for strand in non_masked_strands:
+            # Snap only the start and end points
+            strand.start += QPointF(offset_x, offset_y)
+            strand.end += QPointF(offset_x, offset_y)
+            
+            # Update the strand's shape and side line
+            strand.update_shape()
+            if hasattr(strand, 'update_side_line'):
+                strand.update_side_line()
+
+        # Update masked strands based on their parent strands' new positions
+        for strand in group_strands:
+            if isinstance(strand, MaskedStrand):
+                strand.update_position_from_parents()
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+
+        self.update()
 
     def update_strands(self, strands):
         for strand in strands:
@@ -213,20 +250,6 @@ class StrandDrawingCanvas(QWidget):
 
 
 
-    def snap_group_to_grid(self, group_name):
-        if self.group_layer_manager:
-            group_data = self.group_layer_manager.group_panel.groups.get(group_name)
-            if group_data:
-                for layer_name in group_data['layers']:
-                    strand = self.find_strand_by_name(layer_name)
-                    if strand:
-                        # Snap both start and end points to the nearest grid intersection
-                        strand.start = self.snap_to_grid(strand.start)
-                        strand.end = self.snap_to_grid(strand.end)
-                        strand.update_shape()
-                        if hasattr(strand, 'update_side_line'):
-                            strand.update_side_line()
-                self.update()
 
     def mousePressEvent(self, event):
         if self.group_layer_manager and self.group_layer_manager.move_mode:

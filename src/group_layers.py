@@ -826,8 +826,11 @@ class GroupLayerManager:
         logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
 
 
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
+
+
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton, QLineEdit
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QDoubleValidator
 
 class GroupRotateDialog(QDialog):
     rotation_updated = pyqtSignal(str, float)
@@ -850,22 +853,44 @@ class GroupRotateDialog(QDialog):
         self.angle_slider = QSlider(Qt.Horizontal)
         self.angle_slider.setRange(-180, 180)
         self.angle_slider.setValue(0)
-        self.angle_slider.valueChanged.connect(self.update_angle)
+        self.angle_slider.valueChanged.connect(self.update_angle_from_slider)
         angle_layout.addWidget(self.angle_slider)
-        self.angle_value = QLabel("0°")
-        angle_layout.addWidget(self.angle_value)
         layout.addLayout(angle_layout)
+
+        # Precise angle input
+        precise_angle_layout = QHBoxLayout()
+        precise_angle_layout.addWidget(QLabel("Precise Angle:"))
+        self.angle_input = QLineEdit()
+        self.angle_input.setValidator(QDoubleValidator(-180, 180, 2))
+        self.angle_input.setText("0")
+        self.angle_input.textChanged.connect(self.update_angle_from_input)
+        precise_angle_layout.addWidget(self.angle_input)
+        precise_angle_layout.addWidget(QLabel("°"))
+        layout.addLayout(precise_angle_layout)
 
         # OK button
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.on_ok_clicked)
         layout.addWidget(ok_button)
 
-    def update_angle(self):
+    def update_angle_from_slider(self):
         self.angle = self.angle_slider.value()
-        self.angle_value.setText(f"{self.angle}°")
+        self.angle_input.setText(str(self.angle))
         self.rotation_updated.emit(self.group_name, self.angle)
 
+    def update_angle_from_input(self):
+        try:
+            self.angle = float(self.angle_input.text())
+            self.angle_slider.setValue(int(self.angle))
+            self.rotation_updated.emit(self.group_name, self.angle)
+        except ValueError:
+            pass  # Ignore invalid input
+
     def on_ok_clicked(self):
+        try:
+            final_angle = float(self.angle_input.text())
+            self.rotation_updated.emit(self.group_name, final_angle)
+        except ValueError:
+            pass  # Ignore invalid input
         self.rotation_finished.emit(self.group_name)
         self.accept()

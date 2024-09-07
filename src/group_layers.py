@@ -1,9 +1,12 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF
 from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
 from PyQt5.QtCore import QMimeData, QPoint
-from PyQt5.QtCore import QPointF
+from PyQt5.QtGui import QPixmap
+from strand_drawing_canvas import StrandDrawingCanvas
+from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+import logging
 from strand_drawing_canvas import StrandDrawingCanvas   
 class GroupedLayerTree(QTreeWidget):
     layer_selected = pyqtSignal(int)
@@ -35,12 +38,19 @@ class GroupedLayerTree(QTreeWidget):
         # You can decide how to handle new layers here, for example:
         # self.add_layer_to_default_group(layer_name, color)
 
-    def add_layer(self, layer_name, color):
-        item = QTreeWidgetItem(self, [layer_name])
-        item.setData(0, Qt.UserRole, "layer")
-        item.setData(1, Qt.UserRole, color)
-        self.addTopLevelItem(item)
-        return item
+    def add_layer(self, layer_name, color=None, is_masked=False):
+        if layer_name not in self.layers:
+            self.layers.append(layer_name)
+            item = QListWidgetItem(layer_name)
+            if color:
+                item.setForeground(color)
+            if is_masked:
+                pixmap = QPixmap(16, 16)
+                pixmap.fill(QColor(255, 0, 0))  # Red square for masked layers
+                item.setIcon(QIcon(pixmap))
+            self.layers_list.addItem(item)
+            self.update_size()
+            logging.info(f"Added layer {layer_name} to CollapsibleGroupWidget")
 
     def add_group(self, group_name):
         group_item = QTreeWidgetItem(self, [group_name])
@@ -155,10 +165,14 @@ class CollapsibleGroupWidget(QWidget):
         self.content.setVisible(not self.is_collapsed)
         self.update_size()
 
-    def add_layer(self, layer_name):
+    def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
             item = QListWidgetItem(layer_name)
+            if color:
+                item.setForeground(color)
+            if is_masked:
+                item.setIcon(QIcon("path_to_mask_icon.png"))  # Add an icon for masked layers
             self.layers_list.addItem(item)
             self.update_size()
 
@@ -172,7 +186,8 @@ class CollapsibleGroupWidget(QWidget):
         self.update_group_display()
 
     def update_group_display(self):
-        self.group_button.setText(f"{self.group_name} ({len(self.layers)})")
+        masked_count = sum(1 for layer in self.layers if len(layer.split('_')) == 4)
+        self.group_button.setText(f"{self.group_name} ({len(self.layers)}, Masked: {masked_count})")
 
     def update_layer(self, layer_name, color):
         for i in range(self.layers_list.count()):
@@ -226,30 +241,31 @@ class GroupPanel(QWidget):
     def create_group(self, group_name, layers_data):
         group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)
-        self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': []}
-        logging.info(f"Group '{group_name}' created with layers: {layers_data}")
-        logging.info(f"Creating group: {group_name}")
-        logging.info("Strands in the group:")
+        self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': layers_data}
 
-        for layer_name, strand_data in layers_data:
-            self.add_layer_to_group(layer_name, group_name, strand_data)
-            
-            start = strand_data['start']
-            end = strand_data['end']
-            logging.info(f"  Layer: {layer_name}")
-            logging.info(f"    Start: ({start.x():.2f}, {start.y():.2f})")
-            logging.info(f"    End: ({end.x():.2f}, {end.y():.2f})")
-
-        logging.info(f"Group {group_name} created with {len(layers_data)} strands.")
+        for strand_data in layers_data:
+            self.add_layer_to_group(strand_data['layer_name'], group_name, strand_data)
 
     def add_layer_to_group(self, layer_name, group_name, strand_data):
         if group_name not in self.groups:
-            return  # Group doesn't exist, can't add layer
+            logging.error(f"Attempted to add layer to non-existent group: {group_name}")
+            return
 
         self.groups[group_name]['layers'].append(layer_name)
-        self.groups[group_name]['strands'].append(strand_data)
-        self.groups[group_name]['widget'].add_layer(layer_name)
+        self.groups[group_name]['widget'].add_layer(
+            layer_name, 
+            color=strand_data.get('color'),
+            is_masked=strand_data.get('is_masked', False)
+        )
         self.groups[group_name]['widget'].update_group_display()
+        logging.info(f"Successfully added layer {layer_name} to group {group_name}")
+
+    def update_group_display(self, group_name):
+        logging.info(f"Updating display for group: {group_name}")
+        if group_name in self.groups:
+            self.groups[group_name]['widget'].update_group_display()
+        else:
+            logging.error(f"Attempted to update non-existent group: {group_name}")
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasFormat("application/x-strand-data"):
@@ -300,11 +316,6 @@ class GroupPanel(QWidget):
                 # This might involve updating labels, positions, etc.
                 pass
         logging.info(f"Updated group '{group_name}' with new data")
-
-    def update_group_display(self, group_name):
-        if group_name in self.groups:
-            group_widget = self.groups[group_name]['widget']
-            group_widget.update_group_display()
 
     def start_group_rotation(self, group_name):
         if group_name in self.groups:
@@ -542,6 +553,49 @@ class GroupLayerManager:
         logging.info(f"New strand attached: {new_strand.layer_name} to {parent_strand.layer_name}")
         self.update_groups_with_new_strand(new_strand)
 
+    def add_strand_to_group(self, group_name, strand):
+        logging.info(f"Adding strand {strand.layer_name} to group {group_name}")
+        if group_name in self.group_panel.groups:
+            group_data = self.group_panel.groups[group_name]
+            if strand.layer_name not in group_data['layers']:
+                group_data['layers'].append(strand.layer_name)
+                strand_data = {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'color': strand.color,
+                    'is_masked': isinstance(strand, MaskedStrand)
+                }
+                self.group_panel.add_layer_to_group(strand.layer_name, group_name, strand_data)
+                
+                if self.canvas and group_name in self.canvas.groups:
+                    self.canvas.groups[group_name]['strands'].append(strand)
+                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                
+                logging.info(f"Successfully added strand {strand.layer_name} to group {group_name}")
+            else:
+                logging.info(f"Strand {strand.layer_name} already in group {group_name}")
+        else:
+            logging.warning(f"Attempted to add strand to non-existent group: {group_name}")
+
+        logging.info(f"Group {group_name} layers after adding: {self.group_panel.groups[group_name]['layers']}")
+
+    def update_groups_with_new_mask(self, masked_strand):
+        logging.info(f"Updating groups with new mask: {masked_strand.layer_name}")
+        logging.info(f"Current groups: {list(self.group_panel.groups.keys())}")
+        for group_name, group_data in self.group_panel.groups.items():
+            logging.info(f"Checking group: {group_name}")
+            logging.info(f"Group layers: {group_data['layers']}")
+            # Check if any of the parent strands of the mask are in the group
+            if any(parent.layer_name in group_data['layers'] for parent in masked_strand.parent_strands):
+                logging.info(f"Parent strand found in group {group_name}")
+                logging.info(f"Adding mask {masked_strand.layer_name} to group {group_name}")
+                self.add_strand_to_group(group_name, masked_strand)
+        
+        logging.info(f"Finished updating groups with new mask: {masked_strand.layer_name}")
+        logging.info(f"Groups after update: {list(self.group_panel.groups.keys())}")
+
+
     def update_groups_with_new_strand(self, new_strand):
         logging.info(f"Updating groups with new strand: {new_strand.layer_name}")
         main_layer = new_strand.layer_name.split('_')[0]
@@ -550,39 +604,6 @@ class GroupLayerManager:
             if any(layer.startswith(f"{main_layer}_") for layer in group_data['layers']):
                 logging.info(f"Adding strand {new_strand.layer_name} to group {group_name}")
                 self.add_strand_to_group(group_name, new_strand)
-
-    def add_strand_to_group(self, group_name, strand):
-        if group_name in self.group_panel.groups:
-            group_data = self.group_panel.groups[group_name]
-            if strand.layer_name not in group_data['layers']:
-                group_data['layers'].append(strand.layer_name)
-                strand_data = {
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end)
-                }
-                group_data['strands'].append(strand_data)
-                
-                # Update the group panel
-                self.group_panel.update_group_display(group_name)
-                
-                # Update the CollapsibleGroupWidget
-                group_widget = self.group_panel.groups[group_name]['widget']
-                group_widget.add_layer(strand.layer_name)
-                group_widget.update_group_display()
-                
-                logging.info(f"Added strand {strand.layer_name} to group {group_name}")
-                
-                # Force a refresh of the group panel
-                self.group_panel.update()
-
-                # Update canvas groups
-                if self.canvas and group_name in self.canvas.groups:
-                    self.canvas.groups[group_name]['strands'].append(strand)
-                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-            else:
-                logging.info(f"Strand {strand.layer_name} already in group {group_name}")
-        else:
-            logging.warning(f"Attempted to add strand to non-existent group: {group_name}")
 
     def create_group(self):
         group_name, ok = QInputDialog.getText(self.layer_panel, "Create Group", "Enter group name:")
@@ -601,20 +622,38 @@ class GroupLayerManager:
                         if layer_index < len(self.canvas.strands):
                             strand = self.canvas.strands[layer_index]
                             strand_data = {
+                                'layer_name': sub_layer,
                                 'start': QPointF(strand.start),
-                                'end': QPointF(strand.end)
+                                'end': QPointF(strand.end),
+                                'width': strand.width,
+                                'color': strand.color,
+                                'is_masked': len(sub_layer.split('_')) == 4,  # Check if it's a masked layer
+                                'attached_to': [],
+                                'has_circles': strand.has_circles.copy()
                             }
-                            layers_data.append((sub_layer, strand_data))
+                            
+                            # Save information about attached strands
+                            for attached_strand in strand.attached_strands:
+                                attached_index = self.canvas.strands.index(attached_strand)
+                                strand_data['attached_to'].append(attached_index)
+                            
+                            layers_data.append(strand_data)
                 
                 self.group_panel.create_group(group_name, layers_data)
                 
                 # Initialize the group in canvas.groups
-                self.canvas.groups[group_name] = {'strands': [], 'layers': []}
-                for sub_layer, _ in layers_data:
-                    strand = self.canvas.find_strand_by_name(sub_layer)
+                self.canvas.groups[group_name] = {
+                    'strands': [],
+                    'layers': [],
+                    'data': layers_data
+                }
+                for strand_data in layers_data:
+                    strand = self.canvas.find_strand_by_name(strand_data['layer_name'])
                     if strand:
                         self.canvas.groups[group_name]['strands'].append(strand)
-                        self.canvas.groups[group_name]['layers'].append(sub_layer)
+                        self.canvas.groups[group_name]['layers'].append(strand_data['layer_name'])
+
+                logging.info(f"Created group '{group_name}' with {len(layers_data)} strands")
 
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
@@ -747,6 +786,40 @@ class GroupLayerManager:
                     if strand:
                         self.canvas.groups[group_name]['strands'].append(strand)
                         self.canvas.groups[group_name]['layers'].append(layer_name)
+
+
+
+        logging.info(f"Adding strand {strand.layer_name} to group {group_name}")
+        if group_name in self.group_panel.groups:
+            group_data = self.group_panel.groups[group_name]
+            if strand.layer_name not in group_data['layers']:
+                group_data['layers'].append(strand.layer_name)
+                strand_data = {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'color': strand.color,
+                    'is_masked': isinstance(strand, MaskedStrand)
+                }
+                self.group_panel.add_layer_to_group(strand.layer_name, group_name, strand_data)
+                
+                if self.canvas and group_name in self.canvas.groups:
+                    self.canvas.groups[group_name]['strands'].append(strand)
+                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                
+                logging.info(f"Successfully added strand {strand.layer_name} to group {group_name}")
+            else:
+                logging.info(f"Strand {strand.layer_name} already in group {group_name}")
+        else:
+            logging.warning(f"Attempted to add strand to non-existent group: {group_name}")
+
+        # Verify that the group still exists after the operation
+        if group_name not in self.group_panel.groups:
+            logging.error(f"Group {group_name} was deleted after adding strand {strand.layer_name}")
+        
+        logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
+
+
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
 

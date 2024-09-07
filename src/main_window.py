@@ -213,14 +213,6 @@ class MainWindow(QMainWindow):
         self.canvas.set_mode("mask")
 
     def handle_mask_created(self, strand1, strand2):
-        """
-        Handle the creation of a mask between two strands.
-        This method is called when the mask_created signal is emitted.
-
-        Args:
-            strand1 (Strand): The first strand in the mask.
-            strand2 (Strand): The second strand in the mask.
-        """
         logging.info(f"Received mask_created signal for {strand1.layer_name} and {strand2.layer_name}")
 
         # Verify that both strands exist in the canvas
@@ -233,10 +225,17 @@ class MainWindow(QMainWindow):
             logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}. Skipping creation.")
             return
 
+        # Create the masked layer
+        masked_strand = MaskedStrand(strand1, strand2)
+        self.canvas.add_strand(masked_strand)
+
+        # Update the groups
+        self.layer_panel.group_layer_manager.update_groups_with_new_mask(masked_strand)
+
         # Update UI or perform any other necessary actions
         self.update_mode(self.current_mode)  # Refresh the current mode
         
-        # You might want to update the layer panel or other UI elements here
+        # Update the layer panel
         if self.layer_panel:
             self.layer_panel.refresh()
 
@@ -301,6 +300,7 @@ class MainWindow(QMainWindow):
         self.layer_panel.update_colors_for_set(set_number, color)
 
     def create_masked_layer(self, layer1_index, layer2_index):
+        logging.info(f"Creating masked layer for layers at indices {layer1_index} and {layer2_index}")
         layer1 = self.canvas.strands[layer1_index]
         layer2 = self.canvas.strands[layer2_index]
         
@@ -310,10 +310,16 @@ class MainWindow(QMainWindow):
         button = self.layer_panel.add_masked_layer_button(layer1_index, layer2_index)
         button.color_changed.connect(self.handle_color_change)
         
-        logging.info(f"Created masked layer: {masked_strand.set_number}")
+        logging.info(f"Created masked layer: {masked_strand.layer_name}")
+        
+        # Update the groups with the new masked strand
+        logging.info("Updating groups with new masked strand")
+        self.layer_panel.group_layer_manager.update_groups_with_new_mask(masked_strand)
         
         self.canvas.update()
         self.update_mode(self.current_mode)
+
+        logging.info("Finished creating masked layer and updating groups")
 
     def restore_selection(self):
         if self.layer_panel.last_selected_index is not None:

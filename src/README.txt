@@ -94,3 +94,19 @@ New Features:
 **HIGHLIGHTED FEATURE:**
 
 > **Sample Projects: Download and load sample projects from the provided folder to explore different design techniques and possibilities**
+
+------
+
+## version 1.04 (Released 9/1/2024)
+
+New Features:
+
+1. Group Function: Create and manage groups of strands.
+2. Group Panel: Organize and edit groups easily.
+3. Group Operations: Move, rotate, or scale entire groups at once.
+4. Group Properties: Apply changes to all strands in a group simultaneously.
+
+------
+**HIGHLIGHTED FEATURE:**
+
+> **Group Functionality: Efficiently handle complex designs by grouping and manipulating multiple strands as a single unit**

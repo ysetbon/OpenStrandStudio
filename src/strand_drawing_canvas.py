@@ -10,7 +10,7 @@ from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
-
+from math import radians, cos, sin, atan2, degrees
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     mask_created = pyqtSignal(object, object)  # Add this signal
@@ -1540,5 +1540,33 @@ class StrandDrawingCanvas(QWidget):
 
 
 
+    def update_strand_angle(self, strand_name, new_angle):
+        strand = self.find_strand_by_name(strand_name)
+        if strand:
+            old_angle = self.calculate_angle(strand)
+            angle_diff = radians(new_angle - old_angle)
+            
+            dx = strand.end.x() - strand.start.x()
+            dy = strand.end.y() - strand.start.y()
+            length = (dx**2 + dy**2)**0.5
+            
+            new_dx = length * cos(radians(new_angle))
+            new_dy = length * sin(radians(new_angle))
+            
+            strand.end.setX(strand.start.x() + new_dx)
+            strand.end.setY(strand.start.y() + new_dy)
+            
+            strand.update_shape()
+            if hasattr(strand, 'update_side_line'):
+                strand.update_side_line()
+            
+            self.update()  # Trigger a repaint of the canvas
+
+    def calculate_angle(self, strand):
+        dx = strand.end.x() - strand.start.x()
+        dy = strand.end.y() - strand.start.y()
+        return degrees(atan2(dy, dx))
+
+  
 
 # End of StrandDrawingCanvas class

@@ -9,7 +9,8 @@ from strand import Strand, AttachedStrand, MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 import logging
-from group_layers import GroupLayerManager
+from group_layers import GroupLayerManager, StrandAngleEditDialog
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -550,3 +551,9 @@ class MainWindow(QMainWindow):
             loaded_strands = load_strands(filename, self.canvas)
             apply_loaded_strands(self.canvas, loaded_strands)
             logging.info(f"Project loaded from {filename}")
+    def edit_group_angles(self, group_name):
+        if group_name in self.canvas.groups:
+            group_data = self.canvas.groups[group_name]
+            dialog = StrandAngleEditDialog(group_name, group_data, self.canvas)
+            dialog.angle_changed.connect(self.canvas.update_strand_angle)
+            dialog.exec_()

@@ -19,7 +19,7 @@ class GroupedLayerTree(QTreeWidget):
         super().__init__()  # Call the superclass constructor
         self.layer_panel = layer_panel
         self.canvas = canvas
-        self.group_panel = GroupPanel(canvas=self.canvas)
+        self.group_panel = GroupPanel(layer_panel=self.layer_panel, canvas=self.canvas)
         
         if self.canvas:
             logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
@@ -220,15 +220,16 @@ class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
     move_group_started = pyqtSignal(str, list)  # New signal
 
-    def __init__(self, canvas=None, parent=None):
+    def __init__(self, layer_panel, canvas, parent=None):
         super().__init__(parent)
+        self.layer_panel = layer_panel
+        self.canvas = canvas
+        self.groups = {}
         self.setStyleSheet("background-color: white;")
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(5, 5, 5, 5)
         self.layout.setSpacing(5)
-        self.groups = {}
         self.setAcceptDrops(True)
-        self.canvas = canvas
         if self.canvas:
             logging.info(f"Canvas set on GroupPanel during initialization: {self.canvas}")
         else:
@@ -246,10 +247,22 @@ class GroupPanel(QWidget):
     def create_group(self, group_name, layers_data):
         group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)
-        self.groups[group_name] = {'widget': group_widget, 'layers': [], 'strands': layers_data}
+        self.groups[group_name] = {
+            'widget': group_widget, 
+            'layers': [], 
+            'strands': layers_data,
+            'editable_layers': []
+        }
 
         for strand_data in layers_data:
-            self.add_layer_to_group(strand_data['layer_name'], group_name, strand_data)
+            layer_name = strand_data['layer_name']
+            self.add_layer_to_group(layer_name, group_name, strand_data)
+            
+            # Check if the layer is editable (has a green rectangle)
+            if self.is_layer_editable(layer_name):
+                self.groups[group_name]['editable_layers'].append(layer_name)
+
+
 
     def add_layer_to_group(self, layer_name, group_name, strand_data):
         if group_name not in self.groups:
@@ -376,8 +389,26 @@ class GroupPanel(QWidget):
 
     def edit_strand_angles(self, group_name):
         if group_name in self.groups:
-            dialog = StrandAngleEditDialog(group_name, self.groups[group_name], self.canvas, self)
+            # Ensure that editable_layers is correctly populated
+            editable_layers = [layer for layer in self.groups[group_name]['layers'] 
+                               if self.is_layer_editable(layer)]
+            
+            dialog = StrandAngleEditDialog(
+                group_name, 
+                {
+                    'strands': self.groups[group_name]['strands'],
+                    'layers': self.groups[group_name]['layers'],
+                    'editable_layers': editable_layers  # Pass the correct editable_layers list
+                }, 
+                self.canvas, 
+                self
+            )
             dialog.exec_()
+
+    def is_layer_editable(self, layer_name):
+        # This method should check if the layer has a green rectangle
+        layer_button = next((button for button in self.layer_panel.layer_buttons if button.text() == layer_name), None)
+        return layer_button is not None and layer_button.isEnabled()
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -534,12 +565,11 @@ class LayerSelectionDialog(QDialog):
                 if self.layer_list.item(i).checkState() == Qt.Checked]
 
 class GroupLayerManager:
-    def __init__(self, layer_panel, canvas=None):
+    def __init__(self, layer_panel, canvas):
         self.layer_panel = layer_panel
         self.canvas = canvas
-        self.group_panel = GroupPanel(canvas=self.canvas)
-        self.tree = GroupedLayerTree(layer_panel, canvas=self.canvas)
-        self.tree.hide()  # Hide the tree completely
+        self.tree = GroupedLayerTree(layer_panel=self.layer_panel, canvas=self.canvas)
+        self.group_panel = self.tree.group_panel
         
         if self.canvas:
             logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
@@ -955,7 +985,8 @@ class StrandAngleEditDialog(QDialog):
         
         self.group_data = {
             'strands': [self.ensure_strand_object(s) for s in group_data['strands']],
-            'layers': group_data['layers']
+            'layers': group_data['layers'],
+            'editable_layers': group_data['editable_layers']  # New line
         }
         
         self.setup_ui()
@@ -1034,12 +1065,11 @@ class StrandAngleEditDialog(QDialog):
         self.move(frame_geometry.topLeft())
 
     def populate_table(self):
-        non_masked_strands = [strand for strand in self.group_data['strands'] 
-                              if not isinstance(strand, MaskedStrand)]
-        self.table.setRowCount(len(non_masked_strands))
+        self.table.setRowCount(len(self.group_data['strands']))
 
-        for row, strand in enumerate(non_masked_strands):
+        for row, strand in enumerate(self.group_data['strands']):
             is_main_strand = strand.layer_name.endswith("_1")
+            is_editable = strand.layer_name in self.group_data['editable_layers']
             
             self.table.setItem(row, 0, QTableWidgetItem(strand.layer_name))
             
@@ -1070,18 +1100,23 @@ class StrandAngleEditDialog(QDialog):
             x_checkbox.stateChanged.connect(lambda state, r=row, c=x_checkbox: self.on_checkbox_changed(r, c, state))
             x_plus_180_checkbox.stateChanged.connect(lambda state, r=row, c=x_plus_180_checkbox: self.on_checkbox_changed(r, c, state))
 
-            for col in [1, 4, 5]:  # Angle, End X, End Y
-                item = self.table.item(row, col)
-                if is_main_strand:
-                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                else:
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-
-            if is_main_strand:
+            # Disable editing for non-editable strands
+            if is_main_strand or not is_editable:
+                for col in range(1, self.table.columnCount()):
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 angle_buttons.setEnabled(False)
                 fast_angle_buttons.setEnabled(False)
                 x_checkbox.setEnabled(False)
                 x_plus_180_checkbox.setEnabled(False)
+
+            # Optionally, you can visually indicate non-editable rows
+            if not is_editable:
+                for col in range(self.table.columnCount()):
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setBackground(QColor(240, 240, 240))  # Light gray background
 
     def create_angle_buttons(self, row):
         widget = QWidget()

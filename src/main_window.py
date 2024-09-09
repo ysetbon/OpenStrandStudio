@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
         self.set_attach_mode()
         self.selected_strand = None
 
+        self.group_layer_manager = GroupLayerManager(self.layer_panel, self.canvas)
         self.layer_panel.group_layer_manager.set_canvas(self.canvas)
         self.canvas.set_group_layer_manager(self.layer_panel.group_layer_manager)
         logging.info(f"Canvas set in MainWindow: {self.canvas}")

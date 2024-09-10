@@ -218,39 +218,59 @@ class MaskedStrand(Strand):
         path1 = QPainterPath()
         path2 = QPainterPath()
 
+        extension = -self.width/2 # pixels
+
         if self.first_selected_strand:
-            path1 = QPainterPath(self.first_selected_strand.get_path())
+            # Calculate the angle of the first strand
+            dx1 = self.first_selected_strand.end.x() - self.first_selected_strand.start.x()
+            dy1 = self.first_selected_strand.end.y() - self.first_selected_strand.start.y()
+            angle1 = math.atan2(dy1, dx1)
+
+            # Calculate the extended start and end points for the first strand
+            extended_start1 = QPointF(
+                self.first_selected_strand.start.x() - extension * math.cos(angle1),
+                self.first_selected_strand.start.y() - extension * math.sin(angle1)
+            )
+            extended_end1 = QPointF(
+                self.first_selected_strand.end.x() + extension * math.cos(angle1),
+                self.first_selected_strand.end.y() + extension * math.sin(angle1)
+            )
+
+            # Create an extended path for the first strand
+            extended_path1 = QPainterPath()
+            extended_path1.moveTo(extended_start1)
+            extended_path1.lineTo(extended_end1)
+
+            # Apply the stroke
             stroker1 = QPainterPathStroker()
-            stroker1.setWidth(self.first_selected_strand.stroke_width+1)
-            path1 = stroker1.createStroke(path1).united(path1)
+            stroker1.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width + 2)
+            path1 = stroker1.createStroke(extended_path1).united(extended_path1)
 
         if self.second_selected_strand:
             # Calculate the angle of the second strand
-            dx = self.second_selected_strand.end.x() - self.second_selected_strand.start.x()
-            dy = self.second_selected_strand.end.y() - self.second_selected_strand.start.y()
-            angle = math.atan2(dy, dx)
+            dx2 = self.second_selected_strand.end.x() - self.second_selected_strand.start.x()
+            dy2 = self.second_selected_strand.end.y() - self.second_selected_strand.start.y()
+            angle2 = math.atan2(dy2, dx2)
 
-            # Calculate the extended start and end points
-            extension = 50  # pixels
-            extended_start = QPointF(
-                self.second_selected_strand.start.x() - extension * math.cos(angle),
-                self.second_selected_strand.start.y() - extension * math.sin(angle)
+            # Calculate the extended start and end points for the second strand
+            extended_start2 = QPointF(
+                self.second_selected_strand.start.x() + extension * math.cos(angle2),
+                self.second_selected_strand.start.y() + extension * math.sin(angle2)
             )
-            extended_end = QPointF(
-                self.second_selected_strand.end.x() + extension * math.cos(angle),
-                self.second_selected_strand.end.y() + extension * math.sin(angle)
+            extended_end2 = QPointF(
+                self.second_selected_strand.end.x() - extension * math.cos(angle2),
+                self.second_selected_strand.end.y() - extension * math.sin(angle2)
             )
 
-            # Create an extended path
-            extended_path = QPainterPath()
-            extended_path.moveTo(extended_start)
-            extended_path.lineTo(extended_end)
+            # Create an extended path for the second strand
+            extended_path2 = QPainterPath()
+            extended_path2.moveTo(extended_start2)
+            extended_path2.lineTo(extended_end2)
 
-            # Apply the same stroke as before
+            # Apply the stroke
             stroker2 = QPainterPathStroker()
-            print (f"width: {self.second_selected_strand.width}")
-            stroker2.setWidth(self.second_selected_strand.width+self.second_selected_strand.stroke_width+2)
-            path2 = stroker2.createStroke(extended_path).united(extended_path)
+            stroker2.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width + 2)
+            path2 = stroker2.createStroke(extended_path2).united(extended_path2)
 
         return path1.intersected(path2)
 

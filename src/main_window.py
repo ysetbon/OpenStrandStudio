@@ -21,7 +21,8 @@ class MainWindow(QMainWindow):
         # The GroupLayerManager is now initialized inside LayerPanel, so we don't need to do it here
         self.setup_ui()
         self.setup_connections()
-        self.current_mode = "attach"
+        self.current_mode = None
+        self.previous_mode = None
         self.set_attach_mode()
         self.selected_strand = None
 
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
         self.layer_panel = LayerPanel(self.canvas)
         
         self.setup_button_styles()
+        self.update_button_states("attach")  # Set initial state
 
         self.splitter = QSplitter(Qt.Horizontal)
         left_widget = QWidget()
@@ -91,6 +93,42 @@ class MainWindow(QMainWindow):
         )
 
     def setup_button_styles(self):
+        button_style = """
+            QPushButton {{
+                background-color: {bg_color};
+                color: {text_color};
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {hover_color};
+            }}
+            QPushButton:pressed {{
+                background-color: {pressed_color};
+            }}
+            QPushButton:checked {{
+                background-color: {checked_color};
+            }}
+        """
+
+        buttons = [
+            (self.attach_button, "#87CEFA", "black", "#1E90FF", "#4169E1", "#5F9EA0"),
+            (self.move_button, "#DBC323", "black", "#3CB371", "#2E8B57", "#9ACD32"),
+            (self.rotate_button, "#FFA07A", "black", "#FF7F50", "#FF6347", "#CD5C5C"),
+            (self.angle_adjust_button, "#F0E68C", "black", "#DAA520", "#B8860B", "#BDB76B"),
+            (self.select_strand_button, "#FFB6C1", "black", "#FF69B4", "#DB7093", "#C71585"),
+            (self.mask_button, "#7B68EE", "black", "#6A5ACD", "#483D8B", "#4B0082"),
+        ]
+
+        for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:
+            button.setStyleSheet(button_style.format(
+                bg_color=bg_color,
+                text_color=text_color,
+                hover_color=hover_color,
+                pressed_color=pressed_color,
+                checked_color=checked_color
+            ))
+            button.setCheckable(True)
+
         self.layer_panel.lock_layers_button.setStyleSheet("""
             QPushButton {
                 background-color: orange;
@@ -145,48 +183,6 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.attach_button.setStyleSheet("""
-            QPushButton {
-                background-color: #87CEFA;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #1E90FF;
-            }
-            QPushButton:pressed {
-                background-color: #4169E1;
-            }
-        """)
-
-        self.move_button.setStyleSheet("""
-            QPushButton {
-                background-color: #DBC323;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3CB371;
-            }
-            QPushButton:pressed {
-                background-color: #2E8B57;
-            }
-        """)
-
-        self.rotate_button.setStyleSheet("""
-            QPushButton {
-                background-color: #FFA07A;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #FF7F50;
-            }
-            QPushButton:pressed {
-                background-color: #FF6347;
-            }
-        """)
-
         self.toggle_grid_button.setStyleSheet("""
             QPushButton {
                 background-color: #DDA0DD;
@@ -198,20 +194,6 @@ class MainWindow(QMainWindow):
             }
             QPushButton:pressed {
                 background-color: #BA55D3;
-            }
-        """)
-
-        self.angle_adjust_button.setStyleSheet("""
-            QPushButton {
-                background-color: #F0E68C;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #DAA520;
-            }
-            QPushButton:pressed {
-                background-color: #B8860B;
             }
         """)
 
@@ -257,33 +239,18 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.select_strand_button.setStyleSheet("""
-            QPushButton {
-                background-color: #FFB6C1;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #FF69B4;
-            }
-            QPushButton:pressed {
-                background-color: #DB7093;
-            }
-        """)
+    def update_button_states(self, active_mode):
+        buttons = {
+            "attach": self.attach_button,
+            "move": self.move_button,
+            "rotate": self.rotate_button,
+            "angle_adjust": self.angle_adjust_button,
+            "select": self.select_strand_button,
+            "mask": self.mask_button
+        }
 
-        self.mask_button.setStyleSheet("""
-            QPushButton {
-                background-color: #7B68EE;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #6A5ACD;
-            }
-            QPushButton:pressed {
-                background-color: #483D8B;
-            }
-        """)
+        for mode, button in buttons.items():
+            button.setChecked(mode == active_mode)
 
     def setup_connections(self):
         # Layer panel handle connections
@@ -461,12 +428,14 @@ class MainWindow(QMainWindow):
         self.canvas.set_mode("select")
         
     def update_mode(self, mode):
-        if self.current_mode == "select" and mode != "select":
-            self.canvas.exit_select_mode()
+        if self.current_mode == "angle_adjust" and mode != "angle_adjust":
+            # If we're leaving angle adjust mode, confirm the adjustment
+            self.canvas.angle_adjust_mode.confirm_adjustment()
         
         self.current_mode = mode
         self.canvas.set_mode(mode)
-        
+        self.update_button_states(mode)
+
         if mode == "select":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
@@ -523,15 +492,10 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(False)
 
-        self.attach_button.setChecked(mode == "attach")
-        self.move_button.setChecked(mode == "move")
-        self.select_strand_button.setChecked(mode == "select")
-        self.mask_button.setChecked(mode == "mask")
-        self.rotate_button.setChecked(mode == "rotate")
-        self.angle_adjust_button.setChecked(mode == "angle_adjust")
-
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
+
+
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)
@@ -561,25 +525,6 @@ class MainWindow(QMainWindow):
         self.canvas.selected_strand_index = None
         self.canvas.update()
 
-    def toggle_angle_adjust_mode(self):
-        if self.canvas.selected_strand:
-            if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
-                return
-            
-            if self.canvas.is_angle_adjusting:
-                # Exit angle adjust mode
-                self.canvas.angle_adjust_mode.confirm_adjustment()
-                # The strand should still be selected at this point
-                self.update_mode(self.current_mode)
-            else:
-                # Enter angle adjust mode
-                self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
-                self.update_mode("angle_adjust")
-            self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
-        else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def create_new_strand(self):
         if self.canvas.is_angle_adjusting:
@@ -593,6 +538,24 @@ class MainWindow(QMainWindow):
         self.canvas.start_new_strand_mode(set_number)
         
         logging.info(f"Ready to create new main strand for set: {set_number}")
+    def toggle_angle_adjust_mode(self):
+        if self.canvas.selected_strand:
+            if isinstance(self.canvas.selected_strand, MaskedStrand):
+                print("Angle adjustment is not available for masked layers.")
+                return
+            
+            if self.canvas.is_angle_adjusting:
+                # Exit angle adjust mode
+                self.canvas.angle_adjust_mode.confirm_adjustment()
+                self.update_mode(self.previous_mode)  # Return to previous mode
+            else:
+                # Enter angle adjust mode
+                self.previous_mode = self.current_mode  # Store the current mode
+                self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
+                self.update_mode("angle_adjust")
+        else:
+            print("No strand selected. Please select a strand before adjusting its angle.")
+            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def select_strand(self, index, emit_signal=True):
         if self.canvas.is_angle_adjusting:

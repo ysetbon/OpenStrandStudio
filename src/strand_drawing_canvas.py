@@ -733,10 +733,16 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode.is_attaching = False
             self.current_strand = None
             self.strand_selected.emit(index)
+            # Enable delete button for masked layers
+            if isinstance(self.selected_strand, MaskedStrand) and self.layer_panel:
+                self.layer_panel.delete_strand_button.setEnabled(True)
         else:
             self.selected_strand = None
             self.selected_strand_index = None
             self.strand_selected.emit(-1)  # Emit -1 for deselection
+            # Disable delete button when no strand is selected
+            if self.layer_panel:
+                self.layer_panel.delete_strand_button.setEnabled(False)
         self.update()  # Force a redraw
         logging.info(f"Selected strand index: {index}")
 
@@ -1348,13 +1354,8 @@ class StrandDrawingCanvas(QWidget):
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)
         
-        # Filter out masked strands if there are non-masked strands at the same point
-        non_masked_strands = [s for s in strands_at_point if not isinstance(s, MaskedStrand)]
-        if non_masked_strands:
-            strands_at_point = non_masked_strands
-
-        if len(strands_at_point) == 1:
-            selected_strand = strands_at_point[0]
+        if strands_at_point:
+            selected_strand = strands_at_point[-1]  # Select the topmost strand
             index = self.strands.index(selected_strand)
             
             if self.current_mode == self.mask_mode:
@@ -1363,7 +1364,7 @@ class StrandDrawingCanvas(QWidget):
                 self.select_strand(index)
                 self.strand_selected.emit(index)
         else:
-            # Deselect if clicking on an empty area or multiple strands
+            # Deselect if clicking on an empty area
             if self.current_mode == self.mask_mode:
                 self.mask_mode.clear_selection()
             else:
@@ -1580,6 +1581,32 @@ class StrandDrawingCanvas(QWidget):
         dy = strand.end.y() - strand.start.y()
         return degrees(atan2(dy, dx))
 
-  
+    def delete_masked_layer(self, masked_strand):
+        if isinstance(masked_strand, MaskedStrand) and masked_strand in self.strands:
+            logging.info(f"Deleting masked layer: {masked_strand.layer_name}")
+            
+            # Remove the masked strand from the strands list
+            self.strands.remove(masked_strand)
+            
+            # Get the index of the masked strand in the layer panel
+            index = next((i for i, button in enumerate(self.layer_panel.layer_buttons) 
+                        if button.text() == masked_strand.layer_name), None)
+            
+            # Update the layer panel
+            if index is not None and self.layer_panel:
+                self.layer_panel.remove_layer_button(index)
+            
+            # Clear selection if the deleted masked strand was selected
+            if self.selected_strand == masked_strand:
+                self.clear_selection()
+            
+            # Force a redraw of the canvas
+            self.update()
+            
+            logging.info(f"Masked layer {masked_strand.layer_name} deleted successfully")
+            return True
+        else:
+            logging.warning(f"Attempted to delete non-existent or non-masked layer")
+            return False
 
 # End of StrandDrawingCanvas class

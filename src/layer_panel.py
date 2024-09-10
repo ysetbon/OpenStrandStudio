@@ -396,7 +396,14 @@ class LayerPanel(QWidget):
             strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
             
             if strand_index is not None:
-                self.strand_deleted.emit(strand_index)
+                strand = self.canvas.strands[strand_index]
+                if isinstance(strand, MaskedStrand):
+                    # Delete masked layer
+                    if self.canvas.delete_masked_layer(strand):
+                        self.remove_layer_button(strand_index)
+                else:
+                    # Delete regular strand
+                    self.strand_deleted.emit(strand_index)
             else:
                 logging.warning(f"Strand {strand_name} not found in canvas strands")
         else:

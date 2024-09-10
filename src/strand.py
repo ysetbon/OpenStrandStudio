@@ -225,10 +225,32 @@ class MaskedStrand(Strand):
             path1 = stroker1.createStroke(path1).united(path1)
 
         if self.second_selected_strand:
-            path2 = QPainterPath(self.second_selected_strand.get_path())
+            # Calculate the angle of the second strand
+            dx = self.second_selected_strand.end.x() - self.second_selected_strand.start.x()
+            dy = self.second_selected_strand.end.y() - self.second_selected_strand.start.y()
+            angle = math.atan2(dy, dx)
+
+            # Calculate the extended start and end points
+            extension = 50  # pixels
+            extended_start = QPointF(
+                self.second_selected_strand.start.x() - extension * math.cos(angle),
+                self.second_selected_strand.start.y() - extension * math.sin(angle)
+            )
+            extended_end = QPointF(
+                self.second_selected_strand.end.x() + extension * math.cos(angle),
+                self.second_selected_strand.end.y() + extension * math.sin(angle)
+            )
+
+            # Create an extended path
+            extended_path = QPainterPath()
+            extended_path.moveTo(extended_start)
+            extended_path.lineTo(extended_end)
+
+            # Apply the same stroke as before
             stroker2 = QPainterPathStroker()
-            stroker2.setWidth(self.second_selected_strand.stroke_width+1)
-            path2 = stroker2.createStroke(path2).united(path2)
+            print (f"width: {self.second_selected_strand.width}")
+            stroker2.setWidth(self.second_selected_strand.width+self.second_selected_strand.stroke_width+2)
+            path2 = stroker2.createStroke(extended_path).united(extended_path)
 
         return path1.intersected(path2)
 

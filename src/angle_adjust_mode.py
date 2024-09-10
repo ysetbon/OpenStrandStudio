@@ -229,6 +229,9 @@ class AngleAdjustMode:
             
             # Emit the strand_selected signal
             self.canvas.strand_selected.emit(active_strand_index)
+            
+            # Emit a signal to indicate that angle adjustment is completed
+            self.canvas.angle_adjust_completed.emit()
         
         self.active_strand = None
         self.canvas.update()

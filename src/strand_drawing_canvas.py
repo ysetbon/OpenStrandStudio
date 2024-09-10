@@ -14,8 +14,10 @@ from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
-    mask_created = pyqtSignal(object, object)  # Add this signal
     strand_created = pyqtSignal(object)
+    strand_selected = pyqtSignal(int)
+    mask_created = pyqtSignal(int, int)
+    angle_adjust_completed = pyqtSignal()  # Add this line
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -24,7 +26,8 @@ class StrandDrawingCanvas(QWidget):
         self.initialize_properties()
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
-        
+        angle_adjust_completed = pyqtSignal()
+    
         # Add these new attributes
         self.is_drawing_new_strand = False
         self.new_strand_set_number = None
@@ -1349,7 +1352,9 @@ class StrandDrawingCanvas(QWidget):
             self.angle_adjust_mode.activate(strand)
         else:
             self.angle_adjust_mode.confirm_adjustment()
+            self.angle_adjust_completed.emit()  # Add this line
         self.update()
+
 
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)

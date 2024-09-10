@@ -11,6 +11,7 @@ from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
 from math import radians, cos, sin, atan2, degrees
+from rotate_mode import RotateMode
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     mask_created = pyqtSignal(object, object)  # Add this signal
@@ -44,6 +45,8 @@ class StrandDrawingCanvas(QWidget):
         self.rotating_group = None
         self.rotation_center = None
         self.original_strand_positions = {}
+        
+        self.rotate_mode = RotateMode(self)
 
     def start_group_rotation(self, group_name):
         if group_name in self.groups:
@@ -744,7 +747,9 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
-        if self.moving_group:
+        if self.current_mode == "rotate":
+            self.rotate_mode.mousePressEvent(event)
+        elif self.moving_group:
             self.move_start_pos = event.pos()
             self.setCursor(Qt.ClosedHandCursor)
         elif self.is_drawing_new_strand:
@@ -757,6 +762,7 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode.mousePressEvent(event)
         self.update()
 
+
     def mouseMoveEvent(self, event):
         if self.moving_group and self.move_start_pos:
             dx = event.pos().x() - self.move_start_pos.x()
@@ -766,11 +772,15 @@ class StrandDrawingCanvas(QWidget):
         elif self.is_drawing_new_strand and self.new_strand_start_point:
             self.new_strand_end_point = event.pos()
             self.update()
+        elif self.current_mode == "rotate":
+            self.rotate_mode.mouseMoveEvent(event)
         elif self.current_mode:
             self.current_mode.mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if self.moving_group:
+        if self.current_mode == "rotate":
+            self.rotate_mode.mouseReleaseEvent(event)
+        elif self.moving_group:
             self.moving_group = False
             self.move_group_name = None
             self.move_group_layers = None
@@ -821,7 +831,7 @@ class StrandDrawingCanvas(QWidget):
         Set the current mode of the canvas.
         
         Args:
-            mode (str): The mode to set. Can be "attach", "move", "select", "mask", "angle_adjust", "new_strand", or "new_strand".
+            mode (str): The mode to set. Can be "attach", "move", "select", "mask", "angle_adjust", "new_strand", "rotate", or "new_strand".
         """
         # Deactivate the current mode if it has a deactivate method
         if hasattr(self.current_mode, 'deactivate'):
@@ -835,7 +845,7 @@ class StrandDrawingCanvas(QWidget):
         # Set the new mode
         if mode == "attach":
             self.current_mode = self.attach_mode
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CrossCursor)
         elif mode == "move":
             self.current_mode = self.move_mode
             self.setCursor(Qt.OpenHandCursor)
@@ -854,6 +864,9 @@ class StrandDrawingCanvas(QWidget):
             self.is_drawing_new_strand = True
             self.current_mode = None  # or you could set it to a default mode like self.attach_mode
             self.setCursor(Qt.CrossCursor)
+        elif mode == "rotate":
+            self.current_mode = self.rotate_mode
+            self.setCursor(Qt.SizeAllCursor)
         else:
             raise ValueError(f"Unknown mode: {mode}")
 

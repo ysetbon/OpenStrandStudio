@@ -46,22 +46,24 @@ class MainWindow(QMainWindow):
         button_layout = QHBoxLayout()
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
+        self.rotate_button = QPushButton("Rotate Mode")  # New button
         self.toggle_grid_button = QPushButton("Toggle Grid")
         self.angle_adjust_button = QPushButton("Angle Adjust Mode")
         self.save_button = QPushButton("Save")
         self.load_button = QPushButton("Load")
-        self.save_image_button = QPushButton("Save as Image")  # New button
+        self.save_image_button = QPushButton("Save as Image")
         self.select_strand_button = QPushButton("Select Strand")
         self.mask_button = QPushButton("Mask Mode")
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
+        button_layout.addWidget(self.rotate_button)  # Add rotate button next to move button
         button_layout.addWidget(self.toggle_grid_button)
         button_layout.addWidget(self.angle_adjust_button)
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.load_button)
-        button_layout.addWidget(self.save_image_button)  # Add new button to layout
+        button_layout.addWidget(self.save_image_button)
 
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
@@ -143,7 +145,104 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Add style for the new save image button
+        self.attach_button.setStyleSheet("""
+            QPushButton {
+                background-color: #87CEFA;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1E90FF;
+            }
+            QPushButton:pressed {
+                background-color: #4169E1;
+            }
+        """)
+
+        self.move_button.setStyleSheet("""
+            QPushButton {
+                background-color: #DBC323;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3CB371;
+            }
+            QPushButton:pressed {
+                background-color: #2E8B57;
+            }
+        """)
+
+        self.rotate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFA07A;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #FF7F50;
+            }
+            QPushButton:pressed {
+                background-color: #FF6347;
+            }
+        """)
+
+        self.toggle_grid_button.setStyleSheet("""
+            QPushButton {
+                background-color: #DDA0DD;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #DA70D6;
+            }
+            QPushButton:pressed {
+                background-color: #BA55D3;
+            }
+        """)
+
+        self.angle_adjust_button.setStyleSheet("""
+            QPushButton {
+                background-color: #F0E68C;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #DAA520;
+            }
+            QPushButton:pressed {
+                background-color: #B8860B;
+            }
+        """)
+
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                background-color: #20B2AA;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #48D1CC;
+            }
+            QPushButton:pressed {
+                background-color: #008B8B;
+            }
+        """)
+
+        self.load_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF69B4;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #FF1493;
+            }
+            QPushButton:pressed {
+                background-color: #C71585;
+            }
+        """)
+
         self.save_image_button.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -155,6 +254,34 @@ class MainWindow(QMainWindow):
             }
             QPushButton:pressed {
                 background-color: #3e8e41;
+            }
+        """)
+
+        self.select_strand_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFB6C1;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #FF69B4;
+            }
+            QPushButton:pressed {
+                background-color: #DB7093;
+            }
+        """)
+
+        self.mask_button.setStyleSheet("""
+            QPushButton {
+                background-color: #7B68EE;
+                color: black;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #6A5ACD;
+            }
+            QPushButton:pressed {
+                background-color: #483D8B;
             }
         """)
 
@@ -181,6 +308,7 @@ class MainWindow(QMainWindow):
         # Button connections
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
+        self.rotate_button.clicked.connect(self.set_rotate_mode)
         self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
         self.angle_adjust_button.clicked.connect(self.toggle_angle_adjust_mode)
         self.save_button.clicked.connect(self.save_project)
@@ -188,6 +316,7 @@ class MainWindow(QMainWindow):
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
         self.mask_button.clicked.connect(self.set_mask_mode)
+        self.rotate_button.clicked.connect(self.set_rotate_mode)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -345,6 +474,7 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(False)
             self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(True)
         elif mode == "attach":
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
@@ -352,6 +482,7 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(True)
         elif mode == "move":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
@@ -359,6 +490,7 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(True)
         elif mode == "angle_adjust":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
@@ -366,6 +498,7 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(self.canvas.is_angle_adjusting)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(True)
         elif mode == "mask":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
@@ -373,12 +506,29 @@ class MainWindow(QMainWindow):
             self.angle_adjust_button.setChecked(False)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(False)
+            self.rotate_button.setEnabled(True)
         elif mode == "new_strand":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(False)
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(False)
+            self.rotate_button.setEnabled(True)
+        elif mode == "rotate":
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setChecked(False)
+            self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(False)
+
+        self.attach_button.setChecked(mode == "attach")
+        self.move_button.setChecked(mode == "move")
+        self.select_strand_button.setChecked(mode == "select")
+        self.mask_button.setChecked(mode == "mask")
+        self.rotate_button.setChecked(mode == "rotate")
+        self.angle_adjust_button.setChecked(mode == "angle_adjust")
 
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
@@ -558,3 +708,7 @@ class MainWindow(QMainWindow):
             dialog = StrandAngleEditDialog(group_name, group_data, self.canvas)
             dialog.angle_changed.connect(self.canvas.update_strand_angle)
             dialog.exec_()
+
+    def set_rotate_mode(self):
+        self.update_mode("rotate")
+        self.canvas.set_mode("rotate")

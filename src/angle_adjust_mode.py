@@ -150,13 +150,20 @@ class AngleAdjustMode:
         if self.initial_angle is None:
             print("No initial angle set")  # Debug print
             return
-
-        try:
-            new_angle = eval(operation.replace('x', str(self.initial_angle)))
-            print(f"Calculated new angle: {new_angle}")  # Debug print
-            self.rotate_strand(new_angle)
-        except Exception as e:
-            print(f"Error in angle calculation: {e}")  # Debug print
+        if operation == 'x':
+            try:
+                new_angle = eval(operation.replace('x', str(self.initial_angle)))
+                print(f"Calculated new angle: {new_angle}")  # Debug print
+                self.rotate_strand(new_angle)
+            except Exception as e:
+                print(f"Error in angle calculation: {e}")  # Debug print
+        if operation == '180+x':
+            try:
+                new_angle = eval(operation.replace('180+x', str(self.initial_angle)))
+                print(f"Calculated new angle: {new_angle}")  # Debug print
+                self.rotate_strand(new_angle)
+            except Exception as e:
+                print(f"Error in angle calculation: {e}")  # Debug print
 
 
 

@@ -7,12 +7,12 @@ class AngleAdjustMode:
     def __init__(self, canvas):
         self.canvas = canvas
         self.active_strand = None
-        self.initial_angle = 0
         self.initial_length = 0
         self.max_length = 0
         self.angle_step = 1  # Degrees to adjust per key press
         self.length_step = 5  # Pixels to adjust per key press
-
+        self.initial_angle = None
+        self.x_pressed = False
     def activate(self, strand):
         self.active_strand = strand
         self.initial_angle = self.calculate_angle(strand.start, strand.end)
@@ -123,7 +123,17 @@ class AngleAdjustMode:
         if not self.active_strand:
             return
 
-        if event.key() == Qt.Key_Left:
+        if event.key() == Qt.Key_X:
+            self.x_pressed = True
+            print(f"Using initial angle: {self.initial_angle}")  # Debug print
+        elif self.x_pressed and event.text().isdigit():
+            angle_input = event.text()
+            if angle_input == '1':
+                self.apply_angle_operation('180+x')
+            elif angle_input == '2':
+                self.apply_angle_operation('x')
+            self.x_pressed = False
+        elif event.key() == Qt.Key_Left:
             self.adjust_angle(-self.angle_step)
         elif event.key() == Qt.Key_Right:
             self.adjust_angle(self.angle_step)
@@ -135,6 +145,20 @@ class AngleAdjustMode:
             self.prompt_for_adjustments()
         elif event.key() == Qt.Key_Escape:
             self.cancel_adjustment()
+
+    def apply_angle_operation(self, operation):
+        if self.initial_angle is None:
+            print("No initial angle set")  # Debug print
+            return
+
+        try:
+            new_angle = eval(operation.replace('x', str(self.initial_angle)))
+            print(f"Calculated new angle: {new_angle}")  # Debug print
+            self.rotate_strand(new_angle)
+        except Exception as e:
+            print(f"Error in angle calculation: {e}")  # Debug print
+
+
 
     def adjust_angle(self, delta):
         if not self.active_strand:

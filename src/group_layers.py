@@ -1336,15 +1336,16 @@ class StrandAngleEditDialog(QDialog):
         while new_angle <= -180:
             new_angle += 360
         
-        dx = strand.end.x() - strand.start.x()  # Fixed: Added missing parenthesis and subtraction
+        dx = strand.end.x() - strand.start.x()
         dy = strand.end.y() - strand.start.y()
         length = (dx**2 + dy**2)**0.5
         
         new_dx = length * cos(radians(new_angle))
         new_dy = length * sin(radians(new_angle))
         
-        strand.end.setX(strand.start.x() + new_dx)
-        strand.end.setY(strand.start.y() + new_dy)
+        # Create a new QPointF
+        new_end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
+        strand.end = new_end
         
         strand.update_shape()
         if hasattr(strand, 'update_side_line'):

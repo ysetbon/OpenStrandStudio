@@ -110,3 +110,12 @@ New Features:
 **HIGHLIGHTED FEATURE:**
 
 > **Group Functionality: Efficiently handle complex designs by grouping and manipulating multiple strands as a single unit**
+
+------
+
+## version 1.05 (Released 9/11/2024)
+
+Fixed Features:
+
+1. Masking layers take into consideration the circle of attached strand. 
+2. Enhanced typography for canvas overlay buttons.

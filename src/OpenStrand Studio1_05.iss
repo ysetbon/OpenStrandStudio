@@ -2,7 +2,7 @@
 #define MyAppVersion "1.05"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "9_Sept_2024"
+#define MyAppDate "12_Sept_2024"
 #define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src"
 #define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
 
@@ -51,7 +51,7 @@ begin
 end;
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nNew in this version:%n- Added a better implemtation for masking, now the circle of the attached strand is also considered.%n- Improved button style at the top of the canvas.%n- Angle adjust mode improved although still needed improvement.. "Save Image" button%n%nThe program is brought to you by Yonatan Setbon. You can contact me at ysetbon@gmail.com.%n%nIt is recommended that you close all other applications before continuing.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nNew in this version:%n- Added a better implementation for masking, now the circle of the attached strand is also considered.%n- Improved button style at the top of the canvas.%n- Angle adjust mode improved: disables strands that cannot have new strands attached, simplifying the process.%n- Better overall functionality for angle adjust, improving user experience and precision.%n- Enhanced typography for canvas overlay buttons.%n%nThe program is brought to you by Yonatan Setbon. You can contact me at ysetbon@gmail.com.%n%nIt is recommended that you close all other applications before continuing.
 
 [CustomMessages]
 LaunchAfterInstall=Launch {#MyAppName} after installation

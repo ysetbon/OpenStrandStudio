@@ -5,6 +5,7 @@ from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
     color_changed = pyqtSignal(int, QColor)
+    attachable_changed = pyqtSignal(int, bool)  # Add this line
 
     def __init__(self, text, count, color=QColor('purple'), parent=None):
         """
@@ -91,14 +92,12 @@ class NumberedLayerButton(QPushButton):
         self.update_style()
 
     def set_attachable(self, attachable):
-        """
-        Set whether the button represents a strand that can be attached to.
-
-        Args:
-            attachable (bool): Whether the strand can be attached to.
-        """
-        self.attachable = attachable
-        self.update_style()
+        if self.attachable != attachable:
+            self.attachable = attachable
+            self.update_style()
+            self.update()
+            set_number = int(self.text().split('_')[0])
+            self.attachable_changed.emit(set_number, attachable)  # Emit the signal
 
     def update_style(self):
         """Update the button's style based on its current state."""

@@ -22,6 +22,16 @@ class Strand:
         self.update_side_line()
         self.layer_name = ""
         self._set_number = None  # Initialize _set_number
+        self.attachable = True  # Initialize as True, will be updated based on has_circles
+
+    def update_attachable(self):
+        """Update the attachable property based on has_circles."""
+        self.attachable = not all(self.has_circles)
+
+    def set_has_circles(self, start_circle, end_circle):
+        """Set the has_circles attribute and update attachable."""
+        self.has_circles = [start_circle, end_circle]
+        self.update_attachable()
 
     @property
     def set_number(self):
@@ -74,6 +84,10 @@ class Strand:
         self.side_line_end = QPointF(self.start.x() - perpendicular_dx + perpendicular_dx_stroke, 
                                      self.start.y() - perpendicular_dy + perpendicular_dy_stroke)
 
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
     def draw(self, painter):
         """Draw the strand on the given painter."""
         painter.save()
@@ -109,7 +123,12 @@ class Strand:
         for attached_strand in self.attached_strands:
             attached_strand.remove_attached_strands()
         self.attached_strands.clear()
-
+    def is_attachable(self):
+        """
+        Determine if the strand is attachable.
+        Returns True if the strand is attachable, False otherwise.
+        """
+        return self.attachable
 class AttachedStrand(Strand):
     """
     Represents a strand attached to another strand.
@@ -339,6 +358,7 @@ class MaskedStrand(Strand):
             self.first_selected_strand.remove_attached_strands()
         if self.second_selected_strand:
             self.second_selected_strand.remove_attached_strands()
+
 
     def __getattr__(self, name):
         """

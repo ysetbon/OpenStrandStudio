@@ -986,7 +986,7 @@ class StrandAngleEditDialog(QDialog):
         self.group_data = {
             'strands': [self.ensure_strand_object(s) for s in group_data['strands']],
             'layers': group_data['layers'],
-            'editable_layers': group_data['editable_layers']  # New line
+            'editable_layers': group_data['editable_layers']
         }
         
         self.setup_ui()
@@ -1034,8 +1034,8 @@ class StrandAngleEditDialog(QDialog):
         QTimer.singleShot(0, self.adjust_dialog_size)
 
     def setup_table(self):
-        self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["Strand", "Angle", "+/-", "++/--", "End X", "End Y", "x", "180+x"])
+        self.table.setColumnCount(9)  # Increased column count to include 'Attachable'
+        self.table.setHorizontalHeaderLabels(["Strand", "Angle", "+/-", "++/--", "End X", "End Y", "x", "180+x", "Attachable"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setItemDelegate(FloatDelegate())
         self.table.itemChanged.connect(self.on_item_changed)
@@ -1070,6 +1070,7 @@ class StrandAngleEditDialog(QDialog):
         for row, strand in enumerate(self.group_data['strands']):
             is_main_strand = strand.layer_name.endswith("_1")
             is_editable = strand.layer_name in self.group_data['editable_layers']
+            is_attachable = strand.is_attachable()
             
             self.table.setItem(row, 0, QTableWidgetItem(strand.layer_name))
             
@@ -1097,11 +1098,19 @@ class StrandAngleEditDialog(QDialog):
             x_plus_180_checkbox.setObjectName("180+x")
             self.table.setCellWidget(row, 7, x_plus_180_checkbox)
 
+            # Add 'Attachable' indicator
+            self.table.setCellWidget(row, 8, None)
+            self.table.setItem(row, 8, QTableWidgetItem())
+            item = self.table.item(row, 8)
+            item.setData(Qt.DisplayRole, '✓' if is_attachable else '✗')
+            item.setTextAlignment(Qt.AlignCenter)
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+
             x_checkbox.stateChanged.connect(lambda state, r=row, c=x_checkbox: self.on_checkbox_changed(r, c, state))
             x_plus_180_checkbox.stateChanged.connect(lambda state, r=row, c=x_plus_180_checkbox: self.on_checkbox_changed(r, c, state))
 
-            # Disable editing for non-editable strands
-            if is_main_strand or not is_editable:
+            # Disable editing for non-editable strands, x_1 strands, and non-attachable strands
+            if is_main_strand or not is_editable or not is_attachable:
                 for col in range(1, self.table.columnCount()):
                     item = self.table.item(row, col)
                     if item:
@@ -1111,12 +1120,44 @@ class StrandAngleEditDialog(QDialog):
                 x_checkbox.setEnabled(False)
                 x_plus_180_checkbox.setEnabled(False)
 
-            # Optionally, you can visually indicate non-editable rows
-            if not is_editable:
+            # Visually indicate non-editable rows
+            if not is_editable or not is_attachable:
                 for col in range(self.table.columnCount()):
                     item = self.table.item(row, col)
                     if item:
                         item.setBackground(QColor(240, 240, 240))  # Light gray background
+    def create_custom_delegate(self):
+        class CustomDelegate(QStyledItemDelegate):
+            def paint(self, painter, option, index):
+                if index.column() == 8:  # Attachable column
+                    value = index.data(Qt.DisplayRole)
+                    painter.save()
+                    if value == '✓':
+                        painter.setPen(QColor('green'))
+                    else:
+                        painter.setPen(QColor('red'))
+                    painter.drawText(option.rect, Qt.AlignCenter, value)
+                    painter.restore()
+                else:
+                    super().paint(painter, option, index)
+
+        return CustomDelegate(self.table)
+
+
+    def on_attachable_changed(self, row, state):
+        strand = self.group_data['strands'][row]
+        strand.attachable = (state == Qt.Checked)
+        # You might want to update the strand in your canvas or other data structures here
+        # For example:
+        # self.canvas.update_strand_attachable(strand.layer_name, strand.attachable)
+        
+        # Update the NumberedLayerButton if necessary
+        # This assumes you have a method to access the button for this strand
+        # button = self.get_button_for_strand(strand)
+        # if button:
+        #     button.set_attachable(strand.attachable)
+
+        self.canvas.update()  # Refresh the canvas to reflect changes
 
     def create_angle_buttons(self, row):
         widget = QWidget()

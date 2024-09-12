@@ -326,6 +326,16 @@ class MainWindow(QMainWindow):
         # Add this new connection
         self.canvas.angle_adjust_completed.connect(self.deselect_angle_adjust_button)
 
+        # Connect attachable_changed signal for each layer button
+        for button in self.layer_panel.layer_buttons:
+            button.attachable_changed.connect(self.update_strand_attachable)
+
+    def update_strand_attachable(self, set_number, attachable):
+        for strand in self.canvas.strands:
+            if strand.set_number == set_number:
+                strand.set_attachable(attachable)
+        self.canvas.update()  # Redraw the canvas to show the changes
+
     # Add this new method
     def handle_angle_adjust_click(self):
         if self.canvas.selected_strand:

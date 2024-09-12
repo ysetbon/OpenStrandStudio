@@ -795,9 +795,8 @@ class LayerPanel(QWidget):
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
-                # A strand is attachable if it has any free end (not connected to another strand)
-                is_attachable = not all(strand.has_circles)
-                button.set_attachable(is_attachable)
+                strand.update_attachable()  # Update the strand's attachable property
+                button.set_attachable(strand.attachable)
             else:
                 button.set_attachable(False)
 

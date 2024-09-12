@@ -197,6 +197,7 @@ class AttachMode(QObject):
         new_strand.is_start_side = False
         parent_strand.attached_strands.append(new_strand)
         parent_strand.has_circles[side] = True
+        parent_strand.update_attachable()  # Add this line
         self.canvas.current_strand = new_strand
         self.is_attaching = True
         self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)

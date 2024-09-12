@@ -120,3 +120,4 @@ Fixed Features:
 1. Masking layers now take into consideration the circle of attached strands.
 2. Enhanced typography for canvas overlay buttons.
 3. Angle adjust now disables strands that cannot have new strands attached, simplifying the process.
+4. Better overall functionality for angle adjust, improving user experience and precision.

@@ -113,9 +113,10 @@ New Features:
 
 ------
 
-## version 1.05 (Released 9/11/2024)
+## version 1.05 (Released: 9/12/2024)
 
 Fixed Features:
 
-1. Masking layers take into consideration the circle of attached strand. 
+1. Masking layers now take into consideration the circle of attached strands.
 2. Enhanced typography for canvas overlay buttons.
+3. Angle adjust now disables strands that cannot have new strands attached, simplifying the process.

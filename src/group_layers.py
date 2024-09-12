@@ -990,6 +990,8 @@ class StrandAngleEditDialog(QDialog):
         }
         
         self.setup_ui()
+        self.adjust_dialog_size()  # Call the function here after setting up the UI
+        
         self.adjustment_timer = QTimer(self)
         self.adjustment_timer.setInterval(10)  # 10 milliseconds (0.01 seconds)
         self.initial_delay_timer = QTimer(self)
@@ -1011,6 +1013,7 @@ class StrandAngleEditDialog(QDialog):
 
         self.current_button = None
         self.last_press_time = None
+        self.x_angle = 0  # Initialize x_angle
 
     def ensure_strand_object(self, strand):
         if isinstance(strand, dict):
@@ -1018,20 +1021,72 @@ class StrandAngleEditDialog(QDialog):
         return strand
 
     def setup_ui(self):
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
 
         self.table = QTableWidget()
         self.setup_table()
-        layout.addWidget(self.table)
+        main_layout.addWidget(self.table)
 
         self.populate_table()
 
-        ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
-        layout.addWidget(ok_button)
+        # Add the bottom layout
+        main_layout.addLayout(self.setup_bottom_layout())
 
-        # Set the dialog size after a short delay to ensure all widgets are properly sized
-        QTimer.singleShot(0, self.adjust_dialog_size)
+        self.setLayout(main_layout)
+
+    def setup_bottom_layout(self):
+        bottom_layout = QHBoxLayout()
+        
+        # X Angle input
+        x_angle_layout = QHBoxLayout()
+        x_angle_label = QLabel("X Angle:")
+        self.x_angle_input = QLineEdit()
+        self.x_angle_input.setFixedWidth(100)
+        self.x_angle_input.setText("0.00")
+        self.x_angle_input.textChanged.connect(self.update_x_angle)
+        x_angle_layout.addWidget(x_angle_label)
+        x_angle_layout.addWidget(self.x_angle_input)
+        x_angle_layout.addStretch()
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        minus_minus_btn = QPushButton("--")
+        minus_btn = QPushButton("-")
+        plus_btn = QPushButton("+")
+        plus_plus_btn = QPushButton("++")
+        ok_btn = QPushButton("OK")
+
+        for btn in [minus_minus_btn, minus_btn, plus_btn, plus_plus_btn, ok_btn]:
+            btn.setFixedSize(50, 30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    font-size: 14px;
+                    font-weight: bold;
+                    border: 1px solid #bbbbbb;
+                    border-radius: 5px;
+                    background-color: #f0f0f0;
+                }
+                QPushButton:pressed {
+                    background-color: #d0d0d0;
+                }
+            """)
+            button_layout.addWidget(btn)
+
+        button_layout.setSpacing(10)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        # Connect button signals
+        minus_minus_btn.clicked.connect(lambda: self.adjust_x_angle(-5))
+        minus_btn.clicked.connect(lambda: self.adjust_x_angle(-1))
+        plus_btn.clicked.connect(lambda: self.adjust_x_angle(1))
+        plus_plus_btn.clicked.connect(lambda: self.adjust_x_angle(5))
+        ok_btn.clicked.connect(self.accept)
+
+        # Combine layouts
+        bottom_layout.addLayout(x_angle_layout)
+        bottom_layout.addLayout(button_layout)
+
+        return bottom_layout
 
     def setup_table(self):
         self.table.setColumnCount(9)  # Increased column count to include 'Attachable'
@@ -1051,8 +1106,8 @@ class StrandAngleEditDialog(QDialog):
             height += self.table.rowHeight(i)
 
         # Add some padding
-        width += 550
-        height += 400  # Extra space for the OK button and padding
+        width += 250
+        height += 300  # Extra space for the OK button and padding
 
         # Set the size of the dialog
         self.resize(width, height)
@@ -1106,8 +1161,8 @@ class StrandAngleEditDialog(QDialog):
             item.setTextAlignment(Qt.AlignCenter)
             item.setFlags(item.flags() & ~Qt.ItemIsEditable)
 
-            x_checkbox.stateChanged.connect(lambda state, r=row, c=x_checkbox: self.on_checkbox_changed(r, c, state))
-            x_plus_180_checkbox.stateChanged.connect(lambda state, r=row, c=x_plus_180_checkbox: self.on_checkbox_changed(r, c, state))
+            x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
+            x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
 
             # Disable editing for non-editable strands, x_1 strands, and non-attachable strands
             if is_main_strand or not is_editable or not is_attachable:
@@ -1163,11 +1218,25 @@ class StrandAngleEditDialog(QDialog):
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
 
-        plus_button = QPushButton("+")
         minus_button = QPushButton("-")
-        plus_button.setFixedSize(20, 20)
-        minus_button.setFixedSize(20, 20)
+        plus_button = QPushButton("+")
+        
+        for button in [minus_button, plus_button]:
+            button.setFixedSize(24, 24)
+            button.setStyleSheet("""
+                QPushButton {
+                    font-size: 14px;
+                    font-weight: bold;
+                    border: 1px solid #bbbbbb;
+                    border-radius: 12px;
+                    background-color: #f0f0f0;
+                }
+                QPushButton:pressed {
+                    background-color: #d0d0d0;
+                }
+            """)
 
         plus_button.pressed.connect(lambda: self.on_plus_pressed(row))
         plus_button.released.connect(self.on_plus_released)
@@ -1176,6 +1245,7 @@ class StrandAngleEditDialog(QDialog):
 
         layout.addWidget(minus_button)
         layout.addWidget(plus_button)
+        layout.setAlignment(Qt.AlignCenter)
 
         return widget
 
@@ -1183,11 +1253,25 @@ class StrandAngleEditDialog(QDialog):
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
 
-        plus_plus_button = QPushButton("++")
         minus_minus_button = QPushButton("--")
-        plus_plus_button.setFixedSize(30, 20)
-        minus_minus_button.setFixedSize(30, 20)
+        plus_plus_button = QPushButton("++")
+        
+        for button in [minus_minus_button, plus_plus_button]:
+            button.setFixedSize(28, 24)
+            button.setStyleSheet("""
+                QPushButton {
+                    font-size: 14px;
+                    font-weight: bold;
+                    border: 1px solid #bbbbbb;
+                    border-radius: 12px;
+                    background-color: #f0f0f0;
+                }
+                QPushButton:pressed {
+                    background-color: #d0d0d0;
+                }
+            """)
 
         plus_plus_button.pressed.connect(lambda: self.on_plus_plus_pressed(row))
         plus_plus_button.released.connect(self.on_plus_plus_released)
@@ -1196,6 +1280,7 @@ class StrandAngleEditDialog(QDialog):
 
         layout.addWidget(minus_minus_button)
         layout.addWidget(plus_plus_button)
+        layout.setAlignment(Qt.AlignCenter)
 
         return widget
 
@@ -1282,7 +1367,7 @@ class StrandAngleEditDialog(QDialog):
         dy = strand.end.y() - strand.start.y()
         
         if dx == 0:
-            return 90 if dy > 0 else -90 if dy < 0 else 0
+            return 90 if dy > 0 else -90
         
         angle = degrees(atan2(dy, dx))
         
@@ -1292,7 +1377,6 @@ class StrandAngleEditDialog(QDialog):
             angle += 360
         
         return angle
-
     def on_item_changed(self, item):
         if self.updating:
             return
@@ -1322,54 +1406,111 @@ class StrandAngleEditDialog(QDialog):
         finally:
             self.updating = False
 
-    def update_linked_strands(self, source_strand):
-        if source_strand.layer_name in self.linked_strands:
-            source_angle = self.calculate_angle(source_strand)
-            x_strands = []
-            x_plus_180_strands = []
+    def update_linked_strands(self, current_strand=None):
+        for row, strand in enumerate(self.group_data['strands']):
+            if strand == current_strand:
+                continue  # Skip the current strand to avoid recursive updates
+            x_checkbox = self.table.cellWidget(row, 6)
+            x_plus_180_checkbox = self.table.cellWidget(row, 7)
 
-            for linked_strand in self.linked_strands.values():
-                row = self.group_data['strands'].index(linked_strand)
-                x_checkbox = self.table.cellWidget(row, 6)
-                x_plus_180_checkbox = self.table.cellWidget(row, 7)
-
-                if x_checkbox and x_checkbox.isChecked():
-                    x_strands.append(linked_strand)
-                elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
-                    x_plus_180_strands.append(linked_strand)
-
-            for strand in x_strands:
-                self.update_strand_angle(strand, source_angle, update_linked=False)
-
-            opposite_angle = (source_angle + 180) % 360
-            if opposite_angle > 180:
-                opposite_angle -= 360
-            for strand in x_plus_180_strands:
+            if x_checkbox and x_checkbox.isChecked():
+                self.update_strand_angle(strand, self.x_angle, update_linked=False)
+            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
+                opposite_angle = (self.x_angle + 180) % 360
+                if opposite_angle > 180:
+                    opposite_angle -= 360
                 self.update_strand_angle(strand, opposite_angle, update_linked=False)
 
-    def on_checkbox_changed(self, row, checkbox, state):
-        if self.updating:
-            return
-
-        self.updating = True
-        try:
-            strand = self.group_data['strands'][row]
-            checkbox_type = checkbox.objectName()
+    def on_checkbox_changed(self, row, column, state):
+        strand = self.group_data['strands'][row]
+        checkbox = self.table.cellWidget(row, column)
+        other_column = 7 if column == 6 else 6
+        other_checkbox = self.table.cellWidget(row, other_column)
+        
+        if state == Qt.Checked:
+            # Uncheck the other checkbox
+            other_checkbox.setChecked(False)
             
-            if state == Qt.Checked:
-                other_checkbox_name = "180+x" if checkbox_type == "x" else "x"
-                other_checkbox = self.table.cellWidget(row, 7 if other_checkbox_name == "180+x" else 6)
-                if other_checkbox:
-                    other_checkbox.setChecked(False)
+            # Update the X Angle only if this is the first checkbox being checked
+            if not any(self.table.cellWidget(r, 6).isChecked() or self.table.cellWidget(r, 7).isChecked() for r in range(row)):
+                try:
+                    current_angle_item = self.table.item(row, 1)  # Angle column
+                    if current_angle_item:
+                        current_angle = float(current_angle_item.text())
+                        if column == 7:  # X+180 checkbox
+                            current_angle = (current_angle + 180) % 360
+                            if current_angle > 180:
+                                current_angle -= 360
+                        self.x_angle = current_angle
+                        self.x_angle_input.setText(f"{self.x_angle:.2f}")
+                except ValueError:
+                    logging.error(f"Invalid angle value in row {row}. Skipping update.")
+                    return
 
-                self.update_strand_links(strand, checkbox_type)
-                self.update_linked_strands(strand)
-            else:
-                self.remove_strand_link(strand)
-                if self.linked_strands:
-                    self.update_linked_strands(next(iter(self.linked_strands.values())))
-        finally:
-            self.updating = False
+        self.update_linked_strands(strand)
+        self.canvas.update()
+
+    def update_x_angle(self):
+        try:
+            self.x_angle = float(self.x_angle_input.text())
+            self.update_linked_strands(None)  # Pass None as current_strand
+        except ValueError:
+            pass
+
+    def on_x_angle_button_pressed(self, button):
+        if button == self.x_minus_minus_button:
+            self.handle_x_angle_button_press('minus_minus', self.delta_minus_minus, self.start_continuous_x_angle_adjustment_minus_minus)
+        elif button == self.x_minus_button:
+            self.handle_x_angle_button_press('minus', self.delta_minus, self.start_continuous_x_angle_adjustment_minus)
+        elif button == self.x_plus_button:
+            self.handle_x_angle_button_press('plus', self.delta_plus, self.start_continuous_x_angle_adjustment_plus)
+        elif button == self.x_plus_plus_button:
+            self.handle_x_angle_button_press('plus_plus', self.delta_plus_plus, self.start_continuous_x_angle_adjustment_plus_plus)
+
+    def handle_x_angle_button_press(self, button_type, initial_delta, continuous_function):
+        current_time = QDateTime.currentMSecsSinceEpoch()
+        
+        self.stop_adjustment()
+        
+        self.current_button = button_type
+        self.last_press_time = current_time
+        
+        self.adjust_x_angle(initial_delta)
+        
+        self.initial_delay_timer.timeout.connect(continuous_function)
+        self.initial_delay_timer.start()
+
+    def on_x_angle_button_released(self):
+        self.stop_adjustment()
+
+    def adjust_x_angle(self, delta):
+        self.x_angle += delta
+        self.x_angle_input.setText(f"{self.x_angle:.2f}")
+        self.update_linked_strands()
+
+    def start_continuous_x_angle_adjustment_plus(self):
+        self.stop_adjustment()
+        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_continuous_plus)
+        self.adjustment_timer.timeout.connect(self.current_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_x_angle_adjustment_minus(self):
+        self.stop_adjustment()
+        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_continuous_minus)
+        self.adjustment_timer.timeout.connect(self.current_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_x_angle_adjustment_plus_plus(self):
+        self.stop_adjustment()
+        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_fast_continuous_plus)
+        self.adjustment_timer.timeout.connect(self.current_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_x_angle_adjustment_minus_minus(self):
+        self.stop_adjustment()
+        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_fast_continuous_minus)
+        self.adjustment_timer.timeout.connect(self.current_adjustment)
+        self.adjustment_timer.start()
 
     def update_strand_angle(self, strand, new_angle, update_linked=False):
         while new_angle > 180:

@@ -2,7 +2,7 @@ import json
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor
 from strand import Strand, AttachedStrand, MaskedStrand
-
+import logging
 def serialize_point(point):
     return {"x": point.x(), "y": point.y()}
 
@@ -23,7 +23,7 @@ def serialize_color(color):
 def deserialize_color(data):
     return QColor(data["r"], data["g"], data["b"], data["a"])
 
-def serialize_strand(strand, index):
+def serialize_strand(strand, index=None):
     data = {
         "type": type(strand).__name__,
         "index": index,
@@ -48,10 +48,14 @@ def serialize_strand(strand, index):
     
     return data
 
-def save_strands(strands, filename):
-    data = [serialize_strand(strand, i) for i, strand in enumerate(strands)]
+def save_strands(strands, groups, filename):
+    data = {
+        "strands": [serialize_strand(strand, i) for i, strand in enumerate(strands)],
+        "groups": groups
+    }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
+    logging.info(f"Saved strands and groups to {filename}")
 
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
@@ -61,7 +65,7 @@ def load_strands(filename, canvas):
     strand_dict = {}
     
     # First pass: create all strands
-    for strand_data in data:
+    for strand_data in data["strands"]:
         if strand_data["type"] == "Strand":
             strand = Strand(
                 deserialize_point(strand_data["start"]),
@@ -99,7 +103,7 @@ def load_strands(filename, canvas):
         strand_dict[strand.layer_name] = strand
     
     # Second pass: set up relationships
-    for strand_data, strand in zip(data, strands):
+    for strand_data, strand in zip(data["strands"], strands):
         if strand_data["type"] == "AttachedStrand":
             parent = strand_dict.get(strand_data["parent_index"])
             if parent:
@@ -124,9 +128,8 @@ def load_strands(filename, canvas):
                 strand.update_shape()
                 strand.update_side_line()
     
-    return strands
-
-def apply_loaded_strands(canvas, strands):
+    return strands, data.get("groups", {})
+def apply_loaded_strands(canvas, strands, groups):
     canvas.strands = strands
     canvas.strand_colors = {}  # Reset the strand colors dictionary
     for strand in strands:
@@ -140,3 +143,7 @@ def apply_loaded_strands(canvas, strands):
     
     if canvas.layer_panel:
         canvas.layer_panel.refresh()
+    
+    # Apply group data if available
+    if canvas.group_layer_manager:
+        canvas.group_layer_manager.apply_group_data(groups)

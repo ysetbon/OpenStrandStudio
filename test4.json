@@ -1,0 +1,36 @@
+[
+  {
+    "type": "Strand",
+    "index": 0,
+    "start": {
+      "x": 390.0,
+      "y": 240.0
+    },
+    "end": {
+      "x": 510.0,
+      "y": 240.0
+    },
+    "width": 55,
+    "color": {
+      "r": 128,
+      "g": 0,
+      "b": 128,
+      "a": 255
+    },
+    "stroke_color": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 255
+    },
+    "stroke_width": 5,
+    "has_circles": [
+      false,
+      false
+    ],
+    "layer_name": "1_1",
+    "set_number": 1,
+    "is_first_strand": true,
+    "is_start_side": true
+  }
+]

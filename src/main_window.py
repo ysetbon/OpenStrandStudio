@@ -26,9 +26,10 @@ class MainWindow(QMainWindow):
         self.set_attach_mode()
         self.selected_strand = None
 
-        self.group_layer_manager = GroupLayerManager(self.layer_panel, self.canvas)
-        self.layer_panel.group_layer_manager.set_canvas(self.canvas)
-        self.canvas.set_group_layer_manager(self.layer_panel.group_layer_manager)
+        # Use the instance from layer_panel
+        self.group_layer_manager = self.layer_panel.group_layer_manager
+        self.group_layer_manager.set_canvas(self.canvas)
+        self.canvas.set_group_layer_manager(self.group_layer_manager)
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
         # Connect group operation signal
@@ -734,14 +735,17 @@ class MainWindow(QMainWindow):
     def save_project(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "JSON Files (*.json)")
         if filename:
-            save_strands(self.canvas.strands, filename)
+            # Retrieve the group data from the correct instance
+            groups = self.group_layer_manager.get_group_data()
+            logging.debug(f"Group data before saving: {groups}")  # Add this line
+            # Save the strands and groups
+            save_strands(self.canvas.strands, groups, filename)
             logging.info(f"Project saved to {filename}")
-
     def load_project(self):
-        filename, _ = QFileDialog.getOpenFileName(self, "Load Project", "", "JSON Files (*.json)")
+        filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if filename:
-            loaded_strands = load_strands(filename, self.canvas)
-            apply_loaded_strands(self.canvas, loaded_strands)
+            strands, groups = load_strands(filename, self.canvas)
+            apply_loaded_strands(self.canvas, strands, groups)
             logging.info(f"Project loaded from {filename}")
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:

@@ -9,7 +9,8 @@ from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
 import logging
 from strand_drawing_canvas import StrandDrawingCanvas   
 from math import atan2, degrees
-
+from PyQt5.QtGui import QIntValidator
+ 
 class GroupedLayerTree(QTreeWidget):
     layer_selected = pyqtSignal(int)
     group_created = pyqtSignal(str)
@@ -327,6 +328,9 @@ class GroupPanel(QWidget):
     def snap_to_grid(self):
         if self.canvas:
             self.canvas.snap_group_to_grid(self.group_name)
+            logging.info(f"Snapped group '{self.group_name}' to grid.")
+        else:
+            logging.error("Canvas not properly connected to GroupMoveDialog.")
         self.move_finished.emit(self.group_name)
         self.accept()
 
@@ -429,31 +433,51 @@ class GroupMoveDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
 
-        # dx slider
+        # dx layout
         dx_layout = QHBoxLayout()
         dx_layout.addWidget(QLabel("dx:"))
+
         self.dx_slider = QSlider(Qt.Horizontal)
         self.dx_slider.setRange(-600, 600)
         self.dx_slider.setValue(0)
-        self.dx_slider.valueChanged.connect(self.update_dx)
+        self.dx_slider.valueChanged.connect(self.update_dx_from_slider)
         dx_layout.addWidget(self.dx_slider)
+
         self.dx_value = QLabel("0")
         dx_layout.addWidget(self.dx_value)
+
+        # Add QLineEdit for exact dx input
+        self.dx_input = QLineEdit()
+        self.dx_input.setValidator(QIntValidator(-600, 600))
+        self.dx_input.setFixedWidth(60)
+        self.dx_input.textChanged.connect(self.update_dx_from_input)  # Connect to update method
+        dx_layout.addWidget(self.dx_input)
+
         layout.addLayout(dx_layout)
 
-        # dy slider
+        # dy layout
         dy_layout = QHBoxLayout()
         dy_layout.addWidget(QLabel("dy:"))
+
         self.dy_slider = QSlider(Qt.Horizontal)
         self.dy_slider.setRange(-600, 600)
         self.dy_slider.setValue(0)
-        self.dy_slider.valueChanged.connect(self.update_dy)
+        self.dy_slider.valueChanged.connect(self.update_dy_from_slider)
         dy_layout.addWidget(self.dy_slider)
+
         self.dy_value = QLabel("0")
         dy_layout.addWidget(self.dy_value)
+
+        # Add QLineEdit for exact dy input
+        self.dy_input = QLineEdit()
+        self.dy_input.setValidator(QIntValidator(-600, 600))
+        self.dy_input.setFixedWidth(60)
+        self.dy_input.textChanged.connect(self.update_dy_from_input)  # Connect to update method
+        dy_layout.addWidget(self.dy_input)
+
         layout.addLayout(dy_layout)
 
-        # Add a new button for snapping to grid
+        # Snap to Grid button
         self.snap_to_grid_button = QPushButton("Snap to Grid")
         self.snap_to_grid_button.clicked.connect(self.snap_to_grid)
         layout.addWidget(self.snap_to_grid_button)
@@ -463,17 +487,45 @@ class GroupMoveDialog(QDialog):
         ok_button.clicked.connect(self.on_ok_clicked)
         layout.addWidget(ok_button)
 
-    def update_dx(self):
+    def update_dx_from_slider(self):
         new_dx = self.dx_slider.value()
         self.total_dx = new_dx
         self.dx_value.setText(str(self.total_dx))
+        self.dx_input.setText(str(self.total_dx))
         self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
 
-    def update_dy(self):
+    def update_dy_from_slider(self):
         new_dy = self.dy_slider.value()
         self.total_dy = new_dy
         self.dy_value.setText(str(self.total_dy))
+        self.dy_input.setText(str(self.total_dy))
         self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+
+    def update_dx_from_input(self):
+        text = self.dx_input.text()
+        try:
+            value = int(text)
+            # Clamp the value within the slider range
+            value = max(min(value, 600), -600)
+            self.total_dx = value
+            self.dx_slider.setValue(value)  # Update the slider
+            self.dx_value.setText(str(value))
+            self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+        except ValueError:
+            pass  # Ignore invalid input
+
+    def update_dy_from_input(self):
+        text = self.dy_input.text()
+        try:
+            value = int(text)
+            # Clamp the value within the slider range
+            value = max(min(value, 600), -600)
+            self.total_dy = value
+            self.dy_slider.setValue(value)  # Update the slider
+            self.dy_value.setText(str(value))
+            self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+        except ValueError:
+            pass  # Ignore invalid input
 
     def on_ok_clicked(self):
         self.move_finished.emit(self.group_name)

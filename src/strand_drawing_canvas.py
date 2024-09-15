@@ -192,53 +192,88 @@ class StrandDrawingCanvas(QWidget):
 
 
     def reset_group_move(self, group_name):
-        if group_name in self.groups:
-            for strand in self.groups[group_name]['strands']:
-                if hasattr(strand, 'original_start'):
-                    del strand.original_start
-                if hasattr(strand, 'original_end'):
-                    del strand.original_end
-        self.update()
-
-    def snap_group_to_grid(self, group_name):
+        """
+        Resets the group move operation by deleting temporary attributes
+        used during the movement.
+        """
         if group_name not in self.groups:
+            logging.error(f"Group '{group_name}' not found in canvas.")
             return
 
-        grid_size = 10  # Adjust this value to change the grid size
-        group_strands = self.groups[group_name]['strands']
+        strands = self.groups[group_name]['strands']
 
-        # Calculate the average position of all non-masked strands in the group
-        non_masked_strands = [strand for strand in group_strands if not isinstance(strand, MaskedStrand)]
-        if not non_masked_strands:
-            return  # No non-masked strands to snap
+        for strand in strands:
+            if isinstance(strand, MaskedStrand):
+                # Skip masked strands
+                continue
 
-        avg_x = sum(strand.start.x() for strand in non_masked_strands) / len(non_masked_strands)
-        avg_y = sum(strand.start.y() for strand in non_masked_strands) / len(non_masked_strands)
+            # Delete temporary attributes if they exist
+            if hasattr(strand, 'original_start'):
+                del strand.original_start
+            if hasattr(strand, 'original_end'):
+                del strand.original_end
 
-        # Calculate the offset to the nearest grid point
-        offset_x = round(avg_x / grid_size) * grid_size - avg_x
-        offset_y = round(avg_y / grid_size) * grid_size - avg_y
+            # Reset attached strands
+            if hasattr(strand, 'attached_strands'):
+                for attached_strand in strand.attached_strands:
+                    if isinstance(attached_strand, MaskedStrand):
+                        continue
 
-        # Move all non-masked strands in the group
-        for strand in non_masked_strands:
-            # Snap only the start and end points
-            strand.start += QPointF(offset_x, offset_y)
-            strand.end += QPointF(offset_x, offset_y)
-            
-            # Update the strand's shape and side line
+                    if hasattr(attached_strand, 'original_start'):
+                        del attached_strand.original_start
+                    if hasattr(attached_strand, 'original_end'):
+                        del attached_strand.original_end
+
+        self.update()
+    def snap_group_to_grid(self, group_name):
+        """
+        Snaps all points of strands and attached strands (excluding masked strands)
+        in the specified group to the closest points on the grid.
+        """
+        if group_name not in self.groups:
+            logging.error(f"Group '{group_name}' not found in canvas.")
+            return
+
+        grid_size = self.grid_size  # Ensure grid_size is defined in your class
+
+        strands = self.groups[group_name]['strands']
+
+        for strand in strands:
+            if isinstance(strand, MaskedStrand):
+                # Skip masked strands
+                continue
+
+            # Snap start and end points of the strand
+            strand.start = self.snap_point_to_grid(strand.start, grid_size)
+            strand.end = self.snap_point_to_grid(strand.end, grid_size)
             strand.update_shape()
+
+            # Update any side lines if applicable
             if hasattr(strand, 'update_side_line'):
                 strand.update_side_line()
 
-        # Update masked strands based on their parent strands' new positions
-        for strand in group_strands:
-            if isinstance(strand, MaskedStrand):
-                strand.update_position_from_parents()
-                strand.update_shape()
-                if hasattr(strand, 'update_side_line'):
-                    strand.update_side_line()
+            # Snap attached strands
+            if hasattr(strand, 'attached_strands'):
+                for attached_strand in strand.attached_strands:
+                    if isinstance(attached_strand, MaskedStrand):
+                        continue
+
+                    attached_strand.start = self.snap_point_to_grid(attached_strand.start, grid_size)
+                    attached_strand.end = self.snap_point_to_grid(attached_strand.end, grid_size)
+                    attached_strand.update_shape()
+
+                    if hasattr(attached_strand, 'update_side_line'):
+                        attached_strand.update_side_line()
 
         self.update()
+
+    def snap_point_to_grid(self, point, grid_size):
+        """
+        Snaps a QPointF to the closest grid point based on the grid size.
+        """
+        x = round(point.x() / grid_size) * grid_size
+        y = round(point.y() / grid_size) * grid_size
+        return QPointF(x, y)
 
     def update_strands(self, strands):
         for strand in strands:

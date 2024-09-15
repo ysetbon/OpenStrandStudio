@@ -128,7 +128,8 @@ class Strand:
         Determine if the strand is attachable.
         Returns True if the strand is attachable, False otherwise.
         """
-        return self.attachable
+        # A strand is not attachable if both ends have circles (i.e., has_circles is [True, True])
+        return not all(self.has_circles)
 class AttachedStrand(Strand):
     """
     Represents a strand attached to another strand.

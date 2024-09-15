@@ -81,6 +81,7 @@ def load_strands(filename, canvas):
         else:
             continue
         
+        strand.has_circles = strand_data.get("has_circles", [False, False])
         strand.end = deserialize_point(strand_data["end"])
         strand.color = deserialize_color(strand_data["color"])
         strand.stroke_color = deserialize_color(strand_data["stroke_color"])

@@ -1089,8 +1089,9 @@ class StrandAngleEditDialog(QDialog):
         return bottom_layout
 
     def setup_table(self):
-        self.table.setColumnCount(9)  # Increased column count to include 'Attachable'
-        self.table.setHorizontalHeaderLabels(["Strand", "Angle", "+/-", "++/--", "End X", "End Y", "x", "180+x", "Attachable"])
+        headers = ["Layer", "Angle", "Adjust (\u00B1 1\u00B0)", "Fast Adjust", "End X", "End Y", "X", "180+X", "Attachable"]
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setItemDelegate(FloatDelegate())
         self.table.itemChanged.connect(self.on_item_changed)
@@ -1126,13 +1127,15 @@ class StrandAngleEditDialog(QDialog):
             is_main_strand = strand.layer_name.endswith("_1")
             is_editable = strand.layer_name in self.group_data['editable_layers']
             is_attachable = strand.is_attachable()
-            
+            is_masked = isinstance(strand, MaskedStrand)
+
             self.table.setItem(row, 0, QTableWidgetItem(strand.layer_name))
-            
+
             angle = self.calculate_angle(strand)
             angle_item = QTableWidgetItem(f"{angle:.2f}")
             self.table.setItem(row, 1, angle_item)
 
+            # Create angle adjustment buttons
             angle_buttons = self.create_angle_buttons(row)
             self.table.setCellWidget(row, 2, angle_buttons)
 
@@ -1154,33 +1157,45 @@ class StrandAngleEditDialog(QDialog):
             self.table.setCellWidget(row, 7, x_plus_180_checkbox)
 
             # Add 'Attachable' indicator
-            self.table.setCellWidget(row, 8, None)
-            self.table.setItem(row, 8, QTableWidgetItem())
-            item = self.table.item(row, 8)
-            item.setData(Qt.DisplayRole, '✓' if is_attachable else '✗')
-            item.setTextAlignment(Qt.AlignCenter)
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            attachable_text = 'X' if not is_attachable else ''
+            attachable_item = QTableWidgetItem(attachable_text)
+            attachable_item.setTextAlignment(Qt.AlignCenter)
+            attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row, 8, attachable_item)
 
             x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
             x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
 
-            # Disable editing for non-editable strands, x_1 strands, and non-attachable strands
-            if is_main_strand or not is_editable or not is_attachable:
+            # Disable editing and interaction for non-attachable strands and masked strands
+            if is_main_strand or not is_editable or not is_attachable or is_masked:
                 for col in range(1, self.table.columnCount()):
+                    # Disable QTableWidgetItems
                     item = self.table.item(row, col)
                     if item:
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                angle_buttons.setEnabled(False)
-                fast_angle_buttons.setEnabled(False)
-                x_checkbox.setEnabled(False)
-                x_plus_180_checkbox.setEnabled(False)
 
-            # Visually indicate non-editable rows
-            if not is_editable or not is_attachable:
+                    # Disable QWidget items in cells
+                    widget = self.table.cellWidget(row, col)
+                    if widget:
+                        widget.setEnabled(False)
+
+                # Visually indicate non-editable rows
                 for col in range(self.table.columnCount()):
                     item = self.table.item(row, col)
                     if item:
                         item.setBackground(QColor(240, 240, 240))  # Light gray background
+                    else:
+                        # For cell widgets (e.g., checkboxes, buttons), adjust their styles
+                        widget = self.table.cellWidget(row, col)
+                        if widget:
+                            widget.setStyleSheet("background-color: rgb(240, 240, 240);")
+
+            # Optionally, indicate masked strands in the 'Attachable' column
+            if is_masked:
+                masked_item = QTableWidgetItem('Masked')
+                masked_item.setTextAlignment(Qt.AlignCenter)
+                masked_item.setFlags(masked_item.flags() & ~Qt.ItemIsEditable)
+                self.table.setItem(row, 8, masked_item)
     def create_custom_delegate(self):
         class CustomDelegate(QStyledItemDelegate):
             def paint(self, painter, option, index):

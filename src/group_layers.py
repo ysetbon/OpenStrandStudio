@@ -622,7 +622,7 @@ class GroupLayerManager:
         self.group_panel = GroupPanel(layer_panel=self.layer_panel, canvas=self.canvas)
         self.groups = self.group_panel.groups  # Reference to the group data
         logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
-        
+     
         if self.canvas:
             logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
             logging.info("Connecting canvas signals to GroupLayerManager")
@@ -674,53 +674,112 @@ class GroupLayerManager:
         logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
     def update_groups_with_new_strand(self, new_strand):
         logging.info(f"Updating groups with new strand: {new_strand.layer_name}")
-        main_layer = new_strand.layer_name.split('_')[0]
-        for group_name, group_data in self.group_panel.groups.items():
+        main_layer = self.extract_main_layer(new_strand.layer_name)
+
+        for group_name, group_data in self.canvas.groups.items():
             logging.info(f"Checking group: {group_name}")
-            if any(layer.startswith(f"{main_layer}_") for layer in group_data['layers']):
+            group_main_strands = group_data['main_strands']
+            
+            if main_layer in group_main_strands:
                 logging.info(f"Adding strand {new_strand.layer_name} to group {group_name}")
                 self.add_strand_to_group(group_name, new_strand)
 
+    def extract_main_layer(self, layer_name):
+        # Split the layer name by underscores
+        parts = layer_name.split('_')
+        # The main layer is the first numeric part
+        for part in parts:
+            if part.isdigit():
+                return part
+        return None  # Return None if no numeric part is found
+    def open_main_strand_selection_dialog(self, main_strands):
+        dialog = QDialog(self.layer_panel)
+        dialog.setWindowTitle("Select Main Strands")
 
+        layout = QVBoxLayout()
+
+        info_label = QLabel("Select main strands to include in the group:")
+        layout.addWidget(info_label)
+
+        checkboxes = []
+        for main_strand in main_strands:
+            checkbox = QCheckBox(str(main_strand))
+            layout.addWidget(checkbox)
+            checkboxes.append((main_strand, checkbox))
+
+        buttons_layout = QHBoxLayout()
+        ok_button = QPushButton("OK")
+        cancel_button = QPushButton("Cancel")
+        buttons_layout.addWidget(ok_button)
+        buttons_layout.addWidget(cancel_button)
+        layout.addLayout(buttons_layout)
+
+        dialog.setLayout(layout)
+
+        selected_main_strands = []
+
+        def on_ok():
+            for main_strand, checkbox in checkboxes:
+                if checkbox.isChecked():
+                    selected_main_strands.append(main_strand)
+            dialog.accept()
+
+        def on_cancel():
+            dialog.reject()
+
+        ok_button.clicked.connect(on_ok)
+        cancel_button.clicked.connect(on_cancel)
+
+        if dialog.exec_() == QDialog.Accepted:
+            return set(selected_main_strands)
+        else:
+            return None    
+    def extract_main_layers(self, layer_name):
+        # Split the layer name by underscores and collect all numeric parts
+        parts = layer_name.split('_')
+        main_layers = set()
+
+        for part in parts:
+            if part.isdigit():
+                main_layers.add(part)
+
+        return main_layers    
     def create_group(self):
         # Prompt the user to enter a group name
         group_name, ok = QInputDialog.getText(
             self.layer_panel, "Create Group", "Enter group name:"
         )
         if ok and group_name:
-            # Retrieve the list of main layers (without sub-layers)
-            main_layers = self.get_main_layers()
+            # Get the available main strands
+            main_strands = self.get_unique_main_strands()
 
-            # Open a dialog for the user to select layers to include in the group
-            dialog = LayerSelectionDialog(main_layers, self.layer_panel)
-            if dialog.exec_():
-                selected_main_layers = dialog.get_selected_layers()
+            # Open a dialog to select main strands to include in the group
+            selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
+            if not selected_main_strands:
+                logging.info("No main strands selected. Group creation cancelled.")
+                return
 
-                layers_data = []
-                for main_layer in selected_main_layers:
-                    # Get all sub-layers associated with the main layer
-                    sub_layers = self.get_sub_layers(main_layer)
-                    for sub_layer in sub_layers:
-                        layer_index = self.get_layer_index(sub_layer)
-                        if layer_index < len(self.canvas.strands):
-                            strand = self.canvas.strands[layer_index]
-                            layers_data.append(strand)  # Append the actual Strand object
+            layers_data = []
+            for strand in self.canvas.strands:
+                main_layer = self.extract_main_layer(strand.layer_name)
+                if main_layer in selected_main_strands:
+                    layers_data.append(strand)
 
-                # Create the group in the group panel
-                self.group_panel.create_group(group_name, layers_data)
+            # Create the group in the group panel
+            self.group_panel.create_group(group_name, layers_data)
 
-                # Initialize the group in canvas.groups
-                self.canvas.groups[group_name] = {
-                    'strands': [],
-                    'layers': [],
-                    'data': layers_data
-                }
-                for strand in layers_data:
-                    self.canvas.groups[group_name]['strands'].append(strand)
-                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+            # Initialize the group in canvas.groups and save selected main strands
+            self.canvas.groups[group_name] = {
+                'strands': [],
+                'layers': [],
+                'data': layers_data,
+                'main_strands': selected_main_strands  # Store selected main strands
+            }
+            for strand in layers_data:
+                self.canvas.groups[group_name]['strands'].append(strand)
+                self.canvas.groups[group_name]['layers'].append(strand.layer_name)
 
-                logging.info(f"Created group '{group_name}' with {len(layers_data)} strands")
-
+            logging.info(f"Created group '{group_name}' with {len(layers_data)} strands")
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
 
@@ -732,7 +791,13 @@ class GroupLayerManager:
 
     def get_layer_index(self, layer_name):
         return self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
-
+    def get_unique_main_strands(self):
+        main_strands = set()
+        for strand in self.canvas.strands:
+            main_layer = self.extract_main_layer(strand.layer_name)
+            if main_layer:
+                main_strands.add(main_layer)
+        return sorted(main_strands)
     def save(self, filename):
         data = {
             "groups": self.get_group_data(),  # Ensure group data is included

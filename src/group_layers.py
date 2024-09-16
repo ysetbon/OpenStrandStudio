@@ -370,16 +370,6 @@ class GroupPanel(QWidget):
         else:
             logging.error("Canvas not properly connected to GroupPanel")
 
-    def clear(self):
-        # Remove all widgets from the scroll layout
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
-                widget.setParent(None)
-                widget.deleteLater()
-        
-        # Clear the groups dictionary
-        self.groups.clear()
 
     def update_layer(self, index, layer_name, color):
         # Update the layer information in the groups
@@ -672,18 +662,21 @@ class GroupLayerManager:
             logging.error(f"Group {group_name} was deleted after adding strand {strand.layer_name}")
         
         logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
+
     def update_groups_with_new_strand(self, new_strand):
         logging.info(f"Updating groups with new strand: {new_strand.layer_name}")
         main_layer = self.extract_main_layer(new_strand.layer_name)
 
+        # Iterate over existing groups to see if the new strand should be added
         for group_name, group_data in self.canvas.groups.items():
             logging.info(f"Checking group: {group_name}")
             group_main_strands = group_data['main_strands']
-            
+
             if main_layer in group_main_strands:
                 logging.info(f"Adding strand {new_strand.layer_name} to group {group_name}")
                 self.add_strand_to_group(group_name, new_strand)
-
+                # Ensure existing groups are not modified or deleted
+                # Do not overwrite or clear group data here
     def extract_main_layer(self, layer_name):
         # Split the layer name by underscores
         parts = layer_name.split('_')
@@ -874,9 +867,14 @@ class GroupLayerManager:
             self.tree.setCurrentItem(item)
 
     def refresh(self):
-        self.group_panel.clear()
+        # Instead of clearing the group panel, update existing groups and layers
+        logging.info("Refreshing GroupLayerManager without clearing groups")
         for i, button in enumerate(self.layer_panel.layer_buttons):
-            self.group_panel.update_layer(i, button.text(), button.color)
+            layer_name = button.text()
+            color = button.color
+            # Update existing layers in groups
+            self.group_panel.update_layer(i, layer_name, color)
+        # Do not call self.group_panel.clear() here
 
     def get_group_data(self):
         group_data = {}

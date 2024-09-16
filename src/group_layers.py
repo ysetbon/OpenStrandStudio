@@ -11,206 +11,240 @@ from strand_drawing_canvas import StrandDrawingCanvas
 from math import atan2, degrees
 from PyQt5.QtGui import QIntValidator
  
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PyQt5.QtCore import Qt
+import logging
+from PyQt5.QtWidgets import (
+    QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
+    QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea,
+    QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
+)
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QMimeData, QPoint
+from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon, QPixmap, QIntValidator
+from strand_drawing_canvas import StrandDrawingCanvas
+from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+import logging
+from math import atan2, degrees
+import json
 class GroupedLayerTree(QTreeWidget):
-    layer_selected = pyqtSignal(int)
-    group_created = pyqtSignal(str)
-    layer_moved = pyqtSignal(int, str)  # layer index, group name
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setHeaderHidden(True)
+        self.groups = {}  # Dictionary to hold group items
+        self.setColumnCount(1)
+        self.setIndentation(20)
+        self.setStyleSheet("""
+            QTreeWidget::item {
+                padding: 5px;
+            }
+        """)
 
-    def __init__(self, layer_panel, canvas=None):
-        super().__init__()  # Call the superclass constructor
-        self.layer_panel = layer_panel
-        self.canvas = canvas
-        self.group_panel = GroupPanel(layer_panel=self.layer_panel, canvas=self.canvas)
-        
-        if self.canvas:
-            logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
+    def add_group(self, group_name, layers):
+        if group_name not in self.groups:
+            group_item = QTreeWidgetItem(self)
+            group_item.setText(0, group_name)
+            self.addTopLevelItem(group_item)
+            self.groups[group_name] = group_item
+        self.update_group_display(group_name, layers)
+
+    def update_group_display(self, group_name, layers):
+        if group_name in self.groups:
+            group_item = self.groups[group_name]
+            # Clear existing child items
+            group_item.takeChildren()
+
+            # Extract main strand names
+            main_strands = set()
+            for layer_name in layers:
+                main_strand = self.extract_main_strand(layer_name)
+                if main_strand:
+                    main_strands.add(main_strand)
+
+            # Update group item's text to include main strands
+            main_strands_text = ", ".join(sorted(main_strands))
+            group_item.setText(0, f"{group_name}: {main_strands_text}")
+            logging.info(f"Group '{group_name}' updated with main strands: {main_strands_text}")
+
+            # Optionally, add child items for each main strand
+            for main_strand in sorted(main_strands):
+                strand_item = QTreeWidgetItem()
+                strand_item.setText(0, main_strand)
+                group_item.addChild(strand_item)
         else:
-            logging.warning("GroupLayerManager initialized without a canvas")
+            logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
 
-    def update_layer(self, index, layer_name, color):
-        # Check if the layer is in any group
-        for group_name, group_info in self.groups.items():
-            if layer_name in group_info['layers']:
-                # Update the layer in the group
-                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
-                if group_widget:
-                    group_widget.update_layer(index, layer_name, color)
-                return
-        
-        # If the layer is not in any group, it might be a new layer
-        # You can decide how to handle new layers here, for example:
-        # self.add_layer_to_default_group(layer_name, color)
+    def extract_main_strand(self, layer_name):
+        # Split the layer name to get the main strand (e.g., '1' from '1_1')
+        parts = layer_name.split('_')
+        return parts[0] if parts else layer_name
 
-    def add_layer(self, layer_name, color=None, is_masked=False):
-        if layer_name not in self.layers:
-            self.layers.append(layer_name)
-            item = QListWidgetItem(layer_name)
-            if color:
-                item.setForeground(color)
-            if is_masked:
-                pixmap = QPixmap(16, 16)
-                pixmap.fill(QColor(255, 0, 0))  # Red square for masked layers
-                item.setIcon(QIcon(pixmap))
-            self.layers_list.addItem(item)
-            self.update_size()
-            logging.info(f"Added layer {layer_name} to CollapsibleGroupWidget")
+    def remove_group(self, group_name):
+        if group_name in self.groups:
+            group_item = self.groups[group_name]
+            index = self.indexOfTopLevelItem(group_item)
+            self.takeTopLevelItem(index)
+            del self.groups[group_name]
+            logging.info(f"Group '{group_name}' removed from GroupedLayerTree.")
+        else:
+            logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
 
-    def add_group(self, group_name):
-        group_item = QTreeWidgetItem(self, [group_name])
-        group_item.setData(0, Qt.UserRole, "group")
-        group_item.setExpanded(True)
-        self.addTopLevelItem(group_item)
-        self.group_created.emit(group_name)
-        return group_item
+    def add_layer_to_group(self, group_name, layer_name):
+        if group_name in self.groups:
+            group = self.groups[group_name]
+            # No need to add individual layers if we only display main strands
+            # But if you want to display layers as children, implement here
+            pass
+        else:
+            logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
 
-    def on_item_clicked(self, item, column):
-        if item.data(0, Qt.UserRole) == "layer":
-            index = self.indexOfTopLevelItem(item)
-            if index == -1:
-                # Item is in a group, find its overall index
-                parent = item.parent()
-                index = self.indexOfTopLevelItem(parent)
-                for i in range(parent.childCount()):
-                    if parent.child(i) == item:
-                        index += i + 1
-                        break
-            self.layer_selected.emit(index)
-
-    def dropEvent(self, event):
-        if event.source() == self:
-            super().dropEvent(event)
-            dropped_item = self.itemAt(event.pos())
-            if dropped_item and dropped_item.data(0, Qt.UserRole) == "group":
-                moved_item = self.currentItem()
-                if moved_item and moved_item.data(0, Qt.UserRole) == "layer":
-                    index = self.get_layer_index(moved_item)
-                    self.layer_moved.emit(index, dropped_item.text(0))
-
-    def get_layer_index(self, item):
-        if self.indexOfTopLevelItem(item) != -1:
-            return self.indexOfTopLevelItem(item)
-        parent = item.parent()
-        index = self.indexOfTopLevelItem(parent)
-        for i in range(parent.childCount()):
-            if parent.child(i) == item:
-                return index + i + 1
-        return -1
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, 
-                             QListWidgetItem, QMenu, QSizePolicy)
-from PyQt5.QtCore import Qt, pyqtSignal
+    def remove_layer_from_group(self, group_name, layer_name):
+        if group_name in self.groups:
+            group_item = self.groups[group_name]
+            # Optionally, implement removal of layer items if displayed
+            pass
+        else:
+            logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
+)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 
 class CollapsibleGroupWidget(QWidget):
-    def __init__(self, group_name, group_panel, parent=None):
+    def __init__(self, group_name, parent=None):
         super().__init__(parent)
         self.group_name = group_name
-        self.group_panel = group_panel
-        self.is_collapsed = False
-        self.layers = []  # Store layer names
-        self.setup_ui()
+        self.layers = []  # List to hold layer names
+        self.is_collapsed = False  # State of the collapsible content
 
-    def setup_ui(self):
+        # Main layout
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
         self.layout.setSpacing(0)
 
-        # Header (group name button)
+        # Group button (collapsible header)
         self.group_button = QPushButton(self.group_name)
         self.group_button.setStyleSheet("""
             QPushButton {
-                background-color: #f0f0f0;
-                border: 1px solid #d0d0d0;
-                border-radius: 0px;
-                padding: 5px;
+                background-color: #F0F0F0;
+                border: none;
                 text-align: left;
+                padding: 5px;
+                font-size: 12px;
+                font-weight: bold;
             }
         """)
+        self.group_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
         self.layout.addWidget(self.group_button)
 
-        # Content (layer list)
-        self.content = QWidget()
-        self.content_layout = QVBoxLayout(self.content)
+        # Content widget (collapsible content)
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(0)
-        self.layout.addWidget(self.content)
+        self.layout.addWidget(self.content_widget)
 
-        # Add QListWidget for layers
+        # List widget to display layers
         self.layers_list = QListWidget()
         self.layers_list.setStyleSheet("""
             QListWidget {
+                background-color: transparent;
                 border: none;
-                background-color: white;
             }
             QListWidget::item {
-                padding: 2px;
+                padding: 5px;
+                font-size: 12px;
             }
         """)
+        self.layers_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.layers_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         self.content_layout.addWidget(self.layers_list)
+        
+        # Store main strands
+        self.main_strands = set()
 
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.content_widget.setVisible(not self.is_collapsed)
 
     def show_context_menu(self, position):
         context_menu = QMenu(self)
         move_strands_action = context_menu.addAction("Move Group Strands")
         rotate_strands_action = context_menu.addAction("Rotate Group Strands")
-        edit_angles_action = context_menu.addAction("Edit Strand Angles")  # New action
-        
+        edit_angles_action = context_menu.addAction("Edit Strand Angles")
+
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
 
         if action == move_strands_action:
-            self.group_panel.start_group_move(self.group_name)
+            self.parent().start_group_move(self.group_name)
         elif action == rotate_strands_action:
-            self.group_panel.start_group_rotation(self.group_name)
+            self.parent().start_group_rotation(self.group_name)
         elif action == edit_angles_action:
-            self.group_panel.edit_strand_angles(self.group_name)  # New method call
+            self.parent().edit_strand_angles(self.group_name)
 
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
-        self.content.setVisible(not self.is_collapsed)
+        self.content_widget.setVisible(not self.is_collapsed)
         self.update_size()
 
     def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
-            item = QListWidgetItem(layer_name)
-            if color:
-                item.setForeground(color)
-            if is_masked:
-                item.setIcon(QIcon("path_to_mask_icon.png"))  # Add an icon for masked layers
-            self.layers_list.addItem(item)
+            main_strand = self.extract_main_strand(layer_name)
+            if main_strand not in self.main_strands:
+                self.main_strands.add(main_strand)
+                item = QListWidgetItem(main_strand)
+                if color:
+                    item.setForeground(color)
+                if is_masked:
+                    item.setIcon(QIcon("path_to_mask_icon.png"))  # Replace with the actual path
+                self.layers_list.addItem(item)
             self.update_size()
-
-    def update_size(self):
-        if not self.is_collapsed:
-            total_height = self.group_button.sizeHint().height()
-            total_height += self.layers_list.sizeHintForRow(0) * self.layers_list.count()
-            self.setFixedHeight(total_height)
+            self.update_group_display()
         else:
-            self.setFixedHeight(self.group_button.sizeHint().height())
-        self.update_group_display()
-
-    def update_group_display(self):
-        masked_count = sum(1 for layer in self.layers if len(layer.split('_')) == 4)
-        self.group_button.setText(f"{self.group_name} ({len(self.layers)}, Masked: {masked_count})")
-
-    def update_layer(self, layer_name, color):
-        for i in range(self.layers_list.count()):
-            item = self.layers_list.item(i)
-            if item.text() == layer_name:
-                # Update the color of the layer item
-                item.setForeground(color)
-                break
+            pass  # Layer already exists
 
     def remove_layer(self, layer_name):
         if layer_name in self.layers:
             self.layers.remove(layer_name)
-            for i in range(self.layers_list.count()):
-                if self.layers_list.item(i).text() == layer_name:
-                    self.layers_list.takeItem(i)
-                    break
+            main_strand = self.extract_main_strand(layer_name)
+            if all(self.extract_main_strand(layer) != main_strand for layer in self.layers):
+                self.main_strands.remove(main_strand)
+                for i in range(self.layers_list.count()):
+                    if self.layers_list.item(i).text() == main_strand:
+                        self.layers_list.takeItem(i)
+                        break
             self.update_size()
+            self.update_group_display()
+
+    def update_size(self):
+        # Adjust the size of the widget to fit its contents
+        self.adjustSize()
+        self.setMinimumHeight(self.sizeHint().height())
+
+    def update_group_display(self):
+        main_strands_list = sorted(self.main_strands)
+        max_strands_to_show = 3
+        if len(main_strands_list) > max_strands_to_show:
+            main_strands_text = ", ".join(main_strands_list[:max_strands_to_show]) + "..."
+        else:
+            main_strands_text = ", ".join(main_strands_list)
+        self.group_button.setText(f"{self.group_name}: {main_strands_text}")
+
+    def extract_main_strand(self, layer_name):
+        parts = layer_name.split('_')
+        return parts[0] if parts else layer_name
+
+    def update_layer(self, layer_name, color):
+        main_strand = self.extract_main_strand(layer_name)
+        for i in range(self.layers_list.count()):
+            item = self.layers_list.item(i)
+            if item.text() == main_strand:
+                item.setForeground(color)
+                break
+
 
 import logging
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QInputDialog
@@ -248,25 +282,24 @@ class GroupPanel(QWidget):
 
 
 
+
     def add_layer_to_group(self, layer_name, group_name, strand):
         if group_name not in self.groups:
             logging.warning(f"Group {group_name} does not exist")
             return
 
         group = self.groups[group_name]
-        if layer_name not in group["layers"]:
-            group["layers"].append(layer_name)
-            group["strands"].append(strand)  # Store the actual Strand object
-            self.groups[group_name]['widget'].add_layer(
-                layer_name, 
+        if layer_name not in group['layers']:
+            group['layers'].append(layer_name)
+            group['strands'].append(strand)
+            group['widget'].add_layer(
+                layer_name,
                 color=strand.color,
                 is_masked=isinstance(strand, MaskedStrand)
             )
-            self.groups[group_name]['widget'].update_group_display()
             logging.info(f"Successfully added layer {layer_name} to group {group_name}")
         else:
             logging.info(f"Layer {layer_name} already in group {group_name}")
-
     def update_group_display(self, group_name):
         logging.info(f"Updating display for group: {group_name}")
         if group_name in self.groups:
@@ -332,6 +365,9 @@ class GroupPanel(QWidget):
                 # This might involve updating labels, positions, etc.
                 pass
         logging.info(f"Updated group '{group_name}' with new data")
+
+
+
     def create_group(self, group_name, strands):
         group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)

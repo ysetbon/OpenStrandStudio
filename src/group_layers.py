@@ -109,11 +109,12 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-
+from PyQt5.QtWidgets import QMessageBox
 class CollapsibleGroupWidget(QWidget):
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
         self.group_name = group_name
+        self.group_panel = parent  # Store the direct reference to GroupPanel
         self.layers = []  # List to hold layer names
         self.is_collapsed = False  # State of the collapsible content
 
@@ -169,21 +170,24 @@ class CollapsibleGroupWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.content_widget.setVisible(not self.is_collapsed)
 
+
     def show_context_menu(self, position):
         context_menu = QMenu(self)
         move_strands_action = context_menu.addAction("Move Group Strands")
         rotate_strands_action = context_menu.addAction("Rotate Group Strands")
         edit_angles_action = context_menu.addAction("Edit Strand Angles")
+        delete_group_action = context_menu.addAction("Delete Group")  # New action added
 
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
 
         if action == move_strands_action:
-            self.parent().start_group_move(self.group_name)
+            self.group_panel.start_group_move(self.group_name)
         elif action == rotate_strands_action:
-            self.parent().start_group_rotation(self.group_name)
+            self.group_panel.start_group_rotation(self.group_name)
         elif action == edit_angles_action:
-            self.parent().edit_strand_angles(self.group_name)
-
+            self.group_panel.edit_strand_angles(self.group_name)
+        elif action == delete_group_action:
+            self.group_panel.delete_group(self.group_name)
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
         self.content_widget.setVisible(not self.is_collapsed)
@@ -369,7 +373,7 @@ class GroupPanel(QWidget):
 
 
     def create_group(self, group_name, strands):
-        group_widget = CollapsibleGroupWidget(group_name, self)
+        group_widget = CollapsibleGroupWidget(group_name, self)  # `self` is the GroupPanel instance
         self.scroll_layout.addWidget(group_widget)
         self.groups[group_name] = {
             'widget': group_widget,
@@ -406,7 +410,22 @@ class GroupPanel(QWidget):
         else:
             logging.error("Canvas not properly connected to GroupPanel")
 
+    def delete_group(self, group_name):
+        if group_name in self.groups:
+            # Remove group from canvas if applicable
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
+                logging.info(f"Group '{group_name}' removed from canvas.")
+            else:
+                logging.warning(f"Group '{group_name}' not found in canvas.")
 
+            self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
+            group_widget = self.groups.pop(group_name)['widget']
+            self.scroll_layout.removeWidget(group_widget)
+            group_widget.deleteLater()
+            logging.info(f"Group '{group_name}' deleted.")
+        else:
+            logging.warning(f"Group '{group_name}' not found in GroupPanel.")
     def update_layer(self, index, layer_name, color):
         # Update the layer information in the groups
         for group_name, group_info in self.groups.items():
@@ -601,12 +620,6 @@ def start_move_mode(self, group_name):
     self.move_group_started.emit(group_name)
     self.group_operation.emit("prepare_move", group_name, self.groups[group_name]['layers'])
 
-def delete_group(self, group_name):
-    if group_name in self.groups:
-        self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
-        group_widget = self.groups.pop(group_name)['widget']
-        self.scroll_layout.removeWidget(group_widget)
-        group_widget.deleteLater()
 
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
@@ -999,7 +1012,13 @@ class GroupLayerManager:
             self.start_group_rotation(group_name)
         elif operation == "edit_angles":
             self.edit_strand_angles(group_name)
-
+        elif operation == "delete":
+            # Remove the group from canvas groups
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
+                logging.info(f"Group '{group_name}' deleted from canvas.")
+            else:
+                logging.warning(f"Group '{group_name}' not found in canvas.")
     def start_group_rotation(self, group_name):
         if group_name in self.group_panel.groups:
             if self.canvas:

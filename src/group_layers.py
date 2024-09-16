@@ -582,43 +582,6 @@ class GroupMoveDialog(QDialog):
 
 
 
-def add_layer_to_group(self, layer_name, group_name, strand_data):
-    if group_name not in self.groups:
-        return  # Group doesn't exist, can't add layer
-
-    self.groups[group_name]['layers'].append(layer_name)
-    self.groups[group_name]['strands'].append(strand_data)
-    self.groups[group_name]['widget'].add_layer(layer_name)
-    self.groups[group_name]['widget'].update_group_display()
-
-def update_group_display(self, group_name):
-    if group_name in self.groups:
-        self.groups[group_name]['widget'].update_group_display()
-
-def clear(self):
-    # Remove all widgets from the scroll layout
-    for i in reversed(range(self.scroll_layout.count())):
-        widget = self.scroll_layout.itemAt(i).widget()
-        if widget is not None:
-            widget.setParent(None)
-            widget.deleteLater()
-    
-    # Clear the groups dictionary
-    self.groups.clear()
-
-def update_layer(self, index, layer_name, color):
-    # Check if the layer is in any group
-    for group_name, group_info in self.groups.items():
-        if layer_name in group_info['layers']:
-            # Update the layer in the group
-            group_widget = self.findChild(CollapsibleGroupWidget, group_name)
-            if group_widget:
-                group_widget.update_layer(layer_name, color)
-            return
-
-def start_move_mode(self, group_name):
-    self.move_group_started.emit(group_name)
-    self.group_operation.emit("prepare_move", group_name, self.groups[group_name]['layers'])
 
 
 class LayerSelectionDialog(QDialog):

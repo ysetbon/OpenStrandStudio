@@ -274,12 +274,12 @@ class MaskedStrand(Strand):
 
             # Calculate the extended start and end points for the second strand
             extended_start2 = QPointF(
-                self.second_selected_strand.start.x() + extension * math.cos(angle2),
-                self.second_selected_strand.start.y() + extension * math.sin(angle2)
+                self.second_selected_strand.start.x() - extension * math.cos(angle2),
+                self.second_selected_strand.start.y() - extension * math.sin(angle2)
             )
             extended_end2 = QPointF(
-                self.second_selected_strand.end.x() - extension * math.cos(angle2),
-                self.second_selected_strand.end.y() - extension * math.sin(angle2)
+                self.second_selected_strand.end.x() + extension * math.cos(angle2),
+                self.second_selected_strand.end.y() + extension * math.sin(angle2)
             )
 
             # Create an extended path for the second strand

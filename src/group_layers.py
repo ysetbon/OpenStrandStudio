@@ -646,6 +646,8 @@ class GroupLayerManager:
     def on_strand_created(self, new_strand):
         logging.info(f"New strand created: {new_strand.layer_name}")
         self.update_groups_with_new_strand(new_strand)
+        # Update groups with the new strand
+        self.group_layer_manager.update_groups_with_new_strand(new_strand)
 
     def on_strand_attached(self, parent_strand, new_strand):
         logging.info(f"New strand attached: {new_strand.layer_name} to {parent_strand.layer_name}")
@@ -675,20 +677,35 @@ class GroupLayerManager:
         
         logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
 
+
     def update_groups_with_new_strand(self, new_strand):
-        logging.info(f"Updating groups with new strand: {new_strand.layer_name}")
-        main_layer = self.extract_main_layer(new_strand.layer_name)
+        """
+        Adds a new strand to the appropriate group if its parent strand is in a group.
+        """
+        # Ensure new_strand has a parent
+        if not hasattr(new_strand, 'parent') or not new_strand.parent:
+            logging.warning(f"New strand {new_strand.layer_name} has no parent; cannot update groups.")
+            return
 
-        # Iterate over existing groups to see if the new strand should be added
-        for group_name, group_data in self.canvas.groups.items():
-            logging.info(f"Checking group: {group_name}")
-            group_main_strands = group_data['main_strands']
+        for group_name, group_data in self.groups.items():
+            # Check if the parent strand is in this group
+            parent_in_group = any(
+                strand.layer_name == new_strand.parent.layer_name for strand in group_data['strands']
+            )
+            if parent_in_group:
+                # Add the new strand to the group's 'strands' list
+                group_data['strands'].append(new_strand)
+                group_data['layers'].append(new_strand.layer_name)
+                logging.info(f"Successfully added strand {new_strand.layer_name} to group {group_name}")
 
-            if main_layer in group_main_strands:
-                logging.info(f"Adding strand {new_strand.layer_name} to group {group_name}")
-                self.add_strand_to_group(group_name, new_strand)
-                # Ensure existing groups are not modified or deleted
-                # Do not overwrite or clear group data here
+                # If the new strand is a masked strand, ensure it's added
+                if isinstance(new_strand, MaskedStrand):
+                    for masked_strand in new_strand.masked_strands:
+                        group_data['strands'].append(masked_strand)
+                        group_data['layers'].append(masked_strand.layer_name)
+                        logging.info(f"Masked strand {masked_strand.layer_name} added to group {group_name}")
+
+                break  # Assuming a strand belongs to only one group
     def extract_main_layer(self, layer_name):
         # Split the layer name by underscores
         parts = layer_name.split('_')
@@ -1010,23 +1027,34 @@ class GroupLayerManager:
             logging.error("Canvas not properly connected to GroupPanel")
 
     def edit_strand_angles(self, group_name):
-        if group_name in self.group_panel.groups:
+        if group_name in self.groups:
+            # Fetch up-to-date group data
+            group_data = self.groups[group_name]
+
+            # Update the list of strands to include any new strands added to the group
+            group_data['strands'] = self.get_group_strands(group_name)
+
             # Ensure that editable_layers is correctly populated
-            editable_layers = [layer for layer in self.group_panel.groups[group_name]['layers'] 
-                               if self.is_layer_editable(layer)]
-            
+            editable_layers = [layer for layer in group_data['layers'] if self.is_layer_editable(layer)]
+
             dialog = StrandAngleEditDialog(
-                group_name, 
+                group_name,
                 {
-                    'strands': self.group_panel.groups[group_name]['strands'],
-                    'layers': self.group_panel.groups[group_name]['layers'],
-                    'editable_layers': editable_layers  # Pass the correct editable_layers list
-                }, 
-                self.canvas, 
+                    'strands': group_data['strands'],
+                    'layers': group_data['layers'],
+                    'editable_layers': editable_layers
+                },
+                self.canvas,
                 self
             )
             dialog.exec_()
-
+    def get_group_strands(self, group_name):
+        group_layers = self.groups[group_name]['layers']
+        strands = []
+        for strand in self.canvas.strands:
+            if strand.layer_name in group_layers:
+                strands.append(strand)
+        return strands
     def is_layer_editable(self, layer_name):
         # Implement the logic to determine if a layer is editable
         return True  # Placeholder implementation
@@ -1147,6 +1175,9 @@ class StrandAngleEditDialog(QDialog):
         self.linked_strands = {}
         self.setWindowTitle(f"Edit Strand Angles: {group_name}")
         self.updating = False
+
+        # Add initializing flag
+        self.initializing = True
         
         self.group_data = {
             'strands': [self.ensure_strand_object(s) for s in group_data['strands']],
@@ -1156,7 +1187,7 @@ class StrandAngleEditDialog(QDialog):
         
         self.setup_ui()
         self.adjust_dialog_size()  # Call the function here after setting up the UI
-        
+   
         self.adjustment_timer = QTimer(self)
         self.adjustment_timer.setInterval(10)  # 10 milliseconds (0.01 seconds)
         self.initial_delay_timer = QTimer(self)
@@ -1287,15 +1318,18 @@ class StrandAngleEditDialog(QDialog):
 
     def populate_table(self):
         self.table.setRowCount(len(self.group_data['strands']))
+        # Start initializing
+        self.initializing = True
 
         for row, strand in enumerate(self.group_data['strands']):
             is_main_strand = strand.layer_name.endswith("_1")
-            is_editable = strand.layer_name in self.group_data['editable_layers']
-            is_attachable = strand.is_attachable()
             is_masked = isinstance(strand, MaskedStrand)
+            is_attachable = strand.is_attachable()
+            is_editable = not is_main_strand and not is_masked and is_attachable
 
             self.table.setItem(row, 0, QTableWidgetItem(strand.layer_name))
 
+            # Calculate angle
             angle = self.calculate_angle(strand)
             angle_item = QTableWidgetItem(f"{angle:.2f}")
             self.table.setItem(row, 1, angle_item)
@@ -1313,12 +1347,25 @@ class StrandAngleEditDialog(QDialog):
             end_y_item = QTableWidgetItem(f"{strand.end.y():.2f}")
             self.table.setItem(row, 5, end_y_item)
 
+            # Create checkboxes
             x_checkbox = QCheckBox("x")
             x_checkbox.setObjectName("x")
-            self.table.setCellWidget(row, 6, x_checkbox)
-
             x_plus_180_checkbox = QCheckBox("180+x")
             x_plus_180_checkbox.setObjectName("180+x")
+
+            # Block signals while setting initial state
+            x_checkbox.blockSignals(True)
+            x_plus_180_checkbox.blockSignals(True)
+
+            # Set initial state
+            x_checkbox.setChecked(False)
+            x_plus_180_checkbox.setChecked(False)
+
+            # Connect signals after initial state is set
+            x_checkbox.blockSignals(False)
+            x_plus_180_checkbox.blockSignals(False)
+
+            self.table.setCellWidget(row, 6, x_checkbox)
             self.table.setCellWidget(row, 7, x_plus_180_checkbox)
 
             # Add 'Attachable' indicator
@@ -1331,8 +1378,8 @@ class StrandAngleEditDialog(QDialog):
             x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
             x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
 
-            # Disable editing and interaction for non-attachable strands and masked strands
-            if is_main_strand or not is_editable or not is_attachable or is_masked:
+            # Disable editing and interaction for non-editable strands
+            if not is_editable:
                 for col in range(1, self.table.columnCount()):
                     # Disable QTableWidgetItems
                     item = self.table.item(row, col)
@@ -1350,17 +1397,12 @@ class StrandAngleEditDialog(QDialog):
                     if item:
                         item.setBackground(QColor(240, 240, 240))  # Light gray background
                     else:
-                        # For cell widgets (e.g., checkboxes, buttons), adjust their styles
                         widget = self.table.cellWidget(row, col)
                         if widget:
                             widget.setStyleSheet("background-color: rgb(240, 240, 240);")
 
-            # Optionally, indicate masked strands in the 'Attachable' column
-            if is_masked:
-                masked_item = QTableWidgetItem('Masked')
-                masked_item.setTextAlignment(Qt.AlignCenter)
-                masked_item.setFlags(masked_item.flags() & ~Qt.ItemIsEditable)
-                self.table.setItem(row, 8, masked_item)
+        # End initializing
+        self.initializing = False
     def create_custom_delegate(self):
         class CustomDelegate(QStyledItemDelegate):
             def paint(self, painter, option, index):
@@ -1558,6 +1600,10 @@ class StrandAngleEditDialog(QDialog):
         
         return angle
     def on_item_changed(self, item):
+        # Exit early if initializing
+        if self.initializing:
+            return
+
         if self.updating:
             return
 
@@ -1587,6 +1633,10 @@ class StrandAngleEditDialog(QDialog):
             self.updating = False
 
     def update_linked_strands(self, current_strand=None):
+        # Exit early if initializing
+        if self.initializing:
+            return
+
         for row, strand in enumerate(self.group_data['strands']):
             if strand == current_strand:
                 continue  # Skip the current strand to avoid recursive updates
@@ -1602,6 +1652,10 @@ class StrandAngleEditDialog(QDialog):
                 self.update_strand_angle(strand, opposite_angle, update_linked=False)
 
     def on_checkbox_changed(self, row, column, state):
+        # Exit early if initializing
+        if self.initializing:
+            return
+
         strand = self.group_data['strands'][row]
         checkbox = self.table.cellWidget(row, column)
         other_column = 7 if column == 6 else 6
@@ -1612,7 +1666,10 @@ class StrandAngleEditDialog(QDialog):
             other_checkbox.setChecked(False)
             
             # Update the X Angle only if this is the first checkbox being checked
-            if not any(self.table.cellWidget(r, 6).isChecked() or self.table.cellWidget(r, 7).isChecked() for r in range(row)):
+            if not any(
+                self.table.cellWidget(r, 6).isChecked() or self.table.cellWidget(r, 7).isChecked()
+                for r in range(row)
+            ):
                 try:
                     current_angle_item = self.table.item(row, 1)  # Angle column
                     if current_angle_item:
@@ -1692,7 +1749,13 @@ class StrandAngleEditDialog(QDialog):
         self.adjustment_timer.timeout.connect(self.current_adjustment)
         self.adjustment_timer.start()
 
-    def update_strand_angle(self, strand, new_angle, update_linked=False):
+    def update_strand_angle(self, strand, new_angle, update_linked=False, visited=None):
+        if visited is None:
+            visited = set()
+        if strand in visited:
+            return
+        visited.add(strand)
+        
         while new_angle > 180:
             new_angle -= 360
         while new_angle <= -180:
@@ -1705,22 +1768,36 @@ class StrandAngleEditDialog(QDialog):
         new_dx = length * cos(radians(new_angle))
         new_dy = length * sin(radians(new_angle))
         
-        # Create a new QPointF
-        new_end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
-        strand.end = new_end
+        # Update end point
+        strand.end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
         
         strand.update_shape()
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
-
-        row = self.group_data['strands'].index(strand)
-        self.update_table_row(row)
-
+        
+        # Adjust attached strands recursively
+        for attached_strand in strand.attached_strands:
+            self.update_strand_angle(attached_strand, new_angle, update_linked=False, visited=visited)
+        
+        # Adjust masked strands recursively if applicable
+        if isinstance(strand, MaskedStrand):
+            if hasattr(strand, 'masked_strands'):
+                for masked_strand in strand.masked_strands:
+                    self.update_strand_angle(masked_strand, new_angle, update_linked=False, visited=visited)
+        elif hasattr(strand, 'mask'):
+            self.update_strand_angle(strand.mask, new_angle, update_linked=False, visited=visited)
+        
+        # Update the table row if the strand is listed
+        if strand in self.group_data['strands']:
+            row_indices = [i for i, s in enumerate(self.group_data['strands']) if s == strand]
+            for row in row_indices:
+                self.update_table_row(row)
+        
         self.angle_changed.emit(strand.layer_name, new_angle)
         
         if update_linked:
             self.update_linked_strands(strand)
-
+        
         self.canvas.update()
 
     def update_strand_end(self, strand, coordinate, value):

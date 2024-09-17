@@ -302,6 +302,10 @@ class GroupPanel(QWidget):
                 is_masked=isinstance(strand, MaskedStrand)
             )
             logging.info(f"Successfully added layer {layer_name} to group {group_name}")
+
+            # Update the canvas's group data
+            if self.canvas:
+                self.canvas.update_group_data(group_name, group)
         else:
             logging.info(f"Layer {layer_name} already in group {group_name}")
     def update_group_display(self, group_name):
@@ -383,9 +387,15 @@ class GroupPanel(QWidget):
         for strand in strands:
             layer_name = strand.layer_name
             self.add_layer_to_group(layer_name, group_name, strand)
+
+
     def start_group_rotation(self, group_name):
         if group_name in self.groups:
+            # Set the active group name
+            self.active_group_name = group_name
             if self.canvas:
+                # Update the group's strands before rotation
+                self.update_group_strands(group_name)
                 self.canvas.start_group_rotation(group_name)
                 dialog = GroupRotateDialog(group_name, self)
                 dialog.rotation_updated.connect(self.update_group_rotation)
@@ -396,12 +406,34 @@ class GroupPanel(QWidget):
         else:
             logging.warning(f"Attempted to rotate non-existent group: {group_name}")
 
+    def update_group_strands(self, group_name):
+        """
+        Refresh the group's strands to include any newly added strands.
+        """
+        group_data = self.groups[group_name]
+        # Get all strands that belong to the group's layers
+        updated_strands = []
+        for strand in self.canvas.strands:
+            if strand.layer_name in group_data['layers']:
+                if strand not in updated_strands:
+                    updated_strands.append(strand)
+                # Include any attached strands
+                if hasattr(strand, 'attached_strands'):
+                    for attached_strand in strand.attached_strands:
+                        if attached_strand not in updated_strands:
+                            updated_strands.append(attached_strand)
+        group_data['strands'] = updated_strands
+
     def update_group_rotation(self, group_name, angle):
         logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
-        if self.canvas:
-            self.canvas.rotate_group(group_name, angle)
+        if group_name == self.active_group_name:
+            if self.canvas:
+                self.canvas.rotate_group(group_name, angle)
+            else:
+                logging.error("Canvas not properly connected to GroupPanel")
         else:
-            logging.error("Canvas not properly connected to GroupPanel")
+            logging.warning(f"Attempted to rotate non-existent or inactive group: {group_name}")
+
 
     def finish_group_rotation(self, group_name):
         logging.info(f"GroupPanel: Finishing group rotation for '{group_name}'")
@@ -409,6 +441,9 @@ class GroupPanel(QWidget):
             self.canvas.finish_group_rotation(group_name)
         else:
             logging.error("Canvas not properly connected to GroupPanel")
+        # Clear the active group name
+        self.active_group_name = None
+
 
     def delete_group(self, group_name):
         if group_name in self.groups:
@@ -1116,6 +1151,18 @@ class GroupRotateDialog(QDialog):
             self.rotation_updated.emit(self.group_name, self.angle)
         except ValueError:
             pass  # Ignore invalid input
+
+    # Update the group's strands rotation
+    def rotate_group_strands(self):
+        if self.canvas and self.group_name in self.canvas.groups:
+            group_data = self.canvas.groups[self.group_name]
+            rotation_center = self.calculate_group_center(group_data['strands'])
+            angle_radians = radians(self.angle)
+            for strand in group_data['strands']:
+                self.rotate_strand_around_point(strand, rotation_center, angle_radians)
+            self.canvas.update()
+        else:
+            logging.error(f"Group '{self.group_name}' not found in canvas.")
 
     def on_ok_clicked(self):
         try:

@@ -121,3 +121,13 @@ Fixed Features:
 2. Enhanced typography for canvas overlay buttons.
 3. Angle adjust now disables strands that cannot have new strands attached, simplifying the process.
 4. Better overall functionality for angle adjust, improving user experience and precision.
+
+------
+
+## version 1.06 (Released: 9/20/2024)
+
+### Fixed Features:
+
+1. Fixed group issues.
+2. Now saving and loading takes into consideration the groups.
+3. Masks are better drawn.

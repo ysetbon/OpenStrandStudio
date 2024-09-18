@@ -1,70 +1,83 @@
 import os
-import sys
 import subprocess
 from setuptools import setup
 
 # Define constants
 APP_NAME = "OpenStrand Studio"
-APP_VERSION = "1.03"
+APP_VERSION = "1.06"
 APP_PUBLISHER = "Yonatan Setbon"
 APP_CONTACT = "ysetbon@gmail.com"
-APP_COMMENTS = "The program is brought to you by Yonatan Setbon, you can contact me at ysetbon@gmail.com"
-ICON_FILE = 'box_stitch.icns'
-ORIGINAL_ICON = r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico'
-MAIN_SCRIPT = r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\main.py'
-OUTPUT_DIR = r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\mac'
+APP_COMMENTS = (
+    "The program is brought to you by Yonatan Setbon, you can contact me at ysetbon@gmail.com"
+)
+ICON_ICO_PATH = r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico'
+ICON_ICNS_PATH = 'box_stitch.icns'
+MAIN_SCRIPT = 'main.py'
+OUTPUT_DIR = 'dist'
 
-# Create the output directory if it doesn't exist
+# Ensure the output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Add the src directory to Python path
-sys.path.append(r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src')
+def convert_ico_to_icns(ico_path, icns_path):
+    """
+    Converts a .ico file to .icns format.
+    """
+    # Convert .ico to .png
+    png_path = 'icon.png'
+    try:
+        subprocess.run(['sips', '-s', 'format', 'png', ico_path, '--out', png_path], check=True)
+    except subprocess.CalledProcessError:
+        print("Error converting .ico to .png. Make sure the .ico file exists and 'sips' is available.")
+        return False
 
-def convert_icon():
-    if not os.path.exists(os.path.join(OUTPUT_DIR, ICON_FILE)):
-        if not os.path.exists(ORIGINAL_ICON):
-            raise FileNotFoundError(f"Original icon file {ORIGINAL_ICON} not found.")
-        
-        print(f"Converting {ORIGINAL_ICON} to {ICON_FILE}...")
-        
-        # Create a temporary iconset directory in the output directory
-        iconset_dir = os.path.join(OUTPUT_DIR, 'box_stitch.iconset')
-        os.makedirs(iconset_dir, exist_ok=True)
-        
-        # Convert ico to png if needed
-        png_path = os.path.join(OUTPUT_DIR, 'box_stitch.png')
-        if not os.path.exists(png_path):
-            subprocess.run(['sips', '-s', 'format', 'png', ORIGINAL_ICON, '--out', png_path])
-        
-        # Generate different sizes
-        sizes = [16, 32, 128, 256, 512]
-        for size in sizes:
-            subprocess.run(['sips', '-z', str(size), str(size), png_path, '--out', os.path.join(iconset_dir, f'icon_{size}x{size}.png')])
-            if size <= 256:
-                subprocess.run(['sips', '-z', str(size*2), str(size*2), png_path, '--out', os.path.join(iconset_dir, f'icon_{size}x{size}@2x.png')])
-        
-        # Create icns file
-        subprocess.run(['iconutil', '-c', 'icns', iconset_dir, '-o', os.path.join(OUTPUT_DIR, ICON_FILE)])
-        
-        # Clean up
-        subprocess.run(['rm', '-rf', iconset_dir])
-        os.remove(png_path)
-        
-        print(f"Icon conversion complete. {ICON_FILE} created in {OUTPUT_DIR}.")
-    else:
-        print(f"{ICON_FILE} already exists in {OUTPUT_DIR}. Skipping conversion.")
+    # Create iconset directory
+    iconset_dir = 'icon.iconset'
+    os.makedirs(iconset_dir, exist_ok=True)
 
-# Convert icon
-convert_icon()
+    # Generate icon sizes
+    sizes = [
+        (16, 'icon_16x16.png'),
+        (32, 'icon_16x16@2x.png'),
+        (32, 'icon_32x32.png'),
+        (64, 'icon_32x32@2x.png'),
+        (128, 'icon_128x128.png'),
+        (256, 'icon_128x128@2x.png'),
+        (256, 'icon_256x256.png'),
+        (512, 'icon_256x256@2x.png'),
+        (512, 'icon_512x512.png'),
+        (1024, 'icon_512x512@2x.png'),
+    ]
 
-APP = [MAIN_SCRIPT]
-DATA_FILES = [os.path.join(OUTPUT_DIR, ICON_FILE)]
+    for size, filename in sizes:
+        output_path = os.path.join(iconset_dir, filename)
+        subprocess.run(['sips', '-z', str(size), str(size), png_path, '--out', output_path])
+
+    # Create .icns file
+    try:
+        subprocess.run(['iconutil', '-c', 'icns', iconset_dir, '-o', icns_path], check=True)
+    except subprocess.CalledProcessError:
+        print("Error creating .icns file.")
+        return False
+
+    # Clean up
+    os.remove(png_path)
+    subprocess.run(['rm', '-r', iconset_dir])
+
+    return True
+
+# Convert the .ico file to .icns
+if not os.path.exists(ICON_ICNS_PATH):
+    print("Converting .ico to .icns...")
+    success = convert_ico_to_icns(ICON_ICO_PATH, ICON_ICNS_PATH)
+    if not success:
+        print("Failed to convert icon.")
+else:
+    print(".icns file already exists.")
+
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['PyQt5'],
-    'iconfile': os.path.join(OUTPUT_DIR, ICON_FILE),
-    'dist_dir': os.path.join(OUTPUT_DIR, 'dist'),
-    'bdist_base': os.path.join(OUTPUT_DIR, 'build'),
+    'iconfile': ICON_ICNS_PATH,
+    'dist_dir': OUTPUT_DIR,
     'plist': {
         'CFBundleName': APP_NAME,
         'CFBundleDisplayName': APP_NAME,
@@ -91,18 +104,13 @@ OPTIONS = {
             }
         ],
     },
-    'includes': [
-        'PyQt5',
-        'PyQt5.QtCore',
-        'PyQt5.QtGui',
-        'PyQt5.QtWidgets',
-    ],
+    'packages': ['PyQt5'],
+    'includes': ['PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets'],
 }
 
 setup(
     name=APP_NAME,
-    app=APP,
-    data_files=DATA_FILES,
+    app=[MAIN_SCRIPT],
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
     version=APP_VERSION,

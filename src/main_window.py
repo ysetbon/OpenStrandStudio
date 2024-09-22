@@ -1,32 +1,40 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSplitter, QFileDialog
-from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QIcon, QColor, QImage, QPainter
 import os
+import sys
+import logging
+from PyQt5.QtWidgets import (
+    QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
+    QSplitter, QFileDialog
+)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, AttachedStrand, MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
-import logging
 from group_layers import GroupLayerManager, StrandAngleEditDialog
-
+from settings_dialog import SettingsDialog
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        logging.info("Initializing MainWindow")
+
+        # Set window properties
         self.setWindowTitle("OpenStrand Studio")
         self.setMinimumSize(900, 900)
+
+        # Initialize components
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
-        # The GroupLayerManager is now initialized inside LayerPanel, so we don't need to do it here
         self.setup_ui()
-        self.setup_connections()
+        self.setup_connections()  # Assuming this method exists
         self.current_mode = None
         self.previous_mode = None
         self.set_attach_mode()
         self.selected_strand = None
 
-        # Use the instance from layer_panel
+        # Get the group layer manager from the layer panel
         self.group_layer_manager = self.layer_panel.group_layer_manager
         self.group_layer_manager.set_canvas(self.canvas)
         self.canvas.set_group_layer_manager(self.group_layer_manager)
@@ -37,20 +45,27 @@ class MainWindow(QMainWindow):
             self.layer_panel.group_layer_manager.on_group_operation
         )
 
-
     def setup_ui(self):
-        icon_path = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\box_stitch.ico"
+        logging.info("Entered setup_ui")
+
+        # Set the window icon if available
+        icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'box_stitch.ico'))
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
+            logging.info(f"Window icon set from: {icon_path}")
+        else:
+            logging.warning(f"Window icon not found at: {icon_path}")
 
+        # Create central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
 
+        # Create the horizontal layout for buttons
         button_layout = QHBoxLayout()
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
-        self.rotate_button = QPushButton("Rotate Mode")  # New button
+        self.rotate_button = QPushButton("Rotate Mode")
         self.toggle_grid_button = QPushButton("Toggle Grid")
         self.angle_adjust_button = QPushButton("Angle Adjust Mode")
         self.save_button = QPushButton("Save")
@@ -58,26 +73,52 @@ class MainWindow(QMainWindow):
         self.save_image_button = QPushButton("Save as Image")
         self.select_strand_button = QPushButton("Select Strand")
         self.mask_button = QPushButton("Mask Mode")
+
+        # Create the settings button
+        self.settings_button = QPushButton()
+        self.settings_button.setFixedSize(32, 32)
+
+        # Set the gear icon or fallback to Unicode character if the image is not found
+        gear_icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'settings_icon.png'))
+        logging.info(f"Searching for gear icon at: {gear_icon_path}")
+
+        if os.path.exists(gear_icon_path):
+            logging.info("Settings icon found. Setting icon for settings_button.")
+            self.settings_button.setIcon(QIcon(gear_icon_path))
+            self.settings_button.setIconSize(QSize(24, 24))
+        else:
+            logging.warning("Settings icon not found. Using Unicode '⚙' character.")
+            self.settings_button.setText('⚙')
+            self.settings_button.setFont(QFont('Segoe UI Symbol', 16))  # Adjust font if necessary
+
+        # Style the settings button
+        self.settings_button.setStyleSheet("""
+            QPushButton {
+                border: none;
+                border-radius: 16px;
+            }
+            QPushButton:hover {
+                background-color: rgba(0, 0, 0, 20);
+            }
+        """)
+
+        # Add buttons to the button layout
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
-        button_layout.addWidget(self.rotate_button)  # Add rotate button next to move button
+        button_layout.addWidget(self.rotate_button)
         button_layout.addWidget(self.toggle_grid_button)
         button_layout.addWidget(self.angle_adjust_button)
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_image_button)
+        button_layout.addWidget(self.settings_button)
 
         # Change the angle_adjust_button to be non-checkable
         self.angle_adjust_button.setCheckable(False)
 
-        self.canvas = StrandDrawingCanvas()
-        self.layer_panel = LayerPanel(self.canvas)
-        
-        self.setup_button_styles()
-        self.update_button_states("attach")  # Set initial state
-
+        # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
@@ -86,17 +127,93 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(left_widget)
         self.splitter.addWidget(self.layer_panel)
 
+        # Configure splitter and main layout
         self.splitter.setHandleWidth(0)
         main_layout.addWidget(self.splitter)
 
+        # Set minimum widths
         left_widget.setMinimumWidth(200)
         self.layer_panel.setMinimumWidth(100)
+    def setup_connections(self):
+        # Layer panel handle connections
+        self.layer_panel.handle.mousePressEvent = self.start_resize
+        self.layer_panel.handle.mouseMoveEvent = self.do_resize
+        self.layer_panel.handle.mouseReleaseEvent = self.stop_resize
 
+        # Set layer panel for canvas
+        self.canvas.set_layer_panel(self.layer_panel)
+
+        # Layer panel connections
+        self.layer_panel.new_strand_requested.connect(self.create_new_strand)
+        self.layer_panel.strand_selected.connect(lambda idx: self.select_strand(idx, emit_signal=False))
+        self.layer_panel.deselect_all_requested.connect(self.canvas.deselect_all_strands)
+        self.layer_panel.color_changed.connect(self.handle_color_change)
+        self.layer_panel.masked_layer_created.connect(self.create_masked_layer)
+        self.layer_panel.masked_mode_entered.connect(self.canvas.deselect_all_strands)
+        self.layer_panel.masked_mode_exited.connect(self.restore_selection)
+        self.layer_panel.lock_layers_changed.connect(self.update_locked_layers)
+        self.layer_panel.strand_deleted.connect(self.delete_strand)
+
+        # Button connections
+        self.attach_button.clicked.connect(self.set_attach_mode)
+        self.move_button.clicked.connect(self.set_move_mode)
+        self.rotate_button.clicked.connect(self.set_rotate_mode)
+        self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
+        self.angle_adjust_button.clicked.connect(self.handle_angle_adjust_click)
+        self.save_button.clicked.connect(self.save_project)
+        self.load_button.clicked.connect(self.load_project)
+        self.save_image_button.clicked.connect(self.save_canvas_as_image)
+        self.select_strand_button.clicked.connect(self.set_select_mode)
+        self.mask_button.clicked.connect(self.set_mask_mode)
+        self.rotate_button.clicked.connect(self.set_rotate_mode)
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+
+        # Canvas connections
+        self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
+
+        # Disconnect any existing connections for mask_created
+        try:
+            self.canvas.mask_created.disconnect(self.handle_mask_created)
+        except TypeError:
+            # This exception will be raised if there was no connection, which is fine
+            pass
+
+        # Reconnect mask_created signal
+        self.canvas.mask_created.connect(self.handle_mask_created)
+
+        # Connect the canvas to the group layer manager
+        self.layer_panel.group_layer_manager.canvas = self.canvas
 
         # Connect group operation signal
         self.layer_panel.group_layer_manager.group_panel.group_operation.connect(
             self.layer_panel.group_layer_manager.on_group_operation
         )
+
+        # Add this new connection
+        self.canvas.angle_adjust_completed.connect(self.deselect_angle_adjust_button)
+
+        # Connect attachable_changed signal for each layer button
+        for button in self.layer_panel.layer_buttons:
+            button.attachable_changed.connect(self.update_strand_attachable)
+
+    def open_settings_dialog(self):
+        settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
+        settings_dialog.exec_()
+
+    def update_strand_attachable(self, set_number, attachable):
+        for strand in self.canvas.strands:
+            if strand.set_number == set_number:
+                strand.set_attachable(attachable)
+        self.canvas.update()  # Redraw the canvas to show the changes
+
+    def handle_angle_adjust_click(self):
+        if self.canvas.selected_strand:
+            if isinstance(self.canvas.selected_strand, MaskedStrand):
+                print("Angle adjustment is not available for masked layers.")
+                return
+            
+            self.previous_mode = self.current_mode  # Store the current mode
+
 
     def setup_button_styles(self):
         button_style = """
@@ -257,6 +374,17 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        # Style for the settings button
+        self.settings_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: none;
+                border-radius: 16px;
+            }
+            QPushButton:hover {
+                background-color: rgba(0, 0, 0, 20);
+            }
+        """)
     def update_button_states(self, active_mode):
         buttons = {
             "attach": self.attach_button,
@@ -302,6 +430,7 @@ class MainWindow(QMainWindow):
         self.select_strand_button.clicked.connect(self.set_select_mode)
         self.mask_button.clicked.connect(self.set_mask_mode)
         self.rotate_button.clicked.connect(self.set_rotate_mode)
+        self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -330,7 +459,9 @@ class MainWindow(QMainWindow):
         # Connect attachable_changed signal for each layer button
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
-
+    def open_settings_dialog(self):
+        settings_dialog = SettingsDialog(self)
+        settings_dialog.exec_()
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:
             if strand.set_number == set_number:

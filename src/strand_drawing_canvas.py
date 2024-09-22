@@ -34,8 +34,8 @@ class StrandDrawingCanvas(QWidget):
         self.new_strand_start_point = None
         self.new_strand_end_point = None
         self.stroke_color = Qt.black
-        self.strand_width = 55  # Width of strands
-        self.stroke_width = 5  # Width of the black outline
+        self.strand_width = 46  # Width of strands
+        self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
         
         # Add new attributes for group moving
@@ -332,10 +332,10 @@ class StrandDrawingCanvas(QWidget):
         """Initialize all properties used in the StrandDrawingCanvas."""
         self.strands = []  # List to store all strands
         self.current_strand = None  # Currently active strand
-        self.strand_width = 55  # Width of strands
+        self.strand_width = 37  # Width of strands
         self.strand_color = QColor('purple')  # Default color for strands
         self.stroke_color = Qt.black  # Color for strand outlines
-        self.stroke_width = 5  # Width of strand outlines
+        self.stroke_width = 3  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
         self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
@@ -345,7 +345,7 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand = None  # Currently selected strand
         self.last_selected_strand_index = None  # Index of the last selected strand
         self.strand_colors = {}  # Dictionary to store colors for each strand set
-        self.grid_size = 30  # Size of grid cells
+        self.grid_size = 25  # Size of grid cells
         self.show_grid = True  # Flag to show/hide grid
         self.should_draw_names = False  # Flag to show/hide strand names
         self.newest_strand = None  # Track the most recently created strand
@@ -528,11 +528,12 @@ class StrandDrawingCanvas(QWidget):
     def draw_grid(self, painter):
         """Draw the grid on the canvas."""
         painter.setPen(QPen(QColor(200, 200, 200), 1))
+        # Vertical lines
         for x in range(0, self.width(), self.grid_size):
             painter.drawLine(x, 0, x, self.height())
+        # Horizontal lines
         for y in range(0, self.height(), self.grid_size):
             painter.drawLine(0, y, self.width(), y)
-
     def draw_strand_label(self, painter, strand):
         """Draw the label for a strand."""
         if isinstance(strand, MaskedStrand):
@@ -1076,9 +1077,9 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def set_grid_size(self, size):
-        """Set the size of the grid cells."""
+        """Set the size of the grid cells and refresh the canvas."""
         self.grid_size = size
-        self.update()
+        self.update()  # Redraw the canvas to reflect the new grid size
 
     def get_strand_at_position(self, pos):
         """Get the strand at the given position."""
@@ -1604,7 +1605,10 @@ class StrandDrawingCanvas(QWidget):
 
 
 
-
+    def set_grid_size(self, grid_size):
+        """Set the grid size and refresh the canvas."""
+        self.grid_size = grid_size
+        self.update()  # Refresh the canvas to reflect the new grid size
 
     def find_strand_by_name(self, layer_name):
         for strand in self.strands:

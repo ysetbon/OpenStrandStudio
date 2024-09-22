@@ -16,6 +16,7 @@ from group_layers import GroupPanel, GroupLayerManager
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
 from PyQt5.QtCore import Qt
+from translations import translations
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -56,6 +57,7 @@ class LayerPanel(QWidget):
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
+        self.main_window = parent  # Store the reference to MainWindow
         self.layout = QHBoxLayout(self)  # Main layout for the panel
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -174,7 +176,27 @@ class LayerPanel(QWidget):
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
+    def update_translations(self):
+        _ = translations[self.parent().language_code]
 
+        # Update window title if applicable
+        self.setWindowTitle(_['layer_panel_title'])
+
+        # Update button texts
+        self.draw_names_button.setText(_['draw_names'])
+        self.lock_layers_button.setText(_['lock_layers'])
+        self.add_new_strand_button.setText(_['add_new_strand'])
+        self.delete_strand_button.setText(_['delete_strand'])
+        self.deselect_all_button.setText(_['deselect_all'])
+
+        # Update any labels or UI elements with text
+        if self.notification_label.text():
+            self.notification_label.setText(_['notification_message'])
+
+        # Update tooltips or other text properties if any
+        # Example:
+        # self.draw_names_button.setToolTip(_['draw_names_tooltip'])
+        # Similarly update other tooltips or accessible descriptions
 
     def create_group(self):
         group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
@@ -816,4 +838,26 @@ class LayerPanel(QWidget):
         else:
             self.delete_strand_button.setEnabled(False)
 
+    def translate_ui(self):
+           _ = translations[self.main_window.language_code]
+
+           # Update window title if applicable
+           self.setWindowTitle(_['layer_panel_title'])
+
+           # Update button texts
+           self.draw_names_button.setText(_['draw_names'])
+           self.lock_layers_button.setText(_['lock_layers'])
+           self.add_new_strand_button.setText(_['add_new_strand'])
+           self.delete_strand_button.setText(_['delete_strand'])
+           self.deselect_all_button.setText(_['deselect_all'])
+
+           # Update any labels or UI elements with text
+           if self.notification_label.text():
+               self.notification_label.setText(_['notification_message'])
+
+           # Update tooltips or other text properties if any
+           # Example:
+           # self.draw_names_button.setToolTip(_['draw_names_tooltip'])
+           # Similarly update other tooltips or accessible descriptions
+        # Update any other UI elements as needed
 # End of LayerPanel class

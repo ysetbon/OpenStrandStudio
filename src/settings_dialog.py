@@ -4,11 +4,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem, QSizePolicy
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-
-class SettingsDialog(QDialog):
-    theme_changed = pyqtSignal(str)  # Signal to notify theme change
-
-from PyQt5.QtCore import pyqtSignal
+from translations import translations
 
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
@@ -16,11 +12,12 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None, canvas=None):
         super(SettingsDialog, self).__init__(parent)
         self.canvas = canvas  # Reference to the canvas
-        self.setWindowTitle("Settings")
+        self.setWindowTitle(translations[self.parent().language_code]['settings'])
         self.setMinimumSize(600, 400)
         self.setup_ui()
 
     def setup_ui(self):
+        _ = translations[self.parent().language_code]
         main_layout = QHBoxLayout(self)
 
         # Left side: categories list
@@ -29,10 +26,10 @@ class SettingsDialog(QDialog):
         self.categories_list.itemClicked.connect(self.change_category)
 
         categories = [
-            "General Settings",
-            "Change Language",
-            "Tutorial",
-            "About OpenStrand Studio"
+            _['general_settings'],
+            _['change_language'],
+            _['tutorial'],
+            _['about']
         ]
         for category in categories:
             item = QListWidgetItem(category)
@@ -46,28 +43,26 @@ class SettingsDialog(QDialog):
         self.general_settings_widget = QWidget()
         general_layout = QVBoxLayout(self.general_settings_widget)
 
-
         # Theme Selection
         theme_layout = QHBoxLayout()
-        theme_label = QLabel("Select Theme:")
+        self.theme_label = QLabel(_['select_theme'])
         self.theme_combobox = QComboBox()
-        self.theme_combobox.addItems(["Light", "Dark"])
-        current_theme = getattr(self.canvas, 'theme', 'Light')
+        self.theme_combobox.addItems([_['light'], _['dark']])
+        current_theme = getattr(self.canvas, 'theme', _['light'])
         index = self.theme_combobox.findText(current_theme)
         if index >= 0:
             self.theme_combobox.setCurrentIndex(index)
-        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(self.theme_label)
         theme_layout.addWidget(self.theme_combobox)
 
         # Apply Button
-        self.apply_button = QPushButton("ok")
+        self.apply_button = QPushButton(_['ok'])
         self.apply_button.clicked.connect(self.apply_general_settings)
 
         # Spacer to push the apply button to the bottom
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # Add controls to general settings layout
-
         general_layout.addLayout(theme_layout)
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
@@ -77,22 +72,41 @@ class SettingsDialog(QDialog):
         # Change Language Page
         self.change_language_widget = QWidget()
         language_layout = QVBoxLayout(self.change_language_widget)
-        language_label = QLabel("Language settings will be implemented here.")
-        language_layout.addWidget(language_label)
+        
+        # Language Selection
+        self.language_label = QLabel(_['select_language'])
+        self.language_combobox = QComboBox()
+
+        # Add items with associated language codes
+        self.language_combobox.addItem(_['english'], 'en')
+        self.language_combobox.addItem(_['french'], 'fr')
+        # Remove the automatic change on combo box selection
+        # self.language_combobox.currentIndexChanged.connect(self.change_language)
+        
+        self.language_info_label = QLabel(_['language_settings_info'])
+        language_layout.addWidget(self.language_label)
+        language_layout.addWidget(self.language_combobox)
+        language_layout.addWidget(self.language_info_label)
+
+        # Add the "OK" button
+        self.language_ok_button = QPushButton(_['ok'])
+        self.language_ok_button.clicked.connect(self.apply_language_settings)
+        language_layout.addWidget(self.language_ok_button)
+
         self.stacked_widget.addWidget(self.change_language_widget)
 
         # Tutorial Page
         self.tutorial_widget = QWidget()
         tutorial_layout = QVBoxLayout(self.tutorial_widget)
-        tutorial_label = QLabel("Tutorial content will be displayed here.")
-        tutorial_layout.addWidget(tutorial_label)
+        self.tutorial_label = QLabel(_['tutorial_info'])
+        tutorial_layout.addWidget(self.tutorial_label)
         self.stacked_widget.addWidget(self.tutorial_widget)
 
         # About Page
         self.about_widget = QWidget()
         about_layout = QVBoxLayout(self.about_widget)
-        about_label = QLabel("Information about OpenStrand Studio.")
-        about_layout.addWidget(about_label)
+        self.about_label = QLabel(_['about_info'])
+        about_layout.addWidget(self.about_label)
         self.stacked_widget.addWidget(self.about_widget)
 
         # Add widgets to main layout
@@ -119,3 +133,39 @@ class SettingsDialog(QDialog):
     def change_category(self, item):
         index = self.categories_list.row(item)
         self.stacked_widget.setCurrentIndex(index)
+
+    def change_language(self):
+        selected_language = self.language_combobox.currentText()
+        if selected_language == "French":
+            self.parent().set_language('fr')
+        else:
+            self.parent().set_language('en')
+
+    def update_translations(self):
+        _ = translations[self.parent().language_code]
+        self.setWindowTitle(_['settings'])
+        # Update category names
+        self.categories_list.item(0).setText(_['general_settings'])
+        self.categories_list.item(1).setText(_['change_language'])
+        self.categories_list.item(2).setText(_['tutorial'])
+        self.categories_list.item(3).setText(_['about'])
+        # Update labels and buttons
+        self.theme_label.setText(_['select_theme'])
+        self.apply_button.setText(_['ok'])
+        self.language_ok_button.setText(_['ok'])  # Update the "OK" button text
+        self.language_label.setText(_['select_language'])
+        # Update information labels
+        self.language_info_label.setText(_['language_settings_info'])
+        self.tutorial_label.setText(_['tutorial_info'])
+        self.about_label.setText(_['about_info'])
+
+    def apply_language_settings(self):
+        # Get the selected language code from the combo box
+        language_code = self.language_combobox.currentData()
+        self.parent().set_language(language_code)
+
+        # Update translations
+        self.update_translations()
+
+        # Close the settings dialog
+        self.accept()

@@ -16,17 +16,20 @@ from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
+from translations import translations
 
 # main_window.py
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.language_code = 'en'  # Default language
+
         logging.info("Initializing MainWindow")
 
         # Initialize components
         self.canvas = StrandDrawingCanvas()
-        self.layer_panel = LayerPanel(self.canvas)
+        self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
 
         # Use the GroupLayerManager from layer_panel
         self.group_layer_manager = self.layer_panel.group_layer_manager
@@ -886,3 +889,38 @@ class MainWindow(QMainWindow):
     def set_rotate_mode(self):
         self.update_mode("rotate")
         self.canvas.set_mode("rotate")
+    def set_language(self, language_code):
+        self.language_code = language_code
+        self.translate_ui()
+        if self.settings_dialog:
+            self.settings_dialog.update_translations()
+        if hasattr(self, 'about_dialog'):
+            self.about_dialog.update_translations()
+    # At the end of the translate_ui method in MainWindow
+
+    def translate_ui(self):
+        _ = translations[self.language_code]
+
+        # Update window title
+        self.setWindowTitle(_['main_window_title'])
+
+        # Update button texts
+        self.attach_button.setText(_['attach_mode'])
+        self.move_button.setText(_['move_mode'])
+        self.rotate_button.setText(_['rotate_mode'])
+        self.toggle_grid_button.setText(_['toggle_grid'])
+        self.angle_adjust_button.setText(_['angle_adjust_mode'])
+        self.select_strand_button.setText(_['select_mode'])
+        self.mask_button.setText(_['mask_mode'])
+        self.save_button.setText(_['save'])
+        self.load_button.setText(_['open'])
+        self.save_image_button.setText(_['save_image'])
+
+        # Corrected line for layer panel's new strand button
+        self.layer_panel.add_new_strand_button.setText(_['add_new_strand'])
+
+        # Update settings button text or tooltip if necessary
+        self.settings_button.setToolTip(_['settings'])
+
+        # Call translate_ui on layer_panel
+        self.layer_panel.translate_ui()

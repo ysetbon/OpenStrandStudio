@@ -1,33 +1,21 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QLabel
+# src/layer_panel.py
+
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
+    QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
+    QSplitter 
+)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
-from functools import partial
 import logging
+from functools import partial
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
 from strand import MaskedStrand
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QScrollArea, QHBoxLayout, QLabel,
-                             QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox)
+from group_layers import GroupPanel, GroupLayerManager
+from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
+from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from group_layers import GroupPanel
-from group_layers import GroupLayerManager
-from PyQt5.QtWidgets import QSplitter
-class LayerPanel(QWidget):
-    # Custom signals for various events
-    new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
-    strand_selected = pyqtSignal(int)  # Signal when a strand is selected (index)
-    deselect_all_requested = pyqtSignal()  # Signal to deselect all strands
-    color_changed = pyqtSignal(int, QColor)  # Signal when a strand's color is changed (set number, new color)
-    masked_layer_created = pyqtSignal(int, int)  # Signal when a masked layer is created (layer1 index, layer2 index)
-    draw_names_requested = pyqtSignal(bool)  # Signal to toggle drawing of strand names
-    masked_mode_entered = pyqtSignal()  # Signal when masked mode is entered
-    masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
-    lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change (locked layers set, lock mode state)
-    strand_deleted = pyqtSignal(int)  # New signal for strand deletion
-
-
-
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -54,29 +42,29 @@ class LayerSelectionDialog(QDialog):
 
 class LayerPanel(QWidget):
     # Custom signals for various events
-    new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested (set number, color)
-    strand_selected = pyqtSignal(int)  # Signal when a strand is selected (index)
+    new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested
+    strand_selected = pyqtSignal(int)  # Signal when a strand is selected
     deselect_all_requested = pyqtSignal()  # Signal to deselect all strands
-    color_changed = pyqtSignal(int, QColor)  # Signal when a strand's color is changed (set number, new color)
-    masked_layer_created = pyqtSignal(int, int)  # Signal when a masked layer is created (layer1 index, layer2 index)
+    color_changed = pyqtSignal(int, QColor)  # Signal when a strand's color is changed
+    masked_layer_created = pyqtSignal(int, int)  # Signal when a masked layer is created
     draw_names_requested = pyqtSignal(bool)  # Signal to toggle drawing of strand names
     masked_mode_entered = pyqtSignal()  # Signal when masked mode is entered
     masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
-    lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change (locked layers set, lock mode state)
-    strand_deleted = pyqtSignal(int)  # New signal for strand deletion
+    lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change
+    strand_deleted = pyqtSignal(int)  # Signal for strand deletion
 
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
-        self.layout = QHBoxLayout(self)  # Change to QHBoxLayout for side-by-side panels
+        self.layout = QHBoxLayout(self)  # Main layout for the panel
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None  # Stores the index of the last selected layer
-        
+
         # Create left panel (existing layer panel)
         self.left_panel = QWidget()
         self.left_layout = QVBoxLayout(self.left_panel)
-        
+
         # Create and add the splitter handle
         self.handle = SplitterHandle(self)
         self.left_layout.addWidget(self.handle)
@@ -88,18 +76,18 @@ class LayerPanel(QWidget):
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
-        
+
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
-        
+
         self.draw_names_button = QPushButton("Draw Names")
         self.draw_names_button.setStyleSheet("font-weight: bold; background-color: #E6E6FA;")
         self.draw_names_button.clicked.connect(self.request_draw_names)
 
         self.lock_layers_button = QPushButton("Lock Layers")
-        self.lock_layers_button.setStyleSheet("font-weight: bold; background-color: orange;")
+        self.lock_layers_button.setStyleSheet("font-weight: bold; color: black; background-color: orange;")
         self.lock_layers_button.setCheckable(True)
         self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
 
@@ -108,7 +96,7 @@ class LayerPanel(QWidget):
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
         self.delete_strand_button = QPushButton("Delete Strand (beta)")
-        self.delete_strand_button.setStyleSheet("font-weight: bold; background-color: #FF6B6B;")
+        self.delete_strand_button.setStyleSheet("font-weight: bold; color: black; background-color: #FF6B6B;")
         self.delete_strand_button.clicked.connect(self.request_delete_strand)
         self.delete_strand_button.setEnabled(False)
 
@@ -122,7 +110,7 @@ class LayerPanel(QWidget):
         bottom_layout.addWidget(self.add_new_strand_button)
         bottom_layout.addWidget(self.delete_strand_button)
         bottom_layout.addWidget(self.deselect_all_button)
-        
+
         # Add scroll area and bottom panel to left layout
         self.left_layout.addWidget(self.scroll_area)
         self.left_layout.addWidget(bottom_panel)
@@ -130,11 +118,11 @@ class LayerPanel(QWidget):
         # Create right panel (group panel)
         self.right_panel = QWidget()
         self.right_layout = QVBoxLayout(self.right_panel)
-        
+
         # Create GroupLayerManager
         self.group_layer_manager = GroupLayerManager(self, canvas=self.canvas)
-        
-        # Add only the create_group_button and group_panel to right layout
+
+        # Add the create_group_button and group_panel to right layout
         self.right_layout.addWidget(self.group_layer_manager.create_group_button)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
@@ -142,20 +130,20 @@ class LayerPanel(QWidget):
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.left_panel)
         self.splitter.addWidget(self.right_panel)
-        
+
         # Add splitter to main layout
         self.layout.addWidget(self.splitter)
-        
+
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
         self.current_set = 1  # Current set number
         self.set_counts = {1: 0}  # Dictionary to keep track of counts for each set
         self.set_colors = {1: QColor('purple')}  # Dictionary to store colors for each set
-      
+
         # Initialize masked mode variables
         self.masked_mode = False
         self.first_masked_layer = None
-        
+
         # Create notification label
         self.notification_label = QLabel()
         self.notification_label.setAlignment(Qt.AlignCenter)
@@ -169,8 +157,24 @@ class LayerPanel(QWidget):
         # Initialize should_draw_names attribute
         self.should_draw_names = False
 
-        # Initialize group-related variables
+        # Initialize groups
         self.groups = {}
+
+        logging.info("LayerPanel initialized")
+
+    def set_theme(self, theme_name):
+        """Set the theme of the layer panel without altering child widget styles."""
+        palette = self.palette()
+        if theme_name == "Dark":
+            palette.setColor(QPalette.Window, QColor("#2C2C2C"))
+            palette.setColor(QPalette.WindowText, QColor("black"))
+        else:
+            palette.setColor(QPalette.Window, QColor("#FFFFFF"))
+            palette.setColor(QPalette.WindowText, QColor("black"))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
+
 
     def create_group(self):
         group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")

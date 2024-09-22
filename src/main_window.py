@@ -5,8 +5,9 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog
 )
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSlot
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
+from PyQt5.QtWidgets import QApplication
 
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
@@ -15,35 +16,47 @@ from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
+
+# main_window.py
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         logging.info("Initializing MainWindow")
 
-        # Set window properties
-        self.setWindowTitle("OpenStrand Studio")
-        self.setMinimumSize(900, 900)
-
         # Initialize components
         self.canvas = StrandDrawingCanvas()
         self.layer_panel = LayerPanel(self.canvas)
+
+        # Use the GroupLayerManager from layer_panel
+        self.group_layer_manager = self.layer_panel.group_layer_manager
+
+        logging.info(f"Canvas set in MainWindow: {self.canvas}")
+
+        # Create settings dialog
+        self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
+
+        # Verify that group_layer_manager is properly initialized
+        if self.group_layer_manager is None:
+            logging.error("group_layer_manager is None")
+        else:
+            logging.info("group_layer_manager is initialized")
+
+        # Ensure that on_theme_changed method exists
+        if hasattr(self.group_layer_manager, 'on_theme_changed'):
+            logging.info("group_layer_manager.on_theme_changed exists")
+        else:
+            logging.error("group_layer_manager.on_theme_changed does not exist")
+
+   
+        # Proceed with the rest of your setup
         self.setup_ui()
-        self.setup_connections()  # Assuming this method exists
+        self.setup_connections()
         self.current_mode = None
         self.previous_mode = None
         self.set_attach_mode()
         self.selected_strand = None
 
-        # Get the group layer manager from the layer panel
-        self.group_layer_manager = self.layer_panel.group_layer_manager
-        self.group_layer_manager.set_canvas(self.canvas)
-        self.canvas.set_group_layer_manager(self.group_layer_manager)
-        logging.info(f"Canvas set in MainWindow: {self.canvas}")
-
-        # Connect group operation signal
-        self.layer_panel.group_layer_manager.group_panel.group_operation.connect(
-            self.layer_panel.group_layer_manager.on_group_operation
-        )
 
     def setup_ui(self):
         logging.info("Entered setup_ui")
@@ -77,6 +90,7 @@ class MainWindow(QMainWindow):
         # Create the settings button
         self.settings_button = QPushButton()
         self.settings_button.setFixedSize(32, 32)
+        self.settings_button.setObjectName("settingsButton")  # Assign an object name for stylesheet targeting
 
         # Set the gear icon or fallback to Unicode character if the image is not found
         gear_icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'settings_icon.png'))
@@ -91,14 +105,15 @@ class MainWindow(QMainWindow):
             self.settings_button.setText('⚙')
             self.settings_button.setFont(QFont('Segoe UI Symbol', 16))  # Adjust font if necessary
 
-        # Style the settings button
+        # Style the settings button to have a transparent background
         self.settings_button.setStyleSheet("""
-            QPushButton {
+            QPushButton#settingsButton {
+                background-color: rgba(150, 150, 150, 255);
                 border: none;
-                border-radius: 16px;
+                border-radius: 18px;
             }
-            QPushButton:hover {
-                background-color: rgba(0, 0, 0, 20);
+            QPushButton#settingsButton:hover {
+                background-color: rgba(200, 200, 200, 50); /* Light transparent hover effect */
             }
         """)
 
@@ -134,6 +149,10 @@ class MainWindow(QMainWindow):
         # Set minimum widths
         left_widget.setMinimumWidth(200)
         self.layer_panel.setMinimumWidth(100)
+
+        # Apply button styles
+        self.setup_button_styles()
+
     def setup_connections(self):
         # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize
@@ -198,8 +217,43 @@ class MainWindow(QMainWindow):
 
     def open_settings_dialog(self):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
+        settings_dialog.theme_changed.connect(self.apply_theme)  # Connect the signal
         settings_dialog.exec_()
 
+    def apply_theme(self, theme_name):
+        if theme_name == "Dark":
+            style_sheet = """
+                QWidget {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                /* Apply styles to all QPushButtons except the settings button */
+                QPushButton:not(#settingsButton) {
+                    background-color: #3C3C3C;
+                    color: white;
+                }
+                /* Add styles for other widgets as needed */
+            """
+        else:
+            style_sheet = """
+                QWidget {
+                    background-color: #FFFFFF;
+                    color: black;
+                }
+                /* Apply styles to all QPushButtons except the settings button */
+                QPushButton:not(#settingsButton) {
+                    background-color: #F0F0F0;
+                    color: black;
+                }
+                /* Add styles for other widgets as needed */
+            """
+        # Apply the style sheet to the application
+        QApplication.instance().setStyleSheet(style_sheet)
+        # Update the canvas theme if needed
+        self.canvas.set_theme(theme_name)
+        self.canvas.update()
+        # Update the layer panel theme
+        self.layer_panel.set_theme(theme_name)
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:
             if strand.set_number == set_number:
@@ -221,6 +275,9 @@ class MainWindow(QMainWindow):
                 background-color: {bg_color};
                 color: {text_color};
                 font-weight: bold;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
@@ -232,30 +289,39 @@ class MainWindow(QMainWindow):
                 background-color: {checked_color};
             }}
         """
-
         buttons = [
-            (self.attach_button, "#87CEFA", "black", "#1E90FF", "#4169E1", "#5F9EA0"),
-            (self.move_button, "#DBC323", "black", "#3CB371", "#2E8B57", "#9ACD32"),
-            (self.rotate_button, "#FFA07A", "black", "#FF7F50", "#FF6347", "#CD5C5C"),
-            (self.select_strand_button, "#FFB6C1", "black", "#FF69B4", "#DB7093", "#C71585"),
-            (self.mask_button, "#7B68EE", "black", "#6A5ACD", "#483D8B", "#4B0082"),
+            (self.attach_button, "#3C8DAD", "white", "#5CA3B8", "#2B6A85", "#2B6A85"),
+            (self.move_button, "#AD8D3C", "white", "#B8B35C", "#856A2B", "#856A2B"),
+            (self.rotate_button, "#8D3CAD", "white", "#B35CB8", "#6A2B85", "#6A2B85"),
+            (self.toggle_grid_button, "#DDA0DD", "black", "#DA70D6", "#BA55D3", "#BA55D3"),
+            (self.angle_adjust_button, "#DBAA93", "black", "#C69C6D", "#B38B5D", "#B38B5D"),
+            (self.save_button, "#20B2AA", "white", "#48D1CC", "#008B8B", "#008B8B"),
+            (self.load_button, "#FF69B4", "white", "#FF1493", "#C71585", "#C71585"),
+            (self.save_image_button, "#4CAF50", "white", "#45a049", "#3e8e41", "#3e8e41"),
+            (self.select_strand_button, "#FFA500", "white", "#FFB732", "#FF8C00", "#FF8C00"),
+            (self.mask_button, "#800080", "white", "#9932CC", "#4B0082", "#4B0082"),
         ]
-
         for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:
-            button.setStyleSheet(button_style.format(
-                bg_color=bg_color,
-                text_color=text_color,
-                hover_color=hover_color,
-                pressed_color=pressed_color,
-                checked_color=checked_color
-            ))
-            button.setCheckable(True)
+            # Avoid applying styles to the settings button
+            if button != self.settings_button:
+                button.setStyleSheet(button_style.format(
+                    bg_color=bg_color,
+                    text_color=text_color,
+                    hover_color=hover_color,
+                    pressed_color=pressed_color,
+                    checked_color=checked_color
+                ))
+                button.setCheckable(True)
 
+        # Style specific buttons that don't follow the generic pattern
         self.layer_panel.lock_layers_button.setStyleSheet("""
             QPushButton {
                 background-color: orange;
                 color: white;
                 font-weight: bold;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
             }
             QPushButton:hover {
                 background-color: darkorange;
@@ -270,6 +336,9 @@ class MainWindow(QMainWindow):
                 background-color: #E6E6FA;
                 color: black;
                 font-weight: bold;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
             }
             QPushButton:hover {
                 background-color: #D8BFD8;
@@ -283,12 +352,16 @@ class MainWindow(QMainWindow):
             QPushButton {
                 background-color: lightgreen;
                 font-weight: bold;
+                color: black;                                           
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #90EE90;
+                background-color: #6EB56E;
             }
             QPushButton:pressed {
-                background-color: #32CD32;
+                background-color: #4D804D;
             }
         """)
 
@@ -296,95 +369,19 @@ class MainWindow(QMainWindow):
             QPushButton {
                 background-color: lightyellow;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #FFFFE0;
-            }
-            QPushButton:pressed {
-                background-color: #FAFAD2;
-            }
-        """)
-
-        self.toggle_grid_button.setStyleSheet("""
-            QPushButton {
-                background-color: #DDA0DD;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #DA70D6;
-            }
-            QPushButton:pressed {
-                background-color: #BA55D3;
-            }
-        """)
-        self.angle_adjust_button.setStyleSheet("""
-            QPushButton {
-                background-color: #DBAA93;
-                color: black;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #C69C6D;
-            }
-            QPushButton:pressed {
-                background-color: #B38B5D;
-            }
-        """)
-
-        self.save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #20B2AA;
-                color: white;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #48D1CC;
-            }
-            QPushButton:pressed {
-                background-color: #008B8B;
-            }
-        """)
-
-        self.load_button.setStyleSheet("""
-            QPushButton {
-                background-color: #FF69B4;
-                color: white;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #FF1493;
-            }
-            QPushButton:pressed {
-                background-color: #C71585;
-            }
-        """)
-
-        self.save_image_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3e8e41;
-            }
-        """)
-
-        # Style for the settings button
-        self.settings_button.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
+                color: black;                                                                                      
                 border: none;
-                border-radius: 16px;
+                padding: 8px 16px;
+                border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: rgba(0, 0, 0, 20);
+                background-color: #D7D9A3;
+            }
+            QPushButton:pressed {
+                background-color: #C0C286;
             }
         """)
+
     def update_button_states(self, active_mode):
         buttons = {
             "attach": self.attach_button,
@@ -460,7 +457,8 @@ class MainWindow(QMainWindow):
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
     def open_settings_dialog(self):
-        settings_dialog = SettingsDialog(self)
+        settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
+        settings_dialog.theme_changed.connect(self.apply_theme)
         settings_dialog.exec_()
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:

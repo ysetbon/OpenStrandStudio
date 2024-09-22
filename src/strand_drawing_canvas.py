@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
+
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     strand_created = pyqtSignal(object)
@@ -50,7 +51,18 @@ class StrandDrawingCanvas(QWidget):
         self.original_strand_positions = {}
         
         self.rotate_mode = RotateMode(self)
-
+    def set_theme(self, theme_name):
+        if theme_name == "Dark":
+            self.setStyleSheet("""
+                background-color: #2C2C2C;
+                /* Add styles specific to the canvas if needed */
+            """)
+        else:
+            self.setStyleSheet("""
+                background-color: #FFFFFF;
+                /* Add styles specific to the canvas if needed */
+            """)
+        self.update()
     def start_group_rotation(self, group_name):
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel

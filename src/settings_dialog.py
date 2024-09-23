@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem, QSizePolicy
 )
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QMovie
 from translations import translations
 
 class SettingsDialog(QDialog):
@@ -15,6 +16,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle(translations[self.parent().language_code]['settings'])
         self.setMinimumSize(600, 400)
         self.setup_ui()
+        self.load_gifs()  # Load GIFs after setting up the UI
 
     def setup_ui(self):
         _ = translations[self.parent().language_code]
@@ -98,8 +100,21 @@ class SettingsDialog(QDialog):
         # Tutorial Page
         self.tutorial_widget = QWidget()
         tutorial_layout = QVBoxLayout(self.tutorial_widget)
-        self.tutorial_label = QLabel(_['tutorial_info'])
-        tutorial_layout.addWidget(self.tutorial_label)
+
+        self.gif_labels = []  # Store references to the labels
+
+        for i in range(6):
+            # Explanation Label
+            explanation_label = QLabel(_[f'gif_explanation_{i+1}'])
+            tutorial_layout.addWidget(explanation_label)
+
+            # GIF Label
+            gif_label = QLabel()
+            gif_label.setFixedSize(400, 300)
+            gif_label.setAlignment(Qt.AlignCenter)
+            tutorial_layout.addWidget(gif_label)
+            self.gif_labels.append(gif_label)
+
         self.stacked_widget.addWidget(self.tutorial_widget)
 
         # About Page
@@ -171,3 +186,21 @@ class SettingsDialog(QDialog):
         self.update_translations()
         # Close the settings dialog
         self.accept()
+
+    def load_gifs(self):
+        gif_paths = [
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif1.gif',
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif2.gif',
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif3.gif',
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif4.gif',
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif5.gif',
+            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif6.gif',
+        ]
+
+        for gif_label, gif_path in zip(self.gif_labels, gif_paths):
+            movie = QMovie(gif_path)
+            if movie.isValid():
+                gif_label.setMovie(movie)
+                movie.start()
+            else:
+                gif_label.setText("Failed to load GIF")

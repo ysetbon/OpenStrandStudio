@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
             }}
         """
         buttons = [
-            (self.attach_button, "#3C8DAD", "white", "#5CA3B8", "#2B6A85", "#2B6A85"),
+            (self.attach_button, "#5F7C88", "white", "#AFBDC3", "#2D5463", "#133D4D"),
             (self.move_button, "#AD8D3C", "white", "#B8B35C", "#856A2B", "#856A2B"),
             (self.rotate_button, "#8D3CAD", "white", "#B35CB8", "#6A2B85", "#6A2B85"),
             (self.toggle_grid_button, "#DDA0DD", "black", "#DA70D6", "#BA55D3", "#BA55D3"),
@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
             (self.save_button, "#20B2AA", "white", "#48D1CC", "#008B8B", "#008B8B"),
             (self.load_button, "#FF69B4", "white", "#FF1493", "#C71585", "#C71585"),
             (self.save_image_button, "#4CAF50", "white", "#45a049", "#3e8e41", "#3e8e41"),
-            (self.select_strand_button, "#FFA500", "white", "#FFB732", "#FF8C00", "#FF8C00"),
+            (self.select_strand_button, "#FFA500", "white", "#FFEBC7", "#FF8C00", "#FF8C00"),
             (self.mask_button, "#800080", "white", "#9932CC", "#4B0082", "#4B0082"),
         ]
         for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:

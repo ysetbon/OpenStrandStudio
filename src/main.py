@@ -25,9 +25,18 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
 
-    # Set the icon for the entire application
-    app_icon = resource_path("box_stitch.ico")
-    app.setWindowIcon(QIcon(app_icon))
+    # Determine the base path
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    # Load the icon
+    icon_path = os.path.join(base_path, 'box_stitch.ico')
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+    else:
+        print(f"Icon not found at {icon_path}")
 
     window = MainWindow()
     window.show()

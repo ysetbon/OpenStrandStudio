@@ -131,3 +131,16 @@ Fixed Features:
 1. Fixed group issues.
 2. Now saving and loading takes into consideration the groups.
 3. Masks are better drawn.
+
+------
+## Version 1.061 (Released: 9/23/2024)
+
+### New Features:
+
+1. Settings Dialog:
+   - Introduced a new settings dialog with the following options:
+     - Theme customization: Users can now change the color theme of the application windows.
+     - Language selection: Added support for French language interface.
+
+2. Upcoming Features:
+   - A comprehensive tutorial for beginners is planned for inclusion in the settings dialog in the next version.

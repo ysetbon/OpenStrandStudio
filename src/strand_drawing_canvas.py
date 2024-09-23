@@ -364,10 +364,10 @@ class StrandDrawingCanvas(QWidget):
         """Initialize all properties used in the StrandDrawingCanvas."""
         self.strands = []  # List to store all strands
         self.current_strand = None  # Currently active strand
-        self.strand_width = 37  # Width of strands
+        self.strand_width = 46  # Width of strands
         self.strand_color = QColor('purple')  # Default color for strands
         self.stroke_color = Qt.black  # Color for strand outlines
-        self.stroke_width = 3  # Width of strand outlines
+        self.stroke_width = 4  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
         self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
@@ -377,7 +377,7 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand = None  # Currently selected strand
         self.last_selected_strand_index = None  # Index of the last selected strand
         self.strand_colors = {}  # Dictionary to store colors for each strand set
-        self.grid_size = 25  # Size of grid cells
+        self.grid_size = 26  # Size of grid cells
         self.show_grid = True  # Flag to show/hide grid
         self.should_draw_names = False  # Flag to show/hide strand names
         self.newest_strand = None  # Track the most recently created strand

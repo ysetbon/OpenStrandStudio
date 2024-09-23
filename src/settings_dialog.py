@@ -101,6 +101,10 @@ class SettingsDialog(QDialog):
         self.tutorial_widget = QWidget()
         tutorial_layout = QVBoxLayout(self.tutorial_widget)
 
+        # Add a tutorial label
+        self.tutorial_label = QLabel(_['tutorial_info'])
+        tutorial_layout.addWidget(self.tutorial_label)
+
         self.gif_labels = []  # Store references to the labels
 
         for i in range(6):

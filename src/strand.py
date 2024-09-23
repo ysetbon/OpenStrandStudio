@@ -6,7 +6,7 @@ class Strand:
     """
     Represents a basic strand in the application.
     """
-    def __init__(self, start, end, width, color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=5):
+    def __init__(self, start, end, width, color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=4):
         self.start = start
         self.end = end
         self.width = width

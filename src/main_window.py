@@ -36,6 +36,9 @@ class MainWindow(QMainWindow):
         # Use the GroupLayerManager from layer_panel
         self.group_layer_manager = self.layer_panel.group_layer_manager
 
+        # Set the group_layer_manager in the canvas
+        self.canvas.group_layer_manager = self.group_layer_manager
+
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
         # Create settings dialog
@@ -52,13 +55,9 @@ class MainWindow(QMainWindow):
             logging.info("group_layer_manager.on_theme_changed exists")
         else:
             logging.error("group_layer_manager.on_theme_changed does not exist")
-        self.group_layer_manager = GroupLayerManager(
-    parent=self,
-    layer_panel=self.layer_panel,
-    canvas=self.canvas
-)
-        self.language_changed.connect(self.group_layer_manager.update_translations)
-   
+        self.group_layer_manager = self.layer_panel.group_layer_manager
+
+
         # Proceed with the rest of your setup
         self.setup_ui()
         self.setup_connections()
@@ -301,7 +300,7 @@ class MainWindow(QMainWindow):
             }}
         """
         buttons = [
-            (self.attach_button, "#5F7C88", "white", "#AFBDC3", "#2D5463", "#133D4D"),
+            (self.attach_button, "#436A7C", "white", "#AFBDC3", "#34383A", "#133D4D"),
             (self.move_button, "#AD8D3C", "white", "#B8B35C", "#856A2B", "#856A2B"),
             (self.rotate_button, "#8D3CAD", "white", "#B35CB8", "#6A2B85", "#6A2B85"),
             (self.toggle_grid_button, "#DDA0DD", "black", "#DA70D6", "#BA55D3", "#BA55D3"),
@@ -915,8 +914,7 @@ class MainWindow(QMainWindow):
             self.settings_dialog.update_translations()
         if self.canvas:
             self.canvas.language_code = language_code
-        # Update translations in the GroupLayerManager
-        self.group_layer_manager.update_translations()
+
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]

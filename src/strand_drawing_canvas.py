@@ -19,6 +19,7 @@ class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
+    language_changed = pyqtSignal(str)  # Signal to emit when language changes
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -65,6 +66,11 @@ class StrandDrawingCanvas(QWidget):
         # For example, if you have tooltips or context menus:
         # self.some_action.setToolTip(_['some_tooltip'])
         pass  # Remove or replace this line with actual translation updates
+
+       
+    def set_language(self, language_code):
+        self.language_code = language_code
+        self.language_changed.emit(language_code)
     def set_theme(self, theme_name):
         if theme_name == "Dark":
             self.setStyleSheet("""

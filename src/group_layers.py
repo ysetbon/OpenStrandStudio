@@ -10,7 +10,7 @@ import logging
 from strand_drawing_canvas import StrandDrawingCanvas   
 from math import atan2, degrees
 from PyQt5.QtGui import QIntValidator
- 
+from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtCore import Qt
 import logging
@@ -122,6 +122,9 @@ class CollapsibleGroupWidget(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
         self.layout.setSpacing(0)
+        # Access the current language code
+        self.language_code = self.group_panel.canvas.language_code if self.group_panel.canvas else 'en'
+        self.update_translations()  # Call the method to set initial translations
 
         # Group button (collapsible header)
         self.group_button = QPushButton(self.group_name)
@@ -172,11 +175,12 @@ class CollapsibleGroupWidget(QWidget):
 
 
     def show_context_menu(self, position):
+        _ = translations[self.language_code]
         context_menu = QMenu(self)
-        move_strands_action = context_menu.addAction("Move Group Strands")
-        rotate_strands_action = context_menu.addAction("Rotate Group Strands")
-        edit_angles_action = context_menu.addAction("Edit Strand Angles")
-        delete_group_action = context_menu.addAction("Delete Group")  # New action added
+        move_strands_action = context_menu.addAction(_['move_group_strands'])
+        rotate_strands_action = context_menu.addAction(_['rotate_group_strands'])
+        edit_angles_action = context_menu.addAction(_['edit_strand_angles'])
+        delete_group_action = context_menu.addAction(_['delete_group'])
 
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
 
@@ -188,11 +192,16 @@ class CollapsibleGroupWidget(QWidget):
             self.group_panel.edit_strand_angles(self.group_name)
         elif action == delete_group_action:
             self.group_panel.delete_group(self.group_name)
+
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
         self.content_widget.setVisible(not self.is_collapsed)
         self.update_size()
-
+    def update_translations(self):
+        # Update translations when language changes
+        self.language_code = self.group_panel.canvas.language_code if self.group_panel.canvas else 'en'
+        _ = translations[self.language_code]
+        # Update any other texts if necessary
     def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
@@ -653,13 +662,15 @@ from PyQt5.QtWidgets import QInputDialog, QPushButton
 class GroupLayerManager:
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
 
-    def __init__(self, layer_panel, canvas=None):
+    def __init__(self, parent, layer_panel, canvas=None):
+
+        self.parent = parent  # Reference to the main window
         self.layer_panel = layer_panel
         self.canvas = canvas
         self.group_panel = GroupPanel(layer_panel=self.layer_panel, canvas=self.canvas)
         self.groups = self.group_panel.groups  # Reference to the group data
         logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
-     
+        
         if self.canvas:
             logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
             logging.info("Connecting canvas signals to GroupLayerManager")
@@ -668,15 +679,33 @@ class GroupLayerManager:
             self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         else:
             logging.warning("Canvas not provided to GroupLayerManager")
+        # Access the current language code from the main window
+        self.language_code = self.parent.language_code
+        _ = translations[self.language_code]
 
-        self.create_group_button = QPushButton("Create Group")
+
+        # Create the "Create Group" button with translated text
+        self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)
 
+    def update_translations(self):
+        # Access the current translation dictionary from the main window
+        self.language_code = self.parent.language_code
+        _ = translations[self.language_code]
+
+        # Update the "Create Group" button text
+        self.create_group_button.setText(_['create_group'])
+
+        # Update any other texts if necessary
+        logging.info(f"Updated translations to {self.language_code}")
     def set_canvas(self, canvas):
         self.canvas = canvas
         self.group_panel.set_canvas(canvas)
         self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         logging.info(f"Canvas set on GroupLayerManager: {self.canvas}")
+
+        # Connect the language_changed signal to update_translations
+        self.canvas.language_changed.connect(self.update_translations)
 
     def on_strand_created(self, new_strand):
         logging.info(f"New strand created: {new_strand.layer_name}")
@@ -801,10 +830,15 @@ class GroupLayerManager:
                 main_layers.add(part)
 
         return main_layers    
+
+
     def create_group(self):
-        # Prompt the user to enter a group name
+        # Access the current translation dictionary
+        _ = translations[self.language_code]
+
+        # Prompt the user to enter a group name with translated text
         group_name, ok = QInputDialog.getText(
-            self.layer_panel, "Create Group", "Enter group name:"
+            self.layer_panel, _['create_group'], _['enter_group_name']
         )
         if ok and group_name:
             # Get the available main strands
@@ -813,7 +847,7 @@ class GroupLayerManager:
             # Open a dialog to select main strands to include in the group
             selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
             if not selected_main_strands:
-                logging.info("No main strands selected. Group creation cancelled.")
+                logging.info(_['group_creation_cancelled'])
                 return
 
             layers_data = []

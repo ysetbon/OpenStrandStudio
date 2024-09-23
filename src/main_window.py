@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog
 )
-from PyQt5.QtCore import Qt, QSize, pyqtSlot
+from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 from PyQt5.QtWidgets import QApplication
 
@@ -21,6 +21,8 @@ from translations import translations
 # main_window.py
 
 class MainWindow(QMainWindow):
+    language_changed = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         self.language_code = 'en'  # Default language
@@ -50,7 +52,12 @@ class MainWindow(QMainWindow):
             logging.info("group_layer_manager.on_theme_changed exists")
         else:
             logging.error("group_layer_manager.on_theme_changed does not exist")
-
+        self.group_layer_manager = GroupLayerManager(
+    parent=self,
+    layer_panel=self.layer_panel,
+    canvas=self.canvas
+)
+        self.language_changed.connect(self.group_layer_manager.update_translations)
    
         # Proceed with the rest of your setup
         self.setup_ui()
@@ -906,6 +913,10 @@ class MainWindow(QMainWindow):
         self.layer_panel.translate_ui()
         if self.settings_dialog.isVisible():
             self.settings_dialog.update_translations()
+        if self.canvas:
+            self.canvas.language_code = language_code
+        # Update translations in the GroupLayerManager
+        self.group_layer_manager.update_translations()
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]

@@ -44,6 +44,13 @@ translations = {
         'angle_label': 'Angle:',
         'length_label': 'Length:',
         'ok': 'OK',
+        'create_group': 'Create Group',
+        'enter_group_name': 'Enter group name:',
+        'group_creation_cancelled': 'No main strands selected. Group creation cancelled.',
+        'move_group_strands': 'Move Group Strands',
+        'rotate_group_strands': 'Rotate Group Strands',
+        'edit_strand_angles': 'Edit Strand Angles',
+        'delete_group': 'Delete Group',
     },
     'fr': {
         # MainWindow translations
@@ -90,5 +97,12 @@ translations = {
         'angle_label': 'Angle :',
         'length_label': 'Longueur :',
         'ok': 'OK',
+        'create_group': 'Créer un groupe',
+        'enter_group_name': 'Entrez le nom du groupe :',
+        'group_creation_cancelled': 'Aucun brin principal sélectionné. Création du groupe annulée.',
+        'move_group_strands': 'Déplacer les Brins du Groupe',
+        'rotate_group_strands': 'Tourner les Brins du Groupe',
+        'edit_strand_angles': 'Éditer les Angles des Brins',
+        'delete_group': 'Supprimer le Groupe',
     }
 }

@@ -123,7 +123,8 @@ class LayerPanel(QWidget):
         self.right_layout = QVBoxLayout(self.right_panel)
 
         # Create GroupLayerManager
-        self.group_layer_manager = GroupLayerManager(self, canvas=self.canvas)
+        # In layer_panel.py, inside LayerPanel.__init__
+        self.group_layer_manager = GroupLayerManager(parent=self, layer_panel=self, canvas=self.canvas)
 
         # Add the create_group_button and group_panel to right layout
         self.right_layout.addWidget(self.group_layer_manager.create_group_button)
@@ -209,17 +210,6 @@ class LayerPanel(QWidget):
         # Example:
         # self.draw_names_button.setToolTip(_['draw_names_tooltip'])
         # Similarly update other tooltips or accessible descriptions
-
-    def create_group(self):
-        group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
-        if ok and group_name:
-            layers = [button.text() for button in self.layer_buttons]
-            dialog = LayerSelectionDialog(layers, self)
-            if dialog.exec_():
-                selected_layers = dialog.get_selected_layers()
-                for layer in selected_layers:
-                    self.right_panel.add_layer_to_group(layer, group_name)
-
 
 
     def request_draw_names(self):

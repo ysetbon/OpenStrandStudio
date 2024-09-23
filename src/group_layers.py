@@ -512,13 +512,21 @@ class GroupMoveDialog(QDialog):
         super().__init__(parent)
         self.group_name = group_name
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
-        self.setWindowTitle(f"Move Group Strands: {group_name}")
+
+        # Define the language code, defaulting to 'en' if not available
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+
+        self.setWindowTitle(f"{_['move_group_strands']} {group_name}")
+
         self.total_dx = 0
         self.total_dy = 0
         self.setup_ui()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
 
         # dx layout
         dx_layout = QHBoxLayout()
@@ -565,7 +573,7 @@ class GroupMoveDialog(QDialog):
         layout.addLayout(dy_layout)
 
         # Snap to Grid button
-        self.snap_to_grid_button = QPushButton("Snap to Grid")
+        self.snap_to_grid_button = QPushButton(_['snap_to_grid'])
         self.snap_to_grid_button.clicked.connect(self.snap_to_grid)
         layout.addWidget(self.snap_to_grid_button)
 
@@ -631,7 +639,7 @@ class GroupMoveDialog(QDialog):
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Select Layers for Group")
+        self.setWindowTitle("Select Layers for Group (Sélectionner les calques pour le groupe)")
         self.layout = QVBoxLayout(self)
         
         self.layer_list = QListWidget()
@@ -663,6 +671,7 @@ class GroupLayerManager:
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
 
     def __init__(self, parent, layer_panel, canvas=None):
+        self.main_window = parent  # Now, parent is the MainWindow
 
         self.parent = parent  # Reference to the main window
         self.layer_panel = layer_panel
@@ -679,31 +688,32 @@ class GroupLayerManager:
             self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         else:
             logging.warning("Canvas not provided to GroupLayerManager")
-        # Access the current language code from the main window
-        self.language_code = self.parent.language_code
-        _ = translations[self.language_code]
 
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        
 
         # Create the "Create Group" button with translated text
         self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)
 
-    def update_translations(self):
-        # Access the current translation dictionary from the main window
-        self.language_code = self.parent.language_code
-        _ = translations[self.language_code]
-
-        # Update the "Create Group" button text
         self.create_group_button.setText(_['create_group'])
+        # Connect the language_changed signal to update_translations
+        if self.canvas:
+            self.canvas.language_changed.connect(self.update_translations)
 
-        # Update any other texts if necessary
-        logging.info(f"Updated translations to {self.language_code}")
+
+    def update_translations(self):
+        """Update UI texts to the selected language."""
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        self.create_group_button.setText(_['create_group'])
+        # Update other UI elements as needed
+        logging.info(f"GroupLayerManager updated to language {self.language_code}")
     def set_canvas(self, canvas):
         self.canvas = canvas
         self.group_panel.set_canvas(canvas)
-        self.canvas.groups = {}  # Initialize the groups attribute in the canvas
         logging.info(f"Canvas set on GroupLayerManager: {self.canvas}")
-
         # Connect the language_changed signal to update_translations
         self.canvas.language_changed.connect(self.update_translations)
 
@@ -779,12 +789,20 @@ class GroupLayerManager:
                 return part
         return None  # Return None if no numeric part is found
     def open_main_strand_selection_dialog(self, main_strands):
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        
         dialog = QDialog(self.layer_panel)
-        dialog.setWindowTitle("Select Main Strands (Sélectionner les principaux axes)")
+        dialog.setWindowTitle(_['select_main_strands'])
 
         layout = QVBoxLayout()
 
-        info_label = QLabel("Select main strands to include in the group: (Sélectionner les principaux axes à inclure dans le groupe:)")
+        # Create the info label
+        info_label = QLabel(_['select_main_strands_to_include_in_the_group'])
+        
+  
+        # **Add the info label to the layout**
+        layout.addWidget(info_label)
 
         checkboxes = []
         for main_strand in main_strands:
@@ -794,7 +812,7 @@ class GroupLayerManager:
 
         buttons_layout = QHBoxLayout()
         ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QPushButton(_['cancel'])
         buttons_layout.addWidget(ok_button)
         buttons_layout.addWidget(cancel_button)
         layout.addLayout(buttons_layout)
@@ -818,7 +836,7 @@ class GroupLayerManager:
         if dialog.exec_() == QDialog.Accepted:
             return set(selected_main_strands)
         else:
-            return None    
+            return None   
     def extract_main_layers(self, layer_name):
         # Split the layer name by underscores and collect all numeric parts
         parts = layer_name.split('_')
@@ -833,6 +851,7 @@ class GroupLayerManager:
 
     def create_group(self):
         # Access the current translation dictionary
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
 
         # Prompt the user to enter a group name with translated text
@@ -1138,17 +1157,26 @@ class GroupRotateDialog(QDialog):
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
         self.group_name = group_name
+        self.group_name = group_name
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
-        self.setWindowTitle(f"Rotate Group Strands: {group_name}")
+
+                # Define the language code, defaulting to 'en' if not available
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+
+        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
+        self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
         self.setup_ui()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
 
         # Angle slider
         angle_layout = QHBoxLayout()
-        angle_layout.addWidget(QLabel("Angle:"))
+        angle_layout.addWidget(QLabel(_['angle']))
         self.angle_slider = QSlider(Qt.Horizontal)
         self.angle_slider.setRange(-180, 180)
         self.angle_slider.setValue(0)
@@ -1158,7 +1186,7 @@ class GroupRotateDialog(QDialog):
 
         # Precise angle input
         precise_angle_layout = QHBoxLayout()
-        precise_angle_layout.addWidget(QLabel("Precise Angle:"))
+        precise_angle_layout.addWidget(QLabel(_['precise_angle']))
         self.angle_input = QLineEdit()
         self.angle_input.setValidator(QDoubleValidator(-180, 180, 2))
         self.angle_input.setText("0")
@@ -1253,7 +1281,10 @@ class StrandAngleEditDialog(QDialog):
         self.group_name = group_name
         self.canvas = canvas
         self.linked_strands = {}
-        self.setWindowTitle(f"Edit Strand Angles: {group_name}")
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        self.setWindowTitle(f"{_['edit_strand_angles']} {group_name}")
+
         self.updating = False
 
         # Add initializing flag
@@ -1312,10 +1343,11 @@ class StrandAngleEditDialog(QDialog):
 
     def setup_bottom_layout(self):
         bottom_layout = QHBoxLayout()
-        
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
         # X Angle input
         x_angle_layout = QHBoxLayout()
-        x_angle_label = QLabel("X Angle:")
+        x_angle_label = QLabel(_['X_angle'])
         self.x_angle_input = QLineEdit()
         self.x_angle_input.setFixedWidth(100)
         self.x_angle_input.setText("0.00")
@@ -1365,12 +1397,78 @@ class StrandAngleEditDialog(QDialog):
         return bottom_layout
 
     def setup_table(self):
-        headers = ["Layer", "Angle", "Adjust (\u00B1 1\u00B0)", "Fast Adjust", "End X", "End Y", "X", "180+X", "Attachable"]
+        # Retrieve the current language code
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        
+        # Define header keys for translations
+        header_keys = [
+            'layer',
+            'angle',
+            'adjust_1_degree',
+            'fast_adjust',
+            'end_x',
+            'end_y',
+            'x',
+            'x_plus_180',
+            'attachable'
+        ]
+        
+        # Fetch translated header labels
+        headers = [
+            _['layer'],
+            _['angle'],
+            _['adjust_1_degree'],  # Adjust (±1°)
+            _['fast_adjust'],
+            _['end_x'],
+            _['end_y'],
+            _['x'],
+            _['x_plus_180'],
+            _['attachable']
+        ]
+        
+        # Set up the table with translated headers
         self.table.setColumnCount(len(headers))
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setItemDelegate(FloatDelegate())
         self.table.itemChanged.connect(self.on_item_changed)
+
+    def retranslate_ui(self):
+        """Update the table headers to match the current language."""
+        if not hasattr(self, 'table'):
+            return
+        
+        _ = translations[self.language_code]
+        
+        # Define header keys for translations
+        header_keys = [
+            'layer',
+            'angle',
+            'adjust_1_degree',
+            'fast_adjust',
+            'end_x',
+            'end_y',
+            'x',
+            'x_plus_180',
+            'attachable'
+        ]
+        
+        # Fetch translated header labels
+        headers = [
+            _['layer'],
+            _['angle'],
+            _['adjust_1_degree'],  # Adjust (±1°)
+            _['fast_adjust'],
+            _['end_x'],
+            _['end_y'],
+            _['x'],
+            _['x_plus_180'],
+            _['attachable']
+        ]
+        
+        # Update the table headers
+        self.table.setHorizontalHeaderLabels(headers)
 
     def adjust_dialog_size(self):
         # Calculate the required width and height

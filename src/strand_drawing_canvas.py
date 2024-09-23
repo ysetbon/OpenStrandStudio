@@ -19,7 +19,7 @@ class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
-    language_changed = pyqtSignal(str)  # Signal to emit when language changes
+    language_changed = pyqtSignal()  # Signal to emit when language changes
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""

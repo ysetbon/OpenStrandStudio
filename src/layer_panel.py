@@ -63,6 +63,7 @@ class LayerPanel(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None  # Stores the index of the last selected layer
+        self.group_layer_manager = GroupLayerManager(parent=parent, layer_panel=self, canvas=self.canvas)
 
         # Create left panel (existing layer panel)
         self.left_panel = QWidget()

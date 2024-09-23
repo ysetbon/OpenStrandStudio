@@ -178,19 +178,19 @@ class SettingsDialog(QDialog):
         self.tutorial_label.setText(_['tutorial_info'])
         self.about_label.setText(_['about_info'])
 
+    # settings_dialog.py
+   # settings_dialog.py
     def apply_language_settings(self):
-        # Get the selected language code from the combo box
-        language_code = self.language_combobox.currentData()
-        # Update the language in the main window
-        self.parent().set_language(language_code)
-        # Update the canvas language code
-        if self.canvas:
+           # Get the selected language code from the combo box
+           language_code = self.language_combobox.currentData()
+           # Update the language in the main window
+           self.parent().set_language(language_code)
+           # Update the canvas language code and emit the signal
+           if self.canvas:
             self.canvas.language_code = language_code
-        # Update translations in the settings dialog
-        self.update_translations()
-        # Close the settings dialog
-        self.accept()
-
+            self.canvas.language_changed.emit()
+           # Close the settings dialog
+           self.accept()
     def load_gifs(self):
         gif_paths = [
             r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif1.gif',

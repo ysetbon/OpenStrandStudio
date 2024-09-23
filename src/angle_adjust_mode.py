@@ -3,6 +3,12 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleS
 from PyQt5.QtGui import QPainter, QPen, QColor
 import math
 
+from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel
+from PyQt5.QtGui import QPainter, QPen, QColor
+import math
+from translations import translations  # Import the translations
+
 class AngleAdjustMode:
     def __init__(self, canvas):
         self.canvas = canvas
@@ -39,16 +45,19 @@ class AngleAdjustMode:
         if not self.active_strand:
             return
 
+        # Get the current language translations
+        _ = translations[self.canvas.language_code]
+
         current_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end)
         current_length = self.calculate_length(self.active_strand.start, self.active_strand.end)
         
         dialog = QDialog(self.canvas)
-        dialog.setWindowTitle("Adjust Angle and Length")
+        dialog.setWindowTitle(_['adjust_angle_and_length'])
         layout = QVBoxLayout()
 
         # Angle adjustment
         angle_layout = QHBoxLayout()
-        angle_layout.addWidget(QLabel("Angle:"))
+        angle_layout.addWidget(QLabel(_['angle_label']))
         angle_slider = QSlider(Qt.Horizontal)
         angle_slider.setRange(-360, 360)
         angle_slider.setValue(int(current_angle))
@@ -64,7 +73,7 @@ class AngleAdjustMode:
 
         # Length adjustment
         length_layout = QHBoxLayout()
-        length_layout.addWidget(QLabel("Length:"))
+        length_layout.addWidget(QLabel(_['length_label']))
         length_slider = QSlider(Qt.Horizontal)
         length_slider.setRange(10, self.max_length)
         length_slider.setValue(int(current_length))
@@ -80,7 +89,7 @@ class AngleAdjustMode:
 
         layout.addLayout(length_layout)
 
-        ok_button = QPushButton("OK")
+        ok_button = QPushButton(_['ok'])
         ok_button.clicked.connect(dialog.accept)
         layout.addWidget(ok_button)
 

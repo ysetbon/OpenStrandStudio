@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         logging.info("Initializing MainWindow")
 
         # Initialize components
-        self.canvas = StrandDrawingCanvas()
+        self.canvas = StrandDrawingCanvas(parent=self)
         self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
 
         # Use the GroupLayerManager from layer_panel
@@ -257,6 +257,7 @@ class MainWindow(QMainWindow):
         self.canvas.update()
         # Update the layer panel theme
         self.layer_panel.set_theme(theme_name)
+
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:
             if strand.set_number == set_number:
@@ -890,15 +891,23 @@ class MainWindow(QMainWindow):
         self.update_mode("rotate")
         self.canvas.set_mode("rotate")
     def set_language(self, language_code):
+        """Set the application language and update all UI elements."""
         self.language_code = language_code
-        self.translate_ui()
-        if self.settings_dialog:
-            self.settings_dialog.update_translations()
-        if hasattr(self, 'about_dialog'):
-            self.about_dialog.update_translations()
-    # At the end of the translate_ui method in MainWindow
 
+        # Update the language code in all components
+        self.canvas.language_code = language_code
+        self.layer_panel.language_code = language_code
+        if self.settings_dialog:
+            self.settings_dialog.language_code = language_code
+
+        # Update translations in UI elements
+        self.translate_ui()
+        self.canvas.update_translations()
+        self.layer_panel.translate_ui()
+        if self.settings_dialog.isVisible():
+            self.settings_dialog.update_translations()
     def translate_ui(self):
+        """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
 
         # Update window title
@@ -916,11 +925,14 @@ class MainWindow(QMainWindow):
         self.load_button.setText(_['open'])
         self.save_image_button.setText(_['save_image'])
 
-        # Corrected line for layer panel's new strand button
-        self.layer_panel.add_new_strand_button.setText(_['add_new_strand'])
-
-        # Update settings button text or tooltip if necessary
+        # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
 
-        # Call translate_ui on layer_panel
-        self.layer_panel.translate_ui()
+        # Update any other UI elements as needed
+        # ...
+
+        # Apply translations to other UI components
+        if hasattr(self.layer_panel, 'translate_ui'):
+            self.layer_panel.translate_ui()
+        if hasattr(self.canvas, 'update_translations'):
+            self.canvas.update_translations()

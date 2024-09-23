@@ -40,6 +40,10 @@ translations = {
         'deselect_all': 'Deselect All',
         'notification_message': 'Notification',
         # Add other texts as needed...
+        'adjust_angle_and_length': 'Adjust Angle and Length',
+        'angle_label': 'Angle:',
+        'length_label': 'Length:',
+        'ok': 'OK',
     },
     'fr': {
         # MainWindow translations
@@ -82,5 +86,9 @@ translations = {
         'deselect_all': 'Tout Désélectionner',
         'notification_message': 'Notification',
         # Add other texts translated...
+        'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
+        'angle_label': 'Angle :',
+        'length_label': 'Longueur :',
+        'ok': 'OK',
     }
 }

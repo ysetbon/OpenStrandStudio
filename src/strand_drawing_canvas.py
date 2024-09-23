@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
-
+from translations import translations
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     strand_created = pyqtSignal(object)
@@ -51,6 +51,20 @@ class StrandDrawingCanvas(QWidget):
         self.original_strand_positions = {}
         
         self.rotate_mode = RotateMode(self)
+
+        self.parent_window = parent  # Keep a reference to the main window
+        # Initialize language_code
+        self.language_code = 'en'  # Default to English
+        if hasattr(self.parent_window, 'language_code'):
+            self.language_code = self.parent_window.language_code
+
+    def update_translations(self):
+        """Update any text elements in the canvas that require translation."""
+        _ = translations[self.language_code]
+        # If the canvas has text elements that need updating, implement them here.
+        # For example, if you have tooltips or context menus:
+        # self.some_action.setToolTip(_['some_tooltip'])
+        pass  # Remove or replace this line with actual translation updates
     def set_theme(self, theme_name):
         if theme_name == "Dark":
             self.setStyleSheet("""
@@ -1639,6 +1653,10 @@ class StrandDrawingCanvas(QWidget):
             self.update()
 
 
+    def update_language_code(self, language_code):
+        self.language_code = language_code
+        if self.angle_adjust_mode:
+            self.angle_adjust_mode.language_code = language_code
 
     def update_strand_angle(self, strand_name, new_angle):
         strand = self.find_strand_by_name(strand_name)

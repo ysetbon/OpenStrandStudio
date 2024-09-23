@@ -163,9 +163,10 @@ class SettingsDialog(QDialog):
         # Get the selected language code from the combo box
         language_code = self.language_combobox.currentData()
         self.parent().set_language(language_code)
-
+        # Update the canvas language code
+        if self.canvas:
+            self.canvas.language_code = language_code
         # Update translations
         self.update_translations()
-
         # Close the settings dialog
         self.accept()

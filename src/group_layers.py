@@ -123,7 +123,7 @@ class CollapsibleGroupWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
         self.layout.setSpacing(0)
         # Access the current language code
-        self.language_code = self.group_panel.canvas.language_code if self.group_panel.canvas else 'en'
+        self.language_code = 'en'
         self.update_translations()  # Call the method to set initial translations
 
         # Group button (collapsible header)
@@ -780,12 +780,11 @@ class GroupLayerManager:
         return None  # Return None if no numeric part is found
     def open_main_strand_selection_dialog(self, main_strands):
         dialog = QDialog(self.layer_panel)
-        dialog.setWindowTitle("Select Main Strands")
+        dialog.setWindowTitle("Select Main Strands (Sélectionner les principaux axes)")
 
         layout = QVBoxLayout()
 
-        info_label = QLabel("Select main strands to include in the group:")
-        layout.addWidget(info_label)
+        info_label = QLabel("Select main strands to include in the group: (Sélectionner les principaux axes à inclure dans le groupe:)")
 
         checkboxes = []
         for main_strand in main_strands:

@@ -27,6 +27,7 @@ from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
 import logging
 from math import atan2, degrees
 import json
+from translations import translations
 class GroupedLayerTree(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -738,6 +739,7 @@ from PyQt5.QtCore import QPointF, Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog, QPushButton
 
+# group_layers.py
 class GroupLayerManager:
     def __init__(self, parent, layer_panel, canvas=None):
         self.main_window = parent  # Reference to the main window
@@ -753,8 +755,19 @@ class GroupLayerManager:
         else:
             self.language_code = 'en'  # Default to English
 
+        self.language_code = 'en'  # Or dynamically set based on user settings
+
+        if self.language_code in translations:
+            _ = translations[self.language_code]
+        else:
+            logging.error(f"Invalid language_code: {self.language_code}. Defaulting to 'en'.")
+            _ = translations['en']
+            self.language_code = 'en'
+
         # Access the translations
         _ = translations[self.language_code]
+
+        logging.info(f"GroupLayerManager initialized with language_code: {self.language_code}")
 
         # Initialize the group panel
         self.group_panel = GroupPanel(self.layer_panel, canvas=self.canvas)
@@ -765,31 +778,27 @@ class GroupLayerManager:
         self.create_group_button.clicked.connect(self.create_group)
 
         # Connect to language_changed signal
-        if self.canvas:
-            self.canvas.language_changed.connect(self.update_translations)
-        elif hasattr(self.parent, 'language_changed'):
+        if hasattr(self.parent, 'language_changed'):
             self.parent.language_changed.connect(self.update_translations)
 
-        # Call update_translations
+        # Call update_translations to ensure UI is updated
         self.update_translations()
 
     def update_translations(self):
-        # Update the language code from canvas or parent
-        if self.canvas and hasattr(self.canvas, 'language_code'):
-            self.language_code = self.canvas.language_code
-        elif hasattr(self.parent, 'language_code'):
-            self.language_code = self.parent.language_code
+        # Fetch the translations for the current language code
+        if self.language_code in translations:
+            _ = translations[self.language_code]
         else:
-            self.language_code = 'en'  # default to English
+            logging.error(f"Invalid language_code: {self.language_code} in update_translations. Defaulting to 'en'.")
+            _ = translations['en']
+            self.language_code = 'en'
 
-        # Ensure language_code is valid
-        if self.language_code not in translations:
-            self.language_code = 'en'  # default to English if unrecognized code
+        logging.info(f"Updating translations for language_code: {self.language_code}")
 
-        _ = translations[self.language_code]
+        # Update button texts and any other UI elements
         self.create_group_button.setText(_['create_group'])
         # Update other UI elements as needed
-        logging.info(f"GroupLayerManager updated to language {self.language_code}")
+
     def set_canvas(self, canvas):
         self.canvas = canvas
         self.group_panel.set_canvas(canvas)
@@ -1359,16 +1368,42 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QDateTime, QTimer
 from PyQt5.QtGui import QDoubleValidator, QColor, QPalette, QGuiApplication
 from math import atan2, degrees, cos, sin, radians
 from PyQt5.QtGui import QBrush
+from PyQt5.QtWidgets import (
+    QDialog, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
+    QStyledItemDelegate, QLineEdit, QCheckBox, QHBoxLayout, QWidget, QLabel, QDesktopWidget
+)
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QDateTime, QTimer
+from PyQt5.QtGui import QDoubleValidator, QColor, QBrush
+from math import atan2, degrees, radians, cos, sin
+import logging
+
+
+
+class FloatDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = QLineEdit(parent)
+        editor.setValidator(QDoubleValidator())
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, Qt.EditRole)
+        editor.setText(str(value))
+
+    def setModelData(self, editor, model, index):
+        value = editor.text()
+        model.setData(index, float(value), Qt.EditRole)
 
 class StrandAngleEditDialog(QDialog):
     angle_changed = pyqtSignal(str, float)
+
     def __init__(self, group_name, group_data, canvas, parent=None):
         super().__init__(parent)
         self.setAutoFillBackground(True)
-
         self.group_name = group_name
         self.canvas = canvas
         self.linked_strands = {}
+
+        # Set the language code for translations
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
         self.setWindowTitle(f"{_['edit_strand_angles']} {group_name}")
@@ -1415,7 +1450,220 @@ class StrandAngleEditDialog(QDialog):
         if self.canvas and hasattr(self.canvas, 'theme_changed'):
             self.canvas.theme_changed.connect(self.on_theme_changed)
 
- 
+        self.initializing = False
+
+    def ensure_strand_object(self, strand):
+        if isinstance(strand, dict):
+            return self.canvas.find_strand_by_name(strand['layer_name'])
+        return strand
+
+    def setup_ui(self):
+        main_layout = QVBoxLayout()
+
+        # Wrap the main layout in a QWidget to apply stylesheet
+        main_widget = QWidget()
+        main_widget.setLayout(main_layout)
+
+        # Table widget
+        self.table = QTableWidget()
+        self.setup_table()
+        main_layout.addWidget(self.table)
+
+        self.populate_table()
+
+        bottom_layout = self.setup_bottom_layout()
+        main_layout.addLayout(bottom_layout)
+
+        self.setLayout(main_layout)
+
+    def setup_table(self):
+        _ = translations[self.language_code]
+        headers = [
+            _['layer'],
+            _['angle'],
+            _['adjust_1_degree'],
+            _['fast_adjust'],
+            _['end_x'],
+            _['end_y'],
+            _['x'],
+            _['x_plus_180'],
+            _['attachable']
+        ]
+
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setItemDelegate(FloatDelegate())
+        self.table.itemChanged.connect(self.on_item_changed)
+
+    def populate_table(self):
+        self.table.setRowCount(len(self.group_data['strands']))
+        self.initializing = True
+
+        is_dark_mode = False
+        if hasattr(self.canvas, 'is_dark_mode'):
+            is_dark_mode = self.canvas.is_dark_mode
+
+        for row, strand in enumerate(self.group_data['strands']):
+            is_main_strand = strand.layer_name.endswith("_1")
+            is_masked = isinstance(strand, MaskedStrand)
+            is_attachable = strand.is_attachable()
+            is_editable = not is_main_strand and not is_masked and is_attachable
+
+            # Layer Name
+            layer_name_item = QTableWidgetItem(str(strand.layer_name))
+            self.set_item_style(layer_name_item, is_editable)
+            self.table.setItem(row, 0, layer_name_item)
+
+            # Angle
+            angle = self.calculate_angle(strand)
+            angle_item = QTableWidgetItem(f"{angle:.2f}")
+            self.set_item_style(angle_item, is_editable)
+            self.table.setItem(row, 1, angle_item)
+
+            # Angle adjustment buttons
+            angle_buttons = self.create_angle_buttons(row)
+            self.table.setCellWidget(row, 2, angle_buttons)
+
+            # Fast angle adjustment buttons
+            fast_angle_buttons = self.create_fast_angle_buttons(row)
+            self.table.setCellWidget(row, 3, fast_angle_buttons)
+
+            # End X coordinate
+            end_x_item = QTableWidgetItem(f"{strand.end.x():.2f}")
+            self.set_item_style(end_x_item, is_editable)
+            self.table.setItem(row, 4, end_x_item)
+
+            # End Y coordinate
+            end_y_item = QTableWidgetItem(f"{strand.end.y():.2f}")
+            self.set_item_style(end_y_item, is_editable)
+            self.table.setItem(row, 5, end_y_item)
+
+            # Checkboxes
+            x_checkbox = QCheckBox("x")
+            x_plus_180_checkbox = QCheckBox("180+x")
+
+            # Checkboxes styles are applied via stylesheet
+
+            self.table.setCellWidget(row, 6, x_checkbox)
+            self.table.setCellWidget(row, 7, x_plus_180_checkbox)
+
+            # 'Attachable' indicator
+            attachable_text = 'X' if not is_attachable else ''
+            attachable_item = QTableWidgetItem(attachable_text)
+            attachable_item.setTextAlignment(Qt.AlignCenter)
+            attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)
+            self.set_item_style(attachable_item, is_editable)
+            self.table.setItem(row, 8, attachable_item)
+
+            x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
+            x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
+
+            # Disable interaction for non-editable strands
+            if not is_editable:
+                for col in [0, 1, 4, 5, 8]:
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                for col in [2, 3, 6, 7]:
+                    widget = self.table.cellWidget(row, col)
+                    if widget:
+                        widget.setEnabled(False)
+
+        self.initializing = False
+
+    def set_item_style(self, item, is_editable):
+        is_dark_mode = self.canvas.is_dark_mode if hasattr(self.canvas, 'is_dark_mode') else False
+        if is_editable:
+            if is_dark_mode:
+                item.setForeground(QBrush(QColor(255, 255, 255)))
+            else:
+                item.setForeground(QBrush(QColor(0, 0, 0)))
+        else:
+            item.setForeground(QBrush(QColor(150, 150, 150)))
+
+    def setup_bottom_layout(self):
+        _ = translations[self.language_code]
+
+        # X Angle widget
+        x_angle_widget = QWidget()
+        x_angle_widget.setObjectName("xAngleWidget")
+        x_angle_layout = QHBoxLayout()
+        x_angle_widget.setLayout(x_angle_layout)
+        x_angle_layout.setContentsMargins(0, 0, 0, 0)
+        x_angle_layout.setSpacing(5)
+
+        x_angle_label = QLabel(_['X_angle'])
+        self.x_angle_input = QLineEdit()
+        self.x_angle_input.setFixedWidth(100)
+        self.x_angle_input.setText("0.00")
+        self.x_angle_input.textChanged.connect(self.update_x_angle)
+        x_angle_layout.addWidget(x_angle_label)
+        x_angle_layout.addWidget(self.x_angle_input)
+        x_angle_layout.addStretch()
+
+        # Buttons
+        button_layout_widget = QWidget()
+        button_layout = QHBoxLayout()
+        button_layout_widget.setLayout(button_layout)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(10)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        minus_minus_btn = QPushButton("--")
+        minus_btn = QPushButton("-")
+        plus_btn = QPushButton("+")
+        plus_plus_btn = QPushButton("++")
+        ok_btn = QPushButton("OK")
+
+        for btn in [minus_minus_btn, minus_btn, plus_btn, plus_plus_btn, ok_btn]:
+            btn.setFixedSize(50, 30)
+            # Styles will be applied via stylesheet
+
+        minus_minus_btn.clicked.connect(lambda: self.adjust_x_angle(-5))
+        minus_btn.clicked.connect(lambda: self.adjust_x_angle(-1))
+        plus_btn.clicked.connect(lambda: self.adjust_x_angle(1))
+        plus_plus_btn.clicked.connect(lambda: self.adjust_x_angle(5))
+        ok_btn.clicked.connect(self.accept)
+
+        button_layout.addWidget(minus_minus_btn)
+        button_layout.addWidget(minus_btn)
+        button_layout.addWidget(plus_btn)
+        button_layout.addWidget(plus_plus_btn)
+        button_layout.addWidget(ok_btn)
+
+        # Combine x_angle_widget and buttons into one layout
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addWidget(x_angle_widget)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(button_layout_widget)
+
+        return bottom_layout
+
+    def adjust_dialog_size(self):
+        # Calculate the required width and height
+        width = self.table.verticalHeader().width() + 4  # Left and right margins
+        for i in range(self.table.columnCount()):
+            width += self.table.columnWidth(i)
+
+        height = self.table.horizontalHeader().height() + 4  # Top and bottom margins
+        for i in range(self.table.rowCount()):
+            height += self.table.rowHeight(i)
+
+        # Add some padding
+        width += 250
+        height += 300  # Extra space for the OK button and padding
+
+        # Set the size of the dialog
+        self.resize(width, height)
+
+        # Center the dialog on the screen
+        screen = QDesktopWidget().screenNumber(QDesktopWidget().cursor().pos())
+        center_point = QDesktopWidget().screenGeometry(screen).center()
+        frame_geometry = self.frameGeometry()
+        frame_geometry.moveCenter(center_point)
+        self.move(frame_geometry.topLeft())
+
     def apply_theme(self):
         """Apply the current theme using custom stylesheets."""
         is_dark_mode = False
@@ -1429,19 +1677,6 @@ class StrandAngleEditDialog(QDialog):
 
         # Update styles of table items if necessary
         self.update_table_styles()
-    def update_table_styles(self):
-        """Update the styles of table items based on the current theme."""
-        is_dark_mode = self.canvas.is_dark_mode if hasattr(self.canvas, 'is_dark_mode') else False
-        for row in range(self.table.rowCount()):
-            for col in range(self.table.columnCount()):
-                item = self.table.item(row, col)
-                if item:
-                    if is_dark_mode:
-                        item.setForeground(QBrush(QColor(255, 255, 255)))
-                        item.setBackground(QBrush(QColor(28, 28, 28)))
-                    else:
-                        item.setForeground(QBrush(QColor(0, 0, 0)))
-                        item.setBackground(QBrush(QColor(255, 255, 255)))
 
     def apply_dark_theme(self):
         """Apply dark theme styles to the dialog."""
@@ -1464,8 +1699,8 @@ class StrandAngleEditDialog(QDialog):
                 color: #FFFFFF;
                 border: 1px solid #777777;
                 border-radius: 5px;
-                min-width: 40px;
-                min-height: 24px;
+                min-width: 50px;
+                min-height: 30px;
             }
             QPushButton:hover {
                 background-color: #3C3C3C;
@@ -1577,7 +1812,7 @@ class StrandAngleEditDialog(QDialog):
                 padding: 4px;
                 border: 1px solid #CCCCCC;
             }
-            QTableWidget QTableCornerButton::section {
+            QTableCornerButton::section {
                 background-color: #DDDDDD;
                 border: 1px solid #CCCCCC;
             }
@@ -1587,290 +1822,47 @@ class StrandAngleEditDialog(QDialog):
         """
         self.setStyleSheet(light_stylesheet)
 
-    def on_theme_changed(self):
+    def update_table_styles(self):
+        """Update the styles of table items based on the current theme."""
+        is_dark_mode = self.canvas.is_dark_mode if hasattr(self.canvas, 'is_dark_mode') else False
+        for row in range(self.table.rowCount()):
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+                if item:
+                    if is_dark_mode:
+                        item.setForeground(QBrush(QColor(255, 255, 255)))
+                        item.setBackground(QBrush(QColor(28, 28, 28)))
+                    else:
+                        item.setForeground(QBrush(QColor(0, 0, 0)))
+                        item.setBackground(QBrush(QColor(255, 255, 255)))
+
+    def on_theme_changed(self, theme_name):
         """Handle theme changes."""
         self.apply_theme()
 
-    def ensure_strand_object(self, strand):
-        if isinstance(strand, dict):
-            return self.canvas.find_strand_by_name(strand['layer_name'])
-        return strand
-
-    def setup_ui(self):
-        main_layout = QVBoxLayout()
-
-        # Wrap the main layout in a QWidget to apply stylesheet
-        main_widget = QWidget()
-        main_widget.setLayout(main_layout)
-
-        # Table widget
-        self.table = QTableWidget()
-        self.setup_table()
-        main_layout.addWidget(self.table)
-
-        self.populate_table()
-
-        bottom_layout = self.setup_bottom_layout()
-        main_layout.addLayout(bottom_layout)
-
-        self.setLayout(main_layout)
-
-
-
-    def setup_bottom_layout(self):
-        _ = translations[self.language_code]
-
-        # X Angle widget
-        x_angle_widget = QWidget()
-        x_angle_widget.setObjectName("xAngleWidget")
-        x_angle_layout = QHBoxLayout()
-        x_angle_widget.setLayout(x_angle_layout)
-        x_angle_layout.setContentsMargins(0, 0, 0, 0)
-        x_angle_layout.setSpacing(5)
-
-        x_angle_label = QLabel(_['X_angle'])
-        self.x_angle_input = QLineEdit()
-        self.x_angle_input.setFixedWidth(100)
-        self.x_angle_input.setText("0.00")
-        self.x_angle_input.textChanged.connect(self.update_x_angle)
-        x_angle_layout.addWidget(x_angle_label)
-        x_angle_layout.addWidget(self.x_angle_input)
-        x_angle_layout.addStretch()
-
-        # Buttons
-        button_layout_widget = QWidget()
-        button_layout = QHBoxLayout()
-        button_layout_widget.setLayout(button_layout)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.setSpacing(10)
-        button_layout.setAlignment(Qt.AlignRight)
-
-        minus_minus_btn = QPushButton("--")
-        minus_btn = QPushButton("-")
-        plus_btn = QPushButton("+")
-        plus_plus_btn = QPushButton("++")
-        ok_btn = QPushButton("OK")
-
-        for btn in [minus_minus_btn, minus_btn, plus_btn, plus_plus_btn, ok_btn]:
-            btn.setFixedSize(50, 30)
-            # Styles will be applied via stylesheet
-
-        minus_minus_btn.clicked.connect(lambda: self.adjust_x_angle(-5))
-        minus_btn.clicked.connect(lambda: self.adjust_x_angle(-1))
-        plus_btn.clicked.connect(lambda: self.adjust_x_angle(1))
-        plus_plus_btn.clicked.connect(lambda: self.adjust_x_angle(5))
-        ok_btn.clicked.connect(self.accept)
-
-        button_layout.addWidget(minus_minus_btn)
-        button_layout.addWidget(minus_btn)
-        button_layout.addWidget(plus_btn)
-        button_layout.addWidget(plus_plus_btn)
-        button_layout.addWidget(ok_btn)
-
-        # Combine x_angle_widget and buttons into one layout
-        bottom_layout = QHBoxLayout()
-        bottom_layout.addWidget(x_angle_widget)
-        bottom_layout.addStretch()
-        bottom_layout.addWidget(button_layout_widget)
-
-        return bottom_layout
-
-
-    def setup_table(self):
-        _ = translations[self.language_code]
-        headers = [
-            _['layer'],
-            _['angle'],
-            _['adjust_1_degree'],
-            _['fast_adjust'],
-            _['end_x'],
-            _['end_y'],
-            _['x'],
-            _['x_plus_180'],
-            _['attachable']
-        ]
-
-        self.table.setColumnCount(len(headers))
-        self.table.setHorizontalHeaderLabels(headers)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setItemDelegate(FloatDelegate())
-        self.table.itemChanged.connect(self.on_item_changed)
-
-    def retranslate_ui(self):
-        """Update the table headers to match the current language."""
-        if not hasattr(self, 'table'):
+    def on_item_changed(self, item):
+        if self.initializing:
             return
-        
-        _ = translations[self.language_code]
-        
-        # Define header keys for translations
-        header_keys = [
-            'layer',
-            'angle',
-            'adjust_1_degree',
-            'fast_adjust',
-            'end_x',
-            'end_y',
-            'x',
-            'x_plus_180',
-            'attachable'
-        ]
-        
-        # Fetch translated header labels
-        headers = [
-            _['layer'],
-            _['angle'],
-            _['adjust_1_degree'],  # Adjust (±1°)
-            _['fast_adjust'],
-            _['end_x'],
-            _['end_y'],
-            _['x'],
-            _['x_plus_180'],
-            _['attachable']
-        ]
-        
-        # Update the table headers
-        self.table.setHorizontalHeaderLabels(headers)
-
-    def adjust_dialog_size(self):
-        # Calculate the required width and height
-        width = self.table.verticalHeader().width() + 4  # Left and right margins
-        for i in range(self.table.columnCount()):
-            width += self.table.columnWidth(i)
-        
-        height = self.table.horizontalHeader().height() + 4  # Top and bottom margins
-        for i in range(self.table.rowCount()):
-            height += self.table.rowHeight(i)
-
-        # Add some padding
-        width += 250
-        height += 300  # Extra space for the OK button and padding
-
-        # Set the size of the dialog
-        self.resize(width, height)
-
-        # Center the dialog on the screen
-        screen = QDesktopWidget().screenNumber(QDesktopWidget().cursor().pos())
-        center_point = QDesktopWidget().screenGeometry(screen).center()
-        frame_geometry = self.frameGeometry()
-        frame_geometry.moveCenter(center_point)
-        self.move(frame_geometry.topLeft())
-
-    def populate_table(self):
-        self.table.setRowCount(len(self.group_data['strands']))
-        self.initializing = True
-
-        is_dark_mode = False
-        if hasattr(self.canvas, 'is_dark_mode'):
-            is_dark_mode = self.canvas.is_dark_mode
-
-        for row, strand in enumerate(self.group_data['strands']):
-            is_main_strand = strand.layer_name.endswith("_1")
-            is_masked = isinstance(strand, MaskedStrand)
-            is_attachable = strand.is_attachable()
-            is_editable = not is_main_strand and not is_masked and is_attachable
-
-            # Layer Name
-            layer_name_item = QTableWidgetItem(str(strand.layer_name))
-            self.set_item_style(layer_name_item, is_editable)
-            self.table.setItem(row, 0, layer_name_item)
-
-            # Angle
-            angle = self.calculate_angle(strand)
-            angle_item = QTableWidgetItem(f"{angle:.2f}")
-            self.set_item_style(angle_item, is_editable)
-            self.table.setItem(row, 1, angle_item)
-
-            # Angle adjustment buttons
-            angle_buttons = self.create_angle_buttons(row)
-            self.table.setCellWidget(row, 2, angle_buttons)
-
-            # Fast angle adjustment buttons
-            fast_angle_buttons = self.create_fast_angle_buttons(row)
-            self.table.setCellWidget(row, 3, fast_angle_buttons)
-
-            # End X coordinate
-            end_x_item = QTableWidgetItem(f"{strand.end.x():.2f}")
-            self.set_item_style(end_x_item, is_editable)
-            self.table.setItem(row, 4, end_x_item)
-
-            # End Y coordinate
-            end_y_item = QTableWidgetItem(f"{strand.end.y():.2f}")
-            self.set_item_style(end_y_item, is_editable)
-            self.table.setItem(row, 5, end_y_item)
-
-            # Checkboxes
-            x_checkbox = QCheckBox("x")
-            x_plus_180_checkbox = QCheckBox("180+x")
-
-            # Checkboxes styles are applied via stylesheet
-
-            self.table.setCellWidget(row, 6, x_checkbox)
-            self.table.setCellWidget(row, 7, x_plus_180_checkbox)
-
-            # 'Attachable' indicator
-            attachable_text = 'X' if not is_attachable else ''
-            attachable_item = QTableWidgetItem(attachable_text)
-            attachable_item.setTextAlignment(Qt.AlignCenter)
-            attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)
-            self.set_item_style(attachable_item, is_editable)
-            self.table.setItem(row, 8, attachable_item)
-
-            x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
-            x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
-
-            # Disable interaction for non-editable strands
-            if not is_editable:
-                for col in [0, 1, 4, 5, 8]:
-                    item = self.table.item(row, col)
-                    if item:
-                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                for col in [2, 3, 6, 7]:
-                    widget = self.table.cellWidget(row, col)
-                    if widget:
-                        widget.setEnabled(False)
-
-        self.initializing = False
-
-    def set_item_style(self, item, is_editable):
-        if is_editable:
-            item.setForeground(QBrush(QColor(255, 255, 255)))
-        else:
-            item.setForeground(QBrush(QColor(150, 150, 150)))
-
-
-    def create_custom_delegate(self):
-        class CustomDelegate(QStyledItemDelegate):
-            def paint(self, painter, option, index):
-                if index.column() == 8:  # Attachable column
-                    value = index.data(Qt.DisplayRole)
-                    painter.save()
-                    if value == '✓':
-                        painter.setPen(QColor('green'))
-                    else:
-                        painter.setPen(QColor('red'))
-                    painter.drawText(option.rect, Qt.AlignCenter, value)
-                    painter.restore()
-                else:
-                    super().paint(painter, option, index)
-
-        return CustomDelegate(self.table)
-
-
-    def on_attachable_changed(self, row, state):
+        row = item.row()
+        col = item.column()
         strand = self.group_data['strands'][row]
-        strand.attachable = (state == Qt.Checked)
-        # You might want to update the strand in your canvas or other data structures here
-        # For example:
-        # self.canvas.update_strand_attachable(strand.layer_name, strand.attachable)
-        
-        # Update the NumberedLayerButton if necessary
-        # This assumes you have a method to access the button for this strand
-        # button = self.get_button_for_strand(strand)
-        # if button:
-        #     button.set_attachable(strand.attachable)
+        if col == 1:  # Angle column
+            try:
+                new_angle = float(item.text())
+                self.update_strand_angle(strand, new_angle)
+            except ValueError:
+                pass  # Invalid input, ignore
 
-        self.canvas.update()  # Refresh the canvas to reflect changes
+    def update_strand_angle(self, strand, new_angle):
+        dx = strand.end.x() - strand.start.x()
+        dy = strand.end.y() - strand.start.y()
+        length = (dx**2 + dy**2)**0.5
+        angle_rad = radians(new_angle)
+        new_end_x = strand.start.x() + length * cos(angle_rad)
+        new_end_y = strand.start.y() + length * sin(angle_rad)
+        strand.end = QPointF(new_end_x, new_end_y)
+        strand.update_shape()
+        self.canvas.update()
 
     def create_angle_buttons(self, row):
         widget = QWidget()
@@ -1881,40 +1873,13 @@ class StrandAngleEditDialog(QDialog):
 
         minus_button = QPushButton("-")
         plus_button = QPushButton("+")
-        minus_button.setFixedSize(24, 24)
-        plus_button.setFixedSize(24, 24)
+        minus_button.setFixedSize(28, 24)
+        plus_button.setFixedSize(28, 24)
 
         # Styles are applied via stylesheet
 
-        plus_button.pressed.connect(lambda: self.on_plus_pressed(row))
-        plus_button.released.connect(self.on_plus_released)
-        minus_button.pressed.connect(lambda: self.on_minus_pressed(row))
-        minus_button.released.connect(self.on_minus_released)
-
-        layout.addWidget(minus_button)
-        layout.addWidget(plus_button)
-        layout.setAlignment(Qt.AlignCenter)
-
-        return widget
-    
-    def create_angle_buttons(self, row):
-        widget = QWidget()
-        layout = QHBoxLayout()
-        widget.setLayout(layout)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
-        minus_button = QPushButton("-")
-        plus_button = QPushButton("+")
-        minus_button.setFixedSize(24, 24)
-        plus_button.setFixedSize(24, 24)
-
-        # Styles are applied via stylesheet
-
-        plus_button.pressed.connect(lambda: self.on_plus_pressed(row))
-        plus_button.released.connect(self.on_plus_released)
-        minus_button.pressed.connect(lambda: self.on_minus_pressed(row))
-        minus_button.released.connect(self.on_minus_released)
+        plus_button.clicked.connect(lambda: self.on_plus_clicked(row))
+        minus_button.clicked.connect(lambda: self.on_minus_clicked(row))
 
         layout.addWidget(minus_button)
         layout.addWidget(plus_button)
@@ -1936,10 +1901,8 @@ class StrandAngleEditDialog(QDialog):
 
         # Styles are applied via stylesheet
 
-        plus_plus_button.pressed.connect(lambda: self.on_plus_plus_pressed(row))
-        plus_plus_button.released.connect(self.on_plus_plus_released)
-        minus_minus_button.pressed.connect(lambda: self.on_minus_minus_pressed(row))
-        minus_minus_button.released.connect(self.on_minus_minus_released)
+        plus_plus_button.clicked.connect(lambda: self.on_plus_plus_clicked(row))
+        minus_minus_button.clicked.connect(lambda: self.on_minus_minus_clicked(row))
 
         layout.addWidget(minus_minus_button)
         layout.addWidget(plus_plus_button)
@@ -1947,367 +1910,87 @@ class StrandAngleEditDialog(QDialog):
 
         return widget
 
+    def on_plus_clicked(self, row):
+        self.adjust_angle(row, self.delta_plus)
 
-    def on_plus_pressed(self, row):
-        self.handle_button_press('plus', row, self.delta_plus, self.start_continuous_adjustment_plus)
+    def on_minus_clicked(self, row):
+        self.adjust_angle(row, self.delta_minus)
 
-    def on_minus_pressed(self, row):
-        self.handle_button_press('minus', row, self.delta_minus, self.start_continuous_adjustment_minus)
+    def on_plus_plus_clicked(self, row):
+        self.adjust_angle(row, self.delta_plus_plus)
 
-    def on_plus_plus_pressed(self, row):
-        self.handle_button_press('plus_plus', row, self.delta_plus_plus, self.start_continuous_adjustment_plus_plus)
+    def on_minus_minus_clicked(self, row):
+        self.adjust_angle(row, self.delta_minus_minus)
 
-    def on_minus_minus_pressed(self, row):
-        self.handle_button_press('minus_minus', row, self.delta_minus_minus, self.start_continuous_adjustment_minus_minus)
-
-    def handle_button_press(self, button_type, row, initial_delta, continuous_function):
-        current_time = QDateTime.currentMSecsSinceEpoch()
-        
-        # Always stop any ongoing adjustments
-        self.stop_adjustment()
-        
-        # Set the new current button and last press time
-        self.current_button = button_type
-        self.last_press_time = current_time
-        
-        # Perform initial adjustment
-        self.adjust_angle(row, initial_delta)
-        
-        # Set up continuous adjustment after delay
-        self.initial_delay_timer.timeout.connect(lambda: continuous_function(row))
-        self.initial_delay_timer.start()
-
-    def stop_adjustment(self):
-        self.initial_delay_timer.stop()
-        self.adjustment_timer.stop()
-        self.current_adjustment = None
-        self.current_button = None
-        self.last_press_time = None
-        
-        # Disconnect only if there are connections
-        if self.initial_delay_timer.receivers(self.initial_delay_timer.timeout) > 0:
-            self.initial_delay_timer.timeout.disconnect()
-        if self.adjustment_timer.receivers(self.adjustment_timer.timeout) > 0:
-            self.adjustment_timer.timeout.disconnect()
-
-    def on_plus_released(self):
-        self.stop_adjustment()
-
-    def on_minus_released(self):
-        self.stop_adjustment()
-
-    def on_plus_plus_released(self):
-        self.stop_adjustment()
-
-    def on_minus_minus_released(self):
-        self.stop_adjustment()
-
-    def start_continuous_adjustment_plus(self, row):
-        self.stop_adjustment()  # Ensure previous adjustments are stopped
-        self.current_adjustment = lambda: self.adjust_angle(row, self.delta_continuous_plus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
-
-    def start_continuous_adjustment_minus(self, row):
-        self.stop_adjustment()  # Ensure previous adjustments are stopped
-        self.current_adjustment = lambda: self.adjust_angle(row, self.delta_continuous_minus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
-
-    def start_continuous_adjustment_plus_plus(self, row):
-        self.stop_adjustment()  # Ensure previous adjustments are stopped
-        self.current_adjustment = lambda: self.adjust_angle(row, self.delta_fast_continuous_plus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
-
-    def start_continuous_adjustment_minus_minus(self, row):
-        self.stop_adjustment()  # Ensure previous adjustments are stopped
-        self.current_adjustment = lambda: self.adjust_angle(row, self.delta_fast_continuous_minus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
-
-    def calculate_angle(self, strand):
-        dx = strand.end.x() - strand.start.x()
-        dy = strand.end.y() - strand.start.y()
-        
-        if dx == 0:
-            return 90 if dy > 0 else -90
-        
-        angle = degrees(atan2(dy, dx))
-        
-        if angle > 180:
-            angle -= 360
-        elif angle <= -180:
-            angle += 360
-        
-        return angle
-    def on_item_changed(self, item):
-        # Exit early if initializing
-        if self.initializing:
-            return
-
-        if self.updating:
-            return
-
-        self.updating = True
-        try:
-            if item.column() == 1:  # Angle column
-                row = item.row()
-                strand = self.group_data['strands'][row]
-                try:
-                    new_angle = float(item.text())
-                    self.update_strand_angle(strand, new_angle, update_linked=True)
-                except ValueError:
-                    self.update_table_row(row)
-            elif item.column() in [4, 5]:  # End X or End Y
-                row = item.row()
-                strand = self.group_data['strands'][row]
-                try:
-                    value = float(item.text()) if item.text() else None
-                    coordinate = 'x' if item.column() == 4 else 'y'
-                    if value is not None:
-                        self.update_strand_end(strand, coordinate, value)
-                    self.update_table_row(row)
-                    self.update_linked_strands(strand)
-                except ValueError:
-                    self.update_table_row(row)
-        finally:
-            self.updating = False
-
-    def update_linked_strands(self, current_strand=None):
-        # Exit early if initializing
-        if self.initializing:
-            return
-
-        for row, strand in enumerate(self.group_data['strands']):
-            if strand == current_strand:
-                continue  # Skip the current strand to avoid recursive updates
-            x_checkbox = self.table.cellWidget(row, 6)
-            x_plus_180_checkbox = self.table.cellWidget(row, 7)
-
-            if x_checkbox and x_checkbox.isChecked():
-                self.update_strand_angle(strand, self.x_angle, update_linked=False)
-            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
-                opposite_angle = (self.x_angle + 180) % 360
-                if opposite_angle > 180:
-                    opposite_angle -= 360
-                self.update_strand_angle(strand, opposite_angle, update_linked=False)
-
-    def on_checkbox_changed(self, row, column, state):
-        # Exit early if initializing
-        if self.initializing:
-            return
-
+    def adjust_angle(self, row, delta):
         strand = self.group_data['strands'][row]
-        checkbox = self.table.cellWidget(row, column)
-        other_column = 7 if column == 6 else 6
-        other_checkbox = self.table.cellWidget(row, other_column)
-        
-        if state == Qt.Checked:
-            # Uncheck the other checkbox
-            other_checkbox.setChecked(False)
-            
-            # Update the X Angle only if this is the first checkbox being checked
-            if not any(
-                self.table.cellWidget(r, 6).isChecked() or self.table.cellWidget(r, 7).isChecked()
-                for r in range(row)
-            ):
-                try:
-                    current_angle_item = self.table.item(row, 1)  # Angle column
-                    if current_angle_item:
-                        current_angle = float(current_angle_item.text())
-                        if column == 7:  # X+180 checkbox
-                            current_angle = (current_angle + 180) % 360
-                            if current_angle > 180:
-                                current_angle -= 360
-                        self.x_angle = current_angle
-                        self.x_angle_input.setText(f"{self.x_angle:.2f}")
-                except ValueError:
-                    logging.error(f"Invalid angle value in row {row}. Skipping update.")
-                    return
+        current_angle_item = self.table.item(row, 1)
+        if current_angle_item:
+            try:
+                current_angle = float(current_angle_item.text())
+            except ValueError:
+                current_angle = self.calculate_angle(strand)
+            new_angle = current_angle + delta
+            current_angle_item.setText(f"{new_angle:.2f}")
+            self.update_strand_angle(strand, new_angle)
 
-        self.update_linked_strands(strand)
-        self.canvas.update()
-
-    def update_x_angle(self, text):
-        try:
-            self.x_angle = float(text)
-        except ValueError:
-            pass
-
-    def on_x_angle_button_pressed(self, button):
-        if button == self.x_minus_minus_button:
-            self.handle_x_angle_button_press('minus_minus', self.delta_minus_minus, self.start_continuous_x_angle_adjustment_minus_minus)
-        elif button == self.x_minus_button:
-            self.handle_x_angle_button_press('minus', self.delta_minus, self.start_continuous_x_angle_adjustment_minus)
-        elif button == self.x_plus_button:
-            self.handle_x_angle_button_press('plus', self.delta_plus, self.start_continuous_x_angle_adjustment_plus)
-        elif button == self.x_plus_plus_button:
-            self.handle_x_angle_button_press('plus_plus', self.delta_plus_plus, self.start_continuous_x_angle_adjustment_plus_plus)
-
-    def handle_x_angle_button_press(self, button_type, initial_delta, continuous_function):
-        current_time = QDateTime.currentMSecsSinceEpoch()
-        
-        self.stop_adjustment()
-        
-        self.current_button = button_type
-        self.last_press_time = current_time
-        
-        self.adjust_x_angle(initial_delta)
-        
-        self.initial_delay_timer.timeout.connect(continuous_function)
-        self.initial_delay_timer.start()
-
-    def on_x_angle_button_released(self):
-        self.stop_adjustment()
-
-    def adjust_x_angle(self, delta):
-        self.x_angle += delta
-        self.x_angle_input.setText(f"{self.x_angle:.2f}")
-        self.update_strands_with_x_angle()
-
-    def update_strands_with_x_angle(self):
-        for strand in self.group_data['strands']:
-            if strand.is_attachable():
-                self.update_strand_angle(strand, self.x_angle)
-        self.update_table_angles()
-
-    def update_table_angles(self):
-        for row, strand in enumerate(self.group_data['strands']):
-            angle = self.calculate_angle(strand)
+    def on_checkbox_changed(self, row, col, state):
+        strand = self.group_data['strands'][row]
+        if col == 6:  # x checkbox
+            if state == Qt.Checked:
+                angle = self.x_angle  # Use x_angle
+                x_plus_180_checkbox = self.table.cellWidget(row, 7)
+                if x_plus_180_checkbox:
+                    x_plus_180_checkbox.setChecked(False)
+            else:
+                angle = self.calculate_angle(strand)
+            self.update_strand_angle(strand, angle)
+            angle_item = self.table.item(row, 1)
+            if angle_item:
+                angle_item.setText(f"{angle:.2f}")
+        elif col == 7:  # x+180 checkbox
+            if state == Qt.Checked:
+                angle = self.x_angle + 180  # Use x_angle + 180
+                x_checkbox = self.table.cellWidget(row, 6)
+                if x_checkbox:
+                    x_checkbox.setChecked(False)
+            else:
+                angle = self.calculate_angle(strand)
+            self.update_strand_angle(strand, angle)
             angle_item = self.table.item(row, 1)
             if angle_item:
                 angle_item.setText(f"{angle:.2f}")
 
-    def start_continuous_x_angle_adjustment_plus(self):
-        self.stop_adjustment()
-        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_continuous_plus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
+    def update_x_angle(self):
+        try:
+            self.x_angle = float(self.x_angle_input.text())
+        except ValueError:
+            self.x_angle = 0.0
 
-    def start_continuous_x_angle_adjustment_minus(self):
-        self.stop_adjustment()
-        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_continuous_minus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
+    def adjust_x_angle(self, delta):
+        try:
+            current_x_angle = float(self.x_angle_input.text())
+        except ValueError:
+            current_x_angle = 0.0
+        new_x_angle = current_x_angle + delta
+        self.x_angle_input.setText(f"{new_x_angle:.2f}")
+        self.apply_x_angle_to_selected()
 
-    def start_continuous_x_angle_adjustment_plus_plus(self):
-        self.stop_adjustment()
-        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_fast_continuous_plus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
+    def apply_x_angle_to_selected(self):
+        for row in range(self.table.rowCount()):
+            x_checkbox = self.table.cellWidget(row, 6)
+            x_plus_180_checkbox = self.table.cellWidget(row, 7)
+            if x_checkbox.isChecked():
+                self.on_checkbox_changed(row, 6, Qt.Checked)
+            elif x_plus_180_checkbox.isChecked():
+                self.on_checkbox_changed(row, 7, Qt.Checked)
 
-    def start_continuous_x_angle_adjustment_minus_minus(self):
-        self.stop_adjustment()
-        self.current_adjustment = lambda: self.adjust_x_angle(self.delta_fast_continuous_minus)
-        self.adjustment_timer.timeout.connect(self.current_adjustment)
-        self.adjustment_timer.start()
-
-    def update_strand_angle(self, strand, new_angle, update_linked=False, visited=None):
-        if visited is None:
-            visited = set()
-        if strand in visited:
-            return
-        visited.add(strand)
-        
-        while new_angle > 180:
-            new_angle -= 360
-        while new_angle <= -180:
-            new_angle += 360
-        
+    def calculate_angle(self, strand):
         dx = strand.end.x() - strand.start.x()
         dy = strand.end.y() - strand.start.y()
-        length = (dx**2 + dy**2)**0.5
-        
-        new_dx = length * cos(radians(new_angle))
-        new_dy = length * sin(radians(new_angle))
-        
-        # Update end point
-        strand.end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
-        
-        strand.update_shape()
-        if hasattr(strand, 'update_side_line'):
-            strand.update_side_line()
-        
-        # Adjust attached strands recursively
-        for attached_strand in strand.attached_strands:
-            self.update_strand_angle(attached_strand, new_angle, update_linked=False, visited=visited)
-        
-        # Adjust masked strands recursively if applicable
-        if isinstance(strand, MaskedStrand):
-            if hasattr(strand, 'masked_strands'):
-                for masked_strand in strand.masked_strands:
-                    self.update_strand_angle(masked_strand, new_angle, update_linked=False, visited=visited)
-        elif hasattr(strand, 'mask'):
-            self.update_strand_angle(strand.mask, new_angle, update_linked=False, visited=visited)
-        
-        # Update the table row if the strand is listed
-        if strand in self.group_data['strands']:
-            row_indices = [i for i, s in enumerate(self.group_data['strands']) if s == strand]
-            for row in row_indices:
-                self.update_table_row(row)
-        
-        self.angle_changed.emit(strand.layer_name, new_angle)
-        
-        if update_linked:
-            self.update_linked_strands(strand)
-        
-        self.canvas.update()
-
-    def update_strand_end(self, strand, coordinate, value):
-        if coordinate == 'x':
-            strand.end.setX(value)
-        else:
-            strand.end.setY(value)
-        
-        strand.update_shape()
-        if hasattr(strand, 'update_side_line'):
-            strand.update_side_line()
-
-    def update_table_row(self, row):
-        strand = self.group_data['strands'][row]
-        angle = self.calculate_angle(strand)
-        end_x = strand.end.x()
-        end_y = strand.end.y()
-
-        angle_item = self.table.item(row, 1)
-        if angle_item is None:
-            angle_item = QTableWidgetItem()
-            self.table.setItem(row, 1, angle_item)
-        angle_item.setText(f"{angle:.2f}")
-
-        end_x_item = self.table.item(row, 4)
-        if end_x_item is None:
-            end_x_item = QTableWidgetItem()
-            self.table.setItem(row, 4, end_x_item)
-        end_x_item.setText(f"{end_x:.2f}")
-
-        end_y_item = self.table.item(row, 5)
-        if end_y_item is None:
-            end_y_item = QTableWidgetItem()
-            self.table.setItem(row, 5, end_y_item)
-        end_y_item.setText(f"{end_y:.2f}")
-
-    def update_strand_links(self, strand, checkbox_type):
-        self.linked_strands = {k: v for k, v in self.linked_strands.items() if v != strand}
-        self.linked_strands[strand.layer_name] = strand
-
-        for other_row, other_strand in enumerate(self.group_data['strands']):
-            if other_strand != strand:
-                x_checkbox = self.table.cellWidget(other_row, 6)
-                x_plus_180_checkbox = self.table.cellWidget(other_row, 7)
-                if (x_checkbox and x_checkbox.isChecked()) or (x_plus_180_checkbox and x_plus_180_checkbox.isChecked()):
-                    self.linked_strands[other_strand.layer_name] = other_strand
-
-    def remove_strand_link(self, strand):
-        self.linked_strands = {k: v for k, v in self.linked_strands.items() if v != strand}
-        
-    def adjust_angle(self, row, delta):
-        strand = self.group_data['strands'][row]
-        current_angle = self.calculate_angle(strand)
-        new_angle = current_angle + delta
-        self.update_strand_angle(strand, new_angle, update_linked=True)
+        angle = degrees(atan2(dy, dx))
+        return angle
 
     def accept(self):
-        self.canvas.update()
+        # Perform any final actions before closing the dialog
         super().accept()

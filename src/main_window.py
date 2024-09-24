@@ -299,6 +299,38 @@ class MainWindow(QMainWindow):
                 background-color: #3C3C3C;
                 color: white;
             }
+            /* QTableWidget styling */
+            QTableWidget {
+                background-color: #3C3C3C;
+                color: white;
+                gridline-color: #555555;
+            }
+            QTableWidget::item {
+                background-color: #3C3C3C;
+                color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #555555;
+                color: white;
+            }
+            QHeaderView::section {
+                background-color: #444444;
+                color: white;
+                padding: 4px;
+                border: 1px solid #666666;
+            }
+            QCheckBox {
+                color: white;
+            }
+            QCheckBox::indicator {
+                background-color: #444444;
+                border: 1px solid #666666;
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #555555;
+            }
             /* Add styles for other widgets as needed */
             """
         elif theme_name == "light":
@@ -311,6 +343,38 @@ class MainWindow(QMainWindow):
             QPushButton:not(#settingsButton) {
                 background-color: #F0F0F0;
                 color: black;
+            }
+            /* QTableWidget styling */
+            QTableWidget {
+                background-color: #FFFFFF;
+                color: black;
+                gridline-color: #CCCCCC;
+            }
+            QTableWidget::item {
+                background-color: #FFFFFF;
+                color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #E0E0E0;
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #DDDDDD;
+                color: black;
+                padding: 4px;
+                border: 1px solid #CCCCCC;
+            }
+            QCheckBox {
+                color: black;
+            }
+            QCheckBox::indicator {
+                background-color: #DDDDDD;
+                border: 1px solid #CCCCCC;
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #CCCCCC;
             }
             /* Add styles for other widgets as needed */
             """
@@ -326,6 +390,39 @@ class MainWindow(QMainWindow):
                 color: black;
                 border: none;
             }
+            /* QTableWidget styling */
+            QTableWidget {
+                background-color: #ECECEC;
+                color: black;
+                gridline-color: #CCCCCC;
+            }
+            QTableWidget::item {
+                background-color: #ECECEC;
+                color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #D0D0D0;
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #DDDDDD;
+                color: black;
+                padding: 4px;
+                border: 1px solid #CCCCCC;
+            }
+            QCheckBox {
+                color: black;
+            }
+            QCheckBox::indicator {
+                background-color: #DDDDDD;
+                border: 1px solid #CCCCCC;
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #CCCCCC;
+            }
+            /* Add styles for other widgets as needed */
             """
         else:
             # If an unknown theme is selected, default to using no stylesheet
@@ -342,10 +439,11 @@ class MainWindow(QMainWindow):
         if hasattr(self.layer_panel, 'set_theme'):
             self.layer_panel.set_theme(theme_name)
 
-        # If you have other components that need to be updated, do so here
-        # For example, if you have dialogs or other windows:
-        # if self.some_dialog:
-        #     self.some_dialog.apply_theme(theme_name)
+        # Update the canvas dark mode flag
+        self.canvas.is_dark_mode = theme_name == "dark"
+
+        # Emit the theme_changed signal
+        self.theme_changed.emit(theme_name)
 
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:

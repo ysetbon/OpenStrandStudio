@@ -298,6 +298,29 @@ class MainWindow(QMainWindow):
             QPushButton:not(#settingsButton) {
                 background-color: #3C3C3C;
                 color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:not(#settingsButton):hover {
+                background-color: #4D4D4D;
+            }
+            QPushButton:not(#settingsButton):pressed {
+                background-color: #5D5D5D;
+            }
+            QMenu {
+                background-color: #2C2C2C;
+                color: white;
+            }
+            QMenu::item:selected {
+                background-color: #4D4D4D;
+            }
+            QScrollBar:vertical {
+                background: #2C2C2C;
+                width: 16px;
+            }
+            QScrollBar::handle:vertical {
+                background: #5D5D5D;
             }
             /* QTableWidget styling */
             QTableWidget {
@@ -331,18 +354,56 @@ class MainWindow(QMainWindow):
             QCheckBox::indicator:checked {
                 background-color: #555555;
             }
-            /* Add styles for other widgets as needed */
             """
+            # Style for create_group_button
+            self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4A4845; /* Dark gray for dark theme */
+                    color: white;
+                    font-weight: bold;
+                    border: none;
+                    padding: 10px;
+                    border-radius: 0; /* Square button */
+                }
+                QPushButton:hover {
+                    background-color: #62605D; /* Slightly lighter on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #2C2A27; /* Darker on press */
+                }
+            """)
         elif theme_name == "light":
             style_sheet = """
             QWidget {
                 background-color: #FFFFFF;
                 color: black;
             }
-            /* Apply styles to all QPushButtons except the settings button */
             QPushButton:not(#settingsButton) {
                 background-color: #F0F0F0;
                 color: black;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:not(#settingsButton):hover {
+                background-color: #E0E0E0;
+            }
+            QPushButton:not(#settingsButton):pressed {
+                background-color: #D0D0D0;
+            }
+            QMenu {
+                background-color: #FFFFFF;
+                color: black;
+            }
+            QMenu::item:selected {
+                background-color: #E0E0E0;
+            }
+            QScrollBar:vertical {
+                background: #FFFFFF;
+                width: 16px;
+            }
+            QScrollBar::handle:vertical {
+                background: #D0D0D0;
             }
             /* QTableWidget styling */
             QTableWidget {
@@ -376,10 +437,24 @@ class MainWindow(QMainWindow):
             QCheckBox::indicator:checked {
                 background-color: #CCCCCC;
             }
-            /* Add styles for other widgets as needed */
             """
+            self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #E8E2D8; /* Light gray for light theme */
+                    color: black;
+                    font-weight: bold;
+                    border: none;
+                    padding: 10px;
+                    border-radius: 0;
+                }
+                QPushButton:hover {
+                    background-color: #F0ECE6; /* Slightly lighter on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #D0CAC0; /* Darker on press */
+                }
+            """)
         elif theme_name == "default":
-            # Define styles for the default theme
             style_sheet = """
             QWidget {
                 background-color: #ECECEC;
@@ -389,6 +464,28 @@ class MainWindow(QMainWindow):
                 background-color: #F9F9F9;
                 color: black;
                 border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:not(#settingsButton):hover {
+                background-color: #E9E9E9;
+            }
+            QPushButton:not(#settingsButton):pressed {
+                background-color: #D9D9D9;
+            }
+            QMenu {
+                background-color: #ECECEC;
+                color: black;
+            }
+            QMenu::item:selected {
+                background-color: #D9D9D9;
+            }
+            QScrollBar:vertical {
+                background: #ECECEC;
+                width: 16px;
+            }
+            QScrollBar::handle:vertical {
+                background: #C9C9C9;
             }
             /* QTableWidget styling */
             QTableWidget {
@@ -422,11 +519,27 @@ class MainWindow(QMainWindow):
             QCheckBox::indicator:checked {
                 background-color: #CCCCCC;
             }
-            /* Add styles for other widgets as needed */
             """
+            self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #A6A19A; /* Grayish color for default theme */
+                    color: black;
+                    font-weight: bold;
+                    border: none;
+                    padding: 10px;
+                    border-radius: 0;
+                }
+                QPushButton:hover {
+                    background-color: #B6B1AA; /* Slightly lighter on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #86817A; /* Darker on press */
+                }
+            """)
         else:
             # If an unknown theme is selected, default to using no stylesheet
             style_sheet = ""
+            self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("")
 
         # Apply the style sheet to the application
         QApplication.instance().setStyleSheet(style_sheet)
@@ -503,7 +616,23 @@ class MainWindow(QMainWindow):
                     checked_color=checked_color
                 ))
                 button.setCheckable(True)
-
+        self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3; /* Blue background */
+                color: white;              /* White text */
+                font-weight: bold;
+                border: none;
+                padding: 10px 24px;
+                text-align: center;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2; /* Darker blue on hover */
+            }
+            QPushButton:pressed {
+                background-color: #1565C0;
+            }
+        """)
         # Style specific buttons that don't follow the generic pattern
         self.layer_panel.lock_layers_button.setStyleSheet("""
             QPushButton {

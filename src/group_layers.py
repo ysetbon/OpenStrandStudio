@@ -14,6 +14,7 @@ from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtCore import Qt
 import logging
+from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
     QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea,
@@ -107,9 +108,35 @@ class GroupedLayerTree(QTreeWidget):
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
 )
+from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
+                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView)
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF
+from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent
+from PyQt5.QtCore import QMimeData, QPoint
+from PyQt5.QtGui import QPixmap
+from strand_drawing_canvas import StrandDrawingCanvas
+from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+import logging
+from strand_drawing_canvas import StrandDrawingCanvas   
+from math import atan2, degrees
+from PyQt5.QtGui import QIntValidator
+from translations import translations
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox
+import logging
+from PyQt5.QtGui import QPalette, QColor, QPainter
+from PyQt5.QtWidgets import QStyleOptionButton
+from PyQt5.QtWidgets import (
+     QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
+     QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea,
+     QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
+ )
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QMimeData, QPoint
+from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon, QPixmap, QIntValidator
+from strand_drawing_canvas import StrandDrawingCanvas
+from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+import logging
+from math import atan2, degrees
 class CollapsibleGroupWidget(QWidget):
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
@@ -122,22 +149,13 @@ class CollapsibleGroupWidget(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
         self.layout.setSpacing(0)
+
         # Access the current language code
         self.language_code = 'en'
         self.update_translations()  # Call the method to set initial translations
 
         # Group button (collapsible header)
         self.group_button = QPushButton(self.group_name)
-        self.group_button.setStyleSheet("""
-            QPushButton {
-                background-color: #F0F0F0;
-                border: none;
-                text-align: left;
-                padding: 5px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-        """)
         self.group_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -166,13 +184,42 @@ class CollapsibleGroupWidget(QWidget):
         self.layers_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.layers_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         self.content_layout.addWidget(self.layers_list)
-        
+
         # Store main strands
         self.main_strands = set()
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.content_widget.setVisible(not self.is_collapsed)
 
+        # Update styles based on the current theme
+        self.update_group_button_style()
+
+        # Connect to the main window's theme_changed signal if available
+        if parent and hasattr(parent, 'theme_changed'):
+            parent.theme_changed.connect(self.on_theme_changed)
+
+    def update_group_button_style(self):
+        """Update the group button's stylesheet based on the current palette."""
+        # Remove the background-color to allow the system theme to take over
+        self.group_button.setStyleSheet(f"""
+            QPushButton {{
+                border: none;
+                text-align: left;
+                padding: 5px;
+                font-size: 12px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(255, 255, 255, 20%);
+            }}
+            QPushButton:pressed {{
+                background-color: rgba(255, 255, 255, 40%);
+            }}
+        """)
+
+    def on_theme_changed(self):
+        """Handle dynamic theme changes by updating styles."""
+        self.update_group_button_style()
 
     def show_context_menu(self, position):
         _ = translations[self.language_code]
@@ -197,11 +244,13 @@ class CollapsibleGroupWidget(QWidget):
         self.is_collapsed = not self.is_collapsed
         self.content_widget.setVisible(not self.is_collapsed)
         self.update_size()
+
     def update_translations(self):
         # Update translations when language changes
         self.language_code = self.group_panel.canvas.language_code if self.group_panel.canvas else 'en'
         _ = translations[self.language_code]
         # Update any other texts if necessary
+
     def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
@@ -273,11 +322,21 @@ class GroupPanel(QWidget):
         self.layer_panel = layer_panel
         self.canvas = canvas
         self.groups = {}  # Initialize groups dictionary
-        self.setStyleSheet("background-color: white;")
+
+        # Remove the hardcoded background color
+        # self.setStyleSheet("background-color: white;")
+
+        # Use the application's palette to set the background role
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), palette.window().color())
+        self.setPalette(palette)
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(5, 5, 5, 5)
         self.layout.setSpacing(5)
         self.setAcceptDrops(True)
+
         if self.canvas:
             logging.info(f"Canvas set on GroupPanel during initialization: {self.canvas}")
         else:
@@ -1494,6 +1553,7 @@ class StrandAngleEditDialog(QDialog):
         frame_geometry.moveCenter(center_point)
         self.move(frame_geometry.topLeft())
 
+
     def populate_table(self):
         self.table.setRowCount(len(self.group_data['strands']))
         # Start initializing
@@ -1558,6 +1618,8 @@ class StrandAngleEditDialog(QDialog):
 
             # Disable editing and interaction for non-editable strands
             if not is_editable:
+                palette = self.palette()
+                alternate_base = palette.color(QPalette.AlternateBase)
                 for col in range(1, self.table.columnCount()):
                     # Disable QTableWidgetItems
                     item = self.table.item(row, col)
@@ -1573,11 +1635,14 @@ class StrandAngleEditDialog(QDialog):
                 for col in range(self.table.columnCount()):
                     item = self.table.item(row, col)
                     if item:
-                        item.setBackground(QColor(240, 240, 240))  # Light gray background
+                        # Use alternate base color for backgrounds
+                        item.setBackground(alternate_base)
                     else:
                         widget = self.table.cellWidget(row, col)
                         if widget:
-                            widget.setStyleSheet("background-color: rgb(240, 240, 240);")
+                            # Set background color appropriately using palette
+                            bg_color = palette.color(QPalette.AlternateBase)
+                            widget.setStyleSheet(f"background-color: {bg_color.name()};")
 
         # End initializing
         self.initializing = False

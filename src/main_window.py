@@ -287,6 +287,7 @@ class MainWindow(QMainWindow):
         settings_dialog.theme_changed.connect(self.apply_theme)  # Connect the signal
         settings_dialog.exec_()
 
+
     def apply_theme(self, theme_name):
         if theme_name == "dark":
             style_sheet = """
@@ -294,82 +295,127 @@ class MainWindow(QMainWindow):
                 background-color: #2C2C2C;
                 color: white;
             }
-            /* Apply styles to all QPushButtons except the settings button */
-            QPushButton:not(#settingsButton) {
+            /* Styles for labels */
+            QLabel {
+                color: white;
+            }
+            /* Styles for push buttons */
+            QPushButton {
                 background-color: #3C3C3C;
                 color: white;
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
             }
-            QPushButton:not(#settingsButton):hover {
+            QPushButton:hover {
                 background-color: #4D4D4D;
             }
-            QPushButton:not(#settingsButton):pressed {
+            QPushButton:pressed {
                 background-color: #5D5D5D;
             }
-            QMenu {
-                background-color: #2C2C2C;
+            /* Styles for spin boxes */
+            QSpinBox, QDoubleSpinBox {
+                background-color: #3C3C3C;
                 color: white;
+                border: 1px solid #5D5D5D;
             }
-            QMenu::item:selected {
-                background-color: #4D4D4D;
+            /* Styles for sliders */
+            QSlider {
+                background-color: transparent;
             }
-            QScrollBar:vertical {
-                background: #2C2C2C;
-                width: 16px;
+            QSlider::groove:horizontal {
+                background: #3C3C3C;
+                height: 6px;
+                border-radius: 3px;
             }
-            QScrollBar::handle:vertical {
+            QSlider::handle:horizontal {
                 background: #5D5D5D;
+                width: 14px;
+                height: 14px;
+                margin: -4px 0;
+                border-radius: 7px;
             }
-            /* QTableWidget styling */
-            QTableWidget {
+            /* Styles for combo boxes */
+            QComboBox {
                 background-color: #3C3C3C;
                 color: white;
-                gridline-color: #555555;
+                border: 1px solid #5D5D5D;
             }
-            QTableWidget::item {
+            QComboBox QAbstractItemView {
                 background-color: #3C3C3C;
                 color: white;
+                selection-background-color: #4D4D4D;
             }
-            QTableWidget::item:selected {
-                background-color: #555555;
-                color: white;
-            }
-            QHeaderView::section {
-                background-color: #444444;
-                color: white;
-                padding: 4px;
-                border: 1px solid #666666;
-            }
+            /* Styles for check boxes */
             QCheckBox {
                 color: white;
             }
             QCheckBox::indicator {
-                background-color: #444444;
-                border: 1px solid #666666;
+                border: 1px solid #5D5D5D;
                 width: 16px;
                 height: 16px;
+                background: #3C3C3C;
             }
             QCheckBox::indicator:checked {
-                background-color: #555555;
+                image: url(:/icons/checkbox_checked_white.png);
+            }
+            /* Styles for the Angle Adjust Dialog */
+            QDialog#AngleAdjustDialog {
+                background-color: #2C2C2C;
+                color: white;
+            }
+            QDialog#AngleAdjustDialog QLabel {
+                color: white;
+            }
+            QDialog#AngleAdjustDialog QPushButton {
+                background-color: #3C3C3C;
+                color: white;
+                border: 1px solid #5D5D5D;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+            QDialog#AngleAdjustDialog QPushButton:hover {
+                background-color: #4D4D4D;
+            }
+            QDialog#AngleAdjustDialog QPushButton:pressed {
+                background-color: #5D5D5D;
+            }
+            QDialog#AngleAdjustDialog QSpinBox, QDialog#AngleAdjustDialog QDoubleSpinBox {
+                background-color: #3C3C3C;
+                color: white;
+                border: 1px solid #5D5D5D;
+            }
+            QDialog#AngleAdjustDialog QSlider {
+                background-color: transparent;
+            }
+            QDialog#AngleAdjustDialog QSlider::groove:horizontal {
+                background: #3C3C3C;
+                height: 6px;
+                border-radius: 3px;
+            }
+            QDialog#AngleAdjustDialog QSlider::handle:horizontal {
+                background: #5D5D5D;
+                width: 14px;
+                height: 14px;
+                margin: -4px 0;
+                border-radius: 7px;
             }
             """
             # Style for create_group_button
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #4A4845; /* Dark gray for dark theme */
+                    background-color: #4A4845;
                     color: white;
                     font-weight: bold;
                     border: none;
                     padding: 10px;
-                    border-radius: 0; /* Square button */
+                    border-radius: 0;
                 }
                 QPushButton:hover {
-                    background-color: #62605D; /* Slightly lighter on hover */
+                    background-color: #62605D;
                 }
                 QPushButton:pressed {
-                    background-color: #2C2A27; /* Darker on press */
+                    background-color: #2C2A27;
                 }
             """)
         elif theme_name == "light":
@@ -378,69 +424,110 @@ class MainWindow(QMainWindow):
                 background-color: #FFFFFF;
                 color: black;
             }
-            QPushButton:not(#settingsButton) {
+            QLabel {
+                color: black;
+            }
+            QPushButton {
                 background-color: #F0F0F0;
                 color: black;
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
             }
-            QPushButton:not(#settingsButton):hover {
+            QPushButton:hover {
                 background-color: #E0E0E0;
             }
-            QPushButton:not(#settingsButton):pressed {
+            QPushButton:pressed {
                 background-color: #D0D0D0;
             }
-            QMenu {
+            QSpinBox, QDoubleSpinBox {
                 background-color: #FFFFFF;
                 color: black;
-            }
-            QMenu::item:selected {
-                background-color: #E0E0E0;
-            }
-            QScrollBar:vertical {
-                background: #FFFFFF;
-                width: 16px;
-            }
-            QScrollBar::handle:vertical {
-                background: #D0D0D0;
-            }
-            /* QTableWidget styling */
-            QTableWidget {
-                background-color: #FFFFFF;
-                color: black;
-                gridline-color: #CCCCCC;
-            }
-            QTableWidget::item {
-                background-color: #FFFFFF;
-                color: black;
-            }
-            QTableWidget::item:selected {
-                background-color: #E0E0E0;
-                color: black;
-            }
-            QHeaderView::section {
-                background-color: #DDDDDD;
-                color: black;
-                padding: 4px;
                 border: 1px solid #CCCCCC;
+            }
+            QSlider {
+                background-color: transparent;
+            }
+            QSlider::groove:horizontal {
+                background: #E0E0E0;
+                height: 6px;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #CCCCCC;
+                width: 14px;
+                height: 14px;
+                margin: -4px 0;
+                border-radius: 7px;
+            }
+            QComboBox {
+                background-color: #FFFFFF;
+                color: black;
+                border: 1px solid #CCCCCC;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #FFFFFF;
+                color: black;
+                selection-background-color: #E0E0E0;
             }
             QCheckBox {
                 color: black;
             }
             QCheckBox::indicator {
-                background-color: #DDDDDD;
                 border: 1px solid #CCCCCC;
                 width: 16px;
                 height: 16px;
+                background: #FFFFFF;
             }
             QCheckBox::indicator:checked {
-                background-color: #CCCCCC;
+                image: url(:/icons/checkbox_checked_black.png);
+            }
+            /* Styles for the Angle Adjust Dialog */
+            QDialog#AngleAdjustDialog {
+                background-color: #FFFFFF;
+                color: black;
+            }
+            QDialog#AngleAdjustDialog QLabel {
+                color: black;
+            }
+            QDialog#AngleAdjustDialog QPushButton {
+                background-color: #F0F0F0;
+                color: black;
+                border: 1px solid #CCCCCC;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+            QDialog#AngleAdjustDialog QPushButton:hover {
+                background-color: #E0E0E0;
+            }
+            QDialog#AngleAdjustDialog QPushButton:pressed {
+                background-color: #D0D0D0;
+            }
+            QDialog#AngleAdjustDialog QSpinBox, QDialog#AngleAdjustDialog QDoubleSpinBox {
+                background-color: #FFFFFF;
+                color: black;
+                border: 1px solid #CCCCCC;
+            }
+            QDialog#AngleAdjustDialog QSlider {
+                background-color: transparent;
+            }
+            QDialog#AngleAdjustDialog QSlider::groove:horizontal {
+                background: #E0E0E0;
+                height: 6px;
+                border-radius: 3px;
+            }
+            QDialog#AngleAdjustDialog QSlider::handle:horizontal {
+                background: #CCCCCC;
+                width: 14px;
+                height: 14px;
+                margin: -4px 0;
+                border-radius: 7px;
             }
             """
+            # Style for create_group_button
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #E8E2D8; /* Light gray for light theme */
+                    background-color: #A6A19A;
                     color: black;
                     font-weight: bold;
                     border: none;
@@ -448,10 +535,10 @@ class MainWindow(QMainWindow):
                     border-radius: 0;
                 }
                 QPushButton:hover {
-                    background-color: #F0ECE6; /* Slightly lighter on hover */
+                    background-color: #B6B1AA;
                 }
                 QPushButton:pressed {
-                    background-color: #D0CAC0; /* Darker on press */
+                    background-color: #86817A;
                 }
             """)
         elif theme_name == "default":
@@ -460,86 +547,88 @@ class MainWindow(QMainWindow):
                 background-color: #ECECEC;
                 color: black;
             }
-            QPushButton:not(#settingsButton) {
-                background-color: #F9F9F9;
+            QLabel {
+                color: black;
+            }
+            QPushButton {
+                background-color: #E8E8E8;
                 color: black;
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
             }
-            QPushButton:not(#settingsButton):hover {
-                background-color: #E9E9E9;
+            QPushButton:hover {
+                background-color: #DADADA;
             }
-            QPushButton:not(#settingsButton):pressed {
-                background-color: #D9D9D9;
+            QPushButton:pressed {
+                background-color: #C8C8C8;
             }
-            QMenu {
-                background-color: #ECECEC;
+            QSpinBox, QDoubleSpinBox {
+                background-color: #FFFFFF;
                 color: black;
-            }
-            QMenu::item:selected {
-                background-color: #D9D9D9;
-            }
-            QScrollBar:vertical {
-                background: #ECECEC;
-                width: 16px;
-            }
-            QScrollBar::handle:vertical {
-                background: #C9C9C9;
-            }
-            /* QTableWidget styling */
-            QTableWidget {
-                background-color: #ECECEC;
-                color: black;
-                gridline-color: #CCCCCC;
-            }
-            QTableWidget::item {
-                background-color: #ECECEC;
-                color: black;
-            }
-            QTableWidget::item:selected {
-                background-color: #D0D0D0;
-                color: black;
-            }
-            QHeaderView::section {
-                background-color: #DDDDDD;
-                color: black;
-                padding: 4px;
                 border: 1px solid #CCCCCC;
             }
-            QCheckBox {
+            QSlider {
+                background-color: transparent;
+            }
+            QSlider::groove:horizontal {
+                background: #E0E0E0;
+                height: 6px;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #CCCCCC;
+                width: 14px;
+                height: 14px;
+                margin: -4px 0;
+                border-radius: 7px;
+            }
+            QDialog {
+                background-color: #ECECEC;
                 color: black;
             }
-            QCheckBox::indicator {
-                background-color: #DDDDDD;
-                border: 1px solid #CCCCCC;
-                width: 16px;
-                height: 16px;
+            QDialog QLabel {
+                color: black;
             }
-            QCheckBox::indicator:checked {
-                background-color: #CCCCCC;
+            QDialog QPushButton {
+                background-color: #E8E8E8;
+                color: black;
+                border: 1px solid #CCCCCC;
+                padding: 5px 10px;
+                border-radius: 4px;
+            }
+            QDialog QPushButton:hover {
+                background-color: #DADADA;
+            }
+            QDialog QPushButton:pressed {
+                background-color: #C8C8C8;
+            }
+            QDialog QSpinBox, QDialog QDoubleSpinBox, QDialog QLineEdit {
+                background-color: #FFFFFF;
+                color: black;
+                border: 1px solid #CCCCCC;
             }
             """
+            # Style for create_group_button in default theme
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #A6A19A; /* Grayish color for default theme */
-                    color: black;
+                    background-color: #96938F;  /* A middle-ground color between light and dark themes */
+                    color: white;
                     font-weight: bold;
                     border: none;
                     padding: 10px;
                     border-radius: 0;
                 }
                 QPushButton:hover {
-                    background-color: #B6B1AA; /* Slightly lighter on hover */
+                    background-color: #A8A5A1;
                 }
                 QPushButton:pressed {
-                    background-color: #86817A; /* Darker on press */
+                    background-color: #7E7B77;
                 }
             """)
         else:
             # If an unknown theme is selected, default to using no stylesheet
             style_sheet = ""
-            self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("")
 
         # Apply the style sheet to the application
         QApplication.instance().setStyleSheet(style_sheet)
@@ -557,7 +646,6 @@ class MainWindow(QMainWindow):
 
         # Emit the theme_changed signal
         self.theme_changed.emit(theme_name)
-
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:
             if strand.set_number == set_number:

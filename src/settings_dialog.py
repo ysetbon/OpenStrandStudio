@@ -9,11 +9,10 @@ from translations import translations
 
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
-
     def __init__(self, parent=None, canvas=None):
         super(SettingsDialog, self).__init__(parent)
-        self.canvas = canvas  # Reference to the canvas
-        self.parent_window = parent  # Reference to the parent window
+        self.canvas = canvas
+        self.parent_window = parent
         self.current_theme = 'default'  # Initialize current_theme
         self.current_language = self.parent_window.language_code  # Initialize current_language
         self.setWindowTitle(translations[self.current_language]['settings'])

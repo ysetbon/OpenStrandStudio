@@ -51,10 +51,15 @@ class AngleAdjustMode:
         current_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end)
         current_length = self.calculate_length(self.active_strand.start, self.active_strand.end)
         
-        dialog = QDialog(self.canvas)
+        # Create the dialog and set an object name
+        dialog = QDialog(self.canvas.parent())  # Ensure proper parenting
         dialog.setWindowTitle(_['adjust_angle_and_length'])
-        layout = QVBoxLayout()
+        dialog.setObjectName("AngleAdjustDialog")  # Set object name for specificity if needed
 
+        # Remove any conflicting stylesheets
+        # dialog.setStyleSheet("")  # Commented out or removed
+
+        layout = QVBoxLayout()
         # Angle adjustment
         angle_layout = QHBoxLayout()
         angle_layout.addWidget(QLabel(_['angle_label']))
@@ -111,11 +116,11 @@ class AngleAdjustMode:
 
         def update_length(value):
             if isinstance(value, int):  # From slider
-                rounded_value = round(value / 5) * 5  # Round to nearest multiple of 5
+                rounded_value = round(value / 5) * 5
                 length_spinbox.setValue(rounded_value)
                 length_slider.setValue(rounded_value)
             else:  # From spinbox
-                rounded_value = round(value / 5) * 5  # Round to nearest multiple of 5
+                rounded_value = round(value / 5) * 5
                 length_slider.setValue(rounded_value)
                 length_spinbox.setValue(rounded_value)
             update_strand(length=rounded_value)

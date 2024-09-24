@@ -1,0 +1,376 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 572.0,
+        "y": 390.0
+      },
+      "end": {
+        "x": 962.0,
+        "y": 390.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 962.0,
+        "y": 390.0
+      },
+      "end": {
+        "x": 727.9873509841988,
+        "y": 649.9886153288398
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_index": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 728.0,
+        "y": 650.0
+      },
+      "end": {
+        "x": 1121.4513947109606,
+        "y": 650.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_index": "1_2"
+    },
+    {
+      "type": "Strand",
+      "index": 3,
+      "start": {
+        "x": 386,
+        "y": 270
+      },
+      "end": {
+        "x": 974.9984310333924,
+        "y": 134.99315483945992
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 974.9984310333924,
+        "y": 134.99315483945992
+      },
+      "end": {
+        "x": 1040.0,
+        "y": 312.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_2",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_index": "2_1"
+    }
+  ],
+  "groups": {
+    "dfg": {
+      "layers": [
+        "1_1",
+        "1_2",
+        "1_3"
+      ],
+      "strands": [
+        {
+          "layer_name": "1_1",
+          "start": {
+            "x": 572.0,
+            "y": 390.0
+          },
+          "end": {
+            "x": 962.0,
+            "y": 390.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            1
+          ],
+          "has_circles": [
+            false,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_2",
+          "start": {
+            "x": 962.0,
+            "y": 390.0
+          },
+          "end": {
+            "x": 727.9873509841988,
+            "y": 649.9886153288398
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            2
+          ],
+          "has_circles": [
+            true,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_3",
+          "start": {
+            "x": 728.0,
+            "y": 650.0
+          },
+          "end": {
+            "x": 1121.4513947109606,
+            "y": 650.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [],
+          "has_circles": [
+            true,
+            false
+          ]
+        }
+      ]
+    },
+    "ghj": {
+      "layers": [
+        "1_1",
+        "1_2",
+        "1_3",
+        "2_1"
+      ],
+      "strands": [
+        {
+          "layer_name": "1_1",
+          "start": {
+            "x": 572.0,
+            "y": 390.0
+          },
+          "end": {
+            "x": 962.0,
+            "y": 390.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            1
+          ],
+          "has_circles": [
+            false,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_2",
+          "start": {
+            "x": 962.0,
+            "y": 390.0
+          },
+          "end": {
+            "x": 727.9873509841988,
+            "y": 649.9886153288398
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            2
+          ],
+          "has_circles": [
+            true,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_3",
+          "start": {
+            "x": 728.0,
+            "y": 650.0
+          },
+          "end": {
+            "x": 1121.4513947109606,
+            "y": 650.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [],
+          "has_circles": [
+            true,
+            false
+          ]
+        },
+        {
+          "layer_name": "2_1",
+          "start": {
+            "x": 386,
+            "y": 270
+          },
+          "end": {
+            "x": 974.9984310333924,
+            "y": 134.99315483945992
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            4
+          ],
+          "has_circles": [
+            false,
+            true
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -13,15 +13,16 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None, canvas=None):
         super(SettingsDialog, self).__init__(parent)
         self.canvas = canvas  # Reference to the canvas
+        self.parent_window = parent  # Reference to the parent window
         self.current_theme = 'default'  # Initialize current_theme
-        self.current_language = self.parent().language_code  # Initialize current_language
-        self.setWindowTitle(translations[self.parent().language_code]['settings'])
+        self.current_language = self.parent_window.language_code  # Initialize current_language
+        self.setWindowTitle(translations[self.current_language]['settings'])
         self.setMinimumSize(600, 400)
         self.setup_ui()
         self.load_gifs()  # Load GIFs after setting up the UI
 
     def setup_ui(self):
-        _ = translations[self.parent().language_code]
+        _ = translations[self.parent_window.language_code]
         main_layout = QHBoxLayout(self)
 
         # Left side: categories list
@@ -173,7 +174,7 @@ class SettingsDialog(QDialog):
             self.parent().set_language('en')
 
     def update_translations(self):
-        _ = translations[self.parent().language_code]
+        _ = translations[self.parent_window.language_code]
         self.setWindowTitle(_['settings'])
         # Update category names
         self.categories_list.item(0).setText(_['general_settings'])
@@ -195,11 +196,14 @@ class SettingsDialog(QDialog):
         # Get the selected language code from the combo box
         language_code = self.language_combobox.currentData()
         # Update the language in the main window
-        self.parent().set_language(language_code)
+        self.parent_window.set_language(language_code)
         # Update the canvas language code and emit the signal
         if self.canvas:
             self.canvas.language_code = language_code
             self.canvas.language_changed.emit()
+        else:
+            # Emit language_changed signal from the parent window
+            self.parent_window.language_changed.emit()
 
         # Store the selected language code
         self.current_language = language_code

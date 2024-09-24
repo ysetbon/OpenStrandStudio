@@ -21,11 +21,13 @@ from translations import translations
 # main_window.py
 
 class MainWindow(QMainWindow):
-    language_changed = pyqtSignal(str)
+    language_changed = pyqtSignal()
+    theme_changed = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
         self.language_code = 'en'  # Default language
+        self.current_theme = 'default'  # Default theme
 
         logging.info("Initializing MainWindow")
 
@@ -60,20 +62,6 @@ class MainWindow(QMainWindow):
         # Create settings dialog
         self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
 
-        # Verify that group_layer_manager is properly initialized
-        if self.group_layer_manager is None:
-            logging.error("group_layer_manager is None")
-        else:
-            logging.info("group_layer_manager is initialized")
-
-        # Ensure that on_theme_changed method exists
-        if hasattr(self.group_layer_manager, 'on_theme_changed'):
-            logging.info("group_layer_manager.on_theme_changed exists")
-        else:
-            logging.error("group_layer_manager.on_theme_changed does not exist")
-        self.group_layer_manager = self.layer_panel.group_layer_manager
-
-
         # Proceed with the rest of your setup
         self.setup_ui()
         self.setup_connections()
@@ -82,6 +70,63 @@ class MainWindow(QMainWindow):
         self.set_attach_mode()
         self.selected_strand = None
 
+        # Connect signals
+        self.language_changed.connect(self.update_translations)
+        self.theme_changed.connect(self.apply_theme_to_widgets)
+
+    # Add the update_translations method here
+    def update_translations(self):
+        _ = translations[self.language_code]
+        self.setWindowTitle(_['main_window_title'])
+
+        # Update button texts
+        self.attach_button.setText(_['attach_mode'])
+        self.move_button.setText(_['move_mode'])
+        self.rotate_button.setText(_['rotate_mode'])
+        self.toggle_grid_button.setText(_['toggle_grid'])
+        self.angle_adjust_button.setText(_['angle_adjust_mode'])
+        self.select_strand_button.setText(_['select_mode'])
+        self.mask_button.setText(_['mask_mode'])
+        self.save_button.setText(_['save'])
+        self.load_button.setText(_['open'])
+        self.save_image_button.setText(_['save_image'])
+
+        # Update settings button tooltip or text
+        self.settings_button.setToolTip(_['settings'])
+
+        # Update other UI components
+        if hasattr(self.layer_panel, 'update_translations'):
+            self.layer_panel.update_translations()
+        if hasattr(self.canvas, 'update_translations'):
+            self.canvas.update_translations()
+        if self.settings_dialog.isVisible():
+            self.settings_dialog.update_translations()
+
+    # Ensure other methods like apply_theme_to_widgets are also defined
+    def apply_theme_to_widgets(self, theme_name):
+        # Apply theme to child widgets
+        self.canvas.set_theme(theme_name)
+        self.layer_panel.set_theme(theme_name)
+        # Apply theme to other widgets if necessary
+    def load_settings_from_file(self):
+        file_path = 'user_settings.txt'
+        theme_name = 'default'
+        language_code = 'en'
+            
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                for line in file:
+                    if line.startswith('Theme:'):
+                        theme_name = line.strip().split(':', 1)[1].strip()
+                    elif line.startswith('Language:'):
+                        language_code = line.strip().split(':', 1)[1].strip()
+        else:
+            # If the file does not exist, you can set the default values here or leave as initialized
+            logging.info("user_settings.txt not found. Using default settings.")
+
+        # Apply the theme and language
+        self.apply_theme(theme_name)
+        self.set_language(language_code)
 
     def setup_ui(self):
         logging.info("Entered setup_ui")
@@ -154,9 +199,6 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_image_button)
         button_layout.addWidget(self.settings_button)
-
-        # Change the angle_adjust_button to be non-checkable
-        self.angle_adjust_button.setCheckable(False)
 
         # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
@@ -248,29 +290,29 @@ class MainWindow(QMainWindow):
     def apply_theme(self, theme_name):
         if theme_name == "dark":
             style_sheet = """
-                QWidget {
-                    background-color: #2C2C2C;
-                    color: white;
-                }
-                /* Apply styles to all QPushButtons except the settings button */
-                QPushButton:not(#settingsButton) {
-                    background-color: #3C3C3C;
-                    color: white;
-                }
-                /* Add styles for other widgets as needed */
+            QWidget {
+                background-color: #2C2C2C;
+                color: white;
+            }
+            /* Apply styles to all QPushButtons except the settings button */
+            QPushButton:not(#settingsButton) {
+                background-color: #3C3C3C;
+                color: white;
+            }
+            /* Add styles for other widgets as needed */
             """
         elif theme_name == "light":
             style_sheet = """
-                QWidget {
-                    background-color: #FFFFFF;
-                    color: black;
-                }
-                /* Apply styles to all QPushButtons except the settings button */
-                QPushButton:not(#settingsButton) {
-                    background-color: #F0F0F0;
-                    color: black;
-                }
-                /* Add styles for other widgets as needed */
+            QWidget {
+                background-color: #FFFFFF;
+                color: black;
+            }
+            /* Apply styles to all QPushButtons except the settings button */
+            QPushButton:not(#settingsButton) {
+                background-color: #F0F0F0;
+                color: black;
+            }
+            /* Add styles for other widgets as needed */
             """
         elif theme_name == "default":
             # Clear the style sheet to use the default theme
@@ -289,6 +331,11 @@ class MainWindow(QMainWindow):
         # Update the layer panel theme
         if hasattr(self.layer_panel, 'set_theme'):
             self.layer_panel.set_theme(theme_name)
+
+        # If you have other components that need to be updated, do so here
+        # For example, if you have dialogs or other windows:
+        # if self.some_dialog:
+        #     self.some_dialog.apply_theme(theme_name)
 
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:

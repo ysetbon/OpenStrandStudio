@@ -1,44 +1,42 @@
 import sys
 import os
 import logging
+from PyQt5.QtWidgets import QApplication
+from main_window import MainWindow
 
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QIcon
-from main_window import MainWindow
-from group_layers import GroupLayerManager
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+def load_user_settings():
+    settings = {}
+    file_path = 'user_settings.txt'
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    if ':' in line:
+                        key, value = line.strip().split(':', 1)
+                        settings[key.strip()] = value.strip()
+        except Exception as e:
+            logging.error(f"Error reading user settings: {e}")
+    else:
+        logging.info("user_settings.txt not found. Using default settings.")
+    return settings
 
 if __name__ == '__main__':
-    # Optionally, add a test logging message here to confirm logging works
     logging.info("Starting the application...")
 
     app = QApplication(sys.argv)
 
-    # Determine the base path
-    if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.dirname(os.path.abspath(__file__))
+    # Load user settings
+    user_settings = load_user_settings()
+    language_code = user_settings.get('Language', 'en')
+    theme = user_settings.get('Theme', 'default')
 
-    # Load the icon
-    icon_path = os.path.join(base_path, 'box_stitch.ico')
-    if os.path.exists(icon_path):
-        app.setWindowIcon(QIcon(icon_path))
-    else:
-        print(f"Icon not found at {icon_path}")
-
+    # Initialize the main window with settings
     window = MainWindow()
+    window.set_language(language_code)
+    window.apply_theme(theme)
     window.show()
 
     sys.exit(app.exec_())

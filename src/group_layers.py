@@ -138,10 +138,12 @@ from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
 import logging
 from math import atan2, degrees
 class CollapsibleGroupWidget(QWidget):
-    def __init__(self, group_name, parent=None):
-        super().__init__(parent)
+    def __init__(self, group_name, group_panel):
+        super().__init__()
         self.group_name = group_name
-        self.group_panel = parent  # Store the direct reference to GroupPanel
+        self.group_panel = group_panel
+        self.canvas = self.group_panel.canvas
+
         self.layers = []  # List to hold layer names
         self.is_collapsed = False  # State of the collapsible content
 
@@ -155,12 +157,13 @@ class CollapsibleGroupWidget(QWidget):
         self.update_translations()  # Call the method to set initial translations
 
         # Group button (collapsible header)
-        self.group_button = QPushButton(self.group_name)
+       # Group button
+        self.group_button = QPushButton()
+        self.layout.addWidget(self.group_button)
         self.group_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
-        self.layout.addWidget(self.group_button)
 
         # Content widget (collapsible content)
         self.content_widget = QWidget()
@@ -194,10 +197,7 @@ class CollapsibleGroupWidget(QWidget):
         # Update styles based on the current theme
         self.update_group_button_style()
 
-        # Connect to the main window's theme_changed signal if available
-        if parent and hasattr(parent, 'theme_changed'):
-            parent.theme_changed.connect(self.on_theme_changed)
-
+        self.update_translations()
     def update_group_button_style(self):
         """Update the group button's stylesheet based on the current palette."""
         # Remove the background-color to allow the system theme to take over
@@ -246,11 +246,21 @@ class CollapsibleGroupWidget(QWidget):
         self.update_size()
 
     def update_translations(self):
-        # Update translations when language changes
-        self.language_code = self.group_panel.canvas.language_code if self.group_panel.canvas else 'en'
+        if self.canvas and hasattr(self.canvas, 'language_code'):
+            self.language_code = self.canvas.language_code
+        elif hasattr(self.group_panel, 'language_code'):
+            self.language_code = self.group_panel.language_code
+        else:
+            self.language_code = 'en'
         _ = translations[self.language_code]
-        # Update any other texts if necessary
+        # Update UI elements specific to CollapsibleGroupWidget
+        # If there are any labels or buttons that need to be translated, update them here
 
+        # For demonstration, suppose we have a label that says "Group: [group_name]"
+        # And we have a translation key 'group_label' in our translations:
+        # _['group_label'] = 'Group: {group_name}' (in both English and French)
+
+        logging.info(f"CollapsibleGroupWidget updated to language {self.language_code}")
     def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
@@ -323,6 +333,7 @@ class GroupPanel(QWidget):
         self.canvas = canvas
         self.groups = {}  # Initialize groups dictionary
 
+
         # Remove the hardcoded background color
         # self.setStyleSheet("background-color: white;")
 
@@ -350,6 +361,7 @@ class GroupPanel(QWidget):
         self.scroll_layout.setAlignment(Qt.AlignTop)
         self.scroll_area.setWidget(self.scroll_content)
         self.layout.addWidget(self.scroll_area)
+
 
 
 
@@ -727,44 +739,53 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog, QPushButton
 
 class GroupLayerManager:
-    group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
-
     def __init__(self, parent, layer_panel, canvas=None):
-        self.main_window = parent  # Now, parent is the MainWindow
-
-        self.parent = parent  # Reference to the main window
+        self.main_window = parent  # Reference to the main window
+        self.parent = parent
         self.layer_panel = layer_panel
         self.canvas = canvas
-        self.group_panel = GroupPanel(layer_panel=self.layer_panel, canvas=self.canvas)
-        self.groups = self.group_panel.groups  # Reference to the group data
-        logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
-        
-        if self.canvas:
-            logging.info(f"GroupLayerManager initialized with canvas: {self.canvas}")
-            logging.info("Connecting canvas signals to GroupLayerManager")
-            self.canvas.attach_mode.strand_attached.connect(self.on_strand_attached)
-            self.canvas.strand_created.connect(self.on_strand_created)
-            self.canvas.groups = {}  # Initialize the groups attribute in the canvas
+
+        # Set language_code appropriately
+        if self.canvas and hasattr(self.canvas, 'language_code'):
+            self.language_code = self.canvas.language_code
+        elif hasattr(self.parent, 'language_code'):
+            self.language_code = self.parent.language_code
         else:
-            logging.warning("Canvas not provided to GroupLayerManager")
+            self.language_code = 'en'  # Default to English
 
-        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        # Access the translations
         _ = translations[self.language_code]
-        
 
-        # Create the "Create Group" button with translated text
+        # Initialize the group panel
+        self.group_panel = GroupPanel(self.layer_panel, canvas=self.canvas)
+        self.group_panel.setParent(parent)  # Set the parent to the main window or appropriate parent
+
+        # Create the 'Create Group' button
         self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)
 
-        self.create_group_button.setText(_['create_group'])
-        # Connect the language_changed signal to update_translations
+        # Connect to language_changed signal
         if self.canvas:
             self.canvas.language_changed.connect(self.update_translations)
+        elif hasattr(self.parent, 'language_changed'):
+            self.parent.language_changed.connect(self.update_translations)
 
+        # Call update_translations
+        self.update_translations()
 
     def update_translations(self):
-        """Update UI texts to the selected language."""
-        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        # Update the language code from canvas or parent
+        if self.canvas and hasattr(self.canvas, 'language_code'):
+            self.language_code = self.canvas.language_code
+        elif hasattr(self.parent, 'language_code'):
+            self.language_code = self.parent.language_code
+        else:
+            self.language_code = 'en'  # default to English
+
+        # Ensure language_code is valid
+        if self.language_code not in translations:
+            self.language_code = 'en'  # default to English if unrecognized code
+
         _ = translations[self.language_code]
         self.create_group_button.setText(_['create_group'])
         # Update other UI elements as needed
@@ -775,7 +796,8 @@ class GroupLayerManager:
         logging.info(f"Canvas set on GroupLayerManager: {self.canvas}")
         # Connect the language_changed signal to update_translations
         self.canvas.language_changed.connect(self.update_translations)
-
+        # Call update_translations to update UI
+        self.update_translations()
     def on_strand_created(self, new_strand):
         logging.info(f"New strand created: {new_strand.layer_name}")
         self.update_groups_with_new_strand(new_strand)

@@ -1,2 +1,2 @@
-Theme: dark
-Language: en
+Theme: default
+Language: fr

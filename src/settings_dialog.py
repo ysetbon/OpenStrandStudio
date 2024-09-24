@@ -68,7 +68,7 @@ class SettingsDialog(QDialog):
 
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
-        self.apply_button.clicked.connect(self.apply_general_settings)
+        self.apply_button.clicked.connect(self.apply_all_settings)  # Connect to apply_all_settings
 
         # Spacer to push the apply button to the bottom
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
@@ -92,6 +92,12 @@ class SettingsDialog(QDialog):
         self.language_combobox.addItem(_['english'], 'en')
         self.language_combobox.addItem(_['french'], 'fr')
 
+        # Set the current language
+        current_language = getattr(self, 'current_language', 'en')
+        index = self.language_combobox.findData(current_language)
+        if index >= 0:
+            self.language_combobox.setCurrentIndex(index)
+
         self.language_info_label = QLabel(_['language_settings_info'])
         language_layout.addWidget(self.language_label)
         language_layout.addWidget(self.language_combobox)
@@ -99,7 +105,7 @@ class SettingsDialog(QDialog):
 
         # Add the "OK" button
         self.language_ok_button = QPushButton(_['ok'])
-        self.language_ok_button.clicked.connect(self.apply_language_settings)
+        self.language_ok_button.clicked.connect(self.apply_all_settings)  # Connect to apply_all_settings
         language_layout.addWidget(self.language_ok_button)
 
         self.stacked_widget.addWidget(self.change_language_widget)
@@ -143,57 +149,20 @@ class SettingsDialog(QDialog):
         self.categories_list.setCurrentRow(0)
         self.stacked_widget.setCurrentIndex(0)
 
-    def apply_general_settings(self):
-        # Update theme
+    def apply_all_settings(self):
+        # Apply Theme Settings
         selected_theme = self.theme_combobox.currentData()
         if selected_theme and self.canvas:
             self.canvas.set_theme(selected_theme)
             self.canvas.update()
-        
+
         # Store the selected theme
         self.current_theme = selected_theme
 
         # Emit signal to notify main window of theme change
         self.theme_changed.emit(selected_theme)
 
-        # Save settings to file
-        self.save_settings_to_file()
-
-        # Close the settings dialog
-        self.accept()
-
-    def change_category(self, item):
-        index = self.categories_list.row(item)
-        self.stacked_widget.setCurrentIndex(index)
-
-    def change_language(self):
-        selected_language = self.language_combobox.currentText()
-        if selected_language == "French":
-            self.parent().set_language('fr')
-        else:
-            self.parent().set_language('en')
-
-    def update_translations(self):
-        _ = translations[self.parent_window.language_code]
-        self.setWindowTitle(_['settings'])
-        # Update category names
-        self.categories_list.item(0).setText(_['general_settings'])
-        self.categories_list.item(1).setText(_['change_language'])
-        self.categories_list.item(2).setText(_['tutorial'])
-        self.categories_list.item(3).setText(_['about'])
-        # Update labels and buttons
-        self.theme_label.setText(_['select_theme'])
-        self.apply_button.setText(_['ok'])
-        self.language_ok_button.setText(_['ok'])  # Update the "OK" button text
-        self.language_label.setText(_['select_language'])
-        # Update information labels
-        self.language_info_label.setText(_['language_settings_info'])
-        self.tutorial_label.setText(_['tutorial_info'])
-        self.about_label.setText(_['about_info'])
-
-    # settings_dialog.py
-    def apply_language_settings(self):
-        # Get the selected language code from the combo box
+        # Apply Language Settings
         language_code = self.language_combobox.currentData()
         # Update the language in the main window
         self.parent_window.set_language(language_code)
@@ -213,6 +182,39 @@ class SettingsDialog(QDialog):
 
         # Close the settings dialog
         self.accept()
+
+    def change_category(self, item):
+        index = self.categories_list.row(item)
+        self.stacked_widget.setCurrentIndex(index)
+
+    def update_translations(self):
+        _ = translations[self.parent_window.language_code]
+        self.setWindowTitle(_['settings'])
+        # Update category names
+        self.categories_list.item(0).setText(_['general_settings'])
+        self.categories_list.item(1).setText(_['change_language'])
+        self.categories_list.item(2).setText(_['tutorial'])
+        self.categories_list.item(3).setText(_['about'])
+        # Update labels and buttons
+        self.theme_label.setText(_['select_theme'])
+        self.apply_button.setText(_['ok'])
+        self.language_ok_button.setText(_['ok'])
+        self.language_label.setText(_['select_language'])
+        # Update information labels
+        self.language_info_label.setText(_['language_settings_info'])
+        self.tutorial_label.setText(_['tutorial_info'])
+        self.about_label.setText(_['about_info'])
+        # Update theme combobox items
+        self.theme_combobox.setItemText(0, _['default'])
+        self.theme_combobox.setItemText(1, _['light'])
+        self.theme_combobox.setItemText(2, _['dark'])
+        # Update language combobox items
+        self.language_combobox.setItemText(0, _['english'])
+        self.language_combobox.setItemText(1, _['french'])
+        # Update tutorial explanations
+        for i in range(6):
+            explanation_label = self.tutorial_layout.itemAt(1 + i * 2).widget()
+            explanation_label.setText(_[f'gif_explanation_{i+1}'])
 
     def load_gifs(self):
         gif_paths = [

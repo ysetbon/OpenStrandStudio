@@ -13,6 +13,8 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None, canvas=None):
         super(SettingsDialog, self).__init__(parent)
         self.canvas = canvas  # Reference to the canvas
+        self.current_theme = 'default'  # Initialize current_theme
+        self.current_language = self.parent().language_code  # Initialize current_language
         self.setWindowTitle(translations[self.parent().language_code]['settings'])
         self.setMinimumSize(600, 400)
         self.setup_ui()
@@ -56,7 +58,7 @@ class SettingsDialog(QDialog):
         self.theme_combobox.addItem(_['dark'], 'dark')
 
         # Set the current theme
-        current_theme = getattr(self.canvas, 'theme', 'default')
+        current_theme = getattr(self, 'current_theme', 'default')
         index = self.theme_combobox.findData(current_theme)
         if index >= 0:
             self.theme_combobox.setCurrentIndex(index)
@@ -147,9 +149,15 @@ class SettingsDialog(QDialog):
             self.canvas.set_theme(selected_theme)
             self.canvas.update()
         
+        # Store the selected theme
+        self.current_theme = selected_theme
+
         # Emit signal to notify main window of theme change
         self.theme_changed.emit(selected_theme)
-        
+
+        # Save settings to file
+        self.save_settings_to_file()
+
         # Close the settings dialog
         self.accept()
 
@@ -192,6 +200,13 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.language_code = language_code
             self.canvas.language_changed.emit()
+
+        # Store the selected language code
+        self.current_language = language_code
+
+        # Save settings to file
+        self.save_settings_to_file()
+
         # Close the settings dialog
         self.accept()
 
@@ -212,3 +227,16 @@ class SettingsDialog(QDialog):
                 movie.start()
             else:
                 gif_label.setText("Failed to load GIF")
+
+    def save_settings_to_file(self):
+        # Use the stored current theme and language
+        current_theme = getattr(self, 'current_theme', 'default')
+        current_language = getattr(self, 'current_language', 'en')
+
+        # Define the file path (you can change it as needed)
+        file_path = 'user_settings.txt'
+
+        # Write the settings to the file
+        with open(file_path, 'w') as file:
+            file.write(f"Theme: {current_theme}\n")
+            file.write(f"Language: {current_language}\n")

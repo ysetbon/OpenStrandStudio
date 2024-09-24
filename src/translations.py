@@ -18,6 +18,11 @@ translations = {
         'dark': 'Dark',
         'english': 'English',
         'french': 'French',
+        'select_theme': 'Select Theme',
+        'default': 'Default',
+        'default': 'Default',
+        'light': 'Light',
+        'dark': 'Dark',
         # SettingsDialog translations
         'general_settings': 'General Settings',
         'change_language': 'Change Language',
@@ -97,6 +102,10 @@ translations = {
         'dark': 'Sombre',
         'english': 'Anglais',
         'french': 'Français',
+        'select_theme': 'Sélectionner le thème',
+        'default': 'Par défaut',
+        'light': 'Clair',
+        'dark': 'Sombre',
         # SettingsDialog translations
         'general_settings': 'Paramètres généraux',
         'change_language': 'Changer la langue',

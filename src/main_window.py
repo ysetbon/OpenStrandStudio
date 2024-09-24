@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         settings_dialog.exec_()
 
     def apply_theme(self, theme_name):
-        if theme_name == "Dark":
+        if theme_name == "dark":
             style_sheet = """
                 QWidget {
                     background-color: #2C2C2C;
@@ -259,7 +259,7 @@ class MainWindow(QMainWindow):
                 }
                 /* Add styles for other widgets as needed */
             """
-        else:
+        elif theme_name == "light":
             style_sheet = """
                 QWidget {
                     background-color: #FFFFFF;
@@ -272,13 +272,23 @@ class MainWindow(QMainWindow):
                 }
                 /* Add styles for other widgets as needed */
             """
+        elif theme_name == "default":
+            # Clear the style sheet to use the default theme
+            style_sheet = ""
+        else:
+            # If an unknown theme is selected, default to using no stylesheet
+            style_sheet = ""
+
         # Apply the style sheet to the application
         QApplication.instance().setStyleSheet(style_sheet)
+
         # Update the canvas theme if needed
         self.canvas.set_theme(theme_name)
         self.canvas.update()
+
         # Update the layer panel theme
-        self.layer_panel.set_theme(theme_name)
+        if hasattr(self.layer_panel, 'set_theme'):
+            self.layer_panel.set_theme(theme_name)
 
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:

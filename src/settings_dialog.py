@@ -49,9 +49,15 @@ class SettingsDialog(QDialog):
         theme_layout = QHBoxLayout()
         self.theme_label = QLabel(_['select_theme'])
         self.theme_combobox = QComboBox()
-        self.theme_combobox.addItems([_['light'], _['dark']])
-        current_theme = getattr(self.canvas, 'theme', _['light'])
-        index = self.theme_combobox.findText(current_theme)
+
+        # Add items with associated internal theme identifiers
+        self.theme_combobox.addItem(_['default'], 'default')
+        self.theme_combobox.addItem(_['light'], 'light')
+        self.theme_combobox.addItem(_['dark'], 'dark')
+
+        # Set the current theme
+        current_theme = getattr(self.canvas, 'theme', 'default')
+        index = self.theme_combobox.findData(current_theme)
         if index >= 0:
             self.theme_combobox.setCurrentIndex(index)
         theme_layout.addWidget(self.theme_label)
@@ -74,7 +80,7 @@ class SettingsDialog(QDialog):
         # Change Language Page
         self.change_language_widget = QWidget()
         language_layout = QVBoxLayout(self.change_language_widget)
-        
+
         # Language Selection
         self.language_label = QLabel(_['select_language'])
         self.language_combobox = QComboBox()
@@ -82,9 +88,7 @@ class SettingsDialog(QDialog):
         # Add items with associated language codes
         self.language_combobox.addItem(_['english'], 'en')
         self.language_combobox.addItem(_['french'], 'fr')
-        # Remove the automatic change on combo box selection
-        # self.language_combobox.currentIndexChanged.connect(self.change_language)
-        
+
         self.language_info_label = QLabel(_['language_settings_info'])
         language_layout.addWidget(self.language_label)
         language_layout.addWidget(self.language_combobox)
@@ -138,8 +142,8 @@ class SettingsDialog(QDialog):
 
     def apply_general_settings(self):
         # Update theme
-        selected_theme = self.theme_combobox.currentText()
-        if self.canvas:
+        selected_theme = self.theme_combobox.currentData()
+        if selected_theme and self.canvas:
             self.canvas.set_theme(selected_theme)
             self.canvas.update()
         
@@ -179,18 +183,18 @@ class SettingsDialog(QDialog):
         self.about_label.setText(_['about_info'])
 
     # settings_dialog.py
-   # settings_dialog.py
     def apply_language_settings(self):
-           # Get the selected language code from the combo box
-           language_code = self.language_combobox.currentData()
-           # Update the language in the main window
-           self.parent().set_language(language_code)
-           # Update the canvas language code and emit the signal
-           if self.canvas:
+        # Get the selected language code from the combo box
+        language_code = self.language_combobox.currentData()
+        # Update the language in the main window
+        self.parent().set_language(language_code)
+        # Update the canvas language code and emit the signal
+        if self.canvas:
             self.canvas.language_code = language_code
             self.canvas.language_changed.emit()
-           # Close the settings dialog
-           self.accept()
+        # Close the settings dialog
+        self.accept()
+
     def load_gifs(self):
         gif_paths = [
             r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif1.gif',

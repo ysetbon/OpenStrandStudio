@@ -180,15 +180,26 @@ class LayerPanel(QWidget):
 
     def set_theme(self, theme_name):
         """Set the theme of the layer panel without altering child widget styles."""
-        palette = self.palette()
-        if theme_name == "Dark":
+        if theme_name == "dark":
+            palette = self.palette()
             palette.setColor(QPalette.Window, QColor("#2C2C2C"))
-            palette.setColor(QPalette.WindowText, QColor("black"))
-        else:
+            palette.setColor(QPalette.WindowText, QColor("white"))
+            self.setPalette(palette)
+            self.setAutoFillBackground(True)
+        elif theme_name == "light":
+            palette = self.palette()
             palette.setColor(QPalette.Window, QColor("#FFFFFF"))
             palette.setColor(QPalette.WindowText, QColor("black"))
-        self.setPalette(palette)
-        self.setAutoFillBackground(True)
+            self.setPalette(palette)
+            self.setAutoFillBackground(True)
+        elif theme_name == "default":
+            # Clear any custom palettes to use the default theme
+            self.setPalette(self.style().standardPalette())
+            self.setAutoFillBackground(False)  # Let the system decide the background
+        else:
+            # Handle unknown themes by reverting to default
+            self.setPalette(self.style().standardPalette())
+            self.setAutoFillBackground(False)
 
     def update_translations(self):
         _ = translations[self.parent().language_code]

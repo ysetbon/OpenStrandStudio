@@ -315,8 +315,18 @@ class MainWindow(QMainWindow):
             /* Add styles for other widgets as needed */
             """
         elif theme_name == "default":
-            # Clear the style sheet to use the default theme
-            style_sheet = ""
+            # Define styles for the default theme
+            style_sheet = """
+            QWidget {
+                background-color: #ECECEC;
+                color: black;
+            }
+            QPushButton:not(#settingsButton) {
+                background-color: #F9F9F9;
+                color: black;
+                border: none;
+            }
+            """
         else:
             # If an unknown theme is selected, default to using no stylesheet
             style_sheet = ""

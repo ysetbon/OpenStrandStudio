@@ -979,6 +979,8 @@ class MainWindow(QMainWindow):
     def set_rotate_mode(self):
         self.update_mode("rotate")
         self.canvas.set_mode("rotate")
+
+
     def set_language(self, language_code):
         """Set the application language and update all UI elements."""
         self.language_code = language_code
@@ -986,6 +988,12 @@ class MainWindow(QMainWindow):
         # Update the language code in all components
         self.canvas.language_code = language_code
         self.layer_panel.language_code = language_code
+        
+        # Update GroupLayerManager's language code and translations
+        if self.layer_panel.group_layer_manager:
+            self.layer_panel.group_layer_manager.language_code = language_code
+            self.layer_panel.group_layer_manager.update_translations()
+
         if self.settings_dialog:
             self.settings_dialog.language_code = language_code
 
@@ -995,9 +1003,8 @@ class MainWindow(QMainWindow):
         self.layer_panel.translate_ui()
         if self.settings_dialog.isVisible():
             self.settings_dialog.update_translations()
-        if self.canvas:
-            self.canvas.language_code = language_code
 
+        logging.info(f"Language set to {language_code}")
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]

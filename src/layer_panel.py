@@ -178,6 +178,10 @@ class LayerPanel(QWidget):
         self.deselect_all_button.setText(_['deselect_all'])
         # Update other text elements as needed
 
+        # Update the GroupLayerManager
+        if self.group_layer_manager:
+            self.group_layer_manager.language_code = self.language_code
+            self.group_layer_manager.update_translations()
     def set_theme(self, theme_name):
         """Set the theme of the layer panel without altering child widget styles."""
         if theme_name == "dark":

@@ -879,19 +879,104 @@ class GroupLayerManager:
                 return part
         return None  # Return None if no numeric part is found
     def open_main_strand_selection_dialog(self, main_strands):
+        # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
-        
+
         dialog = QDialog(self.layer_panel)
         dialog.setWindowTitle(_['select_main_strands'])
+
+        # Apply the current theme's stylesheet to the dialog
+        if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
+            is_dark_mode = self.canvas.is_dark_mode
+        else:
+            is_dark_mode = False  # Default to light mode
+
+        if is_dark_mode:
+            # Dark theme stylesheet
+            dark_stylesheet = """
+                QDialog, QWidget {
+                    background-color: #1C1C1C;
+                    color: #FFFFFF;
+                }
+                QLabel {
+                    color: #FFFFFF;
+                }
+                QCheckBox {
+                    color: #FFFFFF;
+                    background-color: transparent;
+                    padding: 2px;
+                }
+                QCheckBox::indicator {
+                    border: 1px solid #777777;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 3px;
+                    background-color: #2B2B2B;  /* Dark background when unchecked */
+                }
+                QCheckBox::indicator:checked {
+                    background-color: #FFFFFF;  /* Light background when checked */
+                }
+                QPushButton {
+                    background-color: #2B2B2B;
+                    color: #FFFFFF;
+                    border: 1px solid #777777;
+                    border-radius: 5px;
+                    min-width: 50px;
+                    min-height: 30px;
+                }
+                QPushButton:hover {
+                    background-color: #3C3C3C;
+                }
+                QPushButton:pressed {
+                    background-color: #1C1C1C;
+                }
+            """
+            dialog.setStyleSheet(dark_stylesheet)
+        else:
+            # Light theme stylesheet
+            light_stylesheet = """
+                QDialog, QWidget {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QLabel {
+                    color: #000000;
+                }
+                QCheckBox {
+                    color: #000000;
+                    background-color: transparent;
+                    padding: 2px;
+                }
+                QCheckBox::indicator {
+                    border: 1px solid #CCCCCC;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 3px;
+                    background-color: #FFFFFF;  /* Light background when unchecked */
+                }
+                QCheckBox::indicator:checked {
+                    background-color: #000000;  /* Dark background when checked */
+                }
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    border: 1px solid #BBBBBB;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                }
+            """
+            dialog.setStyleSheet(light_stylesheet)
 
         layout = QVBoxLayout()
 
         # Create the info label
         info_label = QLabel(_['select_main_strands_to_include_in_the_group'])
-        
-  
-        # **Add the info label to the layout**
         layout.addWidget(info_label)
 
         checkboxes = []
@@ -926,7 +1011,7 @@ class GroupLayerManager:
         if dialog.exec_() == QDialog.Accepted:
             return set(selected_main_strands)
         else:
-            return None   
+            return None
     def extract_main_layers(self, layer_name):
         # Split the layer name by underscores and collect all numeric parts
         parts = layer_name.split('_')

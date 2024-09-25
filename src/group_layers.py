@@ -158,7 +158,6 @@ class CollapsibleGroupWidget(QWidget):
         self.update_translations()  # Call the method to set initial translations
 
         # Group button (collapsible header)
-       # Group button
         self.group_button = QPushButton()
         self.layout.addWidget(self.group_button)
         self.group_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -196,35 +195,125 @@ class CollapsibleGroupWidget(QWidget):
         self.content_widget.setVisible(not self.is_collapsed)
 
         # Update styles based on the current theme
-        self.update_group_button_style()
+        self.apply_theme()
+
+        # Connect to theme changed signal if available
+        if self.canvas and hasattr(self.canvas, 'theme_changed'):
+            self.canvas.theme_changed.connect(self.on_theme_changed)
 
         self.update_translations()
     def update_group_button_style(self):
-        """Update the group button's stylesheet based on the current palette."""
-        # Remove the background-color to allow the system theme to take over
-        self.group_button.setStyleSheet(f"""
-            QPushButton {{
-                border: none;
-                text-align: left;
-                padding: 5px;
-                font-size: 12px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: rgba(255, 255, 255, 20%);
-            }}
-            QPushButton:pressed {{
-                background-color: rgba(255, 255, 255, 40%);
-            }}
-        """)
+        """Update the group button's stylesheet based on the current theme."""
+        is_dark_mode = False
+        if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
+            is_dark_mode = self.canvas.is_dark_mode
+
+        if is_dark_mode:
+            # Dark mode styles
+            self.group_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #2B2B2B;
+                    color: #FFFFFF;
+                    border: none;
+                    text-align: left;
+                    padding: 5px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #3C3C3C;  /* Lighter on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #1C1C1C;
+                }
+            """)
+        else:
+            # Light mode styles
+            self.group_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: none;
+                    text-align: left;
+                    padding: 5px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;  /* Darker on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                }
+            """)
 
     def on_theme_changed(self):
         """Handle dynamic theme changes by updating styles."""
         self.apply_theme()
+    def apply_theme(self):
+            """Apply the current theme to the widget."""
+            self.update_group_button_style()
+            
+            # Update styles for layers_list based on theme
+            is_dark_mode = False
+            if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
+                is_dark_mode = self.canvas.is_dark_mode
 
+            if is_dark_mode:
+                # Dark mode styles
+                self.layers_list.setStyleSheet("""
+                    QListWidget {
+                        background-color: transparent;
+                        border: none;
+                    }
+                    QListWidget::item {
+                        padding: 5px;
+                        font-size: 12px;
+                        color: #FFFFFF;
+                    }
+                    QScrollBar:vertical {
+                        background: #1C1C1C;
+                    }
+                    QScrollBar::handle:vertical {
+                        background: #2B2B2B;
+                        border-radius: 4px;
+                    }
+                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                        background: none;
+                    }
+                """)
+            else:
+                # Light mode styles
+                self.layers_list.setStyleSheet("""
+                    QListWidget {
+                        background-color: transparent;
+                        border: none;
+                    }
+                    QListWidget::item {
+                        padding: 5px;
+                        font-size: 12px;
+                        color: #000000;
+                    }
+                    QScrollBar:vertical {
+                        background: #FFFFFF;
+                    }
+                    QScrollBar::handle:vertical {
+                        background: #CCCCCC;
+                        border-radius: 4px;
+                    }
+                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                        background: none;
+                    }
+                """)
     def show_context_menu(self, position):
         _ = translations[self.language_code]
         context_menu = QMenu(self)
+
+        # Apply theme-specific styles to the context menu
+        self.apply_context_menu_style(context_menu)
+
         move_strands_action = context_menu.addAction(_['move_group_strands'])
         rotate_strands_action = context_menu.addAction(_['rotate_group_strands'])
         edit_angles_action = context_menu.addAction(_['edit_strand_angles'])
@@ -241,6 +330,44 @@ class CollapsibleGroupWidget(QWidget):
         elif action == delete_group_action:
             self.group_panel.delete_group(self.group_name)
 
+    def apply_context_menu_style(self, menu):
+        """Apply styles to the context menu based on the current theme."""
+        is_dark_mode = False
+        if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
+            is_dark_mode = self.canvas.is_dark_mode
+
+        if is_dark_mode:
+            # Dark mode styles
+            menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2B2B2B;
+                    color: #FFFFFF;
+                    border: 1px solid #3C3C3C;
+                }
+                QMenu::item {
+                    background-color: transparent;
+                    padding: 5px 20px 5px 20px;
+                }
+                QMenu::item:selected {
+                    background-color: #3C3C3C;  /* Lighter on hover */
+                }
+            """)
+        else:
+            # Light mode styles
+            menu.setStyleSheet("""
+                QMenu {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: 1px solid #CCCCCC;
+                }
+                QMenu::item {
+                    background-color: transparent;
+                    padding: 5px 20px 5px 20px;
+                }
+                QMenu::item:selected {
+                    background-color: #E0E0E0;  /* Darker on hover */
+                }
+            """)
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
         self.content_widget.setVisible(not self.is_collapsed)
@@ -1504,20 +1631,21 @@ class StrandAngleEditDialog(QDialog):
         self.setup_ui()
         self.adjust_dialog_size()
 
+        # Timers for handling continuous adjustment
         self.adjustment_timer = QTimer(self)
-        self.adjustment_timer.setInterval(10)
+        self.adjustment_timer.setInterval(10)  # 10 milliseconds (0.01 seconds)
         self.initial_delay_timer = QTimer(self)
         self.initial_delay_timer.setSingleShot(True)
-        self.initial_delay_timer.setInterval(500)
+        self.initial_delay_timer.setInterval(500)  # 0.5 seconds
         self.current_adjustment = None
 
-        # Adjustment values
+        # Define delta values for each button type
         self.delta_plus = 1
         self.delta_minus = -1
         self.delta_plus_plus = 5
         self.delta_minus_minus = -5
 
-        # Continuous adjustment values
+        # Continuous adjustment delta values
         self.delta_continuous_plus = 0.025
         self.delta_continuous_minus = -0.025
         self.delta_fast_continuous_plus = 0.4
@@ -1536,6 +1664,15 @@ class StrandAngleEditDialog(QDialog):
 
         self.initializing = False
 
+    def apply_theme(self):
+        """Apply the current theme to the dialog."""
+        # Check if the canvas has the 'is_dark_mode' attribute
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+
+        if is_dark_mode:
+            self.apply_dark_theme()
+        else:
+            self.apply_light_theme()
     def ensure_strand_object(self, strand):
         if isinstance(strand, dict):
             return self.canvas.find_strand_by_name(strand['layer_name'])
@@ -1557,6 +1694,7 @@ class StrandAngleEditDialog(QDialog):
 
         bottom_layout = self.setup_bottom_layout()
         main_layout.addLayout(bottom_layout)
+
 
         self.setLayout(main_layout)
 
@@ -1694,26 +1832,32 @@ class StrandAngleEditDialog(QDialog):
         button_layout.setSpacing(10)
         button_layout.setAlignment(Qt.AlignRight)
 
-        minus_minus_btn = QPushButton("--")
-        minus_btn = QPushButton("-")
-        plus_btn = QPushButton("+")
-        plus_plus_btn = QPushButton("++")
+        self.minus_minus_button = QPushButton("--")
+        self.minus_button = QPushButton("-")
+        self.plus_button = QPushButton("+")
+        self.plus_plus_button = QPushButton("++")
         ok_btn = QPushButton("OK")
 
-        for btn in [minus_minus_btn, minus_btn, plus_btn, plus_plus_btn, ok_btn]:
+        for btn in [self.minus_minus_button, self.minus_button, self.plus_button, self.plus_plus_button, ok_btn]:
             btn.setFixedSize(50, 30)
             # Styles will be applied via stylesheet
 
-        minus_minus_btn.clicked.connect(lambda: self.adjust_x_angle(-5))
-        minus_btn.clicked.connect(lambda: self.adjust_x_angle(-1))
-        plus_btn.clicked.connect(lambda: self.adjust_x_angle(1))
-        plus_plus_btn.clicked.connect(lambda: self.adjust_x_angle(5))
+        # Connect button signals
+        self.minus_minus_button.pressed.connect(lambda: self.handle_button_press('minus_minus', self.delta_minus_minus, self.start_continuous_adjustment_minus_minus))
+        self.minus_minus_button.released.connect(self.stop_adjustment)
+        self.minus_button.pressed.connect(lambda: self.handle_button_press('minus', self.delta_minus, self.start_continuous_adjustment_minus))
+        self.minus_button.released.connect(self.stop_adjustment)
+        self.plus_button.pressed.connect(lambda: self.handle_button_press('plus', self.delta_plus, self.start_continuous_adjustment_plus))
+        self.plus_button.released.connect(self.stop_adjustment)
+        self.plus_plus_button.pressed.connect(lambda: self.handle_button_press('plus_plus', self.delta_plus_plus, self.start_continuous_adjustment_plus_plus))
+        self.plus_plus_button.released.connect(self.stop_adjustment)
+
         ok_btn.clicked.connect(self.accept)
 
-        button_layout.addWidget(minus_minus_btn)
-        button_layout.addWidget(minus_btn)
-        button_layout.addWidget(plus_btn)
-        button_layout.addWidget(plus_plus_btn)
+        button_layout.addWidget(self.minus_minus_button)
+        button_layout.addWidget(self.minus_button)
+        button_layout.addWidget(self.plus_button)
+        button_layout.addWidget(self.plus_plus_button)
         button_layout.addWidget(ok_btn)
 
         # Combine x_angle_widget and buttons into one layout
@@ -1723,6 +1867,66 @@ class StrandAngleEditDialog(QDialog):
         bottom_layout.addWidget(button_layout_widget)
 
         return bottom_layout
+    def handle_button_press(self, button_type, initial_delta, continuous_function):
+        current_time = QDateTime.currentMSecsSinceEpoch()
+
+        # Always stop any ongoing adjustments
+        self.stop_adjustment()
+
+        # Set the new current button and last press time
+        self.current_button = button_type
+        self.last_press_time = current_time
+
+        # Perform initial adjustment
+        self.adjust_x_angle(initial_delta)
+
+        # Set up continuous adjustment after delay
+        self.initial_delay_timer.timeout.connect(continuous_function)
+        self.initial_delay_timer.start()
+    def stop_adjustment(self):
+        self.initial_delay_timer.stop()
+        self.adjustment_timer.stop()
+        self.current_adjustment = None
+        self.current_button = None
+        self.last_press_time = None
+
+        # Disconnect timers to avoid multiple connections
+        try:
+            self.initial_delay_timer.timeout.disconnect()
+        except TypeError:
+            pass  # Not connected
+
+        try:
+            self.adjustment_timer.timeout.disconnect()
+        except TypeError:
+            pass  # Not connected
+    def start_continuous_adjustment_plus(self):
+        self.stop_adjustment()
+        self.current_adjustment = self.delta_continuous_plus
+        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_adjustment_minus(self):
+        self.stop_adjustment()
+        self.current_adjustment = self.delta_continuous_minus
+        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_adjustment_plus_plus(self):
+        self.stop_adjustment()
+        self.current_adjustment = self.delta_fast_continuous_plus
+        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
+        self.adjustment_timer.start()
+
+    def start_continuous_adjustment_minus_minus(self):
+        self.stop_adjustment()
+        self.current_adjustment = self.delta_fast_continuous_minus
+        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
+        self.adjustment_timer.start()
+
+    def perform_continuous_adjustment(self):
+        if self.current_adjustment is not None:
+            self.adjust_x_angle(self.current_adjustment)
 
     def adjust_dialog_size(self):
         # Calculate the required width and height
@@ -1748,19 +1952,7 @@ class StrandAngleEditDialog(QDialog):
         frame_geometry.moveCenter(center_point)
         self.move(frame_geometry.topLeft())
 
-    def apply_theme(self):
-        """Apply the current theme using custom stylesheets."""
-        is_dark_mode = False
-        if hasattr(self.canvas, 'is_dark_mode'):
-            is_dark_mode = self.canvas.is_dark_mode
 
-        if is_dark_mode:
-            self.apply_dark_theme()
-        else:
-            self.apply_light_theme()
-
-        # Update styles of table items if necessary
-        self.update_table_styles()
 
     def apply_dark_theme(self):
         """Apply dark theme styles to the dialog."""
@@ -1968,6 +2160,7 @@ class StrandAngleEditDialog(QDialog):
             self.table.setItem(row, 5, end_y_item)
         end_y_item.setText(f"{end_y:.2f}")
 
+
     def update_strand_angle(self, strand, new_angle, update_linked=False):
         # Ensure the angle is within -180 to 180 degrees
         while new_angle > 180:
@@ -2008,9 +2201,6 @@ class StrandAngleEditDialog(QDialog):
         self.canvas.update()
 
     def update_linked_strands(self, current_strand=None):
-        """
-        Updates the angles of strands that are linked via checkboxes.
-        """
         for row, strand in enumerate(self.group_data['strands']):
             if strand == current_strand:
                 continue  # Skip the current strand to avoid recursive updates
@@ -2025,6 +2215,7 @@ class StrandAngleEditDialog(QDialog):
                 if opposite_angle > 180:
                     opposite_angle -= 360
                 self.update_strand_angle(strand, opposite_angle, update_linked=False)
+
     def create_angle_buttons(self, row):
         widget = QWidget()
         layout = QHBoxLayout()
@@ -2125,6 +2316,7 @@ class StrandAngleEditDialog(QDialog):
     def update_x_angle(self):
         try:
             self.x_angle = float(self.x_angle_input.text())
+            self.update_linked_strands()
         except ValueError:
             self.x_angle = 0.0
 
@@ -2135,6 +2327,7 @@ class StrandAngleEditDialog(QDialog):
             current_x_angle = 0.0
         new_x_angle = current_x_angle + delta
         self.x_angle_input.setText(f"{new_x_angle:.2f}")
+        self.update_x_angle()
         self.apply_x_angle_to_selected()
 
     def apply_x_angle_to_selected(self):

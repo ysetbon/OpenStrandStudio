@@ -144,3 +144,17 @@ Fixed Features:
 
 2. Upcoming Features:
    - A comprehensive tutorial for beginners is planned for inclusion in the settings dialog in the next version.
+
+------
+## Version 1.062 (Released: 9/25/2024)
+
+### New Features:
+
+1. **User Settings:**
+   - **Persistent Preferences:** User preferences are now automatically saved, ensuring that your settings remain consistent every time you open the application. This enhancement eliminates the need to reconfigure your preferences with each session, providing a more seamless and personalized user experience.
+
+2. **Group Management:**
+   - **Proper Group Creation:** Groups are now created correctly, allowing for effective organization and management of multiple strands within your design.
+   - **Adding Strands to Groups:** When adding more strands to an existing group, please ensure to delete and recreate the group. This ensures that all strands are properly integrated and that the group's functionality remains intact. This will be fixed in later version to work automatically, for now you'll need to delete and create on your own.
+
+------

@@ -1,3 +1,4 @@
+import os
 from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
@@ -6,6 +7,17 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QMovie
 from translations import translations
+import logging
+import os
+import sys
+import logging
+from PyQt5.QtWidgets import (
+    QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
+    QSplitter, QFileDialog
+)
+from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
+from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
+from PyQt5.QtWidgets import QApplication
 
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
@@ -216,13 +228,20 @@ class SettingsDialog(QDialog):
             explanation_label.setText(_[f'gif_explanation_{i+1}'])
 
     def load_gifs(self):
+        if getattr(sys, 'frozen', False):
+            # If the application is frozen (running as an executable)
+            base_path = sys._MEIPASS
+        else:
+            # If running from source
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
         gif_paths = [
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif1.gif',
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif2.gif',
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif3.gif',
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif4.gif',
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif5.gif',
-            r'C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\gif6.gif',
+            os.path.join(base_path, 'gif1.gif'),
+            os.path.join(base_path, 'gif2.gif'),
+            os.path.join(base_path, 'gif3.gif'),
+            os.path.join(base_path, 'gif4.gif'),
+            os.path.join(base_path, 'gif5.gif'),
+            os.path.join(base_path, 'gif6.gif'),
         ]
 
         for gif_label, gif_path in zip(self.gif_labels, gif_paths):
@@ -238,10 +257,30 @@ class SettingsDialog(QDialog):
         current_theme = getattr(self, 'current_theme', 'default')
         current_language = getattr(self, 'current_language', 'en')
 
-        # Define the file path (you can change it as needed)
-        file_path = 'user_settings.txt'
+        # Use the AppData directory
+        from PyQt5.QtCore import QStandardPaths
+
+        app_name = "OpenStrand Studio"
+        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        logging.info(f"Program data directory: {program_data_dir}")
+        settings_dir = os.path.join(program_data_dir, app_name)
+        logging.info(f"Settings directory: {settings_dir}")
+
+        if not os.path.exists(settings_dir):
+            try:
+                os.makedirs(settings_dir)
+            except Exception as e:
+                logging.error(f"Cannot create directory {settings_dir}: {e}")
+                return  # Exit if we cannot create the directory
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Settings file path: {file_path}")
 
         # Write the settings to the file
-        with open(file_path, 'w') as file:
-            file.write(f"Theme: {current_theme}\n")
-            file.write(f"Language: {current_language}\n")
+        try:
+            with open(file_path, 'w') as file:
+                file.write(f"Theme: {current_theme}\n")
+                file.write(f"Language: {current_language}\n")
+            logging.info(f"Settings saved to {file_path}")
+        except Exception as e:
+            logging.error(f"Error saving settings to file: {e}")

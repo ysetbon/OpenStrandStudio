@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
         # Replace full-screen mode with maximized window
         self.showMaximized()
 
+        # Load user settings from file
+        self.load_settings_from_file()
+
     # Add the update_translations method here
     def update_translations(self):
         _ = translations[self.language_code]
@@ -116,20 +119,32 @@ class MainWindow(QMainWindow):
         self.layer_panel.set_theme(theme_name)
         # Apply theme to other widgets if necessary
     def load_settings_from_file(self):
-        file_path = 'user_settings.txt'
+        # Use the AppData directory
+        from PyQt5.QtCore import QStandardPaths
+
+        app_name = "OpenStrand Studio"
+        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        logging.info(f"Program data directory: {program_data_dir}")
+        settings_dir = os.path.join(program_data_dir, app_name)
+        logging.info(f"Settings directory: {settings_dir}")
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Settings file path: {file_path}")
+
         theme_name = 'default'
         language_code = 'en'
-            
+
         if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                for line in file:
-                    if line.startswith('Theme:'):
-                        theme_name = line.strip().split(':', 1)[1].strip()
-                    elif line.startswith('Language:'):
-                        language_code = line.strip().split(':', 1)[1].strip()
+            try:
+                with open(file_path, 'r') as file:
+                    for line in file:
+                        if line.startswith('Theme:'):
+                            theme_name = line.strip().split(':', 1)[1].strip()
+                        elif line.startswith('Language:'):
+                            language_code = line.strip().split(':', 1)[1].strip()
+            except Exception as e:
+                logging.error(f"Error reading user settings: {e}")
         else:
-            # If the file does not exist, you can set the default values here or leave as initialized
-            logging.info("user_settings.txt not found. Using default settings.")
+            logging.info("user_settings.txt not found in AppData. Using default settings.")
 
         # Apply the theme and language
         self.apply_theme(theme_name)

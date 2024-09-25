@@ -144,3 +144,15 @@ Fonctionnalités Corrigées :
 
 2. Fonctionnalités à Venir :
    - Un tutoriel complet pour les débutants est prévu pour être inclus dans le dialogue des paramètres dans la prochaine version.
+
+------
+## Version 1.061 (Sortie : 25/09/2024)
+
+1. **Paramètres Utilisateur :**
+   - **Préférences Persistantes :** Les préférences utilisateur sont désormais enregistrées automatiquement, garantissant que vos paramètres restent cohérents à chaque ouverture de l'application. Cette amélioration élimine le besoin de reconfigurer vos préférences à chaque session, offrant une expérience utilisateur plus fluide et personnalisée.
+
+2. **Gestion des Groupes :**
+   - **Création Correcte des Groupes :** Les groupes sont désormais créés correctement, permettant une organisation et une gestion efficaces de plusieurs brins au sein de votre design.
+   - **Ajout de Brins aux Groupes :** Lors de l'ajout de nouveaux brins à un groupe existant, veuillez vous assurer de supprimer et recréer le groupe. Cela garantit que tous les brins sont correctement intégrés et que la fonctionnalité du groupe reste intacte. Cela sera corrigé dans les versions ultérieures pour fonctionner automatiquement ; pour l'instant, vous devrez supprimer et recréer le groupe vous-même.
+
+------

@@ -47,6 +47,10 @@ class MainWindow(QMainWindow):
         else:
             logging.warning(f"Icon not found at {icon_path}")
 
+        # Load the settings icon
+        gear_icon_path = os.path.join(base_path, 'settings_icon.png')
+        logging.info(f"Searching for gear icon at: {gear_icon_path}")
+
         # Initialize components
         self.canvas = StrandDrawingCanvas(parent=self)
         self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
@@ -134,8 +138,16 @@ class MainWindow(QMainWindow):
     def setup_ui(self):
         logging.info("Entered setup_ui")
 
+        # Determine the base path to resources
+        if getattr(sys, 'frozen', False):
+            # If the application is frozen (running as an executable)
+            base_path = sys._MEIPASS
+        else:
+            # If running from source
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
         # Set the window icon if available
-        icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'box_stitch.ico'))
+        icon_path = os.path.join(base_path, 'box_stitch.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
             logging.info(f"Window icon set from: {icon_path}")
@@ -166,7 +178,7 @@ class MainWindow(QMainWindow):
         self.settings_button.setObjectName("settingsButton")  # Assign an object name for stylesheet targeting
 
         # Set the gear icon or fallback to Unicode character if the image is not found
-        gear_icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'settings_icon.png'))
+        gear_icon_path = os.path.join(base_path, 'settings_icon.png')
         logging.info(f"Searching for gear icon at: {gear_icon_path}")
 
         if os.path.exists(gear_icon_path):

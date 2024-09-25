@@ -1463,7 +1463,6 @@ from math import atan2, degrees, radians, cos, sin
 import logging
 
 
-
 class FloatDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QLineEdit(parent)
@@ -1926,29 +1925,106 @@ class StrandAngleEditDialog(QDialog):
         self.apply_theme()
 
     def on_item_changed(self, item):
-        if self.initializing:
+        if self.updating:
             return
-        row = item.row()
-        col = item.column()
-        strand = self.group_data['strands'][row]
-        if col == 1:  # Angle column
-            try:
-                new_angle = float(item.text())
-                self.update_strand_angle(strand, new_angle)
-            except ValueError:
-                pass  # Invalid input, ignore
 
-    def update_strand_angle(self, strand, new_angle):
+        self.updating = True
+        try:
+            if item.column() == 1:  # Angle column
+                row = item.row()
+                strand = self.group_data['strands'][row]
+                try:
+                    new_angle = float(item.text())
+                    self.update_strand_angle(strand, new_angle, update_linked=True)
+                except ValueError:
+                    self.update_table_row(row)
+        finally:
+            self.updating = False
+
+    def update_table_row(self, row):
+        strand = self.group_data['strands'][row]
+        angle = self.calculate_angle(strand)
+        end_x = strand.end.x()
+        end_y = strand.end.y()
+
+        # Update angle
+        angle_item = self.table.item(row, 1)
+        if angle_item is None:
+            angle_item = QTableWidgetItem()
+            self.table.setItem(row, 1, angle_item)
+        angle_item.setText(f"{angle:.2f}")
+
+        # Update end X
+        end_x_item = self.table.item(row, 4)
+        if end_x_item is None:
+            end_x_item = QTableWidgetItem()
+            self.table.setItem(row, 4, end_x_item)
+        end_x_item.setText(f"{end_x:.2f}")
+
+        # Update end Y
+        end_y_item = self.table.item(row, 5)
+        if end_y_item is None:
+            end_y_item = QTableWidgetItem()
+            self.table.setItem(row, 5, end_y_item)
+        end_y_item.setText(f"{end_y:.2f}")
+
+    def update_strand_angle(self, strand, new_angle, update_linked=False):
+        # Ensure the angle is within -180 to 180 degrees
+        while new_angle > 180:
+            new_angle -= 360
+        while new_angle <= -180:
+            new_angle += 360
+
+        # Calculate the length of the strand
         dx = strand.end.x() - strand.start.x()
         dy = strand.end.y() - strand.start.y()
-        length = (dx**2 + dy**2)**0.5
-        angle_rad = radians(new_angle)
-        new_end_x = strand.start.x() + length * cos(angle_rad)
-        new_end_y = strand.start.y() + length * sin(angle_rad)
-        strand.end = QPointF(new_end_x, new_end_y)
+        length = (dx**2 + dy**2) ** 0.5
+
+        # Calculate new end coordinates based on the new angle
+        new_dx = length * cos(radians(new_angle))
+        new_dy = length * sin(radians(new_angle))
+        new_end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
+
+        # Update the strand's end point
+        strand.end = new_end
+
+        # Update the strand's shape
         strand.update_shape()
+        if hasattr(strand, 'update_side_line'):
+            strand.update_side_line()
+
+        # Update the table row to reflect the new angle and coordinates
+        row = self.group_data['strands'].index(strand)
+        self.update_table_row(row)
+
+        # Emit signal if needed
+        self.angle_changed.emit(strand.layer_name, new_angle)
+
+        # Update linked strands if applicable
+        if update_linked:
+            self.update_linked_strands(strand)
+
+        # Refresh the canvas to show the updated strand
         self.canvas.update()
 
+    def update_linked_strands(self, current_strand=None):
+        """
+        Updates the angles of strands that are linked via checkboxes.
+        """
+        for row, strand in enumerate(self.group_data['strands']):
+            if strand == current_strand:
+                continue  # Skip the current strand to avoid recursive updates
+            x_checkbox = self.table.cellWidget(row, 6)
+            x_plus_180_checkbox = self.table.cellWidget(row, 7)
+
+            if x_checkbox and x_checkbox.isChecked():
+                self.update_strand_angle(strand, self.x_angle, update_linked=False)
+            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
+                # Normalize the angle to be within -180 to 180 degrees
+                opposite_angle = (self.x_angle + 180) % 360
+                if opposite_angle > 180:
+                    opposite_angle -= 360
+                self.update_strand_angle(strand, opposite_angle, update_linked=False)
     def create_angle_buttons(self, row):
         widget = QWidget()
         layout = QHBoxLayout()
@@ -2071,10 +2147,18 @@ class StrandAngleEditDialog(QDialog):
                 self.on_checkbox_changed(row, 7, Qt.Checked)
 
     def calculate_angle(self, strand):
-        dx = strand.end.x() - strand.start.x()
-        dy = strand.end.y() - strand.start.y()
-        angle = degrees(atan2(dy, dx))
-        return angle
+            dx = strand.end.x() - strand.start.x()
+            dy = strand.end.y() - strand.start.y()
+
+            angle = degrees(atan2(dy, dx))
+
+            # Normalize the angle to be within -180 to 180 degrees
+            if angle > 180:
+                angle -= 360
+            elif angle <= -180:
+                angle += 360
+
+            return angle
 
     def accept(self):
         # Perform any final actions before closing the dialog

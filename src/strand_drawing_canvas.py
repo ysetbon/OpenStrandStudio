@@ -1568,32 +1568,30 @@ class StrandDrawingCanvas(QWidget):
 
 
 
-    def points_are_close(self, point1, point2):
-        tolerance = self.strand_width if hasattr(self, 'strand_width') else 10  # Default to 10 if strand_width is not defined
-        return (abs(point1.x() - point2.x()) < tolerance and
-                abs(point1.y() - point2.y()) < tolerance)
 
     def move_strand_and_update(self, strand, dx, dy, updated_strands):
-        if not hasattr(strand, 'original_start'):
-            strand.original_start = QPointF(strand.start)
-            strand.original_end = QPointF(strand.end)
-        
-        # Calculate new positions based on original positions
-        new_start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
-        new_end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
-        
-        # Only update if the position has actually changed
-        if strand.start != new_start or strand.end != new_end:
-            strand.start = new_start
-            strand.end = new_end
+            print(f"Moving strand {strand.layer_name} by dx={dx}, dy={dy}")
+
+            if not hasattr(strand, 'original_start'):
+                strand.original_start = QPointF(strand.start)
+                strand.original_end = QPointF(strand.end)
             
-            strand.update_shape()
-            if hasattr(strand, 'update_side_line'):
-                strand.update_side_line()
-            updated_strands.add(strand)
-            logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
-        else:
-            logging.info(f"Strand '{strand.layer_name}' position unchanged")
+            # Calculate new positions based on original positions
+            new_start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
+            new_end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
+            
+            # Only update if the position has actually changed
+            if strand.start != new_start or strand.end != new_end:
+                strand.start = new_start
+                strand.end = new_end
+                
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+                updated_strands.add(strand)
+                logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+            else:
+                logging.info(f"Strand '{strand.layer_name}' position unchanged")
 
     def points_are_close(self, point1, point2):
         tolerance = self.strand_width if hasattr(self, 'strand_width') else 10  # Default to 10 if strand_width is not defined

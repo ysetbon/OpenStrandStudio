@@ -190,18 +190,28 @@ class StrandDrawingCanvas(QWidget):
         self.strand_created.emit(new_strand)
         return new_strand
     def initialize_original_positions(self, group_name):
+        """
+        Initialize original positions for group strands and their attached strands.
+        """
         if self.group_layer_manager is None:
             return
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
         if group_data:
-            # Initialize original positions for all strands in group_data['strands']
-            for strand in group_data['strands']:
-                if not hasattr(strand, 'original_start'):
-                    strand.original_start = QPointF(strand.start)
-                if not hasattr(strand, 'original_end'):
-                    strand.original_end = QPointF(strand.end)
+            strands = group_data['strands']
+            for strand in strands:
+                self.initialize_strand_original_positions_recursively(strand)
+        else:
+            logging.warning(f"Group '{group_name}' not found in group panel")
 
-
+    def initialize_strand_original_positions_recursively(self, strand):
+        """
+        Recursively initialize original positions for a strand and its attached strands.
+        """
+        if not hasattr(strand, 'original_start'):
+            strand.original_start = QPointF(strand.start)
+            strand.original_end = QPointF(strand.end)
+        for attached_strand in strand.attached_strands:
+            self.initialize_strand_original_positions_recursively(attached_strand)
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name."""
         parts = layer_name.split('_')
@@ -1685,10 +1695,10 @@ class StrandDrawingCanvas(QWidget):
             for layer_name in group_layers:
                 strand = self.find_strand_by_name(layer_name)
                 if strand:
-                    # First, update attached strands before moving the group strand
-                    self.update_non_group_attached_strands(strand, total_dx, total_dy, updated_strands, group_layers)
+                    # Update attached strands before moving the group strand
+                    self.update_attached_strands_recursively(strand, total_dx, total_dy, updated_strands, group_layers)
 
-            # Now, move the group strands
+            # Move all group strands
             for layer_name in group_layers:
                 strand = self.find_strand_by_name(layer_name)
                 if strand:
@@ -1701,12 +1711,27 @@ class StrandDrawingCanvas(QWidget):
         else:
             logging.warning(f"No group data found for group '{group_name}'")
 
+    def update_attached_strands_recursively(self, strand, dx, dy, updated_strands, group_layers):
+        """
+        Recursively update all attached strands that need to be included in the movement.
+        """
+        for attached_strand in strand.attached_strands:
+            if attached_strand not in updated_strands:
+                # Check if the attached strand should be included in the group movement
+                if attached_strand.layer_name not in group_layers:
+                    # Include the attached strand in the group movement
+                    self.move_entire_strand(attached_strand, dx, dy)
+                    updated_strands.add(attached_strand)
+                    logging.info(f"Moved attached strand '{attached_strand.layer_name}'")
+                # Recursively update attached strands of the attached strand
+                self.update_attached_strands_recursively(attached_strand, dx, dy, updated_strands, group_layers)
+
     def move_entire_strand(self, strand, dx, dy):
         # Initialize original positions if they are not already initialized
         if not hasattr(strand, 'original_start'):
             strand.original_start = QPointF(strand.start)
             strand.original_end = QPointF(strand.end)
-        
+
         # Use the original positions
         new_start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
         new_end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
@@ -1719,6 +1744,7 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
         logging.info(f"Moved entire strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+
 
     def move_strand_and_update(self, strand, dx, dy, updated_strands):
         if not hasattr(strand, 'original_start'):

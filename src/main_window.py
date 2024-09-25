@@ -74,6 +74,9 @@ class MainWindow(QMainWindow):
         self.language_changed.connect(self.update_translations)
         self.theme_changed.connect(self.apply_theme_to_widgets)
 
+        # Add this line to start in full-screen mode
+        self.showFullScreen()
+
     # Add the update_translations method here
     def update_translations(self):
         _ = translations[self.language_code]

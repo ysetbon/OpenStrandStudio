@@ -946,7 +946,7 @@ class MainWindow(QMainWindow):
         self.canvas.add_strand(masked_strand)
 
         # Update the groups
-        self.layer_panel.group_layer_manager.update_groups_with_new_mask(masked_strand)
+        self.layer_panel.group_layer_manager.update_groups_with_new_strand(masked_strand)
 
         # Update UI or perform any other necessary actions
         self.update_mode(self.current_mode)  # Refresh the current mode

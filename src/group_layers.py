@@ -911,6 +911,12 @@ class GroupLayerManager:
         # Call update_translations to ensure UI is updated
         self.update_translations()
 
+    def extract_main_layer(self, layer_name):
+        """Extract the first main layer number from a layer name."""
+        parts = layer_name.split('_')
+        if parts and parts[0].isdigit():
+            return parts[0]
+        return None
     def update_translations(self):
         # Fetch the translations for the current language code
         if self.language_code in translations:
@@ -971,40 +977,30 @@ class GroupLayerManager:
 
     def update_groups_with_new_strand(self, new_strand):
         """
-        Adds a new strand to the appropriate group if its parent strand is in a group.
+        Adds a new strand to any group whose main_strands include new_strand's main layer.
         """
-        # Ensure new_strand has a parent
-        if not hasattr(new_strand, 'parent') or not new_strand.parent:
-            logging.warning(f"New strand {new_strand.layer_name} has no parent; cannot update groups.")
+        new_strand_main_layer = self.extract_main_layer(new_strand.layer_name)
+        if not new_strand_main_layer:
+            logging.warning(f"Could not extract main layer from {new_strand.layer_name}")
             return
-
-        for group_name, group_data in self.groups.items():
-            # Check if the parent strand is in this group
-            parent_in_group = any(
-                strand.layer_name == new_strand.parent.layer_name for strand in group_data['strands']
-            )
-            if parent_in_group:
-                # Add the new strand to the group's 'strands' list
-                group_data['strands'].append(new_strand)
-                group_data['layers'].append(new_strand.layer_name)
-                logging.info(f"Successfully added strand {new_strand.layer_name} to group {group_name}")
-
-                # If the new strand is a masked strand, ensure it's added
-                if isinstance(new_strand, MaskedStrand):
-                    for masked_strand in new_strand.masked_strands:
-                        group_data['strands'].append(masked_strand)
-                        group_data['layers'].append(masked_strand.layer_name)
-                        logging.info(f"Masked strand {masked_strand.layer_name} added to group {group_name}")
-
-                break  # Assuming a strand belongs to only one group
-    def extract_main_layer(self, layer_name):
-        # Split the layer name by underscores
+        for group_name, group_data in self.canvas.groups.items():
+            group_main_strands = group_data.get('main_strands', set())
+            if new_strand_main_layer in group_main_strands:
+                if new_strand.layer_name not in group_data['layers']:
+                    group_data['strands'].append(new_strand)
+                    group_data['layers'].append(new_strand.layer_name)
+                    self.group_panel.add_layer_to_group(new_strand.layer_name, group_name, new_strand)
+                    logging.info(f"Added new strand {new_strand.layer_name} to group {group_name}")
+                else:
+                    logging.info(f"Strand {new_strand.layer_name} already in group {group_name}")
+    def extract_main_layers(self, layer_name):
+        """Extract all main layer numbers from a layer name."""
         parts = layer_name.split('_')
-        # The main layer is the first numeric part
+        main_layers = set()
         for part in parts:
             if part.isdigit():
-                return part
-        return None  # Return None if no numeric part is found
+                main_layers.add(part)
+        return main_layers
     def open_main_strand_selection_dialog(self, main_strands):
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
@@ -1170,6 +1166,10 @@ class GroupLayerManager:
                 logging.info(_['group_creation_cancelled'])
                 return
 
+            # Convert selected_main_strands to a set
+            selected_main_strands = set(selected_main_strands)
+
+            # Collect strands that match the selected main strands
             layers_data = []
             for strand in self.canvas.strands:
                 main_layer = self.extract_main_layer(strand.layer_name)
@@ -1184,7 +1184,7 @@ class GroupLayerManager:
                 'strands': [],
                 'layers': [],
                 'data': layers_data,
-                'main_strands': selected_main_strands  # Store selected main strands
+                'main_strands': selected_main_strands  # Store as a set
             }
             for strand in layers_data:
                 self.canvas.groups[group_name]['strands'].append(strand)
@@ -1203,12 +1203,12 @@ class GroupLayerManager:
     def get_layer_index(self, layer_name):
         return self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
     def get_unique_main_strands(self):
-        main_strands = set()
+        unique_main_strands = set()
         for strand in self.canvas.strands:
             main_layer = self.extract_main_layer(strand.layer_name)
             if main_layer:
-                main_strands.add(main_layer)
-        return sorted(main_strands)
+                unique_main_strands.add(main_layer)
+        return unique_main_strands
     def save(self, filename):
         data = {
             "groups": self.get_group_data(),  # Ensure group data is included

@@ -1767,13 +1767,15 @@ class StrandAngleEditDialog(QDialog):
             x_checkbox = QCheckBox("x")
             x_plus_180_checkbox = QCheckBox("180+x")
 
-            # Checkboxes styles are applied via stylesheet
-
             self.table.setCellWidget(row, 6, x_checkbox)
             self.table.setCellWidget(row, 7, x_plus_180_checkbox)
 
             # 'Attachable' indicator
-            attachable_text = 'X' if not is_attachable else ''
+            if is_main_strand:
+                attachable_text = 'X'
+            else:
+                attachable_text = '' if is_attachable else 'No'
+
             attachable_item = QTableWidgetItem(attachable_text)
             attachable_item.setTextAlignment(Qt.AlignCenter)
             attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)

@@ -171,6 +171,10 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         if self.rotating_group == group_name:
+            group_data = self.groups[group_name]
+            # Update the original positions of each strand to the new positions
+            for strand in group_data['strands']:
+                self.update_original_positions_recursively(strand)
             self.rotating_group = None
             self.rotation_center = None
             self.current_rotation_angle = 0
@@ -179,6 +183,13 @@ class StrandDrawingCanvas(QWidget):
             self.update()
         else:
             logging.warning(f"Attempted to finish rotation for inactive group: {group_name}")
+
+
+    def update_original_positions_recursively(self, strand):
+        strand.original_start = QPointF(strand.start)
+        strand.original_end = QPointF(strand.end)
+        for attached_strand in strand.attached_strands:
+            self.update_original_positions_recursively(attached_strand)
 
              
     def create_strand(self, start, end, set_number):
@@ -193,8 +204,10 @@ class StrandDrawingCanvas(QWidget):
         """
         Initialize original positions for group strands and their attached strands.
         """
-        if self.group_layer_manager is None:
+        if not self.group_layer_manager:
+            logging.error("GroupLayerManager not connected.")
             return
+        
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
         if group_data:
             strands = group_data['strands']
@@ -202,6 +215,7 @@ class StrandDrawingCanvas(QWidget):
                 self.initialize_strand_original_positions_recursively(strand)
         else:
             logging.warning(f"Group '{group_name}' not found in group panel")
+
 
     def initialize_strand_original_positions_recursively(self, strand):
         """
@@ -211,6 +225,8 @@ class StrandDrawingCanvas(QWidget):
             strand.original_start = QPointF(strand.start)
             strand.original_end = QPointF(strand.end)
         for attached_strand in strand.attached_strands:
+            if isinstance(attached_strand, MaskedStrand):
+                continue
             self.initialize_strand_original_positions_recursively(attached_strand)
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name."""
@@ -280,7 +296,8 @@ class StrandDrawingCanvas(QWidget):
     def snap_group_to_grid(self, group_name):
         """
         Snaps all points of strands and attached strands (excluding masked strands)
-        in the specified group to the closest points on the grid.
+        in the specified group to the closest points on the grid, and updates their
+        original positions accordingly.
         """
         if group_name not in self.groups:
             logging.error(f"Group '{group_name}' not found in canvas.")
@@ -296,8 +313,16 @@ class StrandDrawingCanvas(QWidget):
                 continue
 
             # Snap start and end points of the strand
-            strand.start = self.snap_point_to_grid(strand.start, grid_size)
-            strand.end = self.snap_point_to_grid(strand.end, grid_size)
+            snapped_start = self.snap_point_to_grid(strand.start, grid_size)
+            snapped_end = self.snap_point_to_grid(strand.end, grid_size)
+
+            strand.start = snapped_start
+            strand.end = snapped_end
+
+            # Update original positions
+            strand.original_start = QPointF(snapped_start)
+            strand.original_end = QPointF(snapped_end)
+
             strand.update_shape()
 
             # Update any side lines if applicable
@@ -310,8 +335,16 @@ class StrandDrawingCanvas(QWidget):
                     if isinstance(attached_strand, MaskedStrand):
                         continue
 
-                    attached_strand.start = self.snap_point_to_grid(attached_strand.start, grid_size)
-                    attached_strand.end = self.snap_point_to_grid(attached_strand.end, grid_size)
+                    snapped_start = self.snap_point_to_grid(attached_strand.start, grid_size)
+                    snapped_end = self.snap_point_to_grid(attached_strand.end, grid_size)
+
+                    attached_strand.start = snapped_start
+                    attached_strand.end = snapped_end
+
+                    # Update original positions
+                    attached_strand.original_start = QPointF(snapped_start)
+                    attached_strand.original_end = QPointF(snapped_end)
+
                     attached_strand.update_shape()
 
                     if hasattr(attached_strand, 'update_side_line'):
@@ -378,14 +411,19 @@ class StrandDrawingCanvas(QWidget):
 
 
     def start_group_move(self, group_name, layers):
-        # Refresh group data
+        # Refresh group data to include any new strands
         self.refresh_group_data(group_name)
+        
+        # Initialize original positions for all strands in the group
+        self.initialize_original_positions(group_name)
+        
         # Proceed with setting up moving group
         self.moving_group = True
         self.move_group_name = group_name
         self.move_group_layers = layers
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
+        logging.info(f"Started moving group '{group_name}'")
 
     def refresh_group_data(self, group_name):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager.group_panel:

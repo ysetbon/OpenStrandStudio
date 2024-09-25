@@ -956,13 +956,15 @@ class GroupLayerManager:
             group_data = self.group_panel.groups[group_name]
             if strand.layer_name not in group_data['layers']:
                 group_data['layers'].append(strand.layer_name)
+                group_data['strands'].append(strand)
                 self.group_panel.add_layer_to_group(strand.layer_name, group_name, strand)
                 
+                # Update canvas groups
                 if self.canvas and group_name in self.canvas.groups:
-                    self.canvas.groups[group_name]['strands'].append(strand)
                     self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                
-                logging.info(f"Successfully added strand {strand.layer_name} to group {group_name}")
+                    self.canvas.groups[group_name]['strands'].append(strand)
+
+                logging.info(f"Strand {strand.layer_name} added to group {group_name}")
             else:
                 logging.info(f"Strand {strand.layer_name} already in group {group_name}")
         else:
@@ -971,7 +973,7 @@ class GroupLayerManager:
         # Verify that the group still exists after the operation
         if group_name not in self.group_panel.groups:
             logging.error(f"Group {group_name} was deleted after adding strand {strand.layer_name}")
-        
+
         logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
 
 
@@ -989,18 +991,17 @@ class GroupLayerManager:
                 if new_strand.layer_name not in group_data['layers']:
                     group_data['strands'].append(new_strand)
                     group_data['layers'].append(new_strand.layer_name)
-                    self.group_panel.add_layer_to_group(new_strand.layer_name, group_name, new_strand)
+                    # Update the group panel as well
+                    if self.group_panel:
+                        self.group_panel.add_layer_to_group(new_strand.layer_name, group_name, new_strand)
                     logging.info(f"Added new strand {new_strand.layer_name} to group {group_name}")
                 else:
                     logging.info(f"Strand {new_strand.layer_name} already in group {group_name}")
-    def extract_main_layers(self, layer_name):
-        """Extract all main layer numbers from a layer name."""
+    def extract_main_layer(self, layer_name):
         parts = layer_name.split('_')
-        main_layers = set()
-        for part in parts:
-            if part.isdigit():
-                main_layers.add(part)
-        return main_layers
+        if parts:
+            return parts[0]  # Assuming the main layer is the first part
+        return None
     def open_main_strand_selection_dialog(self, main_strands):
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
@@ -1320,25 +1321,25 @@ class GroupLayerManager:
             # Pass both group_name and strands to create_group
             self.group_panel.create_group(group_name, strands)
     def move_group_strands(self, group_name, dx, dy):
-        if group_name in self.group_panel.groups:
-            group_data = self.group_panel.groups[group_name]
-            updated_strands = []
+            if group_name in self.group_panel.groups:
+                group_data = self.group_panel.groups[group_name]
+                updated_strands = []
 
-            for i, strand_data in enumerate(group_data['strands']):
-                layer_name = group_data['layers'][i]
-                layer_index = self.get_layer_index(layer_name)
-                if layer_index < len(self.canvas.strands):
-                    strand = self.canvas.strands[layer_index]
-                    # Move the entire strand
-                    strand.start += QPointF(dx, dy)
-                    strand.end += QPointF(dx, dy)
-                    strand.update_shape()
-                    if hasattr(strand, 'update_side_line'):
-                        strand.update_side_line()
-                    updated_strands.append(strand)
+                for i, strand_data in enumerate(group_data['strands']):
+                    layer_name = group_data['layers'][i]
+                    layer_index = self.get_layer_index(layer_name)
+                    if layer_index < len(self.canvas.strands):
+                        strand = self.canvas.strands[layer_index]
+                        # Move the entire strand
+                        strand.start += QPointF(dx, dy)
+                        strand.end += QPointF(dx, dy)
+                        strand.update_shape()
+                        if hasattr(strand, 'update_side_line'):
+                            strand.update_side_line()
+                        updated_strands.append(strand)
 
-            # Update the canvas with all modified strands
-            self.canvas.update_strands(updated_strands)
+                # Update the canvas with all modified strands
+                self.canvas.update_strands(updated_strands)
 
     def start_group_move(self, group_name):
         if self.canvas:
@@ -1388,6 +1389,7 @@ class GroupLayerManager:
                 logging.info(f"Group '{group_name}' deleted from canvas.")
             else:
                 logging.warning(f"Group '{group_name}' not found in canvas.")
+
     def start_group_rotation(self, group_name):
         if group_name in self.group_panel.groups:
             if self.canvas:

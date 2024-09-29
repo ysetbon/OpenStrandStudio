@@ -231,7 +231,7 @@ class CollapsibleGroupWidget(QWidget):
             # Light mode styles
             self.group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #FFFFFF;
+                    background-color: #BBBBBB;
                     color: #000000;
                     border: none;
                     text-align: left;
@@ -492,7 +492,20 @@ class GroupPanel(QWidget):
 
 
 
+    def update_group_display(self, group_name, layers):
+        """
+        Updates the display for a specific group.
 
+        Args:
+            group_name (str): The name of the group to update.
+            layers (list): The list of layers associated with the group.
+        """
+        # Implementation to update the display for the specified group
+        # For example, you might refresh the UI elements representing the group
+        if group_name in self.group_tree.groups:
+            self.group_tree.update_group_display(group_name, layers)
+        else:
+            logging.warning(f"Group '{group_name}' not found in GroupPanel.")
 
 
     def add_layer_to_group(self, layer_name, group_name, strand):
@@ -951,52 +964,56 @@ class GroupLayerManager:
         self.update_groups_with_new_strand(new_strand)
 
     def add_strand_to_group(self, group_name, strand):
-        logging.info(f"Adding strand {strand.layer_name} to group {group_name}")
+        logging.info(f"Attempting to add strand {strand.layer_name} to group {group_name}")
+        # Only allow adding strands explicitly chosen by the user
+        # This method should be called when the user explicitly adds a strand to a group
         if group_name in self.group_panel.groups:
             group_data = self.group_panel.groups[group_name]
             if strand.layer_name not in group_data['layers']:
                 group_data['layers'].append(strand.layer_name)
                 group_data['strands'].append(strand)
                 self.group_panel.add_layer_to_group(strand.layer_name, group_name, strand)
-                
                 # Update canvas groups
                 if self.canvas and group_name in self.canvas.groups:
                     self.canvas.groups[group_name]['layers'].append(strand.layer_name)
                     self.canvas.groups[group_name]['strands'].append(strand)
-
                 logging.info(f"Strand {strand.layer_name} added to group {group_name}")
             else:
                 logging.info(f"Strand {strand.layer_name} already in group {group_name}")
         else:
             logging.warning(f"Attempted to add strand to non-existent group: {group_name}")
 
-        # Verify that the group still exists after the operation
-        if group_name not in self.group_panel.groups:
-            logging.error(f"Group {group_name} was deleted after adding strand {strand.layer_name}")
-
-        logging.info(f"Finished adding strand {strand.layer_name} to group {group_name}")
-
 
     def update_groups_with_new_strand(self, new_strand):
         """
-        Adds a new strand to any group whose main_strands include new_strand's main layer.
+        Updates groups based on the new strand added.
+        This method checks if the new strand affects any groups and deletes groups if necessary.
         """
         new_strand_main_layer = self.extract_main_layer(new_strand.layer_name)
         if not new_strand_main_layer:
             logging.warning(f"Could not extract main layer from {new_strand.layer_name}")
             return
+        # Do not automatically add the new strand to existing groups
+        # Instead, check if this should cause any groups to be deleted
+        groups_to_delete = []
         for group_name, group_data in self.canvas.groups.items():
             group_main_strands = group_data.get('main_strands', set())
             if new_strand_main_layer in group_main_strands:
+                # If the new strand is not in the group, mark the group for deletion
                 if new_strand.layer_name not in group_data['layers']:
-                    group_data['strands'].append(new_strand)
-                    group_data['layers'].append(new_strand.layer_name)
-                    # Update the group panel as well
-                    if self.group_panel:
-                        self.group_panel.add_layer_to_group(new_strand.layer_name, group_name, new_strand)
-                    logging.info(f"Added new strand {new_strand.layer_name} to group {group_name}")
-                else:
-                    logging.info(f"Strand {new_strand.layer_name} already in group {group_name}")
+                    logging.info(f"Group '{group_name}' will be deleted because new strand '{new_strand.layer_name}' connected to its main strand is not in the group.")
+                    groups_to_delete.append(group_name)
+        # Delete the groups outside the loop to avoid runtime issues
+        for group_name in groups_to_delete:
+            self.group_panel.delete_group(group_name)
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
+                logging.info(f"Group '{group_name}' deleted from canvas.")
+        # If there are remaining groups, update the group panel display
+        if self.group_panel:
+            for group_name, group_data in self.group_panel.groups.items():
+                self.group_panel.update_group_display(group_name, group_data['layers'])
+        logging.info("Updated group displays after processing new strand.")
     def extract_main_layer(self, layer_name):
         parts = layer_name.split('_')
         if parts:
@@ -1080,7 +1097,7 @@ class GroupLayerManager:
                     background-color: #FFFFFF;  /* Light background when unchecked */
                 }
                 QCheckBox::indicator:checked {
-                    background-color: #000000;  /* Dark background when checked */
+                    background-color: #BBBBBB;  /* Dark background when checked */
                 }
                 QPushButton {
                     background-color: #F0F0F0;
@@ -1624,10 +1641,21 @@ class StrandAngleEditDialog(QDialog):
         self.updating = False
         self.initializing = True
 
+        # **Exclude masked strands and update layers accordingly**
+        non_masked_strands = [
+            self.ensure_strand_object(s) 
+            for s in group_data['strands'] 
+            if not isinstance(s, MaskedStrand)
+        ]
+        non_masked_layers = [strand.layer_name for strand in non_masked_strands]
+
         self.group_data = {
-            'strands': [self.ensure_strand_object(s) for s in group_data['strands']],
-            'layers': group_data['layers'],
-            'editable_layers': group_data['editable_layers']
+            'strands': non_masked_strands,
+            'layers': non_masked_layers,
+            'editable_layers': [
+                layer for layer in group_data['editable_layers'] 
+                if layer in non_masked_layers
+            ]
         }
 
         self.setup_ui()
@@ -1986,7 +2014,8 @@ class StrandAngleEditDialog(QDialog):
                 background-color: #3C3C3C;
             }
             QPushButton:pressed {
-                background-color: #1C1C1C;
+                background-color: #E0E0E0;  /* Almost white color when pressed */
+                color: #000000;             /* Text color for contrast */
             }
             QTableWidget {
                 background-color: #1C1C1C;
@@ -2024,7 +2053,8 @@ class StrandAngleEditDialog(QDialog):
                 background: #2B2B2B;
             }
             QCheckBox::indicator:checked {
-                background-color: #555555;
+                background-color: #E0E0E0;  /* Almost white color when checked */
+                border: 1px solid #FFFFFF;  /* Optional: White border for better visibility */
             }
             QScrollBar:vertical, QScrollBar:horizontal {
                 background-color: #1C1C1C;
@@ -2066,12 +2096,15 @@ class StrandAngleEditDialog(QDialog):
                 color: #000000;
                 border: 1px solid #BBBBBB;
                 border-radius: 5px;
+                min-width: 50px;
+                min-height: 30px;
             }
             QPushButton:hover {
                 background-color: #E0E0E0;
             }
             QPushButton:pressed {
-                background-color: #D0D0D0;
+                background-color: #BBBBBB;  /* Darker gray when pressed */
+                color: #FFFFFF;             /* Change text color to white for contrast */
             }
             QTableWidget {
                 background-color: #FFFFFF;
@@ -2098,6 +2131,35 @@ class StrandAngleEditDialog(QDialog):
             }
             QCheckBox {
                 color: #000000;
+                background-color: transparent;
+                padding: 2px;
+            }
+            QCheckBox::indicator {
+                border: 1px solid #BBBBBB;
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+                background: #FFFFFF;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #BBBBBB;  /* Dark gray color when checked */
+                border: 1px solid #000000;  /* Optional: Black border for better visibility */
+            }
+            QScrollBar:vertical, QScrollBar:horizontal {
+                background-color: #FFFFFF;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+                background-color: #BBBBBB;
+                min-height: 20px;
+                border-radius: 4px;
+            }
+            QScrollBar::add-line, QScrollBar::sub-line,
+            QScrollBar::add-page, QScrollBar::sub-page {
+                background: none;
+            }
+            QWidget#xAngleWidget {
+                background-color: #FFFFFF;
             }
         """
         self.setStyleSheet(light_stylesheet)

@@ -874,10 +874,11 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Updated color for attached strand: {attached_strand.layer_name}")
             self.update_attached_strands_color(attached_strand, color)
 
+
     def on_strand_created(self, strand):
         """Handle the creation of a new strand."""
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
-        
+
         if hasattr(strand, 'is_being_deleted') and strand.is_being_deleted:
             logging.info("Strand is being deleted, skipping creation process")
             return
@@ -899,7 +900,7 @@ class StrandDrawingCanvas(QWidget):
 
         # Add the new strand to the strands list
         self.strands.append(strand)
-        
+
         # Set this as the newest strand to ensure it's drawn on top
         self.newest_strand = strand
 
@@ -908,72 +909,56 @@ class StrandDrawingCanvas(QWidget):
             set_number = int(strand.set_number) if isinstance(strand.set_number, str) else strand.set_number
             count = len([s for s in self.strands if s.set_number == set_number])
             strand.layer_name = f"{set_number}_{count}"
-            
+
             if not hasattr(strand, 'is_being_deleted'):
                 logging.info(f"Adding new layer button for set {set_number}, count {count}")
                 self.layer_panel.add_layer_button(set_number, count)
             else:
                 logging.info(f"Updating layer names for set {set_number}")
                 self.layer_panel.update_layer_names(set_number)
-            
+
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
 
         # Select the new strand if it's not an attached strand
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
-        
+
         self.update()
-        
+
         # Notify LayerPanel that a new strand was added
         if self.layer_panel:
             self.layer_panel.update_attachable_states()
-        
-        # --- Begin new code to update group data ---
-        # Update group data if the new strand belongs to an existing group
+
+        # --- Begin new code to check group consistency ---
+        # Inform the GroupLayerManager about the new strand
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
-            group_panel = self.group_layer_manager.group_panel
-            if group_panel:
-                main_set_number = str(strand.set_number)
-                for group_name, group_data in group_panel.groups.items():
-                    # Assuming 'main_strands' stores main set numbers associated with the group
-                    if 'main_strands' in group_data:
-                        if main_set_number in group_data['main_strands']:
-                            # Add the new strand to the group if not already present
-                            if strand.layer_name not in group_data['layers']:
-                                group_data['layers'].append(strand.layer_name)
-                                group_data['strands'].append(strand)
-                                logging.info(f"Added new strand '{strand.layer_name}' to group '{group_name}'")
-                                # Update the group panel display
-                                group_panel.update_group_display(group_name, group_data['layers'])
+            self.group_layer_manager.update_groups_with_new_strand(strand)
         # --- End new code ---
 
         logging.info("Finished on_strand_created")
-
-
-
 
     def attach_strand(self, parent_strand, new_strand):
         """Attach a new strand to a parent strand."""
         parent_strand.attached_strands.append(new_strand)
         new_strand.parent = parent_strand
-        
+
         # Set the set_number for the new strand
         new_strand.set_number = parent_strand.set_number
-        
+
         # Append the new strand to the strands list
         self.strands.append(new_strand)
-        
+
         # Set this as the newest strand to ensure it's drawn on top
         self.newest_strand = new_strand
-        
+
         # Calculate the correct count for the new strand
         count = len([s for s in self.strands if s.set_number == new_strand.set_number])
         new_strand.layer_name = f"{new_strand.set_number}_{count}"
-        
+
         # Set the color for the new strand
         if new_strand.set_number in self.strand_colors:
             new_strand.set_color(self.strand_colors[new_strand.set_number])
-        
+
         # Update the layer panel
         if self.layer_panel:
             if not hasattr(new_strand, 'is_being_deleted'):
@@ -981,10 +966,16 @@ class StrandDrawingCanvas(QWidget):
             else:
                 self.layer_panel.update_layer_names(new_strand.set_number)
             self.layer_panel.on_strand_attached()
-        
+
+        # --- Begin new code to check group consistency ---
+        # Inform the GroupLayerManager about the new attached strand
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            self.group_layer_manager.update_groups_with_new_strand(new_strand)
+        # --- End new code ---
+
         # Update the canvas
         self.update()
-        
+
         logging.info(f"Attached new strand: {new_strand.layer_name} to parent: {parent_strand.layer_name}")
 
     def move_strand_to_top(self, strand):
@@ -1209,7 +1200,75 @@ class StrandDrawingCanvas(QWidget):
                     strand.layer_name in masked_strand.layer_name)
         return False
 
+    def create_masked_strand(self, first_strand, second_strand):
+        """
+        Create a masked strand from two selected strands.
 
+        Args:
+            first_strand (Strand): The first selected strand.
+            second_strand (Strand): The second selected strand.
+        """
+        logging.info(f"Attempting to create masked strand for {first_strand.layer_name} and {second_strand.layer_name}")
+
+        # Check if a masked strand already exists for these strands
+        if self.mask_exists(first_strand, second_strand):
+            logging.info(f"Masked strand for {first_strand.layer_name} and {second_strand.layer_name} already exists.")
+            return
+
+        # Create the new masked strand
+        masked_strand = MaskedStrand(first_strand, second_strand)
+
+        # Add the new masked strand to the canvas
+        self.add_strand(masked_strand)
+
+        # Update the layer panel if it exists
+        if self.layer_panel:
+            button = self.layer_panel.add_masked_layer_button(
+                self.strands.index(first_strand),
+                self.strands.index(second_strand)
+            )
+            button.color_changed.connect(self.handle_color_change)
+
+        # Set the color of the masked strand
+        masked_strand.set_color(first_strand.color)
+
+        # Update the masked strand's layer name
+        masked_strand.layer_name = f"{first_strand.layer_name}_{second_strand.layer_name}"
+
+        # --- Begin new code to check group consistency ---
+        # Inform the GroupLayerManager about the new masked strand
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            self.group_layer_manager.update_groups_with_new_strand(masked_strand)
+        # --- End new code ---
+
+        # Log the creation of the masked strand
+        logging.info(f"Created masked strand: {masked_strand.layer_name}")
+
+        # Clear any existing selection
+        self.clear_selection()
+
+        # Move the new masked strand to the top of the drawing order
+        self.move_strand_to_top(masked_strand)
+
+        # Force a redraw of the canvas
+        self.update()
+
+        # Return the new masked strand in case it's needed
+        return masked_strand
+    def check_and_delete_group_for_new_strand(self, related_strand, new_strand):
+        """Helper method to check group consistency when a new strand is added."""
+        if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
+            return
+        group_panel = self.group_layer_manager.group_panel
+        if not group_panel:
+            return
+        main_set_number = str(related_strand.set_number)
+        for group_name, group_data in group_panel.groups.items():
+            if 'main_strands' in group_data and main_set_number in group_data['main_strands']:
+                # If the new strand is not in the group, delete the group
+                if new_strand.layer_name not in group_data['layers']:
+                    logging.info(f"Deleting group '{group_name}' because new strand '{new_strand.layer_name}' connected to its main strand is not in the group.")
+                    group_panel.delete_group(group_name)
     def remove_related_masked_layers(self, strand):
         """
         Remove all masked layers associated with the given main strand and its attachments.
@@ -1487,6 +1546,9 @@ class StrandDrawingCanvas(QWidget):
             if s in self.strands:
                 indices_to_remove.append(self.strands.index(s))
 
+        # Delete groups containing the strands to be removed
+        self.delete_groups_containing_strands(strands_to_remove)
+
         # Remove collected strands and masks
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
@@ -1526,10 +1588,32 @@ class StrandDrawingCanvas(QWidget):
         # Update the layer panel
         if self.layer_panel:
             self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
-            self.update_layer_panel_colors()  # Add this line
+            self.update_layer_panel_colors()
 
         logging.info("Finished remove_strand")
         return True
+
+    def delete_groups_containing_strands(self, strands):
+        """
+        Deletes groups that contain any of the given strands.
+        """
+        if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
+            return
+
+        group_panel = self.group_layer_manager.group_panel
+        if not group_panel:
+            return
+
+        strands_layer_names = [strand.layer_name for strand in strands]
+
+        groups_to_delete = []
+        for group_name, group_data in group_panel.groups.items():
+            if any(layer_name in group_data['layers'] for layer_name in strands_layer_names):
+                groups_to_delete.append(group_name)
+
+        for group_name in groups_to_delete:
+            logging.info(f"Deleting group '{group_name}' because it contains a deleted strand.")
+            group_panel.delete_group(group_name)
     def update_layer_panel_colors(self):
         if self.layer_panel:
             for strand in self.strands:

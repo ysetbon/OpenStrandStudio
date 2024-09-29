@@ -20,10 +20,12 @@ class StrandDrawingCanvas(QWidget):
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
     language_changed = pyqtSignal()  # Signal to emit when language changes
-
+    theme_changed = pyqtSignal(str)  # Add this line
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
+        self.current_theme = 'default'  # Initialize current_theme
+
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
         self.initialize_properties()
         self.setup_modes()
@@ -72,17 +74,66 @@ class StrandDrawingCanvas(QWidget):
         self.language_code = language_code
         self.language_changed.emit(language_code)
     def set_theme(self, theme_name):
-        if theme_name == "Dark":
-            self.setStyleSheet("""
-                background-color: #2C2C2C;
-                /* Add styles specific to the canvas if needed */
-            """)
+        self.current_theme = theme_name
+        self.apply_theme()
+        self.theme_changed.emit(theme_name)  # Emit theme_changed signal
+
+    def apply_theme(self):
+        if self.current_theme == 'dark':
+            self.apply_dark_theme()
+        elif self.current_theme == 'light':
+            self.apply_light_theme()
         else:
-            self.setStyleSheet("""
-                background-color: #FFFFFF;
-                /* Add styles specific to the canvas if needed */
-            """)
-        self.update()
+            self.apply_default_theme()
+        self.update_theme_colors()
+    def apply_default_theme(self):
+        """Apply the default theme styles to the canvas."""
+        default_stylesheet = """
+            QWidget {
+                background-color: #FFFFFF;  /* White background */
+                color: #000000;             /* Black text */
+            }
+        """
+        self.setStyleSheet(default_stylesheet)
+        self.update_theme_colors()
+
+    def apply_dark_theme(self):
+        """Apply dark theme styles to the canvas."""
+        dark_stylesheet = """
+            QWidget {
+                background-color: #1C1C1C;  /* Dark grey background */
+                color: #FFFFFF;             /* White text */
+            }
+        """
+        self.setStyleSheet(dark_stylesheet)
+        self.update_theme_colors()
+
+    def apply_light_theme(self):
+        """Apply light theme styles to the canvas."""
+        light_stylesheet = """
+            QWidget {
+                background-color: #FFFBF0;  /* Light cream color background */
+                color: #000000;             /* Black text */
+            }
+        """
+        self.setStyleSheet(light_stylesheet)
+        self.update_theme_colors()
+
+    def update_theme_colors(self):
+        """Update colors used in drawing based on the current theme."""
+        if self.current_theme == 'dark':
+            self.background_color = QColor('#1C1C1C')
+            self.grid_color = QColor('#555555')
+            self.stroke_color = QColor('#000000')
+        elif self.current_theme == 'light':
+            self.background_color = QColor('#FFFBF0')
+            self.grid_color = QColor('#CCCCCC')
+            self.stroke_color = QColor('#000000')
+        else:  # Default theme
+            self.background_color = QColor('#FFFFFF')
+            self.grid_color = QColor('#CCCCCC')
+            self.stroke_color = QColor('#000000')
+        self.update()  # Refresh the canvas
     def start_group_rotation(self, group_name):
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel

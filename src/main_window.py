@@ -314,8 +314,9 @@ class MainWindow(QMainWindow):
 
     def open_settings_dialog(self):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
-        settings_dialog.theme_changed.connect(self.apply_theme)  # Connect the signal
+        settings_dialog.theme_changed.connect(self.canvas.set_theme)  # Connect the signal
         settings_dialog.exec_()
+
 
 
     def apply_theme(self, theme_name):
@@ -1317,7 +1318,7 @@ class MainWindow(QMainWindow):
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:
             group_data = self.canvas.groups[group_name]
-            dialog = StrandAngleEditDialog(group_name, group_data, self.canvas)
+            dialog = StrandAngleEditDialog(group_name, group_data, canvas=self.canvas)
             dialog.angle_changed.connect(self.canvas.update_strand_angle)
             dialog.exec_()
 

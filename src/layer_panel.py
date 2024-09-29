@@ -993,40 +993,46 @@ class LayerPanel(QWidget):
         # Update any other UI elements as needed
 # End of LayerPanel class
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtCore import Qt
+
 class StrokeTextButton(QPushButton):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setFixedSize(40, 40)
-        self.setStyleSheet("""
-            QPushButton {
+        self.updateStyleSheet()
+
+    def updateStyleSheet(self):
+         self.setStyleSheet(f"""
+            QPushButton {{
                 font-weight: bold;
                 font-size: 30px;
                 color: black;
                 background-color: #4d9958;
                 border: none;
-                padding: 0px 0px 4px 0px;  /* Added 4px bottom padding to shift text up */
+                padding: 0px;
+                padding-top: -8px;  /* Move text up by 2 pixels */
                 border-radius: 20px;
                 text-align: center;
-                line-height: 36px;  /* Adjusted line height to account for the shift */
-            }
-            QPushButton:hover {
+                line-height: 38px;  /* Adjust line height to compensate for padding */
+            }}
+            QPushButton:hover {{
                 background-color: #67c975;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: #2a522f;
-            }
+            }}
         """)
+
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Set up the font
         font = self.font()
         font.setBold(True)
         painter.setFont(font)
 
-        # Prepare the text
         text = self.text()
         text_rect = self.rect()
         fm = QFontMetrics(font)
@@ -1035,13 +1041,13 @@ class StrokeTextButton(QPushButton):
         x = (text_rect.width() - text_width) / 2
         y = (text_rect.height() + text_height) / 2 - fm.descent()
 
-        # Create the path for the text
         path = QPainterPath()
         path.addText(x, y-2, font, text)
 
-        # Draw the stroke
-        pen = QPen(QColor('#e6fae9'), 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        pen = QPen(QColor('#e6fae9'), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         painter.strokePath(path, pen)
-
-        # Draw the fill
         painter.fillPath(path, QColor('black'))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateStyleSheet()

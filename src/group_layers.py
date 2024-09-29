@@ -2446,17 +2446,30 @@ class StrandAngleEditDialog(QDialog):
 
         return widget
 
-    def on_plus_clicked(self, row):
-        self.adjust_angle(row, self.delta_plus)
+    def on_minus_minus_clicked(self):
+        """
+        Handle the '--' button click event.
+        """
+        self.adjust_x_angle(-5)
 
-    def on_minus_clicked(self, row):
-        self.adjust_angle(row, self.delta_minus)
+    def on_minus_clicked(self):
+        """
+        Handle the '-' button click event.
+        """
+        self.adjust_x_angle(-1)
 
-    def on_plus_plus_clicked(self, row):
-        self.adjust_angle(row, self.delta_plus_plus)
+    def on_plus_clicked(self):
+        """
+        Handle the '+' button click event.
+        """
+        self.adjust_x_angle(1)
 
-    def on_minus_minus_clicked(self, row):
-        self.adjust_angle(row, self.delta_minus_minus)
+    def on_plus_plus_clicked(self):
+        """
+        Handle the '++' button click event.
+        """
+        self.adjust_x_angle(5)
+
 
     def adjust_angle(self, row, delta):
         strand = self.group_data['strands'][row]
@@ -2471,48 +2484,94 @@ class StrandAngleEditDialog(QDialog):
             self.update_strand_angle(strand, new_angle)
 
     def on_checkbox_changed(self, row, col, state):
+        """
+        Handle changes when checkboxes are checked or unchecked.
+        """
         strand = self.group_data['strands'][row]
-        if col == 6:  # x checkbox
-            if state == Qt.Checked:
-                angle = self.x_angle  # Use x_angle
+
+        if state == Qt.Checked:
+            # Check if this is the first checkbox being checked
+            any_other_checks = False
+            for r in range(self.table.rowCount()):
+                if r == row:
+                    continue
+                for c in [6, 7]:  # Columns for 'x' and '180+x' checkboxes
+                    checkbox = self.table.cellWidget(r, c)
+                    if checkbox and checkbox.isChecked():
+                        any_other_checks = True
+                        break
+                if any_other_checks:
+                    break
+
+            if not any_other_checks:
+                # This is the first checkbox being checked
+                angle = self.calculate_angle(strand)
+                if col == 6:  # 'x' checkbox
+                    self.x_angle = angle  # Use the strand's current angle
+                elif col == 7:  # '180+x' checkbox
+                    self.x_angle = angle - 180  # Subtract 180 degrees
+                # Update the 'Angle X:' input field without triggering updates
+                self.x_angle_input.blockSignals(True)
+                self.x_angle_input.setText(f"{self.x_angle:.2f}")
+                self.x_angle_input.blockSignals(False)
+
+            # Ensure only one checkbox is checked per row
+            if col == 6:  # 'x' checkbox
                 x_plus_180_checkbox = self.table.cellWidget(row, 7)
                 if x_plus_180_checkbox:
+                    x_plus_180_checkbox.blockSignals(True)
                     x_plus_180_checkbox.setChecked(False)
-            else:
-                angle = self.calculate_angle(strand)
-            self.update_strand_angle(strand, angle)
-            angle_item = self.table.item(row, 1)
-            if angle_item:
-                angle_item.setText(f"{angle:.2f}")
-        elif col == 7:  # x+180 checkbox
-            if state == Qt.Checked:
-                angle = self.x_angle + 180  # Use x_angle + 180
+                    x_plus_180_checkbox.blockSignals(False)
+            elif col == 7:  # '180+x' checkbox
                 x_checkbox = self.table.cellWidget(row, 6)
                 if x_checkbox:
+                    x_checkbox.blockSignals(True)
                     x_checkbox.setChecked(False)
-            else:
-                angle = self.calculate_angle(strand)
-            self.update_strand_angle(strand, angle)
-            angle_item = self.table.item(row, 1)
-            if angle_item:
-                angle_item.setText(f"{angle:.2f}")
+                    x_checkbox.blockSignals(False)
+        else:
+            # If unchecked, check if no other checkboxes are checked
+            any_checks_left = False
+            for r in range(self.table.rowCount()):
+                for c in [6, 7]:
+                    checkbox = self.table.cellWidget(r, c)
+                    if checkbox and checkbox.isChecked():
+                        any_checks_left = True
+                        break
+                if any_checks_left:
+                    break
+
+            if not any_checks_left:
+                # No checkboxes are checked; reset x_angle to 0
+                self.x_angle = 0.0
+                self.x_angle_input.blockSignals(True)
+                self.x_angle_input.setText(f"{self.x_angle:.2f}")
+                self.x_angle_input.blockSignals(False)
 
     def update_x_angle(self):
+        """
+        Update the x_angle variable when the Angle X: input changes.
+        Do not update strands immediately.
+        """
         try:
             self.x_angle = float(self.x_angle_input.text())
-            self.update_linked_strands()
+            # Do not apply changes to strands here
         except ValueError:
             self.x_angle = 0.0
 
     def adjust_x_angle(self, delta):
+        """
+        Adjust the X angle by the specified delta when buttons are pressed.
+        """
         try:
-            current_x_angle = float(self.x_angle_input.text())
+            current_angle = float(self.x_angle_input.text())
         except ValueError:
-            current_x_angle = 0.0
-        new_x_angle = current_x_angle + delta
-        self.x_angle_input.setText(f"{new_x_angle:.2f}")
-        self.update_x_angle()
-        self.apply_x_angle_to_selected()
+            current_angle = 0.0
+        new_angle = current_angle + delta
+        self.x_angle = new_angle  # Update x_angle variable
+        self.x_angle_input.blockSignals(True)
+        self.x_angle_input.setText(f"{new_angle:.2f}")
+        self.x_angle_input.blockSignals(False)
+        self.apply_x_angle_to_strands()
 
     def apply_x_angle_to_selected(self):
         for row in range(self.table.rowCount()):
@@ -2522,7 +2581,78 @@ class StrandAngleEditDialog(QDialog):
                 self.on_checkbox_changed(row, 6, Qt.Checked)
             elif x_plus_180_checkbox.isChecked():
                 self.on_checkbox_changed(row, 7, Qt.Checked)
+    def update_strand_angle(self, strand, new_angle, update_table=True, update_linked=False):
+        """
+        Update the strand's angle to new_angle.
+        """
+        # Ensure the angle is within -180 to 180 degrees
+        while new_angle > 180:
+            new_angle -= 360
+        while new_angle <= -180:
+            new_angle += 360
 
+        # Calculate the length of the strand
+        dx = strand.end.x() - strand.start.x()
+        dy = strand.end.y() - strand.start.y()
+        length = (dx**2 + dy**2) ** 0.5
+
+        # Calculate new end coordinates based on the new angle
+        new_dx = length * cos(radians(new_angle))
+        new_dy = length * sin(radians(new_angle))
+        new_end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
+
+        # Update the strand's end point
+        strand.end = new_end
+
+        # Update the strand's shape
+        strand.update_shape()
+        if hasattr(strand, 'update_side_line'):
+            strand.update_side_line()
+
+        # Update the table row to reflect the new angle and coordinates
+        if update_table:
+            row = self.group_data['strands'].index(strand)
+            self.update_table_row(row)
+
+        # Emit signal if needed
+        self.angle_changed.emit(strand.layer_name, new_angle)
+
+        # Do not update linked strands to prevent recursion
+        # Refresh the canvas if applicable (handled elsewhere)
+    def apply_x_angle_to_strands(self):
+        """
+        Apply the current x_angle to all strands with checkboxes checked.
+        """
+        for row in range(self.table.rowCount()):
+            strand = self.group_data['strands'][row]
+            x_checkbox = self.table.cellWidget(row, 6)
+            x_plus_180_checkbox = self.table.cellWidget(row, 7)
+
+            if x_checkbox and x_checkbox.isChecked():
+                angle = self.x_angle
+            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
+                angle = self.x_angle + 180
+                # Normalize angle to -180 to 180 degrees
+                while angle > 180:
+                    angle -= 360
+                while angle <= -180:
+                    angle += 360
+            else:
+                continue  # Skip strands without checkboxes checked
+
+            # Update the strand's angle without recursive updates
+            self.update_strand_angle(strand, angle, update_table=False)
+
+            # Update the angle display in the table
+            angle_item = self.table.item(row, 1)
+            if angle_item:
+                angle_item.setText(f"{angle:.2f}")
+
+            # Update end_x and end_y coordinates
+            self.update_table_row(row)
+
+        # Refresh the canvas to show updated strands
+        self.canvas.update()
     def calculate_angle(self, strand):
             dx = strand.end.x() - strand.start.x()
             dy = strand.end.y() - strand.start.y()

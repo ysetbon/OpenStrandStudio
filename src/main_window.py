@@ -31,26 +31,6 @@ class MainWindow(QMainWindow):
 
         logging.info("Initializing MainWindow")
 
-        # Determine the base path to resources
-        if getattr(sys, 'frozen', False):
-            # If the application is frozen (running as an executable)
-            base_path = sys._MEIPASS
-        else:
-            # If running from source
-            base_path = os.path.dirname(os.path.abspath(__file__))
-
-        # Load the icon
-        icon_path = os.path.join(base_path, 'box_stitch.ico')
-        if os.path.exists(icon_path):
-            self.setWindowIcon(QIcon(icon_path))
-            logging.info(f"Window icon set from: {icon_path}")
-        else:
-            logging.warning(f"Icon not found at {icon_path}")
-
-        # Load the settings icon
-        gear_icon_path = os.path.join(base_path, 'settings_icon.png')
-        logging.info(f"Searching for gear icon at: {gear_icon_path}")
-
         # Initialize components
         self.canvas = StrandDrawingCanvas(parent=self)
         self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
@@ -98,7 +78,7 @@ class MainWindow(QMainWindow):
         self.select_strand_button.setText(_['select_mode'])
         self.mask_button.setText(_['mask_mode'])
         self.save_button.setText(_['save'])
-        self.load_button.setText(_['open'])
+        self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
 
         # Update settings button tooltip or text
@@ -1367,7 +1347,7 @@ class MainWindow(QMainWindow):
         self.select_strand_button.setText(_['select_mode'])
         self.mask_button.setText(_['mask_mode'])
         self.save_button.setText(_['save'])
-        self.load_button.setText(_['open'])
+        self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
 
         # Update settings button tooltip or text

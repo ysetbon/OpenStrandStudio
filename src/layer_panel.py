@@ -190,20 +190,103 @@ class LayerPanel(QWidget):
             palette.setColor(QPalette.WindowText, QColor("white"))
             self.setPalette(palette)
             self.setAutoFillBackground(True)
+
+            # Update button styles for dark theme
+            self.delete_strand_button.setStyleSheet("""
+                QPushButton {
+                    font-weight: bold;
+                    color: black;
+                    background-color: #FF6B6B;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #FF4C4C; /* Lighter red on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #FF0000; /* Darker red on click */
+                }
+            """)
+
+            # Similarly update other buttons if necessary
+
         elif theme_name == "light":
             palette = self.palette()
             palette.setColor(QPalette.Window, QColor("#FFFFFF"))
             palette.setColor(QPalette.WindowText, QColor("black"))
             self.setPalette(palette)
             self.setAutoFillBackground(True)
+
+            # Update button styles for light theme
+            self.delete_strand_button.setStyleSheet("""
+                QPushButton {
+                    font-weight: bold;
+                    color: black;
+                    background-color: #FF6B6B;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #FF4C4C; /* Lighter red on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #FF0000; /* Darker red on click */
+                }
+            """)
+
+            # Similarly update other buttons if necessary
+
         elif theme_name == "default":
             # Clear any custom palettes to use the default theme
             self.setPalette(self.style().standardPalette())
-            self.setAutoFillBackground(False)  # Let the system decide the background
+            self.setAutoFillBackground(False)
+
+            # Reset button styles to default
+            self.delete_strand_button.setStyleSheet("""
+                QPushButton {
+                    font-weight: bold;
+                    color: black;
+                    background-color: #FF6B6B;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #FF4C4C; /* Lighter red on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #FF0000; /* Darker red on click */
+                }
+            """)
+
+            # Similarly reset other buttons if necessary
+
         else:
             # Handle unknown themes by reverting to default
             self.setPalette(self.style().standardPalette())
             self.setAutoFillBackground(False)
+
+            # Reset button styles to default
+            self.delete_strand_button.setStyleSheet("""
+                QPushButton {
+                    font-weight: bold;
+                    color: black;
+                    background-color: #FF6B6B;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #FF4C4C; /* Lighter red on hover */
+                }
+                QPushButton:pressed {
+                    background-color: #FF0000; /* Darker red on click */
+                }
+            """)
+
+            # Similarly reset other buttons if necessary
 
     def update_translations(self):
         _ = translations[self.parent().language_code]

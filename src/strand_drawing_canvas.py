@@ -13,6 +13,7 @@ import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from translations import translations
+
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     strand_created = pyqtSignal(object)

@@ -57,21 +57,38 @@ class LayerPanel(QWidget):
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
-        self.parent_window = parent  # Store the reference to MainWindow
+        self.parent_window = parent
         self.language_code = parent.language_code if parent else 'en'
-        self.layout = QHBoxLayout(self)  # Main layout for the panel
+        self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        self.last_selected_index = None  # Stores the index of the last selected layer
+        self.last_selected_index = None
         self.group_layer_manager = GroupLayerManager(parent=parent, layer_panel=self, canvas=self.canvas)
 
         # Create left panel (existing layer panel)
         self.left_panel = QWidget()
         self.left_layout = QVBoxLayout(self.left_panel)
 
-        # Create and add the splitter handle
+        # **Add the splitter handle at the top of the left layout**
         self.handle = SplitterHandle(self)
         self.left_layout.addWidget(self.handle)
+
+        # **Add the refresh button below the splitter handle**
+        # Create top panel for the refresh button
+        top_panel = QWidget()
+        top_layout = QHBoxLayout(top_panel)
+        top_layout.setContentsMargins(5, 5, 5, 5)
+        top_layout.setAlignment(Qt.AlignLeft)
+
+        # Create the refresh button
+        self.refresh_button = StrokeTextButton("⟳")
+        self.refresh_button.clicked.connect(self.refresh_layers)
+
+        # Add the refresh button to the top layout
+        top_layout.addWidget(self.refresh_button)
+
+        # Add top_panel to left_layout below the splitter handle
+        self.left_layout.addWidget(top_panel)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
@@ -80,6 +97,9 @@ class LayerPanel(QWidget):
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
+
+        # Add the scroll area to the left layout
+        self.left_layout.addWidget(self.scroll_area)
 
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
@@ -167,6 +187,32 @@ class LayerPanel(QWidget):
 
         logging.info("LayerPanel initialized")
 
+    def refresh_layers(self):
+        """Refresh the drawing of the layers."""
+        logging.info("Starting refresh of layer panel")
+        # Clear all layer buttons from the layout without deleting them
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                # Remove the widget from the layout but do not set parent to None or delete it
+                widget.hide()  # Optionally hide the widget
+            else:
+                # Handle nested layouts if any
+                pass
+        
+        # Re-add the layer buttons in the original order
+        for button in reversed(self.layer_buttons):
+            button_container = QWidget()
+            button_layout = QHBoxLayout(button_container)
+            button_layout.setAlignment(Qt.AlignHCenter)
+            button_layout.addWidget(button)
+            button_layout.setContentsMargins(0, 0, 0, 0)
+            self.scroll_layout.addWidget(button_container)
+            button.show()  # Ensure the button is visible
+            button_container.show()
+        
+        logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
@@ -946,3 +992,56 @@ class LayerPanel(QWidget):
            # Similarly update other tooltips or accessible descriptions
         # Update any other UI elements as needed
 # End of LayerPanel class
+from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics
+class StrokeTextButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setFixedSize(40, 40)
+        self.setStyleSheet("""
+            QPushButton {
+                font-weight: bold;
+                font-size: 30px;
+                color: black;
+                background-color: #4d9958;
+                border: none;
+                padding: 0px 0px 4px 0px;  /* Added 4px bottom padding to shift text up */
+                border-radius: 20px;
+                text-align: center;
+                line-height: 36px;  /* Adjusted line height to account for the shift */
+            }
+            QPushButton:hover {
+                background-color: #67c975;
+            }
+            QPushButton:pressed {
+                background-color: #2a522f;
+            }
+        """)
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Set up the font
+        font = self.font()
+        font.setBold(True)
+        painter.setFont(font)
+
+        # Prepare the text
+        text = self.text()
+        text_rect = self.rect()
+        fm = QFontMetrics(font)
+        text_width = fm.horizontalAdvance(text)
+        text_height = fm.height()
+        x = (text_rect.width() - text_width) / 2
+        y = (text_rect.height() + text_height) / 2 - fm.descent()
+
+        # Create the path for the text
+        path = QPainterPath()
+        path.addText(x, y-2, font, text)
+
+        # Draw the stroke
+        pen = QPen(QColor('#e6fae9'), 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        painter.strokePath(path, pen)
+
+        # Draw the fill
+        painter.fillPath(path, QColor('black'))

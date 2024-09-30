@@ -117,6 +117,8 @@ class LayerPanel(QWidget):
 
         self.add_new_strand_button = QPushButton("Add New Strand")
         self.add_new_strand_button.setStyleSheet("font-weight: bold; background-color: lightgreen;")
+        ### Inside LayerPanel __init__ method ###
+
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
         self.delete_strand_button = QPushButton("Delete Strand (beta)")
@@ -549,14 +551,15 @@ class LayerPanel(QWidget):
         self.layer_buttons.append(button)
         return button
 
+    ### Inside LayerPanel class ###
+
     def request_new_strand(self):
-        """Request the creation of a new strand."""
+        logging.info("Add New Strand button clicked.")
+        # Start a new set or use an existing one
         self.start_new_set()
-        new_color = QColor('purple')
-        new_strand_number = self.current_set
-        new_strand_index = self.set_counts[self.current_set] + 1
-        new_strand_name = f"{new_strand_number}_{new_strand_index}"
-        self.new_strand_requested.emit(new_strand_number, new_color)
+        # Call the canvas method to start drawing a new strand
+        self.canvas.start_new_strand_mode(self.current_set)
+        logging.info(f"Requested new strand for set {self.current_set}")
 
     def request_delete_strand(self):
         """Request the deletion of the selected strand."""
@@ -645,12 +648,18 @@ class LayerPanel(QWidget):
                 del self.set_colors[deleted_set_number]
                 logging.info(f"Deleted set color for set {deleted_set_number}")
 
-            # Update the current set to the highest remaining set number
-            if self.set_counts:
-                self.current_set = max(self.set_counts.keys())
+            # Update the current set to the highest remaining set number among main strands
+            existing_sets = set(
+                strand.set_number
+                for strand in self.canvas.strands
+                if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
+            )
+            if existing_sets:
+                self.current_set = max(existing_sets)
             else:
                 self.current_set = 0
             logging.info(f"Updated current_set to {self.current_set}")
+
 
         # Update masked layers
         self.update_masked_layers(deleted_set_number, strands_removed)
@@ -730,43 +739,66 @@ class LayerPanel(QWidget):
 
         self.update_layer_button_states()
 
+    def get_next_available_set_number(self):
+        existing_set_numbers = set(
+            strand.set_number
+            for strand in self.canvas.strands
+            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
+        )
+        max_set_number = max(existing_set_numbers, default=0)
+        return max_set_number + 1
+
     def add_layer_button(self, set_number, count=None):
+        """Add a new button for a layer."""
         logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
+
         # Ensure set_number is an integer
-        set_number = int(set_number) if isinstance(set_number, str) else set_number
-        
-        if set_number not in self.set_counts:
-            self.set_counts[set_number] = 0
-            logging.info(f"Initialized set count for set {set_number}")
-        
-        if count is None:
-            self.set_counts[set_number] += 1
-            count = self.set_counts[set_number]
-            logging.info(f"Incremented set count for set {set_number} to {count}")
+        if not isinstance(set_number, int):
+            try:
+                set_number_int = int(set_number)
+            except ValueError:
+                logging.warning(f"Invalid set_number '{set_number}' provided. Using next available integer.")
+                set_number_int = self.get_next_available_set_number()
         else:
-            self.set_counts[set_number] = max(self.set_counts[set_number], count)
-            logging.info(f"Updated set count for set {set_number} to {self.set_counts[set_number]}")
-        
-        color = self.set_colors.get(set_number, QColor('purple'))
-        button = NumberedLayerButton(f"{set_number}_{count}", count, color)
+            set_number_int = set_number
+
+        # Initialize or update set count
+        if set_number_int not in self.set_counts:
+            self.set_counts[set_number_int] = 0
+            logging.info(f"Initialized set count for set {set_number_int}")
+
+        if count is None:
+            self.set_counts[set_number_int] += 1
+            count = self.set_counts[set_number_int]
+            logging.info(f"Incremented set count for set {set_number_int} to {count}")
+        else:
+            self.set_counts[set_number_int] = max(self.set_counts[set_number_int], count)
+            logging.info(f"Updated set count for set {set_number_int} to {self.set_counts[set_number_int]}")
+
+        # Get the color for the set
+        color = self.set_colors.get(set_number_int, QColor('purple'))
+
+        # Create the layer name using set_number_int and count
+        layer_name = f"{set_number_int}_{count}"
+
+        # Create the new layer button
+        button = NumberedLayerButton(layer_name, count, color)
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
         logging.info(f"Created new button: {button.text()}")
-        
+
+        # Set up the layout for the button
         button_container = QWidget()
         button_layout = QHBoxLayout(button_container)
         button_layout.setAlignment(Qt.AlignHCenter)
         button_layout.addWidget(button)
         button_layout.setContentsMargins(0, 0, 0, 0)
-        
+
+        # Insert the button at the top of the scroll area
         self.scroll_layout.insertWidget(0, button_container)
         self.layer_buttons.append(button)
         self.select_layer(len(self.layer_buttons) - 1)
         logging.info(f"Added button to layer_buttons, total buttons: {len(self.layer_buttons)}")
-        
-        if set_number > self.current_set:
-            self.current_set = set_number
-            logging.info(f"Updated current_set to {self.current_set}")
 
         # Update attachable states after adding a new button
         self.update_layer_button_states()
@@ -796,11 +828,23 @@ class LayerPanel(QWidget):
         """Called when a strand is attached to another strand."""
         self.update_layer_button_states()
 
+    ### Inside LayerPanel class ###
+
     def start_new_set(self):
         """Start a new set of strands."""
-        self.current_set = max(self.set_counts.keys(), default=0) + 1
+        # Get all existing set numbers from the canvas strands, excluding masked strands
+        existing_sets = set(
+            strand.set_number
+            for strand in self.canvas.strands
+            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
+        )
+        logging.info(f"Existing sets: {existing_sets}")
+        # Determine the next available set number
+        self.current_set = max(existing_sets, default=0) + 1
+        # Initialize count and color for the new set
         self.set_counts[self.current_set] = 0
         self.set_colors[self.current_set] = QColor('purple')
+        logging.info(f"Starting new set. Assigned set number: {self.current_set}")
 
     def delete_strand(self, index):
         """
@@ -811,8 +855,47 @@ class LayerPanel(QWidget):
         """
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
+            set_number = strand.set_number
+            is_main_strand = strand.layer_name.split('_')[1] == '1'
+
+            # Remove the strand from the canvas
             self.canvas.remove_strand(strand)
             self.canvas.update()
+
+            # Remove the corresponding layer button
+            if index < len(self.layer_buttons):
+                button = self.layer_buttons.pop(index)
+                button.setParent(None)
+                button.deleteLater()
+                logging.info(f"Removed layer button for strand: {strand.layer_name}")
+
+            # Update set_counts
+            if set_number in self.set_counts:
+                self.set_counts[set_number] -= 1
+                if self.set_counts[set_number] <= 0:
+                    del self.set_counts[set_number]
+                    logging.info(f"Removed set_count entry for set {set_number}")
+
+            # Remove set color if no strands are left in the set
+            if not any(s.set_number == set_number for s in self.canvas.strands):
+                if set_number in self.set_colors:
+                    del self.set_colors[set_number]
+                    logging.info(f"Removed set_color entry for set {set_number}")
+
+            # Update current_set to the lowest available set number
+            existing_sets = set(
+                strand.set_number for strand in self.canvas.strands if hasattr(strand, 'set_number')
+            )
+            if existing_sets:
+                self.current_set = min(existing_sets)
+            else:
+                self.current_set = 1
+            logging.info(f"Updated current_set to {self.current_set}")
+
+            # Update layer button states
+            self.update_layer_button_states()
+        else:
+            logging.warning(f"Invalid index for deleting strand: {index}")
 
     def clear_selection(self):
         """Clear the selection of all layer buttons."""

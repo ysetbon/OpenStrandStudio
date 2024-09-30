@@ -13,7 +13,6 @@ import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from translations import translations
-
 class StrandDrawingCanvas(QWidget):
     strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     strand_created = pyqtSignal(object)
@@ -21,12 +20,10 @@ class StrandDrawingCanvas(QWidget):
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
     language_changed = pyqtSignal()  # Signal to emit when language changes
-    theme_changed = pyqtSignal(str)  # Add this line
+
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
-        self.current_theme = 'default'  # Initialize current_theme
-
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
         self.initialize_properties()
         self.setup_modes()
@@ -42,7 +39,7 @@ class StrandDrawingCanvas(QWidget):
         self.strand_width = 46  # Width of strands
         self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
-        
+        # In strand_drawing_canvas.py
         # Add new attributes for group moving
         self.moving_group = False
         self.move_group_name = None
@@ -75,66 +72,17 @@ class StrandDrawingCanvas(QWidget):
         self.language_code = language_code
         self.language_changed.emit(language_code)
     def set_theme(self, theme_name):
-        self.current_theme = theme_name
-        self.apply_theme()
-        self.theme_changed.emit(theme_name)  # Emit theme_changed signal
-
-    def apply_theme(self):
-        if self.current_theme == 'dark':
-            self.apply_dark_theme()
-        elif self.current_theme == 'light':
-            self.apply_light_theme()
+        if theme_name == "Dark":
+            self.setStyleSheet("""
+                background-color: #2C2C2C;
+                /* Add styles specific to the canvas if needed */
+            """)
         else:
-            self.apply_default_theme()
-        self.update_theme_colors()
-    def apply_default_theme(self):
-        """Apply the default theme styles to the canvas."""
-        default_stylesheet = """
-            QWidget {
-                background-color: #FFFFFF;  /* White background */
-                color: #000000;             /* Black text */
-            }
-        """
-        self.setStyleSheet(default_stylesheet)
-        self.update_theme_colors()
-
-    def apply_dark_theme(self):
-        """Apply dark theme styles to the canvas."""
-        dark_stylesheet = """
-            QWidget {
-                background-color: #1C1C1C;  /* Dark grey background */
-                color: #FFFFFF;             /* White text */
-            }
-        """
-        self.setStyleSheet(dark_stylesheet)
-        self.update_theme_colors()
-
-    def apply_light_theme(self):
-        """Apply light theme styles to the canvas."""
-        light_stylesheet = """
-            QWidget {
-                background-color: #FFFBF0;  /* Light cream color background */
-                color: #000000;             /* Black text */
-            }
-        """
-        self.setStyleSheet(light_stylesheet)
-        self.update_theme_colors()
-
-    def update_theme_colors(self):
-        """Update colors used in drawing based on the current theme."""
-        if self.current_theme == 'dark':
-            self.background_color = QColor('#1C1C1C')
-            self.grid_color = QColor('#555555')
-            self.stroke_color = QColor('#000000')
-        elif self.current_theme == 'light':
-            self.background_color = QColor('#FFFBF0')
-            self.grid_color = QColor('#CCCCCC')
-            self.stroke_color = QColor('#000000')
-        else:  # Default theme
-            self.background_color = QColor('#FFFFFF')
-            self.grid_color = QColor('#CCCCCC')
-            self.stroke_color = QColor('#000000')
-        self.update()  # Refresh the canvas
+            self.setStyleSheet("""
+                background-color: #FFFFFF;
+                /* Add styles specific to the canvas if needed */
+            """)
+        self.update()
     def start_group_rotation(self, group_name):
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel
@@ -613,13 +561,18 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False  # Add this line
         self.mask_mode_active = False
         self.mask_selected_strands = []
+
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number
         self.new_strand_start_point = None
         self.new_strand_end_point = None
         self.is_drawing_new_strand = True
         self.setCursor(Qt.CrossCursor)
-        # Keep the current mode, don't set it to None
+        
+        # **Add this line to ensure the color is set**
+        if set_number not in self.strand_colors:
+            self.strand_colors[set_number] = QColor('purple')  # Or get the color from LayerPanel
+        
         logging.info(f"Entered new strand mode for set: {set_number}")
     def setup_modes(self):
         """Set up attach, move, and mask modes."""
@@ -926,7 +879,6 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Updated color for attached strand: {attached_strand.layer_name}")
             self.update_attached_strands_color(attached_strand, color)
 
-
     def on_strand_created(self, strand):
         """Handle the creation of a new strand."""
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
@@ -938,16 +890,32 @@ class StrandDrawingCanvas(QWidget):
         # Determine the set number for the new strand
         if isinstance(strand, AttachedStrand):
             set_number = strand.parent.set_number
-        elif self.selected_strand:
+        elif self.selected_strand and not isinstance(self.selected_strand, MaskedStrand):
             set_number = self.selected_strand.set_number
         else:
-            set_number = max(self.strand_colors.keys(), default=0) + 1
+            # Use the current_set from LayerPanel
+            if self.layer_panel:
+                set_number = self.layer_panel.current_set
+            else:
+                # Fallback logic if layer_panel is not available
+                set_number = self.get_next_available_set_number()
+
+        # Ensure set_number is an integer
+        if not isinstance(set_number, int):
+            try:
+                set_number = int(set_number)
+            except ValueError:
+                logging.warning(f"Invalid set_number '{set_number}' encountered. Using next available integer.")
+                set_number = self.get_next_available_set_number()
 
         strand.set_number = set_number
 
         # Assign color to the new strand
         if set_number not in self.strand_colors:
-            self.strand_colors[set_number] = QColor('purple')
+            if self.layer_panel and set_number in self.layer_panel.set_colors:
+                self.strand_colors[set_number] = self.layer_panel.set_colors[set_number]
+            else:
+                self.strand_colors[set_number] = QColor('purple')
         strand.set_color(self.strand_colors[set_number])
 
         # Add the new strand to the strands list
@@ -958,8 +926,11 @@ class StrandDrawingCanvas(QWidget):
 
         # Update layer panel
         if self.layer_panel:
-            set_number = int(strand.set_number) if isinstance(strand.set_number, str) else strand.set_number
-            count = len([s for s in self.strands if s.set_number == set_number])
+            # Count the number of strands in this set (excluding MaskedStrands)
+            count = len([
+                s for s in self.strands
+                if s.set_number == set_number and not isinstance(s, MaskedStrand)
+            ])
             strand.layer_name = f"{set_number}_{count}"
 
             if not hasattr(strand, 'is_being_deleted'):
@@ -969,26 +940,32 @@ class StrandDrawingCanvas(QWidget):
                 logging.info(f"Updating layer names for set {set_number}")
                 self.layer_panel.update_layer_names(set_number)
 
+            # Update the color in the layer panel
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
 
         # Select the new strand if it's not an attached strand
         if not isinstance(strand, AttachedStrand):
             self.select_strand(len(self.strands) - 1)
 
+        # Update the canvas
         self.update()
 
         # Notify LayerPanel that a new strand was added
         if self.layer_panel:
             self.layer_panel.update_attachable_states()
 
-        # --- Begin new code to check group consistency ---
         # Inform the GroupLayerManager about the new strand
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             self.group_layer_manager.update_groups_with_new_strand(strand)
-        # --- End new code ---
 
         logging.info("Finished on_strand_created")
-
+    def get_next_available_set_number(self):
+        existing_set_numbers = set(
+            strand.set_number
+            for strand in self.strands
+            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
+        )
+        return max(existing_set_numbers, default=0) + 1
     def attach_strand(self, parent_strand, new_strand):
         """Attach a new strand to a parent strand."""
         parent_strand.attached_strands.append(new_strand)

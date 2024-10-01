@@ -1,0 +1,272 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 598.0,
+        "y": 286.0
+      },
+      "end": {
+        "x": 806.0,
+        "y": 286.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 806.0,
+        "y": 286.0
+      },
+      "end": {
+        "x": 806.0,
+        "y": 442.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 806.0,
+        "y": 442.0
+      },
+      "end": {
+        "x": 962.0,
+        "y": 442.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_2"
+    }
+  ],
+  "groups": {
+    "zxc": {
+      "layers": [
+        "1_1",
+        "1_2",
+        "1_3"
+      ],
+      "main_strands": [],
+      "strands": [
+        {
+          "layer_name": "1_1",
+          "start": {
+            "x": 598.0,
+            "y": 286.0
+          },
+          "end": {
+            "x": 806.0,
+            "y": 286.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            1
+          ],
+          "has_circles": [
+            false,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_2",
+          "start": {
+            "x": 806.0,
+            "y": 286.0
+          },
+          "end": {
+            "x": 806.0,
+            "y": 442.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            2
+          ],
+          "has_circles": [
+            true,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_3",
+          "start": {
+            "x": 806.0,
+            "y": 442.0
+          },
+          "end": {
+            "x": 962.0,
+            "y": 442.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [],
+          "has_circles": [
+            true,
+            false
+          ]
+        },
+        {
+          "layer_name": "1_1",
+          "start": {
+            "x": 598.0,
+            "y": 286.0
+          },
+          "end": {
+            "x": 806.0,
+            "y": 286.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            1
+          ],
+          "has_circles": [
+            false,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_2",
+          "start": {
+            "x": 806.0,
+            "y": 286.0
+          },
+          "end": {
+            "x": 806.0,
+            "y": 442.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [
+            2
+          ],
+          "has_circles": [
+            true,
+            true
+          ]
+        },
+        {
+          "layer_name": "1_3",
+          "start": {
+            "x": 806.0,
+            "y": 442.0
+          },
+          "end": {
+            "x": 962.0,
+            "y": 442.0
+          },
+          "width": 46,
+          "color": {
+            "r": 128,
+            "g": 0,
+            "b": 128,
+            "a": 255
+          },
+          "is_masked": false,
+          "attached_to": [],
+          "has_circles": [
+            true,
+            false
+          ]
+        }
+      ]
+    }
+  }
+}

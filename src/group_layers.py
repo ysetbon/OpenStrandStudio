@@ -598,13 +598,14 @@ class GroupPanel(QWidget):
 
 
 
-    def create_group(self, group_name, strands):
-        group_widget = CollapsibleGroupWidget(group_name, self)  # `self` is the GroupPanel instance
+    def create_group(self, group_name, strands, main_strands=None):
+        group_widget = CollapsibleGroupWidget(group_name, self)
         self.scroll_layout.addWidget(group_widget)
         self.groups[group_name] = {
             'widget': group_widget,
             'layers': [],
-            'strands': []
+            'strands': strands,
+            'main_strands': set(main_strands) if main_strands else set()
         }
         for strand in strands:
             layer_name = strand.layer_name
@@ -1269,20 +1270,42 @@ class GroupLayerManager:
     def deserialize_color(self, data):
         return QColor(data["r"], data["g"], data["b"], data["a"])
 
-    def get_group_data(self):
-        group_data = {}
-        for group_name, group_info in self.group_panel.groups.items():
-            group_data[group_name] = {
-                "layers": group_info["layers"],
-                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
-            }
-        return group_data
+
     def apply_group_data(self, group_data):
         for group_name, group_info in group_data.items():
-            self.group_panel.create_group(group_name, group_info["strands"])
+            # Deserialize strands from group_info["strands"]
+            strands = []
+            for strand_data in group_info["strands"]:
+                strand = self.deserialize_strand(strand_data)
+                if strand:
+                    strands.append(strand)
+                else:
+                    logging.warning(f"Strand with layer_name '{strand_data['layer_name']}' not found in canvas.strands.")
+
+            # Extract main_strands from group_info, defaulting to an empty set if not present
+            main_strands = set(group_info.get('main_strands', []))
+
+            # Create the group in the group panel with main_strands
+            self.group_panel.create_group(group_name, strands, main_strands)
+
+            # Update self.canvas.groups with the group's details, including main_strands
+            self.canvas.groups[group_name] = {
+                'strands': strands,
+                'layers': [strand.layer_name for strand in strands],
+                'data': strands,  # Assuming 'data' holds strand objects; adjust if it holds serialized data
+                'main_strands': main_strands
+            }
+
+            # Add each layer to the group in the group panel
             for layer_name in group_info["layers"]:
-                strand_data = next((strand for strand in group_info["strands"] if strand["layer_name"] == layer_name), None)
-                self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
+                strand_data = next(
+                    (strand for strand in group_info["strands"] if strand["layer_name"] == layer_name), 
+                    None
+                )
+                if strand_data:
+                    self.group_panel.add_layer_to_group(group_name, layer_name, strand_data)
+                else:
+                    logging.warning(f"Layer '{layer_name}' not found in group_info['strands'] for group '{group_name}'.")
     def clear(self):
         self.tree.clear()
         self.group_panel.groups.clear()
@@ -1316,7 +1339,8 @@ class GroupLayerManager:
         for group_name, group_info in self.group_panel.groups.items():
             group_data[group_name] = {
                 "layers": group_info["layers"],
-                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
+                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]],
+                "main_strands": list(group_info.get('main_strands', set()))  # Include main_strands
             }
         return group_data
 
@@ -1334,8 +1358,17 @@ class GroupLayerManager:
                     strands.append(strand)
                 else:
                     logging.warning(f"Strand with layer_name '{layer_name}' not found in canvas.strands")
+
             # Pass both group_name and strands to create_group
             self.group_panel.create_group(group_name, strands)
+
+            # Restore the group in self.canvas.groups and include main_strands
+            self.canvas.groups[group_name] = {
+                'strands': strands,
+                'layers': [strand.layer_name for strand in strands],
+                'data': strands,
+                'main_strands': set(group_info.get('main_strands', []))  # Restore main_strands
+            }
     def move_group_strands(self, group_name, dx, dy):
             if group_name in self.group_panel.groups:
                 group_data = self.group_panel.groups[group_name]

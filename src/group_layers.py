@@ -598,14 +598,13 @@ class GroupPanel(QWidget):
 
 
 
-    def create_group(self, group_name, strands, main_strands=None):
-        group_widget = CollapsibleGroupWidget(group_name, self)
+    def create_group(self, group_name, strands):
+        group_widget = CollapsibleGroupWidget(group_name, self)  # `self` is the GroupPanel instance
         self.scroll_layout.addWidget(group_widget)
         self.groups[group_name] = {
             'widget': group_widget,
             'layers': [],
-            'strands': strands,
-            'main_strands': set(main_strands) if main_strands else set()
+            'strands': []
         }
         for strand in strands:
             layer_name = strand.layer_name
@@ -1270,42 +1269,20 @@ class GroupLayerManager:
     def deserialize_color(self, data):
         return QColor(data["r"], data["g"], data["b"], data["a"])
 
-
+    def get_group_data(self):
+        group_data = {}
+        for group_name, group_info in self.group_panel.groups.items():
+            group_data[group_name] = {
+                "layers": group_info["layers"],
+                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
+            }
+        return group_data
     def apply_group_data(self, group_data):
         for group_name, group_info in group_data.items():
-            # Deserialize strands from group_info["strands"]
-            strands = []
-            for strand_data in group_info["strands"]:
-                strand = self.deserialize_strand(strand_data)
-                if strand:
-                    strands.append(strand)
-                else:
-                    logging.warning(f"Strand with layer_name '{strand_data['layer_name']}' not found in canvas.strands.")
-
-            # Extract main_strands from group_info, defaulting to an empty set if not present
-            main_strands = set(group_info.get('main_strands', []))
-
-            # Create the group in the group panel with main_strands
-            self.group_panel.create_group(group_name, strands, main_strands)
-
-            # Update self.canvas.groups with the group's details, including main_strands
-            self.canvas.groups[group_name] = {
-                'strands': strands,
-                'layers': [strand.layer_name for strand in strands],
-                'data': strands,  # Assuming 'data' holds strand objects; adjust if it holds serialized data
-                'main_strands': main_strands
-            }
-
-            # Add each layer to the group in the group panel
+            self.group_panel.create_group(group_name, group_info["strands"])
             for layer_name in group_info["layers"]:
-                strand_data = next(
-                    (strand for strand in group_info["strands"] if strand["layer_name"] == layer_name), 
-                    None
-                )
-                if strand_data:
-                    self.group_panel.add_layer_to_group(group_name, layer_name, strand_data)
-                else:
-                    logging.warning(f"Layer '{layer_name}' not found in group_info['strands'] for group '{group_name}'.")
+                strand_data = next((strand for strand in group_info["strands"] if strand["layer_name"] == layer_name), None)
+                self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
     def clear(self):
         self.tree.clear()
         self.group_panel.groups.clear()
@@ -1339,8 +1316,7 @@ class GroupLayerManager:
         for group_name, group_info in self.group_panel.groups.items():
             group_data[group_name] = {
                 "layers": group_info["layers"],
-                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]],
-                "main_strands": list(group_info.get('main_strands', set()))  # Include main_strands
+                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
             }
         return group_data
 
@@ -1358,17 +1334,8 @@ class GroupLayerManager:
                     strands.append(strand)
                 else:
                     logging.warning(f"Strand with layer_name '{layer_name}' not found in canvas.strands")
-
             # Pass both group_name and strands to create_group
             self.group_panel.create_group(group_name, strands)
-
-            # Restore the group in self.canvas.groups and include main_strands
-            self.canvas.groups[group_name] = {
-                'strands': strands,
-                'layers': [strand.layer_name for strand in strands],
-                'data': strands,
-                'main_strands': set(group_info.get('main_strands', []))  # Restore main_strands
-            }
     def move_group_strands(self, group_name, dx, dy):
             if group_name in self.group_panel.groups:
                 group_data = self.group_panel.groups[group_name]
@@ -1673,21 +1640,10 @@ class StrandAngleEditDialog(QDialog):
         self.updating = False
         self.initializing = True
 
-        # **Exclude masked strands and update layers accordingly**
-        non_masked_strands = [
-            self.ensure_strand_object(s) 
-            for s in group_data['strands'] 
-            if not isinstance(s, MaskedStrand)
-        ]
-        non_masked_layers = [strand.layer_name for strand in non_masked_strands]
-
         self.group_data = {
-            'strands': non_masked_strands,
-            'layers': non_masked_layers,
-            'editable_layers': [
-                layer for layer in group_data['editable_layers'] 
-                if layer in non_masked_layers
-            ]
+            'strands': [self.ensure_strand_object(s) for s in group_data['strands']],
+            'layers': group_data['layers'],
+            'editable_layers': group_data['editable_layers']
         }
 
         self.setup_ui()
@@ -1805,11 +1761,11 @@ class StrandAngleEditDialog(QDialog):
             self.set_item_style(angle_item, is_editable)
             self.table.setItem(row, 1, angle_item)
 
-            # Angle adjustment buttons
+            # Angle adjustment buttons (+/-1 degree)
             angle_buttons = self.create_angle_buttons(row)
             self.table.setCellWidget(row, 2, angle_buttons)
 
-            # Fast angle adjustment buttons
+            # Fast angle adjustment buttons (+/-5 degrees)
             fast_angle_buttons = self.create_fast_angle_buttons(row)
             self.table.setCellWidget(row, 3, fast_angle_buttons)
 
@@ -1823,12 +1779,29 @@ class StrandAngleEditDialog(QDialog):
             self.set_item_style(end_y_item, is_editable)
             self.table.setItem(row, 5, end_y_item)
 
-            # Checkboxes
+            # Checkboxes for angle syncing
             x_checkbox = QCheckBox("x")
             x_plus_180_checkbox = QCheckBox("180+x")
 
-            self.table.setCellWidget(row, 6, x_checkbox)
-            self.table.setCellWidget(row, 7, x_plus_180_checkbox)
+            # Set fixed sizes for the checkboxes
+            x_checkbox.setFixedSize(60, 24)
+            x_plus_180_checkbox.setFixedSize(60, 24)
+
+            # Create container widgets for checkboxes with zero margins
+            x_widget = QWidget()
+            x_layout = QHBoxLayout(x_widget)
+            x_layout.setContentsMargins(0, 0, 0, 0)
+            x_layout.setAlignment(Qt.AlignCenter)
+            x_layout.addWidget(x_checkbox)
+
+            x_plus_180_widget = QWidget()
+            x_plus_180_layout = QHBoxLayout(x_plus_180_widget)
+            x_plus_180_layout.setContentsMargins(0, 0, 0, 0)
+            x_plus_180_layout.setAlignment(Qt.AlignCenter)
+            x_plus_180_layout.addWidget(x_plus_180_checkbox)
+
+            self.table.setCellWidget(row, 6, x_widget)
+            self.table.setCellWidget(row, 7, x_plus_180_widget)
 
             # 'Attachable' indicator
             if is_main_strand:
@@ -1842,6 +1815,7 @@ class StrandAngleEditDialog(QDialog):
             self.set_item_style(attachable_item, is_editable)
             self.table.setItem(row, 8, attachable_item)
 
+            # Connect checkbox state changes
             x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
             x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
 
@@ -1881,7 +1855,7 @@ class StrandAngleEditDialog(QDialog):
 
         x_angle_label = QLabel(_['X_angle'])
         self.x_angle_input = QLineEdit()
-        self.x_angle_input.setFixedWidth(100)
+        self.x_angle_input.setFixedWidth(60)  # Reduced width
         self.x_angle_input.setText("0.00")
         self.x_angle_input.textChanged.connect(self.update_x_angle)
         x_angle_layout.addWidget(x_angle_label)
@@ -1892,8 +1866,7 @@ class StrandAngleEditDialog(QDialog):
         button_layout_widget = QWidget()
         button_layout = QHBoxLayout()
         button_layout_widget.setLayout(button_layout)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.setSpacing(10)
+        button_layout.setSpacing(5)  # Reduced spacing
         button_layout.setAlignment(Qt.AlignRight)
 
         self.minus_minus_button = QPushButton("--")
@@ -1903,7 +1876,7 @@ class StrandAngleEditDialog(QDialog):
         ok_btn = QPushButton("OK")
 
         for btn in [self.minus_minus_button, self.minus_button, self.plus_button, self.plus_plus_button, ok_btn]:
-            btn.setFixedSize(50, 30)
+            btn.setFixedSize(30, 25)  # Reduced width
             # Styles will be applied via stylesheet
 
         # Connect button signals
@@ -2003,7 +1976,7 @@ class StrandAngleEditDialog(QDialog):
             height += self.table.rowHeight(i)
 
         # Add some padding
-        width += 250
+        width += 500
         height += 300  # Extra space for the OK button and padding
 
         # Set the size of the dialog
@@ -2015,7 +1988,6 @@ class StrandAngleEditDialog(QDialog):
         frame_geometry = self.frameGeometry()
         frame_geometry.moveCenter(center_point)
         self.move(frame_geometry.topLeft())
-
 
 
     def apply_dark_theme(self):
@@ -2046,8 +2018,7 @@ class StrandAngleEditDialog(QDialog):
                 background-color: #3C3C3C;
             }
             QPushButton:pressed {
-                background-color: #E0E0E0;  /* Almost white color when pressed */
-                color: #000000;             /* Text color for contrast */
+                background-color: #1C1C1C;
             }
             QTableWidget {
                 background-color: #1C1C1C;
@@ -2085,8 +2056,7 @@ class StrandAngleEditDialog(QDialog):
                 background: #2B2B2B;
             }
             QCheckBox::indicator:checked {
-                background-color: #E0E0E0;  /* Almost white color when checked */
-                border: 1px solid #FFFFFF;  /* Optional: White border for better visibility */
+                background-color: #555555;
             }
             QScrollBar:vertical, QScrollBar:horizontal {
                 background-color: #1C1C1C;
@@ -2135,8 +2105,7 @@ class StrandAngleEditDialog(QDialog):
                 background-color: #E0E0E0;
             }
             QPushButton:pressed {
-                background-color: #BBBBBB;  /* Darker gray when pressed */
-                color: #FFFFFF;             /* Change text color to white for contrast */
+                background-color: #D0D0D0;
             }
             QTableWidget {
                 background-color: #FFFFFF;
@@ -2152,13 +2121,13 @@ class StrandAngleEditDialog(QDialog):
                 color: #000000;
             }
             QHeaderView::section {
-                background-color: #DDDDDD;
+                background-color: #F5F5F5;
                 color: #000000;
                 padding: 4px;
                 border: 1px solid #CCCCCC;
             }
             QTableCornerButton::section {
-                background-color: #DDDDDD;
+                background-color: #F5F5F5;
                 border: 1px solid #CCCCCC;
             }
             QCheckBox {
@@ -2167,22 +2136,21 @@ class StrandAngleEditDialog(QDialog):
                 padding: 2px;
             }
             QCheckBox::indicator {
-                border: 1px solid #BBBBBB;
+                border: 1px solid #CCCCCC;
                 width: 16px;
                 height: 16px;
                 border-radius: 3px;
-                background: #FFFFFF;
+                background-color: #FFFFFF;
             }
             QCheckBox::indicator:checked {
-                background-color: #BBBBBB;  /* Dark gray color when checked */
-                border: 1px solid #000000;  /* Optional: Black border for better visibility */
+                background-color: #BBBBBB;
             }
             QScrollBar:vertical, QScrollBar:horizontal {
                 background-color: #FFFFFF;
                 margin: 0px;
             }
             QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-                background-color: #BBBBBB;
+                background-color: #CCCCCC;
                 min-height: 20px;
                 border-radius: 4px;
             }
@@ -2302,8 +2270,17 @@ class StrandAngleEditDialog(QDialog):
         for row, strand in enumerate(self.group_data['strands']):
             if strand == current_strand:
                 continue  # Skip the current strand to avoid recursive updates
-            x_checkbox = self.table.cellWidget(row, 6)
-            x_plus_180_checkbox = self.table.cellWidget(row, 7)
+
+            x_widget = self.table.cellWidget(row, 6)
+            x_plus_180_widget = self.table.cellWidget(row, 7)
+
+            # Check if widgets are None
+            if x_widget is None and x_plus_180_widget is None:
+                continue  # Skip to the next strand
+
+            # Extract the QCheckBox from the QWidget
+            x_checkbox = x_widget.findChild(QCheckBox) if x_widget else None
+            x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox) if x_plus_180_widget else None
 
             if x_checkbox and x_checkbox.isChecked():
                 self.update_strand_angle(strand, self.x_angle, update_linked=False)
@@ -2316,17 +2293,21 @@ class StrandAngleEditDialog(QDialog):
 
     def create_angle_buttons(self, row):
         widget = QWidget()
-        layout = QHBoxLayout()
-        widget.setLayout(layout)
+        layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         minus_button = QPushButton("-")
         plus_button = QPushButton("+")
-        minus_button.setFixedSize(28, 24)
-        plus_button.setFixedSize(28, 24)
-
-        # Styles are applied via stylesheet
+        # Remove fixed size settings
+        # minus_button.setFixedSize(14, 24)
+        # plus_button.setFixedSize(14, 24)
+        # Set size policy to minimum size
+        minus_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        plus_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        # Adjust button styles to reduce padding and margins
+        minus_button.setStyleSheet("padding: 0px; margin: 0px;")
+        plus_button.setStyleSheet("padding: 0px; margin: 0px;")
 
         plus_button.clicked.connect(lambda: self.on_plus_clicked(row))
         minus_button.clicked.connect(lambda: self.on_minus_clicked(row))
@@ -2336,20 +2317,24 @@ class StrandAngleEditDialog(QDialog):
         layout.setAlignment(Qt.AlignCenter)
 
         return widget
-
+        
     def create_fast_angle_buttons(self, row):
         widget = QWidget()
-        layout = QHBoxLayout()
-        widget.setLayout(layout)
+        layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         minus_minus_button = QPushButton("--")
         plus_plus_button = QPushButton("++")
-        minus_minus_button.setFixedSize(28, 24)
-        plus_plus_button.setFixedSize(28, 24)
-
-        # Styles are applied via stylesheet
+        # Remove fixed size settings
+        # minus_minus_button.setFixedSize(14, 24)
+        # plus_plus_button.setFixedSize(14, 24)
+        # Set size policy to minimum size
+        minus_minus_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        plus_plus_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        # Adjust button styles to reduce padding and margins
+        minus_minus_button.setStyleSheet("padding: 0px; margin: 0px;")
+        plus_plus_button.setStyleSheet("padding: 0px; margin: 0px;")
 
         plus_plus_button.clicked.connect(lambda: self.on_plus_plus_clicked(row))
         minus_minus_button.clicked.connect(lambda: self.on_minus_minus_clicked(row))
@@ -2386,26 +2371,40 @@ class StrandAngleEditDialog(QDialog):
 
     def on_checkbox_changed(self, row, col, state):
         strand = self.group_data['strands'][row]
+
         if col == 6:  # x checkbox
             if state == Qt.Checked:
                 angle = self.x_angle  # Use x_angle
-                x_plus_180_checkbox = self.table.cellWidget(row, 7)
-                if x_plus_180_checkbox:
-                    x_plus_180_checkbox.setChecked(False)
+
+                # Uncheck the x_plus_180 checkbox
+                x_plus_180_widget = self.table.cellWidget(row, 7)
+                if x_plus_180_widget:
+                    x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox)
+                    if x_plus_180_checkbox:
+                        x_plus_180_checkbox.setChecked(False)
             else:
                 angle = self.calculate_angle(strand)
+
             self.update_strand_angle(strand, angle)
             angle_item = self.table.item(row, 1)
             if angle_item:
                 angle_item.setText(f"{angle:.2f}")
+
         elif col == 7:  # x+180 checkbox
             if state == Qt.Checked:
-                angle = self.x_angle + 180  # Use x_angle + 180
-                x_checkbox = self.table.cellWidget(row, 6)
-                if x_checkbox:
-                    x_checkbox.setChecked(False)
+                angle = (self.x_angle + 180) % 360  # Use x_angle + 180
+                if angle > 180:
+                    angle -= 360
+
+                # Uncheck the x checkbox
+                x_widget = self.table.cellWidget(row, 6)
+                if x_widget:
+                    x_checkbox = x_widget.findChild(QCheckBox)
+                    if x_checkbox:
+                        x_checkbox.setChecked(False)
             else:
                 angle = self.calculate_angle(strand)
+
             self.update_strand_angle(strand, angle)
             angle_item = self.table.item(row, 1)
             if angle_item:
@@ -2430,11 +2429,17 @@ class StrandAngleEditDialog(QDialog):
 
     def apply_x_angle_to_selected(self):
         for row in range(self.table.rowCount()):
-            x_checkbox = self.table.cellWidget(row, 6)
-            x_plus_180_checkbox = self.table.cellWidget(row, 7)
-            if x_checkbox.isChecked():
+            x_widget = self.table.cellWidget(row, 6)
+            x_plus_180_widget = self.table.cellWidget(row, 7)
+
+            # Extract the QCheckBox from the QWidget
+            x_checkbox = x_widget.findChild(QCheckBox) if x_widget else None
+            x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox) if x_plus_180_widget else None
+
+            # Check if checkboxes are checked
+            if x_checkbox and x_checkbox.isChecked():
                 self.on_checkbox_changed(row, 6, Qt.Checked)
-            elif x_plus_180_checkbox.isChecked():
+            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
                 self.on_checkbox_changed(row, 7, Qt.Checked)
 
     def calculate_angle(self, strand):

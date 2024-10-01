@@ -181,7 +181,7 @@ Fixed Features:
 6. **About Section Added:**
    - Added "About Open Strand" section in settings for more information about the application.
 
-### Important Note:
+### Important Note for this version:
 - It is recommended to close the application when the theme settings are changed to ensure that the theme affects the group panel.
 
 ------

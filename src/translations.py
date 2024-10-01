@@ -1,6 +1,7 @@
 translations = {
     'en': {
         # MainWindow translations
+        'play_video': 'Play Video',
         'main_window_title': 'OpenStrand Studio',
         'attach_mode': 'Attach',
         'move_mode': 'Move',
@@ -20,7 +21,6 @@ translations = {
         'french': 'French',
         'select_theme': 'Select Theme',
         'default': 'Default',
-        'default': 'Default',
         'light': 'Light',
         'dark': 'Dark',
         # SettingsDialog translations
@@ -34,8 +34,27 @@ translations = {
         'cancel': 'Cancel',
         'apply': 'Apply',
         'language_settings_info': 'Change the language of the application.',
-        'tutorial_info': 'Tutorial content will be displayed here.',
-        'about_info': 'Information about OpenStrand Studio.',
+        'tutorial_info': 'Press the "play video" button below each text to view the tutorial explaining:',
+        'about_info': '''
+        <h2>About OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio was developed by Yonatan Setbon. The software is designed to create any knot in a diagrammatic way by using layers for each section of a strand and incorporating masked layers that allow for an "over-under effect."
+        </p>
+        <p style="font-size:15px;">
+            Yonatan runs a YouTube channel dedicated to lanyards called <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, where many tutorials feature diagrams of knots. This software was created to facilitate designing any knot, in order to demonstrate and explain how to make complex tutorials involving knot tying.
+        </p>
+        <p style="font-size:15px;">
+            Feel free to contact me at <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> or connect with me on
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> or
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2024 OpenStrand Studio
+        </p>
+        ''',
+
+
+
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',
         'draw_names': 'Draw Names',
@@ -44,11 +63,10 @@ translations = {
         'delete_strand': 'Delete Strand',
         'deselect_all': 'Deselect All',
         'notification_message': 'Notification',
-        # Add other texts as needed...
+        # Additional texts
         'adjust_angle_and_length': 'Adjust Angle and Length',
         'angle_label': 'Angle:',
         'length_label': 'Length:',
-        'ok': 'OK',
         'create_group': 'Create Group',
         'enter_group_name': 'Enter group name:',
         'group_creation_cancelled': 'No main strands selected. Group creation cancelled.',
@@ -56,12 +74,13 @@ translations = {
         'rotate_group_strands': 'Rotate Group Strands',
         'edit_strand_angles': 'Edit Strand Angles:',
         'delete_group': 'Delete Group',
-        'gif_explanation_1': 'Explanation for GIF 1',
-        'gif_explanation_2': 'Explanation for GIF 2',
-        'gif_explanation_3': 'Explanation for GIF 3',
-        'gif_explanation_4': 'Explanation for GIF 4',
-        'gif_explanation_5': 'Explanation for GIF 5',
-        'gif_explanation_6': 'Explanation for GIF 6',
+        'gif_explanation_1': 'Setting themes and language.',
+        'gif_explanation_2': 'Simple tuotrial for attaching strands and creating a mask.',
+        'gif_explanation_3': 'Deleting attached vs. main strands.',
+        'gif_explanation_4': 'Saving a project.',
+        'gif_explanation_5': 'Loading a project.',
+        'gif_explanation_6': 'Creating and manipulating groups.',
+        'gif_explanation_7': 'Creating a 1x1 box stitch knot.',
         'gif_placeholder_1': 'GIF 1 Placeholder',
         'gif_placeholder_2': 'GIF 2 Placeholder',
         'gif_placeholder_3': 'GIF 3 Placeholder',
@@ -85,6 +104,7 @@ translations = {
     },
     'fr': {
         # MainWindow translations
+        'play_video': 'Lire la vidéo',
         'main_window_title': 'OpenStrand Studio',
         'attach_mode': 'Attacher',
         'move_mode': 'Déplacer',
@@ -96,7 +116,7 @@ translations = {
         'new_strand_mode': 'Nouveau Brin',
         'save': 'Enregistrer',
         'load': 'Charger',
-        'save_image': 'Enregistrer comme Image',  # Added this line
+        'save_image': 'Enregistrer comme Image',
         'settings': 'Paramètres',
         'light': 'Clair',
         'dark': 'Sombre',
@@ -117,8 +137,24 @@ translations = {
         'cancel': 'Annuler',
         'apply': 'Appliquer',
         'language_settings_info': 'Changer la langue de l\'application.',
-        'tutorial_info': 'Le contenu du tutoriel sera affiché ici.',
-        'about_info': 'Informations sur OpenStrand Studio.',
+        'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte pour voir le tutoriel explicatif :',
+        'about_info': '''
+        <h2>À propos d'OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio a été développé par Yonatan Setbon. Le logiciel est conçu pour créer n'importe quel nœud de manière diagrammatique en utilisant des couches pour chaque section d'un brin et en incorporant des couches masquées qui permettent un "effet de dessus-dessous".
+        </p>
+        <p style="font-size:15px;">
+            Yonatan anime une chaîne YouTube dédiée aux lanières appelée <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, où de nombreux tutoriels présentent des diagrammes de nœuds. Ce logiciel a été créé pour faciliter la conception de nœuds, afin de démontrer et d'expliquer comment réaliser des tutoriels complexes impliquant le nouage de nœuds.
+        </p>
+        <p style="font-size:15px;">
+            N'hésitez pas à me contacter à <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou à me rejoindre sur
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2024 OpenStrand Studio
+        </p>
+        ''',
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
         'draw_names': 'Afficher les Noms',
@@ -127,11 +163,10 @@ translations = {
         'delete_strand': 'Supprimer le Brin',
         'deselect_all': 'Tout Désélectionner',
         'notification_message': 'Notification',
-        # Add other texts translated...
+        # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
         'length_label': 'Longueur :',
-        'ok': 'OK',
         'create_group': 'Créer un groupe',
         'enter_group_name': 'Entrez le nom du groupe:',
         'group_creation_cancelled': 'Aucun brin principal sélectionné. Création du groupe annulée.',
@@ -139,12 +174,13 @@ translations = {
         'rotate_group_strands': 'Tourner les Brins du Groupe',
         'edit_strand_angles': 'Modifier les angles des brins:',
         'delete_group': 'Supprimer le Groupe',
-        'gif_explanation_1': 'Explication pour le GIF 1',
-        'gif_explanation_2': 'Explication pour le GIF 2',
-        'gif_explanation_3': 'Explication pour le GIF 3',
-        'gif_explanation_4': 'Explication pour le GIF 4',
-        'gif_explanation_5': 'Explication pour le GIF 5',
-        'gif_explanation_6': 'Explication pour le GIF 6',
+        'gif_explanation_1': 'Configuration des thèmes et de la langue.',
+        'gif_explanation_2': 'Tutoriel simple pour attacher les brins et créer un masque.',
+        'gif_explanation_3': 'Suppression des brins attachés versus les brins principaux.',
+        'gif_explanation_4': 'Sauvegarde d\'un projet.',
+        'gif_explanation_5': 'Chargement d\'un projet.',
+        'gif_explanation_6': 'Création et manipulation des groupes.',
+        'gif_explanation_7': 'Création d\'un nœud à boîte 1x1.',
         'gif_placeholder_1': 'Espace réservé pour GIF 1',
         'gif_placeholder_2': 'Espace réservé pour GIF 2',
         'gif_placeholder_3': 'Espace réservé pour GIF 3',

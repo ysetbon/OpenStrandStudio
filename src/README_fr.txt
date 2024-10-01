@@ -133,6 +133,7 @@ Fonctionnalités Corrigées :
 3. Les masques sont mieux dessinés.
 
 ------
+
 ## Version 1.061 (Sortie : 23/09/2024)
 
 ### Nouvelles Fonctionnalités :
@@ -146,7 +147,10 @@ Fonctionnalités Corrigées :
    - Un tutoriel complet pour les débutants est prévu pour être inclus dans le dialogue des paramètres dans la prochaine version.
 
 ------
-## Version 1.061 (Sortie : 25/09/2024)
+
+## Version 1.062 (Sortie : 25/09/2024)
+
+### Nouvelles Fonctionnalités :
 
 1. **Paramètres Utilisateur :**
    - **Préférences Persistantes :** Les préférences utilisateur sont désormais enregistrées automatiquement, garantissant que vos paramètres restent cohérents à chaque ouverture de l'application. Cette amélioration élimine le besoin de reconfigurer vos préférences à chaque session, offrant une expérience utilisateur plus fluide et personnalisée.
@@ -154,5 +158,32 @@ Fonctionnalités Corrigées :
 2. **Gestion des Groupes :**
    - **Création Correcte des Groupes :** Les groupes sont désormais créés correctement, permettant une organisation et une gestion efficaces de plusieurs brins au sein de votre design.
    - **Ajout de Brins aux Groupes :** Lors de l'ajout de nouveaux brins à un groupe existant, veuillez vous assurer de supprimer et recréer le groupe. Cela garantit que tous les brins sont correctement intégrés et que la fonctionnalité du groupe reste intacte. Cela sera corrigé dans les versions ultérieures pour fonctionner automatiquement ; pour l'instant, vous devrez supprimer et recréer le groupe vous-même.
+
+------
+
+## Version 1.063 (Sortie : 10/01/2025)
+
+### Nouvelles Fonctionnalités :
+
+1. **Bouton de Rafraîchissement pour le Panneau de Calques :**
+   - Ajout d'un bouton de rafraîchissement pour aligner les calques en bas du panneau de calques.
+
+2. **Suppression Automatique des Groupes :**
+   - Lors de l'attachement d'un nouveau brin lié à un brin attaché d'un groupe, le groupe est automatiquement supprimé pour éviter des problèmes.
+
+3. **Mise à Jour de la Fonctionnalité de Sauvegarde :**
+   - La sauvegarde exclut désormais les groupes pour résoudre les problèmes précédents.
+
+4. **Améliorations des Paramètres de Thème :**
+   - Après avoir défini un nouveau thème, veuillez rouvrir l'application pour vous assurer que le thème est correctement appliqué à la fenêtre des groupes.
+
+5. **Tutoriels Vidéo Inclus :**
+   - Ajout de tutoriels vidéo pour une meilleure orientation des utilisateurs.
+
+6. **Section À Propos Ajoutée :**
+   - Ajout de la section "À propos d'Open Strand" dans les paramètres pour plus d'informations sur l'application.
+
+### Note Importante :
+- Il est recommandé de fermer l'application lorsque les paramètres de thème sont changés pour s'assurer que les effets de thème s'appliquent également au panneau de groupes.
 
 ------

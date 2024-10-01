@@ -261,7 +261,6 @@ class MainWindow(QMainWindow):
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
         self.mask_button.clicked.connect(self.set_mask_mode)
-        self.rotate_button.clicked.connect(self.set_rotate_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Canvas connections
@@ -292,10 +291,11 @@ class MainWindow(QMainWindow):
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
 
+
     def open_settings_dialog(self):
-        settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
-        settings_dialog.theme_changed.connect(self.canvas.set_theme)  # Connect the signal
-        settings_dialog.exec_()
+        # Open the settings dialog and connect theme change signal
+        self.settings_dialog.theme_changed.connect(self.apply_theme)
+        self.settings_dialog.exec_()
 
 
 

@@ -158,3 +158,30 @@ Fixed Features:
    - **Adding Strands to Groups:** When adding more strands to an existing group, please ensure to delete and recreate the group. This ensures that all strands are properly integrated and that the group's functionality remains intact. This will be fixed in later version to work automatically, for now you'll need to delete and create on your own.
 
 ------
+
+## Version 1.063 (Released: 10/01/2024)
+
+### New Features:
+
+1. **Refresh Button for Layer Panel:**
+   - Added a refresh button to align the layers to the bottom of the layer panel.
+
+2. **Automatic Group Deletion:**
+   - When attaching a new strand related to an attached strand from a group, the group is automatically deleted to prevent issues.
+
+3. **Save Functionality Update:**
+   - Saving now excludes groups to resolve previous issues.
+
+4. **Theme Setting Improvements:**
+   - After setting a new theme, please reopen the application to ensure the theme is properly applied to the group window.
+
+5. **Video Tutorials Included:**
+   - Included video tutorials to provide better user guidance.
+
+6. **About Section Added:**
+   - Added "About Open Strand" section in settings for more information about the application.
+
+### Important Note:
+- It is recommended to close the application when the theme settings are changed to ensure that the theme affects the group panel.
+
+------

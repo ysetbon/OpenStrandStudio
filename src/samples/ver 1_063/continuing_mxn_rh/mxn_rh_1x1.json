@@ -1,0 +1,425 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 104.0,
+        "y": 156.0
+      },
+      "end": {
+        "x": 156.0,
+        "y": 260.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 156.0,
+        "y": 260.0
+      },
+      "end": {
+        "x": 156.0,
+        "y": 156.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 104.0,
+        "y": 156.0
+      },
+      "end": {
+        "x": 104.0,
+        "y": 260.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 3,
+      "start": {
+        "x": 104.0,
+        "y": 156.0
+      },
+      "end": {
+        "x": 104.0,
+        "y": 104.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_4",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 156.0,
+        "y": 260.0
+      },
+      "end": {
+        "x": 156.0,
+        "y": 312.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_5",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "Strand",
+      "index": 5,
+      "start": {
+        "x": 104,
+        "y": 156.0
+      },
+      "end": {
+        "x": 0,
+        "y": 208.0
+      },
+      "width": 46,
+      "color": {
+        "r": 42,
+        "g": 37,
+        "b": 86,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 6,
+      "start": {
+        "x": 0,
+        "y": 208.0
+      },
+      "end": {
+        "x": 104,
+        "y": 208.0
+      },
+      "width": 46,
+      "color": {
+        "r": 42,
+        "g": 37,
+        "b": 86,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_2",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 7,
+      "start": {
+        "x": 104,
+        "y": 156.0
+      },
+      "end": {
+        "x": 0,
+        "y": 156.0
+      },
+      "width": 46,
+      "color": {
+        "r": 42,
+        "g": 37,
+        "b": 86,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_3",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 8,
+      "start": {
+        "x": 104,
+        "y": 156.0
+      },
+      "end": {
+        "x": 156,
+        "y": 156.0
+      },
+      "width": 46,
+      "color": {
+        "r": 42,
+        "g": 37,
+        "b": 86,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_4",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 9,
+      "start": {
+        "x": 0,
+        "y": 208.0
+      },
+      "end": {
+        "x": -52,
+        "y": 208.0
+      },
+      "width": 46,
+      "color": {
+        "r": 42,
+        "g": 37,
+        "b": 86,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_5",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 10,
+      "start": {
+        "x": 156.0,
+        "y": 260.0
+      },
+      "end": {
+        "x": 156.0,
+        "y": 156.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2_2_2",
+      "set_number": 12,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "1_2",
+      "second_selected_strand": "2_2"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 11,
+      "start": {
+        "x": 104.0,
+        "y": 156.0
+      },
+      "end": {
+        "x": 104.0,
+        "y": 260.0
+      },
+      "width": 46,
+      "color": {
+        "r": 236,
+        "g": 249,
+        "b": 195,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_3_2_3",
+      "set_number": 12,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "1_3",
+      "second_selected_strand": "2_3"
+    }
+  ],
+  "groups": {}
+}

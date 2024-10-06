@@ -17,7 +17,7 @@ AppComments=The program is brought to you by Yonatan Setbon, you can contact me 
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputDir=C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\installer_output
-OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}
+OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}_1_063
 Compression=lzma
 SolidCompression=yes
 SetupIconFile={#SourcePath}\box_stitch.ico
@@ -33,13 +33,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [Files]
-; Include only the main executable bundled by PyInstaller
 Source: "{#ExePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#ExePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\box_stitch.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\settings_icon.png"; DestDir: "{app}"; Flags: ignoreversion
+; No need to include default settings file or settings directory
 
-; Remove the following lines as resources are bundled within the executable
-; Source: "{#ExePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Source: "{#SourcePath}\box_stitch.ico"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "{#SourcePath}\settings_icon.png"; DestDir: "{app}"; Flags: ignoreversion
+; [Dirs] Section is no longer needed and can be removed
+; [Dirs]
+; Name: "{commonappdata}\{#MyAppName}"; Permissions: users-full
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\box_stitch.ico"
@@ -51,6 +53,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
 
 [Code]
 function InitializeSetup(): Boolean;

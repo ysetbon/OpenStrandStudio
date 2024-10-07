@@ -84,10 +84,10 @@ def load_json_and_save_png(json_file_path, output_png_path):
 
 if __name__ == "__main__":
     # Directory containing JSON files
-    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_063\ver_1_063_mxn_lh"
+    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_063\continuing_mxn_lh"
     
     # Output directory for PNG files
-    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_063\ver_1_063_mxn_lh_image"
+    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_063\continuing_mxn_lh_image"
 
     # Ensure output directory exists
     os.makedirs(output_directory, exist_ok=True)

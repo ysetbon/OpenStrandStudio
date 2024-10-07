@@ -4,18 +4,18 @@
       "type": "Strand",
       "index": 0,
       "start": {
-        "x": 104.0,
-        "y": 156.0
+        "x": 130.0,
+        "y": 208.0
       },
       "end": {
-        "x": 156.0,
-        "y": 260.0
+        "x": 182.0,
+        "y": 104.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
+        "r": 200,
+        "g": 233,
+        "b": 137,
         "a": 255
       },
       "stroke_color": {
@@ -38,18 +38,18 @@
       "type": "AttachedStrand",
       "index": 1,
       "start": {
-        "x": 156.0,
-        "y": 260.0
+        "x": 130.0,
+        "y": 208.0
       },
       "end": {
-        "x": 156.0,
-        "y": 156.0
+        "x": 130.0,
+        "y": 104.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
+        "r": 200,
+        "g": 233,
+        "b": 137,
         "a": 255
       },
       "stroke_color": {
@@ -61,7 +61,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "1_2",
       "set_number": 1,
@@ -73,18 +73,18 @@
       "type": "AttachedStrand",
       "index": 2,
       "start": {
-        "x": 104.0,
-        "y": 156.0
+        "x": 182.0,
+        "y": 104.0
       },
       "end": {
-        "x": 104.0,
-        "y": 260.0
+        "x": 182.0,
+        "y": 208.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
+        "r": 200,
+        "g": 233,
+        "b": 137,
         "a": 255
       },
       "stroke_color": {
@@ -96,7 +96,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "1_3",
       "set_number": 1,
@@ -105,91 +105,21 @@
       "parent_layer_name": "1_1"
     },
     {
-      "type": "AttachedStrand",
+      "type": "Strand",
       "index": 3,
       "start": {
-        "x": 104.0,
-        "y": 156.0
+        "x": 234.0,
+        "y": 208.0
       },
       "end": {
-        "x": 104.0,
+        "x": 286.0,
         "y": 104.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
-        "a": 255
-      },
-      "stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "stroke_width": 4,
-      "has_circles": [
-        true,
-        true
-      ],
-      "layer_name": "1_4",
-      "set_number": 1,
-      "is_first_strand": false,
-      "is_start_side": false,
-      "parent_layer_name": "1_1"
-    },
-    {
-      "type": "AttachedStrand",
-      "index": 4,
-      "start": {
-        "x": 156.0,
-        "y": 260.0
-      },
-      "end": {
-        "x": 156.0,
-        "y": 312.0
-      },
-      "width": 46,
-      "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
-        "a": 255
-      },
-      "stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "stroke_width": 4,
-      "has_circles": [
-        true,
-        true
-      ],
-      "layer_name": "1_5",
-      "set_number": 1,
-      "is_first_strand": false,
-      "is_start_side": false,
-      "parent_layer_name": "1_1"
-    },
-    {
-      "type": "Strand",
-      "index": 5,
-      "start": {
-        "x": 208.0,
-        "y": 156.0
-      },
-      "end": {
-        "x": 260.0,
-        "y": 260.0
-      },
-      "width": 46,
-      "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
+        "r": 235,
+        "g": 28,
+        "b": 67,
         "a": 255
       },
       "stroke_color": {
@@ -210,20 +140,20 @@
     },
     {
       "type": "AttachedStrand",
-      "index": 6,
+      "index": 4,
       "start": {
-        "x": 260.0,
-        "y": 260.0
+        "x": 234.0,
+        "y": 208.0
       },
       "end": {
-        "x": 260.0,
-        "y": 156.0
+        "x": 234.0,
+        "y": 104.0
       },
       "width": 46,
       "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
+        "r": 235,
+        "g": 28,
+        "b": 67,
         "a": 255
       },
       "stroke_color": {
@@ -235,7 +165,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "2_2",
       "set_number": 2,
@@ -245,20 +175,20 @@
     },
     {
       "type": "AttachedStrand",
-      "index": 7,
+      "index": 5,
       "start": {
-        "x": 208.0,
-        "y": 156.0
+        "x": 286.0,
+        "y": 104.0
       },
       "end": {
-        "x": 208.0,
-        "y": 260.0
+        "x": 286.0,
+        "y": 208.0
       },
       "width": 46,
       "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
+        "r": 235,
+        "g": 28,
+        "b": 67,
         "a": 255
       },
       "stroke_color": {
@@ -270,7 +200,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "2_3",
       "set_number": 2,
@@ -279,91 +209,21 @@
       "parent_layer_name": "2_1"
     },
     {
-      "type": "AttachedStrand",
-      "index": 8,
-      "start": {
-        "x": 208.0,
-        "y": 156.0
-      },
-      "end": {
-        "x": 208.0,
-        "y": 104.0
-      },
-      "width": 46,
-      "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
-        "a": 255
-      },
-      "stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "stroke_width": 4,
-      "has_circles": [
-        true,
-        true
-      ],
-      "layer_name": "2_4",
-      "set_number": 2,
-      "is_first_strand": false,
-      "is_start_side": false,
-      "parent_layer_name": "2_1"
-    },
-    {
-      "type": "AttachedStrand",
-      "index": 9,
-      "start": {
-        "x": 260.0,
-        "y": 260.0
-      },
-      "end": {
-        "x": 260.0,
-        "y": 312.0
-      },
-      "width": 46,
-      "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
-        "a": 255
-      },
-      "stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "stroke_width": 4,
-      "has_circles": [
-        true,
-        true
-      ],
-      "layer_name": "2_5",
-      "set_number": 2,
-      "is_first_strand": false,
-      "is_start_side": false,
-      "parent_layer_name": "2_1"
-    },
-    {
       "type": "Strand",
-      "index": 10,
+      "index": 6,
       "start": {
-        "x": 0,
-        "y": 156.0
+        "x": 104,
+        "y": 130.0
       },
       "end": {
-        "x": -104,
-        "y": 208.0
+        "x": 312.0,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 211,
-        "g": 244,
-        "b": 202,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -384,20 +244,20 @@
     },
     {
       "type": "AttachedStrand",
-      "index": 11,
+      "index": 7,
       "start": {
-        "x": -104,
-        "y": 208.0
+        "x": 104,
+        "y": 130.0
       },
       "end": {
-        "x": 0,
-        "y": 208.0
+        "x": 312.0,
+        "y": 130.0
       },
       "width": 46,
       "color": {
-        "r": 211,
-        "g": 244,
-        "b": 202,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -409,7 +269,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "3_2",
       "set_number": 3,
@@ -419,20 +279,20 @@
     },
     {
       "type": "AttachedStrand",
-      "index": 12,
+      "index": 8,
       "start": {
-        "x": 0,
-        "y": 156.0
+        "x": 312.0,
+        "y": 182.0
       },
       "end": {
-        "x": -104,
-        "y": 156.0
+        "x": 104,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 211,
-        "g": 244,
-        "b": 202,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -444,7 +304,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "3_3",
       "set_number": 3,
@@ -453,21 +313,21 @@
       "parent_layer_name": "3_1"
     },
     {
-      "type": "AttachedStrand",
-      "index": 13,
+      "type": "MaskedStrand",
+      "index": 9,
       "start": {
-        "x": 0,
-        "y": 156.0
+        "x": 312.0,
+        "y": 182.0
       },
       "end": {
-        "x": 52,
-        "y": 156.0
+        "x": 104,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 211,
-        "g": 244,
-        "b": 202,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -479,7 +339,291 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
+      ],
+      "layer_name": "1_2_3_3",
+      "set_number": 13,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "1_2",
+      "second_selected_strand": "3_3"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 10,
+      "start": {
+        "x": 104,
+        "y": 130.0
+      },
+      "end": {
+        "x": 312.0,
+        "y": 130.0
+      },
+      "width": 46,
+      "color": {
+        "r": 78,
+        "g": 68,
+        "b": 215,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3_3_2",
+      "set_number": 13,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "1_3",
+      "second_selected_strand": "3_2"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 11,
+      "start": {
+        "x": 312.0,
+        "y": 182.0
+      },
+      "end": {
+        "x": 104,
+        "y": 182.0
+      },
+      "width": 46,
+      "color": {
+        "r": 78,
+        "g": 68,
+        "b": 215,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_2_3_3",
+      "set_number": 23,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "2_2",
+      "second_selected_strand": "3_3"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 12,
+      "start": {
+        "x": 104,
+        "y": 130.0
+      },
+      "end": {
+        "x": 312.0,
+        "y": 130.0
+      },
+      "width": 46,
+      "color": {
+        "r": 78,
+        "g": 68,
+        "b": 215,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_3_3_2",
+      "set_number": 23,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "2_3",
+      "second_selected_strand": "3_2"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 13,
+      "start": {
+        "x": 130.0,
+        "y": 104.0
+      },
+      "end": {
+        "x": 130.0,
+        "y": 260.0
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 233,
+        "b": 137,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_4",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 14,
+      "start": {
+        "x": 182.0,
+        "y": 208.0
+      },
+      "end": {
+        "x": 182.0,
+        "y": 52.0
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 233,
+        "b": 137,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_5",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 15,
+      "start": {
+        "x": 234.0,
+        "y": 104.0
+      },
+      "end": {
+        "x": 234.0,
+        "y": 260.0
+      },
+      "width": 46,
+      "color": {
+        "r": 235,
+        "g": 28,
+        "b": 67,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_4",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 16,
+      "start": {
+        "x": 286.0,
+        "y": 208.0
+      },
+      "end": {
+        "x": 286.0,
+        "y": 52.0
+      },
+      "width": 46,
+      "color": {
+        "r": 235,
+        "g": 28,
+        "b": 67,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_5",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 17,
+      "start": {
+        "x": 312.0,
+        "y": 130.0
+      },
+      "end": {
+        "x": 52,
+        "y": 130.0
+      },
+      "width": 46,
+      "color": {
+        "r": 78,
+        "g": 68,
+        "b": 215,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
       ],
       "layer_name": "3_4",
       "set_number": 3,
@@ -489,20 +633,20 @@
     },
     {
       "type": "AttachedStrand",
-      "index": 14,
+      "index": 18,
       "start": {
-        "x": -104,
-        "y": 208.0
+        "x": 104,
+        "y": 182.0
       },
       "end": {
-        "x": -156,
-        "y": 208.0
+        "x": 364.0,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 211,
-        "g": 244,
-        "b": 202,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -514,7 +658,7 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
       "layer_name": "3_5",
       "set_number": 3,
@@ -524,20 +668,20 @@
     },
     {
       "type": "MaskedStrand",
-      "index": 15,
+      "index": 19,
       "start": {
-        "x": 156.0,
-        "y": 260.0
+        "x": 312.0,
+        "y": 130.0
       },
       "end": {
-        "x": 156.0,
-        "y": 156.0
+        "x": 52,
+        "y": 130.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -549,31 +693,31 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
-      "layer_name": "1_2_3_2",
+      "layer_name": "1_4_3_4",
       "set_number": 13,
       "is_first_strand": false,
       "is_start_side": true,
-      "first_selected_strand": "1_2",
-      "second_selected_strand": "3_2"
+      "first_selected_strand": "1_4",
+      "second_selected_strand": "3_4"
     },
     {
       "type": "MaskedStrand",
-      "index": 16,
+      "index": 20,
       "start": {
-        "x": 104.0,
-        "y": 156.0
+        "x": 104,
+        "y": 182.0
       },
       "end": {
-        "x": 104.0,
-        "y": 260.0
+        "x": 364.0,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 160,
-        "g": 87,
-        "b": 136,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -585,31 +729,31 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
-      "layer_name": "1_3_3_3",
+      "layer_name": "1_5_3_5",
       "set_number": 13,
       "is_first_strand": false,
       "is_start_side": true,
-      "first_selected_strand": "1_3",
-      "second_selected_strand": "3_3"
+      "first_selected_strand": "1_5",
+      "second_selected_strand": "3_5"
     },
     {
       "type": "MaskedStrand",
-      "index": 17,
+      "index": 21,
       "start": {
-        "x": 260.0,
-        "y": 260.0
+        "x": 312.0,
+        "y": 130.0
       },
       "end": {
-        "x": 260.0,
-        "y": 156.0
+        "x": 52,
+        "y": 130.0
       },
       "width": 46,
       "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -621,31 +765,31 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
-      "layer_name": "2_2_3_2",
+      "layer_name": "2_4_3_4",
       "set_number": 23,
       "is_first_strand": false,
       "is_start_side": true,
-      "first_selected_strand": "2_2",
-      "second_selected_strand": "3_2"
+      "first_selected_strand": "2_4",
+      "second_selected_strand": "3_4"
     },
     {
       "type": "MaskedStrand",
-      "index": 18,
+      "index": 22,
       "start": {
-        "x": 208.0,
-        "y": 156.0
+        "x": 104,
+        "y": 182.0
       },
       "end": {
-        "x": 208.0,
-        "y": 260.0
+        "x": 364.0,
+        "y": 182.0
       },
       "width": 46,
       "color": {
-        "r": 154,
-        "g": 24,
-        "b": 141,
+        "r": 78,
+        "g": 68,
+        "b": 215,
         "a": 255
       },
       "stroke_color": {
@@ -657,14 +801,14 @@
       "stroke_width": 4,
       "has_circles": [
         true,
-        true
+        false
       ],
-      "layer_name": "2_3_3_3",
+      "layer_name": "2_5_3_5",
       "set_number": 23,
       "is_first_strand": false,
       "is_start_side": true,
-      "first_selected_strand": "2_3",
-      "second_selected_strand": "3_3"
+      "first_selected_strand": "2_5",
+      "second_selected_strand": "3_5"
     }
   ],
   "groups": {}

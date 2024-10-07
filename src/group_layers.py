@@ -203,110 +203,39 @@ class CollapsibleGroupWidget(QWidget):
 
         self.update_translations()
     def update_group_button_style(self):
-        """Update the group button's stylesheet based on the current theme."""
-        is_dark_mode = False
-        if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
-            is_dark_mode = self.canvas.is_dark_mode
-
-        if is_dark_mode:
-            # Dark mode styles
-            self.group_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #2B2B2B;
-                    color: #FFFFFF;
-                    border: none;
-                    text-align: left;
-                    padding: 5px;
-                    font-size: 12px;
-                    font-weight: bold;
-                }
-                QPushButton:hover {
-                    background-color: #3C3C3C;  /* Lighter on hover */
-                }
-                QPushButton:pressed {
-                    background-color: #1C1C1C;
-                }
-            """)
-        else:
-            # Light mode styles
-            self.group_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #BBBBBB;
-                    color: #000000;
-                    border: none;
-                    text-align: left;
-                    padding: 5px;
-                    font-size: 12px;
-                    font-weight: bold;
-                }
-                QPushButton:hover {
-                    background-color: #E0E0E0;  /* Darker on hover */
-                }
-                QPushButton:pressed {
-                    background-color: #D0D0D0;
-                }
-            """)
+        self.layers_list.setStyleSheet("""
+            QListWidget {
+                background-color: transparent;
+                border: none;
+            }
+            QListWidget::item {
+                background-color: rgba(35, 35, 35, 255);
+                color: white;
+                padding: 5px;
+            }
+            QListWidget::item:hover {
+                background-color: rgba(30, 30, 30, 230);
+            }
+        """)
 
     def on_theme_changed(self):
         """Handle dynamic theme changes by updating styles."""
         self.apply_theme()
     def apply_theme(self):
-            """Apply the current theme to the widget."""
-            self.update_group_button_style()
-            
-            # Update styles for layers_list based on theme
-            is_dark_mode = False
-            if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
-                is_dark_mode = self.canvas.is_dark_mode
-
-            if is_dark_mode:
-                # Dark mode styles
-                self.layers_list.setStyleSheet("""
-                    QListWidget {
-                        background-color: transparent;
-                        border: none;
-                    }
-                    QListWidget::item {
-                        padding: 5px;
-                        font-size: 12px;
-                        color: #FFFFFF;
-                    }
-                    QScrollBar:vertical {
-                        background: #1C1C1C;
-                    }
-                    QScrollBar::handle:vertical {
-                        background: #2B2B2B;
-                        border-radius: 4px;
-                    }
-                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
-                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                        background: none;
-                    }
-                """)
-            else:
-                # Light mode styles
-                self.layers_list.setStyleSheet("""
-                    QListWidget {
-                        background-color: transparent;
-                        border: none;
-                    }
-                    QListWidget::item {
-                        padding: 5px;
-                        font-size: 12px;
-                        color: #000000;
-                    }
-                    QScrollBar:vertical {
-                        background: #FFFFFF;
-                    }
-                    QScrollBar::handle:vertical {
-                        background: #CCCCCC;
-                        border-radius: 4px;
-                    }
-                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
-                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                        background: none;
-                    }
-                """)
+        self.layers_list.setStyleSheet("""
+            QListWidget {
+                background-color: transparent;
+                border: none;
+            }
+            QListWidget::item {
+                background-color: rgba(35, 35, 35, 255);
+                color: white;
+                padding: 5px;
+            }
+            QListWidget::item:hover {
+                background-color: rgba(30, 30, 30, 230);
+            }
+        """)
     def show_context_menu(self, position):
         _ = translations[self.language_code]
         context_menu = QMenu(self)

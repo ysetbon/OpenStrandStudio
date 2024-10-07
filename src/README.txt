@@ -185,3 +185,17 @@ Fixed Features:
 - It is recommended to close the application when the theme settings are changed to ensure that the theme affects the group panel.
 
 ------
+
+## Version 1.064 (Released: 10/07/2024)
+
+### New Features and Improvements:
+
+1. **Enhanced Group Colors:**
+   - When setting a new theme, group colors now appear correctly.
+
+2. **Improved JSON File Loading:**
+   - When loading a JSON file, the order of importing layers is now correct, including masked layers.
+
+These updates enhance the visual experience when changing themes and ensure better accuracy when loading projects.
+
+------

@@ -187,3 +187,16 @@ Fonctionnalités Corrigées :
 - Il est recommandé de fermer l'application lorsque les paramètres de thème sont changés pour s'assurer que les effets de thème s'appliquent également au panneau de groupes.
 
 ------
+## Version 1.064 (Sortie : 07/10/2024)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Amélioration des Couleurs de Groupe :**
+   - Lors du changement de thème, les couleurs des groupes apparaissent maintenant correctement.
+
+2. **Amélioration du Chargement de Fichiers JSON :**
+   - Lors du chargement d'un fichier JSON, l'ordre d'importation des couches est désormais correct, y compris pour les couches masquées.
+
+Ces mises à jour améliorent l'expérience visuelle lors du changement de thème et assurent une meilleure précision lors du chargement de projets.
+
+------

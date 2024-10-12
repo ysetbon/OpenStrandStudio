@@ -19,7 +19,8 @@ class LayerStateManager(QObject):
             'colors': {},
             'positions': {},
             'selected_strand': None,
-            'newest_strand': None
+            'newest_strand': None,
+            'newest_layer': None  # Add this line
         }
         self.initial_state = {}
         self.undo_stack = []
@@ -33,6 +34,24 @@ class LayerStateManager(QObject):
         # Use the src directory for logging
         src_dir = os.path.dirname(os.path.abspath(__file__))
         self.log_file_path = os.path.join(src_dir, "layer_state_log.txt")
+
+        # Delete the existing log file if it exists
+        if os.path.exists(self.log_file_path):
+            try:
+                os.remove(self.log_file_path)
+                print(f"LayerStateManager: Deleted existing log file: {self.log_file_path}")
+            except Exception as e:
+                print(f"LayerStateManager: Failed to delete existing log file. Error: {str(e)}")
+
+        # Create a new blank log file
+        try:
+            with open(self.log_file_path, 'w') as f:
+                f.write("Layer State Log\n")
+            print(f"LayerStateManager: Created new blank log file: {self.log_file_path}")
+        except Exception as e:
+            print(f"LayerStateManager: Failed to create new log file. Error: {str(e)}")
+
+        # Set up logging configuration
         logging.basicConfig(
             filename=self.log_file_path,
             level=logging.INFO,
@@ -93,18 +112,34 @@ class LayerStateManager(QObject):
             logging.warning("Canvas is not set or has no strands. Cannot save current state.")
             return
 
-        self.layer_state = {
-            'order': [strand.layer_name for strand in self.canvas.strands],
-            'connections': self.get_layer_connections(),
-            'groups': self.get_group_information(),
-            'masked_layers': self.get_masked_layers(),
-            'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
-            'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in self.canvas.strands},
-            'parent_child': self.get_parent_child_relationships()
-        }
-        print(f"LayerStateManager: Current state saved: {self.layer_state}")
-        logging.info(f"Current state saved: {self.layer_state}")
-        self.log_layer_state()
+        try:
+            # Use a dictionary to ensure unique layer names, then convert back to a list
+            unique_layers = list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands))
+            
+            # Use a set to ensure unique masked layers
+            masked_layers = list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand)))
+            
+            self.layer_state = {
+                'order': unique_layers,
+                'connections': self.get_layer_connections(self.canvas.strands),
+                'groups': self.get_group_information(),
+                'masked_layers': masked_layers,
+                'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
+                'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in self.canvas.strands},
+            }
+            print(f"LayerStateManager: Current state saved: {self.layer_state}")
+            logging.info(f"Current state saved: {self.layer_state}")
+            self.log_layer_state()
+        except Exception as e:
+            print(f"LayerStateManager: Error saving current state: {str(e)}")
+            logging.error(f"Error saving current state: {str(e)}")
+
+    def get_masked_layers_info(self):
+        masked_layers_info = {}
+        for strand in self.canvas.strands:
+            if isinstance(strand, MaskedStrand):
+                masked_layers_info[strand.layer_name] = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
+        return masked_layers_info
 
     def log_layer_state(self):
         """Write the current layer state to a text file."""
@@ -122,12 +157,11 @@ class LayerStateManager(QObject):
                         for item in value:
                             f.write(f"  - {item}\n")
                     elif isinstance(value, dict):
-                        for k, v in value.items():
-                            if isinstance(v, dict):
-                                f.write(f"  {k}:\n")
-                                for sub_k, sub_v in v.items():
-                                    f.write(f"    {sub_k}: {sub_v}\n")
-                            else:
+                        if key == 'masked_layers':
+                            for masked_layer, strands in value.items():
+                                f.write(f"  {masked_layer}: {strands}\n")
+                        else:
+                            for k, v in value.items():
                                 f.write(f"  {k}: {v}\n")
                     else:
                         f.write(f"  {value}\n")
@@ -141,15 +175,19 @@ class LayerStateManager(QObject):
             logging.error(f"Failed to write layer state to {self.log_file_path}. Error: {str(e)}")
 
     def update_from_paint_event(self, strands, selected_strand, newest_strand):
+        unique_layers = list(dict.fromkeys(strand.layer_name for strand in strands))
+        masked_layers = list(set(strand.layer_name for strand in strands if isinstance(strand, MaskedStrand)))
+        
         self.layer_state = {
-            'order': [strand.layer_name for strand in strands],
+            'order': unique_layers,
             'connections': self.get_layer_connections(strands),
             'groups': self.get_group_information(),
-            'masked_layers': [strand.layer_name for strand in strands if isinstance(strand, MaskedStrand)],
+            'masked_layers': masked_layers,
             'colors': {strand.layer_name: strand.color.name() for strand in strands},
             'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in strands},
             'selected_strand': selected_strand.layer_name if selected_strand else None,
-            'newest_strand': newest_strand.layer_name if newest_strand else None
+            'newest_strand': newest_strand.layer_name if newest_strand else None,
+            'newest_layer': unique_layers[-1] if unique_layers else None  # Add this line
         }
         self.log_layer_state()
 
@@ -173,9 +211,17 @@ class LayerStateManager(QObject):
     def get_parent_child_relationships(self):
         relationships = {}
         for strand in self.canvas.strands:
+            parent = None
+            children = []
+
+            if isinstance(strand, AttachedStrand):
+                parent = strand.parent.layer_name if strand.parent else None
+            elif isinstance(strand, MaskedStrand):
+                children = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
+
             relationships[strand.layer_name] = {
-                'parent': strand.parent.layer_name if strand.parent else None,
-                'children': [child.layer_name for child in strand.children]
+                'parent': parent,
+                'children': children
             }
         return relationships
 
@@ -223,6 +269,7 @@ class LayerStateManager(QObject):
         """Called when a masked layer is created."""
         print(f"LayerStateManager: Masked layer created: {masked_strand.layer_name}")
         logging.info(f"Masked layer created: {masked_strand.layer_name}")
+        self.layer_state['newest_layer'] = masked_strand.layer_name  # Add this line
         self.save_current_state()
 
     @pyqtSlot()

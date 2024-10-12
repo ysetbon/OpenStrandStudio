@@ -1,0 +1,1143 @@
+Layer State Log
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+
+Connections:
+
+Groups:
+
+Masked_layers:
+
+Colors:
+
+Positions:
+
+Selected_strand:
+  None
+
+Newest_strand:
+  None
+
+Newest_layer:
+  None
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+
+Connections:
+  1_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  1_1
+
+Newest_strand:
+  1_1
+
+Newest_layer:
+  1_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+
+Connections:
+  1_1: []
+  2_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+
+Selected_strand:
+  2_1
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+
+Connections:
+  1_1: []
+  2_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+
+Connections:
+  1_1: []
+  2_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+
+Connections:
+  1_1: []
+  2_1: []
+
+Groups:
+
+Masked_layers:
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+
+
+Current Layer State:
+===================
+
+Order:
+  - 1_1
+  - 2_1
+  - 1_1_2_1
+
+Connections:
+  1_1: []
+  2_1: []
+  1_1_2_1: []
+
+Groups:
+
+Masked_layers:
+  - 1_1_2_1
+
+Colors:
+  1_1: #800080
+  2_1: #800080
+  1_1_2_1: #800080
+
+Positions:
+  1_1: (728.0, 286.0, 910.0, 286.0)
+  2_1: (863, 406, 752, 125)
+  1_1_2_1: (728.0, 286.0, 910.0, 286.0)
+
+Selected_strand:
+  None
+
+Newest_strand:
+  2_1
+
+Newest_layer:
+  1_1_2_1
+
+----------------------------------------
+

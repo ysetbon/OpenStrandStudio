@@ -14,12 +14,13 @@ from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from translations import translations
 class StrandDrawingCanvas(QWidget):
-    strand_selected = pyqtSignal(int)  # New signal to emit when a strand is selected
     strand_created = pyqtSignal(object)
+    strand_deleted = pyqtSignal(int)  # Add this line
     strand_selected = pyqtSignal(int)
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
     language_changed = pyqtSignal()  # Signal to emit when language changes
+    masked_layer_created = pyqtSignal(object)
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -668,6 +669,11 @@ class StrandDrawingCanvas(QWidget):
 
         logging.info(f"Paint event completed. Selected strand: {self.selected_strand.layer_name if self.selected_strand else 'None'}, "
                      f"Newest strand: {self.newest_strand.layer_name if self.newest_strand else 'None'}")
+        
+        # Update LayerStateManager with the current state
+        if hasattr(self, 'layer_state_manager'):
+            self.layer_state_manager.update_from_paint_event(self.strands, self.selected_strand, self.newest_strand)
+
     def create_masked_layer(self, strand1, strand2):
         """
         Create a masked layer from two selected strands.
@@ -714,6 +720,8 @@ class StrandDrawingCanvas(QWidget):
         self.move_strand_to_top(masked_strand)
         
         # Force a redraw of the canvas
+        self.strands.append(masked_strand)
+        self.masked_layer_created.emit(masked_strand)
         self.update()
         
         # Emit a signal if needed (e.g., to update other parts of the UI)
@@ -1064,7 +1072,11 @@ class StrandDrawingCanvas(QWidget):
                 self.layer_panel.delete_strand_button.setEnabled(False)
         self.update()  # Force a redraw
         logging.info(f"Selected strand index: {index}")
-
+    def delete_strand(self, index):
+        if 0 <= index < len(self.strands):
+            del self.strands[index]
+            self.strand_deleted.emit(index)  # Emit the signal when a strand is deleted
+            self.update()
     def deselect_all_strands(self):
         """Deselect all strands."""
         self.selected_strand = None

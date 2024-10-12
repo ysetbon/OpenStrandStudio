@@ -816,7 +816,7 @@ class GroupLayerManager:
         self.parent = parent
         self.layer_panel = layer_panel
         self.canvas = canvas
-
+        self.groups = {} 
         # Set language_code appropriately
         if self.canvas and hasattr(self.canvas, 'language_code'):
             self.language_code = self.canvas.language_code
@@ -842,7 +842,7 @@ class GroupLayerManager:
         # Initialize the group panel
         self.group_panel = GroupPanel(self.layer_panel, canvas=self.canvas)
         self.group_panel.setParent(parent)  # Set the parent to the main window or appropriate parent
-
+        
         # Create the 'Create Group' button
         self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)

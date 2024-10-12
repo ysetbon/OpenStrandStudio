@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 from PyQt5.QtWidgets import QApplication
+from layer_state_manager import LayerStateManager
 
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
@@ -32,6 +33,9 @@ class MainWindow(QMainWindow):
         logging.info("Initializing MainWindow")
 
         # Initialize components
+        self.layer_state_manager = LayerStateManager()
+        logging.info("LayerStateManager initialized in MainWindow")
+
         self.canvas = StrandDrawingCanvas(parent=self)
         self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
 
@@ -63,6 +67,24 @@ class MainWindow(QMainWindow):
 
         # Load user settings from file
         self.load_settings_from_file()
+        # Log initial state
+        self.layer_state_manager.save_initial_state()
+        self.layer_state_manager.log_layer_state()
+
+        # Set up connections for LayerStateManager
+        self.layer_state_manager.canvas = self.canvas
+        self.layer_state_manager.layer_panel = self.layer_panel
+        self.canvas.layer_state_manager = self.layer_state_manager
+
+        logging.info("LayerStateManager connected to canvas and layer_panel")
+
+        # Connect signals
+        self.canvas.strand_created.connect(self.layer_state_manager.on_strand_created_in_layer_manager)
+        self.canvas.strand_deleted.connect(self.layer_state_manager.on_strand_deleted_in_layer_manager)
+        self.canvas.masked_layer_created.connect(self.layer_state_manager.on_masked_layer_created_in_layer_manager)
+        logging.info("Connected strand_created, strand_deleted, and masked_layer_created signals to LayerStateManager")
+
+        logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
     # Add the update_translations method here
     def update_translations(self):
@@ -83,7 +105,9 @@ class MainWindow(QMainWindow):
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
-
+        self.layer_state_manager = LayerStateManager()
+        self.layer_state_manager.set_canvas(self.canvas)
+        self.layer_state_manager.set_layer_panel(self.layer_panel)
         # Update other UI components
         if hasattr(self.layer_panel, 'update_translations'):
             self.layer_panel.update_translations()

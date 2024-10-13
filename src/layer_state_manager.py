@@ -20,11 +20,12 @@ class LayerStateManager(QObject):
             'positions': {},
             'selected_strand': None,
             'newest_strand': None,
-            'newest_layer': None  # Add this line
+            'newest_layer': None
         }
         self.initial_state = {}
         self.undo_stack = []
         self.redo_stack = []
+        self.current_state = {}  # Add this line to store the most recent state
 
         self.setup_logging()
         self.check_log_file()
@@ -134,15 +135,22 @@ class LayerStateManager(QObject):
             print(f"LayerStateManager: Error saving current state: {str(e)}")
             logging.error(f"Error saving current state: {str(e)}")
 
+    def get_group_information(self):
+        if hasattr(self, 'layer_panel') and self.layer_panel:
+            if hasattr(self.layer_panel, 'group_layer_manager'):
+                group_layer_manager = self.layer_panel.group_layer_manager
+                if hasattr(group_layer_manager, 'groups'):
+                    return group_layer_manager.groups
+        return {}  # Return an empty dict if groups are not accessible
+
     def get_masked_layers_info(self):
         masked_layers_info = {}
         for strand in self.canvas.strands:
             if isinstance(strand, MaskedStrand):
                 masked_layers_info[strand.layer_name] = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
         return masked_layers_info
-
     def log_layer_state(self):
-        """Write the current layer state to a text file."""
+        """Write the current layer state to a text file and update current_state."""
         print("LayerStateManager: Attempting to log layer state")
         logging.info("Attempting to log layer state")
 
@@ -168,11 +176,51 @@ class LayerStateManager(QObject):
                     f.write("\n")
 
                 f.write("----------------------------------------\n\n")
+            
+            # Update current_state with the latest layer_state
+            self.current_state = self.layer_state.copy()
+            
             print(f"LayerStateManager: Successfully wrote layer state to {self.log_file_path}")
             logging.info(f"Successfully wrote layer state to {self.log_file_path}")
         except Exception as e:
             print(f"LayerStateManager: Failed to write layer state. Error: {str(e)}")
             logging.error(f"Failed to write layer state to {self.log_file_path}. Error: {str(e)}")
+
+    def getOrder(self):
+        """Get the current order of layers."""
+        return self.current_state.get('order', [])
+
+    def getConnections(self):
+        """Get the current connections between layers."""
+        return self.current_state.get('connections', {})
+
+    def getGroups(self):
+        """Get the current group information."""
+        return self.current_state.get('groups', {})
+
+    def getMaskedLayers(self):
+        """Get the current masked layers."""
+        return self.current_state.get('masked_layers', [])
+
+    def getColors(self):
+        """Get the current colors of layers."""
+        return self.current_state.get('colors', {})
+
+    def getPositions(self):
+        """Get the current positions of layers."""
+        return self.current_state.get('positions', {})
+
+    def getSelectedStrand(self):
+        """Get the currently selected strand."""
+        return self.current_state.get('selected_strand')
+
+    def getNewestStrand(self):
+        """Get the newest strand."""
+        return self.current_state.get('newest_strand')
+
+    def getNewestLayer(self):
+        """Get the newest layer."""
+        return self.current_state.get('newest_layer')
 
     def update_from_paint_event(self, strands, selected_strand, newest_strand):
         unique_layers = list(dict.fromkeys(strand.layer_name for strand in strands))
@@ -233,22 +281,39 @@ class LayerStateManager(QObject):
 
     def get_layer_order(self):
         """Get the current order of layers."""
-        return [strand.layer_name for strand in self.canvas.strands] if self.canvas and self.canvas.strands else []
+        return self.current_state.get('order', [])
 
     def get_layer_colors(self):
         """Get the colors of layers."""
-        return {
-            strand.layer_name: strand.color.name() for strand in self.canvas.strands
-        } if self.canvas and self.canvas.strands else {}
+        return self.current_state.get('colors', {})
 
     def get_layer_positions(self):
         """Get the positions of layers."""
-        return {
-            strand.layer_name: {
-                'start': (strand.start.x(), strand.start.y()),
-                'end': (strand.end.x(), strand.end.y())
-            } for strand in self.canvas.strands
-        } if self.canvas and self.canvas.strands else {}
+        return self.current_state.get('positions', {})
+
+    def get_connections(self):
+        """Get the current connections between layers."""
+        return self.current_state.get('connections', {})
+
+    def get_groups(self):
+        """Get the current group information."""
+        return self.current_state.get('groups', {})
+
+    def get_masked_layers(self):
+        """Get the current masked layers."""
+        return self.current_state.get('masked_layers', [])
+
+    def get_selected_strand(self):
+        """Get the currently selected strand."""
+        return self.current_state.get('selected_strand')
+
+    def get_newest_strand(self):
+        """Get the newest strand."""
+        return self.current_state.get('newest_strand')
+
+    def get_newest_layer(self):
+        """Get the newest layer."""
+        return self.current_state.get('newest_layer')
 
     @pyqtSlot(object)
     def on_strand_created_in_layer_manager(self, strand):

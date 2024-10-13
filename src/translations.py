@@ -23,6 +23,33 @@ translations = {
         'default': 'Default',
         'light': 'Light',
         'dark': 'Dark',
+        'layer_state': 'Layer State',
+        'layer_state_log_title': 'Layer State Log',
+        'layer_state_info_title': 'Layer State Information',
+        'layer_state_info_tooltip': 'Layer State Info',
+        'close': 'Close',
+        # Layer State Info Text
+        'layer_state_info_text': '''
+<b>Explanation of Layer State Information:</b><br>
+<br><br>
+<b>Order:</b> The sequence of layers (strands) in the canvas.<br>
+<br>
+<b>Connections:</b> The relationships between strands, indicating which strands are connected or attached.<br>
+<br>
+<b>Groups:</b> The groups of strands that are collectively manipulated.<br>
+<br>
+<b>Masked Layers:</b> The layers that have masking applied for over-under effects.<br>
+<br>
+<b>Colors:</b> The colors assigned to each strand.<br>
+<br>
+<b>Positions:</b> The positions of strands on the canvas.<br>
+<br>
+<b>Selected Strand:</b> The strand currently selected in the canvas.<br>
+<br>
+<b>Newest Strand:</b> The most recently created strand.<br>
+<br>
+<b>Newest Layer:</b> The most recently added layer in the canvas.
+''',
         # SettingsDialog translations
         'general_settings': 'General Settings',
         'change_language': 'Change Language',
@@ -100,7 +127,18 @@ translations = {
         'snap_to_grid': 'Snap to grid',
         'precise_angle': 'Precise angle:',
         'select_main_strands': 'Select Main Strands',
-        'select_main_strands_to_include_in_the_group': 'Select main strands to include in the group:'
+        'select_main_strands_to_include_in_the_group': 'Select main strands to include in the group:',
+        # New translation keys for Layer State Log
+        'current_layer_state': 'Current Layer State',
+        'order': 'Order',
+        'connections': 'Connections',
+        'groups': 'Groups',
+        'masked_layers': 'Masked Layers',
+        'colors': 'Colors',
+        'positions': 'Positions',
+        'selected_strand': 'Selected Strand',
+        'newest_strand': 'Newest Strand',
+        'newest_layer': 'Newest Layer'
     },
     'fr': {
         # MainWindow translations
@@ -126,6 +164,33 @@ translations = {
         'default': 'Par défaut',
         'light': 'Clair',
         'dark': 'Sombre',
+        'layer_state': 'État des Couches',
+        'layer_state_log_title': 'Journal de l\'État des Couches',
+        'layer_state_info_title': 'Informations sur l\'État des Couches',
+        'layer_state_info_tooltip': 'Infos État des Couches',
+        'close': 'Fermer',
+        # Layer State Info Text
+        'layer_state_info_text': '''
+<b>Explication des informations sur l'état des couches :</b><br>
+<br><br>
+<b>Ordre :</b> La séquence des couches (brins) dans le canevas.<br>
+<br>
+<b>Connexions :</b> Les relations entre les brins, indiquant quels brins sont connectés ou attachés.<br>
+<br>
+<b>Groupes :</b> Les groupes de brins qui sont manipulés collectivement.<br>
+<br>
+<b>Couches Masquées :</b> Les couches qui ont un masquage appliqué pour les effets de dessus-dessous.<br>
+<br>
+<b>Couleurs :</b> Les couleurs assignées à chaque brin.<br>
+<br>
+<b>Positions :</b> Les positions des brins sur le canevas.<br>
+<br>
+<b>Brin Sélectionné :</b> Le brin actuellement sélectionné dans le canevas.<br>
+<br>
+<b>Dernier Brin :</b> Le brin le plus récemment créé.<br>
+<br>
+<b>Dernière Couche :</b> La couche la plus récemment ajoutée dans le canevas.
+''',
         # SettingsDialog translations
         'general_settings': 'Paramètres généraux',
         'change_language': 'Changer la langue',
@@ -200,6 +265,17 @@ translations = {
         'snap_to_grid': 'Aligner sur la grille',
         'precise_angle': 'Angle précis:',
         'select_main_strands': 'Sélectionner les principaux axes',
-        'select_main_strands_to_include_in_the_group': 'Sélectionner les principaux axes à inclure dans le groupe:'
+        'select_main_strands_to_include_in_the_group': 'Sélectionner les principaux axes à inclure dans le groupe:',
+        # New translation keys for Layer State Log
+        'current_layer_state': 'État Actuel des Couches',
+        'order': 'Ordre',
+        'connections': 'Connexions',
+        'groups': 'Groupes',
+        'masked_layers': 'Couches Masquées',
+        'colors': 'Couleurs',
+        'positions': 'Positions',
+        'selected_strand': 'Brin Sélectionné',
+        'newest_strand': 'Dernier Brin',
+        'newest_layer': 'Dernière Couche'
     }
 }

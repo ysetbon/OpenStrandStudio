@@ -9,7 +9,11 @@ from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 from PyQt5.QtWidgets import QApplication
 from layer_state_manager import LayerStateManager
-
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
+                             QSplitter, QFileDialog, QSpacerItem, QSizePolicy,
+                             QDialog, QTextEdit)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon, QFont
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from strand import Strand, AttachedStrand, MaskedStrand
@@ -18,7 +22,14 @@ from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
 from translations import translations
-
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
+                             QSplitter, QFileDialog, QSpacerItem, QSizePolicy)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtWidgets import (
+    # ... existing imports ...
+    QLabel
+)
 # main_window.py
 
 class MainWindow(QMainWindow):
@@ -217,7 +228,7 @@ class MainWindow(QMainWindow):
                 border-radius: 18px;
             }
             QPushButton#settingsButton:hover {
-                background-color: rgba(200, 200, 200, 50); /* Light transparent hover effect */
+                background-color: rgba(200, 200, 200, 50);
             }
         """)
 
@@ -232,6 +243,20 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_image_button)
+
+        # Add a horizontal spacer to push the layer state button to the right
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        button_layout.addItem(spacer)
+
+        # Create a layout for the layer state button
+        layer_state_layout = QHBoxLayout()
+        self.layer_state_button = QPushButton("Layer State")
+        self.layer_state_button.setFixedSize(100, 30)
+        layer_state_layout.addWidget(self.layer_state_button)
+
+        button_layout.addLayout(layer_state_layout)
+
+        # Add the settings button
         button_layout.addWidget(self.settings_button)
 
         # Set up the splitter and layouts
@@ -253,6 +278,7 @@ class MainWindow(QMainWindow):
 
         # Apply button styles
         self.setup_button_styles()
+        logging.info("UI setup completed")
 
     def setup_connections(self):
         # Layer panel handle connections
@@ -825,6 +851,25 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        # Style the layer_state_button
+        self.layer_state_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFD700;  /* Gold background */
+                color: black;
+                font-weight: bold;
+                border: none;
+                padding: 8px 4px;
+                border-radius: 0px;
+            }
+            QPushButton:hover {
+                background-color: #FFC200;  /* Darker gold on hover */
+            }
+            QPushButton:pressed {
+                background-color: #FFB700;
+            }
+        """)
+
+
     def update_button_states(self, active_mode):
         buttons = {
             "attach": self.attach_button,
@@ -869,8 +914,10 @@ class MainWindow(QMainWindow):
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
         self.mask_button.clicked.connect(self.set_mask_mode)
-        self.rotate_button.clicked.connect(self.set_rotate_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
+
+        # Connect the layer_state_button clicked signal to the method
+        self.layer_state_button.clicked.connect(self.show_layer_state_log)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -903,6 +950,117 @@ class MainWindow(QMainWindow):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
         settings_dialog.theme_changed.connect(self.apply_theme)
         settings_dialog.exec_()
+
+    def show_layer_state_log(self):
+        """Display the current layer state information."""
+        _ = self.translations  # Access the current translations
+
+        # Retrieve the current state from the LayerStateManager
+        order = self.layer_state_manager.getOrder()
+        connections = self.layer_state_manager.getConnections()
+        groups = self.layer_state_manager.getGroups()
+        masked_layers = self.layer_state_manager.getMaskedLayers()
+        colors = self.layer_state_manager.getColors()
+        positions = self.layer_state_manager.getPositions()
+        selected_strand = self.layer_state_manager.getSelectedStrand()
+        newest_strand = self.layer_state_manager.getNewestStrand()
+        newest_layer = self.layer_state_manager.getNewestLayer()
+
+        # Format the state information using translated labels
+        state_info = f"""
+{_['current_layer_state']}:
+
+{_['order']}:
+{order}
+
+{_['connections']}:
+{connections}
+
+{_['groups']}:
+{groups}
+
+{_['masked_layers']}:
+{masked_layers}
+
+{_['colors']}:
+{colors}
+
+{_['positions']}:
+{positions}
+
+{_['selected_strand']}:
+{selected_strand}
+
+{_['newest_strand']}:
+{newest_strand}
+
+{_['newest_layer']}:
+{newest_layer}
+"""
+
+        # Display the state information in a dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle(_['layer_state_log_title'])
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # Remove the question mark
+        layout = QVBoxLayout(dialog)
+
+        # Create a horizontal layout for the title and info button
+        title_layout = QHBoxLayout()
+        title_label = QLabel(_['layer_state_log_title'])
+        title_layout.addWidget(title_label)
+        
+        # Add the info button
+        info_button = QPushButton("?")
+        info_button.setFixedSize(30, 30)
+        info_button.clicked.connect(self.show_layer_state_info)
+        title_layout.addWidget(info_button)
+        title_layout.addStretch()  # This will push the button to the right
+        
+        layout.addLayout(title_layout)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(state_info)
+        layout.addWidget(text_edit)
+
+        close_button = QPushButton(_['close'])
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button)
+
+        # Set a default size for the dialog (width, height)
+        default_width, default_height = 400, 600
+        dialog.resize(default_width, default_height)
+
+        # Position the dialog at the top right corner of the canvas
+        canvas_geometry = self.canvas.geometry()
+        canvas_top_right = self.canvas.mapToGlobal(canvas_geometry.topRight())
+        dialog.move(canvas_top_right.x() - default_width, canvas_top_right.y())
+
+        # Allow resizing
+        dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
+
+        dialog.exec_()
+
+    def show_layer_state_info(self):
+        """Display information explaining each piece of layer state data."""
+        info_text = self.translations['layer_state_info_text']
+
+        # Display the information in a dialog
+        info_dialog = QDialog(self)
+        info_dialog.setWindowTitle(self.translations['layer_state_info_title'])
+        layout = QVBoxLayout(info_dialog)
+
+        info_label = QLabel(info_text)
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+
+        close_button = QPushButton(self.translations['close'])
+        close_button.clicked.connect(info_dialog.accept)
+        layout.addWidget(close_button)
+
+        info_dialog.exec_()
+
+
     def update_strand_attachable(self, set_number, attachable):
         for strand in self.canvas.strands:
             if strand.set_number == set_number:
@@ -1189,6 +1347,10 @@ class MainWindow(QMainWindow):
         self.canvas.start_new_strand_mode(set_number)
         
         logging.info(f"Ready to create new main strand for set: {set_number}")
+        
+        self.layer_state_manager.save_current_state()
+
+
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
@@ -1280,6 +1442,9 @@ class MainWindow(QMainWindow):
                     # Update the mode to maintain consistency
                     self.update_mode(self.current_mode)
 
+                    # Save the current state after deletion
+                    self.layer_state_manager.save_current_state()
+
                     logging.info("Finished deleting strand and updating UI")
                 else:
                     logging.warning(f"Strand {strand_name} not found in canvas strands")
@@ -1358,6 +1523,7 @@ class MainWindow(QMainWindow):
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
+        self.translations = _  # Store the translations for later use
 
         # Update window title
         self.setWindowTitle(_['main_window_title'])
@@ -1373,6 +1539,7 @@ class MainWindow(QMainWindow):
         self.save_button.setText(_['save'])
         self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
+        self.layer_state_button.setText(_['layer_state'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
@@ -1385,3 +1552,5 @@ class MainWindow(QMainWindow):
             self.layer_panel.translate_ui()
         if hasattr(self.canvas, 'update_translations'):
             self.canvas.update_translations()
+        if self.settings_dialog.isVisible():
+            self.settings_dialog.update_translations()

@@ -123,10 +123,13 @@ class LayerStateManager(QObject):
             self.layer_state = {
                 'order': unique_layers,
                 'connections': self.get_layer_connections(self.canvas.strands),
-                'groups': self.get_group_information(),
+                'groups': self.get_group_information(),  # Make sure this method is implemented
                 'masked_layers': masked_layers,
                 'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
                 'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in self.canvas.strands},
+                'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
+                'newest_strand': self.canvas.newest_strand.layer_name if self.canvas.newest_strand else None,
+                'newest_layer': self.canvas.newest_layer
             }
             print(f"LayerStateManager: Current state saved: {self.layer_state}")
             logging.info(f"Current state saved: {self.layer_state}")
@@ -136,19 +139,18 @@ class LayerStateManager(QObject):
             logging.error(f"Error saving current state: {str(e)}")
 
     def get_group_information(self):
-        if hasattr(self, 'layer_panel') and self.layer_panel:
-            if hasattr(self.layer_panel, 'group_layer_manager'):
-                group_layer_manager = self.layer_panel.group_layer_manager
-                if hasattr(group_layer_manager, 'groups'):
-                    return group_layer_manager.groups
-        return {}  # Return an empty dict if groups are not accessible
+        """Retrieve group information from the canvas."""
+        if not hasattr(self.canvas, 'groups'):
+            return {}
+        
+        group_info = {}
+        for group_name, group_data in self.canvas.groups.items():
+            group_info[group_name] = {
+                'layers': group_data.get('layers', []),
+                'main_strands': group_data.get('main_strands', [])
+            }
+        return group_info
 
-    def get_masked_layers_info(self):
-        masked_layers_info = {}
-        for strand in self.canvas.strands:
-            if isinstance(strand, MaskedStrand):
-                masked_layers_info[strand.layer_name] = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
-        return masked_layers_info
     def log_layer_state(self):
         """Write the current layer state to a text file and update current_state."""
         print("LayerStateManager: Attempting to log layer state")
@@ -165,9 +167,11 @@ class LayerStateManager(QObject):
                         for item in value:
                             f.write(f"  - {item}\n")
                     elif isinstance(value, dict):
-                        if key == 'masked_layers':
-                            for masked_layer, strands in value.items():
-                                f.write(f"  {masked_layer}: {strands}\n")
+                        if key == 'groups':
+                            for group_name, group_info in value.items():
+                                f.write(f"  {group_name}:\n")
+                                f.write(f"    Layers: {group_info['layers']}\n")
+                                f.write(f"    Main Strands: {group_info.get('main_strands', [])}\n")
                         else:
                             for k, v in value.items():
                                 f.write(f"  {k}: {v}\n")
@@ -185,6 +189,16 @@ class LayerStateManager(QObject):
         except Exception as e:
             print(f"LayerStateManager: Failed to write layer state. Error: {str(e)}")
             logging.error(f"Failed to write layer state to {self.log_file_path}. Error: {str(e)}")
+
+
+
+    def get_masked_layers_info(self):
+        masked_layers_info = {}
+        for strand in self.canvas.strands:
+            if isinstance(strand, MaskedStrand):
+                masked_layers_info[strand.layer_name] = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
+        return masked_layers_info
+
 
     def getOrder(self):
         """Get the current order of layers."""
@@ -245,13 +259,6 @@ class LayerStateManager(QObject):
             connections[strand.layer_name] = [s.layer_name for s in strand.attached_strands]
         return connections
 
-    def get_group_information(self):
-        if hasattr(self, 'layer_panel') and self.layer_panel:
-            if hasattr(self.layer_panel, 'group_layer_manager'):
-                group_layer_manager = self.layer_panel.group_layer_manager
-                if hasattr(group_layer_manager, 'groups'):
-                    return group_layer_manager.groups
-        return {}  # Return an empty dict if groups are not accessible
 
     def get_masked_layers(self):
         return [strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand)]

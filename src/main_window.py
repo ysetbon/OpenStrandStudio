@@ -1011,7 +1011,7 @@ class MainWindow(QMainWindow):
         
         # Add the info button
         info_button = QPushButton("?")
-        info_button.setFixedSize(30, 30)
+        info_button.setFixedSize(40, 40)
         info_button.clicked.connect(self.show_layer_state_info)
         title_layout.addWidget(info_button)
         title_layout.addStretch()  # This will push the button to the right

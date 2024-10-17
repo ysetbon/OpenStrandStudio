@@ -32,25 +32,19 @@ class LayerStateManager(QObject):
         logging.info("LayerStateManager initialized")
 
     def setup_logging(self):
-        # Use the src directory for logging
-        src_dir = os.path.dirname(os.path.abspath(__file__))
-        self.log_file_path = os.path.join(src_dir, "layer_state_log.txt")
-
-        # Delete the existing log file if it exists
-        if os.path.exists(self.log_file_path):
+        # Use the AppData\Local directory for logging
+        app_name = "OpenStrand Studio"
+        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        log_dir = os.path.join(program_data_dir, app_name)
+        
+        if not os.path.exists(log_dir):
             try:
-                os.remove(self.log_file_path)
-                print(f"LayerStateManager: Deleted existing log file: {self.log_file_path}")
+                os.makedirs(log_dir)
             except Exception as e:
-                print(f"LayerStateManager: Failed to delete existing log file. Error: {str(e)}")
+                print(f"LayerStateManager: Failed to create log directory. Error: {str(e)}")
+                return
 
-        # Create a new blank log file
-        try:
-            with open(self.log_file_path, 'w') as f:
-                f.write("Layer State Log\n")
-            print(f"LayerStateManager: Created new blank log file: {self.log_file_path}")
-        except Exception as e:
-            print(f"LayerStateManager: Failed to create new log file. Error: {str(e)}")
+        self.log_file_path = os.path.join(log_dir, "layer_state_log.txt")
 
         # Set up logging configuration
         logging.basicConfig(
@@ -60,6 +54,15 @@ class LayerStateManager(QObject):
         )
         print(f"LayerStateManager: Initialized with log file path: {self.log_file_path}")
         logging.info(f"LayerStateManager initialized. Log file path: {self.log_file_path}")
+
+        try:
+            with open(self.log_file_path, 'w') as f:
+                f.write("Layer State Log\n")
+            print(f"LayerStateManager: Created new log file: {self.log_file_path}")
+            logging.info(f"Created new log file: {self.log_file_path}")
+        except Exception as e:
+            print(f"LayerStateManager: Failed to create new log file. Error: {str(e)}")
+            logging.error(f"Failed to create new log file: {self.log_file_path}. Error: {str(e)}")
 
     def check_log_file(self):
         """Check if the log file exists and is writable."""

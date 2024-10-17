@@ -13,6 +13,8 @@ import os
 import sys
 import subprocess
 import sys
+from PyQt5.QtCore import QStandardPaths
+
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
 
@@ -235,9 +237,7 @@ class SettingsDialog(QDialog):
         current_theme = getattr(self, 'current_theme', 'default')
         current_language = getattr(self, 'current_language', 'en')
 
-        # Use the AppData directory
-        from PyQt5.QtCore import QStandardPaths
-
+        # Use the AppData\Local directory
         app_name = "OpenStrand Studio"
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         logging.info(f"Program data directory: {program_data_dir}")

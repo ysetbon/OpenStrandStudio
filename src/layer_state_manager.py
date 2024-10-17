@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from PyQt5.QtCore import QObject, pyqtSlot, QPointF, QStandardPaths
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QPointF, QStandardPaths
 from PyQt5.QtGui import QColor
 from strand import Strand, MaskedStrand, AttachedStrand
 
@@ -25,18 +25,21 @@ class LayerStateManager(QObject):
         self.initial_state = {}
         self.undo_stack = []
         self.redo_stack = []
-        self.current_state = {}  # Add this line to store the most recent state
+        self.current_state = {}
 
         self.setup_logging()
         self.check_log_file()
         logging.info("LayerStateManager initialized")
+
+        if canvas:
+            self.set_canvas(canvas)
 
     def setup_logging(self):
         # Use the AppData\Local directory for logging
         app_name = "OpenStrand Studio"
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         log_dir = os.path.join(program_data_dir, app_name)
-        
+
         if not os.path.exists(log_dir):
             try:
                 os.makedirs(log_dir)
@@ -87,52 +90,57 @@ class LayerStateManager(QObject):
     def set_canvas(self, canvas):
         print("LayerStateManager: Setting canvas")
         self.canvas = canvas
+
+        # Connect to the canvas signals
         if hasattr(canvas, 'strand_created'):
             canvas.strand_created.connect(self.on_strand_created_in_layer_manager)
-            print("LayerStateManager: Connected to strand_created signal in LayerStateManager")
-            logging.info("Connected to strand_created signal in LayerStateManager")
+            print("LayerStateManager: Connected to strand_created signal")
+            logging.info("Connected to strand_created signal")
         if hasattr(canvas, 'strand_deleted'):
             canvas.strand_deleted.connect(self.on_strand_deleted_in_layer_manager)
-            print("LayerStateManager: Connected to strand_deleted signal in LayerStateManager")
-            logging.info("Connected to strand_deleted signal in LayerStateManager")
+            print("LayerStateManager: Connected to strand_deleted signal")
+            logging.info("Connected to strand_deleted signal")
         if hasattr(canvas, 'masked_layer_created'):
             canvas.masked_layer_created.connect(self.on_masked_layer_created_in_layer_manager)
-            print("LayerStateManager: Connected to masked_layer_created signal in LayerStateManager")
-            logging.info("Connected to masked_layer_created signal in LayerStateManager")
+            print("LayerStateManager: Connected to masked_layer_created signal")
+            logging.info("Connected to masked_layer_created signal")
+
+        # Initialize state based on current canvas strands
+        self.save_current_state()
 
     def set_layer_panel(self, layer_panel):
         print("LayerStateManager: Setting layer panel")
         self.layer_panel = layer_panel
         if hasattr(layer_panel, 'new_strand_requested'):
             layer_panel.new_strand_requested.connect(self.on_new_strand_requested_in_layer_manager)
-            print("LayerStateManager: Connected to new_strand_requested signal in LayerStateManager")
-            logging.info("Connected to new_strand_requested signal in LayerStateManager")
+            print("LayerStateManager: Connected to new_strand_requested signal")
+            logging.info("Connected to new_strand_requested signal")
 
     def save_current_state(self):
         """Save the current state of all layers."""
         print("LayerStateManager: Saving current state")
-        if not self.canvas or not self.canvas.strands:
-            print("LayerStateManager: Canvas is not set or has no strands. Cannot save current state.")
-            logging.warning("Canvas is not set or has no strands. Cannot save current state.")
+        if not self.canvas:
+            print("LayerStateManager: Canvas is not set. Cannot save current state.")
+            logging.warning("Canvas is not set. Cannot save current state.")
             return
 
         try:
             # Use a dictionary to ensure unique layer names, then convert back to a list
             unique_layers = list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands))
-            
+
             # Use a set to ensure unique masked layers
             masked_layers = list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand)))
-            
+
             self.layer_state = {
                 'order': unique_layers,
                 'connections': self.get_layer_connections(self.canvas.strands),
-                'groups': self.get_group_information(),  # Make sure this method is implemented
+                'groups': self.get_group_information(),
                 'masked_layers': masked_layers,
                 'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
                 'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in self.canvas.strands},
                 'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
                 'newest_strand': self.canvas.newest_strand.layer_name if self.canvas.newest_strand else None,
-                'newest_layer': self.canvas.newest_layer
+                'newest_layer': unique_layers[-1] if unique_layers else None
             }
             print(f"LayerStateManager: Current state saved: {self.layer_state}")
             logging.info(f"Current state saved: {self.layer_state}")
@@ -145,7 +153,7 @@ class LayerStateManager(QObject):
         """Retrieve group information from the canvas."""
         if not hasattr(self.canvas, 'groups'):
             return {}
-        
+
         group_info = {}
         for group_name, group_data in self.canvas.groups.items():
             group_info[group_name] = {
@@ -183,78 +191,15 @@ class LayerStateManager(QObject):
                     f.write("\n")
 
                 f.write("----------------------------------------\n\n")
-            
+
             # Update current_state with the latest layer_state
             self.current_state = self.layer_state.copy()
-            
+
             print(f"LayerStateManager: Successfully wrote layer state to {self.log_file_path}")
             logging.info(f"Successfully wrote layer state to {self.log_file_path}")
         except Exception as e:
             print(f"LayerStateManager: Failed to write layer state. Error: {str(e)}")
             logging.error(f"Failed to write layer state to {self.log_file_path}. Error: {str(e)}")
-
-
-
-    def get_masked_layers_info(self):
-        masked_layers_info = {}
-        for strand in self.canvas.strands:
-            if isinstance(strand, MaskedStrand):
-                masked_layers_info[strand.layer_name] = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
-        return masked_layers_info
-
-
-    def getOrder(self):
-        """Get the current order of layers."""
-        return self.current_state.get('order', [])
-
-    def getConnections(self):
-        """Get the current connections between layers."""
-        return self.current_state.get('connections', {})
-
-    def getGroups(self):
-        """Get the current group information."""
-        return self.current_state.get('groups', {})
-
-    def getMaskedLayers(self):
-        """Get the current masked layers."""
-        return self.current_state.get('masked_layers', [])
-
-    def getColors(self):
-        """Get the current colors of layers."""
-        return self.current_state.get('colors', {})
-
-    def getPositions(self):
-        """Get the current positions of layers."""
-        return self.current_state.get('positions', {})
-
-    def getSelectedStrand(self):
-        """Get the currently selected strand."""
-        return self.current_state.get('selected_strand')
-
-    def getNewestStrand(self):
-        """Get the newest strand."""
-        return self.current_state.get('newest_strand')
-
-    def getNewestLayer(self):
-        """Get the newest layer."""
-        return self.current_state.get('newest_layer')
-
-    def update_from_paint_event(self, strands, selected_strand, newest_strand):
-        unique_layers = list(dict.fromkeys(strand.layer_name for strand in strands))
-        masked_layers = list(set(strand.layer_name for strand in strands if isinstance(strand, MaskedStrand)))
-        
-        self.layer_state = {
-            'order': unique_layers,
-            'connections': self.get_layer_connections(strands),
-            'groups': self.get_group_information(),
-            'masked_layers': masked_layers,
-            'colors': {strand.layer_name: strand.color.name() for strand in strands},
-            'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in strands},
-            'selected_strand': selected_strand.layer_name if selected_strand else None,
-            'newest_strand': newest_strand.layer_name if newest_strand else None,
-            'newest_layer': unique_layers[-1] if unique_layers else None  # Add this line
-        }
-        self.log_layer_state()
 
     def get_layer_connections(self, strands):
         connections = {}
@@ -262,74 +207,11 @@ class LayerStateManager(QObject):
             connections[strand.layer_name] = [s.layer_name for s in strand.attached_strands]
         return connections
 
-
-    def get_masked_layers(self):
-        return [strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand)]
-
-    def get_parent_child_relationships(self):
-        relationships = {}
-        for strand in self.canvas.strands:
-            parent = None
-            children = []
-
-            if isinstance(strand, AttachedStrand):
-                parent = strand.parent.layer_name if strand.parent else None
-            elif isinstance(strand, MaskedStrand):
-                children = [strand.first_selected_strand.layer_name, strand.second_selected_strand.layer_name]
-
-            relationships[strand.layer_name] = {
-                'parent': parent,
-                'children': children
-            }
-        return relationships
-
-    def save_initial_state(self):
-        """Save the initial state when loading a JSON file."""
-        print("LayerStateManager: Saving initial state")
-        self.initial_state = self.layer_state.copy()
-        logging.info("Initial state saved")
-
-    def get_layer_order(self):
-        """Get the current order of layers."""
-        return self.current_state.get('order', [])
-
-    def get_layer_colors(self):
-        """Get the colors of layers."""
-        return self.current_state.get('colors', {})
-
-    def get_layer_positions(self):
-        """Get the positions of layers."""
-        return self.current_state.get('positions', {})
-
-    def get_connections(self):
-        """Get the current connections between layers."""
-        return self.current_state.get('connections', {})
-
-    def get_groups(self):
-        """Get the current group information."""
-        return self.current_state.get('groups', {})
-
-    def get_masked_layers(self):
-        """Get the current masked layers."""
-        return self.current_state.get('masked_layers', [])
-
-    def get_selected_strand(self):
-        """Get the currently selected strand."""
-        return self.current_state.get('selected_strand')
-
-    def get_newest_strand(self):
-        """Get the newest strand."""
-        return self.current_state.get('newest_strand')
-
-    def get_newest_layer(self):
-        """Get the newest layer."""
-        return self.current_state.get('newest_layer')
-
     @pyqtSlot(object)
     def on_strand_created_in_layer_manager(self, strand):
         """Called when a new strand is created."""
-        print(f"LayerStateManager: on_strand_created_in_layer_manager called with {strand.layer_name}")
-        logging.info(f"LayerStateManager: New strand created: {strand.layer_name}")
+        print(f"LayerStateManager: Strand created: {strand.layer_name}")
+        logging.info(f"Strand created: {strand.layer_name}")
         self.save_current_state()
 
     @pyqtSlot(int)
@@ -344,7 +226,6 @@ class LayerStateManager(QObject):
         """Called when a masked layer is created."""
         print(f"LayerStateManager: Masked layer created: {masked_strand.layer_name}")
         logging.info(f"Masked layer created: {masked_strand.layer_name}")
-        self.layer_state['newest_layer'] = masked_strand.layer_name  # Add this line
         self.save_current_state()
 
     @pyqtSlot()
@@ -358,6 +239,97 @@ class LayerStateManager(QObject):
         else:
             print("LayerStateManager: Canvas is not set. Cannot process new strand request.")
             logging.warning("Canvas is not set. Cannot process new strand request.")
+
+    def apply_loaded_state(self, state_data):
+        """Apply the loaded state to the canvas."""
+        print("LayerStateManager: Applying loaded state")
+        if not self.canvas:
+            print("LayerStateManager: Canvas is not set. Cannot apply loaded state.")
+            logging.warning("Canvas is not set. Cannot apply loaded state.")
+            return
+
+        # Clear existing strands
+        self.canvas.clear_strands()
+
+        # Recreate strands
+        strand_dict = {}
+        for layer_name in state_data['order']:
+            color_name = state_data['colors'][layer_name]
+            color = QColor(color_name)
+            positions = state_data['positions'][layer_name]
+            start = QPointF(positions[0], positions[1])
+            end = QPointF(positions[2], positions[3])
+
+            # Create the strand
+            strand = Strand(start, end, self.canvas.strand_width, color, self.canvas.stroke_color, self.canvas.stroke_width)
+            strand.layer_name = layer_name
+
+            # Assign set_number (extract from layer_name)
+            set_number = int(layer_name.split('_')[0])
+            strand.set_number = set_number
+
+            self.canvas.strands.append(strand)
+            strand_dict[layer_name] = strand
+
+        # Recreate connections (attached strands)
+        for layer_name, connected_layers in state_data['connections'].items():
+            strand = strand_dict.get(layer_name)
+            if strand:
+                for connected_layer_name in connected_layers:
+                    attached_strand = strand_dict.get(connected_layer_name)
+                    if attached_strand:
+                        # Create an AttachedStrand
+                        attached = AttachedStrand(attached_strand.start, attached_strand.end, strand)
+                        attached.layer_name = attached_strand.layer_name
+                        attached.set_number = strand.set_number
+                        attached.set_color(attached_strand.color)
+                        attached.parent = strand
+
+                        strand.attached_strands.append(attached)
+                        self.canvas.strands.append(attached)
+                        strand_dict[attached.layer_name] = attached
+
+        # Recreate masked layers
+        for masked_layer_name in state_data['masked_layers']:
+            # Assuming masked layers are stored with their layer names
+            masked_strand = MaskedStrand(None, None)  # Will set the strands below
+            masked_strand.layer_name = masked_layer_name
+            # Retrieve the original strands based on their layer names
+            # Assuming the masked layer name format is 'layer1_layer2_masked'
+            original_layer_names = masked_layer_name.replace('_masked', '').split('_')
+            if len(original_layer_names) >= 2:
+                first_strand = strand_dict.get(original_layer_names[0])
+                second_strand = strand_dict.get(original_layer_names[1])
+                if first_strand and second_strand:
+                    masked_strand.first_selected_strand = first_strand
+                    masked_strand.second_selected_strand = second_strand
+                    masked_strand.update_path()  # Update the path based on new strands
+
+                    self.canvas.strands.append(masked_strand)
+                    strand_dict[masked_layer_name] = masked_strand
+                    # Update group information if necessary
+                    # ...
+
+        # Set groups
+        if hasattr(self.canvas, 'groups'):
+            self.canvas.groups = {}
+            for group_name, group_info in state_data['groups'].items():
+                group_layers = group_info.get('layers', [])
+                main_strands = group_info.get('main_strands', [])
+                self.canvas.groups[group_name] = {
+                    'layers': group_layers,
+                    'main_strands': main_strands,
+                    'strands': [strand_dict[layer_name] for layer_name in group_layers if layer_name in strand_dict]
+                }
+
+        # Update the canvas and layer panel
+        if self.layer_panel:
+            self.layer_panel.rebuild_layer_buttons()
+            self.layer_panel.refresh()
+
+        self.canvas.update()
+        print("LayerStateManager: State applied successfully")
+        logging.info("Loaded state applied to canvas")
 
     def save_state_to_json(self, file_path):
         """Save the current state to a JSON file."""
@@ -385,50 +357,6 @@ class LayerStateManager(QObject):
         except Exception as e:
             print(f"LayerStateManager: Failed to load state from JSON file. Error: {str(e)}")
             logging.error(f"Failed to load state from JSON file: {file_path}. Error: {str(e)}")
-
-    def apply_loaded_state(self, state_data):
-        """Apply the loaded state to the canvas."""
-        print("LayerStateManager: Applying loaded state")
-        if not self.canvas:
-            print("LayerStateManager: Canvas is not set. Cannot apply loaded state.")
-            logging.warning("Canvas is not set. Cannot apply loaded state.")
-            return
-
-        # Clear existing strands
-        self.canvas.strands.clear()
-
-        # Recreate strands
-        for layer_name in state_data['order']:
-            color = QColor(state_data['colors'][layer_name])
-            start = QPointF(*state_data['positions'][layer_name]['start'])
-            end = QPointF(*state_data['positions'][layer_name]['end'])
-            strand = Strand(layer_name, color, start, end)
-            self.canvas.strands.append(strand)
-
-        # Recreate connections
-        for layer_name, connected_layers in state_data['connections'].items():
-            strand = next((s for s in self.canvas.strands if s.layer_name == layer_name), None)
-            if strand:
-                for connected_layer in connected_layers:
-                    connected_strand = next((s for s in self.canvas.strands if s.layer_name == connected_layer), None)
-                    if connected_strand:
-                        strand.attached_strands.append(connected_strand)
-
-        # Recreate masked layers
-        for masked_layer, mask_info in state_data['masked_layers'].items():
-            first_strand = next((s for s in self.canvas.strands if s.layer_name == mask_info['first_strand']), None)
-            second_strand = next((s for s in self.canvas.strands if s.layer_name == mask_info['second_strand']), None)
-            if first_strand and second_strand:
-                masked_strand = MaskedStrand(masked_layer, first_strand, second_strand)
-                self.canvas.strands.append(masked_strand)
-
-        # Set groups
-        self.canvas.groups = state_data['groups']
-
-        # Update the canvas
-        self.canvas.update()
-        print("LayerStateManager: State applied successfully")
-        logging.info("Loaded state applied to canvas")
 
     def compare_with_initial_state(self):
         """Compare the current state with the initial state."""
@@ -462,6 +390,7 @@ class LayerStateManager(QObject):
             )
 
         print("LayerStateManager: Comparison completed")
+        logging.info(f"Differences found: {differences}")
         return differences
 
     def compare_groups(self, initial_groups, current_groups):
@@ -486,239 +415,48 @@ class LayerStateManager(QObject):
 
         return group_changes
 
-    def undo_last_action(self):
-        """Undo the last action performed."""
-        print("LayerStateManager: Attempting to undo last action")
-        if len(self.undo_stack) > 0:
-            previous_state = self.undo_stack.pop()
-            self.redo_stack.append(self.layer_state.copy())
-            self.layer_state = previous_state
-            self.apply_loaded_state(self.layer_state)
-            print("LayerStateManager: Undo successful")
-            logging.info("Undo action performed successfully")
-        else:
-            print("LayerStateManager: No actions to undo")
-            logging.info("No actions to undo")
+    def save_initial_state(self):
+        """Save the initial state when loading a JSON file."""
+        print("LayerStateManager: Saving initial state")
+        self.initial_state = self.layer_state.copy()
+        logging.info("Initial state saved")
 
-    def redo_last_action(self):
-        """Redo the last undone action."""
-        print("LayerStateManager: Attempting to redo last action")
-        if len(self.redo_stack) > 0:
-            next_state = self.redo_stack.pop()
-            self.undo_stack.append(self.layer_state.copy())
-            self.layer_state = next_state
-            self.apply_loaded_state(self.layer_state)
-            print("LayerStateManager: Redo successful")
-            logging.info("Redo action performed successfully")
-        else:
-            print("LayerStateManager: No actions to redo")
-            logging.info("No actions to redo")
+    def getOrder(self):
+        """Get the current order of layers."""
+        return self.layer_state.get('order', [])
 
-    def create_snapshot(self):
-        """Create a snapshot of the current state."""
-        print("LayerStateManager: Creating snapshot")
-        self.undo_stack.append(self.layer_state.copy())
-        self.redo_stack.clear()
-        logging.info("Snapshot created")
+    def getConnections(self):
+        """Get the current connections between layers."""
+        return self.layer_state.get('connections', {})
 
-    def get_layer_info(self, layer_name):
-        """Get detailed information about a specific layer."""
-        print(f"LayerStateManager: Getting info for layer {layer_name}")
-        if layer_name in self.layer_state['order']:
-            return {
-                'position': self.layer_state['positions'][layer_name],
-                'color': self.layer_state['colors'][layer_name],
-                'connections': self.layer_state['connections'].get(layer_name, []),
-                'groups': [group for group, data in self.layer_state['groups'].items() if layer_name in data['layers']]
-            }
-        else:
-            print(f"LayerStateManager: Layer {layer_name} not found")
-            return None
+    def getGroups(self):
+        """Get the current group information."""
+        return self.layer_state.get('groups', {})
 
-    def get_group_layers(self, group_name):
-        """Get all layers in a specific group."""
-        print(f"LayerStateManager: Getting layers for group {group_name}")
-        return self.layer_state['groups'].get(group_name, {}).get('layers', [])
+    def getMaskedLayers(self):
+        """Get the current masked layers."""
+        return self.layer_state.get('masked_layers', [])
 
-    def update_layer_position(self, layer_name, new_position):
-        """Update the position of a specific layer."""
-        print(f"LayerStateManager: Updating position for layer {layer_name}")
-        if layer_name in self.layer_state['positions']:
-            self.layer_state['positions'][layer_name] = new_position
-            self.save_current_state()
-            self.log_layer_state()
-            logging.info(f"Updated position for layer {layer_name}")
-        else:
-            print(f"LayerStateManager: Layer {layer_name} not found")
-            logging.warning(f"Layer {layer_name} not found when updating position")
+    def getColors(self):
+        """Get the current colors of layers."""
+        return self.layer_state.get('colors', {})
 
-    def update_layer_color(self, layer_name, new_color):
-        """Update the color of a specific layer."""
-        print(f"LayerStateManager: Updating color for layer {layer_name}")
-        if layer_name in self.layer_state['colors']:
-            self.layer_state['colors'][layer_name] = new_color.name()
-            self.save_current_state()
-            self.log_layer_state()
-            logging.info(f"Updated color for layer {layer_name}")
-        else:
-            print(f"LayerStateManager: Layer {layer_name} not found")
-            logging.warning(f"Layer {layer_name} not found when updating color")
+    def getPositions(self):
+        """Get the current positions of layers."""
+        return self.layer_state.get('positions', {})
 
-    def add_layer_to_group(self, layer_name, group_name):
-        """Add a layer to a specific group."""
-        print(f"LayerStateManager: Adding layer {layer_name} to group {group_name}")
-        if group_name not in self.layer_state['groups']:
-            self.layer_state['groups'][group_name] = {'layers': [], 'main_strands': []}
-        if layer_name not in self.layer_state['groups'][group_name]['layers']:
-            self.layer_state['groups'][group_name]['layers'].append(layer_name)
-            self.save_current_state()
-            self.log_layer_state()
-            logging.info(f"Added layer {layer_name} to group {group_name}")
-        else:
-            print(f"LayerStateManager: Layer {layer_name} already in group {group_name}")
-            logging.info(f"Layer {layer_name} already in group {group_name}")
+    def getSelectedStrand(self):
+        """Get the currently selected strand."""
+        return self.layer_state.get('selected_strand')
 
-    def remove_layer_from_group(self, layer_name, group_name):
-        """Remove a layer from a specific group."""
-        print(f"LayerStateManager: Removing layer {layer_name} from group {group_name}")
-        if group_name in self.layer_state['groups'] and layer_name in self.layer_state['groups'][group_name]['layers']:
-            self.layer_state['groups'][group_name]['layers'].remove(layer_name)
-            if not self.layer_state['groups'][group_name]['layers']:
-                del self.layer_state['groups'][group_name]
-            self.save_current_state()
-            self.log_layer_state()
-            logging.info(f"Removed layer {layer_name} from group {group_name}")
-        else:
-            print(f"LayerStateManager: Layer {layer_name} not found in group {group_name}")
-            logging.warning(f"Layer {layer_name} not found in group {group_name} when removing")
+    def getNewestStrand(self):
+        """Get the newest strand."""
+        return self.layer_state.get('newest_strand')
 
-    def get_all_groups(self):
-        """Get all group names and their layers."""
-        print("LayerStateManager: Getting all groups")
-        return self.layer_state['groups']
+    def getNewestLayer(self):
+        """Get the newest layer."""
+        return self.layer_state.get('newest_layer')
 
-    def get_layer_groups(self, layer_name):
-        """Get all groups that a specific layer belongs to."""
-        print(f"LayerStateManager: Getting groups for layer {layer_name}")
-        return [group for group, data in self.layer_state['groups'].items() if layer_name in data['layers']]
-
-    def rename_layer(self, old_name, new_name):
-        """Rename a layer."""
-        print(f"LayerStateManager: Renaming layer {old_name} to {new_name}")
-        if old_name in self.layer_state['order']:
-            index = self.layer_state['order'].index(old_name)
-            self.layer_state['order'][index] = new_name
-            self.layer_state['colors'][new_name] = self.layer_state['colors'].pop(old_name)
-            self.layer_state['positions'][new_name] = self.layer_state['positions'].pop(old_name)
-            if old_name in self.layer_state['connections']:
-                self.layer_state['connections'][new_name] = self.layer_state['connections'].pop(old_name)
-            for group in self.layer_state['groups'].values():
-                if old_name in group['layers']:
-                    group['layers'][group['layers'].index(old_name)] = new_name
-            self.save_current_state()
-            self.log_layer_state()
-            logging.info(f"Renamed layer {old_name} to {new_name}")
-        else:
-            print(f"LayerStateManager: Layer {old_name} not found")
-            logging.warning(f"Layer {old_name} not found when renaming")
-
-    def get_layer_history(self, layer_name):
-        """Get the history of changes for a specific layer."""
-        print(f"LayerStateManager: Getting history for layer {layer_name}")
-        history = []
-        for state in self.undo_stack + [self.layer_state]:
-            if layer_name in state['order']:
-                history.append({
-                    'position': state['positions'][layer_name],
-                    'color': state['colors'][layer_name],
-                    'connections': state['connections'].get(layer_name, []),
-                    'groups': [group for group, data in state['groups'].items() if layer_name in data['layers']]
-                })
-        return history
-
-    def get_layer_dependencies(self, layer_name):
-        """Get all layers that depend on a specific layer."""
-        print(f"LayerStateManager: Getting dependencies for layer {layer_name}")
-        dependencies = []
-        for strand, connected_layers in self.layer_state['connections'].items():
-            if layer_name in connected_layers:
-                dependencies.append(strand)
-        return dependencies
-
-    def get_orphaned_layers(self):
-        """Get all layers that are not connected to any other layer."""
-        print("LayerStateManager: Getting orphaned layers")
-        connected_layers = set()
-        for connected_list in self.layer_state['connections'].values():
-            connected_layers.update(connected_list)
-        return [layer for layer in self.layer_state['order'] if layer not in connected_layers]
-
-    def get_layer_depth(self, layer_name):
-        """Get the depth of a layer in the connection hierarchy."""
-        print(f"LayerStateManager: Getting depth for layer {layer_name}")
-
-        def depth(layer, visited=None):
-            if visited is None:
-                visited = set()
-            if layer in visited:
-                return 0
-            visited.add(layer)
-            if layer not in self.layer_state['connections'] or not self.layer_state['connections'][layer]:
-                return 0
-            return 1 + max(depth(connected, visited) for connected in self.layer_state['connections'][layer])
-
-        return depth(layer_name)
-
-    def get_deepest_layers(self):
-        """Get the layers with the maximum depth in the connection hierarchy."""
-        print("LayerStateManager: Getting deepest layers")
-        depths = {layer: self.get_layer_depth(layer) for layer in self.layer_state['order']}
-        max_depth = max(depths.values())
-        return [layer for layer, depth in depths.items() if depth == max_depth]
-
-    def get_layer_tree(self):
-        """Get a tree representation of the layer hierarchy."""
-        print("LayerStateManager: Getting layer tree")
-
-        def build_tree(layer):
-            return {
-                'name': layer,
-                'children': [build_tree(child) for child in self.layer_state['connections'].get(layer, [])]
-            }
-
-        all_connected_layers = set()
-        for layers in self.layer_state['connections'].values():
-            all_connected_layers.update(layers)
-
-        root_layers = [layer for layer in self.layer_state['order'] if layer not in all_connected_layers]
-
-        return [build_tree(layer) for layer in root_layers]
-
-    def analyze_layer_structure(self):
-        """Analyze the overall structure of the layers."""
-        print("LayerStateManager: Analyzing layer structure")
-        if not self.layer_state['order']:
-            print("LayerStateManager: No layers to analyze")
-            logging.info("No layers to analyze in layer structure")
-            return {}
-
-        analysis = {
-            'total_layers': len(self.layer_state['order']),
-            'total_groups': len(self.layer_state['groups']),
-            'orphaned_layers': self.get_orphaned_layers(),
-            'max_depth': max(self.get_layer_depth(layer) for layer in self.layer_state['order']),
-            'most_connected_layer': max(
-                self.layer_state['connections'],
-                key=lambda x: len(self.layer_state['connections'][x]),
-                default=None
-            ),
-            'largest_group': max(
-                self.layer_state['groups'],
-                key=lambda x: len(self.layer_state['groups'][x]['layers']),
-                default=None
-            )
-        }
-        logging.info("Layer structure analysis completed")
-        return analysis
+    # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 
 # End of LayerStateManager class

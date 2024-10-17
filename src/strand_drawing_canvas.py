@@ -13,9 +13,13 @@ import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from translations import translations
+
 class StrandDrawingCanvas(QWidget):
-    strand_created = pyqtSignal(object)
-    strand_deleted = pyqtSignal(int)  # Add this line
+    # Define signals
+    strand_created = pyqtSignal(object)   # Emitting the strand object
+    strand_deleted = pyqtSignal(int)      # Emitting the index of deleted strand
+    masked_layer_created = pyqtSignal(object)  # Emitting the masked strand object
+
     strand_selected = pyqtSignal(int)
     mask_created = pyqtSignal(int, int)
     angle_adjust_completed = pyqtSignal()  # Add this line
@@ -605,43 +609,60 @@ class StrandDrawingCanvas(QWidget):
 
 
     def paintEvent(self, event):
+        """
+        Handles the painting of the canvas.
+        """
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Draw the grid, if applicable
         if self.show_grid:
             self.draw_grid(painter)
 
-        # Create a temporary image for all strands
-        temp_image = QImage(self.size(), QImage.Format_ARGB32_Premultiplied)
-        temp_image.fill(Qt.transparent)
-        temp_painter = QPainter(temp_image)
-        temp_painter.setRenderHint(QPainter.Antialiasing)
-
         logging.info(f"Painting {len(self.strands)} strands")
-        # Draw all strands in their current order
+
+        # Draw all strands
         for strand in self.strands:
-            logging.info(f"Drawing strand '{strand.layer_name}' at ({strand.start.x()}, {strand.start.y()}) to ({strand.end.x()}, {strand.end.y()})")
+            logging.info(f"Drawing strand '{strand.layer_name}'")
             if strand == self.selected_strand:
                 logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
-                self.draw_highlighted_strand(temp_painter, strand)
+                self.draw_highlighted_strand(painter, strand)
             else:
-                strand.draw(temp_painter)
+                strand.draw(painter)
 
-        # Draw the temporary image with all strands onto the main painter
-        temp_painter.end()
-        painter.drawImage(0, 0, temp_image)
+        # Draw the new strand being created
+        if self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
+            # Determine the color for the new strand
+            if self.new_strand_set_number in self.strand_colors:
+                strand_color = self.strand_colors[self.new_strand_set_number]
+            else:
+                # If it's the first strand (no existing colors), use the default color
+                strand_color = QColor('purple')
 
-        if self.current_strand:
-            self.current_strand.draw(painter)
+            # Create a temporary Strand object for drawing
+            temp_strand = Strand(
+                self.new_strand_start_point,
+                self.new_strand_end_point,
+                self.strand_width,
+                color=strand_color,
+                stroke_color=self.stroke_color,
+                stroke_width=self.stroke_width
+            )
+            temp_strand.draw(painter)
 
+        # Draw the control points if they are not drawn within the Strand class
+        self.draw_control_points(painter)
+
+        # Draw strand labels if enabled
         if self.should_draw_names:
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
+        # Draw selection rectangle if in MoveMode
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
             painter.setBrush(QBrush(self.selection_color))
-            painter.setPen(QPen(Qt.red, 5))
+            painter.setPen(QPen(Qt.red, 2))
             painter.drawRect(self.current_mode.selected_rectangle)
 
         # Draw the angle adjustment visualization if in angle adjust mode
@@ -653,26 +674,10 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
 
-        # Draw the new strand being created
-        if self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
-            # Determine the color for the new strand
-            if self.new_strand_set_number in self.strand_colors:
-                strand_color = self.strand_colors[self.new_strand_set_number]
-            else:
-                # If it's the first strand (no existing colors), use the default color
-                strand_color = QColor('purple')
+        logging.info(f"Paint event completed. Selected strand: "
+                    f"{self.selected_strand.layer_name if self.selected_strand else 'None'}")
 
-     
-            # Draw the colored strand
-            painter.setPen(QPen(QColor('black'),self.stroke_width, Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin))
-            painter.drawLine(self.new_strand_start_point, self.new_strand_end_point)
-
-        logging.info(f"Paint event completed. Selected strand: {self.selected_strand.layer_name if self.selected_strand else 'None'}, "
-                     f"Newest strand: {self.newest_strand.layer_name if self.newest_strand else 'None'}")
-        
-        # Update LayerStateManager with the current state
-        if hasattr(self, 'layer_state_manager'):
-            self.layer_state_manager.update_from_paint_event(self.strands, self.selected_strand, self.newest_strand)
+        painter.end()
 
     def create_masked_layer(self, strand1, strand2):
         """
@@ -704,7 +709,6 @@ class StrandDrawingCanvas(QWidget):
             button.color_changed.connect(self.handle_color_change)
         
         # Set the color of the masked strand
-        # You might want to adjust this based on your color scheme
         masked_strand.set_color(strand1.color)
         
         # Update the masked strand's layer name
@@ -719,11 +723,10 @@ class StrandDrawingCanvas(QWidget):
         # Move the new masked strand to the top of the drawing order
         self.move_strand_to_top(masked_strand)
         
-        # Force a redraw of the canvas
-        self.strands.append(masked_strand)
-        self.masked_layer_created.emit(masked_strand)
+        # Emit the masked_layer_created signal
         self.update()
-        
+        self.masked_layer_created.emit(masked_strand)
+
         # Emit a signal if needed (e.g., to update other parts of the UI)
         # self.mask_created.emit(masked_strand)  # Uncomment if you have this signal
         
@@ -967,6 +970,9 @@ class StrandDrawingCanvas(QWidget):
             self.group_layer_manager.update_groups_with_new_strand(strand)
 
         logging.info("Finished on_strand_created")
+
+        # Add this line to emit the signal
+        self.strand_created.emit(strand)
     def get_next_available_set_number(self):
         existing_set_numbers = set(
             strand.set_number
@@ -1004,16 +1010,17 @@ class StrandDrawingCanvas(QWidget):
                 self.layer_panel.update_layer_names(new_strand.set_number)
             self.layer_panel.on_strand_attached()
 
-        # --- Begin new code to check group consistency ---
         # Inform the GroupLayerManager about the new attached strand
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             self.group_layer_manager.update_groups_with_new_strand(new_strand)
-        # --- End new code ---
 
         # Update the canvas
         self.update()
 
         logging.info(f"Attached new strand: {new_strand.layer_name} to parent: {parent_strand.layer_name}")
+
+        # Emit the strand_created signal
+        self.strand_created.emit(new_strand)
 
     def move_strand_to_top(self, strand):
         """Move a strand to the top of the drawing order and update the layer panel."""
@@ -1074,9 +1081,16 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Selected strand index: {index}")
     def delete_strand(self, index):
         if 0 <= index < len(self.strands):
+            # Add this line to capture the deleted strand's layer name (optional)
+            deleted_strand = self.strands.pop(index)
+            
             del self.strands[index]
             self.strand_deleted.emit(index)  # Emit the signal when a strand is deleted
             self.update()
+            self.strand_deleted.emit(index)
+
+            # Optionally log the deletion
+            logging.info(f"Deleted strand: {deleted_strand.layer_name}")
     def deselect_all_strands(self):
         """Deselect all strands."""
         self.selected_strand = None
@@ -1786,7 +1800,24 @@ class StrandDrawingCanvas(QWidget):
             self.angle_adjust_completed.emit()  # Add this line
         self.update()
 
+    def draw_control_points(self, painter):
+        """
+        Draw control points for all strands.
 
+        Args:
+            painter (QPainter): The painter used for drawing.
+        """
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        control_point_radius = 5  # Adjust as needed
+        for strand in self.strands:
+            if hasattr(strand, 'control_point'):
+                painter.setBrush(QBrush(Qt.red))  # Color for the control point
+                painter.setPen(QPen(Qt.black, 1))
+                painter.drawEllipse(
+                    strand.control_point, control_point_radius, control_point_radius
+                )
+        painter.restore()
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)
         
@@ -2078,5 +2109,53 @@ class StrandDrawingCanvas(QWidget):
         else:
             logging.warning(f"Attempted to delete non-existent or non-masked layer")
             return False
+    def find_control_point_at_position(self, pos):
+        """
+        Find the strand whose control point is at the given position.
 
+        Args:
+            pos (QPointF): The position to check.
+
+        Returns:
+            Strand or None: The strand whose control point is at the position, or None if not found.
+        """
+        for strand in reversed(self.strands):  # Reverse to check topmost strands first
+            if hasattr(strand, 'control_point'):
+                control_point_rect = self.get_control_point_rectangle(strand)
+                if control_point_rect.contains(pos):
+                    return strand
+        return None
+
+    def get_control_point_rectangle(self, strand):
+        """
+        Get the rectangle around the control point for hit detection.
+
+        Args:
+            strand (Strand): The strand whose control point to get.
+
+        Returns:
+            QRectF: The rectangle around the control point.
+        """
+        size = 10  # Adjust as needed
+        center = strand.control_point
+        return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
+
+    def handle_control_point_selection(self, pos):
+        """
+        Handle selection of a control point at the given position.
+
+        Args:
+            pos (QPointF): The position where the user clicked.
+
+        Returns:
+            bool: True if a control point was selected, False otherwise.
+        """
+        strand = self.find_control_point_at_position(pos)
+        if strand:
+            # Perform any selection logic here
+            self.selected_strand = strand
+            self.selected_point = 'control_point'
+            self.update()
+            return True
+        return False
 # End of StrandDrawingCanvas class

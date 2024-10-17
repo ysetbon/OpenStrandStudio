@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QApplication
 import math
 
 from strand import Strand, AttachedStrand, MaskedStrand
+
 class MoveMode:
     def __init__(self, canvas):
         """
@@ -21,7 +22,7 @@ class MoveMode:
         self.moving_point = None  # The point being moved
         self.is_moving = False  # Flag to indicate if we're currently moving a point
         self.affected_strand = None  # The strand being affected by the move
-        self.moving_side = None  # Which side of the strand is being moved (0 for start, 1 for end)
+        self.moving_side = None  # Which side of the strand is being moved (0 for start, 1 for end, 'control_point' for control point)
         self.selected_rectangle = None  # The rectangle representing the selected point
         self.last_update_pos = None  # The last position update
         self.accumulated_delta = QPointF(0, 0)  # Accumulated movement delta
@@ -108,7 +109,7 @@ class MoveMode:
         self.canvas.update()
 
     def gradual_move(self):
-        """Perform gradual movement of the strand end point."""
+        """Perform gradual movement of the strand point."""
         if not self.is_moving or not self.target_pos or not self.last_snapped_pos or getattr(self.affected_strand, 'deleted', False):
             self.move_timer.stop()
             return
@@ -153,7 +154,7 @@ class MoveMode:
 
     def try_move_strand(self, strand, pos, strand_index):
         """
-        Try to move a strand if the position is within its end rectangles.
+        Try to move a strand if the position is within its end rectangles or control point.
 
         Args:
             strand (Strand): The strand to try moving.
@@ -165,14 +166,24 @@ class MoveMode:
         """
         start_rect = self.get_end_rectangle(strand, 0)
         end_rect = self.get_end_rectangle(strand, 1)
+        control_point_rect = self.get_control_point_rectangle(strand)
 
-        if start_rect.contains(pos) and self.can_move_side(strand, 0, strand_index):
+        if control_point_rect.contains(pos):
+            self.start_movement(strand, 'control_point', control_point_rect)
+            return True
+        elif start_rect.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_rect)
             return True
         elif end_rect.contains(pos) and self.can_move_side(strand, 1, strand_index):
             self.start_movement(strand, 1, end_rect)
             return True
         return False
+
+    def get_control_point_rectangle(self, strand):
+        """Get the rectangle around the control point for hit detection."""
+        size = 10  # Adjust as needed
+        center = strand.control_point
+        return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def try_move_attached_strands(self, attached_strands, pos):
         """
@@ -187,7 +198,8 @@ class MoveMode:
         """
         for attached_strand in attached_strands:
             if not getattr(attached_strand, 'deleted', False):
-                if self.try_move_strand(attached_strand, pos, self.canvas.strands.index(attached_strand)):
+                index = self.canvas.strands.index(attached_strand) if attached_strand in self.canvas.strands else -1
+                if self.try_move_strand(attached_strand, pos, index):
                     return True
                 if self.try_move_attached_strands(attached_strand.attached_strands, pos):
                     return True
@@ -199,7 +211,7 @@ class MoveMode:
 
         Args:
             strand (Strand): The strand to check.
-            side (int): Which side of the strand to check (0 for start, 1 for end).
+            side (int or str): Which side of the strand to check (0 for start, 1 for end, 'control_point' for control point).
             strand_index (int): The index of the strand in the canvas's strand list.
 
         Returns:
@@ -207,27 +219,30 @@ class MoveMode:
         """
         if not self.lock_mode_active:
             return True
-        
+
         # Check if the strand itself is locked
         if strand_index in self.locked_layers:
             return False
-        
+
+        if side == 'control_point':
+            return True  # Assume control point can be moved unless specific locking is needed
+
         # Check if the side is shared with a locked strand
         point = strand.start if side == 0 else strand.end
         for i, other_strand in enumerate(self.canvas.strands):
             if i in self.locked_layers:
                 if point == other_strand.start or point == other_strand.end:
                     return False
-        
+
         return True
 
     def start_movement(self, strand, side, rect):
         """
-        Start the movement of a strand.
+        Start the movement of a strand's point.
 
         Args:
             strand (Strand): The strand to move.
-            side (int): Which side of the strand to move (0 for start, 1 for end).
+            side (int or str): Which side of the strand to move (0 for start, 1 for end, 'control_point' for control point).
             rect (QRectF): The rectangle representing the movable area.
         """
         self.moving_side = side
@@ -252,21 +267,30 @@ class MoveMode:
             QRectF: The rectangle representing the movable area of the strand end.
         """
         center = strand.start if side == 0 else strand.end
-        return QRectF(center.x() - strand.width, center.y() - strand.width, strand.width*2, strand.width*2)
+        size = strand.width  # Adjust as needed
+        return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def update_strand_position(self, new_pos):
         """
-        Update the position of the affected strand.
+        Update the position of the affected strand's point.
 
         Args:
-            new_pos (QPointF): The new position for the strand end.
+            new_pos (QPointF): The new position.
         """
         if not self.affected_strand:
             return
 
-        self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
-        self.selected_rectangle.moveCenter(new_pos)
-        self.canvas.update()
+        if self.moving_side == 'control_point':
+            # Move the control point
+            self.affected_strand.control_point = new_pos
+            self.affected_strand.update_shape()
+            self.selected_rectangle.moveCenter(new_pos)
+            self.canvas.update()
+        else:
+            # Move the start or end point
+            self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
+            self.selected_rectangle.moveCenter(new_pos)
+            self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
         old_start, old_end = strand.start, strand.end
@@ -274,6 +298,10 @@ class MoveMode:
             strand.start = new_pos
         else:
             strand.end = new_pos
+        # Recalculate control point if needed; here we keep it stationary or adjust as needed
+        # Optionally, adjust control point to stay centered
+        # strand.control_point = QPointF((strand.start.x() + strand.end.x()) / 2,
+        #                                (strand.start.y() + strand.end.y()) / 2)
         strand.update_shape()
         strand.update_side_line()
 
@@ -376,12 +404,12 @@ class MoveMode:
         """Remove deleted strands and update references after strand deletion."""
         # Remove deleted strands from the canvas
         self.canvas.strands = [strand for strand in self.canvas.strands if not getattr(strand, 'deleted', False)]
-        
+
         # Update attached strands for remaining strands
         for strand in self.canvas.strands:
             if isinstance(strand, Strand):
                 strand.attached_strands = [attached for attached in strand.attached_strands if not getattr(attached, 'deleted', False)]
-        
+
         # Clear selection if the selected strand was deleted
         if self.affected_strand and getattr(self.affected_strand, 'deleted', False):
             self.affected_strand = None
@@ -389,6 +417,6 @@ class MoveMode:
             self.moving_point = None
             self.moving_side = None
             self.selected_rectangle = None
-        
+
         # Update the canvas
         self.canvas.update()

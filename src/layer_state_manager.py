@@ -457,6 +457,17 @@ class LayerStateManager(QObject):
         """Get the newest layer."""
         return self.layer_state.get('newest_layer')
 
+    def connect_layers(self, layer_name1, layer_name2):
+        """Connect two layers by their names."""
+        connections = self.layer_state.setdefault('connections', {})
+        connections.setdefault(layer_name1, []).append(layer_name2)
+        connections.setdefault(layer_name2, []).append(layer_name1)
+        logging.info(f"Connected layers: {layer_name1} and {layer_name2}")
+
+    def getConnections(self):
+        """Return the current layer connections."""
+        return self.layer_state.get('connections', {})
+
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 
 # End of LayerStateManager class

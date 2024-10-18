@@ -1,8 +1,11 @@
+# src/strand.py
+
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker, QImage
 )
 import math
+import logging
 
 class Strand:
     """
@@ -24,6 +27,10 @@ class Strand:
         self.has_circles = [False, False]  # Flags for circles at start and end
         self.is_first_strand = False
         self.is_start_side = True
+
+        # Initialize attachment statuses
+        self.start_attached = False
+        self.end_attached = False
 
         # Initialize control point at the midpoint
         self.control_point = QPointF(
@@ -102,12 +109,8 @@ class Strand:
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Determine the cap style based on the number of attached strands
-        num_attached = len(self.attached_strands)
-        if num_attached <= 1:
-            cap_style = Qt.SquareCap
-        else:
-            cap_style = Qt.RoundCap
+        # Use square cap style by default
+        cap_style = Qt.SquareCap
 
         # Draw the black outline (stroke)
         outline_pen = QPen(
@@ -121,7 +124,7 @@ class Strand:
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.get_path())
 
-        # Draw the purple fill
+        # Draw the color fill
         fill_pen = QPen(
             self.color,
             self.width,
@@ -132,9 +135,9 @@ class Strand:
         painter.setPen(fill_pen)
         painter.drawPath(self.get_path())
 
-        # Draw circles at the ends if needed
-        for i, has_circle in enumerate(self.has_circles):
-            if has_circle:
+        # Draw circles at the ends if needed (has_circles or attached)
+        for i, (has_circle, attached) in enumerate(zip(self.has_circles, [self.start_attached, self.end_attached])):
+            if has_circle or attached:
                 circle_radius = self.width / 2
                 center = self.start if i == 0 else self.end
 
@@ -143,7 +146,7 @@ class Strand:
                 painter.setPen(QPen(self.stroke_color, self.stroke_width * 2))
                 painter.drawEllipse(center, circle_radius, circle_radius)
 
-                # Draw purple fill circle
+                # Draw color fill circle
                 painter.setBrush(QBrush(self.color))
                 painter.setPen(Qt.NoPen)
                 painter.drawEllipse(center, circle_radius, circle_radius)
@@ -198,6 +201,10 @@ class AttachedStrand(Strand):
             (self.start.x() + self.end.x()) / 2,
             (self.start.y() + self.end.y()) / 2
         )
+
+        # Initialize attachment statuses
+        self.start_attached = True  # Attached at start to parent strand
+        self.end_attached = False
 
     def update_start(self, new_start):
         """Update the start point of the attached strand."""
@@ -374,7 +381,7 @@ class MaskedStrand(Strand):
         self.update_shape()
 
     def set_color(self, new_color):
-        """Set the color of the masked strand and the first selected strand."""
+        """Set the color of the masked strand and the selected strands."""
         self.color = new_color
         if self.first_selected_strand:
             self.first_selected_strand.set_color(new_color)
@@ -407,7 +414,7 @@ class MaskedStrand(Strand):
         """
         Custom attribute setter to handle specific attributes.
         """
-        if name in ['attached_strands', 'has_circles', 'set_number', 'layer_name']:
+        if name in ['attached_strands', 'has_circles', 'set_number', 'layer_name', '_attached_strands']:
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)

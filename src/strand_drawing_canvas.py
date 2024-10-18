@@ -980,6 +980,7 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
         )
         return max(existing_set_numbers, default=0) + 1
+
     def attach_strand(self, parent_strand, new_strand):
         """Attach a new strand to a parent strand."""
         parent_strand.attached_strands.append(new_strand)
@@ -1001,6 +1002,20 @@ class StrandDrawingCanvas(QWidget):
         # Set the color for the new strand
         if new_strand.set_number in self.strand_colors:
             new_strand.set_color(self.strand_colors[new_strand.set_number])
+
+        # **Update attachment statuses**
+        # The start of the new strand is attached to the end of the parent strand
+        new_strand.start = QPointF(parent_strand.end)
+        new_strand.start_attached = True
+        parent_strand.end_attached = True
+
+        # Update the side lines to reflect attachment
+        parent_strand.update_side_line()
+        new_strand.update_side_line()
+
+        # **Update the layer_state_manager with the new connection**
+        if self.layer_state_manager:
+            self.layer_state_manager.connect_layers(parent_strand.layer_name, new_strand.layer_name)
 
         # Update the layer panel
         if self.layer_panel:
@@ -1959,10 +1974,46 @@ class StrandDrawingCanvas(QWidget):
         updated_strands.add(strand)
         logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
 
-    def points_are_close(self, point1, point2):
-        tolerance = self.strand_width if hasattr(self, 'strand_width') else 10  # Default to 10 if strand_width is not defined
-        return (abs(point1.x() - point2.x()) < tolerance and
-                abs(point1.y() - point2.y()) < tolerance)
+    def points_are_close(self, point1, point2, tolerance=5.0):
+        """Check if two points are within a certain tolerance."""
+        return (abs(point1.x() - point2.x()) <= tolerance and
+                abs(point1.y() - point2.y()) <= tolerance)
+
+    def update(self):
+        self.update_attachment_statuses()
+        super().update()
+
+    def update_attachment_statuses(self):
+        """Update attachment statuses of all strands based on the current layer state."""
+        if not hasattr(self, 'layer_state_manager') or not self.layer_state_manager:
+            return
+
+        connections = self.layer_state_manager.getConnections()
+        strand_dict = {strand.layer_name: strand for strand in self.strands if not isinstance(strand, MaskedStrand)}
+
+        for strand in self.strands:
+            if isinstance(strand, MaskedStrand):
+                # Skip MaskedStrands
+                continue
+
+            # Reset attachment status
+            strand.start_attached = False
+            strand.end_attached = False
+
+            attached_layer_names = connections.get(strand.layer_name, [])
+
+            for attached_name in attached_layer_names:
+                attached_strand = strand_dict.get(attached_name)
+                if attached_strand:
+                    # Check if the start or end points are close and update attachment statuses
+                    if self.points_are_close(strand.start, attached_strand.start) or self.points_are_close(strand.start, attached_strand.end):
+                        strand.start_attached = True
+                    if self.points_are_close(strand.end, attached_strand.start) or self.points_are_close(strand.end, attached_strand.end):
+                        strand.end_attached = True
+
+    def set_layer_state_manager(self, layer_state_manager):
+        self.layer_state_manager = layer_state_manager
+        # Connect any necessary signals here
 
 
 

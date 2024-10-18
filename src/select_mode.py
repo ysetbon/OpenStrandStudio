@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QPointF
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -8,20 +8,51 @@ class SelectMode(QObject):
         self.canvas = canvas
 
     def mousePressEvent(self, event):
+        # Map the event position to the canvas coordinate system
         pos = event.pos()
         strands_at_point = self.find_strands_at_point(pos)
+
+        # Deselect all strands and circles before selecting a new one
+        for strand in self.canvas.strands:
+            self.deselect_strand_recursively(strand)
+
         if len(strands_at_point) == 1:
-            selected_strand = strands_at_point[0]
+            selected_strand, selection_type = strands_at_point[0]
+            if selection_type == 'start':
+                selected_strand.start_selected = True
+            elif selection_type == 'end':
+                selected_strand.end_selected = True
+            else:
+                selected_strand.is_selected = True
+
             index = self.canvas.strands.index(selected_strand)
-            self.canvas.select_strand(index)
             self.strand_selected.emit(index)
-        elif len(strands_at_point) == 0:
-            # Deselect if clicking on an empty area
-            self.canvas.select_strand(None)
-            self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
+        else:
+            # Deselect if clicking on an empty area or multiple strands
+            index = -1
+            self.strand_selected.emit(index)
+
+        # Redraw the canvas to update the visual state
+        self.canvas.update()
 
     def find_strands_at_point(self, pos):
-        return [
-            strand for strand in self.canvas.strands
-            if strand.get_selection_path().contains(pos)
-        ]
+        results = []
+        for strand in self.canvas.strands:
+            contains_start = strand.get_start_selection_path().contains(pos)
+            contains_end = strand.get_end_selection_path().contains(pos)
+            if contains_start:
+                results.append((strand, 'start'))
+            elif contains_end:
+                results.append((strand, 'end'))
+            elif strand.get_selection_path().contains(pos):
+                results.append((strand, 'strand'))
+        return results
+
+    def deselect_strand_recursively(self, strand):
+        """Recursively deselect strand and its attached strands."""
+        strand.is_selected = False
+        strand.start_selected = False
+        strand.end_selected = False
+        if hasattr(strand, 'attached_strands'):
+            for attached_strand in strand.attached_strands:
+                self.deselect_strand_recursively(attached_strand)

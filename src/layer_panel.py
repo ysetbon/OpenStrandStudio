@@ -909,18 +909,22 @@ class LayerPanel(QWidget):
                 return i
         return None
 
+
     def deselect_all(self):
         """Deselect all layers and emit the deselect_all_requested signal."""
         for button in self.layer_buttons:
             button.setChecked(False)
             button.update()  # Force a repaint of the button
+
         if self.lock_mode:
             self.locked_layers.clear()
             self.update_layer_buttons_lock_state()
             self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+
         self.deselect_all_requested.emit()
-        self.canvas.deselect_all_strands()  # Add this line to deselect strands in the canvas
-        self.update()  # Force a repaint of the entire panel
+        self.canvas.deselect_all_strands()  # Deselect all strands in the canvas
+        self.canvas.update()  # Update the canvas to reflect changes
+        self.update()  # Force a repaint of the layer panel if needed
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""

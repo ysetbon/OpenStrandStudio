@@ -536,11 +536,6 @@ class StrandDrawingCanvas(QWidget):
         else:
             logging.error("GroupLayerManager not properly connected to StrandDrawingCanvas")
 
-    def mousePressEvent(self, event):
-        if self.group_layer_manager and self.group_layer_manager.move_mode:
-            self.group_layer_manager.start_group_move(event.pos())
-        else:
-            super().mousePressEvent(event)
 
     def initialize_properties(self):
         """Initialize all properties used in the StrandDrawingCanvas."""
@@ -1114,12 +1109,23 @@ class StrandDrawingCanvas(QWidget):
             # Optionally log the deletion
             logging.info(f"Deleted strand: {deleted_strand.layer_name}")
     def deselect_all_strands(self):
-        """Deselect all strands."""
-        self.selected_strand = None
-        self.selected_strand_index = None
-        self.update()
+        """Deselect all strands and update the canvas."""
+        def deselect_strand_recursively(strand):
+            strand.is_selected = False
+            strand.start_selected = False
+            strand.end_selected = False
+            if hasattr(strand, 'attached_strands'):
+                for attached_strand in strand.attached_strands:
+                    deselect_strand_recursively(attached_strand)
+
+        for strand in self.strands:
+            deselect_strand_recursively(strand)
+
+        self.update()  # Redraw the canvas to reflect changes
 
     def mousePressEvent(self, event):
+        pos = event.pos()
+
         if self.current_mode == "rotate":
             self.rotate_mode.mousePressEvent(event)
         elif self.moving_group:
@@ -1127,8 +1133,9 @@ class StrandDrawingCanvas(QWidget):
             self.setCursor(Qt.ClosedHandCursor)
         elif self.is_drawing_new_strand:
             self.new_strand_start_point = event.pos()
-        elif self.current_mode == "select":
-            self.handle_strand_selection(event.pos())
+
+        if self.current_mode == "select":
+            self.handle_strand_selection(pos)
             
         elif self.current_mode == self.mask_mode:
             self.mask_mode.handle_mouse_press(event)
@@ -1843,11 +1850,10 @@ class StrandDrawingCanvas(QWidget):
         painter.restore()
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)
-        
         if strands_at_point:
             selected_strand = strands_at_point[-1]  # Select the topmost strand
             index = self.strands.index(selected_strand)
-            
+
             if self.current_mode == self.mask_mode:
                 self.mask_mode.handle_strand_selection(selected_strand)
             else:
@@ -1863,8 +1869,14 @@ class StrandDrawingCanvas(QWidget):
 
 
     def find_strands_at_point(self, pos):
-        return [strand for strand in self.strands if strand.get_path().contains(pos)]
-    
+        results = []
+        for strand in self.strands:
+            contains_start = strand.get_start_selection_path().contains(pos)
+            contains_end = strand.get_end_selection_path().contains(pos)
+            if contains_start or contains_end:
+                results.append(strand)
+        return results
+        
     def exit_select_mode(self):
         if self.current_mode == "select" or self.current_mode == self.mask_mode:
             self.current_mode = self.attach_mode

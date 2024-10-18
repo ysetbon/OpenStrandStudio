@@ -16,8 +16,8 @@ class Strand:
         color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=4,
         set_number=None, layer_name=""
     ):
-        self.start = start
-        self.end = end
+        self._start = start
+        self._end = end
         self.width = width
         self.color = color
         self.stroke_color = stroke_color
@@ -34,16 +34,37 @@ class Strand:
 
         # Initialize control point at the midpoint
         self.control_point = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
+            (self._start.x() + self._end.x()) / 2,
+            (self._start.y() + self._end.y()) / 2
         )
 
         self.layer_name = layer_name
         self.set_number = set_number
         self.update_attachable()
         self.update_shape()
-        self.update_side_line()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
+
+    @property
+    def start(self):
+        """Getter for the start point."""
+        return self._start
+
+    @start.setter
+    def start(self, value):
+        """Setter for the start point."""
+        self._start = value
+        self.update_shape()
+
+    @property
+    def end(self):
+        """Getter for the end point."""
+        return self._end
+
+    @end.setter
+    def end(self, value):
+        """Setter for the end point."""
+        self._end = value
+        self.update_shape()
 
     def update_attachable(self):
         """Update the attachable property based on has_circles."""
@@ -70,9 +91,22 @@ class Strand:
         self.side_line_color = new_color
 
     def update_shape(self):
-        """Update the shape of the strand based on its start and end points."""
-        # No additional calculations needed unless you want to automatically adjust the control point
-        pass
+        """Update the shape of the strand based on its start, end, and control points."""
+        # Calculate the new midpoint between start and end
+        new_midpoint = QPointF(
+            (self.start.x() + self.end.x()) / 2,
+            (self.start.y() + self.end.y()) / 2
+        )
+
+        # Check if the control point was previously at the midpoint
+        # Allow a small tolerance due to floating-point precision
+        if (abs(self.control_point.x() - new_midpoint.x()) < 1e-6 and
+            abs(self.control_point.y() - new_midpoint.y()) < 1e-6):
+            # Update the control point to the new midpoint
+            self.control_point = new_midpoint
+
+        # Update side lines
+        self.update_side_line()
 
     def get_path(self):
         """Get the path representing the strand as a quadratic Bézier curve."""
@@ -81,22 +115,54 @@ class Strand:
         path.quadTo(self.control_point, self.end)
         return path
 
+    def boundingRect(self):
+        """Return the bounding rectangle of the strand."""
+        # Get the path representing the strand as a quadratic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Start with the bounding rect of the stroke path
+        bounding_rect = stroke_path.boundingRect()
+
+        # Include side lines in the bounding rect if they exist
+        if hasattr(self, 'start_line_start') and hasattr(self, 'start_line_end'):
+            start_line_rect = QRectF(self.start_line_start, self.start_line_end)
+            bounding_rect = bounding_rect.united(start_line_rect)
+
+        if hasattr(self, 'end_line_start') and hasattr(self, 'end_line_end'):
+            end_line_rect = QRectF(self.end_line_start, self.end_line_end)
+            bounding_rect = bounding_rect.united(end_line_rect)
+
+        # Return the combined bounding rectangle
+        return bounding_rect
+
     def update_side_line(self):
         """Update the positions of the black lines covering the sides of the squared ends based on the Bézier curve's tangents."""
-        # Calculate the tangent angles at the start and end points
-        # For a quadratic Bézier curve: B(t) = (1 - t)^2 * P0 + 2(1 - t)t * P1 + t^2 * P2
-        # The derivative B'(t) gives the tangent vector at point t
-        # At t=0: B'(0) = 2(P1 - P0)
-        # At t=1: B'(1) = 2(P2 - P1)
-
-        # Tangent at the start point
+        # Calculate the tangent vectors at the start and end points
         tangent_start = 2 * (self.control_point - self.start)
-        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
-
-        # Tangent at the end point
         tangent_end = 2 * (self.end - self.control_point)
-        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+        
+        # Check for zero-length tangents to avoid division by zero in angle calculations
+        if tangent_start.x() == 0 and tangent_start.y() == 0:
+            # Handle the case where tangent is zero (control point coincides with start)
+            # Use the direction from start to end as the tangent direction
+            tangent_start = self.end - self.start
+            
+        if tangent_end.x() == 0 and tangent_end.y() == 0:
+            # Handle the case where tangent is zero (control point coincides with end)
+            # Use the direction from start to end as the tangent direction
+            tangent_end = self.end - self.start
 
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+        
         # Perpendicular angles at start and end
         perp_angle_start = angle_start + math.pi / 2
         perp_angle_end = angle_end + math.pi / 2
@@ -201,27 +267,24 @@ class AttachedStrand(Strand):
         self.min_length = 40
         self.has_circles = [True, False]
         self.update_end()
-        self.update_shape()
-        self.update_side_line()
-    
-        # Initialize control point
-        self.control_point = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
-        )
-    
+        # Control point is initialized in `update_end`
+        
         # Initialize attachment statuses
         self.start_attached = True  # Attached at start to parent strand
         self.end_attached = False
 
-    def update_side_line(self):
-        """Update the positions of the black line covering the side of the squared end."""
-        # Calculate the tangent angle at the end point
-        # For a quadratic Bézier curve: B(t) = (1 - t)^2 * P0 + 2(1 - t)t * P1 + t^2 * P2
-        # The derivative B'(t) gives the tangent vector at point t
-        # At t=1: B'(1) = 2(P2 - P1)
+    @property
+    def end(self):
+        return super().end
 
-        # Tangent at the end point
+    @end.setter
+    def end(self, value):
+        super(AttachedStrand, self.__class__).end.fset(self, value)
+        self.update_shape()
+
+    def update_side_line(self):
+        """Update the positions of the black lines covering the sides of the squared end."""
+        # Calculate the tangent angle at the end point
         tangent_end = 2 * (self.end - self.control_point)
         angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
@@ -236,6 +299,11 @@ class AttachedStrand(Strand):
         # End side line positions
         self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
         self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+        # **Define start_line_start and start_line_end for consistency**
+        # Since the start is rounded and doesn't have side lines, we can set them to the start point
+        self.start_line_start = self.start
+        self.start_line_end = self.start
 
     def update_end(self):
         """Update the end point based on the current angle and length."""
@@ -271,6 +339,25 @@ class AttachedStrand(Strand):
             self.update_shape()
             self.update_side_line()
 
+    def boundingRect(self):
+        """Return the bounding rectangle of the strand."""
+        # Get the path representing the strand as a quadratic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Include side lines in the bounding rect
+        bounding_rect = stroke_path.boundingRect()
+        bounding_rect = bounding_rect.united(QRectF(self.start_line_start, self.start_line_end))
+        bounding_rect = bounding_rect.united(QRectF(self.end_line_start, self.end_line_end))
+
+        # Adjust for any pen widths or additional drawing elements if necessary
+        return bounding_rect
     def draw(self, painter):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save()
@@ -498,3 +585,7 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
+
+
+

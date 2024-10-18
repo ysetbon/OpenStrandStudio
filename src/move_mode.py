@@ -284,6 +284,7 @@ class MoveMode:
             # Move the control point
             self.affected_strand.control_point = new_pos
             self.affected_strand.update_shape()
+            self.affected_strand.update_side_line()  # Add this line to update side lines
             self.selected_rectangle.moveCenter(new_pos)
             self.canvas.update()
         else:

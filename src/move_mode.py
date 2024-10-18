@@ -22,7 +22,7 @@ class MoveMode:
         self.moving_point = None  # The point being moved
         self.is_moving = False  # Flag to indicate if we're currently moving a point
         self.affected_strand = None  # The strand being affected by the move
-        self.moving_side = None  # Which side of the strand is being moved (0 for start, 1 for end, 'control_point' for control point)
+        self.moving_side = None  # Which side of the strand is being moved (0 for start, 1 for end, 'control_point1', 'control_point2')
         self.selected_rectangle = None  # The rectangle representing the selected point
         self.last_update_pos = None  # The last position update
         self.accumulated_delta = QPointF(0, 0)  # Accumulated movement delta
@@ -154,7 +154,7 @@ class MoveMode:
 
     def try_move_strand(self, strand, pos, strand_index):
         """
-        Try to move a strand if the position is within its end rectangles or control point.
+        Try to move a strand if the position is within its end rectangles or control points.
 
         Args:
             strand (Strand): The strand to try moving.
@@ -166,10 +166,14 @@ class MoveMode:
         """
         start_rect = self.get_end_rectangle(strand, 0)
         end_rect = self.get_end_rectangle(strand, 1)
-        control_point_rect = self.get_control_point_rectangle(strand)
+        control_point1_rect = self.get_control_point_rectangle(strand, 1)
+        control_point2_rect = self.get_control_point_rectangle(strand, 2)
 
-        if control_point_rect.contains(pos):
-            self.start_movement(strand, 'control_point', control_point_rect)
+        if control_point1_rect.contains(pos):
+            self.start_movement(strand, 'control_point1', control_point1_rect)
+            return True
+        elif control_point2_rect.contains(pos):
+            self.start_movement(strand, 'control_point2', control_point2_rect)
             return True
         elif start_rect.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_rect)
@@ -179,10 +183,15 @@ class MoveMode:
             return True
         return False
 
-    def get_control_point_rectangle(self, strand):
-        """Get the rectangle around the control point for hit detection."""
-        size = 20  # Increased size to make the area twice as large
-        center = strand.control_point
+    def get_control_point_rectangle(self, strand, control_point_number):
+        """Get the rectangle around the specified control point for hit detection."""
+        size = 80  # Size of the area for control point selection
+        if control_point_number == 1:
+            center = strand.control_point1
+        elif control_point_number == 2:
+            center = strand.control_point2
+        else:
+            return QRectF()
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def try_move_attached_strands(self, attached_strands, pos):
@@ -211,7 +220,7 @@ class MoveMode:
 
         Args:
             strand (Strand): The strand to check.
-            side (int or str): Which side of the strand to check (0 for start, 1 for end, 'control_point' for control point).
+            side (int or str): Which side of the strand to check (0 for start, 1 for end, 'control_point1', 'control_point2').
             strand_index (int): The index of the strand in the canvas's strand list.
 
         Returns:
@@ -224,8 +233,8 @@ class MoveMode:
         if strand_index in self.locked_layers:
             return False
 
-        if side == 'control_point':
-            return True  # Assume control point can be moved unless specific locking is needed
+        if side in ('control_point1', 'control_point2'):
+            return True  # Assume control points can be moved unless specific locking is needed
 
         # Check if the side is shared with a locked strand
         point = strand.start if side == 0 else strand.end
@@ -242,9 +251,11 @@ class MoveMode:
 
         Args:
             strand (Strand): The strand to move.
-            side (int or str): Which side of the strand to move (0 for start, 1 for end, 'control_point' for control point).
+            side (int or str): Which side of the strand to move (0 for start, 1 for end, 'control_point1', 'control_point2').
             rect (QRectF): The rectangle representing the movable area.
         """
+        # Debug statement to verify movement initiation
+        # print(f"Starting movement on side: {side}")
         self.moving_side = side
         self.moving_point = rect.center()
         self.affected_strand = strand
@@ -267,7 +278,7 @@ class MoveMode:
             QRectF: The rectangle representing the movable area of the strand end.
         """
         center = strand.start if side == 0 else strand.end
-        size = strand.width * 2  # Increased size to make the area twice as large
+        size = 80  # Increased size for easier selection
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def update_strand_position(self, new_pos):
@@ -280,18 +291,28 @@ class MoveMode:
         if not self.affected_strand:
             return
 
-        if self.moving_side == 'control_point':
-            # Move the control point
-            self.affected_strand.control_point = new_pos
+        if self.moving_side == 'control_point1':
+            # Move the first control point
+            self.affected_strand.control_point1 = new_pos
             self.affected_strand.update_shape()
-            self.affected_strand.update_side_line()  # Add this line to update side lines
+            self.affected_strand.update_side_line()  # Ensure side lines are updated
             self.selected_rectangle.moveCenter(new_pos)
             self.canvas.update()
-        else:
-            # Move the start or end point
+        elif self.moving_side == 'control_point2':
+            # Move the second control point
+            self.affected_strand.control_point2 = new_pos
+            self.affected_strand.update_shape()
+            self.affected_strand.update_side_line()  # Ensure side lines are updated
+            self.selected_rectangle.moveCenter(new_pos)
+            self.canvas.update()
+        elif self.moving_side == 0 or self.moving_side == 1:
+            # Moving start or end point
             self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
             self.selected_rectangle.moveCenter(new_pos)
             self.canvas.update()
+        else:
+            # Invalid moving_side
+            pass  # Or handle unexpected cases
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
         """Move the strand's point and update attached strands without resetting control points.
@@ -303,19 +324,21 @@ class MoveMode:
         """
         old_start, old_end = strand.start, strand.end
 
-        # Check if the control point is at the same position as the moving end
         if moving_side == 0:
-            control_point_at_moving_end = (strand.control_point == strand.start)
+            # Update control points if they coincide with the start point
+            if strand.control_point1 == strand.start:
+                strand.control_point1 = new_pos
+            if strand.control_point2 == strand.start:
+                strand.control_point2 = new_pos
             strand.start = new_pos
-            if control_point_at_moving_end:
-                strand.control_point = new_pos
+
         elif moving_side == 1:
-            control_point_at_moving_end = (strand.control_point == strand.end)
+            # Update control points if they coincide with the end point
+            if strand.control_point1 == strand.end:
+                strand.control_point1 = new_pos
+            if strand.control_point2 == strand.end:
+                strand.control_point2 = new_pos
             strand.end = new_pos
-            if control_point_at_moving_end:
-                strand.control_point = new_pos
-        elif moving_side == 'control_point':
-            strand.control_point = new_pos
 
         strand.update_shape()
         strand.update_side_line()
@@ -372,8 +395,8 @@ class MoveMode:
                 attached.start = strand.start
             elif attached.start == old_end:
                 attached.start = strand.end
-            # Update attached strand without resetting control point
-            attached.update(attached.end, reset_control_point=False)
+            # Update attached strand without resetting control points
+            attached.update(attached.end, reset_control_points=False)
             attached.update_side_line()
             # Recursively update attached strands
             self.update_all_attached_strands(attached, attached.start, attached.end)

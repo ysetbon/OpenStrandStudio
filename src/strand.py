@@ -693,15 +693,16 @@ class MaskedStrand(Strand):
     def update_shape(self):
         """Update the shape of the masked strand."""
         if self.first_selected_strand:
-            self.start = self.first_selected_strand.start
-            self.end = self.first_selected_strand.end
+            self._start = self.first_selected_strand.start  # Set private attribute directly
+            self._end = self.first_selected_strand.end
         elif self.second_selected_strand:
-            self.start = self.second_selected_strand.start
-            self.end = self.second_selected_strand.end
+            self._start = self.second_selected_strand.start
+            self._end = self.second_selected_strand.end
+
         # Update control point
         self.control_point = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
+            (self._start.x() + self._end.x()) / 2,
+            (self._start.y() + self._end.y()) / 2
         )
         super().update_shape()
 

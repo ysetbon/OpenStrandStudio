@@ -23,18 +23,31 @@ class MaskMode(QObject):
 
     def handle_mouse_press(self, event):
         pos = event.pos()
-        strands_at_point = self.canvas.find_strands_at_point(pos)
-        
+        strands_at_point = self.find_strands_at_point(pos)
+
         # Filter out masked strands if there are non-masked strands at the same point
-        non_masked_strands = [s for s in strands_at_point if not isinstance(s, MaskedStrand)]
+        non_masked_strands = [(s, t) for s, t in strands_at_point if not isinstance(s, MaskedStrand)]
         if non_masked_strands:
             strands_at_point = non_masked_strands
 
         if len(strands_at_point) == 1:
-            selected_strand = strands_at_point[0]
+            selected_strand, selection_type = strands_at_point[0]
             self.handle_strand_selection(selected_strand)
         else:
             self.clear_selection()
+
+    def find_strands_at_point(self, pos):
+        results = []
+        for strand in self.canvas.strands:
+            contains_start = strand.get_start_selection_path().contains(pos)
+            contains_end = strand.get_end_selection_path().contains(pos)
+            if contains_start:
+                results.append((strand, 'start'))
+            elif contains_end:
+                results.append((strand, 'end'))
+            elif strand.get_selection_path().contains(pos):
+                results.append((strand, 'strand'))
+        return results
 
     def handle_strand_selection(self, strand):
         logging.info(f"Selecting strand: {strand.layer_name}")

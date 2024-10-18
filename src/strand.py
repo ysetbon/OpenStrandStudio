@@ -82,83 +82,84 @@ class Strand:
         return path
 
     def update_side_line(self):
-        """Update the position of the side line."""
-        angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
-        perpendicular_angle = angle + 90
-        half_width = self.width / 2
-        perpendicular_dx = math.cos(math.radians(perpendicular_angle)) * half_width
-        perpendicular_dy = math.sin(math.radians(perpendicular_angle)) * half_width
-        perpendicular_dx_stroke = math.cos(math.radians(perpendicular_angle)) * self.stroke_width * 2
-        perpendicular_dy_stroke = math.sin(math.radians(perpendicular_angle)) * self.stroke_width * 2
+        """Update the positions of the black lines covering the sides of the squared ends based on the Bézier curve's tangents."""
+        # Calculate the tangent angles at the start and end points
+        # For a quadratic Bézier curve: B(t) = (1 - t)^2 * P0 + 2(1 - t)t * P1 + t^2 * P2
+        # The derivative B'(t) gives the tangent vector at point t
+        # At t=0: B'(0) = 2(P1 - P0)
+        # At t=1: B'(1) = 2(P2 - P1)
 
-        self.side_line_start = QPointF(
-            self.start.x() + perpendicular_dx - perpendicular_dx_stroke,
-            self.start.y() + perpendicular_dy - perpendicular_dy_stroke
-        )
-        self.side_line_end = QPointF(
-            self.start.x() - perpendicular_dx + perpendicular_dx_stroke,
-            self.start.y() - perpendicular_dy + perpendicular_dy_stroke
-        )
+        # Tangent at the start point
+        tangent_start = 2 * (self.control_point - self.start)
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+
+        # Tangent at the end point
+        tangent_end = 2 * (self.end - self.control_point)
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
 
     def set_attachable(self, attachable):
         self.attachable = attachable
         self.update_shape()  # Assuming you have this method to update the strand's appearance
 
     def draw(self, painter):
-        """Draw the strand on the given painter."""
+        """Draw the strand with squared ends and black lines covering the sides."""
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Use square cap style by default
-        cap_style = Qt.SquareCap
+        # Get the path representing the strand as a quadratic Bézier curve
+        path = self.get_path()
 
-        # Draw the black outline (stroke)
-        outline_pen = QPen(
-            self.stroke_color,
-            self.width + self.stroke_width * 2,
-            Qt.SolidLine,
-            cap_style,
-            Qt.RoundJoin
-        )
-        painter.setPen(outline_pen)
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Create a stroker for the fill path with squared ends
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        fill_path = fill_stroker.createStroke(path)
+
+        # Draw the stroke path with the stroke color
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
+        painter.drawPath(stroke_path)
+
+        # Draw the fill path with the strand's color
+        painter.setBrush(self.color)
+        painter.drawPath(fill_path)
+
+        # Draw black lines covering the sides of the squared ends
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(side_pen)
         painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_path())
 
-        # Draw the color fill
-        fill_pen = QPen(
-            self.color,
-            self.width,
-            Qt.SolidLine,
-            cap_style,
-            Qt.RoundJoin
-        )
-        painter.setPen(fill_pen)
-        painter.drawPath(self.get_path())
-
-        # Draw circles at the ends if needed (has_circles or attached)
-        for i, (has_circle, attached) in enumerate(zip(self.has_circles, [self.start_attached, self.end_attached])):
-            if has_circle or attached:
-                circle_radius = self.width / 2
-                center = self.start if i == 0 else self.end
-
-                # Draw black outline circle
-                painter.setBrush(Qt.NoBrush)
-                painter.setPen(QPen(self.stroke_color, self.stroke_width * 2))
-                painter.drawEllipse(center, circle_radius, circle_radius)
-
-                # Draw color fill circle
-                painter.setBrush(QBrush(self.color))
-                painter.setPen(Qt.NoPen)
-                painter.drawEllipse(center, circle_radius, circle_radius)
-
-        # Draw the side line if not the first strand on start side
-        if not (self.is_first_strand and self.is_start_side):
-            painter.setPen(QPen(self.side_line_color, self.stroke_width * 3))
-            painter.drawLine(self.side_line_start, self.side_line_end)
-
-        # Draw attached strands
-        for attached_strand in self.attached_strands:
-            attached_strand.draw(painter)
+        # Draw lines at the start and end to cover the sides
+        painter.drawLine(self.start_line_start, self.start_line_end)
+        painter.drawLine(self.end_line_start, self.end_line_end)
 
         painter.restore()
 
@@ -175,11 +176,17 @@ class Strand:
         """
         # A strand is not attachable if both ends have circles (i.e., has_circles is [True, True])
         return not all(self.has_circles)
+from PyQt5.QtCore import QPointF, Qt
+from PyQt5.QtGui import (
+    QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker
+)
+import math
 
 class AttachedStrand(Strand):
     """
     Represents a strand attached to another strand.
     """
+
     def __init__(self, parent, start_point):
         super().__init__(
             start_point, start_point, parent.width,
@@ -194,43 +201,41 @@ class AttachedStrand(Strand):
         self.min_length = 40
         self.has_circles = [True, False]
         self.update_end()
+        self.update_shape()
         self.update_side_line()
-
+    
         # Initialize control point
         self.control_point = QPointF(
             (self.start.x() + self.end.x()) / 2,
             (self.start.y() + self.end.y()) / 2
         )
-
+    
         # Initialize attachment statuses
         self.start_attached = True  # Attached at start to parent strand
         self.end_attached = False
 
-    def update_start(self, new_start):
-        """Update the start point of the attached strand."""
-        delta = new_start - self.start
-        self.start = new_start
-        self.end += delta
-        self.control_point += delta
-        self.update_shape()
-        self.update_side_line()
+    def update_side_line(self):
+        """Update the positions of the black line covering the side of the squared end."""
+        # Calculate the tangent angle at the end point
+        # For a quadratic Bézier curve: B(t) = (1 - t)^2 * P0 + 2(1 - t)t * P1 + t^2 * P2
+        # The derivative B'(t) gives the tangent vector at point t
+        # At t=1: B'(1) = 2(P2 - P1)
 
-    def update(self, new_end):
-        """Update the end point of the attached strand."""
-        old_end = self.end
-        self.end = new_end
-        self.length = math.hypot(self.end.x() - self.start.x(), self.end.y() - self.start.y())
-        self.angle = math.degrees(math.atan2(self.end.y() - self.start.y(), self.end.x() - self.start.x()))
-        self.control_point = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
-        )
-        self.update_shape()
-        self.update_side_line()
-        self.parent.update_side_line()
-        for attached in self.attached_strands:
-            if attached.start == old_end:
-                attached.update_start(self.end)
+        # Tangent at the end point
+        tangent_end = 2 * (self.end - self.control_point)
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angle at end
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side line
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
 
     def update_end(self):
         """Update the end point based on the current angle and length."""
@@ -244,7 +249,82 @@ class AttachedStrand(Strand):
             (self.start.y() + self.end.y()) / 2
         )
         self.update_shape()
+        self.update_side_line()  # Update side line when end changes
 
+    def update(self, new_end):
+        """Update the end point of the attached strand and recalculate control point and side lines."""
+        dx = new_end.x() - self.start.x()
+        dy = new_end.y() - self.start.y()
+        self.length = math.hypot(dx, dy)
+        self.angle = math.degrees(math.atan2(dy, dx))
+        
+        # Enforce a minimum length if needed
+        if self.length < self.min_length:
+            self.length = self.min_length
+            self.update_end()  # Recalculate end based on adjusted length
+        else:
+            self.end = new_end
+            self.control_point = QPointF(
+                (self.start.x() + self.end.x()) / 2,
+                (self.start.y() + self.end.y()) / 2
+            )
+            self.update_shape()
+            self.update_side_line()
+
+    def draw(self, painter):
+        """Draw the attached strand with a rounded start and squared end."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a quadratic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Create a stroker for the fill path with squared ends
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        fill_path = fill_stroker.createStroke(path)
+
+        # Draw the stroke path with the stroke color
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
+        painter.drawPath(stroke_path)
+
+        # Draw the fill path with the strand's color
+        painter.setBrush(self.color)
+        painter.drawPath(fill_path)
+
+        # Draw black line covering the side of the squared end
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(side_pen)
+        painter.setBrush(Qt.NoBrush)
+        # Draw line at the end to cover the side
+        painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Draw circle at the start to make it rounded
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Draw outer circle with stroke color
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
+        painter.drawEllipse(self.start, circle_radius, circle_radius)
+
+        # Draw inner circle with strand color
+        painter.setBrush(self.color)
+        inner_radius = self.width / 2
+        painter.drawEllipse(self.start, inner_radius, inner_radius)
+
+        painter.restore()
 class MaskedStrand(Strand):
     """
     Represents a strand that is a result of masking two other strands.

@@ -68,6 +68,32 @@ class Strand:
         self._end = value
         self.update_shape()
 
+
+    def draw_selection_path(self, painter):
+        """Draws the selection area of the strand."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        selection_pen = QPen(QColor('blue'), 1, Qt.DashLine)
+        painter.setPen(selection_pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawPath(self.get_selection_path())
+
+        painter.restore()
+
+    def get_selection_path(self):
+        """Get the path representing the area for selection."""
+        # Get the path representing the strand
+        path = self.get_path()
+
+        # Create a stroker to widen the path for selection purposes
+        stroker = QPainterPathStroker()
+        stroker.setWidth(self.width + self.stroke_width * 2)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        selection_path = stroker.createStroke(path)
+
+        return selection_path
     def update_attachable(self):
         """Update the attachable property based on has_circles."""
         self.attachable = not all(self.has_circles)
@@ -113,25 +139,15 @@ class Strand:
         return area < 1e-5
 
     def get_selection_path(self):
-        """Get the path representing the area for selection (only at endpoints)."""
+        """Get the path representing the area for selection."""
         selection_path = QPainterPath()
-        size = max(self.width * 2, 10)  # Ensure a minimum size
-        print(f"Creating selection path for strand {self} with size {size}")
 
-        # Start rectangle
-        start_rect = QRectF(
-            self.start.x() - size / 2, self.start.y() - size / 2, size, size
-        )
-        print(f"Start rect: {start_rect}")
-        selection_path.addRect(start_rect)
+        # Use a stroker to create a selection area around the strand's path
+        stroker = QPainterPathStroker()
+        stroker.setWidth(self.width + self.stroke_width * 2 + 10)  # Adjust width as needed
+        stroked_path = stroker.createStroke(self.get_path())
 
-        # End rectangle
-        end_rect = QRectF(
-            self.end.x() - size / 2, self.end.y() - size / 2, size, size
-        )
-        print(f"End rect: {end_rect}")
-        selection_path.addRect(end_rect)
-
+        selection_path.addPath(stroked_path)
         return selection_path
     def get_stroked_path(self, width: float) -> QPainterPath:
         """
@@ -272,7 +288,16 @@ class Strand:
         painter.drawLine(self.start_line_start, self.start_line_end)
         painter.drawLine(self.end_line_start, self.end_line_end)
 
+        painter.restore()
 
+        # Draw the selection path
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        selection_pen = QPen(QColor('blue'), 1, Qt.DashLine)
+        painter.setPen(selection_pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawPath(self.get_selection_path())  # Use get_selection_path to show selection area
 
         painter.restore()
 

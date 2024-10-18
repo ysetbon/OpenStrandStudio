@@ -1129,6 +1129,7 @@ class StrandDrawingCanvas(QWidget):
             self.new_strand_start_point = event.pos()
         elif self.current_mode == "select":
             self.handle_strand_selection(event.pos())
+            
         elif self.current_mode == self.mask_mode:
             self.mask_mode.handle_mouse_press(event)
         elif self.current_mode:

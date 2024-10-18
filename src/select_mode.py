@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QRectF
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -21,4 +21,43 @@ class SelectMode(QObject):
             self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
 
     def find_strands_at_point(self, pos):
-        return [strand for strand in self.canvas.strands if strand.get_path().contains(pos)]
+        """
+        Finds strands whose endpoints contain the given position.
+
+        Args:
+            pos (QPointF): The position to check.
+
+        Returns:
+            List of strands at the given position.
+        """
+        matching_strands = []
+        for strand in self.canvas.strands:
+            selection_path = strand.get_selection_path()
+            if selection_path.contains(pos):
+                print(f"Strand {strand} contains point {pos}")
+                matching_strands.append(strand)
+        return matching_strands
+
+    def get_end_rectangle(self, strand, side):
+        """
+        Get the rectangle around the strand's endpoint for hit detection.
+
+        Args:
+            strand: The strand object.
+            side: 0 for start point, 1 for end point.
+
+        Returns:
+            QRectF representing the area around the endpoint.
+        """
+        # Safely get the start or end point
+        if side == 0:
+            point = getattr(strand, 'start', None)
+        else:
+            point = getattr(strand, 'end', None)
+
+        if point is None:
+            return QRectF()  # Return an empty rectangle if point is undefined
+
+        # Adjust the size as needed; using strand width if available
+        size = getattr(strand, 'width', 10) * 2  # Default size if width is not available
+        return QRectF(point.x() - size / 2, point.y() - size / 2, size, size)

@@ -1071,8 +1071,13 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def select_strand(self, index, update_layer_panel=True):
+        """Select a strand by index."""
         if index is not None and 0 <= index < len(self.strands):
+            if self.selected_strand:
+                # Deselect the previously selected strand
+                self.selected_strand.is_selected = False
             self.selected_strand = self.strands[index]
+            self.selected_strand.is_selected = True  # Mark the strand as selected
             self.selected_strand_index = index
             self.last_selected_strand_index = index
             self.is_first_strand = False
@@ -1086,6 +1091,8 @@ class StrandDrawingCanvas(QWidget):
             if isinstance(self.selected_strand, MaskedStrand) and self.layer_panel:
                 self.layer_panel.delete_strand_button.setEnabled(True)
         else:
+            if self.selected_strand:
+                self.selected_strand.is_selected = False
             self.selected_strand = None
             self.selected_strand_index = None
             self.strand_selected.emit(-1)  # Emit -1 for deselection

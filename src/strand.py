@@ -6,7 +6,8 @@ from PyQt5.QtGui import (
 )
 import math
 import logging
-
+from PyQt5.QtGui import QPolygonF  # Ensure this is included among your imports
+from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 class Strand:
     """
     Represents a basic strand in the application.
@@ -27,6 +28,7 @@ class Strand:
         self.has_circles = [False, False]  # Flags for circles at start and end
         self.is_first_strand = False
         self.is_start_side = True
+        self.is_selected = False  # Indicates if the strand is selected
 
         # Initialize attachment statuses
         self.start_attached = False
@@ -98,6 +100,54 @@ class Strand:
         # Update side lines
         self.update_side_line()
 
+    def is_straight_line(self):
+        """Check if the Bezier curve is a straight line."""
+        # Using the area of the triangle formed by start, control point, and end
+        ax, ay = self.start.x(), self.start.y()
+        bx, by = self.end.x(), self.end.y()
+        cx, cy = self.control_point.x(), self.control_point.y()
+
+        # Calculate the area (2 times the area of triangle)
+        area = abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax))
+        # Use a small epsilon to account for floating-point inaccuracies
+        return area < 1e-5
+
+    def get_selection_path(self):
+        """Get the path representing the area for selection (only at endpoints)."""
+        selection_path = QPainterPath()
+        size = max(self.width * 2, 10)  # Ensure a minimum size
+        print(f"Creating selection path for strand {self} with size {size}")
+
+        # Start rectangle
+        start_rect = QRectF(
+            self.start.x() - size / 2, self.start.y() - size / 2, size, size
+        )
+        print(f"Start rect: {start_rect}")
+        selection_path.addRect(start_rect)
+
+        # End rectangle
+        end_rect = QRectF(
+            self.end.x() - size / 2, self.end.y() - size / 2, size, size
+        )
+        print(f"End rect: {end_rect}")
+        selection_path.addRect(end_rect)
+
+        return selection_path
+    def get_stroked_path(self, width: float) -> QPainterPath:
+        """
+        Get the path representing the strand as a stroked path with the given width.
+
+        Args:
+            width (float): The width of the strand.
+
+        Returns:
+            QPainterPath: The stroked path representing the strand with the specified width.
+        """
+        original_path = self.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(width)
+        stroked_path = stroker.createStroke(original_path)
+        return stroked_path
     def get_path(self):
         """Get the path representing the strand as a quadratic Bézier curve."""
         path = QPainterPath()
@@ -177,7 +227,7 @@ class Strand:
         self.update_shape()  # Assuming you have this method to update the strand's appearance
 
     def draw(self, painter):
-        """Draw the strand with squared ends and black lines covering the sides."""
+        """Draw the strand with squared ends and highlight if selected."""
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -190,7 +240,14 @@ class Strand:
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         stroke_path = stroke_stroker.createStroke(path)
-
+        # Highlight the strand if it is selected
+        if self.is_selected:
+            highlight_pen = QPen(QColor('red'), self.stroke_width+8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
         # Create a stroker for the fill path with squared ends
         fill_stroker = QPainterPathStroker()
         fill_stroker.setWidth(self.width)
@@ -212,10 +269,10 @@ class Strand:
         side_pen.setCapStyle(Qt.FlatCap)
         painter.setPen(side_pen)
         painter.setBrush(Qt.NoBrush)
-
-        # Draw lines at the start and end to cover the sides
         painter.drawLine(self.start_line_start, self.start_line_end)
         painter.drawLine(self.end_line_start, self.end_line_end)
+
+
 
         painter.restore()
 
@@ -262,6 +319,7 @@ class AttachedStrand(Strand):
         # Initialize attachment statuses
         self.start_attached = True  # Attached at start to parent strand
         self.end_attached = False
+        self.is_selected = False  # Indicates if the strand is selected
 
     @property
     def end(self):
@@ -355,6 +413,7 @@ class AttachedStrand(Strand):
 
         # Adjust for any pen widths or additional drawing elements if necessary
         return bounding_rect
+
     def draw(self, painter):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save()
@@ -369,7 +428,14 @@ class AttachedStrand(Strand):
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         stroke_path = stroke_stroker.createStroke(path)
-
+        # Highlight the strand if it is selected
+        if self.is_selected:
+            highlight_pen = QPen(QColor('red'), self.stroke_width+8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
         # Create a stroker for the fill path with squared ends
         fill_stroker = QPainterPathStroker()
         fill_stroker.setWidth(self.width)
@@ -408,6 +474,8 @@ class AttachedStrand(Strand):
         inner_radius = self.width / 2
         painter.drawEllipse(self.start, inner_radius, inner_radius)
 
+
+
         painter.restore()
 class MaskedStrand(Strand):
     """
@@ -418,6 +486,7 @@ class MaskedStrand(Strand):
         self.second_selected_strand = second_selected_strand
         self._attached_strands = []  # Private attribute to store attached strands
         self._has_circles = [False, False]  # Private attribute for has_circles
+        self.is_selected = False  # Indicates if the strand is selected
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
@@ -502,8 +571,17 @@ class MaskedStrand(Strand):
         return stroked_path1.intersected(stroked_path2)
 
     def draw(self, painter):
+        """Draw the masked strand and highlight if selected."""
         if not self.first_selected_strand and not self.second_selected_strand:
             return  # Don't draw if both referenced strands have been deleted
+        # Highlight the masked area if it is selected
+        if self.is_selected:
+            highlight_pen = QPen(QColor('red'), 2)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(self.get_mask_path())  # Use the mask path
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
@@ -534,6 +612,8 @@ class MaskedStrand(Strand):
 
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
+
+
         painter.restore()
 
     def update(self, new_end):

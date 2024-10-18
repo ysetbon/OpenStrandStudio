@@ -92,19 +92,9 @@ class Strand:
 
     def update_shape(self):
         """Update the shape of the strand based on its start, end, and control points."""
-        # Calculate the new midpoint between start and end
-        new_midpoint = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
-        )
-
-        # Check if the control point was previously at the midpoint
-        # Allow a small tolerance due to floating-point precision
-        if (abs(self.control_point.x() - new_midpoint.x()) < 1e-6 and
-            abs(self.control_point.y() - new_midpoint.y()) < 1e-6):
-            # Update the control point to the new midpoint
-            self.control_point = new_midpoint
-
+        # We no longer automatically update the control point to the midpoint.
+        # This prevents the control point from being reset when moving the ends.
+        
         # Update side lines
         self.update_side_line()
 
@@ -319,8 +309,13 @@ class AttachedStrand(Strand):
         self.update_shape()
         self.update_side_line()  # Update side line when end changes
 
-    def update(self, new_end):
-        """Update the end point of the attached strand and recalculate control point and side lines."""
+    def update(self, new_end, reset_control_point=True):
+        """Update the end point of the attached strand and recalculate side lines.
+
+        Args:
+            new_end (QPointF): The new end position.
+            reset_control_point (bool): Whether to reset the control point.
+        """
         dx = new_end.x() - self.start.x()
         dy = new_end.y() - self.start.y()
         self.length = math.hypot(dx, dy)
@@ -332,10 +327,12 @@ class AttachedStrand(Strand):
             self.update_end()  # Recalculate end based on adjusted length
         else:
             self.end = new_end
-            self.control_point = QPointF(
-                (self.start.x() + self.end.x()) / 2,
-                (self.start.y() + self.end.y()) / 2
-            )
+            if reset_control_point:
+                # Only reset the control point if specified
+                self.control_point = QPointF(
+                    (self.start.x() + self.end.x()) / 2,
+                    (self.start.y() + self.end.y()) / 2
+                )
             self.update_shape()
             self.update_side_line()
 

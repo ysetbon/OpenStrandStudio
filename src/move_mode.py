@@ -181,7 +181,7 @@ class MoveMode:
 
     def get_control_point_rectangle(self, strand):
         """Get the rectangle around the control point for hit detection."""
-        size = 10  # Adjust as needed
+        size = 20  # Increased size to make the area twice as large
         center = strand.control_point
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
@@ -267,7 +267,7 @@ class MoveMode:
             QRectF: The rectangle representing the movable area of the strand end.
         """
         center = strand.start if side == 0 else strand.end
-        size = strand.width  # Adjust as needed
+        size = strand.width * 2  # Increased size to make the area twice as large
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def update_strand_position(self, new_pos):
@@ -294,22 +294,36 @@ class MoveMode:
             self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
+        """Move the strand's point and update attached strands without resetting control points.
+
+        Args:
+            strand (Strand): The strand to move.
+            new_pos (QPointF): The new position.
+            moving_side (int or str): Which side of the strand is being moved.
+        """
         old_start, old_end = strand.start, strand.end
+
+        # Check if the control point is at the same position as the moving end
         if moving_side == 0:
+            control_point_at_moving_end = (strand.control_point == strand.start)
             strand.start = new_pos
-        else:
+            if control_point_at_moving_end:
+                strand.control_point = new_pos
+        elif moving_side == 1:
+            control_point_at_moving_end = (strand.control_point == strand.end)
             strand.end = new_pos
-        # Recalculate control point if needed; here we keep it stationary or adjust as needed
-        # Optionally, adjust control point to stay centered
-        # strand.control_point = QPointF((strand.start.x() + strand.end.x()) / 2,
-        #                                (strand.start.y() + strand.end.y()) / 2)
+            if control_point_at_moving_end:
+                strand.control_point = new_pos
+        elif moving_side == 'control_point':
+            strand.control_point = new_pos
+
         strand.update_shape()
         strand.update_side_line()
 
         # Update parent strands recursively
         self.update_parent_strands(strand)
 
-        # Update all attached strands
+        # Update all attached strands without resetting their control points
         self.update_all_attached_strands(strand, old_start, old_end)
 
         # If it's an AttachedStrand, update its parent's side line
@@ -346,8 +360,7 @@ class MoveMode:
                 self.update_parent_strands(parent)
 
     def update_all_attached_strands(self, strand, old_start, old_end):
-        """
-        Recursively update all attached strands.
+        """Recursively update all attached strands without resetting control points.
 
         Args:
             strand (Strand): The strand whose attached strands need updating.
@@ -359,9 +372,10 @@ class MoveMode:
                 attached.start = strand.start
             elif attached.start == old_end:
                 attached.start = strand.end
-            attached.update(attached.end)
+            # Update attached strand without resetting control point
+            attached.update(attached.end, reset_control_point=False)
             attached.update_side_line()
-            # Recursively update attached strands of this attached strand
+            # Recursively update attached strands
             self.update_all_attached_strands(attached, attached.start, attached.end)
 
     def find_parent_strand(self, attached_strand):

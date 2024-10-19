@@ -138,23 +138,10 @@ class Strand:
             outer_size
         )
 
-        # Define the inner rectangle (20x20 square) to exclude for control point selection
-        inner_size = 35  # Size of the inner non-selectable square
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            self.end.x() - half_inner_size,
-            self.end.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
 
-        # Create a QPainterPath for the inner rectangle
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
 
         # Create the selection path by subtracting the inner rectangle from the outer rectangle
         path.addRect(outer_rect)
-        path = path.subtracted(inner_path)
 
         return path
 
@@ -261,7 +248,6 @@ class Strand:
     def get_selection_path(self):
         """Combine the start and end selection paths."""
         path = QPainterPath()
-        path.addPath(self.get_start_selection_path())
         path.addPath(self.get_end_selection_path())
         return path
 
@@ -956,19 +942,20 @@ class MaskedStrand(Strand):
         path2 = self.second_selected_strand.get_path()
 
         stroker1 = QPainterPathStroker()
-        stroker1.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2)
+        stroker1.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2+2)
         stroked_path1 = stroker1.createStroke(path1)
 
         stroker2 = QPainterPathStroker()
-        stroker2.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2)
+        stroker2.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2+2)
         stroked_path2 = stroker2.createStroke(path2)
 
         return stroked_path1.intersected(stroked_path2)
 
     def draw(self, painter):
-        """Draw the masked strand and highlight if selected."""
+        """Draw the masked strand with the first selected strand over the second."""
         if not self.first_selected_strand and not self.second_selected_strand:
             return  # Don't draw if both referenced strands have been deleted
+
         # Highlight the masked area if it is selected
         if self.is_selected:
             highlight_pen = QPen(QColor('red'), 2)
@@ -980,6 +967,8 @@ class MaskedStrand(Strand):
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
+
+        # Create a temporary image to perform masking
         temp_image = QImage(
             painter.device().size(), QImage.Format_ARGB32_Premultiplied
         )
@@ -987,12 +976,13 @@ class MaskedStrand(Strand):
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw the first selected strand
-        if self.first_selected_strand:
-            self.first_selected_strand.draw(temp_painter)
-        # Draw the second selected strand
+        # **Draw the second selected strand first**
         if self.second_selected_strand:
             self.second_selected_strand.draw(temp_painter)
+
+        # **Draw the first selected strand on top**
+        if self.first_selected_strand:
+            self.first_selected_strand.draw(temp_painter)
 
         # Mask the intersection area
         mask_path = self.get_mask_path()
@@ -1007,8 +997,6 @@ class MaskedStrand(Strand):
 
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
-
-
         painter.restore()
 
     def update(self, new_end):
@@ -1057,6 +1045,7 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
 
 
 

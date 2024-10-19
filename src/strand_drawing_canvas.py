@@ -554,7 +554,7 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand = None  # Currently selected strand
         self.last_selected_strand_index = None  # Index of the last selected strand
         self.strand_colors = {}  # Dictionary to store colors for each strand set
-        self.grid_size = 26  # Size of grid cells
+        self.grid_size = 28  # Size of grid cells
         self.show_grid = True  # Flag to show/hide grid
         self.should_draw_names = False  # Flag to show/hide strand names
         self.newest_strand = None  # Track the most recently created strand

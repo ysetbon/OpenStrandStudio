@@ -56,6 +56,12 @@ class AttachMode(QObject):
 
     def mousePressEvent(self, event):
         """Handle mouse press events."""
+
+        # Prevent attachment if the canvas is in Move Mode
+        if self.canvas.current_mode == self.canvas.move_mode:
+            # Do not proceed with attachment logic
+            return
+
         if self.canvas.is_first_strand:
             # If it's the first strand, create a new Strand object
             self.start_pos = self.canvas.snap_to_grid(event.pos())

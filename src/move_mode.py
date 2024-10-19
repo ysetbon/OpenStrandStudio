@@ -189,7 +189,7 @@ class MoveMode:
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 35  # Size of the area for control point selection
+        size = 30  # Size of the area for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
@@ -219,7 +219,7 @@ class MoveMode:
         )
 
         # Define the inner rectangle (35x35 square)
-        inner_size = 35
+        inner_size = 30
         half_inner_size = inner_size / 2
         inner_rect = QRectF(
             strand.start.x() - half_inner_size,
@@ -258,7 +258,7 @@ class MoveMode:
         )
 
         # Define the inner rectangle (35x35 square)
-        inner_size = 35
+        inner_size = 30
         half_inner_size = inner_size / 2
         inner_rect = QRectF(
             strand.end.x() - half_inner_size,

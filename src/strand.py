@@ -104,46 +104,82 @@ class Strand:
             outer_size
         )
 
-        # Define the inner rectangle (20x20 square) to exclude for control point selection
-        inner_size = 35  # Size of the inner non-selectable square
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            self.start.x() - half_inner_size,
-            self.start.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
 
-        # Create a QPainterPath for the inner rectangle
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
+
 
         # Create the selection path by subtracting the inner rectangle from the outer rectangle
         path.addRect(outer_rect)
-        path = path.subtracted(inner_path)
 
         return path
 
     def get_end_selection_path(self):
-        """Get the selection path for the ending point, excluding the inner area for control point selection."""
-        path = QPainterPath()
+        """Construct the selection path using the start and end points, control points, and strand width."""
+        # Number of samples along the curve
+        num_samples = 50  # Increase for smoother approximation
 
-        # Define the outer rectangle (80x80 square)
-        outer_size = 120  # Size of the outer selection square for the end edge
-        half_outer_size = outer_size / 2
-        outer_rect = QRectF(
-            self.end.x() - half_outer_size,
-            self.end.y() - half_outer_size,
-            outer_size,
-            outer_size
-        )
+        left_offsets = []
+        right_offsets = []
 
+        for i in range(num_samples + 1):
+            t = i / num_samples
+            # Compute point on the curve
+            point = self.point_at(t)
+            # Compute tangent at the point
+            tangent = self.calculate_cubic_tangent(t)
+            # Normalize tangent
+            length = math.hypot(tangent.x(), tangent.y())
+            if length == 0:
+                # Avoid division by zero
+                continue  # Skip this point if tangent length is zero
+            else:
+                unit_tangent = QPointF(tangent.x() / length, tangent.y() / length)
+                # Compute normal (perpendicular to tangent)
+                normal = QPointF(-unit_tangent.y(), unit_tangent.x())
 
+                # Scale normal by half width
+                half_width = (self.width + self.stroke_width * 2) / 2
+                offset = QPointF(normal.x() * half_width, normal.y() * half_width)
 
-        # Create the selection path by subtracting the inner rectangle from the outer rectangle
-        path.addRect(outer_rect)
+                # Offset points on both sides
+                left_point = QPointF(point.x() + offset.x(), point.y() + offset.y())
+                right_point = QPointF(point.x() - offset.x(), point.y() - offset.y())
 
-        return path
+                left_offsets.append(left_point)
+                right_offsets.append(right_point)
+
+        # Create the selection path
+        selection_path = QPainterPath()
+
+        # Ensure there are offset points
+        if left_offsets:
+            # Move to the first left offset point
+            selection_path.moveTo(left_offsets[0])
+
+            # Add lines along the left offset points
+            for pt in left_offsets[1:]:
+                selection_path.lineTo(pt)
+
+            # Add lines along the right offset points in reverse
+            for pt in reversed(right_offsets):
+                selection_path.lineTo(pt)
+
+            # Close the path to form a complete shape
+            selection_path.closeSubpath()
+
+        else:
+            # Fallback to a rectangle around the end point if no offsets were computed
+            outer_size = 120
+            half_outer_size = outer_size / 2
+            outer_rect = QRectF(
+                self.end.x() - half_outer_size,
+                self.end.y() - half_outer_size,
+                outer_size,
+                outer_size
+            )
+            selection_path.addRect(outer_rect)
+
+        return selection_path
+ 
 
     def is_straight_line(self):
         """Check if the strand is a straight line."""
@@ -564,58 +600,82 @@ class AttachedStrand(Strand):
             outer_size
         )
 
-        # Define the inner rectangle (20x20 square) to exclude for control point selection
-        inner_size = 35  # Size of the inner non-selectable square
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            self.start.x() - half_inner_size,
-            self.start.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
 
-        # Create a QPainterPath for the inner rectangle
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
+
 
         # Create the selection path by subtracting the inner rectangle from the outer rectangle
         path.addRect(outer_rect)
-        path = path.subtracted(inner_path)
 
         return path
 
     def get_end_selection_path(self):
-        """Get the selection path for the ending point, excluding the inner area for control point selection."""
-        path = QPainterPath()
+        """Construct the selection path using the start and end points, control points, and strand width."""
+        # Number of samples along the curve
+        num_samples = 50  # Increase for smoother approximation
 
-        # Define the outer rectangle (80x80 square)
-        outer_size = 120
-        half_outer_size = outer_size / 2
-        outer_rect = QRectF(
-            self.end.x() - half_outer_size,
-            self.end.y() - half_outer_size,
-            outer_size,
-            outer_size
-        )
+        left_offsets = []
+        right_offsets = []
 
-        # Define the inner rectangle (20x20 square)
-        inner_size = 35
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            self.end.x() - half_inner_size,
-            self.end.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
+        for i in range(num_samples + 1):
+            t = i / num_samples
+            # Compute point on the curve
+            point = self.point_at(t)
+            # Compute tangent at the point
+            tangent = self.calculate_cubic_tangent(t)
+            # Normalize tangent
+            length = math.hypot(tangent.x(), tangent.y())
+            if length == 0:
+                # Avoid division by zero
+                continue  # Skip this point if tangent length is zero
+            else:
+                unit_tangent = QPointF(tangent.x() / length, tangent.y() / length)
+                # Compute normal (perpendicular to tangent)
+                normal = QPointF(-unit_tangent.y(), unit_tangent.x())
 
-        # Create inner and outer paths
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
+                # Scale normal by half width
+                half_width = (self.width + self.stroke_width * 2) / 2
+                offset = QPointF(normal.x() * half_width, normal.y() * half_width)
 
-        path.addRect(outer_rect)
-        path = path.subtracted(inner_path)
+                # Offset points on both sides
+                left_point = QPointF(point.x() + offset.x(), point.y() + offset.y())
+                right_point = QPointF(point.x() - offset.x(), point.y() - offset.y())
 
-        return path
+                left_offsets.append(left_point)
+                right_offsets.append(right_point)
+
+        # Create the selection path
+        selection_path = QPainterPath()
+
+        # Ensure there are offset points
+        if left_offsets:
+            # Move to the first left offset point
+            selection_path.moveTo(left_offsets[0])
+
+            # Add lines along the left offset points
+            for pt in left_offsets[1:]:
+                selection_path.lineTo(pt)
+
+            # Add lines along the right offset points in reverse
+            for pt in reversed(right_offsets):
+                selection_path.lineTo(pt)
+
+            # Close the path to form a complete shape
+            selection_path.closeSubpath()
+
+        else:
+            # Fallback to a rectangle around the end point if no offsets were computed
+            outer_size = 120
+            half_outer_size = outer_size / 2
+            outer_rect = QRectF(
+                self.end.x() - half_outer_size,
+                self.end.y() - half_outer_size,
+                outer_size,
+                outer_size
+            )
+            selection_path.addRect(outer_rect)
+
+        return selection_path
+ 
 
     def point_at(self, t):
         """Compute a point on the cubic Bézier curve at parameter t."""

@@ -12,25 +12,21 @@ class SelectMode(QObject):
         pos = event.pos()
         strands_at_point = self.find_strands_at_point(pos)
 
-        # Deselect all strands and circles before selecting a new one
+        # Deselect all strands before selecting a new one
         for strand in self.canvas.strands:
-            self.deselect_strand_recursively(strand)
+            strand.is_selected = False
+            strand.start_selected = False
+            strand.end_selected = False
 
         if len(strands_at_point) == 1:
             selected_strand, selection_type = strands_at_point[0]
-            if selection_type == 'start':
-                selected_strand.start_selected = True
-            elif selection_type == 'end':
-                selected_strand.end_selected = True
-            else:
-                selected_strand.is_selected = True
+            selected_strand.is_selected = True  # Set the is_selected flag
 
             index = self.canvas.strands.index(selected_strand)
             self.strand_selected.emit(index)
         else:
             # Deselect if clicking on an empty area or multiple strands
-            index = -1
-            self.strand_selected.emit(index)
+            self.strand_selected.emit(-1)
 
         # Redraw the canvas to update the visual state
         self.canvas.update()

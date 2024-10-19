@@ -490,6 +490,10 @@ class LayerPanel(QWidget):
             index (int): The index of the layer to select.
             emit_signal (bool): Whether to emit the selection signal.
         """
+        # Deselect all strands first
+        for strand in self.canvas.strands:
+            strand.is_selected = False
+
         if self.masked_mode:
             self.handle_masked_layer_selection(index)
         elif self.lock_mode:
@@ -499,6 +503,8 @@ class LayerPanel(QWidget):
                 if any(not circle for circle in strand.has_circles):
                     for i, button in enumerate(self.layer_buttons):
                         button.setChecked(i == index)
+                    # Set the selected strand's is_selected to True
+                    strand.is_selected = True
                     if emit_signal:
                         self.strand_selected.emit(index)
                     self.last_selected_index = index
@@ -513,10 +519,17 @@ class LayerPanel(QWidget):
         else:
             for i, button in enumerate(self.layer_buttons):
                 button.setChecked(i == index)
+            # Set the selected strand's is_selected to True
+            if 0 <= index < len(self.canvas.strands):
+                selected_strand = self.canvas.strands[index]
+                selected_strand.is_selected = True
             if emit_signal:
                 self.strand_selected.emit(index)
             self.last_selected_index = index
+
+        # Update layer button states and redraw the canvas
         self.update_layer_button_states()
+        self.canvas.update()
 
     def handle_masked_layer_selection(self, index):
         """Handle the selection of layers in masked mode."""
@@ -911,20 +924,17 @@ class LayerPanel(QWidget):
 
 
     def deselect_all(self):
-        """Deselect all layers and emit the deselect_all_requested signal."""
+        """Deselect all layers and strands."""
+        # Deselect all layer buttons
         for button in self.layer_buttons:
             button.setChecked(False)
-            button.update()  # Force a repaint of the button
 
-        if self.lock_mode:
-            self.locked_layers.clear()
-            self.update_layer_buttons_lock_state()
-            self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+        # Deselect all strands
+        for strand in self.canvas.strands:
+            strand.is_selected = False
 
-        self.deselect_all_requested.emit()
-        self.canvas.deselect_all_strands()  # Deselect all strands in the canvas
-        self.canvas.update()  # Update the canvas to reflect changes
-        self.update()  # Force a repaint of the layer panel if needed
+        # Update the canvas to reflect changes
+        self.canvas.update()
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""
@@ -1138,3 +1148,17 @@ class StrokeTextButton(QPushButton):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.updateStyleSheet()
+
+    def on_canvas_strand_selected(self, index):
+        """Update layer selection based on canvas strand selection."""
+        # Deselect all layer buttons
+        for button in self.layer_buttons:
+            button.setChecked(False)
+
+        # Select the corresponding layer button
+        if 0 <= index < len(self.layer_buttons):
+            self.layer_buttons[index].setChecked(True)
+        # Update the last selected index
+        self.last_selected_index = index
+        # Update the layer button states
+        self.update_layer_button_states()

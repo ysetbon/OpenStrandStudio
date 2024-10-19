@@ -18,6 +18,7 @@ def load_user_settings():
     file_path = os.path.join(settings_dir, 'user_settings.txt')
     logging.info(f"Settings file path: {file_path}")
 
+
     theme_name = 'default'
     language_code = 'en'
 

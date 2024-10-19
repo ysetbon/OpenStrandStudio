@@ -859,7 +859,7 @@ class AttachedStrand(Strand):
         return path
 class MaskedStrand(Strand):
     """
-    Represents a strand that is a result of masking two other strands.
+    Represents a strand that is a result of masking two other strands, without control points.
     """
     def __init__(self, first_selected_strand, second_selected_strand, set_number=None):
         self.first_selected_strand = first_selected_strand
@@ -870,7 +870,9 @@ class MaskedStrand(Strand):
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
-                first_selected_strand.start, first_selected_strand.end, first_selected_strand.width,
+                first_selected_strand.start,
+                first_selected_strand.end,
+                first_selected_strand.width,
                 color=first_selected_strand.color,
                 stroke_color=first_selected_strand.stroke_color,
                 stroke_width=first_selected_strand.stroke_width,
@@ -882,12 +884,6 @@ class MaskedStrand(Strand):
             super().__init__(QPointF(0, 0), QPointF(1, 1), 1)
             self.set_number = set_number
             self.layer_name = ""
-
-        # Initialize control point
-        self.control_point = QPointF(
-            (self.start.x() + self.end.x()) / 2,
-            (self.start.y() + self.end.y()) / 2
-        )
 
     @property
     def attached_strands(self):
@@ -918,7 +914,7 @@ class MaskedStrand(Strand):
         self._has_circles = value
 
     def update_shape(self):
-        """Update the shape of the masked strand."""
+        """Update the shape of the masked strand without control points."""
         if self.first_selected_strand:
             self._start = self.first_selected_strand.start  # Set private attribute directly
             self._end = self.first_selected_strand.end
@@ -926,30 +922,30 @@ class MaskedStrand(Strand):
             self._start = self.second_selected_strand.start
             self._end = self.second_selected_strand.end
 
-        # Update control point
-        self.control_point = QPointF(
-            (self._start.x() + self._end.x()) / 2,
-            (self._start.y() + self._end.y()) / 2
-        )
+        # Call the base class update without affecting control points
         super().update_shape()
+
+    def get_path(self):
+        """Get the path representing the masked strand as a straight line."""
+        path = QPainterPath()
+        path.moveTo(self.start)
+        path.lineTo(self.end)
+        return path
 
     def get_mask_path(self):
         """Get the path representing the masked area."""
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
 
-        path1 = self.first_selected_strand.get_path()
-        path2 = self.second_selected_strand.get_path()
+        # Use the stroked paths of the selected strands
+        path1 = self.first_selected_strand.get_stroked_path(
+            self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + 2
+        )
+        path2 = self.second_selected_strand.get_stroked_path(
+            self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + 2
+        )
 
-        stroker1 = QPainterPathStroker()
-        stroker1.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2+2)
-        stroked_path1 = stroker1.createStroke(path1)
-
-        stroker2 = QPainterPathStroker()
-        stroker2.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2+2)
-        stroked_path2 = stroker2.createStroke(path2)
-
-        return stroked_path1.intersected(stroked_path2)
+        return path1.intersected(path2)
 
     def draw(self, painter):
         """Draw the masked strand with the first selected strand over the second."""
@@ -1045,6 +1041,8 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
+
 
 
 

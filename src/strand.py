@@ -34,14 +34,13 @@ class Strand:
         self.start_attached = False
         self.end_attached = False
 
-        # Initialize two control points at 1/3 and 2/3 along the line
         self.control_point1 = QPointF(
-            self.start.x() + (self.end.x() - self.start.x()) / 3,
-            self.start.y() + (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
         self.control_point2 = QPointF(
-            self.start.x() + 2 * (self.end.x() - self.start.x()) / 3,
-            self.start.y() + 2 * (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
 
         self.layer_name = layer_name
@@ -58,6 +57,11 @@ class Strand:
     @start.setter
     def start(self, value):
         """Setter for the start point."""
+        # Update control points if they coincide with the current start point
+        if self.control_point1 == self._start:
+            self.control_point1 = value
+        if self.control_point2 == self._start:
+            self.control_point2 = value
         self._start = value
         self.update_shape()
 
@@ -87,29 +91,71 @@ class Strand:
 
 
     def get_start_selection_path(self):
-        """Get the selection path representing the starting point."""
+        """Get the selection path for the starting point, excluding the inner area for control point selection."""
         path = QPainterPath()
-        half_size = self.width  # Half of the selection square side length
-        rect = QRectF(
-            self.start.x() - half_size,
-            self.start.y() - half_size,
-            2 * half_size,
-            2 * half_size
+
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120  # Size of the outer selection square for the start edge
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            self.start.x() - half_outer_size,
+            self.start.y() - half_outer_size,
+            outer_size,
+            outer_size
         )
-        path.addRect(rect)
+
+        # Define the inner rectangle (20x20 square) to exclude for control point selection
+        inner_size = 35  # Size of the inner non-selectable square
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            self.start.x() - half_inner_size,
+            self.start.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create a QPainterPath for the inner rectangle
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+
+        # Create the selection path by subtracting the inner rectangle from the outer rectangle
+        path.addRect(outer_rect)
+        path = path.subtracted(inner_path)
+
         return path
 
     def get_end_selection_path(self):
-        """Get the selection path representing the ending point."""
+        """Get the selection path for the ending point, excluding the inner area for control point selection."""
         path = QPainterPath()
-        half_size = self.width  # Half of the selection square side length
-        rect = QRectF(
-            self.end.x() - half_size,
-            self.end.y() - half_size,
-            2 * half_size,
-            2 * half_size
+
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120  # Size of the outer selection square for the end edge
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            self.end.x() - half_outer_size,
+            self.end.y() - half_outer_size,
+            outer_size,
+            outer_size
         )
-        path.addRect(rect)
+
+        # Define the inner rectangle (20x20 square) to exclude for control point selection
+        inner_size = 35  # Size of the inner non-selectable square
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            self.end.x() - half_inner_size,
+            self.end.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create a QPainterPath for the inner rectangle
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+
+        # Create the selection path by subtracting the inner rectangle from the outer rectangle
+        path.addRect(outer_rect)
+        path = path.subtracted(inner_path)
+
         return path
 
     def is_straight_line(self):
@@ -269,34 +315,55 @@ class Strand:
         # Return the combined bounding rectangle
         return bounding_rect
 
-    def calculate_cubic_tangent(self, point, control_point1, control_point2, reverse=False):
-        """Calculate the tangent vector at the start or end point of a cubic Bézier curve."""
-        if reverse:
-            # Tangent at t = 1 (end point)
-            tangent = 3 * (point - control_point2)
-        else:
-            # Tangent at t = 0 (start point)
-            tangent = 3 * (control_point1 - point)
+    def point_at(self, t):
+        """Compute a point on the cubic Bézier curve at parameter t."""
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        x = (
+            (1 - t) ** 3 * p0.x() +
+            3 * (1 - t) ** 2 * t * p1.x() +
+            3 * (1 - t) * t ** 2 * p2.x() +
+            t ** 3 * p3.x()
+        )
+        y = (
+            (1 - t) ** 3 * p0.y() +
+            3 * (1 - t) ** 2 * t * p1.y() +
+            3 * (1 - t) * t ** 2 * p2.y() +
+            t ** 3 * p3.y()
+        )
+        return QPointF(x, y)
+
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the cubic Bézier curve."""
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
 
         # Handle zero-length tangent vector
         if tangent.manhattanLength() == 0:
-            # Use the vector between start and end as a fallback
-            tangent = self.end - self.start if not reverse else self.start - self.end
+            tangent = p3 - p0
 
         return tangent
 
     def update_side_line(self):
-        """Update the positions of the side lines covering the squared ends based on the Bézier curve's tangents."""
-        # Calculate the tangent vectors at the start and end points
-        tangent_start = self.calculate_cubic_tangent(self.start, self.control_point1, self.control_point2)
-        tangent_end = self.calculate_cubic_tangent(self.end, self.control_point2, self.control_point1, reverse=True)
+        """Update side lines considering the curve's shape near the ends."""
+        # Small value near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
 
-        # Handle zero-length tangent vectors to avoid division by zero
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
         if tangent_start.manhattanLength() == 0:
-            # Use the vector from start to end as a fallback
             tangent_start = self.end - self.start
         if tangent_end.manhattanLength() == 0:
-            # Use the vector from end to start as a fallback
             tangent_end = self.start - self.end
 
         # Calculate angles of tangents
@@ -455,12 +522,12 @@ class AttachedStrand(Strand):
 
         # Initialize control points at 1/3 and 2/3 along the strand
         self.control_point1 = QPointF(
-            self.start.x() + (self.end.x() - self.start.x()) / 3,
-            self.start.y() + (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
         self.control_point2 = QPointF(
-            self.start.x() + 2 * (self.end.x() - self.start.x()) / 3,
-            self.start.y() + 2 * (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
         
         # Initialize attachment statuses
@@ -473,6 +540,22 @@ class AttachedStrand(Strand):
         self.end_selected = False
 
     @property
+    def start(self):
+        """Getter for the start point."""
+        return self._start
+
+    @start.setter
+    def start(self, value):
+        """Setter for the start point."""
+        # Update control points if they coincide with the current start point
+        if self.control_point1 == self._start:
+            self.control_point1 = value
+        if self.control_point2 == self._start:
+            self.control_point2 = value
+        self._start = value
+        self.update_shape()
+
+    @property
     def end(self):
         return super().end
 
@@ -482,32 +565,122 @@ class AttachedStrand(Strand):
         self.update_shape()
 
     def get_start_selection_path(self):
-        """Get the selection path representing the starting point (rounded start)."""
+        """Get the selection path for the starting point, excluding the inner area for control point selection."""
         path = QPainterPath()
-        # Use a larger radius for easier selection
-        radius = self.width * 1.5
-        path.addEllipse(self.start, radius, radius)
+
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120  # Size of the outer selection square for the start edge
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            self.start.x() - half_outer_size,
+            self.start.y() - half_outer_size,
+            outer_size,
+            outer_size
+        )
+
+        # Define the inner rectangle (20x20 square) to exclude for control point selection
+        inner_size = 35  # Size of the inner non-selectable square
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            self.start.x() - half_inner_size,
+            self.start.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create a QPainterPath for the inner rectangle
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+
+        # Create the selection path by subtracting the inner rectangle from the outer rectangle
+        path.addRect(outer_rect)
+        path = path.subtracted(inner_path)
+
         return path
 
     def get_end_selection_path(self):
-        """Get the selection path representing the ending point (squared end)."""
+        """Get the selection path for the ending point, excluding the inner area for control point selection."""
         path = QPainterPath()
-        half_size = self.width  # Half of the selection square side length (twice the size of the width)
-        rect = QRectF(
-            self.end.x() - half_size,
-            self.end.y() - half_size,
-            2 * half_size,
-            2 * half_size
+
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            self.end.x() - half_outer_size,
+            self.end.y() - half_outer_size,
+            outer_size,
+            outer_size
         )
-        path.addRect(rect)
+
+        # Define the inner rectangle (20x20 square)
+        inner_size = 35
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            self.end.x() - half_inner_size,
+            self.end.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create inner and outer paths
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+
+        path.addRect(outer_rect)
+        path = path.subtracted(inner_path)
+
         return path
 
+    def point_at(self, t):
+        """Compute a point on the cubic Bézier curve at parameter t."""
+        p0 = self.start
+        p1 = self.control_point1
+        p2 = self.control_point2
+        p3 = self.end
+
+        x = (
+            (1 - t) ** 3 * p0.x() +
+            3 * (1 - t) ** 2 * t * p1.x() +
+            3 * (1 - t) * t ** 2 * p2.x() +
+            t ** 3 * p3.x()
+        )
+        y = (
+            (1 - t) ** 3 * p0.y() +
+            3 * (1 - t) ** 2 * t * p1.y() +
+            3 * (1 - t) * t ** 2 * p2.y() +
+            t ** 3 * p3.y()
+        )
+        return QPointF(x, y)
+
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the cubic Bézier curve."""
+        p0 = self.start
+        p1 = self.control_point1
+        p2 = self.control_point2
+        p3 = self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
 
     def update_side_line(self):
-        """Update the positions of the side lines covering the squared ends based on the Bézier curve's tangents."""
-        # Calculate the tangent vectors at the start and end points
-        tangent_start = self.calculate_cubic_tangent(self.start, self.control_point1, self.control_point2)
-        tangent_end = self.calculate_cubic_tangent(self.end, self.control_point2, self.control_point1, reverse=True)
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
 
         # Handle zero-length tangent vectors
         if tangent_start.manhattanLength() == 0:
@@ -530,7 +703,7 @@ class AttachedStrand(Strand):
         dx_end = half_total_width * math.cos(perp_angle_end)
         dy_end = half_total_width * math.sin(perp_angle_end)
 
-        # Start side line positions (even if start is rounded, this ensures consistent updates)
+        # Start side line positions
         self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
         self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
 
@@ -547,16 +720,15 @@ class AttachedStrand(Strand):
         )
         # Update control points when the end moves
         self.control_point1 = QPointF(
-            self.start.x() + (self.end.x() - self.start.x()) / 3,
-            self.start.y() + (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
         self.control_point2 = QPointF(
-            self.start.x() + 2 * (self.end.x() - self.start.x()) / 3,
-            self.start.y() + 2 * (self.end.y() - self.start.y()) / 3
+            self.start.x(),
+            self.start.y()
         )
         self.update_shape()
         self.update_side_line()
-
 
     def update(self, end_point=None, reset_control_points=True):
         """
@@ -570,14 +742,13 @@ class AttachedStrand(Strand):
             self.end = end_point
 
         if reset_control_points:
-            # Recalculate control points at 1/3 and 2/3 along the strand
             self.control_point1 = QPointF(
-                self.start.x() + (self.end.x() - self.start.x()) / 3,
-                self.start.y() + (self.end.y() - self.start.y()) / 3
+                self.start.x(),
+                self.start.y()
             )
             self.control_point2 = QPointF(
-                self.start.x() + 2 * (self.end.x() - self.start.x()) / 3,
-                self.start.y() + 2 * (self.end.y() - self.start.y()) / 3
+                self.start.x(),
+                self.start.y()
             )
 
         self.update_shape()
@@ -693,22 +864,6 @@ class AttachedStrand(Strand):
         painter.drawEllipse(self.control_point1, 4, 4)
         painter.drawEllipse(self.control_point2, 4, 4)
         painter.restore()
-
-    def calculate_cubic_tangent(self, point, control_point1, control_point2, reverse=False):
-        """Calculate the tangent vector at the start or end point of a cubic Bézier curve."""
-        if reverse:
-            # Tangent at t = 1 (end point)
-            tangent = 3 * (point - control_point2)
-        else:
-            # Tangent at t = 0 (start point)
-            tangent = 3 * (control_point1 - point)
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            # Use the vector between start and end as a fallback
-            tangent = self.end - self.start if not reverse else self.start - self.end
-
-        return tangent
 
     def get_path(self):
         """Get the path representing the strand as a cubic Bézier curve."""

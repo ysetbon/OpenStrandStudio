@@ -654,11 +654,22 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
-        # Draw selection rectangle if in MoveMode
+        # Draw selection area if in MoveMode
         if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
-            painter.setBrush(QBrush(self.selection_color))
-            painter.setPen(QPen(Qt.red, 2))
-            painter.drawRect(self.current_mode.selected_rectangle)
+            painter.save()
+            painter.setBrush(QBrush(Qt.transparent))
+            painter.setPen(QPen(Qt.red, 2, Qt.DashLine))
+
+            # Check the type of selected_rectangle and draw accordingly
+            if isinstance(self.current_mode.selected_rectangle, QPainterPath):
+                painter.drawPath(self.current_mode.selected_rectangle)
+            elif isinstance(self.current_mode.selected_rectangle, QRectF):
+                painter.drawRect(self.current_mode.selected_rectangle)
+            else:
+                # Handle other possible types or skip drawing
+                pass
+
+            painter.restore()
 
         # Draw the angle adjustment visualization if in angle adjust mode
         if hasattr(self, 'is_angle_adjusting') and self.is_angle_adjusting and hasattr(self, 'angle_adjust_mode'):

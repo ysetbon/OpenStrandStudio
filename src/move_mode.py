@@ -2,7 +2,10 @@ from PyQt5.QtCore import QPointF, QRectF, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
-
+from PyQt5.QtCore import QPointF, QRectF
+from PyQt5.QtGui import (
+     QPainterPath
+)
 from strand import Strand, AttachedStrand, MaskedStrand
 
 class MoveMode:
@@ -154,7 +157,7 @@ class MoveMode:
 
     def try_move_strand(self, strand, pos, strand_index):
         """
-        Try to move a strand if the position is within its end rectangles or control points.
+        Try to move a strand if the position is within its selection areas.
 
         Args:
             strand (Strand): The strand to try moving.
@@ -164,8 +167,9 @@ class MoveMode:
         Returns:
             bool: True if the strand was moved, False otherwise.
         """
-        start_rect = self.get_end_rectangle(strand, 0)
-        end_rect = self.get_end_rectangle(strand, 1)
+        # Get selection areas
+        start_area = self.get_start_area(strand)
+        end_area = self.get_end_area(strand)
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
 
@@ -175,17 +179,17 @@ class MoveMode:
         elif control_point2_rect.contains(pos):
             self.start_movement(strand, 'control_point2', control_point2_rect)
             return True
-        elif start_rect.contains(pos) and self.can_move_side(strand, 0, strand_index):
-            self.start_movement(strand, 0, start_rect)
+        elif start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
+            self.start_movement(strand, 0, start_area)
             return True
-        elif end_rect.contains(pos) and self.can_move_side(strand, 1, strand_index):
-            self.start_movement(strand, 1, end_rect)
+        elif end_area.contains(pos) and self.can_move_side(strand, 1, strand_index):
+            self.start_movement(strand, 1, end_area)
             return True
         return False
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 80  # Size of the area for control point selection
+        size = 35  # Size of the area for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
@@ -193,6 +197,84 @@ class MoveMode:
         else:
             return QRectF()
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
+
+    def get_start_area(self, strand):
+        """
+        Get the selection area for the start point of a strand.
+
+        Args:
+            strand (Strand): The strand to get the area for.
+
+        Returns:
+            QPainterPath: The selection area path.
+        """
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            strand.start.x() - half_outer_size,
+            strand.start.y() - half_outer_size,
+            outer_size,
+            outer_size
+        )
+
+        # Define the inner rectangle (35x35 square)
+        inner_size = 35
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            strand.start.x() - half_inner_size,
+            strand.start.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create the selection area by subtracting the inner rectangle from the outer rectangle
+        path = QPainterPath()
+        path.addRect(outer_rect)
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+        path = path.subtracted(inner_path)
+
+        return path
+
+    def get_end_area(self, strand):
+        """
+        Get the selection area for the end point of a strand.
+
+        Args:
+            strand (Strand): The strand to get the area for.
+
+        Returns:
+            QPainterPath: The selection area path.
+        """
+        # Define the outer rectangle (80x80 square)
+        outer_size = 120
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            strand.end.x() - half_outer_size,
+            strand.end.y() - half_outer_size,
+            outer_size,
+            outer_size
+        )
+
+        # Define the inner rectangle (35x35 square)
+        inner_size = 35
+        half_inner_size = inner_size / 2
+        inner_rect = QRectF(
+            strand.end.x() - half_inner_size,
+            strand.end.y() - half_inner_size,
+            inner_size,
+            inner_size
+        )
+
+        # Create the selection area by subtracting the inner rectangle from the outer rectangle
+        path = QPainterPath()
+        path.addRect(outer_rect)
+        inner_path = QPainterPath()
+        inner_path.addRect(inner_rect)
+        path = path.subtracted(inner_path)
+
+        return path
 
     def try_move_attached_strands(self, attached_strands, pos):
         """
@@ -245,41 +327,39 @@ class MoveMode:
 
         return True
 
-    def start_movement(self, strand, side, rect):
+    def start_movement(self, strand, side, area):
         """
         Start the movement of a strand's point.
 
         Args:
             strand (Strand): The strand to move.
             side (int or str): Which side of the strand to move (0 for start, 1 for end, 'control_point1', 'control_point2').
-            rect (QRectF): The rectangle representing the movable area.
+            area (QPainterPath or QRectF): The area representing the movable region.
         """
-        # Debug statement to verify movement initiation
-        # print(f"Starting movement on side: {side}")
         self.moving_side = side
-        self.moving_point = rect.center()
+
+        # For QPainterPath, get the bounding rectangle and center
+        if isinstance(area, QPainterPath):
+            bounding_rect = area.boundingRect()
+            self.moving_point = bounding_rect.center()
+        elif isinstance(area, QRectF):
+            self.moving_point = area.center()
+        else:
+            # Default to using the strand's point
+            if side == 0:
+                self.moving_point = strand.start
+            elif side == 1:
+                self.moving_point = strand.end
+            else:
+                self.moving_point = QPointF(0, 0)  # Default value
+
         self.affected_strand = strand
-        self.selected_rectangle = rect
+        self.selected_rectangle = area  # Store the area (QPainterPath or QRectF)
         self.is_moving = True
         snapped_pos = self.canvas.snap_to_grid(self.moving_point)
         self.update_cursor_position(snapped_pos)
         self.last_snapped_pos = snapped_pos
         self.target_pos = snapped_pos
-
-    def get_end_rectangle(self, strand, side):
-        """
-        Get the rectangle representing the end point of a strand.
-
-        Args:
-            strand (Strand): The strand to get the rectangle for.
-            side (int): Which side of the strand (0 for start, 1 for end).
-
-        Returns:
-            QRectF: The rectangle representing the movable area of the strand end.
-        """
-        center = strand.start if side == 0 else strand.end
-        size = 80  # Increased size for easier selection
-        return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
 
     def update_strand_position(self, new_pos):
         """
@@ -295,20 +375,28 @@ class MoveMode:
             # Move the first control point
             self.affected_strand.control_point1 = new_pos
             self.affected_strand.update_shape()
-            self.affected_strand.update_side_line()  # Ensure side lines are updated
-            self.selected_rectangle.moveCenter(new_pos)
+            self.affected_strand.update_side_line()
+            # Update the selection rectangle to the new position
+            self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 1)
             self.canvas.update()
         elif self.moving_side == 'control_point2':
             # Move the second control point
             self.affected_strand.control_point2 = new_pos
             self.affected_strand.update_shape()
-            self.affected_strand.update_side_line()  # Ensure side lines are updated
-            self.selected_rectangle.moveCenter(new_pos)
+            self.affected_strand.update_side_line()
+            # Update the selection rectangle to the new position
+            self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 2)
             self.canvas.update()
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point
             self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
-            self.selected_rectangle.moveCenter(new_pos)
+            # Update the selection area
+            if isinstance(self.selected_rectangle, QPainterPath):
+                # Recreate the selection area at the new position
+                if self.moving_side == 0:
+                    self.selected_rectangle = self.get_start_area(self.affected_strand)
+                else:
+                    self.selected_rectangle = self.get_end_area(self.affected_strand)
             self.canvas.update()
         else:
             # Invalid moving_side

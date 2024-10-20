@@ -672,7 +672,7 @@ class StrandDrawingCanvas(QWidget):
             painter.restore()
 
         # Draw the angle adjustment visualization if in angle adjust mode
-        if hasattr(self, 'is_angle_adjusting') and self.is_angle_adjusting and hasattr(self, 'angle_adjust_mode'):
+        if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
             self.angle_adjust_mode.draw(painter)
 
         # Draw mask mode selections
@@ -680,8 +680,10 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
 
-        logging.info(f"Paint event completed. Selected strand: "
-                    f"{self.selected_strand.layer_name if self.selected_strand else 'None'}")
+        logging.info(
+            f"Paint event completed. Selected strand: "
+            f"{self.selected_strand.layer_name if self.selected_strand else 'None'}"
+        )
 
         painter.end()
 
@@ -1076,35 +1078,44 @@ class StrandDrawingCanvas(QWidget):
         self.strands.append(strand)
         self.update()
 
+
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
+        # First, deselect the previously selected strand if any
+        if self.selected_strand:
+            self.selected_strand.is_selected = False
+            self.selected_strand = None
+            self.selected_strand_index = None
+
         if index is not None and 0 <= index < len(self.strands):
-            if self.selected_strand:
-                # Deselect the previously selected strand
-                self.selected_strand.is_selected = False
             self.selected_strand = self.strands[index]
             self.selected_strand.is_selected = True  # Mark the strand as selected
             self.selected_strand_index = index
             self.last_selected_strand_index = index
             self.is_first_strand = False
+
             if update_layer_panel and self.layer_panel and self.layer_panel.get_selected_layer() != index:
                 self.layer_panel.select_layer(index, emit_signal=False)
+
             self.current_mode = self.attach_mode
             self.current_mode.is_attaching = False
             self.current_strand = None
-            self.strand_selected.emit(index)
+
             # Enable delete button for masked layers
             if isinstance(self.selected_strand, MaskedStrand) and self.layer_panel:
                 self.layer_panel.delete_strand_button.setEnabled(True)
+            else:
+                if self.layer_panel:
+                    self.layer_panel.delete_strand_button.setEnabled(False)
+
+            self.strand_selected.emit(index)
         else:
-            if self.selected_strand:
-                self.selected_strand.is_selected = False
-            self.selected_strand = None
-            self.selected_strand_index = None
-            self.strand_selected.emit(-1)  # Emit -1 for deselection
-            # Disable delete button when no strand is selected
-            if self.layer_panel:
+            # If no valid index is provided, ensure the strand is deselected
+            if update_layer_panel and self.layer_panel:
+                self.layer_panel.deselect_all()
                 self.layer_panel.delete_strand_button.setEnabled(False)
+            self.strand_selected.emit(-1)  # Emit -1 for deselection
+
         self.update()  # Force a redraw
         logging.info(f"Selected strand index: {index}")
     def delete_strand(self, index):

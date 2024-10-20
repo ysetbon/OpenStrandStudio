@@ -513,7 +513,17 @@ class Strand:
         contains_start = self.get_start_selection_path().contains(pos)
         contains_end = self.get_end_selection_path().contains(pos)
         return contains_start or contains_end
-    
+    def update_control_points_from_geometry(self):
+        """Update control points based on current start, end, and desired control point positions."""
+        # For simplicity, we can set control points at 1/3 and 2/3 along the line
+        self.control_point1 = QPointF(
+            self.start.x(),
+            self.start.y()
+        )
+        self.control_point2 = QPointF(
+            self.start.x(),
+            self.start.y()
+        )    
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker
@@ -917,6 +927,23 @@ class AttachedStrand(Strand):
         path.moveTo(self.start)
         path.cubicTo(self.control_point1, self.control_point2, self.end)
         return path
+    def update_angle_length_from_geometry(self):
+        """Update the angle and length of the strand based on current start and end points."""
+        delta_x = self.end.x() - self.start.x()
+        delta_y = self.end.y() - self.start.y()
+        self.length = math.hypot(delta_x, delta_y)
+        self.angle = math.degrees(math.atan2(delta_y, delta_x))
+
+    def update_control_points_from_geometry(self):
+        """Update control points based on current start and end points."""
+        self.control_point1 = QPointF(
+            self.start.x(),
+            self.start.y()
+        )
+        self.control_point2 = QPointF(
+            self.start.x(),
+            self.start.y()
+        )
 class MaskedStrand(Strand):
     """
     Represents a strand that is a result of masking two other strands, without control points.

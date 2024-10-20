@@ -18,12 +18,23 @@ class AngleAdjustMode:
         self.angle_step = 1  # Degrees to adjust per key press
         self.length_step = 5  # Pixels to adjust per key press
         self.initial_angle = None
+        self.angle_adjustment = 0  # Total angle adjustment
         self.x_pressed = False
+
+        # Add these lines to store initial control point vectors
+        self.initial_cp1_vector = None
+        self.initial_cp2_vector = None
+
     def activate(self, strand):
         self.active_strand = strand
         self.initial_angle = self.calculate_angle(strand.start, strand.end)
         self.initial_length = self.calculate_length(strand.start, strand.end)
         self.max_length = math.ceil(self.initial_length * 2 / 10) * 10  # Round up to nearest multiple of 10
+
+        # Store the initial control point vectors relative to the start point
+        self.initial_cp1_vector = strand.control_point1 - strand.start
+        self.initial_cp2_vector = strand.control_point2 - strand.start
+
         self.prompt_for_adjustments()
 
     def mousePressEvent(self, event):
@@ -102,6 +113,8 @@ class AngleAdjustMode:
 
         def update_strand(angle=None, length=None):
             if angle is not None:
+                # Calculate angle adjustment relative to initial angle
+                self.angle_adjustment = angle - self.initial_angle
                 self.rotate_strand(angle)
             if length is not None:
                 self.set_strand_length(length)
@@ -185,8 +198,11 @@ class AngleAdjustMode:
         if not self.active_strand:
             return
 
-        current_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end)
-        new_angle = current_angle + delta
+        # Accumulate the angle adjustment
+        self.angle_adjustment += delta
+
+        # Calculate the new angle based on the initial angle
+        new_angle = self.initial_angle + self.angle_adjustment
         self.rotate_strand(new_angle)
 
     def adjust_length(self, delta):
@@ -199,97 +215,215 @@ class AngleAdjustMode:
         self.set_strand_length(new_length)
 
     def rotate_strand(self, new_angle):
+        """Rotate the active strand to the new angle and adjust control points."""
         if not self.active_strand:
             return
 
         start = self.active_strand.start
         current_length = self.calculate_length(start, self.active_strand.end)
 
+        # Update the end point based on the new angle
         dx = current_length * math.cos(math.radians(new_angle))
         dy = current_length * math.sin(math.radians(new_angle))
-
         new_end = start + QPointF(dx, dy)
         old_end = self.active_strand.end
         self.active_strand.end = new_end
+
+        # Rotate control points around the start point using the total angle adjustment
+        self.rotate_control_points_to_new_angle(new_angle)
+
         self.active_strand.update_shape()
         self.active_strand.update_side_line()
 
         # Update attached strands
         self.update_attached_strands(old_end, new_end)
 
+    def rotate_control_points_to_new_angle(self, new_angle):
+        """Rotate control points when the angle is changed."""
+        start = self.active_strand.start
+
+        # Calculate the total angle difference from the initial angle
+        angle_difference = new_angle - self.initial_angle
+
+        # Rotate each control point based on the angle difference
+        self.active_strand.control_point1 = self.rotate_point_around_pivot(
+            start + self.initial_cp1_vector, start, angle_difference
+        )
+        self.active_strand.control_point2 = self.rotate_point_around_pivot(
+            start + self.initial_cp2_vector, start, angle_difference
+        )
+
+    def rotate_control_points(self, strand, angle_diff, pivot):
+        """Rotate the control points of a strand around a pivot by angle_diff degrees."""
+        cp1 = self.rotate_point_around_pivot(strand.control_point1, pivot, angle_diff)
+        cp2 = self.rotate_point_around_pivot(strand.control_point2, pivot, angle_diff)
+        strand.control_point1 = cp1
+        strand.control_point2 = cp2
+
+    def rotate_point_around_pivot(self, point, pivot, angle_degree):
+        """Rotate a point around a pivot by a certain angle in degrees."""
+        angle_rad = math.radians(angle_degree)
+        s = math.sin(angle_rad)
+        c = math.cos(angle_rad)
+
+        # Translate point back to origin
+        pt = point - pivot
+
+        # Rotate point
+        x_new = pt.x() * c - pt.y() * s
+        y_new = pt.x() * s + pt.y() * c
+
+        # Translate point back
+        new_point = QPointF(x_new, y_new) + pivot
+        return new_point
+
+    def update_attached_strands(self, old_pos, new_pos):
+        """Update attached strands when the active strand is adjusted."""
+        for attached_strand in self.active_strand.attached_strands:
+            if attached_strand.start == old_pos:
+                # Update the start point of the attached strand
+                attached_strand.start = new_pos
+
+                # Adjust the attached strand to keep its end point the same
+                self.adjust_attached_strand(attached_strand)
+
+                attached_strand.update_shape()
+                attached_strand.update_side_line()
+
+                # Recursively update any strands attached to the attached strand
+                self.update_attached_strands_recursive(attached_strand)
+
+    def rotate_attached_strand(self, strand, angle_diff, pivot):
+        """Rotate an attached strand's end point and control points."""
+        # Rotate the end point around the pivot
+        end = self.rotate_point_around_pivot(strand.end, pivot, angle_diff)
+        strand.end = end
+
+        # Rotate control points
+        self.rotate_control_points(strand, angle_diff, pivot)
+
+    def update_attached_strands_recursive(self, strand):
+        """Recursively update any strands attached to the attached strand."""
+        for attached_strand in strand.attached_strands:
+            if attached_strand.start == strand.end:
+                # Since the end point of the current strand hasn't changed,
+                # the start point of the attached strand remains the same
+                pass
+            elif attached_strand.start == strand.start:
+                # If the attached strand's start point is the same as the adjusted strand's start
+                attached_strand.start = strand.start
+
+                # Adjust the attached strand to keep its end point the same
+                self.adjust_attached_strand(attached_strand)
+
+                attached_strand.update_shape()
+                attached_strand.update_side_line()
+
+                # Recursively update further attached strands
+                self.update_attached_strands_recursive(attached_strand)
+
     def set_strand_length(self, new_length):
+        """Set the length of the active strand and adjust control points."""
         if not self.active_strand:
             return
 
         start = self.active_strand.start
+        # Calculate the current angle between start and end
         current_angle = self.calculate_angle(start, self.active_strand.end)
 
+        # Update the end point based on the new length
         dx = new_length * math.cos(math.radians(current_angle))
         dy = new_length * math.sin(math.radians(current_angle))
-
         new_end = start + QPointF(dx, dy)
         old_end = self.active_strand.end
         self.active_strand.end = new_end
+
+        # Adjust the control points based on the new length
+        self.update_control_points_for_length_change(new_length)
+
         self.active_strand.update_shape()
         self.active_strand.update_side_line()
 
         # Update attached strands
         self.update_attached_strands(old_end, new_end)
 
-    def update_attached_strands(self, old_end, new_end):
+    def update_control_points_for_length_change(self, new_length):
+        """Adjust control points when the length is changed."""
+        # Calculate the scaling factor based on the original length
+        length_ratio = new_length / self.initial_length
+
+        start = self.active_strand.start
+
+        # Use the initial control point vectors for consistent scaling
+        cp1_new_vector = self.initial_cp1_vector * length_ratio
+        cp2_new_vector = self.initial_cp2_vector * length_ratio
+
+        # Update control points
+        self.active_strand.control_point1 = start + cp1_new_vector
+        self.active_strand.control_point2 = start + cp2_new_vector
+
+    def update_attached_strands_length(self, old_pos, new_pos):
+        """Update the position of attached strands when the length changes."""
         for attached_strand in self.active_strand.attached_strands:
-            if attached_strand.start == old_end:
-                attached_strand.start = new_end
+            if attached_strand.start == old_pos:
+                attached_strand.start = new_pos
+
+                # Optionally, adjust the attached strand's control points if needed
                 attached_strand.update(attached_strand.end)
                 attached_strand.update_side_line()
-                # Recursively update attached strands
-                self.update_attached_strands_recursive(attached_strand, old_end, new_end)
 
-    def update_attached_strands_recursive(self, strand, old_pos, new_pos):
+                # Recursively update attached strands
+                self.update_attached_strands_length_recursive(attached_strand, old_pos, new_pos)
+
+    def update_attached_strands_length_recursive(self, strand, old_pos, new_pos):
+        """Recursively update any strands attached to the attached strand."""
         for attached_strand in strand.attached_strands:
             if attached_strand.start == old_pos:
                 attached_strand.start = new_pos
                 attached_strand.update(attached_strand.end)
                 attached_strand.update_side_line()
-                self.update_attached_strands_recursive(attached_strand, old_pos, new_pos)
+                self.update_attached_strands_length_recursive(attached_strand, old_pos, new_pos)
 
     def confirm_adjustment(self):
         if self.active_strand:
+            # Apply the adjustments to the strand
             self.active_strand.update_shape()
             self.active_strand.update_side_line()
-            
-            # Get the index of the active strand
-            active_strand_index = self.canvas.strands.index(self.active_strand)
-            
+
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False
-            
-            # Ensure the layer panel selection is updated
-            if self.canvas.layer_panel:
+
+            # Deselect all layers and strands using the deselect_all method in LayerPanel
+            if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                 self.canvas.layer_panel.deselect_all()
-                self.canvas.layer_panel.update()  # Force a repaint of the layer panel
-            
-            # Reselect the strand in the canvas (but not in the layer panel)
-            self.canvas.select_strand(active_strand_index, update_layer_panel=False)
-            
-            # Emit the strand_selected signal
-            self.canvas.strand_selected.emit(active_strand_index)
-            
-            # Emit a signal to indicate that angle adjustment is completed
-            self.canvas.angle_adjust_completed.emit()
-        
-        self.active_strand = None
-        self.canvas.update()
+
+            # Reset the active strand and angle adjustment
+            self.active_strand = None
+            self.angle_adjustment = 0
+
+            # Refresh the canvas
+            self.canvas.update()
 
     def cancel_adjustment(self):
         if self.active_strand:
-            self.rotate_strand(self.initial_angle)
-            self.set_strand_length(self.initial_length)
-            # Ensure the strand remains selected
-            strand_index = self.canvas.strands.index(self.active_strand)
-            self.canvas.select_strand(strand_index)
-        self.active_strand = None
-        self.canvas.update()
+            # Restore the strand to its initial state
+            self.active_strand.start = self.initial_start
+            self.active_strand.end = self.initial_end
+            self.active_strand.update_shape()
+            self.active_strand.update_side_line()
+
+            # Deactivate the angle adjust mode
+            self.canvas.is_angle_adjusting = False
+
+            # Deselect the active strand
+            self.active_strand = None
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+
+            # Reset the angle adjustment
+            self.angle_adjustment = 0
+
+            self.canvas.update()  # Refresh the canvas
 
     @staticmethod
     def calculate_angle(start, end):
@@ -312,13 +446,61 @@ class AngleAdjustMode:
             # Draw the angle arc
             center = self.active_strand.start
             radius = min(50, self.active_strand.width * 2)
-            start_angle = math.degrees(math.atan2(self.active_strand.end.y() - center.y(), self.active_strand.end.x() - center.x()))
-            span_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end) - start_angle
 
+            # Calculate start and span angles
+            start_angle_rad = math.atan2(
+                self.active_strand.end.y() - center.y(),
+                self.active_strand.end.x() - center.x()
+            )
+            start_angle = math.degrees(start_angle_rad)
+            span_angle = self.angle_adjustment
+
+            # Ensure span_angle is within -360 to 360 degrees
+            span_angle = ((span_angle + 360) % 360) if span_angle < 0 else (span_angle % 360)
+
+            # Draw the angle arc
             painter.setPen(QPen(QColor(255, 0, 0), 2))  # Red pen
-            painter.drawArc(QRectF(center.x() - radius, center.y() - radius, radius * 2, radius * 2), 
-                            int(start_angle * 16), int(span_angle * 16))
+            painter.drawArc(
+                QRectF(center.x() - radius, center.y() - radius, radius * 2, radius * 2),
+                int(-start_angle * 16),
+                int(-span_angle * 16)
+            )
 
             # Draw the adjusted strand
             painter.setPen(QPen(QColor(0, 255, 0), 2))  # Green pen
             painter.drawLine(self.active_strand.start, self.active_strand.end)
+
+    def adjust_attached_strand(self, strand):
+        """Adjust the attached strand so that its end point remains the same."""
+        # Compute new length and angle based on the new start and existing end
+        delta_x = strand.end.x() - strand.start.x()
+        delta_y = strand.end.y() - strand.start.y()
+
+        new_length = math.hypot(delta_x, delta_y)
+        new_angle = math.degrees(math.atan2(delta_y, delta_x))
+
+        # Update the attached strand's length and angle
+        if hasattr(strand, 'length'):
+            strand.length = new_length
+        if hasattr(strand, 'angle'):
+            strand.angle = new_angle
+
+        # Update control points accordingly
+        strand.update_control_points_from_geometry()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

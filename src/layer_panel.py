@@ -929,11 +929,13 @@ class LayerPanel(QWidget):
         for button in self.layer_buttons:
             button.setChecked(False)
 
-        # Deselect all strands
+        # Deselect all strands in the canvas
         for strand in self.canvas.strands:
             strand.is_selected = False
 
         # Update the canvas to reflect changes
+        self.canvas.selected_strand = None
+        self.canvas.selected_strand_index = None
         self.canvas.update()
 
     def on_color_changed(self, set_number, color):

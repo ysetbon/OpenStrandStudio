@@ -111,7 +111,10 @@ class Strand:
         path.addRect(outer_rect)
 
         return path
-
+    def draw_path(self, painter):
+        """Draw the path of the strand without filling."""
+        path = self.get_path()
+        painter.drawPath(path)
     def get_end_selection_path(self):
         """Construct the selection path using the start and end points, control points, and strand width."""
         # Number of samples along the curve

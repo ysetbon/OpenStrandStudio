@@ -527,6 +527,14 @@ class LayerPanel(QWidget):
                 self.strand_selected.emit(index)
             self.last_selected_index = index
 
+        # Ensure the selected strand is updated in the canvas
+        if 0 <= index < len(self.canvas.strands):
+            self.canvas.selected_strand = self.canvas.strands[index]
+            self.canvas.selected_strand_index = index
+        else:
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+
         # Update layer button states and redraw the canvas
         self.update_layer_button_states()
         self.canvas.update()

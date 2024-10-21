@@ -14,6 +14,7 @@ class AttachMode(QObject):
         """Initialize the AttachMode."""
         super().__init__()
         self.canvas = canvas
+        self.affected_strand = None  # Add this line
         self.initialize_properties()
         self.setup_timer()
 

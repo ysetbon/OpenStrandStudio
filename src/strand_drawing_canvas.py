@@ -690,6 +690,11 @@ class StrandDrawingCanvas(QWidget):
             elif self.current_mode.affected_strand and isinstance(self.current_mode.affected_strand, AttachedStrand):
                 self.draw_selected_attached_strand_circle(painter, self.current_mode.affected_strand)
 
+        # Always highlight the selected strand, even in move mode
+        if self.selected_strand and (not hasattr(self.current_mode, 'affected_strand') or 
+                                     self.selected_strand != self.current_mode.affected_strand):
+            self.draw_highlighted_strand(painter, self.selected_strand)
+
         logging.info(
             f"Paint event completed. Selected strand: "
             f"{self.selected_strand.layer_name if self.selected_strand else 'None'}"
@@ -830,6 +835,14 @@ class StrandDrawingCanvas(QWidget):
 
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
+        painter.save()
+        highlight_pen = QPen(QColor('red'), strand.stroke_width + 2)
+        highlight_pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(highlight_pen)
+        painter.setBrush(Qt.NoBrush)
+        strand.draw_path(painter)  # Use the new draw_path method
+        painter.restore()
+
         if isinstance(strand, MaskedStrand):
             self.draw_highlighted_masked_strand(painter, strand)
         else:

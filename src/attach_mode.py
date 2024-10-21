@@ -58,7 +58,7 @@ class AttachMode(QObject):
         """Handle mouse press events."""
 
         # Prevent attachment if the canvas is in Move Mode
-        if self.canvas.current_mode == self.canvas.move_mode:
+        if self.canvas.current_mode == "move":
             # Do not proceed with attachment logic
             return
 

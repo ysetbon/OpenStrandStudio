@@ -226,7 +226,7 @@ class RotateMode:
 
     def update_strand_position(self, new_pos):
         """
-        Update the position of the affected strand.
+        Update the position of the affected strand and its control points.
 
         Args:
             new_pos (QPointF): The new position for the strand end.
@@ -234,15 +234,50 @@ class RotateMode:
         if not self.affected_strand:
             return
 
+        # Calculate the rotation angle
+        old_vector = self.rotating_point - self.pivot_point
+        new_vector = new_pos - self.pivot_point
+        rotation_angle = math.atan2(new_vector.y(), new_vector.x()) - math.atan2(old_vector.y(), old_vector.x())
+
         if self.rotating_side == 0:
+            # Rotating the start point
             self.affected_strand.start = new_pos
+            # Rotate control points
+            self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
+            self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
         else:
+            # Rotating the end point
             self.affected_strand.end = new_pos
+            # Rotate control points
+            self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
+            self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
 
         self.affected_strand.update_shape()
         self.affected_strand.update_side_line()
         self.selected_rectangle.moveCenter(new_pos)
         self.canvas.update()
+
+    def rotate_control_point(self, control_point, angle):
+        """
+        Rotate a control point around the pivot point.
+
+        Args:
+            control_point (QPointF): The control point to rotate.
+            angle (float): The rotation angle in radians.
+        """
+        # Translate to origin
+        translated = control_point - self.pivot_point
+        
+        # Rotate
+        rotated_x = translated.x() * math.cos(angle) - translated.y() * math.sin(angle)
+        rotated_y = translated.x() * math.sin(angle) + translated.y() * math.cos(angle)
+        
+        # Translate back
+        rotated = QPointF(rotated_x, rotated_y) + self.pivot_point
+        
+        # Update the control point
+        control_point.setX(rotated.x())
+        control_point.setY(rotated.y())
 
     def cleanup_deleted_strands(self):
         """Remove deleted strands and update references after strand deletion."""

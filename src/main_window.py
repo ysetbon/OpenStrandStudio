@@ -1193,7 +1193,7 @@ class MainWindow(QMainWindow):
                     if self.canvas.should_draw_names:
                         for strand in self.canvas.strands:
                             self.canvas.draw_strand_label(painter, strand)
-                
+
                 # Perform the custom painting
                 paint_canvas(painter)
                 
@@ -1324,15 +1324,24 @@ class MainWindow(QMainWindow):
 
     def set_attach_mode(self):
         self.update_mode("attach")
+        self.canvas.set_mode("attach")  # Explicitly set the canvas mode
         if self.canvas.last_selected_strand_index is not None:
             self.select_strand(self.canvas.last_selected_strand_index)
 
     def set_move_mode(self):
         self.update_mode("move")
         self.canvas.last_selected_strand_index = self.canvas.selected_strand_index
+        
+        # Highlight the selected attached strand immediately
+        if self.canvas.selected_strand and isinstance(self.canvas.selected_strand, AttachedStrand):
+            self.canvas.selected_attached_strand = self.canvas.selected_strand
+            self.canvas.selected_attached_strand.start_selected = True
+        else:
+            self.canvas.selected_attached_strand = None
+        
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
-        self.canvas.update()
+        self.canvas.update()  # Force an update of the canvas
 
 
     def create_new_strand(self):

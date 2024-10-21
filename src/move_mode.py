@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPointF, QRectF, QTimer
-from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QCursor, QPen
 from PyQt5.QtWidgets import QApplication
 import math
 from PyQt5.QtCore import QPointF, QRectF
@@ -78,6 +78,15 @@ class MoveMode:
             self.last_snapped_pos = self.canvas.snap_to_grid(pos)
             self.target_pos = self.last_snapped_pos
 
+            # This part is no longer needed here as we set it in set_move_mode
+            # if isinstance(self.affected_strand, AttachedStrand):
+            #     self.canvas.selected_attached_strand = self.affected_strand
+            #     self.affected_strand.start_selected = True
+            # else:
+            #     self.canvas.selected_attached_strand = None
+
+            self.canvas.update()  # Redraw the canvas to show the selected attached strand
+
     def mouseMoveEvent(self, event):
         """
         Handle mouse move events.
@@ -99,6 +108,8 @@ class MoveMode:
             event (QMouseEvent): The mouse event.
         """
         # Reset all properties
+        if isinstance(self.affected_strand, AttachedStrand):
+            self.affected_strand.start_selected = True
         self.is_moving = False
         self.moving_point = None
         self.affected_strand = None
@@ -546,3 +557,25 @@ class MoveMode:
 
         # Update the canvas
         self.canvas.update()
+
+    def draw_selected_attached_strand(self, painter):
+        """
+        Draw a circle around the selected attached strand.
+
+        Args:
+            painter (QPainter): The painter object to draw with.
+        """
+        if self.canvas.selected_attached_strand:
+            painter.save()
+            pen = QPen()
+            pen.setColor(self.canvas.selected_attached_strand.color)
+            pen.setWidth(2)
+            painter.setPen(pen)
+            
+            # Draw circle at the start point of the attached strand
+            radius = 18  # Adjust this value to change the size of the circle
+            center = self.canvas.selected_attached_strand.start
+            painter.drawEllipse(center, radius, radius)
+            
+            painter.restore()
+

@@ -893,12 +893,12 @@ class AttachedStrand(Strand):
         painter.drawEllipse(self.start, inner_radius, inner_radius)
 
         # Highlight the start circle if it is selected
-        if self.start_selected:
-            highlight_pen = QPen(QColor('red'), self.stroke_width)
+        if self.is_selected or self.start_selected:
+            highlight_pen = QPen(QColor('red'), self.stroke_width+2)
             highlight_pen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
-            painter.drawEllipse(self.start, circle_radius + self.stroke_width / 2, circle_radius + self.stroke_width / 2)
+            painter.drawEllipse(self.start, circle_radius + self.stroke_width-1 , circle_radius + self.stroke_width-1 )
 
         painter.restore()
 
@@ -1128,6 +1128,7 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
 
 
 

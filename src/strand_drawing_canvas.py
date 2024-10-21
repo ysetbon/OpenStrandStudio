@@ -64,6 +64,8 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self.parent_window, 'language_code'):
             self.language_code = self.parent_window.language_code
 
+        self.selected_attached_strand = None
+
     def update_translations(self):
         """Update any text elements in the canvas that require translation."""
         _ = translations[self.language_code]
@@ -561,6 +563,7 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False  # Add this line
         self.mask_mode_active = False
         self.mask_selected_strands = []
+        self.selected_attached_strand = None  # Add this line for selected attached strand
 
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number
@@ -680,12 +683,33 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
 
+        # Draw the selected attached strand's circle when in move mode
+        if isinstance(self.current_mode, MoveMode):
+            if self.selected_attached_strand:
+                self.draw_selected_attached_strand_circle(painter, self.selected_attached_strand)
+            elif self.current_mode.affected_strand and isinstance(self.current_mode.affected_strand, AttachedStrand):
+                self.draw_selected_attached_strand_circle(painter, self.current_mode.affected_strand)
+
         logging.info(
             f"Paint event completed. Selected strand: "
             f"{self.selected_strand.layer_name if self.selected_strand else 'None'}"
         )
 
         painter.end()
+
+    def draw_selected_attached_strand_circle(self, painter, strand):
+        painter.save()
+        highlight_pen = QPen(QColor('red'), strand.stroke_width+2)
+        highlight_pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(highlight_pen)
+        painter.setBrush(Qt.NoBrush)
+        
+        total_diameter = strand.width + strand.stroke_width * 2
+        circle_radius = total_diameter / 2
+        painter.drawEllipse(strand.start, circle_radius + strand.stroke_width-1 , circle_radius + strand.stroke_width-1 )
+        painter.restore()
+
+
 
     def create_masked_layer(self, strand1, strand2):
         """
@@ -1086,6 +1110,7 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand.is_selected = False
             self.selected_strand = None
             self.selected_strand_index = None
+            self.selected_attached_strand = None
 
         if index is not None and 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
@@ -1093,6 +1118,11 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand_index = index
             self.last_selected_strand_index = index
             self.is_first_strand = False
+
+            if isinstance(self.selected_strand, AttachedStrand):
+                self.selected_attached_strand = self.selected_strand
+            else:
+                self.selected_attached_strand = None
 
             if update_layer_panel and self.layer_panel and self.layer_panel.get_selected_layer() != index:
                 self.layer_panel.select_layer(index, emit_signal=False)
@@ -1601,6 +1631,7 @@ class StrandDrawingCanvas(QWidget):
         """Clear the current strand selection."""
         self.selected_strand = None
         self.selected_strand_index = None
+        self.selected_attached_strand = None
         self.update()
 
     def refresh_canvas(self):

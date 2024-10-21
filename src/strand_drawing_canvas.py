@@ -1105,22 +1105,23 @@ class StrandDrawingCanvas(QWidget):
 
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
-        # First, deselect the previously selected strand if any
-        if self.selected_strand:
-            self.selected_strand.is_selected = False
-            self.selected_strand = None
-            self.selected_strand_index = None
-            self.selected_attached_strand = None
+        # Deselect all strands first
+        for strand in self.strands:
+            strand.is_selected = False
+            if hasattr(strand, 'attached_strands'):
+                for attached_strand in strand.attached_strands:
+                    attached_strand.is_selected = False
 
         if index is not None and 0 <= index < len(self.strands):
             self.selected_strand = self.strands[index]
-            self.selected_strand.is_selected = True  # Mark the strand as selected
+            self.selected_strand.is_selected = True
             self.selected_strand_index = index
             self.last_selected_strand_index = index
             self.is_first_strand = False
 
             if isinstance(self.selected_strand, AttachedStrand):
                 self.selected_attached_strand = self.selected_strand
+                self.selected_attached_strand.is_selected = True
             else:
                 self.selected_attached_strand = None
 

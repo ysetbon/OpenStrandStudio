@@ -19,6 +19,9 @@ class MoveMode:
         self.canvas = canvas
         self.initialize_properties()
         self.setup_timer()
+        self.originally_selected_strand = None
+        self.in_move_mode = False
+        self.temp_selected_strand = None
 
     def initialize_properties(self):
         """Initialize all properties used in the MoveMode."""
@@ -71,6 +74,22 @@ class MoveMode:
             event (QMouseEvent): The mouse event.
         """
         pos = event.pos()
+        
+        if not self.in_move_mode:
+            # Set the originally_selected_strand to the currently selected strand in the layer panel
+            self.originally_selected_strand = self.canvas.selected_attached_strand
+            self.in_move_mode = True
+
+        # Store the current selection state
+        previously_selected = self.canvas.selected_attached_strand
+
+        # Deselect all strands
+        for strand in self.canvas.strands:
+            strand.is_selected = False
+            if isinstance(strand, AttachedStrand):
+                for attached in strand.attached_strands:
+                    attached.is_selected = False
+
         self.handle_strand_movement(pos)
         if self.is_moving:
             self.last_update_pos = pos
@@ -78,14 +97,21 @@ class MoveMode:
             self.last_snapped_pos = self.canvas.snap_to_grid(pos)
             self.target_pos = self.last_snapped_pos
 
-            # This part is no longer needed here as we set it in set_move_mode
-            # if isinstance(self.affected_strand, AttachedStrand):
-            #     self.canvas.selected_attached_strand = self.affected_strand
-            #     self.affected_strand.start_selected = True
-            # else:
-            #     self.canvas.selected_attached_strand = None
+            # Set the temporary selected strand
+            self.temp_selected_strand = self.affected_strand
+            if self.temp_selected_strand:
+                self.temp_selected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.temp_selected_strand
+        else:
+            # If no strand was clicked, revert to the original selection
+            if self.originally_selected_strand:
+                self.originally_selected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.originally_selected_strand
+            else:
+                self.canvas.selected_attached_strand = previously_selected
 
-            self.canvas.update()  # Redraw the canvas to show the selected attached strand
+        # Update the canvas
+        self.canvas.update()
 
     def mouseMoveEvent(self, event):
         """
@@ -107,9 +133,19 @@ class MoveMode:
         Args:
             event (QMouseEvent): The mouse event.
         """
+        # Deselect all strands
+        for strand in self.canvas.strands:
+            strand.is_selected = False
+            if isinstance(strand, AttachedStrand):
+                for attached in strand.attached_strands:
+                    attached.is_selected = False
+
+        # Restore the selection of the originally selected strand
+        if self.originally_selected_strand:
+            self.originally_selected_strand.is_selected = True
+            self.canvas.selected_attached_strand = self.originally_selected_strand
+
         # Reset all properties
-        if isinstance(self.affected_strand, AttachedStrand):
-            self.affected_strand.start_selected = True
         self.is_moving = False
         self.moving_point = None
         self.affected_strand = None
@@ -120,6 +156,9 @@ class MoveMode:
         self.last_snapped_pos = None
         self.target_pos = None
         self.move_timer.stop()
+        self.in_move_mode = False
+        self.temp_selected_strand = None  # Reset temporary selection
+
         self.canvas.update()
 
     def gradual_move(self):
@@ -159,6 +198,7 @@ class MoveMode:
         Args:
             pos (QPointF): The position of the mouse click.
         """
+        self.is_moving = False  # Reset this flag at the start
         for i, strand in enumerate(self.canvas.strands):
             if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 if self.try_move_strand(strand, pos, i):
@@ -192,6 +232,9 @@ class MoveMode:
             return True
         elif start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_area)
+            if isinstance(strand, AttachedStrand):
+                self.canvas.selected_attached_strand = strand
+                strand.is_selected = True
             return True
         elif end_area.contains(pos) and self.can_move_side(strand, 1, strand_index):
             self.start_movement(strand, 1, end_area)
@@ -340,7 +383,7 @@ class MoveMode:
 
     def start_movement(self, strand, side, area):
         """
-        Start the movement of a strand's point.
+        Start the movement of a strand's point without changing its selection state.
 
         Args:
             strand (Strand): The strand to move.
@@ -371,6 +414,14 @@ class MoveMode:
         self.update_cursor_position(snapped_pos)
         self.last_snapped_pos = snapped_pos
         self.target_pos = snapped_pos
+
+        # Update the canvas's selected_attached_strand if it's an AttachedStrand
+        # without changing its selection state
+        if isinstance(strand, AttachedStrand):
+            self.canvas.selected_attached_strand = strand
+
+        # Update the canvas
+        self.canvas.update()
 
     def update_strand_position(self, new_pos):
         """
@@ -412,6 +463,13 @@ class MoveMode:
         else:
             # Invalid moving_side
             pass  # Or handle unexpected cases
+
+        # Ensure the affected strand remains selected
+        self.affected_strand.is_selected = True
+        self.canvas.selected_attached_strand = self.affected_strand
+
+        # Force a redraw of the canvas
+        self.canvas.update()
 
     def move_strand_and_update_attached(self, strand, new_pos, moving_side):
         """Move the strand's point and update attached strands without resetting control points.

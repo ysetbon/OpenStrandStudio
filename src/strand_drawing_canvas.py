@@ -65,6 +65,27 @@ class StrandDrawingCanvas(QWidget):
             self.language_code = self.parent_window.language_code
 
         self.selected_attached_strand = None
+        
+        self._selected_strand = None
+
+    @property
+    def selected_strand(self):
+        return self._selected_strand
+
+    @selected_strand.setter
+    def selected_strand(self, strand):
+        if strand is None:
+            logging.info(f"Selected strand set to None. Caller: {self.get_caller()}")
+        else:
+            logging.info(f"Selected strand set to {strand.layer_name}. Caller: {self.get_caller()}")
+        self._selected_strand = strand
+
+    def get_caller(self):
+        import traceback
+        stack = traceback.extract_stack()
+        filename, lineno, function_name, text = stack[-3]
+        return f"{filename}:{lineno} in {function_name}"
+
 
     def update_translations(self):
         """Update any text elements in the canvas that require translation."""
@@ -1074,6 +1095,10 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             self.group_layer_manager.update_groups_with_new_strand(new_strand)
 
+        # Select the newly attached strand
+        new_strand_index = self.strands.index(new_strand)
+        self.select_strand(new_strand_index)
+
         # Update the canvas
         self.update()
 
@@ -1118,6 +1143,7 @@ class StrandDrawingCanvas(QWidget):
 
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
+        logging.info(f"Entering select_strand. Index: {index}")
         # Deselect all strands first
         for strand in self.strands:
             strand.is_selected = False
@@ -1126,6 +1152,7 @@ class StrandDrawingCanvas(QWidget):
                     attached_strand.is_selected = False
 
         if index is not None and 0 <= index < len(self.strands):
+            print(f"selected_strand = {self.strands[index]}")
             self.selected_strand = self.strands[index]
             self.selected_strand.is_selected = True
             self.selected_strand_index = index
@@ -1155,6 +1182,8 @@ class StrandDrawingCanvas(QWidget):
             self.strand_selected.emit(index)
         else:
             # If no valid index is provided, ensure the strand is deselected
+            logging.info(f"Deselecting all strands in select_strand")
+            self.selected_strand = None
             if update_layer_panel and self.layer_panel:
                 self.layer_panel.deselect_all()
                 self.layer_panel.delete_strand_button.setEnabled(False)
@@ -1162,6 +1191,7 @@ class StrandDrawingCanvas(QWidget):
 
         self.update()  # Force a redraw
         logging.info(f"Selected strand index: {index}")
+        logging.info(f"Exiting select_strand. Selected strand: {self.selected_strand}")
     def delete_strand(self, index):
         if 0 <= index < len(self.strands):
             # Add this line to capture the deleted strand's layer name (optional)
@@ -1290,6 +1320,7 @@ class StrandDrawingCanvas(QWidget):
         Args:
             mode (str): The mode to set. Can be "attach", "move", "select", "mask", "angle_adjust", "new_strand", "rotate", or "new_strand".
         """
+        logging.info(f"Setting mode to {mode}. Current selected strand: {self.selected_strand}")
         # Deactivate the current mode if it has a deactivate method
         if hasattr(self.current_mode, 'deactivate'):
             self.current_mode.deactivate()
@@ -1333,14 +1364,14 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode.activate()
 
         # Clear any existing selection if switching to a different mode
-        if mode != "select":
-            self.clear_selection()
+            
 
         # Update the canvas
         self.update()
 
         # Log the mode change
         logging.info(f"Canvas mode changed to: {mode}")
+        logging.info(f"Mode set to {mode}. Selected strand after mode change: {self.selected_strand}")
 
 
 
@@ -1643,10 +1674,12 @@ class StrandDrawingCanvas(QWidget):
 
     def clear_selection(self):
         """Clear the current strand selection."""
+        logging.info(f"Clearing selection. Current selected strand: {self.selected_strand}")
         self.selected_strand = None
         self.selected_strand_index = None
         self.selected_attached_strand = None
         self.update()
+        logging.info("Selection cleared")
 
     def refresh_canvas(self):
         """Refresh the entire canvas, updating all strands."""
@@ -1656,6 +1689,7 @@ class StrandDrawingCanvas(QWidget):
 
     def remove_strand(self, strand):
         logging.info(f"Starting remove_strand for: {strand.layer_name}")
+        logging.info(f"Removing strand {strand.layer_name}. Current selected strand: {self.selected_strand}")
 
         if strand not in self.strands:
             logging.warning(f"Strand {strand.layer_name} not found in self.strands")
@@ -1711,6 +1745,7 @@ class StrandDrawingCanvas(QWidget):
 
         # Update selection if the removed strand was selected
         if self.selected_strand in strands_to_remove + masks_to_remove:
+            logging.info("Clearing selected strand as it's being removed")
             self.selected_strand = None
             self.selected_strand_index = None
             logging.info("Cleared selected strand")
@@ -1742,6 +1777,7 @@ class StrandDrawingCanvas(QWidget):
             self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
             self.update_layer_panel_colors()
 
+        logging.info(f"Strand removed. Current selected strand: {self.selected_strand}")
         logging.info("Finished remove_strand")
         return True
 

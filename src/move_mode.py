@@ -77,11 +77,27 @@ class MoveMode:
         
         if not self.in_move_mode:
             # Set the originally_selected_strand to the currently selected strand in the layer panel
-            self.originally_selected_strand = self.canvas.selected_attached_strand
+            self.originally_selected_strand = self.canvas.selected_strand
             self.in_move_mode = True
+            
+            # Log the self.canvas.selected_strand when entering move mode
+            print(f"Entering move mode. self.canvas.selected_strand: {self.canvas.selected_strand}")
 
         # Store the current selection state
-        previously_selected = self.canvas.selected_attached_strand
+        previously_selected = self.canvas.selected_strand
+
+        # Log previously selected strand
+        print(f"Previously selected strand: {previously_selected}")
+
+        # Log currently selected strands before deselection
+        print("Currently selected strands before deselection:")
+        for strand in self.canvas.strands:
+            if strand.is_selected:
+                print(f"- {strand}")
+            if isinstance(strand, AttachedStrand):
+                for attached in strand.attached_strands:
+                    if attached.is_selected:
+                        print(f"  - Attached: {attached}")
 
         # Deselect all strands
         for strand in self.canvas.strands:

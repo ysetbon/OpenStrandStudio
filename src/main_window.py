@@ -1339,8 +1339,7 @@ class MainWindow(QMainWindow):
         else:
             self.canvas.selected_attached_strand = None
         
-        self.canvas.selected_strand = None
-        self.canvas.selected_strand_index = None
+
         self.canvas.update()  # Force an update of the canvas
 
 

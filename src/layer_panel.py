@@ -539,6 +539,21 @@ class LayerPanel(QWidget):
         self.update_layer_button_states()
         self.canvas.update()
 
+        if not self.masked_mode and not self.lock_mode:
+            for i, button in enumerate(self.layer_buttons):
+                button.setChecked(i == index)
+            # Set the selected strand's is_selected to True
+            if 0 <= index < len(self.canvas.strands):
+                selected_strand = self.canvas.strands[index]
+                selected_strand.is_selected = True
+            if emit_signal:
+                self.strand_selected.emit(index)
+            self.last_selected_index = index
+
+            # Switch to attach mode
+            if self.parent_window:
+                self.parent_window.set_attach_mode()
+
     def handle_masked_layer_selection(self, index):
         """Handle the selection of layers in masked mode."""
         if self.first_masked_layer is None:

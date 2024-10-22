@@ -1327,6 +1327,14 @@ class MainWindow(QMainWindow):
         self.canvas.set_mode("attach")  # Explicitly set the canvas mode
         if self.canvas.last_selected_strand_index is not None:
             self.select_strand(self.canvas.last_selected_strand_index)
+        
+        # Ensure the attach button is checked and others are unchecked
+        self.attach_button.setChecked(True)
+        self.move_button.setChecked(False)
+        self.rotate_button.setChecked(False)
+        self.select_strand_button.setChecked(False)
+        self.mask_button.setChecked(False)
+        self.angle_adjust_button.setChecked(False)
 
     def set_move_mode(self):
         self.update_mode("move")
@@ -1339,7 +1347,6 @@ class MainWindow(QMainWindow):
         else:
             self.canvas.selected_attached_strand = None
         
-
         self.canvas.update()  # Force an update of the canvas
 
 

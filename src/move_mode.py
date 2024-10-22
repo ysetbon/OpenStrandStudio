@@ -117,6 +117,7 @@ class MoveMode:
             self.temp_selected_strand = self.affected_strand
             if self.temp_selected_strand:
                 self.temp_selected_strand.is_selected = True
+                self.originally_selected_strand.is_selected = True
                 self.canvas.selected_attached_strand = self.temp_selected_strand
         else:
             # If no strand was clicked, revert to the original selection
@@ -634,22 +635,21 @@ class MoveMode:
 
     def draw_selected_attached_strand(self, painter):
         """
-        Draw a circle around the selected attached strand.
+        Draw a circle around the selected attached strand or the temporary selected strand.
 
         Args:
             painter (QPainter): The painter object to draw with.
         """
-        if self.canvas.selected_attached_strand:
-            painter.save()
-            pen = QPen()
-            pen.setColor(self.canvas.selected_attached_strand.color)
-            pen.setWidth(2)
-            painter.setPen(pen)
-            
-            # Draw circle at the start point of the attached strand
-            radius = 18  # Adjust this value to change the size of the circle
-            center = self.canvas.selected_attached_strand.start
-            painter.drawEllipse(center, radius, radius)
-            
-            painter.restore()
+        # Determine which strand to highlight
+        strand_to_highlight = None
+        if self.is_moving and self.temp_selected_strand:
+            strand_to_highlight = self.temp_selected_strand
+        elif not self.is_moving and self.canvas.selected_attached_strand:
+            strand_to_highlight = self.canvas.selected_attached_strand
 
+
+        # Log the current state for debugging
+        print(f"Is moving: {self.is_moving}")
+        print(f"Temp selected strand: {self.temp_selected_strand}")
+        print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
+        print(f"Strand to highlight: {strand_to_highlight}")

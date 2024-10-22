@@ -850,7 +850,7 @@ class AttachedStrand(Strand):
 
         # Highlight the strand if it is selected
         if self.is_selected:
-            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen = QPen(QColor('red'), self.stroke_width +8 )
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)
@@ -895,13 +895,7 @@ class AttachedStrand(Strand):
         inner_radius = self.width / 2
         painter.drawEllipse(self.start, inner_radius, inner_radius)
 
-        # Highlight the start circle only if this specific attached strand is selected
-        if self.is_selected:
-            highlight_pen = QPen(QColor('red'), self.stroke_width+2)
-            highlight_pen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawEllipse(self.start, circle_radius + self.stroke_width-1, circle_radius + self.stroke_width-1)
+
 
         painter.restore()
 

@@ -34,6 +34,7 @@ class StrandDrawingCanvas(QWidget):
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
         angle_adjust_completed = pyqtSignal()
+        self.control_points_visible = False  # Initialize control points visibility
     
         # Add these new attributes
         self.is_drawing_new_strand = False
@@ -642,7 +643,10 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False
         self.mask_mode_active = False
 
-
+    def show_control_points(self, visible):
+        """Show or hide control points on the canvas."""
+        self.control_points_visible = visible
+        self.update()  # Redraw the canvas to reflect changes
     def paintEvent(self, event):
         """
         Handles the painting of the canvas.
@@ -1988,14 +1992,23 @@ class StrandDrawingCanvas(QWidget):
         """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        control_point_radius = 5  # Adjust as needed
+        control_point_radius = 4  # Adjust as needed
+
         for strand in self.strands:
-            if hasattr(strand, 'control_point'):
-                painter.setBrush(QBrush(Qt.red))  # Color for the control point
-                painter.setPen(QPen(Qt.black, 1))
-                painter.drawEllipse(
-                    strand.control_point, control_point_radius, control_point_radius
-                )
+            if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+                # Draw lines connecting control points
+                control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+                painter.setPen(control_line_pen)
+                painter.drawLine(strand.start, strand.control_point1)
+                painter.drawLine(strand.end, strand.control_point2)
+
+                # Draw control points
+                control_point_pen = QPen(QColor('green'), 2)
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+                painter.drawEllipse(strand.control_point1, control_point_radius, control_point_radius)
+                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+
         painter.restore()
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)

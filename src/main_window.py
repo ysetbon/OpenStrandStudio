@@ -981,6 +981,18 @@ class MainWindow(QMainWindow):
         # Connect toggle control points button
         self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
         self.toggle_control_points_button.setChecked(True)  # Start with control points visible
+
+    def load_project(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
+        if filename:
+            strands, groups = load_strands(filename, self.canvas)
+            apply_loaded_strands(self.canvas, strands, groups)
+            logging.info(f"Project loaded from {filename}")
+
+            # Ensure control points are visible after loading
+            self.toggle_control_points_button.setChecked(True)
+            self.canvas.show_control_points = True  # Set the attribute directly
+            self.canvas.update()  # Redraw the canvas to reflect changes
     def open_settings_dialog(self):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
         settings_dialog.theme_changed.connect(self.apply_theme)
@@ -1528,12 +1540,16 @@ class MainWindow(QMainWindow):
             # Save the strands and groups
             save_strands(self.canvas.strands, groups, filename)
             logging.info(f"Project saved to {filename}")
-    def load_project(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if filename:
             strands, groups = load_strands(filename, self.canvas)
             apply_loaded_strands(self.canvas, strands, groups)
             logging.info(f"Project loaded from {filename}")
+
+            # Ensure control points are visible after loading
+            self.toggle_control_points_button.setChecked(True)
+            self.canvas.show_control_points(True)  # Assuming this method exists to show control points
+            self.canvas.update()  # Redraw the canvas to reflect changes
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:
             group_data = self.canvas.groups[group_name]

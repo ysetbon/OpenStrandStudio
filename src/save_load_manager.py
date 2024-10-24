@@ -109,12 +109,14 @@ def deserialize_strand(data, parent_strand=None, first_strand=None, second_stran
         if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
             strand.control_point1 = control_points[0]
             strand.control_point2 = control_points[1]
-    
+
+    # Ensure the strand is updated with its shape and side line
     strand.update_shape()
     strand.update_side_line()
 
     logging.debug(f"Deserialized strand '{strand.layer_name}' of type '{strand_type}'")
 
+    return strand
     return strand
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
@@ -200,7 +202,7 @@ def load_strands(filename, canvas):
 
 def apply_loaded_strands(canvas, strands, groups):
     logging.info("Starting to apply loaded strands and groups to the canvas.")
-    
+
     # Log the contents of strand_dict
     logging.debug("Contents of strand_dict before applying group data:")
     strand_dict = {strand.layer_name: strand for strand in strands}
@@ -210,6 +212,11 @@ def apply_loaded_strands(canvas, strands, groups):
     # Apply strands to the canvas
     canvas.strands = strands
     logging.info(f"Applied {len(strands)} strands to the canvas.")
+
+    # Update the LayerPanel with the loaded strands
+    if hasattr(canvas, 'layer_panel'):
+        canvas.layer_panel.refresh()
+        logging.info("LayerPanel refreshed with loaded strands.")
 
     for group_name, group_info in groups.items():
         logging.info(f"Deserializing group '{group_name}'")
@@ -336,3 +343,4 @@ def deserialize_groups(groups_data, strand_dict):
     
     logging.info("Completed deserialization of all groups.")
     return deserialized_groups
+

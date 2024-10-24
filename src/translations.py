@@ -138,7 +138,10 @@ translations = {
         'positions': 'Positions',
         'selected_strand': 'Selected Strand',
         'newest_strand': 'Newest Strand',
-        'newest_layer': 'Newest Layer'
+        'newest_layer': 'Newest Layer',
+        'x_movement': 'X Movement',
+        'y_movement': 'Y Movement',
+        'move_group': 'Move Group'
     },
     'fr': {
         # MainWindow translations
@@ -276,6 +279,22 @@ translations = {
         'positions': 'Positions',
         'selected_strand': 'Brin Sélectionné',
         'newest_strand': 'Dernier Brin',
-        'newest_layer': 'Dernière Couche'
+        'newest_layer': 'Dernière Couche',
+        'x_movement': 'Mouvement X',
+        'y_movement': 'Mouvement Y',
+        'move_group': 'Déplacer le Groupe'
     }
 }
+
+# Add these new keys to both 'en' and 'fr' dictionaries in translations.py
+translations['en'].update({
+    'x_movement': 'X Movement',
+    'y_movement': 'Y Movement',
+    'move_group': 'Move Group',
+})
+
+translations['fr'].update({
+    'x_movement': 'Mouvement X',
+    'y_movement': 'Mouvement Y',
+    'move_group': 'Déplacer le Groupe',
+})

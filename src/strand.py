@@ -273,8 +273,24 @@ class Strand:
 
     def update_shape(self):
         """Update the shape of the strand based on its start, end, and control points."""
+        # Check if we're in the middle of a group move
+        if hasattr(self, 'updating_position') and self.updating_position:
+            # Only update the side lines without modifying control points
+            self.update_side_line()
+            return
+
+        # Store the current path
+        self._path = self.get_path()
+        
         # Update side lines
         self.update_side_line()
+
+    def get_path(self):
+        """Get the path representing the strand as a cubic Bézier curve."""
+        path = QPainterPath()
+        path.moveTo(self.start)
+        path.cubicTo(self.control_point1, self.control_point2, self.end)
+        return path
         # Additional updates if necessary
 
     def get_path(self):

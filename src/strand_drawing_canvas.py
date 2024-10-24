@@ -2182,21 +2182,30 @@ class StrandDrawingCanvas(QWidget):
         if not hasattr(strand, 'original_start'):
             strand.original_start = QPointF(strand.start)
             strand.original_end = QPointF(strand.end)
+            strand.original_control_point1 = QPointF(strand.control_point1)
+            strand.original_control_point2 = QPointF(strand.control_point2)
 
         # Calculate new positions based on original positions
         new_start = QPointF(strand.original_start.x() + dx, strand.original_start.y() + dy)
         new_end = QPointF(strand.original_end.x() + dx, strand.original_end.y() + dy)
+        new_control_point1 = QPointF(strand.original_control_point1.x() + dx, strand.original_control_point1.y() + dy)
+        new_control_point2 = QPointF(strand.original_control_point2.x() + dx, strand.original_control_point2.y() + dy)
 
         # Only update if the position has actually changed
-        if strand.start != new_start or strand.end != new_end:
+        if (strand.start != new_start or strand.end != new_end or 
+            strand.control_point1 != new_control_point1 or strand.control_point2 != new_control_point2):
+            
             strand.start = new_start
             strand.end = new_end
+            strand.control_point1 = new_control_point1
+            strand.control_point2 = new_control_point2
 
             strand.update_shape()
             if hasattr(strand, 'update_side_line'):
                 strand.update_side_line()
             updated_strands.add(strand)
-            logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+            logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}, "
+                        f"cp1={strand.control_point1}, cp2={strand.control_point2}")
         else:
             logging.info(f"Strand '{strand.layer_name}' position unchanged")
 
@@ -2204,11 +2213,17 @@ class StrandDrawingCanvas(QWidget):
         if not hasattr(attached_strand, 'original_start'):
             attached_strand.original_start = QPointF(attached_strand.start)
             attached_strand.original_end = QPointF(attached_strand.end)
+            attached_strand.original_control_point1 = QPointF(attached_strand.control_point1)
+            attached_strand.original_control_point2 = QPointF(attached_strand.control_point2)
 
         if attached_strand.start == moved_strand.start or attached_strand.start == moved_strand.end:
             attached_strand.start = QPointF(attached_strand.original_start.x() + dx, attached_strand.original_start.y() + dy)
+            attached_strand.control_point1 = QPointF(attached_strand.original_control_point1.x() + dx, 
+                                            attached_strand.original_control_point1.y() + dy)
         if attached_strand.end == moved_strand.start or attached_strand.end == moved_strand.end:
             attached_strand.end = QPointF(attached_strand.original_end.x() + dx, attached_strand.original_end.y() + dy)
+            attached_strand.control_point2 = QPointF(attached_strand.original_control_point2.x() + dx, 
+                                            attached_strand.original_control_point2.y() + dy)
         
         attached_strand.update_shape()
         if hasattr(attached_strand, 'update_side_line'):

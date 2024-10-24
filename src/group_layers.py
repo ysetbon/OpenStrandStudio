@@ -484,7 +484,8 @@ class GroupPanel(QWidget):
 
     def start_group_move(self, group_name):
         if group_name in self.groups:
-            dialog = GroupMoveDialog(group_name, self)
+            # Pass self.canvas as the first parameter and group_name as the second
+            dialog = GroupMoveDialog(self.canvas, group_name)
             dialog.move_updated.connect(self.update_group_move)
             dialog.move_finished.connect(self.finish_group_move)
             dialog.exec_()
@@ -494,7 +495,41 @@ class GroupPanel(QWidget):
     def update_group_move(self, group_name, total_dx, total_dy):
         logging.info(f"GroupPanel: Updating group move for '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
         if self.canvas:
-            self.canvas.move_group(group_name, total_dx, total_dy)
+            # Create a QPointF for the movement delta
+            delta = QPointF(total_dx, total_dy)
+            
+            # Get the group data
+            group_data = self.groups[group_name]
+            
+            # Move all strands in the group
+            for strand in group_data['strands']:
+                # Store original control points
+                if not hasattr(strand, 'original_control_point1'):
+                    strand.original_control_point1 = QPointF(strand.control_point1)
+                    strand.original_control_point2 = QPointF(strand.control_point2)
+                
+                # Move all points including control points
+                strand.start = strand.original_start + delta
+                strand.end = strand.original_end + delta
+                strand.control_point1 = strand.original_control_point1 + delta
+                strand.control_point2 = strand.original_control_point2 + delta
+                
+                # Update the strand's shape
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+                
+                # Store the updated control points
+                if 'control_points' not in self.canvas.groups[group_name]:
+                    self.canvas.groups[group_name]['control_points'] = {}
+                
+                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                    'control_point1': strand.control_point1,
+                    'control_point2': strand.control_point2
+                }
+            
+            # Update the canvas
+            self.canvas.update()
         else:
             logging.error("Canvas not properly connected to GroupPanel")
 
@@ -528,16 +563,47 @@ class GroupPanel(QWidget):
 
 
     def create_group(self, group_name, strands):
-        group_widget = CollapsibleGroupWidget(group_name, self)  # `self` is the GroupPanel instance
-        self.scroll_layout.addWidget(group_widget)
+        """
+        Create a new group with the given strands.
+        
+        Args:
+            group_name (str): Name of the group to create
+            strands (list): List of Strand objects to include in the group
+        """
+        if not strands:
+            logging.warning("Attempted to create group with no strands")
+            return
+
+        # Initialize group data
         self.groups[group_name] = {
-            'widget': group_widget,
-            'layers': [],
-            'strands': []
+            'strands': strands,
+            'layers': [strand.layer_name for strand in strands],
+            'widget': None  # Will be set below
         }
+
+        # Create group widget using existing CollapsibleGroupWidget
+        group_widget = CollapsibleGroupWidget(
+            group_name=group_name,
+            group_panel=self  # Pass self as parent instead of canvas
+        )
+
+        # Add strands to the widget
         for strand in strands:
-            layer_name = strand.layer_name
-            self.add_layer_to_group(layer_name, group_name, strand)
+            group_widget.add_layer(
+                layer_name=strand.layer_name,
+                color=strand.color,
+                is_masked=hasattr(strand, 'is_masked') and strand.is_masked
+            )
+
+        # Store widget reference and add to layout
+        self.groups[group_name]['widget'] = group_widget
+        self.scroll_layout.addWidget(group_widget)
+        
+        # Set the canvas after creation if needed
+        if hasattr(group_widget, 'set_canvas') and self.canvas:
+            group_widget.set_canvas(self.canvas)
+        
+        logging.info(f"Created group '{group_name}' with {len(strands)} strands")
 
 
     def start_group_rotation(self, group_name):
@@ -647,124 +713,183 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, 
 from PyQt5.QtCore import Qt, pyqtSignal
 
 class GroupMoveDialog(QDialog):
-    move_updated = pyqtSignal(str, int, int)
-    move_finished = pyqtSignal(str)
+    move_updated = pyqtSignal(str, float, float)  # group_name, dx, dy
+    move_finished = pyqtSignal(str)  # group_name
 
-    def __init__(self, group_name, parent=None):
-        super().__init__(parent)
-        self.group_name = group_name
-        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
-
-        # Define the language code, defaulting to 'en' if not available
-        self.language_code = self.canvas.language_code if self.canvas else 'en'
-        _ = translations[self.language_code]
-
-        self.setWindowTitle(f"{_['move_group_strands']} {group_name}")
-
+    def __init__(self, canvas, group_name):
+        super().__init__()
+        self.canvas = canvas  # Canvas instance
+        self.group_name = group_name  # Group name string
         self.total_dx = 0
         self.total_dy = 0
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
+        
+        # Initialize language code
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
+        
+        self.setWindowTitle(f"{_['move_group']}: {group_name}")
+        
+        # Initialize original positions
+        self.initialize_original_positions()
+        self.setup_ui()
 
-        # dx layout
-        dx_layout = QHBoxLayout()
-        dx_layout.addWidget(QLabel("dx:"))
+    def initialize_original_positions(self):
+        """Initialize original positions for all strands in the group"""
+        if self.canvas and self.group_name in self.canvas.groups:
+            group_data = self.canvas.groups[self.group_name]
+            for strand in group_data['strands']:
+                # Store exact coordinates for all points
+                strand.original_start = QPointF(strand.start)
+                strand.original_end = QPointF(strand.end)
+                strand.original_control_point1 = QPointF(strand.control_point1)
+                strand.original_control_point2 = QPointF(strand.control_point2)
+                logging.info(f"Stored original positions for strand {strand.layer_name}:")
+                logging.info(f"  Start: {strand.original_start}")
+                logging.info(f"  End: {strand.original_end}")
+                logging.info(f"  Control1: {strand.original_control_point1}")
+                logging.info(f"  Control2: {strand.original_control_point2}")
 
+    def setup_ui(self):
+        _ = translations[self.language_code]
+        layout = QVBoxLayout(self)
+
+        # X movement controls
+        x_layout = QHBoxLayout()
+        x_label = QLabel(_['x_movement'])
         self.dx_slider = QSlider(Qt.Horizontal)
         self.dx_slider.setRange(-600, 600)
         self.dx_slider.setValue(0)
-        self.dx_slider.valueChanged.connect(self.update_dx_from_slider)
-        dx_layout.addWidget(self.dx_slider)
-
         self.dx_value = QLabel("0")
-        dx_layout.addWidget(self.dx_value)
-
-        # Add QLineEdit for exact dx input
         self.dx_input = QLineEdit()
         self.dx_input.setValidator(QIntValidator(-600, 600))
-        self.dx_input.setFixedWidth(60)
-        self.dx_input.textChanged.connect(self.update_dx_from_input)  # Connect to update method
-        dx_layout.addWidget(self.dx_input)
+        self.dx_input.setText("0")
+        
+        x_layout.addWidget(x_label)
+        x_layout.addWidget(self.dx_slider)
+        x_layout.addWidget(self.dx_value)
+        x_layout.addWidget(self.dx_input)
 
-        layout.addLayout(dx_layout)
-
-        # dy layout
-        dy_layout = QHBoxLayout()
-        dy_layout.addWidget(QLabel("dy:"))
-
+        # Y movement controls
+        y_layout = QHBoxLayout()
+        y_label = QLabel(_['y_movement'])
         self.dy_slider = QSlider(Qt.Horizontal)
         self.dy_slider.setRange(-600, 600)
         self.dy_slider.setValue(0)
-        self.dy_slider.valueChanged.connect(self.update_dy_from_slider)
-        dy_layout.addWidget(self.dy_slider)
-
         self.dy_value = QLabel("0")
-        dy_layout.addWidget(self.dy_value)
-
-        # Add QLineEdit for exact dy input
         self.dy_input = QLineEdit()
         self.dy_input.setValidator(QIntValidator(-600, 600))
-        self.dy_input.setFixedWidth(60)
-        self.dy_input.textChanged.connect(self.update_dy_from_input)  # Connect to update method
-        dy_layout.addWidget(self.dy_input)
+        self.dy_input.setText("0")
+        
+        y_layout.addWidget(y_label)
+        y_layout.addWidget(self.dy_slider)
+        y_layout.addWidget(self.dy_value)
+        y_layout.addWidget(self.dy_input)
 
-        layout.addLayout(dy_layout)
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_button = QPushButton(_['ok'])
+        cancel_button = QPushButton(_['cancel'])
+        snap_button = QPushButton(_['snap_to_grid'])
+        
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(snap_button)
 
-        # Snap to Grid button
-        self.snap_to_grid_button = QPushButton(_['snap_to_grid'])
-        self.snap_to_grid_button.clicked.connect(self.snap_to_grid)
-        layout.addWidget(self.snap_to_grid_button)
+        # Add all layouts to main layout
+        layout.addLayout(x_layout)
+        layout.addLayout(y_layout)
+        layout.addLayout(button_layout)
 
-        # OK button
-        ok_button = QPushButton("OK")
+        # Connect signals
+        self.dx_slider.valueChanged.connect(self.update_dx_from_slider)
+        self.dy_slider.valueChanged.connect(self.update_dy_from_slider)
+        self.dx_input.textChanged.connect(self.update_dx_from_input)
+        self.dy_input.textChanged.connect(self.update_dy_from_input)
         ok_button.clicked.connect(self.on_ok_clicked)
-        layout.addWidget(ok_button)
+        cancel_button.clicked.connect(self.reject)
+        snap_button.clicked.connect(self.snap_to_grid)
+
+    def update_positions(self):
+        """Update positions based on original positions and current deltas"""
+        if self.canvas and self.group_name in self.canvas.groups:
+            group_data = self.canvas.groups[self.group_name]
+            
+            # Create exact delta point
+            delta = QPointF(self.total_dx, self.total_dy)
+            logging.info(f"Moving by delta: ({self.total_dx}, {self.total_dy})")
+
+            for strand in group_data['strands']:
+                # Temporarily disable shape updates
+                strand.updating_position = True  # Add this flag to Strand class if not exists
+                
+                # Move all points by exactly the same delta
+                strand.start = strand.original_start + delta
+                strand.end = strand.original_end + delta
+                strand.control_point1 = strand.original_control_point1 + delta
+                strand.control_point2 = strand.original_control_point2 + delta
+                
+                logging.info(f"Updated positions for strand {strand.layer_name}:")
+                logging.info(f"  Start: {strand.start}")
+                logging.info(f"  End: {strand.end}")
+                logging.info(f"  Control1: {strand.control_point1}")
+                logging.info(f"  Control2: {strand.control_point2}")
+                
+                # Update the strand's shape without updating control points
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+                
+                # Re-enable shape updates
+                strand.updating_position = False
+
+            # Emit the movement signal with exact values
+            self.move_updated.emit(self.group_name, float(self.total_dx), float(self.total_dy))
+            # Update the canvas
+            self.canvas.update()
 
     def update_dx_from_slider(self):
-        new_dx = self.dx_slider.value()
-        self.total_dx = new_dx
+        self.total_dx = int(self.dx_slider.value())  # Ensure integer value
         self.dx_value.setText(str(self.total_dx))
         self.dx_input.setText(str(self.total_dx))
-        self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+        self.update_positions()
 
     def update_dy_from_slider(self):
-        new_dy = self.dy_slider.value()
-        self.total_dy = new_dy
+        self.total_dy = int(self.dy_slider.value())  # Ensure integer value
         self.dy_value.setText(str(self.total_dy))
         self.dy_input.setText(str(self.total_dy))
-        self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+        self.update_positions()
 
     def update_dx_from_input(self):
-        text = self.dx_input.text()
         try:
-            value = int(text)
-            # Clamp the value within the slider range
+            value = int(self.dx_input.text())
             value = max(min(value, 600), -600)
             self.total_dx = value
-            self.dx_slider.setValue(value)  # Update the slider
+            self.dx_slider.setValue(value)
             self.dx_value.setText(str(value))
-            self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+            self.update_positions()
         except ValueError:
-            pass  # Ignore invalid input
+            pass
 
     def update_dy_from_input(self):
-        text = self.dy_input.text()
         try:
-            value = int(text)
-            # Clamp the value within the slider range
+            value = int(self.dy_input.text())
             value = max(min(value, 600), -600)
             self.total_dy = value
-            self.dy_slider.setValue(value)  # Update the slider
+            self.dy_slider.setValue(value)
             self.dy_value.setText(str(value))
-            self.move_updated.emit(self.group_name, self.total_dx, self.total_dy)
+            self.update_positions()
         except ValueError:
-            pass  # Ignore invalid input
+            pass
 
     def on_ok_clicked(self):
+        """Finalize the movement by storing current positions as new originals"""
+        if self.canvas and self.group_name in self.canvas.groups:
+            group_data = self.canvas.groups[self.group_name]
+            for strand in group_data['strands']:
+                # Store final positions as new originals
+                strand.original_start = QPointF(strand.start)
+                strand.original_end = QPointF(strand.end)
+                strand.original_control_point1 = QPointF(strand.control_point1)
+                strand.original_control_point2 = QPointF(strand.control_point2)
         self.move_finished.emit(self.group_name)
         self.accept()
 
@@ -1093,7 +1218,9 @@ class GroupLayerManager:
         return main_layers    
 
 
+    # In GroupLayerManager
     def create_group(self):
+        """Create a new group with selected main strands and their control points."""
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
@@ -1102,41 +1229,82 @@ class GroupLayerManager:
         group_name, ok = QInputDialog.getText(
             self.layer_panel, _['create_group'], _['enter_group_name']
         )
-        if ok and group_name:
-            # Get the available main strands
-            main_strands = self.get_unique_main_strands()
+        
+        if not ok or not group_name:
+            logging.info("Group creation cancelled - no name provided")
+            return
 
-            # Open a dialog to select main strands to include in the group
-            selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
-            if not selected_main_strands:
-                logging.info(_['group_creation_cancelled'])
-                return
+        # Get the available main strands
+        main_strands = self.get_unique_main_strands()
 
-            # Convert selected_main_strands to a set
-            selected_main_strands = set(selected_main_strands)
+        # Open a dialog to select main strands to include in the group
+        selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
+        if not selected_main_strands:
+            logging.info(_['group_creation_cancelled'])
+            return
 
-            # Collect strands that match the selected main strands
-            layers_data = []
-            for strand in self.canvas.strands:
-                main_layer = self.extract_main_layer(strand.layer_name)
-                if main_layer in selected_main_strands:
-                    layers_data.append(strand)
+        # Convert selected_main_strands to a set
+        selected_main_strands = set(selected_main_strands)
 
-            # Create the group in the group panel
-            self.group_panel.create_group(group_name, layers_data)
+        # Collect strands that match the selected main strands
+        selected_strands = []
+        layers_data = []
+        
+        for strand in self.canvas.strands:
+            main_layer = self.extract_main_layer(strand.layer_name)
+            if main_layer in selected_main_strands:
+                selected_strands.append(strand)  # Keep original strands for group panel
+                # Create a deep copy of the strand data including control points
+                strand_data = {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'control_point1': QPointF(strand.control_point1),
+                    'control_point2': QPointF(strand.control_point2),
+                    'width': strand.width,
+                    'color': QColor(strand.color),
+                    'stroke_color': QColor(strand.stroke_color),
+                    'stroke_width': strand.stroke_width,
+                    'has_circles': strand.has_circles.copy(),
+                    'attached_strands': strand.attached_strands.copy(),
+                    'is_first_strand': strand.is_first_strand,
+                    'is_start_side': strand.is_start_side,
+                    'set_number': strand.set_number
+                }
+                layers_data.append(strand_data)
 
-            # Initialize the group in canvas.groups and save selected main strands
-            self.canvas.groups[group_name] = {
-                'strands': [],
-                'layers': [],
-                'data': layers_data,
-                'main_strands': selected_main_strands  # Store as a set
+        if not selected_strands:
+            logging.warning(f"No strands found for selected main strands: {selected_main_strands}")
+            return
+
+        # Create the group in the group panel with original strand objects
+        self.group_panel.create_group(group_name, selected_strands)
+
+        # Initialize the group in canvas.groups with control points
+        self.canvas.groups[group_name] = {
+            'strands': selected_strands,
+            'layers': [strand.layer_name for strand in selected_strands],
+            'data': layers_data,
+            'main_strands': selected_main_strands,
+            'control_points': {
+                strand.layer_name: {
+                    'control_point1': QPointF(strand.control_point1),
+                    'control_point2': QPointF(strand.control_point2)
+                } for strand in selected_strands
             }
-            for strand in layers_data:
-                self.canvas.groups[group_name]['strands'].append(strand)
-                self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+        }
 
-            logging.info(f"Created group '{group_name}' with {len(layers_data)} strands")
+        # Verify control points were saved
+        for layer_name, control_points in self.canvas.groups[group_name]['control_points'].items():
+            logging.debug(f"Saved control points for {layer_name}: "
+                        f"CP1: {control_points['control_point1']}, "
+                        f"CP2: {control_points['control_point2']}")
+
+        logging.info(f"Created group '{group_name}' with {len(selected_strands)} strands")
+        
+        # Update the UI
+        if hasattr(self.canvas, 'update'):
+            self.canvas.update()
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
 
@@ -1176,17 +1344,24 @@ class GroupLayerManager:
             "layer_name": strand.layer_name,
             "start": {"x": strand.start.x(), "y": strand.start.y()},
             "end": {"x": strand.end.x(), "y": strand.end.y()},
+            "control_point1": {"x": strand.control_point1.x(), "y": strand.control_point1.y()},
+            "control_point2": {"x": strand.control_point2.x(), "y": strand.control_point2.y()},
             "width": strand.width,
             "color": self.serialize_color(strand.color),
             "is_masked": isinstance(strand, MaskedStrand),
-            "attached_to": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands],
+            "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands],
             "has_circles": strand.has_circles.copy()
         }
 
     def deserialize_strand(self, data):
         start = QPointF(data["start"]["x"], data["start"]["y"])
         end = QPointF(data["end"]["x"], data["end"]["y"])
+        control_point1 = QPointF(data["control_point1"]["x"], data["control_point1"]["y"])
+        control_point2 = QPointF(data["control_point2"]["x"], data["control_point2"]["y"])
+        
         strand = Strand(start, end, data["width"])
+        strand.control_point1 = control_point1
+        strand.control_point2 = control_point2
         strand.color = self.deserialize_color(data["color"])
         strand.has_circles = data["has_circles"]
         strand.attached_strands = [self.canvas.strands[i] for i in data["attached_to"]]
@@ -1266,26 +1441,58 @@ class GroupLayerManager:
             # Pass both group_name and strands to create_group
             self.group_panel.create_group(group_name, strands)
     def move_group_strands(self, group_name, dx, dy):
-            if group_name in self.group_panel.groups:
-                group_data = self.group_panel.groups[group_name]
-                updated_strands = []
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            updated_strands = []
 
-                for i, strand_data in enumerate(group_data['strands']):
-                    layer_name = group_data['layers'][i]
-                    layer_index = self.get_layer_index(layer_name)
-                    if layer_index < len(self.canvas.strands):
-                        strand = self.canvas.strands[layer_index]
-                        # Move the entire strand
-                        strand.start += QPointF(dx, dy)
-                        strand.end += QPointF(dx, dy)
-                        strand.update_shape()
-                        if hasattr(strand, 'update_side_line'):
-                            strand.update_side_line()
-                        updated_strands.append(strand)
+            # Create QPointF for the movement delta
+            delta = QPointF(dx, dy)
+            
+            for strand in group_data['strands']:
+                # Store original control points before moving
+                original_cp1 = QPointF(strand.control_point1)
+                original_cp2 = QPointF(strand.control_point2)
+                
+                # Move all points including control points
+                strand.start += delta
+                strand.end += delta
+                strand.control_point1 = original_cp1 + delta  # Apply delta to original control points
+                strand.control_point2 = original_cp2 + delta  # Apply delta to original control points
+                
+                # Update the strand's shape
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+                
+                # Store the updated control points in the group data
+                if 'control_points' not in self.canvas.groups[group_name]:
+                    self.canvas.groups[group_name]['control_points'] = {}
+                
+                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                    'control_point1': strand.control_point1,
+                    'control_point2': strand.control_point2
+                }
+                
+                updated_strands.append(strand)
 
-                # Update the canvas with all modified strands
-                self.canvas.update_strands(updated_strands)
-
+            # Update the canvas with all modified strands
+            if self.canvas:
+                self.canvas.update()
+    def update_strands(self, strands):
+        """Update multiple strands at once."""
+        for strand in strands:
+            # Ensure we're updating all strand properties including control points
+            existing_strand = self.find_strand_by_name(strand.layer_name)
+            if existing_strand:
+                existing_strand.start = QPointF(strand.start)
+                existing_strand.end = QPointF(strand.end)
+                existing_strand.control_point1 = QPointF(strand.control_point1)
+                existing_strand.control_point2 = QPointF(strand.control_point2)
+                existing_strand.update_shape()
+                if hasattr(existing_strand, 'update_side_line'):
+                    existing_strand.update_side_line()
+        
+        self.update()
     def start_group_move(self, group_name):
         if self.canvas:
             self.canvas.start_group_move(group_name, self.group_panel.groups[group_name]['layers'])

@@ -1531,25 +1531,16 @@ class MainWindow(QMainWindow):
     def update_locked_layers(self, locked_layers, lock_mode_active):
         self.canvas.move_mode.set_locked_layers(locked_layers, lock_mode_active)
 
+
     def save_project(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "JSON Files (*.json)")
         if filename:
             # Retrieve the group data from the correct instance
             groups = self.group_layer_manager.get_group_data()
-            logging.debug(f"Group data before saving: {groups}")  # Add this line
+            logging.debug(f"Group data before saving: {groups}")
             # Save the strands and groups
             save_strands(self.canvas.strands, groups, filename)
             logging.info(f"Project saved to {filename}")
-        filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
-        if filename:
-            strands, groups = load_strands(filename, self.canvas)
-            apply_loaded_strands(self.canvas, strands, groups)
-            logging.info(f"Project loaded from {filename}")
-
-            # Ensure control points are visible after loading
-            self.toggle_control_points_button.setChecked(True)
-            self.canvas.show_control_points(True)  # Assuming this method exists to show control points
-            self.canvas.update()  # Redraw the canvas to reflect changes
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:
             group_data = self.canvas.groups[group_name]

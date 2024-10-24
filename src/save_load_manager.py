@@ -50,6 +50,8 @@ def serialize_strand(strand, index=None):
     elif isinstance(strand, MaskedStrand):
         data["first_selected_strand"] = strand.first_selected_strand.layer_name if strand.first_selected_strand else None
         data["second_selected_strand"] = strand.second_selected_strand.layer_name if strand.second_selected_strand else None
+
+    logging.debug(f"Serialized strand '{strand.layer_name}' of type '{type(strand).__name__}'")
     return data
 
 def save_strands(strands, groups, filename):
@@ -111,12 +113,14 @@ def deserialize_strand(data, parent_strand=None, first_strand=None, second_stran
     strand.update_shape()
     strand.update_side_line()
 
-    logging.info(f"Deserialized strand '{layer_name}' of type '{strand_type}'")
+    logging.debug(f"Deserialized strand '{strand.layer_name}' of type '{strand_type}'")
 
     return strand
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
         data = json.load(f)
+
+    logging.debug(f"Loaded data from {filename}: {data}")
 
     # Check if the data contains the expected keys
     if "strands" not in data or "groups" not in data:
@@ -137,6 +141,7 @@ def load_strands(filename, canvas):
         for strand_data in strands_remaining:
             strand_type = strand_data.get("type", "Strand")
             index = strand_data.get("index")
+            logging.debug(f"Attempting to deserialize strand at index {index} with type '{strand_type}'")
             try:
                 if strand_type == "Strand":
                     strand = deserialize_strand(strand_data)
@@ -183,8 +188,7 @@ def load_strands(filename, canvas):
         for strand_data in strands_to_remove:
             strands_remaining.remove(strand_data)
 
-    # Print the contents of strand_dict
-    logging.debug("Strand dictionary contents before group deserialization:")
+    logging.debug("Strand dictionary contents after deserialization:")
     for layer_name, strand in strand_dict.items():
         logging.debug(f"Layer: {layer_name}, Strand: {strand}, Type: {type(strand).__name__}")
 
@@ -193,86 +197,54 @@ def load_strands(filename, canvas):
 
     return strands, data.get("groups", {})
 
+
 def apply_loaded_strands(canvas, strands, groups):
     logging.info("Starting to apply loaded strands and groups to the canvas.")
     
-    # Debug: Initial state
-    logging.debug(f"Initial strands count: {len(strands)}")
-    logging.debug(f"Initial groups: {list(groups.keys()) if groups else 'None'}")
-    
-    canvas.strands = strands
-    canvas.strand_colors = {}
+    # Log the contents of strand_dict
+    logging.debug("Contents of strand_dict before applying group data:")
     strand_dict = {strand.layer_name: strand for strand in strands}
-    logging.info(f"Strand dictionary created with {len(strand_dict)} entries.")
-    # Debug: Print strand_dict contents with object IDs
-    logging.debug(f"Strand dictionary contents: {[(k, id(v)) for k, v in strand_dict.items()]}")
+    for layer_name, strand in strand_dict.items():
+        logging.debug(f"Layer: {layer_name}, Strand ID: {id(strand)}")
 
-    for strand in strands:
-        canvas.strand_colors[strand.set_number] = strand.color
-        canvas.update_color_for_set(strand.set_number, strand.color)
-        logging.debug(f"Updated color for strand '{strand.layer_name}' with set number {strand.set_number}.")
+    # Apply strands to the canvas
+    canvas.strands = strands
+    logging.info(f"Applied {len(strands)} strands to the canvas.")
 
-    if strands:
-        canvas.newest_strand = strands[-1]
-        logging.info(f"Newest strand set to '{canvas.newest_strand.layer_name}'.")
-    canvas.is_first_strand = False
-
-    if groups and canvas.group_layer_manager:
-        logging.info("Deserializing groups.")
-        deserialized_groups = deserialize_groups(groups, strand_dict)
-        canvas.groups = deserialized_groups
-        logging.info(f"Deserialized {len(deserialized_groups)} groups.")
-
-        for group_name, group_data in deserialized_groups.items():
-            # Debug: Print group data before processing
-            logging.debug(f"Processing group '{group_name}' with data: {group_data}")
-            
-            group_strands = [strand_dict[layer_name] for layer_name in group_data["strands"] 
-                            if layer_name in strand_dict]
-            
-            # Debug: Detailed strand validation
-            for layer_name in group_data["strands"]:
-                if layer_name in strand_dict:
-                    strand = strand_dict[layer_name]
-                    logging.debug(f"Valid strand found - Layer: {layer_name}, ID: {id(strand)}, "
-                                f"Type: {type(strand).__name__}, Attributes: {dir(strand)}")
-                else:
-                    logging.warning(f"Invalid strand reference - Layer: {layer_name}")
-
-            logging.info(f"Processing group '{group_name}' with {len(group_strands)} valid strands.")
-
-            if group_strands:
-                logging.info(f"Applying group '{group_name}' with strands: {[s.layer_name for s in group_strands]}")
-                if group_name not in canvas.group_layer_manager.group_panel.groups:
-                    canvas.group_layer_manager.group_panel.groups[group_name] = {
-                        "layers": group_data["layers"],
-                        "strands": group_strands,
-                        "main_strands": group_data.get("main_strands", set()),
-                        "control_points": group_data.get("control_points", {}),
-                        "widget": None
-                    }
-                    logging.info(f"Group '{group_name}' added to group panel.")
-                    # Debug: Verify group creation
-                    logging.debug(f"Group panel groups after addition: "
-                                f"{list(canvas.group_layer_manager.group_panel.groups.keys())}")
-
-                canvas.group_layer_manager.group_panel.create_group(group_name, group_strands)
-                logging.info(f"Applied group '{group_name}' with {len(group_strands)} strands to the canvas.")
+    for group_name, group_info in groups.items():
+        logging.info(f"Deserializing group '{group_name}'")
+        
+        group_strands = []
+        for layer_name in group_info["strands"]:
+            logging.debug(f"Attempting to retrieve strand with layer_name '{layer_name}'")
+            strand = strand_dict.get(layer_name)
+            if strand:
+                group_strands.append(strand)
+                logging.info(f"Strand '{layer_name}' added to group '{group_name}'")
+                logging.debug(f"Strand ID: {id(strand)}, Attributes: {dir(strand)}")
             else:
-                logging.warning(f"Group '{group_name}' has no valid strands.")
-                # Debug: Print group data for investigation
-                logging.debug(f"Failed group data: {group_data}")
-                logging.debug(f"Expected strands: {group_data['strands']}")
-                logging.debug(f"Available strands: {list(strand_dict.keys())}")
+                logging.warning(f"Strand with layer_name '{layer_name}' not found in strand_dict")
 
-    canvas.update()
-    logging.info("Canvas updated.")
-    
-    if canvas.layer_panel:
-        canvas.layer_panel.refresh()
-        logging.info("Layer panel refreshed.")
+        if group_strands:
+            canvas.group_layer_manager.group_panel.create_group(group_name, group_strands)
+            logging.info(f"Group '{group_name}' created in group panel with {len(group_strands)} strands")
+            
+            canvas.groups[group_name] = {
+                "layers": group_info["layers"],
+                "strands": group_strands,
+                "main_strands": group_info.get("main_strands", set()),
+                "control_points": group_info.get("control_points", {})
+            }
+            logging.info(f"Group '{group_name}' applied with {len(group_strands)} strands")
+        else:
+            logging.warning(f"Group '{group_name}' has no valid strands")
 
-    logging.info("Finished applying strands and groups to the canvas.")
+    # Update the canvas to reflect changes
+    if hasattr(canvas, 'update'):
+        canvas.update()
+        logging.info("Canvas updated.")
+
+    logging.info("Finished applying group data.")
 def serialize_groups(groups):
     serialized_groups = {}
     logging.info(f"Starting serialization of groups. Total groups: {len(groups)}")
@@ -316,18 +288,19 @@ def serialize_groups(groups):
 
 
 def deserialize_groups(groups_data, strand_dict):
-    deserialized_groups = {}
     logging.info(f"Starting deserialization of groups. Total groups: {len(groups_data)}")
     
     # Debug: Print all available strands in strand_dict
     logging.debug(f"Available strands in strand_dict: {list(strand_dict.keys())}")
     
+    deserialized_groups = {}
     for group_name, group_data in groups_data.items():
         logging.info(f"Deserializing group '{group_name}'")
         logging.debug(f"Group data before processing: {group_data}")
         
         strands = []
         for layer_name in group_data["strands"]:
+            logging.debug(f"Attempting to retrieve strand with layer_name '{layer_name}'")
             strand = strand_dict.get(layer_name)  # Use get to safely retrieve the strand
             if strand:
                 strands.append(strand)
@@ -343,14 +316,8 @@ def deserialize_groups(groups_data, strand_dict):
                 logging.debug(f"Checking JSON data for layer name '{layer_name}': "
                             f"{'Found' if layer_name in [s['layer_name'] for s in groups_data[group_name]['strands']] else 'Not Found'}")
 
-        # Debug: Check control points
-        for layer_name, points in group_data.get("control_points", {}).items():
-            try:
-                cp1 = deserialize_point(points["control_point1"])
-                cp2 = deserialize_point(points["control_point2"])
-                logging.debug(f"Control points for '{layer_name}' - CP1: {cp1}, CP2: {cp2}")
-            except Exception as e:
-                logging.error(f"Error deserializing control points for '{layer_name}': {e}")
+        # Log the number of strands found for the group
+        logging.info(f"Group '{group_name}' has {len(strands)} valid strands out of {len(group_data['strands'])} total strands")
 
         deserialized_groups[group_name] = {
             "layers": group_data["layers"],
@@ -365,8 +332,7 @@ def deserialize_groups(groups_data, strand_dict):
         }
         logging.info(f"Deserialized group '{group_name}' with {len(strands)} strands")
         # Debug: Print final group structure
-        logging.debug(f"Final group structure: {[s.layer_name for s in strands]}")
+        logging.debug(f"Final group structure for '{group_name}': {[s.layer_name for s in strands]}")
     
+    logging.info("Completed deserialization of all groups.")
     return deserialized_groups
-
-

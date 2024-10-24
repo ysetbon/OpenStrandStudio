@@ -569,15 +569,19 @@ class GroupPanel(QWidget):
             logging.warning(f"Attempted to create group '{group_name}' with no strands")
             return
 
-        if group_name not in self.groups:
-            self.groups[group_name] = {
-                'strands': strands,
-                'layers': [strand.layer_name for strand in strands],
-                'widget': None,
-                'main_strands': set(),
-                'control_points': {}
-            }
-            logging.info(f"Group '{group_name}' added to self.groups")
+        # Check if the group already exists
+        if group_name in self.groups:
+            logging.warning(f"Group '{group_name}' already exists. Skipping creation.")
+            return
+
+        self.groups[group_name] = {
+            'strands': strands,
+            'layers': [strand.layer_name for strand in strands],
+            'widget': None,
+            'main_strands': set(),
+            'control_points': {}
+        }
+        logging.info(f"Group '{group_name}' added to self.groups")
 
         group_widget = CollapsibleGroupWidget(
             group_name=group_name,
@@ -1453,14 +1457,7 @@ class GroupLayerManager:
     def deserialize_color(self, data):
         return QColor(data["r"], data["g"], data["b"], data["a"])
 
-    def get_group_data(self):
-        group_data = {}
-        for group_name, group_info in self.group_panel.groups.items():
-            group_data[group_name] = {
-                "layers": group_info["layers"],
-                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
-            }
-        return group_data
+
 
     def clear(self):
         self.tree.clear()
@@ -1492,35 +1489,53 @@ class GroupLayerManager:
 
     def get_group_data(self):
         group_data = {}
+        logging.info("Starting to collect group data.")
+        
         for group_name, group_info in self.group_panel.groups.items():
+            logging.debug(f"Processing group '{group_name}'")
+            
             group_data[group_name] = {
                 "layers": group_info["layers"],
-                "strands": [self.serialize_strand(strand) for strand in group_info["strands"]]
+                "strands": [strand.layer_name for strand in group_info["strands"]],
+                "main_strands": list(group_info.get("main_strands", set())),
+                "control_points": group_info.get("control_points", {})
             }
+            
+            # Log the collected data for this group
+            logging.debug(f"Collected data for group '{group_name}': {group_data[group_name]}")
+        
+        logging.info("Finished collecting group data.")
         return group_data
 
 
 
     def apply_group_data(self, group_data):
+        logging.info("Starting to apply group data.")
+        logging.debug(f"Group data received: {group_data}")
+
+        # Log the contents of strand_dict
+        logging.debug("Contents of strand_dict before applying group data:")
+        for layer_name, strand in self.strand_dict.items():
+            logging.debug(f"Layer: {layer_name}, Strand ID: {id(strand)}")
+
         for group_name, group_info in group_data.items():
-            # Retrieve the corresponding Strand objects from the canvas
+            logging.info(f"Deserializing group '{group_name}'")
+            
             strands = []
             for layer_name in group_info["strands"]:
-                strand = next(
-                    (s for s in self.canvas.strands if s.layer_name == layer_name),
-                    None
-                )
+                logging.debug(f"Attempting to retrieve strand with layer_name '{layer_name}'")
+                strand = self.strand_dict.get(layer_name)
                 if strand:
                     strands.append(strand)
+                    logging.info(f"Strand '{layer_name}' added to group '{group_name}'")
+                    logging.debug(f"Strand ID: {id(strand)}, Attributes: {dir(strand)}")
                 else:
-                    logging.warning(f"Strand with layer_name '{layer_name}' not found in canvas.strands")
-            
+                    logging.warning(f"Strand with layer_name '{layer_name}' not found in strand_dict")
+
             if strands:
-                # Create the group in the group panel
                 self.group_panel.create_group(group_name, strands)
                 logging.info(f"Group '{group_name}' created in group panel with {len(strands)} strands")
                 
-                # Ensure the group is added to the canvas groups
                 self.canvas.groups[group_name] = {
                     "layers": group_info["layers"],
                     "strands": strands,
@@ -1530,6 +1545,13 @@ class GroupLayerManager:
                 logging.info(f"Group '{group_name}' applied with {len(strands)} strands")
             else:
                 logging.warning(f"Group '{group_name}' has no valid strands")
+
+        # Log the contents of strand_dict after applying group data
+        logging.debug("Contents of strand_dict after applying group data:")
+        for layer_name, strand in self.strand_dict.items():
+            logging.debug(f"Layer: {layer_name}, Strand ID: {id(strand)}")
+
+        logging.info("Finished applying group data.")
     def move_group_strands(self, group_name, dx, dy):
         if group_name in self.groups:
             group_data = self.groups[group_name]

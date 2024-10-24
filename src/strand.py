@@ -845,12 +845,12 @@ class AttachedStrand(Strand):
         stroke_stroker = QPainterPathStroker()
         stroke_stroker.setWidth(self.width + self.stroke_width * 2)
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
-        stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+        stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
 
-        # Highlight the strand if it is selected
-        if self.is_selected:
-            highlight_pen = QPen(QColor('red'), self.stroke_width +8 )
+        # Highlight the strand if it is selected or if it's connected to a selected strand
+        if self.is_selected or (self.start_attached and self.parent.is_selected):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)
@@ -1125,6 +1125,7 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
 
 
 

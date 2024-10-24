@@ -401,14 +401,9 @@ class MoveMode:
     def start_movement(self, strand, side, area):
         """
         Start the movement of a strand's point without changing its selection state.
-
-        Args:
-            strand (Strand): The strand to move.
-            side (int or str): Which side of the strand to move (0 for start, 1 for end, 'control_point1', 'control_point2').
-            area (QPainterPath or QRectF): The area representing the movable region.
         """
         self.moving_side = side
-
+        
         # For QPainterPath, get the bounding rectangle and center
         if isinstance(area, QPainterPath):
             bounding_rect = area.boundingRect()
@@ -422,23 +417,44 @@ class MoveMode:
             elif side == 1:
                 self.moving_point = strand.end
             else:
-                self.moving_point = QPointF(0, 0)  # Default value
+                self.moving_point = QPointF(0, 0)
 
         self.affected_strand = strand
-        self.selected_rectangle = area  # Store the area (QPainterPath or QRectF)
+        self.selected_rectangle = area
         self.is_moving = True
         snapped_pos = self.canvas.snap_to_grid(self.moving_point)
         self.update_cursor_position(snapped_pos)
         self.last_snapped_pos = snapped_pos
         self.target_pos = snapped_pos
 
-        # Update the canvas's selected_attached_strand if it's an AttachedStrand
-        # without changing its selection state
+        # Find any other strands connected to this point
+        connected_strand = None
+        moving_point = strand.start if side == 0 else strand.end
+        
+        for other_strand in self.canvas.strands:
+            if other_strand != strand:
+                if (side == 0 and self.points_are_close(other_strand.end, moving_point)) or \
+                   (side == 1 and self.points_are_close(other_strand.start, moving_point)):
+                    connected_strand = other_strand
+                    break
+
+        # Set both strands as selected
         if isinstance(strand, AttachedStrand):
             self.canvas.selected_attached_strand = strand
+            strand.is_selected = True
+        
+        if connected_strand:
+            connected_strand.is_selected = True
+            if isinstance(connected_strand, AttachedStrand):
+                self.temp_selected_strand = connected_strand
 
         # Update the canvas
         self.canvas.update()
+
+    def points_are_close(self, point1, point2, tolerance=5.0):
+        """Check if two points are within a certain tolerance."""
+        return (abs(point1.x() - point2.x()) <= tolerance and
+                abs(point1.y() - point2.y()) <= tolerance)
 
     def update_strand_position(self, new_pos):
         """

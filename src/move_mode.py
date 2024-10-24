@@ -80,13 +80,11 @@ class MoveMode:
             self.originally_selected_strand = self.canvas.selected_strand
             self.in_move_mode = True
             
-            # Log the self.canvas.selected_strand when entering move mode
             print(f"Entering move mode. self.canvas.selected_strand: {self.canvas.selected_strand}")
 
         # Store the current selection state
         previously_selected = self.canvas.selected_strand
 
-        # Log previously selected strand
         print(f"Previously selected strand: {previously_selected}")
 
         # Log currently selected strands before deselection
@@ -117,14 +115,16 @@ class MoveMode:
             self.temp_selected_strand = self.affected_strand
             if self.temp_selected_strand:
                 self.temp_selected_strand.is_selected = True
-                self.originally_selected_strand.is_selected = True
+                # Only set originally_selected_strand's selection if it exists
+                if self.originally_selected_strand:
+                    self.originally_selected_strand.is_selected = True
                 self.canvas.selected_attached_strand = self.temp_selected_strand
         else:
             # If no strand was clicked, revert to the original selection
             if self.originally_selected_strand:
                 self.originally_selected_strand.is_selected = True
                 self.canvas.selected_attached_strand = self.originally_selected_strand
-            else:
+            elif previously_selected:
                 self.canvas.selected_attached_strand = previously_selected
 
         # Update the canvas
@@ -669,3 +669,4 @@ class MoveMode:
         print(f"Temp selected strand: {self.temp_selected_strand}")
         print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
         print(f"Strand to highlight: {strand_to_highlight}")
+

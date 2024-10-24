@@ -2436,44 +2436,67 @@ class StrandAngleEditDialog(QDialog):
         end_y_item.setText(f"{end_y:.2f}")
 
 
-    def update_strand_angle(self, strand, new_angle, update_linked=False):
-        # Ensure the angle is within -180 to 180 degrees
-        while new_angle > 180:
-            new_angle -= 360
-        while new_angle <= -180:
-            new_angle += 360
+    def update_strand_angle(self, strand, new_angle, update_linked=True):
+        if not hasattr(strand, 'start') or not hasattr(strand, 'end'):
+            return
 
-        # Calculate the length of the strand
-        dx = strand.end.x() - strand.start.x()
-        dy = strand.end.y() - strand.start.y()
-        length = (dx**2 + dy**2) ** 0.5
+        # Store original control points if not already stored
+        if not hasattr(strand, 'pre_rotation_points'):
+            strand.pre_rotation_points = {
+                'start': QPointF(strand.start),
+                'end': QPointF(strand.end),
+                'control_point1': QPointF(strand.control_point1),
+                'control_point2': QPointF(strand.control_point2),
+                'last_angle': self.calculate_angle(strand)  # Store current angle
+            }
 
-        # Calculate new end coordinates based on the new angle
-        new_dx = length * cos(radians(new_angle))
-        new_dy = length * sin(radians(new_angle))
-        new_end = QPointF(strand.start.x() + new_dx, strand.start.y() + new_dy)
+        # Calculate the angle difference
+        current_angle = self.calculate_angle(strand)
+        angle_diff = new_angle - current_angle
 
-        # Update the strand's end point
-        strand.end = new_end
+        # Calculate the center of rotation (strand's start point)
+        center = strand.start
+
+        # Helper function to rotate a point around the center
+        def rotate_point(point, angle_rad):
+            dx = point.x() - center.x()
+            dy = point.y() - center.y()
+            cos_angle = cos(angle_rad)
+            sin_angle = sin(angle_rad)
+            new_x = center.x() + dx * cos_angle - dy * sin_angle
+            new_y = center.y() + dx * sin_angle + dy * cos_angle
+            return QPointF(new_x, new_y)
+
+        # Convert angle difference to radians
+        angle_rad = radians(angle_diff)
+
+        # Rotate end point and control points
+        strand.end = rotate_point(strand.end, angle_rad)
+        strand.control_point1 = rotate_point(strand.control_point1, angle_rad)
+        strand.control_point2 = rotate_point(strand.control_point2, angle_rad)
 
         # Update the strand's shape
         strand.update_shape()
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
 
-        # Update the table row to reflect the new angle and coordinates
-        row = self.group_data['strands'].index(strand)
-        self.update_table_row(row)
+        # Store the new angle as the last angle
+        if hasattr(strand, 'pre_rotation_points'):
+            strand.pre_rotation_points['last_angle'] = new_angle
 
-        # Emit signal if needed
-        self.angle_changed.emit(strand.layer_name, new_angle)
+        # Update x_angle if this is the main strand
+        if strand.layer_name.endswith('_1'):
+            self.x_angle = new_angle
+            if hasattr(self, 'x_angle_input'):
+                self.x_angle_input.setText(f"{new_angle:.2f}")
 
-        # Update linked strands if applicable
+        # Update linked strands if needed
         if update_linked:
-            self.update_linked_strands(strand)
+            self.update_linked_strands(current_strand=strand)
 
-        # Refresh the canvas to show the updated strand
-        self.canvas.update()
+        # Update the canvas
+        if self.canvas:
+            self.canvas.update()
 
     def update_linked_strands(self, current_strand=None):
         for row, strand in enumerate(self.group_data['strands']):

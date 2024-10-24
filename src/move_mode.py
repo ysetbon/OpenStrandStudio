@@ -208,6 +208,7 @@ class MoveMode:
             # If we've reached the target, stop the timer
             self.move_timer.stop()
 
+
     def handle_strand_movement(self, pos):
         """
         Handle the movement of strands.
@@ -216,12 +217,82 @@ class MoveMode:
             pos (QPointF): The position of the mouse click.
         """
         self.is_moving = False  # Reset this flag at the start
+
+        # First pass: Check all control points for all strands
+        for strand in self.canvas.strands:
+            if not getattr(strand, 'deleted', False):
+                if self.try_move_control_points(strand, pos):
+                    return
+                if self.try_move_attached_strands_control_points(strand.attached_strands, pos):
+                    return
+
+        # Second pass: Check start and end points for all strands
         for i, strand in enumerate(self.canvas.strands):
             if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 if self.try_move_strand(strand, pos, i):
                     return
-                if self.try_move_attached_strands(strand.attached_strands, pos):
+                if self.try_move_attached_strands_start_end(strand.attached_strands, pos):
                     return
+
+    def try_move_attached_strands_control_points(self, attached_strands, pos):
+        """
+        Recursively try to move control points of attached strands.
+
+        Args:
+            attached_strands (list): List of attached strands to check.
+            pos (QPointF): The position to check.
+
+        Returns:
+            bool: True if a control point of an attached strand was moved, False otherwise.
+        """
+        for attached_strand in attached_strands:
+            if not getattr(attached_strand, 'deleted', False):
+                if self.try_move_control_points(attached_strand, pos):
+                    return True
+                if self.try_move_attached_strands_control_points(attached_strand.attached_strands, pos):
+                    return True
+        return False
+
+    def try_move_attached_strands_start_end(self, attached_strands, pos):
+        """
+        Recursively try to move start and end points of attached strands.
+
+        Args:
+            attached_strands (list): List of attached strands to check.
+            pos (QPointF): The position to check.
+
+        Returns:
+            bool: True if a start or end point of an attached strand was moved, False otherwise.
+        """
+        for attached_strand in attached_strands:
+            if not getattr(attached_strand, 'deleted', False):
+                if self.try_move_strand(attached_strand, pos, -1):  # Pass -1 if not in main strands list
+                    return True
+                if self.try_move_attached_strands_start_end(attached_strand.attached_strands, pos):
+                    return True
+        return False
+
+    def try_move_control_points(self, strand, pos):
+        """
+        Try to move a strand's control points if the position is within their selection areas.
+
+        Args:
+            strand (Strand): The strand to try moving.
+            pos (QPointF): The position to check.
+
+        Returns:
+            bool: True if a control point was moved, False otherwise.
+        """
+        control_point1_rect = self.get_control_point_rectangle(strand, 1)
+        control_point2_rect = self.get_control_point_rectangle(strand, 2)
+
+        if control_point1_rect.contains(pos):
+            self.start_movement(strand, 'control_point1', control_point1_rect)
+            return True
+        elif control_point2_rect.contains(pos):
+            self.start_movement(strand, 'control_point2', control_point2_rect)
+            return True
+        return False
 
     def try_move_strand(self, strand, pos, strand_index):
         """
@@ -279,7 +350,7 @@ class MoveMode:
         Returns:
             QPainterPath: The selection area path.
         """
-        # Define the outer rectangle (80x80 square)
+        # Define the outer rectangle (120x120 square)
         outer_size = 120
         half_outer_size = outer_size / 2
         outer_rect = QRectF(
@@ -289,22 +360,9 @@ class MoveMode:
             outer_size
         )
 
-        # Define the inner rectangle (35x35 square)
-        inner_size = 30
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            strand.start.x() - half_inner_size,
-            strand.start.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
-
-        # Create the selection area by subtracting the inner rectangle from the outer rectangle
+        # Create the selection area as the outer rectangle only
         path = QPainterPath()
         path.addRect(outer_rect)
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
-        path = path.subtracted(inner_path)
 
         return path
 
@@ -318,7 +376,7 @@ class MoveMode:
         Returns:
             QPainterPath: The selection area path.
         """
-        # Define the outer rectangle (80x80 square)
+        # Define the outer rectangle (120x120 square)
         outer_size = 120
         half_outer_size = outer_size / 2
         outer_rect = QRectF(
@@ -328,44 +386,13 @@ class MoveMode:
             outer_size
         )
 
-        # Define the inner rectangle (35x35 square)
-        inner_size = 30
-        half_inner_size = inner_size / 2
-        inner_rect = QRectF(
-            strand.end.x() - half_inner_size,
-            strand.end.y() - half_inner_size,
-            inner_size,
-            inner_size
-        )
-
-        # Create the selection area by subtracting the inner rectangle from the outer rectangle
+        # Create the selection area as the outer rectangle only
         path = QPainterPath()
         path.addRect(outer_rect)
-        inner_path = QPainterPath()
-        inner_path.addRect(inner_rect)
-        path = path.subtracted(inner_path)
 
         return path
 
-    def try_move_attached_strands(self, attached_strands, pos):
-        """
-        Recursively try to move attached strands.
 
-        Args:
-            attached_strands (list): List of attached strands to check.
-            pos (QPointF): The position to check.
-
-        Returns:
-            bool: True if an attached strand was moved, False otherwise.
-        """
-        for attached_strand in attached_strands:
-            if not getattr(attached_strand, 'deleted', False):
-                index = self.canvas.strands.index(attached_strand) if attached_strand in self.canvas.strands else -1
-                if self.try_move_strand(attached_strand, pos, index):
-                    return True
-                if self.try_move_attached_strands(attached_strand.attached_strands, pos):
-                    return True
-        return False
 
     def can_move_side(self, strand, side, strand_index):
         """
@@ -669,4 +696,10 @@ class MoveMode:
         print(f"Temp selected strand: {self.temp_selected_strand}")
         print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
         print(f"Strand to highlight: {strand_to_highlight}")
+
+
+
+
+
+
 

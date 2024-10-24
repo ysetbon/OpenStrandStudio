@@ -232,6 +232,11 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        # Create the toggle control points button
+        self.toggle_control_points_button = QPushButton("Toggle Control Points")
+        self.toggle_control_points_button.setCheckable(True)
+        self.toggle_control_points_button.setChecked(True)
+
         # Add buttons to the button layout
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
@@ -243,6 +248,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_image_button)
+        button_layout.addWidget(self.toggle_control_points_button)
 
         # Add a horizontal spacer to push the layer state button to the right
         spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -312,6 +318,9 @@ class MainWindow(QMainWindow):
         self.select_strand_button.clicked.connect(self.set_select_mode)
         self.mask_button.clicked.connect(self.set_mask_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
+
+        # Connect the toggle control points button
+        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -753,6 +762,7 @@ class MainWindow(QMainWindow):
             (self.save_image_button, "#4CAF50", "white", "#45a049", "#3e8e41", "#3e8e41"),
             (self.select_strand_button, "#FFA500", "white", "#FFEBC7", "#FF8C00", "#FF8C00"),
             (self.mask_button, "#800080", "white", "#9932CC", "#4B0082", "#4B0082"),
+            (self.toggle_control_points_button, "#5F9EA0", "white", "#79BEBE", "#4F8E90", "#3F7E80"),
         ]
         for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:
             # Avoid applying styles to the settings button
@@ -869,6 +879,27 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        # Style for toggle control points button
+        self.toggle_control_points_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4B0082;  /* Indigo */
+                color: white;
+                font-weight: bold;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #6A0DAD;
+            }
+            QPushButton:pressed {
+                background-color: #380066;
+            }
+            QPushButton:checked {
+                background-color: #2E0051;
+            }
+        """)
+
 
     def update_button_states(self, active_mode):
         buttons = {
@@ -946,6 +977,10 @@ class MainWindow(QMainWindow):
         # Connect attachable_changed signal for each layer button
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
+
+        # Connect toggle control points button
+        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
+        self.toggle_control_points_button.setChecked(True)  # Start with control points visible
     def open_settings_dialog(self):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
         settings_dialog.theme_changed.connect(self.apply_theme)
@@ -1555,6 +1590,7 @@ class MainWindow(QMainWindow):
         self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
         self.layer_state_button.setText(_['layer_state'])
+        self.toggle_control_points_button.setText(_['toggle_control_points'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])

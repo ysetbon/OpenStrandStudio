@@ -43,6 +43,9 @@ class Strand:
             self.start.y()
         )
 
+        # Add canvas reference
+        self.canvas = None
+
         self.layer_name = layer_name
         self.set_number = set_number
         self.update_attachable()
@@ -493,7 +496,7 @@ class Strand:
         painter.drawPath(path)
         painter.restore()
 
-        # **Draw the selection path for debugging**
+        # Draw the selection path for debugging
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         debug_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
@@ -502,15 +505,36 @@ class Strand:
         painter.drawPath(self.get_selection_path())
         painter.restore()
 
-        # Optionally, draw the control points for visualization
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        control_pen = QPen(QColor('green'), 2, Qt.DashLine)
-        painter.setPen(control_pen)
-        painter.setBrush(QBrush(QColor('green')))
-        painter.drawEllipse(self.control_point1, 4, 4)
-        painter.drawEllipse(self.control_point2, 4, 4)
-        painter.restore()
+        # Draw control points with safer checks
+        try:
+            should_show_controls = (
+                hasattr(self, 'canvas') and 
+                self.canvas is not None and 
+                getattr(self.canvas, 'show_control_points', True)
+            )
+            
+            if should_show_controls:
+                painter.save()
+                painter.setRenderHint(QPainter.Antialiasing)
+                
+                # Draw lines connecting control points
+                control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+                painter.setPen(control_line_pen)
+                painter.drawLine(self.start, self.control_point1)
+                painter.drawLine(self.end, self.control_point2)
+                
+                # Draw control points
+                control_point_pen = QPen(QColor('green'), 2)
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+                painter.drawEllipse(self.control_point1, 6, 6)
+                painter.drawEllipse(self.control_point2, 6, 6)
+                
+                painter.restore()
+                
+        except Exception as e:
+            logging.error(f"Error drawing control points: {e}")
+            # Continue drawing even if control points fail
 
     def remove_attached_strands(self):
         """Recursively remove all attached strands."""
@@ -589,6 +613,10 @@ class AttachedStrand(Strand):
         self.is_selected = False  # Indicates if the strand is selected
         self.start_selected = False
         self.end_selected = False
+
+        # Inherit canvas reference from parent strand
+        if hasattr(parent, 'canvas'):
+            self.canvas = parent.canvas
 
     @property
     def start(self):
@@ -911,8 +939,6 @@ class AttachedStrand(Strand):
         inner_radius = self.width / 2
         painter.drawEllipse(self.start, inner_radius, inner_radius)
 
-
-
         painter.restore()
 
         # Draw the selection path for debugging (optional)
@@ -924,15 +950,31 @@ class AttachedStrand(Strand):
         painter.drawPath(self.get_selection_path())
         painter.restore()
 
-        # Draw the control points for visualization
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        control_pen = QPen(QColor('green'), 2, Qt.DashLine)
-        painter.setPen(control_pen)
-        painter.setBrush(QBrush(QColor('green')))
-        painter.drawEllipse(self.control_point1, 4, 4)
-        painter.drawEllipse(self.control_point2, 4, 4)
-        painter.restore()
+        # Draw control points with safer checks
+        show_controls = (
+            hasattr(self, 'canvas') and 
+            self.canvas is not None and 
+            getattr(self.canvas, 'show_control_points', True)
+        )
+        
+        if show_controls:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Draw lines connecting control points
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
+            
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
+            
+            painter.restore()
 
     def get_path(self):
         """Get the path representing the strand as a cubic Bézier curve."""

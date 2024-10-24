@@ -38,7 +38,11 @@ def serialize_strand(strand, index=None):
         "set_number": strand.set_number,
         "is_first_strand": getattr(strand, 'is_first_strand', False),
         "is_start_side": getattr(strand, 'is_start_side', True),
-        # Add any additional properties needed
+        # Save control points for all strand types that have them
+        "control_points": [
+            serialize_point(strand.control_point1),
+            serialize_point(strand.control_point2)
+        ] if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') else []
     }
 
     if isinstance(strand, AttachedStrand):
@@ -109,6 +113,14 @@ def deserialize_strand(data, parent_strand=None, first_strand=None, second_stran
     strand.is_first_strand = is_first_strand
     strand.is_start_side = is_start_side
 
+    # After creating the strand and before updating shape
+    # Set control points for any strand type that has them
+    if len(data.get("control_points", [])) == 2:
+        control_points = [deserialize_point(point) for point in data["control_points"]]
+        if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+            strand.control_point1 = control_points[0]
+            strand.control_point2 = control_points[1]
+    
     strand.update_shape()
     strand.update_side_line()
 

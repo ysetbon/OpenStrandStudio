@@ -141,7 +141,8 @@ translations = {
         'newest_layer': 'Newest Layer',
         'x_movement': 'X Movement',
         'y_movement': 'Y Movement',
-        'move_group': 'Move Group'
+        'move_group': 'Move Group',
+        'toggle_control_points': 'Toggle Control Points',
     },
     'fr': {
         # MainWindow translations
@@ -282,7 +283,8 @@ translations = {
         'newest_layer': 'Dernière Couche',
         'x_movement': 'Mouvement X',
         'y_movement': 'Mouvement Y',
-        'move_group': 'Déplacer le Groupe'
+        'move_group': 'Déplacer le Groupe',
+        'toggle_control_points': 'Basculer les Points de Contrôle',
     }
 }
 
@@ -298,3 +300,4 @@ translations['fr'].update({
     'y_movement': 'Mouvement Y',
     'move_group': 'Déplacer le Groupe',
 })
+

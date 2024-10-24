@@ -201,6 +201,10 @@ class AttachMode(QObject):
     def start_attachment(self, parent_strand, attach_point, side):
         """Start the attachment of a new strand to an existing one."""
         new_strand = AttachedStrand(parent_strand, attach_point)
+        
+        # Set the canvas reference immediately
+        new_strand.canvas = self.canvas  # Add this line
+        
         # Set the affected strand so it can be highlighted during creation
         self.affected_strand = new_strand
         new_strand.set_color(parent_strand.color)
@@ -209,7 +213,7 @@ class AttachMode(QObject):
         new_strand.is_start_side = False
         parent_strand.attached_strands.append(new_strand)
         parent_strand.has_circles[side] = True
-        parent_strand.update_attachable()  # Add this line
+        parent_strand.update_attachable()
         self.canvas.current_strand = new_strand
         self.is_attaching = True
         self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)

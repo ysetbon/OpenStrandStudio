@@ -68,6 +68,22 @@ class StrandDrawingCanvas(QWidget):
         
         self._selected_strand = None
 
+        self.show_control_points = True  # Initialize control points visibility
+        self.current_strand = None
+
+    def toggle_control_points(self):
+        """Toggle the visibility of control points."""
+        self.show_control_points = not self.show_control_points
+        logging.info(f"Control points visibility toggled: {self.show_control_points}")
+        self.update()  # Force a redraw of the canvas
+
+    def add_strand(self, strand):
+        """Add a strand to the canvas and set its canvas reference."""
+        strand.canvas = self
+        self.strands.append(strand)
+        logging.info(f"Added strand to canvas. Show control points: {self.show_control_points}")
+        self.update()
+
     @property
     def selected_strand(self):
         return self._selected_strand
@@ -641,9 +657,11 @@ class StrandDrawingCanvas(QWidget):
 
         logging.info(f"Painting {len(self.strands)} strands")
 
-        # Draw all strands
+        # Draw existing strands
         for strand in self.strands:
             logging.info(f"Drawing strand '{strand.layer_name}'")
+            if not hasattr(strand, 'canvas'):
+                strand.canvas = self  # Ensure all strands have canvas reference
             if strand == self.selected_strand:
                 logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                 self.draw_highlighted_strand(painter, strand)
@@ -652,6 +670,8 @@ class StrandDrawingCanvas(QWidget):
 
         # Draw the current strand being created (either first strand or attached)
         if self.current_strand:
+            if not hasattr(self.current_strand, 'canvas'):
+                self.current_strand.canvas = self  # Ensure current strand has canvas reference
             # For the first strand, draw with a special highlight
             if self.is_first_strand:
                 painter.save()
@@ -685,6 +705,7 @@ class StrandDrawingCanvas(QWidget):
                 stroke_color=self.stroke_color,
                 stroke_width=self.stroke_width
             )
+            temp_strand.canvas = self  # Set canvas reference for the temporary strand
             temp_strand.draw(painter)
 
         # Draw the control points if they are not drawn within the Strand class
@@ -968,6 +989,9 @@ class StrandDrawingCanvas(QWidget):
         """Handle the creation of a new strand."""
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
 
+        # Set the canvas reference
+        strand.canvas = self
+
         if hasattr(strand, 'is_being_deleted') and strand.is_being_deleted:
             logging.info("Strand is being deleted, skipping creation process")
             return
@@ -1143,10 +1167,7 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Moved strand {strand.layer_name} to top")
         else:
             logging.warning(f"Attempted to move non-existent strand to top: {strand.layer_name}")
-    def add_strand(self, strand):
-        """Add a strand to the canvas."""
-        self.strands.append(strand)
-        self.update()
+
 
 
     def select_strand(self, index, update_layer_panel=True):
@@ -1245,6 +1266,15 @@ class StrandDrawingCanvas(QWidget):
             self.mask_mode.handle_mouse_press(event)
         elif self.current_mode:
             self.current_mode.mousePressEvent(event)
+        elif self.current_mode == self.attach_mode:
+            # Create new strand
+            if event.button() == Qt.LeftButton:
+                pos = event.pos()
+                self.current_strand = Strand(pos, pos, self.strand_width)
+                self.current_strand.canvas = self  # Set canvas reference immediately
+                self.is_drawing_new_strand = True
+                logging.info(f"Created new strand with canvas reference. Show control points: {self.show_control_points}")
+                self.update()
         else:
             super().mousePressEvent(event)
 

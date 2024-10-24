@@ -199,3 +199,22 @@ Fixed Features:
 These updates enhance the visual experience when changing themes and ensure better accuracy when loading projects.
 
 ------
+
+## Version 1.070 (Released: 10/25/2024)
+
+### Major New Features:
+
+1. **Complete Bezier Curve Implementation:**
+   - Revolutionary improvement in strand manipulation and control
+   - Smoother and more precise strand creation and editing
+   - Enhanced visual quality of all strands
+   - More natural and fluid strand behavior
+
+2. **Enhanced Save/Load System:**
+   - New comprehensive save/load system that includes group data
+   - Improved project persistence and reliability
+   - Better handling of complex designs
+
+This version represents a significant leap forward in OpenStrand Studio's capabilities, particularly with the implementation of Bezier curves. Users will notice immediately improved control and smoother appearance of all strands, making the design process more intuitive and professional.
+
+------

@@ -200,3 +200,22 @@ Fonctionnalités Corrigées :
 Ces mises à jour améliorent l'expérience visuelle lors du changement de thème et assurent une meilleure précision lors du chargement de projets.
 
 ------
+
+## Version 1.070 (Sortie : 25/10/2024)
+
+### Nouvelles Fonctionnalités Majeures :
+
+1. **Implémentation Complète des Courbes de Bézier :**
+   - Amélioration révolutionnaire dans la manipulation et le contrôle des brins
+   - Création et édition des brins plus fluide et précise
+   - Qualité visuelle améliorée pour tous les brins
+   - Comportement des brins plus naturel et fluide
+
+2. **Système de Sauvegarde/Chargement Amélioré :**
+   - Nouveau système complet de sauvegarde/chargement incluant les données de groupe
+   - Persistance et fiabilité des projets améliorées
+   - Meilleure gestion des designs complexes
+
+Cette version représente une avancée significative dans les capacités d'OpenStrand Studio, particulièrement avec l'implémentation des courbes de Bézier. Les utilisateurs remarqueront immédiatement un contrôle amélioré et une apparence plus fluide de tous les brins, rendant le processus de design plus intuitif et professionnel.
+
+------

@@ -46,7 +46,8 @@ class AttachMode(QObject):
                 self.strand_created.emit(self.canvas.current_strand)
             self.is_attaching = False
         
-        # Reset all properties
+        # Reset all properties including affected_strand
+        self.affected_strand = None
         self.canvas.current_strand = None
         self.move_timer.stop()
         self.start_pos = None
@@ -57,10 +58,8 @@ class AttachMode(QObject):
 
     def mousePressEvent(self, event):
         """Handle mouse press events."""
-
         # Prevent attachment if the canvas is in Move Mode
         if self.canvas.current_mode == "move":
-            # Do not proceed with attachment logic
             return
 
         if self.canvas.is_first_strand:
@@ -73,19 +72,16 @@ class AttachMode(QObject):
             self.canvas.current_strand = new_strand
             self.current_end = self.start_pos
             self.last_snapped_pos = self.start_pos
+            # Start the timer immediately for the first strand
+            self.move_timer.start(16)  # ~60 FPS
         elif self.canvas.selected_strand and not self.is_attaching:
             # If a strand is selected and we're not already attaching, try to attach
             self.handle_strand_attachment(event.pos())
 
     def mouseMoveEvent(self, event):
         """Handle mouse move events."""
-        if self.canvas.is_first_strand and self.canvas.current_strand:
-            # If it's the first strand, update the target position and start the timer
-            self.target_pos = self.canvas.snap_to_grid(event.pos())
-            if not self.move_timer.isActive():
-                self.move_timer.start(16)  # ~60 FPS
-        elif self.is_attaching and self.canvas.current_strand:
-            # If we're attaching a strand, update the target position and start the timer
+        if self.canvas.current_strand:
+            # Update target position for both first strand and attachments
             self.target_pos = self.canvas.snap_to_grid(event.pos())
             if not self.move_timer.isActive():
                 self.move_timer.start(16)  # ~60 FPS
@@ -140,10 +136,17 @@ class AttachMode(QObject):
         rounded_angle = round(angle / 45) * 45
         rounded_angle = rounded_angle % 360
 
-        # Calculate the new end point
-        length = max(self.canvas.grid_size, math.hypot(dx, dy))
-        new_x = self.start_pos.x() + length * math.cos(math.radians(rounded_angle))
-        new_y = self.start_pos.y() + length * math.sin(math.radians(rounded_angle))
+        # Calculate the new end point with gradual movement
+        current_length = (self.canvas.current_strand.end - self.start_pos).manhattanLength()
+        target_length = max(self.canvas.grid_size, math.hypot(dx, dy))
+        
+        # Move the length gradually
+        step_size = self.canvas.grid_size * self.move_speed
+        new_length = min(current_length + step_size, target_length)
+        
+        # Calculate the new end position
+        new_x = self.start_pos.x() + new_length * math.cos(math.radians(rounded_angle))
+        new_y = self.start_pos.y() + new_length * math.sin(math.radians(rounded_angle))
         new_end = self.canvas.snap_to_grid(QPointF(new_x, new_y))
 
         # Update the strand
@@ -198,6 +201,8 @@ class AttachMode(QObject):
     def start_attachment(self, parent_strand, attach_point, side):
         """Start the attachment of a new strand to an existing one."""
         new_strand = AttachedStrand(parent_strand, attach_point)
+        # Set the affected strand so it can be highlighted during creation
+        self.affected_strand = new_strand
         new_strand.set_color(parent_strand.color)
         new_strand.set_number = parent_strand.set_number
         new_strand.is_first_strand = False

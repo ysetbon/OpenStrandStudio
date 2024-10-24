@@ -833,8 +833,18 @@ class LayerPanel(QWidget):
         # Insert the button at the top of the scroll area
         self.scroll_layout.insertWidget(0, button_container)
         self.layer_buttons.append(button)
-        self.select_layer(len(self.layer_buttons) - 1)
-        logging.info(f"Added button to layer_buttons, total buttons: {len(self.layer_buttons)}")
+        
+        # Select the newly created layer and ensure it's selected in the canvas
+        new_index = len(self.layer_buttons) - 1
+        self.select_layer(new_index, emit_signal=True)
+        
+        # Ensure the canvas also knows about the selection
+        if new_index < len(self.canvas.strands):
+            self.canvas.selected_strand = self.canvas.strands[new_index]
+            self.canvas.selected_strand_index = new_index
+            self.canvas.update()
+        
+        logging.info(f"Added and selected new button at index {new_index}")
 
         # Update attachable states after adding a new button
         self.update_layer_button_states()

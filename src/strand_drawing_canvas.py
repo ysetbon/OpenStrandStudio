@@ -650,6 +650,23 @@ class StrandDrawingCanvas(QWidget):
             else:
                 strand.draw(painter)
 
+        # Draw the current strand being created (either first strand or attached)
+        if self.current_strand:
+            # For the first strand, draw with a special highlight
+            if self.is_first_strand:
+                painter.save()
+                # Draw a preview shadow
+                shadow_pen = QPen(QColor(255, 255, 0, 100), self.strand_width + 4)  # Semi-transparent yellow
+                painter.setPen(shadow_pen)
+                self.current_strand.draw(painter)
+                
+                # Draw the actual strand
+                painter.setPen(QPen(self.strand_color, self.strand_width))
+                self.current_strand.draw(painter)
+                painter.restore()
+            else:
+                self.current_strand.draw(painter)
+
         # Draw the new strand being created
         if self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             # Determine the color for the new strand
@@ -704,7 +721,18 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.mask_mode.selected_strands:
                 self.draw_highlighted_strand(painter, strand)
 
-
+        # Highlight the strand being created in attach mode
+        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
+            affected_strand = self.current_mode.affected_strand
+            # Save the current painter state
+            painter.save()
+            # Set a different pen for highlighting
+            highlight_pen = QPen(Qt.yellow, self.strand_width + 4)  # Wider width and different color
+            painter.setPen(highlight_pen)
+            # Draw the affected strand
+            affected_strand.draw(painter)
+            # Restore the painter state
+            painter.restore()
 
         logging.info(
             f"Paint event completed. Selected strand: "
@@ -1276,21 +1304,29 @@ class StrandDrawingCanvas(QWidget):
             self.add_strand(new_strand)
             new_strand_index = len(self.strands) - 1
             
+            # Ensure the new strand is selected and highlighted
+            new_strand.is_selected = True
             self.selected_strand = new_strand
             self.newest_strand = new_strand
             self.selected_strand_index = new_strand_index
+            self.last_selected_strand_index = new_strand_index
             
             self.is_drawing_new_strand = False
             self.new_strand_start_point = None
             self.new_strand_end_point = None
             self.setCursor(Qt.ArrowCursor)
             
-            # Emit signals or call methods to update UI
+            # Emit signals and update UI
             self.strand_selected.emit(new_strand_index)
             if hasattr(self, 'layer_panel'):
                 self.layer_panel.on_strand_created(new_strand)
+                # Ensure the layer panel selection is updated
+                self.layer_panel.select_layer(new_strand_index, emit_signal=False)
             
-            logging.info(f"Created new main strand: {new_strand.layer_name}, index: {new_strand_index}")
+            # Force a canvas update to show the selection
+            self.update()
+            
+            logging.info(f"Created and selected new main strand: {new_strand.layer_name}, index: {new_strand_index}")
         else:
             logging.warning("Attempted to finalize new strand without valid start and end points")
     def set_mode(self, mode):

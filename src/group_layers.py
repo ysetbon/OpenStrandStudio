@@ -645,21 +645,94 @@ class GroupPanel(QWidget):
         logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
         if group_name == self.active_group_name:
             if self.canvas:
-                self.canvas.rotate_group(group_name, angle)
+                group_data = self.canvas.groups[group_name]
+                
+                # Calculate rotation center from all strands in the group
+                center = QPointF(0, 0)
+                num_points = 0
+                for strand in group_data['strands']:
+                    center += strand.start
+                    center += strand.end
+                    num_points += 2
+                center /= num_points
+                
+                # Convert angle to radians
+                angle_rad = radians(angle)
+                
+                for strand in group_data['strands']:
+                    # Store current points only on first rotation
+                    if not hasattr(strand, 'pre_rotation_points'):
+                        strand.pre_rotation_points = {
+                            'start': QPointF(strand.start),
+                            'end': QPointF(strand.end),
+                            'control_point1': QPointF(strand.control_point1),
+                            'control_point2': QPointF(strand.control_point2),
+                            'last_angle': 0  # Store the last angle used
+                        }
+                    
+                    # Calculate the incremental angle (difference from last angle)
+                    delta_angle = angle - strand.pre_rotation_points['last_angle']
+                    delta_angle_rad = radians(delta_angle)
+                    
+                    # Update the last angle
+                    strand.pre_rotation_points['last_angle'] = angle
+                    
+                    # Helper function to rotate a point around the center
+                    def rotate_point(point):
+                        dx = point.x() - center.x()
+                        dy = point.y() - center.y()
+                        new_x = center.x() + dx * cos(delta_angle_rad) - dy * sin(delta_angle_rad)
+                        new_y = center.y() + dx * sin(delta_angle_rad) + dy * cos(delta_angle_rad)
+                        return QPointF(new_x, new_y)
+                    
+                    # Apply rotation to current positions
+                    strand.start = rotate_point(strand.start)
+                    strand.end = rotate_point(strand.end)
+                    strand.control_point1 = rotate_point(strand.control_point1)
+                    strand.control_point2 = rotate_point(strand.control_point2)
+                    
+                    logging.info(f"Updated positions after rotation for strand {strand.layer_name}:")
+                    logging.info(f"  Control1: {strand.control_point1}")
+                    logging.info(f"  Control2: {strand.control_point2}")
+                    
+                    # Update the strand's shape
+                    strand.update_shape()
+                    if hasattr(strand, 'update_side_line'):
+                        strand.update_side_line()
+                    
+                    # Store the updated control points
+                    if 'control_points' not in self.canvas.groups[group_name]:
+                        self.canvas.groups[group_name]['control_points'] = {}
+                    
+                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                        'control_point1': strand.control_point1,
+                        'control_point2': strand.control_point2
+                    }
+                
+                # Update the canvas
+                self.canvas.update()
             else:
                 logging.error("Canvas not properly connected to GroupPanel")
         else:
             logging.warning(f"Attempted to rotate non-existent or inactive group: {group_name}")
 
-
     def finish_group_rotation(self, group_name):
         logging.info(f"GroupPanel: Finishing group rotation for '{group_name}'")
         if self.canvas:
-            self.canvas.finish_group_rotation(group_name)
+            # Store the final positions as the new pre-rotation positions
+            group_data = self.canvas.groups[group_name]
+            for strand in group_data['strands']:
+                if hasattr(strand, 'pre_rotation_points'):
+                    # Clean up the pre-rotation points
+                    delattr(strand, 'pre_rotation_points')
+                    logging.info(f"Cleaned up pre-rotation points for strand {strand.layer_name}")
+            self.canvas.update()
         else:
             logging.error("Canvas not properly connected to GroupPanel")
         # Clear the active group name
         self.active_group_name = None
+
+
 
 
     def delete_group(self, group_name):

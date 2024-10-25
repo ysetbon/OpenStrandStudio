@@ -657,6 +657,7 @@ class GroupPanel(QWidget):
         group_data['strands'] = updated_strands
 
     def update_group_rotation(self, group_name, angle):
+        """Update group rotation using the absolute angle from the dialog."""
         logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
         if group_name == self.active_group_name:
             if self.canvas:
@@ -675,45 +676,32 @@ class GroupPanel(QWidget):
                 angle_rad = radians(angle)
                 
                 for strand in group_data['strands']:
-                    # Store current points only on first rotation
+                    # Store original positions if not already stored
                     if not hasattr(strand, 'pre_rotation_points'):
                         strand.pre_rotation_points = {
                             'start': QPointF(strand.start),
                             'end': QPointF(strand.end),
                             'control_point1': QPointF(strand.control_point1),
-                            'control_point2': QPointF(strand.control_point2),
-                            'last_angle': 0  # Store the last angle used
+                            'control_point2': QPointF(strand.control_point2)
                         }
                     
-                    # Calculate the incremental angle (difference from last angle)
-                    delta_angle = angle - strand.pre_rotation_points['last_angle']
-                    delta_angle_rad = radians(delta_angle)
-                    
-                    # Update the last angle
-                    strand.pre_rotation_points['last_angle'] = angle
-                    
-                    # Helper function to rotate a point around the center
-                    def rotate_point(point):
-                        dx = point.x() - center.x()
-                        dy = point.y() - center.y()
-                        new_x = center.x() + dx * cos(delta_angle_rad) - dy * sin(delta_angle_rad)
-                        new_y = center.y() + dx * sin(delta_angle_rad) + dy * cos(delta_angle_rad)
+                    # Helper function to rotate a point around the center by absolute angle
+                    def rotate_point(original_point):
+                        dx = original_point.x() - center.x()
+                        dy = original_point.y() - center.y()
+                        new_x = center.x() + dx * cos(angle_rad) - dy * sin(angle_rad)
+                        new_y = center.y() + dx * sin(angle_rad) + dy * cos(angle_rad)
                         return QPointF(new_x, new_y)
                     
-                    # Apply rotation to current positions
-                    strand.start = rotate_point(strand.start)
-                    strand.end = rotate_point(strand.end)
-                    strand.control_point1 = rotate_point(strand.control_point1)
-                    strand.control_point2 = rotate_point(strand.control_point2)
+                    # Rotate all points from their original positions
+                    strand.start = rotate_point(strand.pre_rotation_points['start'])
+                    strand.end = rotate_point(strand.pre_rotation_points['end'])
+                    strand.control_point1 = rotate_point(strand.pre_rotation_points['control_point1'])
+                    strand.control_point2 = rotate_point(strand.pre_rotation_points['control_point2'])
                     
-                    logging.info(f"Updated positions after rotation for strand {strand.layer_name}:")
-                    logging.info(f"  Control1: {strand.control_point1}")
-                    logging.info(f"  Control2: {strand.control_point2}")
-                    
-                    # Update the strand's shape
+                    # Update the strand's shape and side lines
                     strand.update_shape()
-                    if hasattr(strand, 'update_side_line'):
-                        strand.update_side_line()
+                    strand.update_side_line()
                     
                     # Store the updated control points
                     if 'control_points' not in self.canvas.groups[group_name]:

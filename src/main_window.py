@@ -47,7 +47,8 @@ class MainWindow(QMainWindow):
         self.layer_state_manager = LayerStateManager()
         logging.info("LayerStateManager initialized in MainWindow")
 
-        self.canvas = StrandDrawingCanvas(parent=self)
+        self.canvas = StrandDrawingCanvas(parent=self)  # Pass self as parent
+        self.canvas.parent_window = self  # Explicitly set the parent window reference
         self.layer_panel = LayerPanel(self.canvas, parent=self)  # Pass self as parent
 
         # Use the GroupLayerManager from layer_panel
@@ -982,6 +983,18 @@ class MainWindow(QMainWindow):
         self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
         self.toggle_control_points_button.setChecked(True)  # Start with control points visible
 
+        # Connect mask edit mode signals
+        self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
+        
+        # Make sure the canvas has focus policy set
+        self.canvas.setFocusPolicy(Qt.StrongFocus)
+
+        # Connect mask edit mode signals
+        if hasattr(self.canvas, 'mask_edit_exited'):
+            self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
+        else:
+            logging.error("Canvas does not have mask_edit_exited signal")
+
     def load_project(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if filename:
@@ -1351,7 +1364,15 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.layer_panel.keyPressEvent(event)
-        if event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+        
+        if event.key() == Qt.Key_Escape:
+            # If we're in mask edit mode, exit it
+            if self.canvas.mask_edit_mode:
+                self.exit_mask_edit_mode()
+                # Use translated message from the current language
+                _ = translations[self.language_code]
+                self.statusBar().showMessage(_['mask_edit_mode_exited'], 2000)
+        elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
             if self.canvas.selected_strand and not isinstance(self.canvas.selected_strand, MaskedStrand):
                 self.toggle_angle_adjust_mode()
             elif self.canvas.selected_strand and isinstance(self.canvas.selected_strand, MaskedStrand):
@@ -1548,7 +1569,13 @@ class MainWindow(QMainWindow):
         self.update_mode("rotate")
         self.canvas.set_mode("rotate")
 
-
+    def exit_mask_edit_mode(self):
+        """Handle exiting mask edit mode."""
+        self.update_mode("select")  # Reset to select mode
+        self.mask_button.setChecked(False)
+        self.select_strand_button.setChecked(True)
+        # Update button states
+        self.update_button_states("select")
     def set_language(self, language_code):
         """Set the application language and update all UI elements."""
         self.language_code = language_code

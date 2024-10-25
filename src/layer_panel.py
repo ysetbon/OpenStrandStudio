@@ -1,5 +1,14 @@
 # src/layer_panel.py
-
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+    QScrollArea, QLabel, QSplitter, QInputDialog, QMenu  # Add QMenu here
+)
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtGui import QColor, QPalette
+from functools import partial
+import logging
+from strand import MaskedStrand
+from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -35,7 +44,30 @@ class LayerSelectionDialog(QDialog):
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         self.layout.addWidget(self.button_box)
-
+        
+        # Add new signal for mask editing
+        self.edit_mask_requested = pyqtSignal(int)  # Signal when mask editing is requested
+        
+        # Create and configure the mask edit label with center alignment
+        self.mask_edit_label = QLabel()
+        self.mask_edit_label.setAlignment(Qt.AlignCenter)  # Center align the text
+        self.mask_edit_label.setStyleSheet("""
+            QLabel {
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 15px;
+                border-radius: 5px;
+                font-weight: bold;
+                color: #333333;
+                text-align: center;
+                min-width: 250px;  /* Ensure minimum width for centering */
+                qproperty-alignment: AlignCenter;  /* Force center alignment */
+                white-space: pre-line;  /* Preserve newlines while wrapping text */
+            }
+        """)
+        self.mask_edit_label.hide()
+        
+        # Add the label to the layout with proper alignment
+        self.left_layout.addWidget(self.mask_edit_label, 0, Qt.AlignHCenter | Qt.AlignTop)
     def get_selected_layers(self):
         return [self.layer_list.item(i).text() for i in range(self.layer_list.count()) 
                 if self.layer_list.item(i).checkState() == Qt.Checked]
@@ -187,34 +219,116 @@ class LayerPanel(QWidget):
         # Initialize groups
         self.groups = {}
 
+        # Add flag to track if we're currently in mask editing mode
+        self.mask_editing = False
+        
+        # Add a label to show mask editing status
+        self.mask_edit_label = QLabel("")
+        self.mask_edit_label.setStyleSheet("color: red; font-weight: bold;")
+        self.left_layout.addWidget(self.mask_edit_label)
+        self.mask_edit_label.hide()
+
         logging.info("LayerPanel initialized")
 
     def refresh_layers(self):
-        """Refresh the drawing of the layers."""
-        logging.info("Starting refresh of layer panel")
-        # Clear all layer buttons from the layout without deleting them
-        while self.scroll_layout.count():
-            item = self.scroll_layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                # Remove the widget from the layout but do not set parent to None or delete it
-                widget.hide()  # Optionally hide the widget
+        """Refresh all layer buttons while preserving colors."""
+        logging.info("Starting refresh_layers")
+        
+        # Store existing colors and set colors
+        existing_colors = {}
+        set_colors = self.set_colors.copy() if hasattr(self, 'set_colors') else {}
+        
+        # First pass: store all original colors
+        for strand in self.canvas.strands:
+            existing_colors[strand.layer_name] = strand.color
+            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand):
+                set_number = strand.set_number
+                set_colors[set_number] = strand.color
+                logging.info(f"Stored color for set {set_number}: {strand.color.name()}")
+        
+        # Clear existing buttons
+        for button in self.layer_buttons:
+            self.scroll_layout.removeWidget(button)
+            button.deleteLater()
+        self.layer_buttons.clear()
+        
+        # Recreate buttons while preserving colors
+        for strand in self.canvas.strands:
+            button = NumberedLayerButton(strand.layer_name, len(self.layer_buttons))
+            
+            if isinstance(strand, MaskedStrand):
+                # For masked strands, use stored color
+                button.set_color(existing_colors[strand.layer_name])
+                if hasattr(strand, 'second_selected_strand'):
+                    # Ensure second strand keeps its original color
+                    second_strand_name = strand.second_selected_strand.layer_name
+                    if second_strand_name in existing_colors:
+                        strand.second_selected_strand.color = existing_colors[second_strand_name]
+                        button.set_border_color(existing_colors[second_strand_name])
+                        logging.info(f"Preserved color for second strand {second_strand_name}: {existing_colors[second_strand_name].name()}")
             else:
-                # Handle nested layouts if any
-                pass
+                # For regular strands, use set color or original color
+                if strand.layer_name in existing_colors:
+                    color = existing_colors[strand.layer_name]
+                    button.set_color(color)
+                    strand.color = color
+                    logging.info(f"Preserved original color for {strand.layer_name}: {color.name()}")
+            
+            button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
+            button.color_changed.connect(self.on_color_changed)
+            
+            self.scroll_layout.insertWidget(0, button)
+            self.layer_buttons.append(button)
+            logging.info(f"Recreated button for strand {strand.layer_name} with color {strand.color.name()}")
         
-        # Re-add the layer buttons in the original order
-        for button in reversed(self.layer_buttons):
-            button_container = QWidget()
-            button_layout = QHBoxLayout(button_container)
-            button_layout.setAlignment(Qt.AlignHCenter)
-            button_layout.addWidget(button)
-            button_layout.setContentsMargins(0, 0, 0, 0)
-            self.scroll_layout.addWidget(button_container)
-            button.show()  # Ensure the button is visible
-            button_container.show()
-        
-        logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
+        self.update_layer_button_states()
+        logging.info("Finished refresh_layers")
+
+    def create_layer_button(self, index, strand, count):
+        """Create a layer button for the given strand."""
+        button = NumberedLayerButton(strand.layer_name, count, strand.color)
+        button.clicked.connect(partial(self.select_layer, index))
+        button.color_changed.connect(self.on_color_changed)
+
+        # Set up context menu for masked strands
+        if isinstance(strand, MaskedStrand):
+            button.set_border_color(strand.second_selected_strand.color)
+            button.setContextMenuPolicy(Qt.CustomContextMenu)
+            button.customContextMenuRequested.connect(
+                lambda pos, idx=index: self.show_masked_layer_context_menu(idx, pos)
+            )
+
+        return button
+
+    def show_masked_layer_context_menu(self, strand_index, position):
+        """Show context menu for masked layer buttons."""
+        if strand_index >= 0 and isinstance(self.canvas.strands[strand_index], MaskedStrand):
+            menu = QMenu(self)
+            
+            # Add Edit Mask action
+            edit_action = menu.addAction("Edit Mask")
+            edit_action.triggered.connect(
+                lambda: self.request_edit_mask(strand_index)
+            )
+            
+            # Add Reset Mask action
+            reset_action = menu.addAction("Reset Mask")
+            reset_action.triggered.connect(
+                lambda: self.reset_mask(strand_index)
+            )
+            
+            # Get the button that triggered the menu
+            button = self.layer_buttons[strand_index]
+            menu.exec_(button.mapToGlobal(position))
+
+
+
+    def reset_mask(self, strand_index):
+        """Reset the mask to its original intersection."""
+        if self.canvas:
+            logging.info(f"Resetting mask for strand {strand_index}")
+            self.canvas.reset_mask(strand_index)
+
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
@@ -490,6 +604,13 @@ class LayerPanel(QWidget):
             index (int): The index of the layer to select.
             emit_signal (bool): Whether to emit the selection signal.
         """
+        # Block layer selection if we're in mask editing mode
+        if self.mask_editing:
+            logging.info("Layer selection blocked: Currently in mask edit mode")
+            # Optionally show a temporary notification
+            self.show_notification("Please exit mask edit mode first (Press ESC)")
+            return
+
         # Deselect all strands first
         for strand in self.canvas.strands:
             strand.is_selected = False
@@ -568,26 +689,204 @@ class LayerPanel(QWidget):
 
     def create_masked_layer(self, layer1, layer2):
         """Create a new masked layer from two selected layers."""
-        masked_layer_name = f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}"
-        if any(button.text() == masked_layer_name for button in self.layer_buttons):
-            self.notification_label.setText(f"Masked layer {masked_layer_name} already exists")
-            return
-
-        self.masked_layer_created.emit(layer1, layer2)
-        self.notification_label.setText(f"Created new masked layer: {masked_layer_name}")
+        if len(self.selected_strands) == 2:
+            strand1, strand2 = self.selected_strands
+            logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
+            
+            if not self.mask_exists(strand1, strand2):
+                # Store all existing colors before any operations
+                original_colors = {}
+                for strand in self.canvas.strands:
+                    original_colors[strand.layer_name] = strand.color
+                    if hasattr(strand, 'set_number'):
+                        set_number = strand.set_number
+                        if set_number not in self.set_colors:
+                            self.set_colors[set_number] = strand.color
+                
+                # Create the masked layer
+                self.mask_created.emit(strand1, strand2)
+                
+                # Find the newly created masked strand
+                masked_strand = self.find_masked_strand(strand1, strand2)
+                if masked_strand:
+                    # Set colors for the masked layer
+                    masked_strand.color = original_colors[strand1.layer_name]
+                    if hasattr(masked_strand, 'second_selected_strand'):
+                        masked_strand.second_selected_strand.color = original_colors[strand2.layer_name]
+                    
+                    self.clear_selection()
+                    self.selected_strands.append(masked_strand)
+                    
+                    # Refresh while preserving all colors
+                    masked_strand_index = self.canvas.strands.index(masked_strand)
+                    if self.canvas.layer_panel:
+                        # Restore all original colors
+                        for strand in self.canvas.strands:
+                            if strand.layer_name in original_colors:
+                                strand.color = original_colors[strand.layer_name]
+                            elif hasattr(strand, 'set_number'):
+                                strand.color = self.set_colors.get(strand.set_number, strand.color)
+                        
+                        self.refresh_layers()
+                        self.select_layer(masked_strand_index)
+                    logging.info(f"Selected newly created masked strand: {masked_strand.layer_name}")
+            else:
+                logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
+                self.clear_selection()
+            self.canvas.update()
 
     def add_masked_layer_button(self, layer1, layer2):
         """Add a new button for a masked layer."""
         button = NumberedLayerButton(f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}", 0)
+        # Set the masked layer's color to match the first selected strand
         button.set_color(self.layer_buttons[layer1].color)
+        # Set the border color to match the second selected strand
         button.set_border_color(self.layer_buttons[layer2].color)
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
+        
+        # Set up context menu for masked layer buttons
+        button.setContextMenuPolicy(Qt.CustomContextMenu)
+        button.customContextMenuRequested.connect(
+            lambda pos: self.show_masked_layer_context_menu(
+                self.layer_buttons.index(button), 
+                button.mapToGlobal(pos)
+            )
+        )
+        
         self.scroll_layout.insertWidget(0, button)
         self.layer_buttons.append(button)
         return button
+    def show_masked_layer_context_menu(self, strand_index, position):
+        """Show context menu for masked layer buttons."""
+        if strand_index >= 0 and isinstance(self.canvas.strands[strand_index], MaskedStrand):
+            menu = QMenu(self)
+            _ = translations[self.language_code]
+            
+            # Add Edit Mask action with translation
+            edit_action = menu.addAction(_['edit_mask'])
+            edit_action.triggered.connect(
+                lambda: self.request_edit_mask(strand_index)
+            )
+            
+            # Add Reset Mask action with translation
+            reset_action = menu.addAction(_['reset_mask'])
+            reset_action.triggered.connect(
+                lambda: self.reset_mask(strand_index)
+            )
+            
+            # Get the button that triggered the menu and show menu at the correct position
+            button = self.layer_buttons[strand_index]
+            # Use position directly as it's already mapped to global coordinates
+            menu.exec_(position)
 
-    ### Inside LayerPanel class ###
+
+
+    def reset_mask(self, strand_index):
+        """Reset the mask to its original intersection."""
+        if self.canvas:
+            logging.info(f"Resetting mask for strand {strand_index}")
+            self.canvas.reset_mask(strand_index)
+
+    def request_edit_mask(self, strand_index):
+        """
+        Enter mask editing mode for a specific strand.
+        
+        Args:
+            strand_index (int): Index of the masked strand to edit
+        """
+        if self.canvas:
+            # Enter mask editing mode
+            self.mask_editing = True
+            
+            # Visual feedback that we're in mask editing mode
+            _ = translations[self.language_code]
+            message = _['mask_edit_mode_message']
+            self.mask_edit_label.setText(message)
+            self.mask_edit_label.adjustSize()  # Adjust size to fit the text
+            self.mask_edit_label.show()
+            
+            # Disable all layer buttons except the one being edited
+            for i, button in enumerate(self.layer_buttons):
+                button.setEnabled(i == strand_index)
+                if i == strand_index:
+                    button.setStyleSheet("""
+                        QPushButton {
+                            border: 2px solid red;
+                            background-color: rgba(255, 0, 0, 0.1);
+                        }
+                    """)
+                else:
+                    button.setStyleSheet("QPushButton { opacity: 0.5; }")
+            
+            # Disable other controls during mask editing
+            self.disable_controls()
+            
+            logging.info(f"Entered mask edit mode for strand {strand_index}")
+            self.canvas.enter_mask_edit_mode(strand_index)
+            self.canvas.setFocus()  # Ensure canvas has focus to receive key events
+
+    def exit_mask_edit_mode(self):
+        """Clean up and exit mask editing mode."""
+        if not self.mask_editing:
+            return
+
+        self.mask_editing = False
+        
+        # Hide the mask editing label
+        self.mask_edit_label.hide()
+        
+        # Re-enable all layer buttons and restore their appearance
+        for button in self.layer_buttons:
+            button.setEnabled(True)
+            if isinstance(button, NumberedLayerButton):
+                button.restore_original_style()  # Use the button's own restore method
+                button.update()  # Force a visual update
+        
+        # Re-enable controls
+        self.enable_controls()
+        
+        # Reset the main window state if available
+        if hasattr(self, 'parent_window'):
+            self.parent_window.exit_mask_edit_mode()
+        
+        _ = translations[self.language_code]
+        logging.info("Exited mask edit mode")
+        self.show_notification(_['mask_edit_mode_exited'])
+        
+        # Force update of the panel
+        self.update()
+
+    def disable_controls(self):
+        """Disable controls that shouldn't be used during mask editing."""
+        self.add_new_strand_button.setEnabled(False)
+        self.delete_strand_button.setEnabled(False)
+        self.draw_names_button.setEnabled(False)
+        self.lock_layers_button.setEnabled(False)
+        self.deselect_all_button.setEnabled(False)
+        if hasattr(self, 'group_layer_manager'):
+            self.group_layer_manager.create_group_button.setEnabled(False)
+
+    def enable_controls(self):
+        """Re-enable controls after mask editing."""
+        self.add_new_strand_button.setEnabled(True)
+        self.delete_strand_button.setEnabled(True)
+        self.draw_names_button.setEnabled(True)
+        self.lock_layers_button.setEnabled(True)
+        self.deselect_all_button.setEnabled(True)
+        if hasattr(self, 'group_layer_manager'):
+            self.group_layer_manager.create_group_button.setEnabled(True)
+
+    def show_notification(self, message, duration=2000):
+        """Show a temporary notification message."""
+        self.notification_label.setText(message)
+        QTimer.singleShot(duration, lambda: self.notification_label.setText(""))
+
+    def reset_mask(self, strand_index):
+        """Reset the mask to its original intersection."""
+        if self.canvas:
+            self.canvas.reset_mask(strand_index)
+            logging.info(f"Reset mask for strand {strand_index}")
 
     def request_new_strand(self):
         logging.info("Add New Strand button clicked.")
@@ -974,17 +1273,81 @@ class LayerPanel(QWidget):
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""
         logging.info(f"Color change requested for set {set_number}")
+        
+        # Update color in set_colors dictionary
         self.set_colors[set_number] = color
+        
+        # Update colors in canvas
         self.canvas.update_color_for_set(set_number, color)
-        self.update_colors_for_set(set_number, color)
+        
+        # Update all related buttons
+        for button in self.layer_buttons:
+            button_text = button.text()
+            parts = button_text.split('_')
+            
+            # Update main strand buttons of the same set
+            if parts[0] == str(set_number):
+                button.set_color(color)
+                
+            # Update masked layer buttons that use this set
+            if len(parts) == 4:  # Masked layer format: "set1_num1_set2_num2"
+                if parts[0] == str(set_number):
+                    button.set_color(color)
+                elif parts[2] == str(set_number):
+                    button.set_border_color(color)
+        
+        # Emit signal for other components
         self.color_changed.emit(set_number, color)
+        
+        # Force canvas update
+        self.canvas.update()
 
     def update_colors_for_set(self, set_number, color):
-        """Update the color of all buttons belonging to a specific set."""
+        """
+        Update colors for all strands in a specific set.
+        
+        Args:
+            set_number (int): The set number to update colors for
+            color (QColor): The new color to apply
+        """
+        logging.info(f"Updating colors for set {set_number} to {color.name()}")
+        
+        # Update colors in canvas strands
+        for strand in self.canvas.strands:
+            # Get the set number from the strand's layer name (e.g., "1_1" -> "1")
+            strand_set = strand.layer_name.split('_')[0]
+            
+            if strand_set == str(set_number):
+                # Update regular strand color
+                strand.color = color
+                logging.info(f"Updated color for strand: {strand.layer_name}")
+                
+                # If it's an attached strand, update its children
+                if hasattr(strand, 'attached_strands'):
+                    for attached in strand.attached_strands:
+                        if attached.layer_name.split('_')[0] == str(set_number):
+                            attached.color = color
+                            logging.info(f"Updated color for attached strand: {attached.layer_name}")
+            
+            # Handle masked strands
+            elif isinstance(strand, MaskedStrand):
+                parts = strand.layer_name.split('_')
+                if len(parts) == 4:  # Ensure proper x_y_z_w format
+                    first_strand_set = parts[0]   # x from x_y
+                    second_strand_set = parts[2]  # z from z_w
+                    
+                    if str(set_number) in (first_strand_set, second_strand_set):
+                        strand.update_masked_color(set_number, color)
+                        logging.info(f"Updated color for masked strand: {strand.layer_name}")
+        
+        # Update layer button colors
         for button in self.layer_buttons:
-            if isinstance(button, NumberedLayerButton):
-                if button.text().startswith(f"{set_number}_") or button.text().split('_')[0] == str(set_number):
-                    button.set_color(color)
+            if button.text().split('_')[0] == str(set_number):
+                button.set_color(color)
+                logging.info(f"Updated button color for {button.text()}")
+        
+        # Force canvas redraw
+        self.canvas.update()
 
     def resizeEvent(self, event):
         """Handle resize events by updating the size of the splitter handle."""
@@ -1045,6 +1408,11 @@ class LayerPanel(QWidget):
                 # Ensure masked strand color is correct
                 if strand.first_selected_strand:
                     button.set_color(strand.first_selected_strand.color)
+                # Add context menu for masked strands
+                button.setContextMenuPolicy(Qt.CustomContextMenu)
+                button.customContextMenuRequested.connect(
+                    lambda pos, idx=i: self.show_masked_layer_context_menu(idx, pos)
+                )
             
             self.scroll_layout.insertWidget(0, button)
             self.layer_buttons.append(button)

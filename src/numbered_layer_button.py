@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
+import logging
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
     color_changed = pyqtSignal(int, QColor)
-    attachable_changed = pyqtSignal(int, bool)  # Add this line
+    attachable_changed = pyqtSignal(int, bool)
 
     def __init__(self, text, count, color=QColor('purple'), parent=None):
         """
@@ -22,8 +23,7 @@ class NumberedLayerButton(QPushButton):
         self.count = count
         self.setFixedSize(100, 30)  # Set fixed size for the button
         self.setCheckable(True)  # Make the button checkable (can be toggled)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_context_menu)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)  # Enable context menu
         self.color = color
         self.border_color = None
         self.masked_mode = False
@@ -31,6 +31,7 @@ class NumberedLayerButton(QPushButton):
         self.selectable = False
         self.attachable = False  # Property to indicate if strand can be attached
         self.set_color(color)
+        self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
 
     def setText(self, text):
         """
@@ -204,11 +205,37 @@ class NumberedLayerButton(QPushButton):
         Args:
             pos (QPoint): The position where the menu should be shown.
         """
-        context_menu = QMenu(self)
-        change_color_action = QAction("Change Color", self)
-        change_color_action.triggered.connect(self.change_color)
-        context_menu.addAction(change_color_action)
-        context_menu.exec_(self.mapToGlobal(pos))
+        # Check if this is a masked layer (has format "set1_num1_set2_num2")
+        parts = self.text().split('_')
+        is_masked_layer = len(parts) == 4
+        
+        if is_masked_layer:
+            # For masked layers, let the layer panel handle the context menu
+            # Find the layer panel by traversing up the widget hierarchy
+            parent = self.parent()
+            while parent and not hasattr(parent, 'show_masked_layer_context_menu'):
+                parent = parent.parent()
+                
+            if parent and hasattr(parent, 'show_masked_layer_context_menu'):
+                layer_panel = parent
+                try:
+                    index = layer_panel.layer_buttons.index(self)
+                    # Set the context menu policy and connect the signal
+                    self.setContextMenuPolicy(Qt.CustomContextMenu)
+                    self.customContextMenuRequested.connect(
+                        lambda pos, idx=index: layer_panel.show_masked_layer_context_menu(idx, pos)
+                    )
+                    # Show the context menu
+                    layer_panel.show_masked_layer_context_menu(index, self.mapToGlobal(pos))
+                except ValueError:
+                    logging.warning("Button not found in layer_buttons list")
+        else:
+            # For regular layers, show color change option
+            context_menu = QMenu(self)
+            change_color_action = QAction("Change Color", self)
+            change_color_action.triggered.connect(self.change_color)
+            context_menu.addAction(change_color_action)
+            context_menu.exec_(self.mapToGlobal(pos))
 
     def change_color(self):
         """Open a color dialog to change the button's color."""
@@ -251,4 +278,6 @@ class NumberedLayerButton(QPushButton):
 
     def restore_original_style(self):
         """Restore the button's original style."""
-        self.update_style()
+        self.masked_mode = False  # Reset masked mode flag
+        self.update_style()  # This will use the original color
+        self.update()  # Force a visual update

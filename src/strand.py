@@ -1069,6 +1069,7 @@ class MaskedStrand(Strand):
         self._attached_strands = []
         self._has_circles = [False, False]
         self.is_selected = False
+        self.custom_mask_path = None  # Add this line for custom mask support
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
@@ -1138,20 +1139,39 @@ class MaskedStrand(Strand):
         path.lineTo(self.end)
         return path
 
+    def set_custom_mask(self, mask_path):
+        """Set a custom mask path for this masked strand."""
+        self.custom_mask_path = mask_path
+        logging.info(f"Set custom mask for masked strand {self.layer_name}")
+
+    def reset_mask(self):
+        """Reset to the default intersection mask."""
+        self.custom_mask_path = None
+        logging.info(f"Reset mask for masked strand {self.layer_name}")
+
     def get_mask_path(self):
         """Get the path representing the masked area."""
+        if self.custom_mask_path is not None:
+            return self.custom_mask_path
+
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
 
-        # Use the stroked paths of the selected strands
-        path1 = self.first_selected_strand.get_stroked_path(
-            self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + 2
-        )
-        path2 = self.second_selected_strand.get_stroked_path(
-            self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + 2
-        )
+        # Get the stroked paths of both selected strands
+        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
 
+        # Return the intersection of the two paths
         return path1.intersected(path2)
+
+    def get_stroked_path_for_strand(self, strand):
+        """Helper method to get the stroked path for a strand."""
+        path = strand.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width + strand.stroke_width * 2 + 2)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(path)
 
     def draw(self, painter):
         """Draw the masked strand without control points or highlights."""
@@ -1161,29 +1181,42 @@ class MaskedStrand(Strand):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Create temporary image for masking
         temp_image = QImage(
-            painter.device().size(), QImage.Format_ARGB32_Premultiplied
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
         )
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw the strands without forcing their selected state
+        # Draw the strands
         if self.second_selected_strand:
             self.second_selected_strand.draw(temp_painter)
-
         if self.first_selected_strand:
             self.first_selected_strand.draw(temp_painter)
 
+        # Apply the mask
         mask_path = self.get_mask_path()
         inverse_path = QPainterPath()
         inverse_path.addRect(QRectF(temp_image.rect()))
         inverse_path = inverse_path.subtracted(mask_path)
 
+        # Clear the masked area
         temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
         temp_painter.setBrush(Qt.transparent)
         temp_painter.setPen(Qt.NoPen)
         temp_painter.drawPath(inverse_path)
+
+        # Draw highlight if selected
+        if self.is_selected:
+            highlight_pen = QPen(QColor('red'), self.stroke_width )
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            temp_painter.setPen(highlight_pen)
+            temp_painter.setBrush(Qt.NoBrush)
+            temp_painter.drawPath(mask_path)
 
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
@@ -1272,6 +1305,15 @@ class MaskedStrand(Strand):
         )
 
 
+    def update_masked_color(self, set_number, color):
+        """Update the color of the masked strand if it involves the given set."""
+        # Check if this masked strand involves the given set
+        strand_sets = set()
+        if self.first_selected_strand:
+            strand_sets.add(self.first_selected_strand.set_number)
+        if self.second_selected_strand:
+            strand_sets.add(self.second_selected_strand.set_number)
+        
 
 
 

@@ -59,27 +59,47 @@ class MaskMode(QObject):
         self.canvas.update()
 
     def create_masked_layer(self):
+        """Create a masked layer from the two selected strands."""
         if len(self.selected_strands) == 2:
             strand1, strand2 = self.selected_strands
             logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
+            
             if not self.mask_exists(strand1, strand2):
+                # Store original colors before any operations
+                strand1_color = strand1.color
+                strand2_color = strand2.color
+                logging.info(f"Storing original colors - Strand1: {strand1_color.name()}, Strand2: {strand2_color.name()}")
+                
+                # Create the masked layer
                 self.mask_created.emit(strand1, strand2)
+                
                 # Find the newly created masked strand
                 masked_strand = self.find_masked_strand(strand1, strand2)
                 if masked_strand:
-                    self.clear_selection()
-                    # Select the masked strand
-                    self.selected_strands.append(masked_strand)
-                    # Get the index of the masked strand and select it in the layer panel
-                    masked_strand_index = self.canvas.strands.index(masked_strand)
+                    # Move masked strand to top of drawing order
+                    if masked_strand in self.canvas.strands:
+                        self.canvas.strands.remove(masked_strand)
+                        self.canvas.strands.append(masked_strand)
+                        logging.info(f"Moved masked strand {masked_strand.layer_name} to top")
+                    
+                    # Ensure the second strand keeps its original color
+                    strand2.color = strand2_color
+                    logging.info(f"Restored color for {strand2.layer_name} to {strand2_color.name()}")
+                    
+                    # Clear selection and refresh
+                    self.canvas.clear_selection()
                     if self.canvas.layer_panel:
-                        self.canvas.layer_panel.refresh_layers()  # Use refresh_layers instead of refresh
-                        self.canvas.layer_panel.select_layer(masked_strand_index)  # Select the masked strand
-                    logging.info(f"Selected newly created masked strand: {masked_strand.layer_name}")
+                        self.canvas.layer_panel.refresh_layers()
+                        # Select the masked strand in the layer panel
+                        masked_strand_index = len(self.canvas.strands) - 1  # Now it's always the last one
+                        self.canvas.layer_panel.select_layer(masked_strand_index)
+                    
+                    # Update the canvas
+                    self.canvas.update()
+                    logging.info(f"Completed masked layer creation and moved to top")
             else:
                 logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
                 self.clear_selection()
-            self.canvas.update()
 
     def find_masked_strand(self, strand1, strand2):
         for strand in self.canvas.strands:

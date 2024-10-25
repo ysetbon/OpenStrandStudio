@@ -13,7 +13,10 @@ import math
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from translations import translations
-
+# Add this import
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from main_window import MainWindow  # This prevents circular imports
 class StrandDrawingCanvas(QWidget):
     # Define signals
     strand_created = pyqtSignal(object)   # Emitting the strand object
@@ -25,6 +28,8 @@ class StrandDrawingCanvas(QWidget):
     angle_adjust_completed = pyqtSignal()  # Add this line
     language_changed = pyqtSignal()  # Signal to emit when language changes
     masked_layer_created = pyqtSignal(object)
+    mask_edit_requested = pyqtSignal(int)  # Signal when mask editing is requested
+    mask_edit_exited = pyqtSignal()
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -33,6 +38,8 @@ class StrandDrawingCanvas(QWidget):
         self.initialize_properties()
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
+        # Add the signal if not already present
+        self.setFocusPolicy(Qt.StrongFocus)  # Add this to enable key events
         angle_adjust_completed = pyqtSignal()
         self.control_points_visible = False  # Initialize control points visibility
     
@@ -71,6 +78,18 @@ class StrandDrawingCanvas(QWidget):
 
         self.show_control_points = True  # Initialize control points visibility
         self.current_strand = None
+        self.mask_edit_mode = False
+        self.editing_masked_strand = None
+        self.mask_edit_path = None
+        self.eraser_size = 20  # Size of the eraser tool
+
+        # Add these new attributes for mask editing
+        self.mask_edit_mode = False
+        self.editing_masked_strand = None
+        self.mask_edit_path = None
+        self.erase_start_pos = None
+        self.current_erase_rect = None
+
 
 
     def add_strand(self, strand):
@@ -755,6 +774,30 @@ class StrandDrawingCanvas(QWidget):
             # Restore the painter state
             painter.restore()
 
+        # Draw mask editing interface
+        if self.mask_edit_mode and self.editing_masked_strand:
+            # Draw the current mask path with semi-transparency
+            painter.setBrush(QColor(255, 0, 0, 100))  # Semi-transparent red
+            painter.setPen(Qt.NoPen)
+            painter.drawPath(self.mask_edit_path)
+            
+            # Draw the current erase rectangle if it exists
+            if self.current_erase_rect:
+                painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
+                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                painter.drawRect(self.current_erase_rect)
+            
+            # Draw the eraser cursor
+            if hasattr(self, 'last_pos'):
+                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                painter.setBrush(Qt.NoBrush)
+                painter.drawEllipse(
+                    self.last_pos.x() - self.eraser_size/2,
+                    self.last_pos.y() - self.eraser_size/2,
+                    self.eraser_size,
+                    self.eraser_size
+                )
+
         logging.info(
             f"Paint event completed. Selected strand: "
             f"{self.selected_strand.layer_name if self.selected_strand else 'None'}"
@@ -1261,9 +1304,13 @@ class StrandDrawingCanvas(QWidget):
         self.update()  # Redraw the canvas to reflect changes
 
     def mousePressEvent(self, event):
-        pos = event.pos()
-
-        if self.current_mode == "rotate":
+        if self.mask_edit_mode and event.button() == Qt.LeftButton:
+            self.erase_start_pos = event.pos()
+            self.current_erase_rect = None
+            self.update()
+            event.accept()
+            return
+        elif self.current_mode == "rotate":
             self.rotate_mode.mousePressEvent(event)
         elif self.moving_group:
             self.move_start_pos = event.pos()
@@ -1299,7 +1346,18 @@ class StrandDrawingCanvas(QWidget):
 
 
     def mouseMoveEvent(self, event):
-        if self.moving_group and self.group_move_start_pos:
+        if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
+            # Update the current erase rectangle
+            self.current_erase_rect = QRectF(
+                min(self.erase_start_pos.x(), event.pos().x()),
+                min(self.erase_start_pos.y(), event.pos().y()),
+                abs(event.pos().x() - self.erase_start_pos.x()),
+                abs(event.pos().y() - self.erase_start_pos.y())
+            )
+            self.update()  # Force a redraw to show the rectangle
+            event.accept()
+            return
+        elif self.moving_group and self.group_move_start_pos:
             # Calculate total dx and dy from the initial movement start position
             total_dx = event.pos().x() - self.group_move_start_pos.x()
             total_dy = event.pos().y() - self.group_move_start_pos.y()
@@ -1311,9 +1369,26 @@ class StrandDrawingCanvas(QWidget):
             self.rotate_mode.mouseMoveEvent(event)
         elif self.current_mode:
             self.current_mode.mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if self.current_mode == "rotate":
+        if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
+            # Create a path from the rectangle
+            erase_path = QPainterPath()
+            erase_path.addRect(self.current_erase_rect)
+            
+            # Subtract the rectangle from the mask path
+            if self.mask_edit_path and self.editing_masked_strand:
+                self.mask_edit_path = self.mask_edit_path.subtracted(erase_path)
+                self.editing_masked_strand.set_custom_mask(self.mask_edit_path)
+            
+            # Clear the current rectangle
+            self.current_erase_rect = None
+            self.erase_start_pos = None
+            self.update()
+            event.accept()
+            return
+        elif self.current_mode == "rotate":
             self.rotate_mode.mouseReleaseEvent(event)
         elif self.moving_group:
             self.moving_group = False
@@ -2421,4 +2496,58 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             return True
         return False
+    
+        # Add these new methods
+    def enter_mask_edit_mode(self, strand_index):
+        """Enter mask editing mode for the specified masked strand."""
+        if 0 <= strand_index < len(self.strands):
+            strand = self.strands[strand_index]
+            if isinstance(strand, MaskedStrand):
+                self.mask_edit_mode = True
+                self.editing_masked_strand = strand
+                self.mask_edit_path = strand.get_mask_path()
+                self.setCursor(Qt.CrossCursor)
+                self.erase_start_pos = None
+                self.current_erase_rect = None
+                self.setFocus()  # Explicitly set focus when entering mask edit mode
+                logging.info(f"Entered mask edit mode for strand {strand_index}")
+                self.update()
+    def keyPressEvent(self, event):
+        """Handle key press events."""
+        if event.key() == Qt.Key_Escape and self.mask_edit_mode:
+            logging.info("ESC key pressed, exiting mask edit mode")
+            self.exit_mask_edit_mode()
+            event.accept()  # Accept the event to prevent it from propagating
+        else:
+            super().keyPressEvent(event)
+    def exit_mask_edit_mode(self):
+        """Exit mask editing mode."""
+        if self.mask_edit_mode:
+            self.mask_edit_mode = False
+            self.editing_masked_strand = None
+            self.mask_edit_path = None
+            self.erase_start_pos = None
+            self.current_erase_rect = None
+            self.setCursor(Qt.ArrowCursor)
+            logging.info("Exited mask edit mode")
+            
+            # Get the parent window directly through the stored reference
+            if hasattr(self, 'parent_window'):
+                self.parent_window.exit_mask_edit_mode()
+            
+            # Emit signal to notify layer panel
+            self.mask_edit_exited.emit()
+            
+            self.update()
+
+
+
+    def reset_mask(self, strand_index):
+        """Reset the mask to its original intersection."""
+        if 0 <= strand_index < len(self.strands):
+            strand = self.strands[strand_index]
+            if isinstance(strand, MaskedStrand):
+                strand.reset_mask()
+                logging.info(f"Reset mask for strand {strand_index}")
+                self.update()
 # End of StrandDrawingCanvas class

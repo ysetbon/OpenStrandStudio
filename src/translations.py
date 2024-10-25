@@ -143,6 +143,10 @@ translations = {
         'y_movement': 'Y Movement',
         'move_group': 'Move Group',
         'toggle_control_points': 'Toggle Control Points',
+        'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',  # Note: use \n not /n
+        'mask_edit_mode_exited': 'Mask edit mode exited',
+        'edit_mask': 'Edit Mask',
+        'reset_mask': 'Reset Mask'
     },
     'fr': {
         # MainWindow translations
@@ -285,21 +289,14 @@ translations = {
         'y_movement': 'Mouvement Y',
         'move_group': 'Déplacer le Groupe',
         'toggle_control_points': 'Points',  # Shorter than 'Basculer les Points de Contrôle'
+        'edit_mask': 'Éditer Masque',
+        'reset_mask': 'Réinit Masque',
+        'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',  # French version with newline
+        'mask_edit_mode_exited': 'Mode édition masque terminé'  # Already concise
     }
 }
 
-# Add these new keys to both 'en' and 'fr' dictionaries in translations.py
-translations['en'].update({
-    'x_movement': 'X Movement',
-    'y_movement': 'Y Movement',
-    'move_group': 'Move Group',
-})
-
-translations['fr'].update({
-    'x_movement': 'Mouvement X',
-    'y_movement': 'Mouvement Y',
-    'move_group': 'Déplacer le Groupe',
-})
+# Remove the update() calls since we've added the translations directly to the dictionaries
 
 
 

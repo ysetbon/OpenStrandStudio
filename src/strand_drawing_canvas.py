@@ -72,11 +72,6 @@ class StrandDrawingCanvas(QWidget):
         self.show_control_points = True  # Initialize control points visibility
         self.current_strand = None
 
-    def toggle_control_points(self):
-        """Toggle the visibility of control points."""
-        self.show_control_points = not self.show_control_points
-        logging.info(f"Control points visibility toggled: {self.show_control_points}")
-        self.update()  # Force a redraw of the canvas
 
     def add_strand(self, strand):
         """Add a strand to the canvas and set its canvas reference."""
@@ -712,8 +707,9 @@ class StrandDrawingCanvas(QWidget):
             temp_strand.canvas = self  # Set canvas reference for the temporary strand
             temp_strand.draw(painter)
 
-        # Draw the control points if they are not drawn within the Strand class
-        self.draw_control_points(painter)
+        # Only draw control points if they're enabled
+        if self.show_control_points:  # Simplified check
+            self.draw_control_points(painter)
 
         # Draw strand labels if enabled
         if self.should_draw_names:
@@ -765,6 +761,18 @@ class StrandDrawingCanvas(QWidget):
         )
 
         painter.end()
+
+    def toggle_control_points(self):
+        """Toggle the visibility of control points."""
+        self.show_control_points = not self.show_control_points
+        logging.info(f"Control points visibility toggled: {self.show_control_points}")
+        
+        # Make sure both implementations respect the toggle state
+        for strand in self.strands:
+            if hasattr(strand, 'show_control_points'):
+                strand.show_control_points = self.show_control_points
+                
+        self.update()  # Force a redraw of the canvas
 
 
 
@@ -1985,7 +1993,7 @@ class StrandDrawingCanvas(QWidget):
 
     def draw_control_points(self, painter):
         """
-        Draw control points for all strands.
+        Draw control points for all non-masked strands.
 
         Args:
             painter (QPainter): The painter used for drawing.
@@ -1995,19 +2003,25 @@ class StrandDrawingCanvas(QWidget):
         control_point_radius = 4  # Adjust as needed
 
         for strand in self.strands:
-            if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-                # Draw lines connecting control points
-                control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
-                painter.setPen(control_line_pen)
-                painter.drawLine(strand.start, strand.control_point1)
-                painter.drawLine(strand.end, strand.control_point2)
+            # Skip masked strands and strands without control points
+            if isinstance(strand, MaskedStrand) or not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
+                continue
+                
+            if strand.control_point1 is None or strand.control_point2 is None:
+                continue
 
-                # Draw control points
-                control_point_pen = QPen(QColor('green'), 2)
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-                painter.drawEllipse(strand.control_point1, control_point_radius, control_point_radius)
-                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+            # Draw lines connecting control points
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(strand.start, strand.control_point1)
+            painter.drawLine(strand.end, strand.control_point2)
+
+            # Draw control points
+            control_point_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_point_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(strand.control_point1, control_point_radius, control_point_radius)
+            painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
 
         painter.restore()
     def handle_strand_selection(self, pos):

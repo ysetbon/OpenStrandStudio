@@ -4,10 +4,11 @@ from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor
 from strand import Strand, AttachedStrand, MaskedStrand
 
-def serialize_point(point):
-    return {"x": point.x(), "y": point.y()}
+
 
 def deserialize_point(data):
+    if data is None:
+        return None
     return QPointF(data["x"], data["y"])
 
 def serialize_color(color):
@@ -22,6 +23,11 @@ def serialize_color(color):
 
 def deserialize_color(data):
     return QColor(data["r"], data["g"], data["b"], data["a"])
+
+def serialize_point(point):
+    if point is None:
+        return None
+    return {"x": point.x(), "y": point.y()}
 
 def serialize_strand(strand, index=None):
     data = {
@@ -38,12 +44,16 @@ def serialize_strand(strand, index=None):
         "set_number": strand.set_number,
         "is_first_strand": getattr(strand, 'is_first_strand', False),
         "is_start_side": getattr(strand, 'is_start_side', True),
-        # Save control points for all strand types that have them
-        "control_points": [
-            serialize_point(strand.control_point1),
-            serialize_point(strand.control_point2)
-        ] if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') else []
     }
+
+    # Safely serialize control points
+    control_points = []
+    if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+        point1 = serialize_point(strand.control_point1)
+        point2 = serialize_point(strand.control_point2)
+        if point1 is not None and point2 is not None:
+            control_points = [point1, point2]
+    data["control_points"] = control_points
 
     if isinstance(strand, AttachedStrand):
         data["parent_layer_name"] = strand.parent.layer_name if strand.parent else None
@@ -104,11 +114,15 @@ def deserialize_strand(data, parent_strand=None, first_strand=None, second_stran
     strand.is_start_side = is_start_side
 
     # Set control points for any strand type that has them
-    if len(data.get("control_points", [])) == 2:
-        control_points = [deserialize_point(point) for point in data["control_points"]]
-        if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-            strand.control_point1 = control_points[0]
-            strand.control_point2 = control_points[1]
+    if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+        control_points = data.get("control_points", [])
+        if len(control_points) == 2:
+            strand.control_point1 = deserialize_point(control_points[0])
+            strand.control_point2 = deserialize_point(control_points[1])
+        else:
+            # Initialize default control points if none were saved
+            strand.control_point1 = QPointF(strand.start)
+            strand.control_point2 = QPointF(strand.end)
 
     # Ensure the strand is updated with its shape and side line
     strand.update_shape()
@@ -343,4 +357,7 @@ def deserialize_groups(groups_data, strand_dict):
     
     logging.info("Completed deserialization of all groups.")
     return deserialized_groups
+
+
+
 

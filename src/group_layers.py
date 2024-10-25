@@ -598,10 +598,14 @@ class GroupPanel(QWidget):
             )
             logging.info(f"Added layer '{strand.layer_name}' to group widget for group '{group_name}'")
             
+            # Safely handle control points
             if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                
                 self.groups[group_name]['control_points'][strand.layer_name] = {
-                    'control_point1': QPointF(strand.control_point1),
-                    'control_point2': QPointF(strand.control_point2)
+                    'control_point1': cp1,
+                    'control_point2': cp2
                 }
                 logging.info(f"Control points set for layer '{strand.layer_name}' in group '{group_name}'")
 
@@ -818,20 +822,32 @@ class GroupMoveDialog(QDialog):
         self.setup_ui()
 
     def initialize_original_positions(self):
-        """Initialize original positions for all strands in the group"""
-        if self.canvas and self.group_name in self.canvas.groups:
-            group_data = self.canvas.groups[self.group_name]
-            for strand in group_data['strands']:
-                # Store exact coordinates for all points
-                strand.original_start = QPointF(strand.start)
-                strand.original_end = QPointF(strand.end)
-                strand.original_control_point1 = QPointF(strand.control_point1)
-                strand.original_control_point2 = QPointF(strand.control_point2)
-                logging.info(f"Stored original positions for strand {strand.layer_name}:")
-                logging.info(f"  Start: {strand.original_start}")
-                logging.info(f"  End: {strand.original_end}")
-                logging.info(f"  Control1: {strand.original_control_point1}")
-                logging.info(f"  Control2: {strand.original_control_point2}")
+        """Store the original positions of all strands in the group."""
+        group_data = self.canvas.groups.get(self.group_name)
+        if not group_data:
+            logging.warning(f"No group data found for {self.group_name}")
+            return
+
+        for strand in group_data['strands']:
+            # Store original positions
+            strand.original_start = QPointF(strand.start)
+            strand.original_end = QPointF(strand.end)
+            
+            # Safely store original control points
+            strand.original_control_point1 = (
+                QPointF(strand.control_point1) if isinstance(strand.control_point1, QPointF) 
+                else QPointF(strand.start)
+            )
+            strand.original_control_point2 = (
+                QPointF(strand.control_point2) if isinstance(strand.control_point2, QPointF) 
+                else QPointF(strand.end)
+            )
+
+            logging.debug(f"Stored original positions for strand {strand.layer_name}: "
+                        f"Start: {strand.original_start}, "
+                        f"End: {strand.original_end}, "
+                        f"CP1: {strand.original_control_point1}, "
+                        f"CP2: {strand.original_control_point2}")
 
     def setup_ui(self):
         _ = translations[self.language_code]
@@ -1026,6 +1042,8 @@ class GroupLayerManager:
         self.layer_panel = layer_panel
         self.canvas = canvas
         self.groups = {} 
+        if self.canvas:
+            self.canvas.masked_layer_created.connect(self.update_groups_with_new_strand)
         # Set language_code appropriately
         if self.canvas and hasattr(self.canvas, 'language_code'):
             self.language_code = self.canvas.language_code
@@ -1034,17 +1052,12 @@ class GroupLayerManager:
         else:
             self.language_code = 'en'  # Default to English
 
-        self.language_code = 'en'  # Or dynamically set based on user settings
-
         if self.language_code in translations:
             _ = translations[self.language_code]
         else:
             logging.error(f"Invalid language_code: {self.language_code}. Defaulting to 'en'.")
             _ = translations['en']
             self.language_code = 'en'
-
-        # Access the translations
-        _ = translations[self.language_code]
 
         logging.info(f"GroupLayerManager initialized with language_code: {self.language_code}")
 
@@ -1127,29 +1140,30 @@ class GroupLayerManager:
         """
         Checks all groups and deletes any that are invalidated by the addition of new_strand.
         """
-        new_strand_main_layer = self.extract_main_layer(new_strand.layer_name)
-        if not new_strand_main_layer:
-            logging.warning(f"Could not extract main layer from {new_strand.layer_name}")
-            return
-
-        # Collect groups to delete
         groups_to_delete = []
 
-        for group_name, group_data in self.canvas.groups.items():
-            group_main_strands = group_data.get('main_strands', set())
+        # Check if this is a masked strand
+        if isinstance(new_strand, MaskedStrand):
+            # For masked strands, get the original layer names being masked
+            original_layer_names = new_strand.layer_name.split('_')[:2]  # Gets ['1', '2'] from '1_2_2_2'
+            logging.info(f"Checking groups for masked strand with original layers: {original_layer_names}")
+            
+            # Find any groups containing any of the masked layers
+            for group_name, group_data in list(self.group_panel.groups.items()):
+                for layer in group_data['layers']:
+                    main_layer = self.extract_main_layer(layer)
+                    if main_layer in original_layer_names:
+                        logging.info(f"Group '{group_name}' will be deleted because it contains layer '{layer}' that was masked")
+                        groups_to_delete.append(group_name)
+                        break
 
-            if new_strand_main_layer in group_main_strands:
-                # If the new strand is not in the group, we need to delete the group
-                if new_strand.layer_name not in group_data['layers']:
-                    logging.info(f"Group '{group_name}' will be deleted because new strand '{new_strand.layer_name}' connected to its main strand is not in the group.")
-                    groups_to_delete.append(group_name)
-
-        # Delete the groups marked for deletion
+        # Delete the identified groups
         for group_name in groups_to_delete:
+            logging.info(f"Deleting group '{group_name}' due to masked strand creation")
             self.group_panel.delete_group(group_name)
             if self.canvas and group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
-                logging.info(f"Group '{group_name}' deleted from canvas.")
+                logging.info(f"Group '{group_name}' deleted from canvas groups")
 
     def extract_main_layer(self, layer_name):
         parts = layer_name.split('_')
@@ -1303,6 +1317,7 @@ class GroupLayerManager:
 
 
     # In GroupLayerManager
+    # In GroupLayerManager
     def create_group(self):
         """Create a new group with selected main strands and their control points."""
         # Access the current translation dictionary
@@ -1338,13 +1353,18 @@ class GroupLayerManager:
             main_layer = self.extract_main_layer(strand.layer_name)
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)  # Keep original strands for group panel
+                
+                # Safely handle control points
+                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                
                 # Create a deep copy of the strand data including control points
                 strand_data = {
                     'layer_name': strand.layer_name,
                     'start': QPointF(strand.start),
                     'end': QPointF(strand.end),
-                    'control_point1': QPointF(strand.control_point1),
-                    'control_point2': QPointF(strand.control_point2),
+                    'control_point1': cp1,
+                    'control_point2': cp2,
                     'width': strand.width,
                     'color': QColor(strand.color),
                     'stroke_color': QColor(strand.stroke_color),
@@ -1372,8 +1392,8 @@ class GroupLayerManager:
             'main_strands': selected_main_strands,
             'control_points': {
                 strand.layer_name: {
-                    'control_point1': QPointF(strand.control_point1),
-                    'control_point2': QPointF(strand.control_point2)
+                    'control_point1': QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1),
+                    'control_point2': QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
                 } for strand in selected_strands
             }
         }

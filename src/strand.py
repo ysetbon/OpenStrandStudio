@@ -510,7 +510,7 @@ class Strand:
             should_show_controls = (
                 hasattr(self, 'canvas') and 
                 self.canvas is not None and 
-                getattr(self.canvas, 'show_control_points', True)
+                self.canvas.show_control_points  # Simplified check
             )
             
             if should_show_controls:
@@ -951,13 +951,13 @@ class AttachedStrand(Strand):
         painter.restore()
 
         # Draw control points with safer checks
-        show_controls = (
+        should_show_controls = (
             hasattr(self, 'canvas') and 
             self.canvas is not None and 
-            getattr(self.canvas, 'show_control_points', True)
+            self.canvas.show_control_points  # Directly use canvas's show_control_points property
         )
         
-        if show_controls:
+        if should_show_controls:
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
             
@@ -1004,11 +1004,12 @@ class MaskedStrand(Strand):
     Represents a strand that is a result of masking two other strands, without control points.
     """
     def __init__(self, first_selected_strand, second_selected_strand, set_number=None):
+        # Initialize without control points
         self.first_selected_strand = first_selected_strand
         self.second_selected_strand = second_selected_strand
-        self._attached_strands = []  # Private attribute to store attached strands
-        self._has_circles = [False, False]  # Private attribute for has_circles
-        self.is_selected = False  # Indicates if the strand is selected
+        self._attached_strands = []
+        self._has_circles = [False, False]
+        self.is_selected = False
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
@@ -1021,11 +1022,15 @@ class MaskedStrand(Strand):
                 set_number=set_number if set_number is not None else int(f"{first_selected_strand.set_number}{second_selected_strand.set_number}"),
                 layer_name=f"{first_selected_strand.layer_name}_{second_selected_strand.layer_name}"
             )
+            # Override control points to None
+            self.control_point1 = None
+            self.control_point2 = None
         else:
-            # Temporary initialization
             super().__init__(QPointF(0, 0), QPointF(1, 1), 1)
             self.set_number = set_number
             self.layer_name = ""
+            self.control_point1 = None
+            self.control_point2 = None
 
     @property
     def attached_strands(self):
@@ -1090,23 +1095,21 @@ class MaskedStrand(Strand):
         return path1.intersected(path2)
 
     def draw(self, painter):
-        """Draw the masked strand with the first selected strand over the second."""
+        """Draw the masked strand without control points."""
         if not self.first_selected_strand and not self.second_selected_strand:
-            return  # Don't draw if both referenced strands have been deleted
+            return
 
-        # Highlight the masked area if it is selected
         if self.is_selected:
             highlight_pen = QPen(QColor('red'), 2)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
-            painter.drawPath(self.get_mask_path())  # Use the mask path
+            painter.drawPath(self.get_mask_path())
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Create a temporary image to perform masking
         temp_image = QImage(
             painter.device().size(), QImage.Format_ARGB32_Premultiplied
         )
@@ -1114,15 +1117,12 @@ class MaskedStrand(Strand):
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
-        # **Draw the second selected strand first**
         if self.second_selected_strand:
             self.second_selected_strand.draw(temp_painter)
 
-        # **Draw the first selected strand on top**
         if self.first_selected_strand:
             self.first_selected_strand.draw(temp_painter)
 
-        # Mask the intersection area
         mask_path = self.get_mask_path()
         inverse_path = QPainterPath()
         inverse_path.addRect(QRectF(temp_image.rect()))
@@ -1183,6 +1183,41 @@ class MaskedStrand(Strand):
             object.__setattr__(self, name, value)
         else:
             super().__setattr__(name, value)
+
+    def update_control_points_from_geometry(self):
+        """Override to do nothing since masked strands don't have control points."""
+        pass
+
+    def get_end_selection_path(self):
+        """Override to create a simpler selection path for masked strands."""
+        path = QPainterPath()
+        
+        # Create a rectangular selection area around the end point
+        outer_size = 120
+        half_outer_size = outer_size / 2
+        outer_rect = QRectF(
+            self.end.x() - half_outer_size,
+            self.end.y() - half_outer_size,
+            outer_size,
+            outer_size
+        )
+        path.addRect(outer_rect)
+        
+        return path
+
+    def point_at(self, t):
+        """Override to return point along straight line instead of bezier curve."""
+        return QPointF(
+            self.start.x() + t * (self.end.x() - self.start.x()),
+            self.start.y() + t * (self.end.y() - self.start.y())
+        )
+
+    def calculate_cubic_tangent(self, t):
+        """Override to return tangent of straight line."""
+        return QPointF(
+            self.end.x() - self.start.x(),
+            self.end.y() - self.start.y()
+        )
 
 
 

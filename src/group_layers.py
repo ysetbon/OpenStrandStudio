@@ -1345,6 +1345,17 @@ class GroupLayerManager:
         # Convert selected_main_strands to a set
         selected_main_strands = set(selected_main_strands)
 
+        # Create the group in canvas.groups first
+        if self.canvas:
+            self.canvas.groups[group_name] = {
+                'strands': [],
+                'layers': [],
+                'main_strands': selected_main_strands,
+                'control_points': {},
+                'data': []
+            }
+            logging.info(f"Initialized empty group '{group_name}' in canvas.groups")
+
         # Collect strands that match the selected main strands
         selected_strands = []
         layers_data = []
@@ -1377,26 +1388,39 @@ class GroupLayerManager:
                 }
                 layers_data.append(strand_data)
 
+                # Add to canvas groups
+                if self.canvas and group_name in self.canvas.groups:
+                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                    self.canvas.groups[group_name]['strands'].append(strand)
+                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                        'control_point1': cp1,
+                        'control_point2': cp2
+                    }
+
         if not selected_strands:
             logging.warning(f"No strands found for selected main strands: {selected_main_strands}")
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
             return
 
         # Create the group in the group panel with original strand objects
         self.group_panel.create_group(group_name, selected_strands)
 
-        # Initialize the group in canvas.groups with control points
-        self.canvas.groups[group_name] = {
-            'strands': selected_strands,
-            'layers': [strand.layer_name for strand in selected_strands],
-            'data': layers_data,
-            'main_strands': selected_main_strands,
-            'control_points': {
-                strand.layer_name: {
-                    'control_point1': QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1),
-                    'control_point2': QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
-                } for strand in selected_strands
-            }
-        }
+        # Update the group in canvas.groups with all data
+        if self.canvas and group_name in self.canvas.groups:
+            self.canvas.groups[group_name].update({
+                'strands': selected_strands,
+                'layers': [strand.layer_name for strand in selected_strands],
+                'data': layers_data,
+                'main_strands': selected_main_strands,
+                'control_points': {
+                    strand.layer_name: {
+                        'control_point1': QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1),
+                        'control_point2': QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
+                    } for strand in selected_strands
+                }
+            })
+            logging.info(f"Added group '{group_name}' to canvas.groups with {len(selected_strands)} strands")
 
         # Verify control points were saved
         for layer_name, control_points in self.canvas.groups[group_name]['control_points'].items():
@@ -1515,16 +1539,21 @@ class GroupLayerManager:
             logging.debug(f"Processing group '{group_name}'")
             
             group_data[group_name] = {
-                "layers": group_info["layers"],
-                "strands": [strand.layer_name for strand in group_info["strands"]],
-                "main_strands": list(group_info.get("main_strands", set())),
-                "control_points": group_info.get("control_points", {})
+                "layers": [strand.layer_name for strand in group_info.get('strands', [])],
+                "strands": [strand.layer_name for strand in group_info.get('strands', [])],
+                "main_strands": list(group_info.get('main_strands', set())),
+                "control_points": {}
             }
+            
+            # Add control points if they exist
+            if self.canvas and group_name in self.canvas.groups:
+                group_data[group_name]['control_points'] = self.canvas.groups[group_name].get('control_points', {})
             
             # Log the collected data for this group
             logging.debug(f"Collected data for group '{group_name}': {group_data[group_name]}")
         
         logging.info("Finished collecting group data.")
+        logging.info(f"Collected group data: {group_data}")
         return group_data
 
 

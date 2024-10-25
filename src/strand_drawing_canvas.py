@@ -898,7 +898,7 @@ class StrandDrawingCanvas(QWidget):
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
         painter.save()
-        highlight_pen = QPen(QColor('red'), strand.stroke_width + 2)
+        highlight_pen = QPen(QColor('transparent'), strand.stroke_width + 2)
         highlight_pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(highlight_pen)
         painter.setBrush(Qt.NoBrush)
@@ -2078,6 +2078,7 @@ class StrandDrawingCanvas(QWidget):
     def set_group_layer_manager(self, group_layer_manager):
         self.group_layer_manager = group_layer_manager
         logging.info(f"GroupLayerManager set on StrandDrawingCanvas: {self.group_layer_manager}")
+        logging.info("Group layer manager set for canvas")
 
     def move_group(self, group_name, total_dx, total_dy):
         logging.info(f"Moving group '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")

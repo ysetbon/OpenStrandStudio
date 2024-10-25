@@ -148,17 +148,17 @@ translations = {
         # MainWindow translations
         'play_video': 'Lire la vidéo',
         'main_window_title': 'OpenStrand Studio',
-        'attach_mode': 'Attacher',
-        'move_mode': 'Déplacer',
-        'rotate_mode': 'Tourner',
-        'toggle_grid': 'Afficher/Cacher la Grille',
-        'angle_adjust_mode': 'Ajuster l\'Angle/Longueur',
-        'select_mode': 'Sélectionner le Brin',
-        'mask_mode': 'Masquer',
-        'new_strand_mode': 'Nouveau Brin',
-        'save': 'Enregistrer',
-        'load': 'Charger',
-        'save_image': 'Enregistrer comme Image',
+        'attach_mode': 'Lier',  # Shorter than 'Attacher'
+        'move_mode': 'Bouger',  # Shorter than 'Déplacer'
+        'rotate_mode': 'Pivoter',  # Shorter than 'Tourner'
+        'toggle_grid': 'Grille',  # Shorter than 'Afficher/Cacher la Grille'
+        'angle_adjust_mode': 'Angle/Long',  # Shorter than 'Ajuster l'Angle/Longueur'
+        'select_mode': 'Choisir',  # Shorter than 'Sélectionner le Brin'
+        'mask_mode': 'Masque',  # Shorter than 'Masquer'
+        'new_strand_mode': 'Nouveau',  # Shorter than 'Nouveau Brin'
+        'save': 'Sauver',  # Already short
+        'load': 'Ouvrir',  # Shorter than 'Charger'
+        'save_image': 'Image',  # Shorter than 'Enregistrer comme Image'
         'settings': 'Paramètres',
         'light': 'Clair',
         'dark': 'Sombre',
@@ -168,10 +168,10 @@ translations = {
         'default': 'Par défaut',
         'light': 'Clair',
         'dark': 'Sombre',
-        'layer_state': 'État des Couches',
-        'layer_state_log_title': 'Journal de l\'État des Couches',
-        'layer_state_info_title': 'Informations sur l\'État des Couches',
-        'layer_state_info_tooltip': 'Infos État des Couches',
+        'layer_state': 'État',  # Shorter than 'État des Couches'
+        'layer_state_log_title': 'Journal',  # Shorter than 'Journal de l'État des Couches'
+        'layer_state_info_title': 'Infos',  # Shorter than 'Informations sur l'État des Couches'
+        'layer_state_info_tooltip': 'Infos',  # Shorter than 'Infos État des Couches'
         'close': 'Fermer',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -271,20 +271,20 @@ translations = {
         'select_main_strands': 'Sélectionner les principaux axes',
         'select_main_strands_to_include_in_the_group': 'Sélectionner les principaux axes à inclure dans le groupe:',
         # New translation keys for Layer State Log
-        'current_layer_state': 'État Actuel des Couches',
-        'order': 'Ordre',
-        'connections': 'Connexions',
-        'groups': 'Groupes',
-        'masked_layers': 'Couches Masquées',
-        'colors': 'Couleurs',
-        'positions': 'Positions',
-        'selected_strand': 'Brin Sélectionné',
-        'newest_strand': 'Dernier Brin',
-        'newest_layer': 'Dernière Couche',
+        'current_layer_state': 'État Actuel',  # Shorter than 'État Actuel des Couches'
+        'order': 'Ordre',  # Already short
+        'connections': 'Liens',  # Shorter than 'Connexions'
+        'groups': 'Groupes',  # Already short
+        'masked_layers': 'Masques',  # Shorter than 'Couches Masquées'
+        'colors': 'Couleurs',  # Already short
+        'positions': 'Positions',  # Already short
+        'selected_strand': 'Sélection',  # Shorter than 'Brin Sélectionné'
+        'newest_strand': 'Nouveau Brin',  # Already concise
+        'newest_layer': 'Nouvelle',  # Shorter than 'Dernière Couche'
         'x_movement': 'Mouvement X',
         'y_movement': 'Mouvement Y',
         'move_group': 'Déplacer le Groupe',
-        'toggle_control_points': 'Basculer les Points de Contrôle',
+        'toggle_control_points': 'Points',  # Shorter than 'Basculer les Points de Contrôle'
     }
 }
 
@@ -300,4 +300,6 @@ translations['fr'].update({
     'y_movement': 'Mouvement Y',
     'move_group': 'Déplacer le Groupe',
 })
+
+
 

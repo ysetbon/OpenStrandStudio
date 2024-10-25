@@ -451,14 +451,16 @@ class Strand:
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         stroke_path = stroke_stroker.createStroke(path)
-        # Highlight the strand if it is selected
-        if self.is_selected:
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
             highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(stroke_path)
+
         # Create a stroker for the fill path with squared ends
         fill_stroker = QPainterPathStroker()
         fill_stroker.setWidth(self.width)
@@ -893,7 +895,8 @@ class AttachedStrand(Strand):
         stroke_path = stroke_stroker.createStroke(path)
 
         # Highlight the strand if it is selected or if it's connected to a selected strand
-        if self.is_selected or (self.start_attached and self.parent.is_selected):
+        # But not if it's part of a masked strand
+        if (self.is_selected or (self.start_attached and self.parent.is_selected)) and not isinstance(self.parent, MaskedStrand):
             highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
@@ -941,20 +944,11 @@ class AttachedStrand(Strand):
 
         painter.restore()
 
-        # Draw the selection path for debugging (optional)
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        debug_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
-        painter.setPen(debug_pen)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_selection_path())
-        painter.restore()
-
-        # Draw control points with safer checks
+        # Draw control points if needed
         should_show_controls = (
             hasattr(self, 'canvas') and 
             self.canvas is not None and 
-            self.canvas.show_control_points  # Directly use canvas's show_control_points property
+            self.canvas.show_control_points
         )
         
         if should_show_controls:
@@ -1095,17 +1089,9 @@ class MaskedStrand(Strand):
         return path1.intersected(path2)
 
     def draw(self, painter):
-        """Draw the masked strand without control points."""
+        """Draw the masked strand without control points or highlights."""
         if not self.first_selected_strand and not self.second_selected_strand:
             return
-
-        if self.is_selected:
-            highlight_pen = QPen(QColor('red'), 2)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(self.get_mask_path())
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
@@ -1117,6 +1103,7 @@ class MaskedStrand(Strand):
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
 
+        # Draw the strands without forcing their selected state
         if self.second_selected_strand:
             self.second_selected_strand.draw(temp_painter)
 

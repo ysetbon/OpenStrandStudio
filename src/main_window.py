@@ -1005,7 +1005,6 @@ class MainWindow(QMainWindow):
         # Retrieve the current state from the LayerStateManager
         order = self.layer_state_manager.getOrder()
         connections = self.layer_state_manager.getConnections()
-        groups = self.layer_state_manager.getGroups()
         masked_layers = self.layer_state_manager.getMaskedLayers()
         colors = self.layer_state_manager.getColors()
         positions = self.layer_state_manager.getPositions()
@@ -1022,9 +1021,6 @@ class MainWindow(QMainWindow):
 
 {_['connections']}:
 {connections}
-
-{_['groups']}:
-{groups}
 
 {_['masked_layers']}:
 {masked_layers}

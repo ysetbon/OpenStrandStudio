@@ -283,6 +283,10 @@ class MoveMode:
         Returns:
             bool: True if a control point was moved, False otherwise.
         """
+        # Skip control point checks for MaskedStrands
+        if isinstance(strand, MaskedStrand):
+            return False
+
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
 
@@ -309,16 +313,20 @@ class MoveMode:
         # Get selection areas
         start_area = self.get_start_area(strand)
         end_area = self.get_end_area(strand)
-        control_point1_rect = self.get_control_point_rectangle(strand, 1)
-        control_point2_rect = self.get_control_point_rectangle(strand, 2)
 
-        if control_point1_rect.contains(pos):
-            self.start_movement(strand, 'control_point1', control_point1_rect)
-            return True
-        elif control_point2_rect.contains(pos):
-            self.start_movement(strand, 'control_point2', control_point2_rect)
-            return True
-        elif start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
+        # Only check control points for non-MaskedStrands
+        if not isinstance(strand, MaskedStrand):
+            control_point1_rect = self.get_control_point_rectangle(strand, 1)
+            control_point2_rect = self.get_control_point_rectangle(strand, 2)
+
+            if control_point1_rect.contains(pos):
+                self.start_movement(strand, 'control_point1', control_point1_rect)
+                return True
+            elif control_point2_rect.contains(pos):
+                self.start_movement(strand, 'control_point2', control_point2_rect)
+                return True
+
+        if start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_area)
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
@@ -696,6 +704,7 @@ class MoveMode:
         print(f"Temp selected strand: {self.temp_selected_strand}")
         print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
         print(f"Strand to highlight: {strand_to_highlight}")
+
 
 
 

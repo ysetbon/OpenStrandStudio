@@ -14,7 +14,6 @@ class LayerStateManager(QObject):
         self.layer_state = {
             'order': [],
             'connections': {},
-            'groups': {},
             'masked_layers': [],
             'colors': {},
             'positions': {},
@@ -125,42 +124,24 @@ class LayerStateManager(QObject):
             return
 
         try:
-            # Use a dictionary to ensure unique layer names, then convert back to a list
-            unique_layers = list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands))
-
-            # Use a set to ensure unique masked layers
-            masked_layers = list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand)))
-
             self.layer_state = {
-                'order': unique_layers,
+                'order': list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands)),
                 'connections': self.get_layer_connections(self.canvas.strands),
-                'groups': self.get_group_information(),
-                'masked_layers': masked_layers,
+                'masked_layers': list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand))),
                 'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
-                'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) for strand in self.canvas.strands},
+                'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) 
+                            for strand in self.canvas.strands},
                 'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
                 'newest_strand': self.canvas.newest_strand.layer_name if self.canvas.newest_strand else None,
-                'newest_layer': unique_layers[-1] if unique_layers else None
+                'newest_layer': list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands))[-1] if self.canvas.strands else None
             }
-            print(f"LayerStateManager: Current state saved: {self.layer_state}")
-            logging.info(f"Current state saved: {self.layer_state}")
+            
+            print("LayerStateManager: Current state saved")
+            logging.info("Current state saved")
             self.log_layer_state()
         except Exception as e:
             print(f"LayerStateManager: Error saving current state: {str(e)}")
             logging.error(f"Error saving current state: {str(e)}")
-
-    def get_group_information(self):
-        """Retrieve group information from the canvas."""
-        if not hasattr(self.canvas, 'groups'):
-            return {}
-
-        group_info = {}
-        for group_name, group_data in self.canvas.groups.items():
-            group_info[group_name] = {
-                'layers': group_data.get('layers', []),
-                'main_strands': group_data.get('main_strands', [])
-            }
-        return group_info
 
     def log_layer_state(self):
         """Write the current layer state to a text file and update current_state."""
@@ -178,14 +159,8 @@ class LayerStateManager(QObject):
                         for item in value:
                             f.write(f"  - {item}\n")
                     elif isinstance(value, dict):
-                        if key == 'groups':
-                            for group_name, group_info in value.items():
-                                f.write(f"  {group_name}:\n")
-                                f.write(f"    Layers: {group_info['layers']}\n")
-                                f.write(f"    Main Strands: {group_info.get('main_strands', [])}\n")
-                        else:
-                            for k, v in value.items():
-                                f.write(f"  {k}: {v}\n")
+                        for k, v in value.items():
+                            f.write(f"  {k}: {v}\n")
                     else:
                         f.write(f"  {value}\n")
                     f.write("\n")
@@ -251,8 +226,10 @@ class LayerStateManager(QObject):
         # Clear existing strands
         self.canvas.clear_strands()
 
-        # Recreate strands
+        # Create a dictionary to store strands by layer name
         strand_dict = {}
+
+        # First pass: Create all basic strands
         for layer_name in state_data['order']:
             color_name = state_data['colors'][layer_name]
             color = QColor(color_name)
@@ -260,76 +237,56 @@ class LayerStateManager(QObject):
             start = QPointF(positions[0], positions[1])
             end = QPointF(positions[2], positions[3])
 
-            # Create the strand
             strand = Strand(start, end, self.canvas.strand_width, color, self.canvas.stroke_color, self.canvas.stroke_width)
             strand.layer_name = layer_name
-
-            # Assign set_number (extract from layer_name)
             set_number = int(layer_name.split('_')[0])
             strand.set_number = set_number
 
             self.canvas.strands.append(strand)
             strand_dict[layer_name] = strand
+            logging.info(f"Created strand: {layer_name}")
 
-        # Recreate connections (attached strands)
+        # Second pass: Create attached strands and connections
         for layer_name, connected_layers in state_data['connections'].items():
             strand = strand_dict.get(layer_name)
             if strand:
                 for connected_layer_name in connected_layers:
-                    attached_strand = strand_dict.get(connected_layer_name)
-                    if attached_strand:
-                        # Create an AttachedStrand
-                        attached = AttachedStrand(attached_strand.start, attached_strand.end, strand)
-                        attached.layer_name = attached_strand.layer_name
+                    connected_strand = strand_dict.get(connected_layer_name)
+                    if connected_strand:
+                        attached = AttachedStrand(connected_strand.start, connected_strand.end, strand)
+                        attached.layer_name = connected_strand.layer_name
                         attached.set_number = strand.set_number
-                        attached.set_color(attached_strand.color)
+                        attached.set_color(connected_strand.color)
                         attached.parent = strand
-
+                        
                         strand.attached_strands.append(attached)
                         self.canvas.strands.append(attached)
                         strand_dict[attached.layer_name] = attached
+                        logging.info(f"Created attached strand: {attached.layer_name}")
 
-        # Recreate masked layers
+        # Third pass: Create masked layers
         for masked_layer_name in state_data['masked_layers']:
-            # Assuming masked layers are stored with their layer names
-            masked_strand = MaskedStrand(None, None)  # Will set the strands below
-            masked_strand.layer_name = masked_layer_name
-            # Retrieve the original strands based on their layer names
-            # Assuming the masked layer name format is 'layer1_layer2_masked'
             original_layer_names = masked_layer_name.replace('_masked', '').split('_')
             if len(original_layer_names) >= 2:
                 first_strand = strand_dict.get(original_layer_names[0])
                 second_strand = strand_dict.get(original_layer_names[1])
                 if first_strand and second_strand:
-                    masked_strand.first_selected_strand = first_strand
-                    masked_strand.second_selected_strand = second_strand
-                    masked_strand.update_path()  # Update the path based on new strands
-
+                    masked_strand = MaskedStrand(first_strand, second_strand)
+                    masked_strand.layer_name = masked_layer_name
                     self.canvas.strands.append(masked_strand)
                     strand_dict[masked_layer_name] = masked_strand
-                    # Update group information if necessary
-                    # ...
+                    logging.info(f"Created masked strand: {masked_layer_name}")
 
-        # Set groups
-        if hasattr(self.canvas, 'groups'):
-            self.canvas.groups = {}
-            for group_name, group_info in state_data['groups'].items():
-                group_layers = group_info.get('layers', [])
-                main_strands = group_info.get('main_strands', [])
-                self.canvas.groups[group_name] = {
-                    'layers': group_layers,
-                    'main_strands': main_strands,
-                    'strands': [strand_dict[layer_name] for layer_name in group_layers if layer_name in strand_dict]
-                }
-
-        # Update the canvas and layer panel
+        # Update UI
         if self.layer_panel:
             self.layer_panel.rebuild_layer_buttons()
             self.layer_panel.refresh()
 
         self.canvas.update()
-        print("LayerStateManager: State applied successfully")
-        logging.info("Loaded state applied to canvas")
+        
+        # Save the current state after loading
+        self.save_current_state()
+        logging.info("Completed applying loaded state")
 
     def save_state_to_json(self, file_path):
         """Save the current state to a JSON file."""
@@ -393,28 +350,6 @@ class LayerStateManager(QObject):
         logging.info(f"Differences found: {differences}")
         return differences
 
-    def compare_groups(self, initial_groups, current_groups):
-        group_changes = []
-        all_group_names = set(initial_groups.keys()).union(set(current_groups.keys()))
-
-        for group_name in all_group_names:
-            if group_name not in initial_groups:
-                group_changes.append(f"New group created: {group_name}")
-            elif group_name not in current_groups:
-                group_changes.append(f"Group deleted: {group_name}")
-            else:
-                initial_layers = set(initial_groups[group_name]['layers'])
-                current_layers = set(current_groups[group_name]['layers'])
-                if initial_layers != current_layers:
-                    added = current_layers - initial_layers
-                    removed = initial_layers - current_layers
-                    if added:
-                        group_changes.append(f"Layers added to {group_name}: {', '.join(added)}")
-                    if removed:
-                        group_changes.append(f"Layers removed from {group_name}: {', '.join(removed)}")
-
-        return group_changes
-
     def save_initial_state(self):
         """Save the initial state when loading a JSON file."""
         print("LayerStateManager: Saving initial state")
@@ -428,10 +363,6 @@ class LayerStateManager(QObject):
     def getConnections(self):
         """Get the current connections between layers."""
         return self.layer_state.get('connections', {})
-
-    def getGroups(self):
-        """Get the current group information."""
-        return self.layer_state.get('groups', {})
 
     def getMaskedLayers(self):
         """Get the current masked layers."""

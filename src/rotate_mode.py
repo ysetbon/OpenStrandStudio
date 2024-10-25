@@ -69,6 +69,8 @@ class RotateMode:
         if self.is_rotating and self.rotating_point:
             new_pos = event.pos()
             self.target_pos = self.calculate_new_position(new_pos)
+            
+            # Start the timer if it's not already running
             if not self.move_timer.isActive():
                 self.move_timer.start(16)  # ~60 FPS
 
@@ -98,18 +100,30 @@ class RotateMode:
             self.move_timer.stop()
             return
 
-        # Calculate the new position
-        new_pos = self.calculate_new_position(self.target_pos)
+        # Calculate the current position to target vector
+        current_to_target = self.target_pos - self.rotating_point
+        distance = math.sqrt(current_to_target.x() ** 2 + current_to_target.y() ** 2)
+        
+        # If we're close enough to the target, snap to it
+        if distance < 1.0:
+            new_pos = self.target_pos
+            self.move_timer.stop()
+        else:
+            # Calculate interpolation factor (adjust for smoother/faster movement)
+            factor = 0.3  # Increase for faster movement, decrease for smoother movement
+            
+            # Calculate the new position
+            new_pos = self.calculate_new_position(QPointF(
+                self.rotating_point.x() + current_to_target.x() * factor,
+                self.rotating_point.y() + current_to_target.y() * factor
+            ))
 
         if new_pos != self.rotating_point:
             # Update the strand position and cursor
             self.update_strand_position(new_pos)
             self.update_cursor_position(new_pos)
             self.rotating_point = new_pos
-
-        if new_pos == self.target_pos:
-            # If we've reached the target, stop the timer
-            self.move_timer.stop()
+            self.canvas.update()
 
     def handle_strand_rotation(self, pos):
         """
@@ -134,6 +148,10 @@ class RotateMode:
         Returns:
             bool: True if the strand was rotated, False otherwise.
         """
+        # Skip if strand is masked
+        if isinstance(strand, MaskedStrand):
+            return False
+
         start_rect = self.get_end_rectangle(strand, 0)
         end_rect = self.get_end_rectangle(strand, 1)
 
@@ -217,11 +235,17 @@ class RotateMode:
         Returns:
             QPointF: The new position for the rotating point.
         """
+        # Calculate vector from pivot to target
         dx = target_pos.x() - self.pivot_point.x()
         dy = target_pos.y() - self.pivot_point.y()
+        
+        # Calculate the angle
         angle = math.atan2(dy, dx)
+        
+        # Use the original length to maintain strand size
         new_x = self.pivot_point.x() + self.original_length * math.cos(angle)
         new_y = self.pivot_point.y() + self.original_length * math.sin(angle)
+        
         return QPointF(new_x, new_y)
 
     def update_strand_position(self, new_pos):
@@ -234,28 +258,95 @@ class RotateMode:
         if not self.affected_strand:
             return
 
-        # Calculate the rotation angle
-        old_vector = self.rotating_point - self.pivot_point
-        new_vector = new_pos - self.pivot_point
-        rotation_angle = math.atan2(new_vector.y(), new_vector.x()) - math.atan2(old_vector.y(), old_vector.x())
+        # Store original positions
+        old_start = QPointF(self.affected_strand.start)
+        old_end = QPointF(self.affected_strand.end)
 
         if self.rotating_side == 0:
-            # Rotating the start point
+            # Rotating the start point, end point is fixed
             self.affected_strand.start = new_pos
-            # Rotate control points
-            self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
-            self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
+            # End point remains fixed (it's the pivot)
+            self.pivot_point = self.affected_strand.end
+            
+            # Update attached strands at start point
+            self.update_attached_strands(old_start, new_pos)
+            
         else:
-            # Rotating the end point
+            # Rotating the end point, start point is fixed
             self.affected_strand.end = new_pos
-            # Rotate control points
-            self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
-            self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
+            # Start point remains fixed (it's the pivot)
+            self.pivot_point = self.affected_strand.start
+            
+            # Update attached strands at end point
+            self.update_attached_strands(old_end, new_pos)
+
+        # Calculate the rotation angle after updating positions
+        old_vector = old_start - old_end if self.rotating_side == 0 else old_end - old_start
+        new_vector = self.affected_strand.start - self.affected_strand.end if self.rotating_side == 0 else self.affected_strand.end - self.affected_strand.start
+        rotation_angle = math.atan2(new_vector.y(), new_vector.x()) - math.atan2(old_vector.y(), old_vector.x())
+
+        # Update control points based on the rotation
+        self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
+        self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
 
         self.affected_strand.update_shape()
         self.affected_strand.update_side_line()
         self.selected_rectangle.moveCenter(new_pos)
         self.canvas.update()
+
+    def update_control_points_proportionally(self, old_start, old_end, new_start, new_end):
+        """
+        Update control points maintaining their relative positions along the strand.
+        
+        Args:
+            old_start (QPointF): Original start point
+            old_end (QPointF): Original end point
+            new_start (QPointF): New start point
+            new_end (QPointF): New end point
+        """
+        # Calculate the relative positions of control points along the original strand
+        old_length = math.sqrt((old_end.x() - old_start.x())**2 + (old_end.y() - old_start.y())**2)
+        
+        # Calculate relative distances of control points from start/end
+        cp1_ratio = self.get_point_ratio(old_start, old_end, self.affected_strand.control_point1)
+        cp2_ratio = self.get_point_ratio(old_end, old_start, self.affected_strand.control_point2)
+        
+        # Apply the same ratios to the new strand position
+        self.affected_strand.control_point1 = self.interpolate_point(new_start, new_end, cp1_ratio)
+        self.affected_strand.control_point2 = self.interpolate_point(new_end, new_start, cp2_ratio)
+
+    def get_point_ratio(self, start, end, point):
+        """
+        Calculate the relative position of a point along a line.
+        
+        Args:
+            start (QPointF): Start point of the line
+            end (QPointF): End point of the line
+            point (QPointF): Point to calculate ratio for
+            
+        Returns:
+            float: Ratio of point position along the line (0-1)
+        """
+        line_length = math.sqrt((end.x() - start.x())**2 + (end.y() - start.y())**2)
+        point_dist = math.sqrt((point.x() - start.x())**2 + (point.y() - start.y())**2)
+        return point_dist / line_length if line_length > 0 else 0
+
+    def interpolate_point(self, start, end, ratio):
+        """
+        Get a point along a line at a given ratio.
+        
+        Args:
+            start (QPointF): Start point of the line
+            end (QPointF): End point of the line
+            ratio (float): Position ratio along the line (0-1)
+            
+        Returns:
+            QPointF: Interpolated point
+        """
+        return QPointF(
+            start.x() + (end.x() - start.x()) * ratio,
+            start.y() + (end.y() - start.y()) * ratio
+        )
 
     def rotate_control_point(self, control_point, angle):
         """
@@ -279,6 +370,34 @@ class RotateMode:
         control_point.setX(rotated.x())
         control_point.setY(rotated.y())
 
+    def update_attached_strands(self, old_pos, new_pos):
+        """
+        Update the positions of attached strands when the main strand is rotated.
+
+        Args:
+            old_pos (QPointF): The previous position of the connection point
+            new_pos (QPointF): The new position of the connection point
+        """
+        if not hasattr(self.affected_strand, 'attached_strands'):
+            return
+
+        for attached_strand in self.affected_strand.attached_strands:
+            if isinstance(attached_strand, AttachedStrand):
+                # Update start point if it matches the old position
+                if attached_strand.start == old_pos:
+                    # Calculate the movement vector
+                    delta = new_pos - old_pos
+                    
+                    # Move all points of the attached strand
+                    attached_strand.start = new_pos
+                    attached_strand.end += delta
+                    attached_strand.control_point1 += delta
+                    attached_strand.control_point2 += delta
+                    
+                    # Update the shape of the attached strand
+                    attached_strand.update_shape()
+                    attached_strand.update_side_line()
+
     def cleanup_deleted_strands(self):
         """Remove deleted strands and update references after strand deletion."""
         # Remove deleted strands from the canvas
@@ -294,3 +413,8 @@ class RotateMode:
         
         # Update the canvas
         self.canvas.update()
+
+
+
+
+

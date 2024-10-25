@@ -281,11 +281,16 @@ class AngleAdjustMode:
         """Update attached strands when the active strand is adjusted."""
         for attached_strand in self.active_strand.attached_strands:
             if attached_strand.start == old_pos:
+                # Store the original control points relative to the start point
+                cp1_vector = attached_strand.control_point1 - old_pos
+                cp2_vector = attached_strand.control_point2 - old_pos
+                
                 # Update the start point of the attached strand
                 attached_strand.start = new_pos
-
-                # Adjust the attached strand to keep its end point the same
-                self.adjust_attached_strand(attached_strand)
+                
+                # Restore control points relative to the new start position
+                attached_strand.control_point1 = new_pos + cp1_vector
+                attached_strand.control_point2 = new_pos + cp2_vector
 
                 attached_strand.update_shape()
                 attached_strand.update_side_line()
@@ -310,11 +315,16 @@ class AngleAdjustMode:
                 # the start point of the attached strand remains the same
                 pass
             elif attached_strand.start == strand.start:
-                # If the attached strand's start point is the same as the adjusted strand's start
+                # Store the original control points relative to the start point
+                cp1_vector = attached_strand.control_point1 - attached_strand.start
+                cp2_vector = attached_strand.control_point2 - attached_strand.start
+                
+                # Update the start point
                 attached_strand.start = strand.start
-
-                # Adjust the attached strand to keep its end point the same
-                self.adjust_attached_strand(attached_strand)
+                
+                # Restore control points relative to the new start position
+                attached_strand.control_point1 = attached_strand.start + cp1_vector
+                attached_strand.control_point2 = attached_strand.start + cp2_vector
 
                 attached_strand.update_shape()
                 attached_strand.update_side_line()
@@ -328,18 +338,32 @@ class AngleAdjustMode:
             return
 
         start = self.active_strand.start
-        # Calculate the current angle between start and end
+        # Calculate the current angle (including any rotations that have been applied)
         current_angle = self.calculate_angle(start, self.active_strand.end)
 
-        # Update the end point based on the new length
+        # Store old end position before updating
+        old_end = self.active_strand.end
+
+        # Update the end point based on the current angle and new length
         dx = new_length * math.cos(math.radians(current_angle))
         dy = new_length * math.sin(math.radians(current_angle))
         new_end = start + QPointF(dx, dy)
-        old_end = self.active_strand.end
         self.active_strand.end = new_end
 
-        # Adjust the control points based on the new length
+        # Ensure initial control point vectors are set if they're None
+        if self.initial_cp1_vector is None:
+            self.initial_cp1_vector = self.active_strand.control_point1 - start
+        if self.initial_cp2_vector is None:
+            self.initial_cp2_vector = self.active_strand.control_point2 - start
+
+        # Calculate the rotation angle relative to the initial angle
+        rotation_angle = current_angle - self.initial_angle
+
+        # First scale the control points
         self.update_control_points_for_length_change(new_length)
+
+        # Then rotate them to match the current angle
+        self.rotate_control_points_to_new_angle(current_angle)
 
         self.active_strand.update_shape()
         self.active_strand.update_side_line()
@@ -349,16 +373,19 @@ class AngleAdjustMode:
 
     def update_control_points_for_length_change(self, new_length):
         """Adjust control points when the length is changed."""
+        if not self.active_strand or not self.initial_length:
+            return
+
         # Calculate the scaling factor based on the original length
         length_ratio = new_length / self.initial_length
 
         start = self.active_strand.start
 
-        # Use the initial control point vectors for consistent scaling
+        # Scale the initial control point vectors
         cp1_new_vector = self.initial_cp1_vector * length_ratio
         cp2_new_vector = self.initial_cp2_vector * length_ratio
 
-        # Update control points
+        # Update control points relative to start point
         self.active_strand.control_point1 = start + cp1_new_vector
         self.active_strand.control_point2 = start + cp2_new_vector
 
@@ -487,6 +514,9 @@ class AngleAdjustMode:
 
         # Update control points accordingly
         strand.update_control_points_from_geometry()
+
+
+
 
 
 

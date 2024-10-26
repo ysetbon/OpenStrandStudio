@@ -218,3 +218,20 @@ These updates enhance the visual experience when changing themes and ensure bett
 This version represents a significant leap forward in OpenStrand Studio's capabilities, particularly with the implementation of Bezier curves. Users will notice immediately improved control and smoother appearance of all strands, making the design process more intuitive and professional.
 
 ------
+
+## Version 1.071 (Released: 27/10/2024)
+
+### New Features:
+
+1. **Enhanced Mask Creation:**
+   - Improved visual feedback during mask creation
+   - First strand selection is now highlighted in red for better clarity
+   - Right-click on masked layers to edit or reset the mask intersection
+
+2. **Improved Attached Strand Visualization:**
+   - Better implementation of attached strand circles
+   - Half-circles are now properly masked when intersecting with other strands
+
+These updates enhance the masking workflow and improve the visual quality of attached strands, making the design process more intuitive and visually accurate.
+
+------

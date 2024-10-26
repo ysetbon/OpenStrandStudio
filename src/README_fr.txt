@@ -136,7 +136,7 @@ Fonctionnalités Corrigées :
 
 ## Version 1.061 (Sortie : 23/09/2024)
 
-### Nouvelles Fonctionnalités :
+### Nouvelles Fonctionnalit��s :
 
 1. Dialogue de Paramètres :
    - Introduction d'un nouveau dialogue de paramètres avec les options suivantes :
@@ -217,5 +217,22 @@ Ces mises à jour améliorent l'expérience visuelle lors du changement de thèm
    - Meilleure gestion des designs complexes
 
 Cette version représente une avancée significative dans les capacités d'OpenStrand Studio, particulièrement avec l'implémentation des courbes de Bézier. Les utilisateurs remarqueront immédiatement un contrôle amélioré et une apparence plus fluide de tous les brins, rendant le processus de design plus intuitif et professionnel.
+
+------
+
+## Version 1.071 (Sortie : 27/10/2024)
+
+### Nouvelles Fonctionnalités :
+
+1. **Création de Masques Améliorée :**
+   - Meilleur retour visuel pendant la création de masques
+   - La sélection du premier brin est maintenant mise en évidence en rouge pour plus de clarté
+   - Clic droit sur les calques masqués pour éditer ou réinitialiser l'intersection du masque
+
+2. **Visualisation Améliorée des Brins Attachés :**
+   - Meilleure implémentation des cercles des brins attachés
+   - Les demi-cercles sont maintenant correctement masqués lors de l'intersection avec d'autres brins
+
+Ces mises à jour améliorent le flux de travail du masquage et la qualité visuelle des brins attachés, rendant le processus de design plus intuitif et visuellement précis.
 
 ------

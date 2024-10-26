@@ -1230,13 +1230,12 @@ class MaskedStrand(Strand):
             self.second_selected_strand.update(new_end)
         self.update_shape()
 
-    def set_color(self, new_color):
-        """Set the color of the masked strand and the selected strands."""
-        self.color = new_color
-        if self.first_selected_strand:
-            self.first_selected_strand.set_color(new_color)
-        if self.second_selected_strand:
-            self.second_selected_strand.set_color(new_color)
+    def set_color(self, color):
+        """Set the color of the masked strand while preserving second strand's color."""
+        self.color = color
+        # Don't propagate the color change to the second selected strand
+        # The second strand should keep its own set's color
+        logging.info(f"Set color for masked strand {self.layer_name} to {color.name()}, preserving second strand color")
 
     def remove_attached_strands(self):
         """Recursively remove all attached strands from both selected strands."""
@@ -1307,12 +1306,17 @@ class MaskedStrand(Strand):
 
     def update_masked_color(self, set_number, color):
         """Update the color of the masked strand if it involves the given set."""
-        # Check if this masked strand involves the given set
-        strand_sets = set()
-        if self.first_selected_strand:
-            strand_sets.add(self.first_selected_strand.set_number)
-        if self.second_selected_strand:
-            strand_sets.add(self.second_selected_strand.set_number)
+        # Only update colors for the parts of the mask that match the set number
+        if self.first_selected_strand and self.first_selected_strand.set_number == set_number:
+            self.first_selected_strand.color = color
+        
+        if self.second_selected_strand and self.second_selected_strand.set_number == set_number:
+            self.second_selected_strand.color = color
+            
+        # Update the mask's display color only if the first strand is from this set
+        # (since the mask inherits its primary color from the first strand)
+        if self.first_selected_strand and self.first_selected_strand.set_number == set_number:
+            self.color = color
         
 
 

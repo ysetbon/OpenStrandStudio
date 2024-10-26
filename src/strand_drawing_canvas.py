@@ -1014,22 +1014,35 @@ class StrandDrawingCanvas(QWidget):
 
 
     def update_color_for_set(self, set_number, color):
-        """Update the color for a set of strands."""
+        """
+        Update the color for strands in a set.
+        Only recolors strands that start with the same set number (e.g., '1_' for set_number=1)
+        """
         logging.info(f"Updating color for set {set_number} to {color.name()}")
         self.strand_colors[set_number] = color
+        
+        # Convert set_number to string for comparison
+        set_prefix = f"{set_number}_"
+        
         for strand in self.strands:
-            if isinstance(strand, MaskedStrand):
-                # For masked strands, only update if the set_number is the first part
-                mask_parts = strand.layer_name.split('_')
-                if mask_parts[0] == str(set_number):
+            if not hasattr(strand, 'layer_name') or not strand.layer_name:
+                logging.info(f"Skipping strand without layer_name")
+                continue
+                
+            logging.info(f"Checking strand: {strand.layer_name}")
+            
+            # Check if the strand's layer_name starts with our set_prefix
+            if strand.layer_name.startswith(set_prefix):
+                strand.set_color(color)
+                logging.info(f"Updated color for strand: {strand.layer_name}")
+                
+            # For masked strands, only update if the first part matches our set_number
+            elif isinstance(strand, MaskedStrand):
+                first_part = strand.layer_name.split('_')[0]  # Get the first number only
+                if first_part == str(set_number):
                     strand.set_color(color)
                     logging.info(f"Updated color for masked strand: {strand.layer_name}")
-            elif isinstance(strand, Strand):
-                # For regular strands, only update if the set_number matches exactly
-                if strand.set_number == set_number:
-                    strand.set_color(color)
-                    logging.info(f"Updated color for strand: {strand.layer_name}")
-                    self.update_attached_strands_color(strand, color)
+        
         self.update()
         logging.info(f"Finished updating color for set {set_number}")
 

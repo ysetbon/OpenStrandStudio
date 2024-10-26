@@ -775,10 +775,14 @@ class LayerPanel(QWidget):
                 lambda: self.reset_mask(strand_index)
             )
             
-            # Get the button that triggered the menu and show menu at the correct position
+            # Get the button that triggered the menu
             button = self.layer_buttons[strand_index]
-            # Use position directly as it's already mapped to global coordinates
-            menu.exec_(position)
+            
+            # Map the button's position to global coordinates
+            global_pos = button.mapToGlobal(button.rect().topRight())
+            
+            # Show menu at the button's right side
+            menu.exec_(global_pos)
 
 
 
@@ -1293,8 +1297,7 @@ class LayerPanel(QWidget):
             if len(parts) == 4:  # Masked layer format: "set1_num1_set2_num2"
                 if parts[0] == str(set_number):
                     button.set_color(color)
-                elif parts[2] == str(set_number):
-                    button.set_border_color(color)
+
         
         # Emit signal for other components
         self.color_changed.emit(set_number, color)
@@ -1305,49 +1308,44 @@ class LayerPanel(QWidget):
     def update_colors_for_set(self, set_number, color):
         """
         Update colors for all strands in a specific set.
-        
-        Args:
-            set_number (int): The set number to update colors for
-            color (QColor): The new color to apply
         """
-        logging.info(f"Updating colors for set {set_number} to {color.name()}")
+        logging.info(f"LayerPanel: Updating colors for set {set_number} to {color.name()}")
         
         # Update colors in canvas strands
         for strand in self.canvas.strands:
-            # Get the set number from the strand's layer name (e.g., "1_1" -> "1")
-            strand_set = strand.layer_name.split('_')[0]
+            logging.info(f"LayerPanel: Checking strand: {strand.layer_name}")
+            # Get the first number from the layer name
+            first_part = strand.layer_name.split('_')[0]
             
-            if strand_set == str(set_number):
+            if first_part == str(set_number):
                 # Update regular strand color
                 strand.color = color
-                logging.info(f"Updated color for strand: {strand.layer_name}")
+                logging.info(f"LayerPanel: Updated color for strand: {strand.layer_name} (matched set {set_number})")
                 
                 # If it's an attached strand, update its children
                 if hasattr(strand, 'attached_strands'):
+                    logging.info(f"LayerPanel: Checking attached strands for {strand.layer_name}")
                     for attached in strand.attached_strands:
                         if attached.layer_name.split('_')[0] == str(set_number):
                             attached.color = color
-                            logging.info(f"Updated color for attached strand: {attached.layer_name}")
-            
-            # Handle masked strands
-            elif isinstance(strand, MaskedStrand):
-                parts = strand.layer_name.split('_')
-                if len(parts) == 4:  # Ensure proper x_y_z_w format
-                    first_strand_set = parts[0]   # x from x_y
-                    second_strand_set = parts[2]  # z from z_w
-                    
-                    if str(set_number) in (first_strand_set, second_strand_set):
-                        strand.update_masked_color(set_number, color)
-                        logging.info(f"Updated color for masked strand: {strand.layer_name}")
+                            logging.info(f"LayerPanel: Updated color for attached strand: {attached.layer_name} (matched set {set_number})")
+                        else:
+                            logging.info(f"LayerPanel: Skipped attached strand: {attached.layer_name} (did not match set {set_number})")
+            else:
+                logging.info(f"LayerPanel: Skipped strand: {strand.layer_name} (did not match set {set_number})")
         
         # Update layer button colors
         for button in self.layer_buttons:
-            if button.text().split('_')[0] == str(set_number):
+            button_set = button.text().split('_')[0]
+            if button_set == str(set_number):
                 button.set_color(color)
-                logging.info(f"Updated button color for {button.text()}")
+                logging.info(f"LayerPanel: Updated button color for {button.text()} (matched set {set_number})")
+            else:
+                logging.info(f"LayerPanel: Skipped button: {button.text()} (did not match set {set_number})")
         
         # Force canvas redraw
         self.canvas.update()
+        logging.info(f"LayerPanel: Finished updating colors for set {set_number}")
 
     def resizeEvent(self, event):
         """Handle resize events by updating the size of the splitter handle."""

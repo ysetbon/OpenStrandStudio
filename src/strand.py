@@ -917,8 +917,8 @@ class AttachedStrand(Strand):
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
 
-        # Draw highlight if selected (keep this before the main drawing)
-        if (self.is_selected or (self.start_attached and self.parent.is_selected)) and not isinstance(self.parent, MaskedStrand):
+        # Draw highlight if selected (only when directly selected)
+        if self.is_selected and not isinstance(self.parent, MaskedStrand):
             highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPath
 from PyQt5.QtWidgets import QApplication
-from strand import MaskedStrand
+from strand import MaskedStrand, AttachedStrand, Strand
 import logging
 
 class MaskMode(QObject):
@@ -123,73 +123,22 @@ class MaskMode(QObject):
         self.canvas.update()
 
     def draw(self, painter):
-        """Draw highlights for selected strands with proper shapes."""
+        """Draw highlights for selected strands as rectangular outlines."""
+        logging.info(f"Drawing mask mode highlights for {len(self.selected_strands)} strands")
         for strand in self.selected_strands:
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
 
-            # Get the path representing the strand
-            path = strand.get_path()
-
-            # Create a stroker with the correct style for the main strand
-            stroke_stroker = QPainterPathStroker()
-            stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-            stroke_stroker.setJoinStyle(Qt.MiterJoin)
-            stroke_stroker.setCapStyle(Qt.FlatCap)  # Ensure flat caps for main strand
-            stroke_path = stroke_stroker.createStroke(path)
-
-            # Create a clipping path that excludes the circle areas
-            clip_path = QPainterPath()
-            rect = painter.viewport()
-            clip_path.addRect(rect)
+            # Get the bounding rectangle of the strand
+            rect = strand.boundingRect()
+            logging.info(f"Drawing highlight rect for strand {strand.layer_name}: {rect}")
             
-            # Remove circle areas at attachment points with larger radius
-            circle_radius = (strand.width + strand.stroke_width * 2) / 2
-            for point in [strand.start, strand.end]:
-                circle_path = QPainterPath()
-                circle_path.addEllipse(point, circle_radius * 1.5, circle_radius * 1.5)  # Increased radius
-                clip_path = clip_path.subtracted(circle_path)
-
-            # Apply the clipping path and draw with a larger stroke width
-            painter.setClipPath(clip_path)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor('red'))
-            
-            # Create a slightly larger stroke path for better coverage
-            larger_stroker = QPainterPathStroker()
-            larger_stroker.setWidth(strand.width + strand.stroke_width * 2.5)  # Slightly larger width
-            larger_stroker.setJoinStyle(Qt.MiterJoin)
-            larger_stroker.setCapStyle(Qt.FlatCap)
-            larger_stroke_path = larger_stroker.createStroke(path)
-            
-            painter.drawPath(larger_stroke_path)
-
-            # Draw highlights for attached strands only if they are directly selected
-            for attached_strand in strand.attached_strands:
-                if attached_strand in self.selected_strands:  # Only highlight if directly selected
-                    # Store original properties
-                    original_color = attached_strand.color
-                    original_stroke = attached_strand.stroke_color
-                    original_width = attached_strand.stroke_width
-                    
-                    # Set highlight properties
-                    attached_strand.color = QColor('red')
-                    attached_strand.stroke_color = QColor('red')
-                    attached_strand.stroke_width = attached_strand.stroke_width + 8
-                    
-                    # Draw the attached strand
-                    attached_path = attached_strand.get_path()
-                    attached_stroker = QPainterPathStroker()
-                    attached_stroker.setWidth(attached_strand.width + attached_strand.stroke_width * 2)
-                    attached_stroker.setJoinStyle(Qt.MiterJoin)
-                    attached_stroker.setCapStyle(Qt.RoundCap)  # Round cap for attached strands
-                    attached_stroke_path = attached_stroker.createStroke(attached_path)
-                    painter.drawPath(attached_stroke_path)
-                    
-                    # Restore original properties
-                    attached_strand.color = original_color
-                    attached_strand.stroke_color = original_stroke
-                    attached_strand.stroke_width = original_width
+            # Draw rectangular highlight
+            highlight_pen = QPen(QColor('red'), 2)  # Thinner pen for the rectangular outline
+            highlight_pen.setStyle(Qt.SolidLine)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(rect)
 
             painter.restore()
 
@@ -200,3 +149,4 @@ class MaskMode(QObject):
     def mouseReleaseEvent(self, event):
         # Implement if needed
         pass
+

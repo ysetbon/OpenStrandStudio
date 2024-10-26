@@ -773,7 +773,9 @@ class StrandDrawingCanvas(QWidget):
             affected_strand.draw(painter)
             # Restore the painter state
             painter.restore()
-
+        # Draw mask mode selections if in mask mode
+        if isinstance(self.current_mode, MaskMode):
+            self.current_mode.draw(painter)
         # Draw mask editing interface
         if self.mask_edit_mode and self.editing_masked_strand:
             # Draw the current mask path with semi-transparency

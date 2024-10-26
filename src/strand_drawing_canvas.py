@@ -680,7 +680,8 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Drawing strand '{strand.layer_name}'")
             if not hasattr(strand, 'canvas'):
                 strand.canvas = self  # Ensure all strands have canvas reference
-            if strand == self.selected_strand:
+            # Only highlight selected strand if we're not in mask mode
+            if strand == self.selected_strand and not isinstance(self.current_mode, MaskMode):
                 logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                 self.draw_highlighted_strand(painter, strand)
             else:
@@ -741,14 +742,10 @@ class StrandDrawingCanvas(QWidget):
             painter.setBrush(QBrush(Qt.transparent))
             painter.setPen(QPen(Qt.red, 2, Qt.DashLine))
 
-            # Check the type of selected_rectangle and draw accordingly
             if isinstance(self.current_mode.selected_rectangle, QPainterPath):
                 painter.drawPath(self.current_mode.selected_rectangle)
             elif isinstance(self.current_mode.selected_rectangle, QRectF):
                 painter.drawRect(self.current_mode.selected_rectangle)
-            else:
-                # Handle other possible types or skip drawing
-                pass
 
             painter.restore()
 
@@ -756,26 +753,19 @@ class StrandDrawingCanvas(QWidget):
         if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
             self.angle_adjust_mode.draw(painter)
 
-        # Draw mask mode selections
-        if self.current_mode == self.mask_mode:
-            for strand in self.mask_mode.selected_strands:
-                self.draw_highlighted_strand(painter, strand)
-
         # Highlight the strand being created in attach mode
         if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
             affected_strand = self.current_mode.affected_strand
-            # Save the current painter state
             painter.save()
-            # Set a different pen for highlighting
             highlight_pen = QPen(Qt.yellow, self.strand_width + 4)  # Wider width and different color
             painter.setPen(highlight_pen)
-            # Draw the affected strand
             affected_strand.draw(painter)
-            # Restore the painter state
             painter.restore()
-        # Draw mask mode selections if in mask mode
+
+        # Draw mask mode selections (this is the single implementation we want to keep)
         if isinstance(self.current_mode, MaskMode):
             self.current_mode.draw(painter)
+
         # Draw mask editing interface
         if self.mask_edit_mode and self.editing_masked_strand:
             # Draw the current mask path with semi-transparency
@@ -1334,6 +1324,8 @@ class StrandDrawingCanvas(QWidget):
             self.new_strand_start_point = event.pos()
 
         if self.current_mode == "select":
+            # Get the position from the event
+            pos = event.pos()
             self.handle_strand_selection(pos)
             
         elif self.current_mode == self.mask_mode:

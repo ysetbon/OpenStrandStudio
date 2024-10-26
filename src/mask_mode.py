@@ -123,22 +123,45 @@ class MaskMode(QObject):
         self.canvas.update()
 
     def draw(self, painter):
-        """Draw highlights for selected strands as rectangular outlines."""
-        logging.info(f"Drawing mask mode highlights for {len(self.selected_strands)} strands")
+        """Draw highlights for selected strands using their paths."""
         for strand in self.selected_strands:
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
 
-            # Get the bounding rectangle of the strand
-            rect = strand.boundingRect()
-            logging.info(f"Drawing highlight rect for strand {strand.layer_name}: {rect}")
-            
-            # Draw rectangular highlight
-            highlight_pen = QPen(QColor('red'), 2)  # Thinner pen for the rectangular outline
-            highlight_pen.setStyle(Qt.SolidLine)
+            # Get the path representing the strand
+            path = strand.get_path()
+
+            # Create a stroker for the highlight with squared ends
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+            stroke_path = stroke_stroker.createStroke(path)
+
+            # Draw the highlight with transparent red filling
+            highlight_color = QColor('red')
+            highlight_color.setAlpha(128)  # Set transparency (0-255)
+            painter.setBrush(highlight_color)
+        
+            # Set the pen with the same transparency as the fill
+            highlight_pen = QPen(highlight_color, strand.stroke_width * 2)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawRect(rect)
+
+            # Draw the filled highlight path
+            painter.drawPath(stroke_path)
+
+            # Set up the stroke for the highlight
+            highlight_stroke_color = QColor('black')
+            highlight_stroke_color.setAlpha(128)  # Set transparency (0-255)
+            highlight_stroke_pen = QPen(highlight_stroke_color, strand.stroke_width * 2)
+            highlight_stroke_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_stroke_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_stroke_pen)
+
+            # Draw the stroke around the highlight path
+            painter.drawPath(stroke_path)
 
             painter.restore()
 
@@ -149,4 +172,3 @@ class MaskMode(QObject):
     def mouseReleaseEvent(self, event):
         # Implement if needed
         pass
-

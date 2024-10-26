@@ -24,8 +24,9 @@ from strand import MaskedStrand
 from group_layers import GroupPanel, GroupLayerManager
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint  # Add QPoint here
 from translations import translations
+from PyQt5.QtWidgets import QApplication
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -231,58 +232,74 @@ class LayerPanel(QWidget):
         logging.info("LayerPanel initialized")
 
     def refresh_layers(self):
-        """Refresh all layer buttons while preserving colors."""
-        logging.info("Starting refresh_layers")
+        """Refresh the drawing of the layers."""
+        logging.info("Starting refresh of layer panel")
         
-        # Store existing colors and set colors
-        existing_colors = {}
-        set_colors = self.set_colors.copy() if hasattr(self, 'set_colors') else {}
+        # Log initial state and selection
+        logging.info(f"Initial layer button count: {len(self.layer_buttons)}")
+        logging.info(f"Initial layout item count: {self.scroll_layout.count()}")
+        logging.info(f"Currently selected strand: {self.canvas.selected_strand.layer_name if self.canvas.selected_strand else 'None'}")
         
-        # First pass: store all original colors
-        for strand in self.canvas.strands:
-            existing_colors[strand.layer_name] = strand.color
-            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand):
-                set_number = strand.set_number
-                set_colors[set_number] = strand.color
-                logging.info(f"Stored color for set {set_number}: {strand.color.name()}")
+        # Log initial Y positions
+        initial_positions = {}
+        for i, button in enumerate(self.layer_buttons):
+            pos = button.mapToGlobal(button.pos()).y()
+            initial_positions[button.text()] = pos
+            logging.info(f"Initial Y position for {button.text()}: {pos}px")
         
-        # Clear existing buttons
-        for button in self.layer_buttons:
-            self.scroll_layout.removeWidget(button)
-            button.deleteLater()
-        self.layer_buttons.clear()
-        
-        # Recreate buttons while preserving colors
-        for strand in self.canvas.strands:
-            button = NumberedLayerButton(strand.layer_name, len(self.layer_buttons))
-            
-            if isinstance(strand, MaskedStrand):
-                # For masked strands, use stored color
-                button.set_color(existing_colors[strand.layer_name])
-                if hasattr(strand, 'second_selected_strand'):
-                    # Ensure second strand keeps its original color
-                    second_strand_name = strand.second_selected_strand.layer_name
-                    if second_strand_name in existing_colors:
-                        strand.second_selected_strand.color = existing_colors[second_strand_name]
-                        button.set_border_color(existing_colors[second_strand_name])
-                        logging.info(f"Preserved color for second strand {second_strand_name}: {existing_colors[second_strand_name].name()}")
+        # Clear all layer buttons from the layout without deleting them
+        removed_count = 0
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.hide()
+                removed_count += 1
+                logging.debug(f"Removed widget from layout: {widget.objectName() if widget.objectName() else 'unnamed'}")
             else:
-                # For regular strands, use set color or original color
-                if strand.layer_name in existing_colors:
-                    color = existing_colors[strand.layer_name]
-                    button.set_color(color)
-                    strand.color = color
-                    logging.info(f"Preserved original color for {strand.layer_name}: {color.name()}")
-            
-            button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
-            button.color_changed.connect(self.on_color_changed)
-            
-            self.scroll_layout.insertWidget(0, button)
-            self.layer_buttons.append(button)
-            logging.info(f"Recreated button for strand {strand.layer_name} with color {strand.color.name()}")
+                logging.debug("Found layout item without widget")
         
-        self.update_layer_button_states()
-        logging.info("Finished refresh_layers")
+        logging.info(f"Removed {removed_count} widgets from layout")
+        
+        # Re-add the layer buttons in reverse order (newest first)
+        added_count = 0
+        for button in reversed(self.layer_buttons):
+            logging.info(f"Adding button for strand: {button.text()}")
+            button_container = QWidget()
+            button_container.setObjectName(f"container_for_{button.text()}")
+            button_layout = QHBoxLayout(button_container)
+            button_layout.setAlignment(Qt.AlignHCenter)
+            button_layout.addWidget(button)
+            button_layout.setContentsMargins(0, 0, 0, 0)
+            self.scroll_layout.addWidget(button_container)
+            button.show()
+            button_container.show()
+            added_count += 1
+            logging.debug(f"Re-added button to layout: {button.text()}")
+        
+        logging.info(f"Re-added {added_count} buttons to layout")
+        
+        # Force layout update
+        self.scroll_layout.update()
+        QApplication.processEvents()
+        
+        # Log final Y positions and selection
+        final_positions = {}
+        for i, button in enumerate(self.layer_buttons):
+            pos = button.mapToGlobal(button.pos()).y()
+            final_positions[button.text()] = pos
+            logging.info(f"Final Y position for {button.text()}: {pos}px")
+            
+            # Log position changes
+            if button.text() in initial_positions:
+                diff = final_positions[button.text()] - initial_positions[button.text()]
+                logging.info(f"Position change for {button.text()}: {diff}px")
+        
+        # Log final state and selection
+        logging.info(f"Final layer button count: {len(self.layer_buttons)}")
+        logging.info(f"Final layout item count: {self.scroll_layout.count()}")
+        logging.info(f"Final selected strand: {self.canvas.selected_strand.layer_name if self.canvas.selected_strand else 'None'}")
+        logging.info("Finished refreshing layer panel")
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -717,8 +734,7 @@ class LayerPanel(QWidget):
                     self.clear_selection()
                     self.selected_strands.append(masked_strand)
                     
-                    # Refresh while preserving all colors
-                    masked_strand_index = self.canvas.strands.index(masked_strand)
+                    # Single refresh with all operations
                     if self.canvas.layer_panel:
                         # Restore all original colors
                         for strand in self.canvas.strands:
@@ -727,13 +743,21 @@ class LayerPanel(QWidget):
                             elif hasattr(strand, 'set_number'):
                                 strand.color = self.set_colors.get(strand.set_number, strand.color)
                         
+                        # Get the masked strand index before refresh
+                        masked_strand_index = self.canvas.strands.index(masked_strand)
+                        
+                        # Do a single refresh
                         self.refresh_layers()
+                        
+                        # Select the masked layer
                         self.select_layer(masked_strand_index)
+                    
                     logging.info(f"Selected newly created masked strand: {masked_strand.layer_name}")
-            else:
-                logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
-                self.clear_selection()
-            self.canvas.update()
+                else:
+                    logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
+                    self.clear_selection()
+                
+                self.canvas.update()
 
     def add_masked_layer_button(self, layer1, layer2):
         """Add a new button for a masked layer."""
@@ -754,8 +778,17 @@ class LayerPanel(QWidget):
             )
         )
         
+        # Store current scroll position
+        scrollbar = self.scroll_area.verticalScrollBar()
+        current_scroll = scrollbar.value()
+        
+        # Add the button to layout
         self.scroll_layout.insertWidget(0, button)
         self.layer_buttons.append(button)
+        
+        # Restore scroll position after a brief delay
+        QTimer.singleShot(10, lambda: scrollbar.setValue(current_scroll))
+        
         return button
     def show_masked_layer_context_menu(self, strand_index, position):
         """Show context menu for masked layer buttons."""
@@ -1087,71 +1120,42 @@ class LayerPanel(QWidget):
         max_set_number = max(existing_set_numbers, default=0)
         return max_set_number + 1
 
-    def add_layer_button(self, set_number, count=None):
-        """Add a new button for a layer."""
+    def add_layer_button(self, set_number, count):
+        """Add a new layer button."""
         logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
-
-        # Ensure set_number is an integer
-        if not isinstance(set_number, int):
-            try:
-                set_number_int = int(set_number)
-            except ValueError:
-                logging.warning(f"Invalid set_number '{set_number}' provided. Using next available integer.")
-                set_number_int = self.get_next_available_set_number()
-        else:
-            set_number_int = set_number
-
-        # Initialize or update set count
-        if set_number_int not in self.set_counts:
-            self.set_counts[set_number_int] = 0
-            logging.info(f"Initialized set count for set {set_number_int}")
-
-        if count is None:
-            self.set_counts[set_number_int] += 1
-            count = self.set_counts[set_number_int]
-            logging.info(f"Incremented set count for set {set_number_int} to {count}")
-        else:
-            self.set_counts[set_number_int] = max(self.set_counts[set_number_int], count)
-            logging.info(f"Updated set count for set {set_number_int} to {self.set_counts[set_number_int]}")
-
-        # Get the color for the set
-        color = self.set_colors.get(set_number_int, QColor('purple'))
-
-        # Create the layer name using set_number_int and count
-        layer_name = f"{set_number_int}_{count}"
-
-        # Create the new layer button
-        button = NumberedLayerButton(layer_name, count, color)
-        button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
-        button.color_changed.connect(self.on_color_changed)
-        logging.info(f"Created new button: {button.text()}")
-
-        # Set up the layout for the button
+        
+        # Update set count
+        self.set_counts[set_number] = count
+        logging.info(f"Updated set count for set {set_number} to {count}")
+        
+        # Create button name
+        button_name = f"{set_number}_{count}"
+        logging.info(f"Created new button: {button_name}")
+        
+        # Get the strand index
+        strand_index = len(self.canvas.strands) - 1
+        
+        # Create and add the button
+        button = self.create_layer_button(strand_index, self.canvas.strands[strand_index], count)
+        self.layer_buttons.append(button)  # Add to end of list
+        
+        # Add button to layout at the top
         button_container = QWidget()
+        button_container.setObjectName(f"container_for_{button_name}")
         button_layout = QHBoxLayout(button_container)
         button_layout.setAlignment(Qt.AlignHCenter)
         button_layout.addWidget(button)
         button_layout.setContentsMargins(0, 0, 0, 0)
-
-        # Insert the button at the top of the scroll area
-        self.scroll_layout.insertWidget(0, button_container)
-        self.layer_buttons.append(button)
+        self.scroll_layout.insertWidget(0, button_container)  # Insert at top
         
-        # Select the newly created layer and ensure it's selected in the canvas
-        new_index = len(self.layer_buttons) - 1
-        self.select_layer(new_index, emit_signal=True)
-        
-        # Ensure the canvas also knows about the selection
-        if new_index < len(self.canvas.strands):
-            self.canvas.selected_strand = self.canvas.strands[new_index]
-            self.canvas.selected_strand_index = new_index
-            self.canvas.update()
-        
-        logging.info(f"Added and selected new button at index {new_index}")
-
-        # Update attachable states after adding a new button
-        self.update_layer_button_states()
+        logging.info(f"Added new button at top (index 0)")
         logging.info("Finished add_layer_button")
+        
+        # Select the newly created strand
+        self.select_layer(strand_index)
+        return button
+
+
 
     def update_layer_button_states(self):
         """Update the states of all layer buttons."""
@@ -1336,12 +1340,22 @@ class LayerPanel(QWidget):
         
         # Update layer button colors
         for button in self.layer_buttons:
-            button_set = button.text().split('_')[0]
-            if button_set == str(set_number):
-                button.set_color(color)
-                logging.info(f"LayerPanel: Updated button color for {button.text()} (matched set {set_number})")
-            else:
-                logging.info(f"LayerPanel: Skipped button: {button.text()} (did not match set {set_number})")
+            button_text = button.text()
+            parts = button_text.split('_')
+            
+            if len(parts) == 4:  # This is a masked layer button (format: "set1_num1_set2_num2")
+                if parts[0] == str(set_number):
+                    # Update main color if it's the first strand
+                    button.set_color(color)
+                    logging.info(f"LayerPanel: Updated masked layer main color for {button_text}")
+                elif parts[2] == str(set_number):
+                    # Update border color if it's the second strand
+                    button.set_border_color(color)
+                    logging.info(f"LayerPanel: Updated masked layer border color for {button_text}")
+            else:  # Regular layer button
+                if parts[0] == str(set_number):
+                    button.set_color(color)
+                    logging.info(f"LayerPanel: Updated button color for {button_text}")
         
         # Force canvas redraw
         self.canvas.update()
@@ -1353,9 +1367,23 @@ class LayerPanel(QWidget):
         self.handle.updateSize()
 
     def on_strand_created(self, strand):
-        """Handle the creation of a new strand."""
-        self.add_layer_button(strand.set_number)
-        self.update_layer_button_states()
+        """Handle strand creation event."""
+        logging.info(f"Starting on_strand_created for strand: {strand.layer_name if hasattr(strand, 'layer_name') else ''}")
+        
+        # Get the set number and count
+        set_number = strand.set_number
+        count = self.set_counts.get(set_number, 0) + 1  # Get current count + 1
+        
+        # Add the new layer button
+        logging.info(f"Adding new layer button for set {set_number}, count {count}")
+        self.add_layer_button(set_number, count)
+        
+        # Update color for the set if needed
+        if set_number not in self.set_colors:
+            self.set_colors[set_number] = QColor('purple')  # Default color
+        self.update_colors_for_set(set_number, self.set_colors[set_number])  # Changed from update_color_for_set
+        
+        logging.info("Finished on_strand_created")
 
     def on_strands_deleted(self, indices):
         """Handle the deletion of multiple strands from the canvas."""

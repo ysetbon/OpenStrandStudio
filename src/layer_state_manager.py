@@ -4,6 +4,7 @@ import logging
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QPointF, QStandardPaths
 from PyQt5.QtGui import QColor
 from strand import Strand, MaskedStrand, AttachedStrand
+import sys
 
 class LayerStateManager(QObject):
     def __init__(self, canvas=None):
@@ -34,16 +35,22 @@ class LayerStateManager(QObject):
             self.set_canvas(canvas)
 
     def setup_logging(self):
-        # Use the AppData\Local directory for logging
+        # Use the macOS-appropriate directory for logging
         app_name = "OpenStrand Studio"
-        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        log_dir = os.path.join(program_data_dir, app_name)
-
+        if sys.platform == 'darwin':  # macOS
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            log_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            log_dir = program_data_dir  # AppDataLocation already includes the app name on other platforms
+        
+        # Ensure directory exists with proper permissions
         if not os.path.exists(log_dir):
             try:
-                os.makedirs(log_dir)
+                os.makedirs(log_dir, mode=0o755)  # Add mode for proper permissions
             except Exception as e:
                 print(f"LayerStateManager: Failed to create log directory. Error: {str(e)}")
+                logging.error(f"Failed to create log directory: {log_dir}. Error: {str(e)}")
                 return
 
         self.log_file_path = os.path.join(log_dir, "layer_state_log.txt")

@@ -27,6 +27,10 @@ from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint  # Add QPoint here
 from translations import translations
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor
+from PyQt5.QtWidgets import QPushButton, QStyle
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QStyleOption
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -1527,36 +1531,42 @@ class StrokeTextButton(QPushButton):
         super().__init__(text, parent)
         self.setFixedSize(40, 40)
         self.updateStyleSheet()
+        # Ensure the button accepts paint events
+        self.setAttribute(Qt.WA_StyledBackground, True)
 
     def updateStyleSheet(self):
-         self.setStyleSheet(f"""
-            QPushButton {{
+         self.setStyleSheet("""
+            QPushButton {
                 font-weight: bold;
                 font-size: 30px;
-                color: black;
+                color: transparent;  /* Make default text transparent */
                 background-color: #4d9958;
                 border: none;
                 padding: 0px;
-                padding-top: -8px;  /* Move text up by 2 pixels */
                 border-radius: 20px;
                 text-align: center;
-                line-height: 38px;  /* Adjust line height to compensate for padding */
-            }}
-            QPushButton:hover {{
+            }
+            QPushButton:hover {
                 background-color: #67c975;
-            }}
-            QPushButton:pressed {{
+            }
+            QPushButton:pressed {
                 background-color: #2a522f;
-            }}
+            }
         """)
 
     def paintEvent(self, event):
-        super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Draw the background (if not handled by stylesheet)
+        option = QStyleOption()
+        option.initFrom(self)
+        self.style().drawPrimitive(QStyle.PE_Widget, option, painter, self)
+
+        # Draw the text with stroke
         font = self.font()
         font.setBold(True)
+        font.setPixelSize(30)  # Explicit font size
         painter.setFont(font)
 
         text = self.text()
@@ -1567,11 +1577,15 @@ class StrokeTextButton(QPushButton):
         x = (text_rect.width() - text_width) / 2
         y = (text_rect.height() + text_height) / 2 - fm.descent()
 
+        # Create and draw the text path
         path = QPainterPath()
         path.addText(x, y-2, font, text)
 
+        # Draw white stroke
         pen = QPen(QColor('#e6fae9'), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         painter.strokePath(path, pen)
+        
+        # Fill with black
         painter.fillPath(path, QColor('black'))
 
     def resizeEvent(self, event):

@@ -7,34 +7,40 @@ from main_window import MainWindow
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# At the start of your main.py
+os.environ['QT_MAC_WANTS_LAYER'] = '1'
+
 def load_user_settings():
     from PyQt5.QtCore import QStandardPaths
 
+    # Use the appropriate directory for each OS
     app_name = "OpenStrand Studio"
-    program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-    logging.info(f"Program data directory: {program_data_dir}")
-    settings_dir = os.path.join(program_data_dir, app_name)
-    logging.info(f"Settings directory: {settings_dir}")
-    file_path = os.path.join(settings_dir, 'user_settings.txt')
-    logging.info(f"Settings file path: {file_path}")
+    if sys.platform == 'darwin':  # macOS
+        program_data_dir = os.path.expanduser('~/Library/Application Support')
+        settings_dir = os.path.join(program_data_dir, app_name)
+    else:
+        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        settings_dir = program_data_dir  # AppDataLocation already includes the app name
 
+    file_path = os.path.join(settings_dir, 'user_settings.txt')
+    logging.info(f"Looking for settings file at: {file_path}")
 
     theme_name = 'default'
     language_code = 'en'
 
     if os.path.exists(file_path):
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding='utf-8') as file:
                 for line in file:
                     if line.startswith('Theme:'):
                         theme_name = line.strip().split(':', 1)[1].strip()
                     elif line.startswith('Language:'):
                         language_code = line.strip().split(':', 1)[1].strip()
-            logging.info("User settings loaded successfully.")
+            logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}")
         except Exception as e:
             logging.error(f"Error reading user settings: {e}")
     else:
-        logging.info("user_settings.txt not found in AppData. Using default settings.")
+        logging.info(f"Settings file not found at {file_path}. Using default settings.")
 
     return theme_name, language_code
 

@@ -237,39 +237,49 @@ class SettingsDialog(QDialog):
         current_theme = getattr(self, 'current_theme', 'default')
         current_language = getattr(self, 'current_language', 'en')
 
-        # Use the AppData\Local directory
+        # Use the appropriate directory for each OS
         app_name = "OpenStrand Studio"
-        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        logging.info(f"Program data directory: {program_data_dir}")
-        settings_dir = os.path.join(program_data_dir, app_name)
-        logging.info(f"Settings directory: {settings_dir}")
-
+        if sys.platform == 'darwin':  # macOS
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir  # AppDataLocation already includes the app name
+        
+        # Ensure directory exists with proper permissions
         if not os.path.exists(settings_dir):
             try:
-                os.makedirs(settings_dir)
+                os.makedirs(settings_dir, mode=0o755)  # Add mode for proper permissions
+                logging.info(f"Created settings directory: {settings_dir}")
             except Exception as e:
                 logging.error(f"Cannot create directory {settings_dir}: {e}")
-                return  # Exit if we cannot create the directory
+                return
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Settings file path: {file_path}")
-
-        # Write the settings to the file
+        
+        # Write the settings to the file with error handling
         try:
-            with open(file_path, 'w') as file:
-                file.write(f"Theme: {current_theme}\n")
-                file.write(f"Language: {current_language}\n")
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(f"Theme: {self.current_theme}\n")
+                file.write(f"Language: {self.current_language}\n")
             logging.info(f"Settings saved to {file_path}")
         except Exception as e:
-            logging.error(f"Error saving settings to file: {e}")
+            logging.error(f"Error saving settings to {file_path}: {e}")
+            # Optionally show an error message to the user
+            QMessageBox.warning(
+                self,
+                "Settings Error",
+                f"Could not save settings: {str(e)}"
+            )
 
     def load_video_paths(self):
-        import sys
         if getattr(sys, 'frozen', False):
-            # If the application is run as a bundled executable
-            base_path = sys._MEIPASS
+            if sys.platform == 'darwin':
+                # For macOS .app bundles, resources are in a different location
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                base_path = sys._MEIPASS
         else:
-            # If the application is run from the source
             base_path = os.path.abspath(".")
 
         mp4_directory = os.path.join(base_path, 'mp4')
@@ -293,14 +303,26 @@ class SettingsDialog(QDialog):
     def play_video(self, index):
         video_path = self.video_paths[index]
         if os.path.exists(video_path):
-            if sys.platform.startswith('win'):
-                os.startfile(video_path)
-            elif sys.platform.startswith('darwin'):
-                subprocess.call(('open', video_path))
-            else:
-                subprocess.call(('xdg-open', video_path))
+            try:
+                if sys.platform.startswith('win'):  # Windows
+                    os.startfile(video_path)
+                elif sys.platform.startswith('darwin'):  # macOS
+                    subprocess.run(['open', video_path], check=True)
+                else:  # Linux and other Unix-like
+                    subprocess.run(['xdg-open', video_path], check=True)
+            except subprocess.SubprocessError as e:
+                QMessageBox.warning(
+                    self,
+                    "Error Playing Video",
+                    f"Could not play the video. Error: {str(e)}"
+                )
+                logging.error(f"Error playing video: {e}")
         else:
-            QMessageBox.warning(self, "Video Not Found", f"The video file was not found:\n{video_path}")
+            QMessageBox.warning(
+                self,
+                "Video Not Found",
+                f"The video file was not found:\n{video_path}"
+            )
 
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):

@@ -1170,16 +1170,17 @@ class StrandDrawingCanvas(QWidget):
             
             if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
                 return True
-                    
+                
             group_panel = self.group_layer_manager.group_panel
-            branch_number = str(parent_strand.set_number)
             
-            # Store groups that need to be recreated
-            groups_to_recreate = {}
-            for group_name, group_data in list(group_panel.groups.items()):
-                if parent_strand.layer_name in group_data.get('layers', []):
+            # Store affected groups and their main strands before deletion
+            affected_groups = {}
+            for group_name, group_data in list(self.groups.items()):  # Use self.groups instead of group_panel.groups
+                if any(strand.layer_name == parent_strand.layer_name for strand in group_data['strands']):
                     logging.info(f"Found group '{group_name}' containing parent strand")
-                    groups_to_recreate[group_name] = dict(group_data)
+                    # Store the original main strands from the canvas groups
+                    affected_groups[group_name] = list(group_data.get('main_strands', []))
+                    logging.info(f"Stored original main strands for {group_name}: {affected_groups[group_name]}")
                     
                     # Delete the group
                     if group_name in self.groups:
@@ -1188,17 +1189,10 @@ class StrandDrawingCanvas(QWidget):
             
             # Connect to the strand_created signal to recreate groups after new strand is initialized
             def recreate_groups(new_strand):
-                for group_name in groups_to_recreate:
-                    logging.info(f"Recreating group '{group_name}' with all strands")
-                    # Get all strands from this branch, including the new one
-                    branch_strands = [s for s in self.strands if str(s.set_number) == branch_number]
-                    logging.info(f"Found {len(branch_strands)} strands for branch {branch_number}")
-                    
-                    self.group_layer_manager.create_group_with_params(
-                        group_name=group_name,
-                        selected_main_strands=[branch_number],
-                        skip_dialog=True
-                    )
+                for group_name, original_main_strands in affected_groups.items():
+                    logging.info(f"Recreating group '{group_name}' with original main strands: {original_main_strands}")
+                    # Pass the original main strands to recreate_group
+                    self.group_layer_manager.recreate_group(group_name, new_strand, original_main_strands)
                 
                 # Disconnect after handling
                 self.strand_created.disconnect(recreate_groups)

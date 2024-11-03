@@ -1100,71 +1100,58 @@ class GroupLayerManager:
         if parts and parts[0].isdigit():
             return parts[0]
         return None
-    def recreate_group(self, group_name, main_strands, auto_select=False):
-        """Recreate a group with the same name but updated main strands."""
-        logging.info(f"Recreating group {group_name} with main strands: {main_strands}")
+    def recreate_group(self, group_name, new_strand, original_main_strands=None):
+        """Recreate a group after a strand is attached, maintaining all original branches."""
+        logging.info(f"Recreating group '{group_name}' with all strands")
+        
+        # Use original main strands if provided, otherwise get from current state
+        all_main_strands = set(original_main_strands) if original_main_strands else set()
+        logging.info(f"Starting with original main strands: {list(all_main_strands)}")
+        
+        # Add the new strand's branch if not already included
+        new_branch = self.extract_main_layer(new_strand.layer_name)
+        if new_branch:
+            all_main_strands.add(new_branch)
+            logging.info(f"Added new branch {new_branch} to main strands")
+        
+        logging.info(f"Final main strands for recreation: {list(all_main_strands)}")
         
         # Initialize the group in canvas.groups
-        if self.canvas:
-            self.canvas.groups[group_name] = {
-                'strands': [],
-                'layers': [],
-                'main_strands': main_strands,
-                'control_points': {},
-                'data': []
+        self.canvas.groups[group_name] = {
+            'layers': [],
+            'strands': [],
+            'control_points': {},
+            'main_strands': list(all_main_strands)
+        }
+        
+        # Collect all strands for each branch
+        all_strands = []
+        for branch in all_main_strands:
+            branch_strands = []
+            for strand in self.canvas.strands:
+                if self.extract_main_layer(strand.layer_name) == branch:
+                    branch_strands.append(strand)
+                    logging.info(f"Added strand {strand.layer_name} to branch {branch}")
+            logging.info(f"Found {len(branch_strands)} strands for branch {branch}")
+            all_strands.extend(branch_strands)
+        
+        # Add all strands to the group
+        for strand in all_strands:
+            self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+            self.canvas.groups[group_name]['strands'].append(strand)
+            self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                'control_point1': strand.control_point1 if hasattr(strand, 'control_point1') else None,
+                'control_point2': strand.control_point2 if hasattr(strand, 'control_point2') else None
             }
-        
-        # Collect all strands that match the main_strands
-        selected_strands = []
-        layers_data = []
-        
-        for strand in self.canvas.strands:
-            main_layer = self.extract_main_layer(strand.layer_name)
-            if main_layer in main_strands:
-                selected_strands.append(strand)
-                
-                # Store control points
-                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                
-                # Create strand data copy
-                strand_data = {
-                    'layer_name': strand.layer_name,
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end),
-                    'control_point1': cp1,
-                    'control_point2': cp2,
-                    'width': strand.width,
-                    'color': QColor(strand.color),
-                    'stroke_color': QColor(strand.stroke_color),
-                    'stroke_width': strand.stroke_width,
-                    'has_circles': strand.has_circles.copy(),
-                    'attached_strands': strand.attached_strands.copy(),
-                    'is_first_strand': strand.is_first_strand,
-                    'is_start_side': strand.is_start_side,
-                    'set_number': strand.set_number
-                }
-                layers_data.append(strand_data)
-        
-        # Update canvas groups with collected data
-        if self.canvas and group_name in self.canvas.groups:
-            self.canvas.groups[group_name].update({
-                'strands': selected_strands,
-                'layers': [strand.layer_name for strand in selected_strands],
-                'data': layers_data,
-                'control_points': {
-                    strand.layer_name: {
-                        'control_point1': QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start),
-                        'control_point2': QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                    } for strand in selected_strands
-                }
-            })
+            logging.info(f"Added strand {strand.layer_name} to group {group_name}")
         
         # Create the group in the group panel
-        if hasattr(self, 'group_panel'):
-            self.group_panel.create_group(group_name, selected_strands)
+        self.group_panel.create_group(group_name, all_strands)
+        logging.info(f"Created group {group_name} in group panel with {len(all_strands)} strands")
         
-        logging.info(f"Successfully recreated group {group_name} with {len(selected_strands)} strands")
+        # Verify final group composition
+        final_branches = set(self.extract_main_layer(strand.layer_name) for strand in all_strands)
+        logging.info(f"Final group composition - branches: {list(final_branches)}, total strands: {len(all_strands)}")
     def update_translations(self):
         # Fetch the translations for the current language code
         if self.language_code in translations:

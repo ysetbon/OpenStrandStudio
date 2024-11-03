@@ -422,49 +422,49 @@ class GroupPanel(QWidget):
         self.layout.addWidget(self.scroll_area)
     def create_group_widget(self, group_name, group_layers):
         pass
-    def update_group_display(self, group_name, group_layers):
-        """
-        Updates the display for a specific group.
+    def update_group_display(self, group_name):
+        """Update the visual display of a group."""
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            # Extract main strand numbers for display
+            main_strands = set()
+            for layer_name in group_data['layers']:
+                main_strand = layer_name.split('_')[0]
+                main_strands.add(main_strand)
+            main_strands_text = ", ".join(sorted(main_strands))
+            
+            # Update the group's display text
+            if hasattr(self, 'group_tree'):
+                group_item = self.group_tree.groups.get(group_name)
+                if group_item:
+                    group_item.setText(0, f"{group_name}: {main_strands_text}")
+            logging.info(f"Updated display for group {group_name}")
 
-        Args:
-            group_name (str): The name of the group to update.
-            group_layers (list): List of layers in the group.
-        """
-        logging.info(f"Updating group display for '{group_name}' with layers: {group_layers}")
 
-        # Update the UI elements representing the group
-        if group_name in self.group_widgets:
-            group_widget = self.group_widgets[group_name]
-            group_widget.update_layers(group_layers)
+    def add_layer_to_group(self, layer_name, group_name):
+        """Add a layer to an existing group in the panel."""
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            if layer_name not in group_data['layers']:
+                group_data['layers'].append(layer_name)
+                if hasattr(self.canvas, 'find_strand_by_name'):
+                    strand = self.canvas.find_strand_by_name(layer_name)
+                    if strand:
+                        group_data['strands'].append(strand)
+                        # Store original positions for the new strand
+                        strand.original_start = QPointF(strand.start)
+                        strand.original_end = QPointF(strand.end)
+                        strand.original_control_point1 = QPointF(strand.control_point1)
+                        strand.original_control_point2 = QPointF(strand.control_point2)
+                        logging.info(f"Stored original positions for new strand in group: {layer_name}")
+                
+                # Update the group's visual representation
+                self.update_group_display(group_name)
+                logging.info(f"Added layer {layer_name} to group {group_name}")
+            else:
+                logging.info(f"Layer {layer_name} already in group {group_name}")
         else:
-            logging.warning(f"Group widget for '{group_name}' not found. Creating new widget.")
-            # If the group widget doesn't exist, create it
-            group_widget = self.create_group_widget(group_name, group_layers)
-            self.group_widgets[group_name] = group_widget
-            self.scroll_layout.addWidget(group_widget)
-
-
-    def add_layer_to_group(self, layer_name, group_name, strand):
-        if group_name not in self.groups:
-            logging.warning(f"Group {group_name} does not exist")
-            return
-
-        group = self.groups[group_name]
-        if layer_name not in group['layers']:
-            group['layers'].append(layer_name)
-            group['strands'].append(strand)
-            group['widget'].add_layer(
-                layer_name,
-                color=strand.color,
-                is_masked=isinstance(strand, MaskedStrand)
-            )
-            logging.info(f"Successfully added layer {layer_name} to group {group_name}")
-
-            # Update the canvas's group data
-            if self.canvas:
-                self.canvas.update_group_data(group_name, group)
-        else:
-            logging.info(f"Layer {layer_name} already in group {group_name}")
+            logging.warning(f"Group {group_name} not found in GroupPanel")
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasFormat("application/x-strand-data"):
@@ -1063,13 +1063,108 @@ class GroupLayerManager:
 
         # Call update_translations to ensure UI is updated
         self.update_translations()
-
+    def create_group_with_params(self, group_name, selected_main_strands, skip_dialog=False):
+        """Create a group with pre-selected parameters."""
+        logging.info(f"Creating group {group_name} with main strands: {selected_main_strands}")
+        
+        # Collect all strands that match the main_strands
+        selected_strands = []
+        for strand in self.canvas.strands:
+            main_layer = self.extract_main_layer(strand.layer_name)
+            if main_layer in selected_main_strands:
+                selected_strands.append(strand)
+                logging.info(f"Added strand {strand.layer_name} to group {group_name}")
+        
+        if not selected_strands:
+            logging.warning(f"No strands found for main strands: {selected_main_strands}")
+            return
+        
+        # Initialize the group in canvas.groups
+        if self.canvas:
+            self.canvas.groups[group_name] = {
+                'strands': selected_strands,
+                'layers': [s.layer_name for s in selected_strands],
+                'main_strands': set(selected_main_strands),
+                'control_points': {},
+                'data': []
+            }
+            logging.info(f"Initialized group {group_name} in canvas.groups")
+        
+        # Create the group in the group panel
+        if hasattr(self, 'group_panel'):
+            self.group_panel.create_group(group_name, selected_strands)
+            logging.info(f"Created group {group_name} in group panel with {len(selected_strands)} strands")
     def extract_main_layer(self, layer_name):
         """Extract the first main layer number from a layer name."""
         parts = layer_name.split('_')
         if parts and parts[0].isdigit():
             return parts[0]
         return None
+    def recreate_group(self, group_name, main_strands, auto_select=False):
+        """Recreate a group with the same name but updated main strands."""
+        logging.info(f"Recreating group {group_name} with main strands: {main_strands}")
+        
+        # Initialize the group in canvas.groups
+        if self.canvas:
+            self.canvas.groups[group_name] = {
+                'strands': [],
+                'layers': [],
+                'main_strands': main_strands,
+                'control_points': {},
+                'data': []
+            }
+        
+        # Collect all strands that match the main_strands
+        selected_strands = []
+        layers_data = []
+        
+        for strand in self.canvas.strands:
+            main_layer = self.extract_main_layer(strand.layer_name)
+            if main_layer in main_strands:
+                selected_strands.append(strand)
+                
+                # Store control points
+                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                
+                # Create strand data copy
+                strand_data = {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'control_point1': cp1,
+                    'control_point2': cp2,
+                    'width': strand.width,
+                    'color': QColor(strand.color),
+                    'stroke_color': QColor(strand.stroke_color),
+                    'stroke_width': strand.stroke_width,
+                    'has_circles': strand.has_circles.copy(),
+                    'attached_strands': strand.attached_strands.copy(),
+                    'is_first_strand': strand.is_first_strand,
+                    'is_start_side': strand.is_start_side,
+                    'set_number': strand.set_number
+                }
+                layers_data.append(strand_data)
+        
+        # Update canvas groups with collected data
+        if self.canvas and group_name in self.canvas.groups:
+            self.canvas.groups[group_name].update({
+                'strands': selected_strands,
+                'layers': [strand.layer_name for strand in selected_strands],
+                'data': layers_data,
+                'control_points': {
+                    strand.layer_name: {
+                        'control_point1': QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start),
+                        'control_point2': QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
+                    } for strand in selected_strands
+                }
+            })
+        
+        # Create the group in the group panel
+        if hasattr(self, 'group_panel'):
+            self.group_panel.create_group(group_name, selected_strands)
+        
+        logging.info(f"Successfully recreated group {group_name} with {len(selected_strands)} strands")
     def update_translations(self):
         # Fetch the translations for the current language code
         if self.language_code in translations:
@@ -1104,24 +1199,24 @@ class GroupLayerManager:
         self.update_groups_with_new_strand(new_strand)
 
     def add_strand_to_group(self, group_name, strand):
+        """Add a strand to an existing group."""
         logging.info(f"Attempting to add strand {strand.layer_name} to group {group_name}")
-        # Only allow adding strands explicitly chosen by the user
-        # This method should be called when the user explicitly adds a strand to a group
-        if group_name in self.group_panel.groups:
-            group_data = self.group_panel.groups[group_name]
+        if group_name in self.canvas.groups:
+            group_data = self.canvas.groups[group_name]
             if strand.layer_name not in group_data['layers']:
+                # Add to canvas groups
                 group_data['layers'].append(strand.layer_name)
                 group_data['strands'].append(strand)
-                self.group_panel.add_layer_to_group(strand.layer_name, group_name, strand)
-                # Update canvas groups
-                if self.canvas and group_name in self.canvas.groups:
-                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                    self.canvas.groups[group_name]['strands'].append(strand)
-                logging.info(f"Strand {strand.layer_name} added to group {group_name}")
+                
+                # Add to group panel groups
+                if hasattr(self, 'group_panel'):
+                    self.group_panel.add_layer_to_group(strand.layer_name, group_name)
+                
+                logging.info(f"Successfully added strand {strand.layer_name} to group {group_name}")
             else:
                 logging.info(f"Strand {strand.layer_name} already in group {group_name}")
         else:
-            logging.warning(f"Attempted to add strand to non-existent group: {group_name}")
+            logging.warning(f"Group {group_name} not found")
 
 
     def update_groups_with_new_strand(self, new_strand):

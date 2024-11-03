@@ -10,8 +10,13 @@ from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
+import traceback 
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
+from PyQt5.QtWidgets import QCheckBox, QLineEdit, QPushButton
+import logging
+import traceback
+
 from translations import translations
 # Add this import
 from typing import TYPE_CHECKING
@@ -1138,66 +1143,75 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
         )
         return max(existing_set_numbers, default=0) + 1
+    def get_next_strand_number(self, set_number):
+        """Get the next available strand number for a set."""
+        # Get all existing numbers for this set
+        existing_numbers = []
+        for strand in self.strands:
+            if strand.set_number == set_number:
+                try:
+                    # Extract the number after the underscore (e.g., '1_3' -> 3)
+                    number = int(strand.layer_name.split('_')[1])
+                    existing_numbers.append(number)
+                except (IndexError, ValueError):
+                    continue
+        
+        # If no existing numbers, start with 1
+        if not existing_numbers:
+            return 1
+            
+        # Get the next sequential number
+        return max(existing_numbers) + 1
 
     def attach_strand(self, parent_strand, new_strand):
-        """Attach a new strand to a parent strand."""
-        parent_strand.attached_strands.append(new_strand)
-        new_strand.parent = parent_strand
+        """Handle group cleanup when a new strand is attached."""
+        try:
+            logging.info(f"\n=== ATTACH_STRAND PROCESSING ===")
+            
+            if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
+                return True
+                    
+            group_panel = self.group_layer_manager.group_panel
+            branch_number = str(parent_strand.set_number)
+            
+            # Store groups that need to be recreated
+            groups_to_recreate = {}
+            for group_name, group_data in list(group_panel.groups.items()):
+                if parent_strand.layer_name in group_data.get('layers', []):
+                    logging.info(f"Found group '{group_name}' containing parent strand")
+                    groups_to_recreate[group_name] = dict(group_data)
+                    
+                    # Delete the group
+                    if group_name in self.groups:
+                        del self.groups[group_name]
+                    group_panel.delete_group(group_name)
+            
+            # Connect to the strand_created signal to recreate groups after new strand is initialized
+            def recreate_groups(new_strand):
+                for group_name in groups_to_recreate:
+                    logging.info(f"Recreating group '{group_name}' with all strands")
+                    # Get all strands from this branch, including the new one
+                    branch_strands = [s for s in self.strands if str(s.set_number) == branch_number]
+                    logging.info(f"Found {len(branch_strands)} strands for branch {branch_number}")
+                    
+                    self.group_layer_manager.create_group_with_params(
+                        group_name=group_name,
+                        selected_main_strands=[branch_number],
+                        skip_dialog=True
+                    )
+                
+                # Disconnect after handling
+                self.strand_created.disconnect(recreate_groups)
+            
+            # Connect the handler
+            self.strand_created.connect(recreate_groups)
+            
+            return True
 
-        # Set the set_number for the new strand
-        new_strand.set_number = parent_strand.set_number
-
-        # Append the new strand to the strands list
-        self.strands.append(new_strand)
-
-        # Set this as the newest strand to ensure it's drawn on top
-        self.newest_strand = new_strand
-
-        # Calculate the correct count for the new strand
-        count = len([s for s in self.strands if s.set_number == new_strand.set_number])
-        new_strand.layer_name = f"{new_strand.set_number}_{count}"
-
-        # Set the color for the new strand
-        if new_strand.set_number in self.strand_colors:
-            new_strand.set_color(self.strand_colors[new_strand.set_number])
-
-        # **Update attachment statuses**
-        # The start of the new strand is attached to the end of the parent strand
-        new_strand.start = QPointF(parent_strand.end)
-        new_strand.start_attached = True
-        parent_strand.end_attached = True
-
-        # Update the side lines to reflect attachment
-        parent_strand.update_side_line()
-        new_strand.update_side_line()
-
-        # **Update the layer_state_manager with the new connection**
-        if self.layer_state_manager:
-            self.layer_state_manager.connect_layers(parent_strand.layer_name, new_strand.layer_name)
-
-        # Update the layer panel
-        if self.layer_panel:
-            if not hasattr(new_strand, 'is_being_deleted'):
-                self.layer_panel.add_layer_button(new_strand.set_number, count)
-            else:
-                self.layer_panel.update_layer_names(new_strand.set_number)
-            self.layer_panel.on_strand_attached()
-
-        # Inform the GroupLayerManager about the new attached strand
-        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
-            self.group_layer_manager.update_groups_with_new_strand(new_strand)
-
-        # Select the newly attached strand
-        new_strand_index = self.strands.index(new_strand)
-        self.select_strand(new_strand_index)
-
-        # Update the canvas
-        self.update()
-
-        logging.info(f"Attached new strand: {new_strand.layer_name} to parent: {parent_strand.layer_name}")
-
-        # Emit the strand_created signal
-        self.strand_created.emit(new_strand)
+        except Exception as e:
+            logging.error(f"Error in attach_strand: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            return False
 
     def move_strand_to_top(self, strand):
         """Move a strand to the top of the drawing order and update the layer panel."""

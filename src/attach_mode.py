@@ -2,6 +2,7 @@ from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
+import logging
 
 from strand import Strand, AttachedStrand, MaskedStrand
 
@@ -200,10 +201,12 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         """Start the attachment of a new strand to an existing one."""
+        logging.info(f"Starting attachment to parent strand {parent_strand.layer_name} at side {side}")
+        
         new_strand = AttachedStrand(parent_strand, attach_point)
         
         # Set the canvas reference immediately
-        new_strand.canvas = self.canvas  # Add this line
+        new_strand.canvas = self.canvas
         
         # Set the affected strand so it can be highlighted during creation
         self.affected_strand = new_strand
@@ -224,8 +227,18 @@ class AttachMode(QObject):
             set_number = parent_strand.set_number
             count = len([s for s in self.canvas.strands if s.set_number == set_number]) + 1
             new_strand.layer_name = f"{set_number}_{count}"
+            logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
+
+        # Call the canvas's attach_strand method to handle group cleanup
+        logging.info(f"Calling attach_strand on canvas for parent: {parent_strand.layer_name}, new: {new_strand.layer_name}")
+        if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+            logging.info(f"Current groups before attachment: {list(self.canvas.group_layer_manager.group_panel.groups.keys())}")
+        self.canvas.attach_strand(parent_strand, new_strand)
+        if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+            logging.info(f"Current groups after attachment: {list(self.canvas.group_layer_manager.group_panel.groups.keys())}")
 
         # Emit the new signal
+        logging.info(f"Emitting strand_attached signal for parent: {parent_strand.layer_name}, new: {new_strand.layer_name}")
         self.strand_attached.emit(parent_strand, new_strand)
 
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):

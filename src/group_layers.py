@@ -1316,34 +1316,51 @@ class GroupLayerManager:
         """Recreate a group after a strand is attached, maintaining all original branches."""
         logging.info(f"[GroupLayerManager.recreate_group] Starting recreation of group '{group_name}'")
         logging.info(f"[GroupLayerManager.recreate_group] New strand: {new_strand.layer_name if hasattr(new_strand, 'layer_name') else 'Unknown'}")
-        logging.info(f"[GroupLayerManager.recreate_group] Original main strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in (original_main_strands or [])]}")
+        
+        # Helper function to convert string to strand object if needed
+        def ensure_strand_object(strand_id):
+            if isinstance(strand_id, str):
+                # If it's just a number, append "_1" to get the main strand name
+                if strand_id.isdigit():
+                    strand_id = f"{strand_id}_1"
+                # Find the actual strand object by name
+                for strand in self.canvas.strands:
+                    if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
+                        return strand
+                logging.warning(f"Could not find strand object for {strand_id}")
+                return None
+            return strand_id
 
-        # Initialize main strands set with original main strands first
+        # Initialize main strands set
         all_main_strands = set()
+        
+        # Process original main strands - this should be the primary source of main strands
         if original_main_strands:
-            all_main_strands.update(original_main_strands)
-            logging.info(f"[GroupLayerManager.recreate_group] Added original main strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in all_main_strands]}")
+            for strand_id in original_main_strands:
+                strand_obj = ensure_strand_object(strand_id)
+                if strand_obj:
+                    all_main_strands.add(strand_obj)
+            logging.info(f"[GroupLayerManager.recreate_group] Added original main strands: {[s.layer_name for s in all_main_strands]}")
         
-        # Then check existing group data as backup
-        if self.canvas and group_name in self.canvas.groups:
+        # Only if we have no main strands, check existing group data
+        if not all_main_strands and self.canvas and group_name in self.canvas.groups:
             existing_group = self.canvas.groups[group_name]
-            logging.info(f"[GroupLayerManager.recreate_group] Found existing group with data: {existing_group}")
-
-            if 'main_strands' in existing_group and not all_main_strands:  # Only use if we don't have original strands
-                all_main_strands.update(existing_group['main_strands'])
-                logging.info(f"[GroupLayerManager.recreate_group] Added existing main strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in all_main_strands]}")
+            if 'main_strands' in existing_group:
+                for strand in existing_group['main_strands']:
+                    strand_obj = ensure_strand_object(strand)
+                    if strand_obj:
+                        all_main_strands.add(strand_obj)
+                logging.info(f"[GroupLayerManager.recreate_group] Added existing main strands: {[s.layer_name for s in all_main_strands]}")
         
-        # If still empty, derive from strands (last resort)
+        # Only if we still have no main strands, derive from strands (last resort)
         if not all_main_strands and self.canvas:
             for strand in self.canvas.strands:
                 if hasattr(strand, 'layer_name'):
                     parts = strand.layer_name.split('_')
                     if len(parts) == 2 and parts[1] == '1':  # Only add main strands (x_1 pattern)
                         all_main_strands.add(strand)
-                        logging.info(f"Derived main strand: {strand.layer_name}")
-            logging.info(f"Derived main strands from existing strands: {[s.layer_name for s in all_main_strands]}")
-        
-        logging.info(f"Final main strands for recreation: {[s.layer_name for s in all_main_strands]}")
+            if all_main_strands:
+                logging.info(f"Derived main strands from existing strands: {[s.layer_name for s in all_main_strands]}")
         
         # Initialize the group in canvas.groups
         self.canvas.groups[group_name] = {
@@ -1356,31 +1373,36 @@ class GroupLayerManager:
         # Collect all strands for each branch
         all_strands = []
         for main_strand in all_main_strands:
-            branch = self.extract_main_layer(main_strand.layer_name)
-            branch_strands = []
-            for strand in self.canvas.strands:
-                if self.extract_main_layer(strand.layer_name) == branch:
-                    branch_strands.append(strand)
-                    logging.info(f"Added strand {strand.layer_name} to branch {branch}")
-            logging.info(f"Found {len(branch_strands)} strands for branch {branch}")
-            all_strands.extend(branch_strands)
+            if hasattr(main_strand, 'layer_name'):
+                branch = self.extract_main_layer(main_strand.layer_name)
+                branch_strands = []
+                for strand in self.canvas.strands:
+                    if hasattr(strand, 'layer_name') and self.extract_main_layer(strand.layer_name) == branch:
+                        branch_strands.append(strand)
+                        logging.info(f"Added strand {strand.layer_name} to branch {branch}")
+                logging.info(f"Found {len(branch_strands)} strands for branch {branch}")
+                all_strands.extend(branch_strands)
         
         # Add all strands to the group
         for strand in all_strands:
-            self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-            self.canvas.groups[group_name]['strands'].append(strand)
-            self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                'control_point1': strand.control_point1 if hasattr(strand, 'control_point1') else None,
-                'control_point2': strand.control_point2 if hasattr(strand, 'control_point2') else None
-            }
-            logging.info(f"Added strand {strand.layer_name} to group {group_name}")
+            if hasattr(strand, 'layer_name'):
+                self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                self.canvas.groups[group_name]['strands'].append(strand)
+                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                    'control_point1': strand.control_point1 if hasattr(strand, 'control_point1') else None,
+                    'control_point2': strand.control_point2 if hasattr(strand, 'control_point2') else None
+                }
+                logging.info(f"Added strand {strand.layer_name} to group {group_name}")
         
         # Create the group in the group panel
         self.group_panel.create_group(group_name, all_strands)
         logging.info(f"Created group {group_name} in group panel with {len(all_strands)} strands")
         
         # Verify final group composition
-        final_branches = set(self.extract_main_layer(strand.layer_name) for strand in all_strands)
+        final_branches = set()
+        for strand in all_strands:
+            if hasattr(strand, 'layer_name'):
+                final_branches.add(self.extract_main_layer(strand.layer_name))
         logging.info(f"Final group composition - branches: {list(final_branches)}, total strands: {len(all_strands)}")
     def preserve_group_data(self, group_name):
         """Store the current group data before any transformations."""
@@ -1488,7 +1510,14 @@ class GroupLayerManager:
         else:
             # For regular strands, check if parent strand is in any group
             for group_name, group_data in self.canvas.groups.items():
-                if any(strand.layer_name == new_strand.parent_strand.layer_name for strand in group_data['strands']):
+                # Get parent strand layer name based on strand type
+                parent_layer_name = None
+                if hasattr(new_strand, 'parent_strand'):
+                    parent_layer_name = new_strand.parent_strand.layer_name
+                elif hasattr(new_strand, 'attached_to'):
+                    parent_layer_name = new_strand.attached_to.layer_name
+                
+                if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data['strands']):
                     logging.info(f"Found group '{group_name}' containing parent strand")
                     # Store the original main strands before deletion
                     original_main_strands = list(group_data.get('main_strands', []))

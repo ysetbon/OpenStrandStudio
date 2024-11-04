@@ -148,6 +148,12 @@ class StrandDrawingCanvas(QWidget):
             """)
         self.update()
     def start_group_rotation(self, group_name):
+        """Start rotating a group of strands."""
+        # First preserve the group data
+        if self.group_layer_manager:
+            self.group_layer_manager.preserve_group_data(group_name)
+            logging.info(f"Preserved group data before rotation for '{group_name}'")
+
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
@@ -234,17 +240,26 @@ class StrandDrawingCanvas(QWidget):
         self.groups[group_name] = group_data.copy()
         logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
+        """Finish rotating a group of strands."""
         if self.rotating_group == group_name:
-            group_data = self.groups[group_name]
-            # Update the original positions of each strand to the new positions
-            for strand in group_data['strands']:
-                self.update_original_positions_recursively(strand)
-            self.rotating_group = None
-            self.rotation_center = None
-            self.current_rotation_angle = 0
-            self.original_strand_positions.clear()
-            logging.info(f"Finished rotation for group '{group_name}'")
-            self.update()
+            # Verify group data is preserved
+            if group_name in self.groups:
+                group_data = self.groups[group_name]
+                if 'main_strands' not in group_data:
+                    logging.warning(f"Group '{group_name}' missing main_strands data")
+                
+                # Update the original positions of each strand to the new positions
+                for strand in group_data['strands']:
+                    self.update_original_positions_recursively(strand)
+                
+                self.rotating_group = None
+                self.rotation_center = None
+                self.current_rotation_angle = 0
+                self.original_strand_positions.clear()
+                logging.info(f"Finished rotation for group '{group_name}'")
+                self.update()
+            else:
+                logging.error(f"Group '{group_name}' not found in canvas groups")
         else:
             logging.warning(f"Attempted to finish rotation for inactive group: {group_name}")
 

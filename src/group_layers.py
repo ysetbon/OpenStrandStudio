@@ -720,18 +720,35 @@ class GroupPanel(QWidget):
             logging.warning(f"Attempted to rotate non-existent or inactive group: {group_name}")
 
     def finish_group_rotation(self, group_name):
+        """Finish the rotation of a group."""
         logging.info(f"GroupPanel: Finishing group rotation for '{group_name}'")
         if self.canvas:
-            # Store the final positions as the new pre-rotation positions
+            # First restore the preserved group data from GroupLayerManager
+            if self.canvas.group_layer_manager:
+                # Get the preserved data before cleaning up rotation points
+                preserved_data = self.canvas.preserved_group_data if hasattr(self.canvas, 'preserved_group_data') else None
+                
+                if preserved_data:
+                    # Update the group with preserved data
+                    self.groups[group_name].update({
+                        'main_strands': preserved_data['main_strands'],
+                        'layers': preserved_data['layers']
+                    })
+                    logging.info(f"Restored group data for '{group_name}': {preserved_data['main_strands']}")
+            
+            # Clean up rotation-specific data
             group_data = self.canvas.groups[group_name]
             for strand in group_data['strands']:
                 if hasattr(strand, 'pre_rotation_points'):
-                    # Clean up the pre-rotation points
                     delattr(strand, 'pre_rotation_points')
                     logging.info(f"Cleaned up pre-rotation points for strand {strand.layer_name}")
+            
+            # Finish rotation in canvas
+            self.canvas.finish_group_rotation(group_name)
             self.canvas.update()
         else:
             logging.error("Canvas not properly connected to GroupPanel")
+        
         # Clear the active group name
         self.active_group_name = None
 
@@ -1104,15 +1121,32 @@ class GroupLayerManager:
         """Recreate a group after a strand is attached, maintaining all original branches."""
         logging.info(f"Recreating group '{group_name}' with all strands")
         
-        # Use original main strands if provided, otherwise get from current state
-        all_main_strands = set(original_main_strands) if original_main_strands else set()
-        logging.info(f"Starting with original main strands: {list(all_main_strands)}")
+        # First try to get main strands from existing group if available
+        all_main_strands = set()
+        if self.canvas and group_name in self.canvas.groups:
+            existing_group = self.canvas.groups[group_name]
+            if 'main_strands' in existing_group:
+                all_main_strands.update(existing_group['main_strands'])
+                logging.info(f"Retrieved existing main strands from group: {list(all_main_strands)}")
         
-        # Add the new strand's branch if not already included
+        # Add original main strands if provided
+        if original_main_strands:
+            all_main_strands.update(original_main_strands)
+            logging.info(f"Added original main strands: {original_main_strands}")
+        
+        # Add the new strand's branch
         new_branch = self.extract_main_layer(new_strand.layer_name)
         if new_branch:
             all_main_strands.add(new_branch)
             logging.info(f"Added new branch {new_branch} to main strands")
+        
+        # If still empty, try to derive from existing strands
+        if not all_main_strands and self.canvas:
+            for strand in self.canvas.strands:
+                main_layer = self.extract_main_layer(strand.layer_name)
+                if main_layer:
+                    all_main_strands.add(main_layer)
+            logging.info(f"Derived main strands from existing strands: {list(all_main_strands)}")
         
         logging.info(f"Final main strands for recreation: {list(all_main_strands)}")
         
@@ -1152,6 +1186,37 @@ class GroupLayerManager:
         # Verify final group composition
         final_branches = set(self.extract_main_layer(strand.layer_name) for strand in all_strands)
         logging.info(f"Final group composition - branches: {list(final_branches)}, total strands: {len(all_strands)}")
+
+    def preserve_group_data(self, group_name):
+        """Store the current group data before any transformations."""
+        if self.canvas and group_name in self.canvas.groups:
+            group_data = self.canvas.groups[group_name]
+            preserved_data = {
+                'main_strands': list(group_data.get('main_strands', [])),
+                'layers': list(group_data.get('layers', [])),
+                'control_points': dict(group_data.get('control_points', {}))
+            }
+            self.canvas.preserved_group_data = preserved_data
+            logging.info(f"Preserved group data for {group_name}: {preserved_data['main_strands']}")
+            return preserved_data
+        return None
+
+    def restore_group_data(self, group_name):
+        """Restore preserved group data after transformations."""
+        if hasattr(self.canvas, 'preserved_group_data'):
+            if group_name in self.canvas.groups:
+                self.canvas.groups[group_name].update({
+                    'main_strands': self.canvas.preserved_group_data['main_strands'],
+                    'layers': self.canvas.preserved_group_data['layers'],
+                    'control_points': self.canvas.preserved_group_data['control_points']
+                })
+                logging.info(f"Restored group data for {group_name}: {self.canvas.preserved_group_data['main_strands']}")
+            else:
+                self.canvas.groups[group_name] = self.canvas.preserved_group_data
+                logging.info(f"Group '{group_name}' did not exist. Restored with preserved data.")
+            delattr(self.canvas, 'preserved_group_data')
+        else:
+            logging.warning("No preserved group data to restore.")
     def update_translations(self):
         # Fetch the translations for the current language code
         if self.language_code in translations:

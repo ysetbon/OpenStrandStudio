@@ -650,13 +650,20 @@ class GroupPanel(QWidget):
                 
                 for strand in group_data['strands']:
                     # Store all current positions and angles
-                    self.pre_rotation_state[strand.layer_name] = {
+                    state = {
                         'start': QPointF(strand.start),
-                        'end': QPointF(strand.end),
-                        'control_point1': QPointF(strand.control_point1),
-                        'control_point2': QPointF(strand.control_point2)
+                        'end': QPointF(strand.end)
                     }
-                    logging.info(f"Stored pre-rotation state for strand {strand.layer_name}")
+                    
+                    # Only store control points for regular strands, not masked strands
+                    if not isinstance(strand, MaskedStrand):
+                        state['control_point1'] = QPointF(strand.control_point1)
+                        state['control_point2'] = QPointF(strand.control_point2)
+                        logging.info(f"Stored pre-rotation state for strand {strand.layer_name}")
+                    else:
+                        logging.info(f"Skipped storing control points for masked strand {strand.layer_name}")
+                    
+                    self.pre_rotation_state[strand.layer_name] = state
                 
                 self.canvas.start_group_rotation(group_name)
                 dialog = GroupRotateDialog(group_name, self)
@@ -716,25 +723,28 @@ class GroupPanel(QWidget):
                         new_y = center.y() + dx * sin(angle_rad) + dy * cos(angle_rad)
                         return QPointF(new_x, new_y)
                     
-                    # Rotate all points from their pre-rotation positions
+                    # Rotate start and end points for all strands
                     strand.start = rotate_point(pre_rotation_pos['start'])
                     strand.end = rotate_point(pre_rotation_pos['end'])
-                    strand.control_point1 = rotate_point(pre_rotation_pos['control_point1'])
-                    strand.control_point2 = rotate_point(pre_rotation_pos['control_point2'])
+                    
+                    # Only rotate control points for regular strands
+                    if not isinstance(strand, MaskedStrand):
+                        strand.control_point1 = rotate_point(pre_rotation_pos['control_point1'])
+                        strand.control_point2 = rotate_point(pre_rotation_pos['control_point2'])
+                        
+                        # Store the updated control points in group data
+                        if 'control_points' not in self.canvas.groups[group_name]:
+                            self.canvas.groups[group_name]['control_points'] = {}
+                        
+                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                            'control_point1': strand.control_point1,
+                            'control_point2': strand.control_point2
+                        }
                     
                     # Update the strand's shape and side lines
                     strand.update_shape()
                     if hasattr(strand, 'update_side_line'):
                         strand.update_side_line()
-                    
-                    # Store the updated control points in group data
-                    if 'control_points' not in self.canvas.groups[group_name]:
-                        self.canvas.groups[group_name]['control_points'] = {}
-                    
-                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                        'control_point1': strand.control_point1,
-                        'control_point2': strand.control_point2
-                    }
                 
                 # Update the canvas
                 self.canvas.update()

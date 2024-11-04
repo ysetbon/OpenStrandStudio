@@ -166,8 +166,12 @@ class StrandDrawingCanvas(QWidget):
             return
 
         if group_name in self.groups:
-            self.rotating_group = group_name
             group_data = self.groups[group_name]
+            # Store the original main strands before rotation
+            self.pre_rotation_main_strands = list(group_data.get('main_strands', []))
+            logging.info(f"Stored pre-rotation main strands for group {group_name}: {self.pre_rotation_main_strands}")
+            
+            self.rotating_group = group_name
             self.original_strand_positions = {}
             for strand in group_data['strands']:
                 self.original_strand_positions[strand] = {
@@ -241,27 +245,48 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         """Finish rotating a group of strands."""
-        if self.rotating_group == group_name:
-            # Verify group data is preserved
-            if group_name in self.groups:
-                group_data = self.groups[group_name]
-                if 'main_strands' not in group_data:
-                    logging.warning(f"Group '{group_name}' missing main_strands data")
-                
-                # Update the original positions of each strand to the new positions
-                for strand in group_data['strands']:
-                    self.update_original_positions_recursively(strand)
-                
-                self.rotating_group = None
-                self.rotation_center = None
-                self.current_rotation_angle = 0
-                self.original_strand_positions.clear()
-                logging.info(f"Finished rotation for group '{group_name}'")
-                self.update()
-            else:
-                logging.error(f"Group '{group_name}' not found in canvas groups")
+        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Starting for group '{group_name}'")
+
+        # Log initial state
+        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current rotating_group_name: {getattr(self, 'rotating_group_name', None)}")
+        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Group exists in self.groups: {group_name in self.groups}")
+        
+        if hasattr(self, 'pre_rotation_main_strands'):
+            logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Found pre_rotation_main_strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
         else:
-            logging.warning(f"Attempted to finish rotation for inactive group: {group_name}")
+            logging.info("[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands found")
+
+        if hasattr(self, 'rotating_group_name') and self.rotating_group_name == group_name:
+            if group_name in self.groups:
+                # Log group data before restoration
+                current_main_strands = self.groups[group_name].get('main_strands', [])
+                logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current main strands before restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in current_main_strands]}")
+                
+                # Restore the original main strands
+                if hasattr(self, 'pre_rotation_main_strands'):
+                    self.groups[group_name]['main_strands'] = self.pre_rotation_main_strands
+                    logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Restored main strands for group {group_name}: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
+                else:
+                    logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands to restore for group {group_name}")
+                
+                # Log final group data
+                final_main_strands = self.groups[group_name].get('main_strands', [])
+                logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Final main strands after restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in final_main_strands]}")
+            else:
+                logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
+                
+            # Cleanup
+            self.is_rotating = False
+            self.rotating_group_name = None
+            self.rotation_center = None
+            if hasattr(self, 'pre_rotation_main_strands'):
+                delattr(self, 'pre_rotation_main_strands')
+                logging.info("[StrandDrawingCanvas.finish_group_rotation] Cleaned up pre_rotation_main_strands")
+                
+            logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Finished rotation cleanup for group '{group_name}'")
+            self.update()
+        else:
+            logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] Attempted to finish rotation for inactive group: {group_name}. Current rotating group: {getattr(self, 'rotating_group_name', None)}")
 
 
     def update_original_positions_recursively(self, strand):
@@ -372,6 +397,28 @@ class StrandDrawingCanvas(QWidget):
                         del attached_strand.original_end
 
         self.update()
+
+    def validate_group_data(self, group_name):
+        """Validate and repair group data if necessary."""
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            
+            # Ensure all required keys exist
+            required_keys = ['layers', 'strands', 'control_points', 'main_strands']
+            for key in required_keys:
+                if key not in group_data:
+                    group_data[key] = [] if key != 'control_points' else {}
+                    
+            # Validate strands exist in canvas
+            group_data['strands'] = [strand for strand in group_data['strands'] 
+                                if strand in self.strands]
+            
+            # Update layers based on valid strands
+            group_data['layers'] = [strand.layer_name for strand in group_data['strands']]
+            
+            logging.info(f"Validated group data for {group_name}")
+            return True
+        return False
     def snap_group_to_grid(self, group_name):
         """
         Snaps all points of strands and attached strands (excluding masked strands)
@@ -2424,8 +2471,16 @@ class StrandDrawingCanvas(QWidget):
             self.angle_adjust_mode.language_code = language_code
 
     def update_strand_angle(self, strand_name, new_angle):
+        """
+        Update the angle of a strand to a new specified angle.
+
+        Args:
+            strand_name (str): The name of the strand to update.
+            new_angle (float): The new angle in degrees.
+        """
         strand = self.find_strand_by_name(strand_name)
         if strand:
+            # Calculate the current angle
             old_angle = self.calculate_angle(strand)
             angle_diff = radians(new_angle - old_angle)
             
@@ -2433,15 +2488,26 @@ class StrandDrawingCanvas(QWidget):
             dy = strand.end.y() - strand.start.y()
             length = (dx**2 + dy**2)**0.5
             
+            # Calculate new end point based on new angle
             new_dx = length * cos(radians(new_angle))
             new_dy = length * sin(radians(new_angle))
             
+            # Update the end point
             strand.end.setX(strand.start.x() + new_dx)
             strand.end.setY(strand.start.y() + new_dy)
             
+            # Update the strand's shape
             strand.update_shape()
             if hasattr(strand, 'update_side_line'):
                 strand.update_side_line()
+            
+            # **Add these lines to update original positions**
+            strand.original_start = QPointF(strand.start)
+            strand.original_end = QPointF(strand.end)
+            if hasattr(strand, 'control_point1'):
+                strand.original_control_point1 = QPointF(strand.control_point1)
+            if hasattr(strand, 'control_point2'):
+                strand.original_control_point2 = QPointF(strand.control_point2)
             
             self.update()  # Trigger a repaint of the canvas
 

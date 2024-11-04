@@ -200,45 +200,67 @@ class AttachMode(QObject):
         return False
 
     def start_attachment(self, parent_strand, attach_point, side):
-        """Start the attachment of a new strand to an existing one."""
-        logging.info(f"Starting attachment to parent strand {parent_strand.layer_name} at side {side}")
+        """Start the attachment process for a new strand."""
+        logging.info(f"[AttachMode.start_attachment] Starting attachment to parent strand {parent_strand.layer_name} at side {side}")
+        
+        # Find the parent strand's group before creating new strand
+        parent_group = None
+        parent_group_name = None
+        if hasattr(self.canvas, 'groups'):
+            for group_name, group_data in self.canvas.groups.items():
+                if parent_strand.layer_name in group_data.get('layers', []):
+                    parent_group = group_data
+                    parent_group_name = group_name
+                    logging.info(f"[AttachMode.start_attachment] Found parent strand in group: {group_name}")
+                    logging.info(f"[AttachMode.start_attachment] Group main strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in group_data.get('main_strands', [])]}")
+                    break
         
         new_strand = AttachedStrand(parent_strand, attach_point)
-        
-        # Set the canvas reference immediately
         new_strand.canvas = self.canvas
-        
-        # Set the affected strand so it can be highlighted during creation
         self.affected_strand = new_strand
+        
+        # Set properties from parent strand
         new_strand.set_color(parent_strand.color)
         new_strand.set_number = parent_strand.set_number
         new_strand.is_first_strand = False
         new_strand.is_start_side = False
+        
+        # Update parent strand
         parent_strand.attached_strands.append(new_strand)
         parent_strand.has_circles[side] = True
         parent_strand.update_attachable()
+        
+        # Setup canvas and position
         self.canvas.current_strand = new_strand
         self.is_attaching = True
         self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)
         self.target_pos = self.last_snapped_pos
 
-        # Update the layer name for the new strand
+        # Update layer name
         if self.canvas.layer_panel:
             set_number = parent_strand.set_number
             count = len([s for s in self.canvas.strands if s.set_number == set_number]) + 1
             new_strand.layer_name = f"{set_number}_{count}"
             logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
 
-        # Call the canvas's attach_strand method to handle group cleanup
-        logging.info(f"Calling attach_strand on canvas for parent: {parent_strand.layer_name}, new: {new_strand.layer_name}")
-        if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
-            logging.info(f"Current groups before attachment: {list(self.canvas.group_layer_manager.group_panel.groups.keys())}")
-        self.canvas.attach_strand(parent_strand, new_strand)
-        if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
-            logging.info(f"Current groups after attachment: {list(self.canvas.group_layer_manager.group_panel.groups.keys())}")
+        # If parent was in a group, update group data
+        if parent_group and parent_group_name:
+            if parent_group_name not in self.canvas.groups:
+                logging.warning(f"Group {parent_group_name} not found in canvas.groups")
+                logging.info(f"Recreating group with data: {parent_group}")
+                self.canvas.groups[parent_group_name] = parent_group
+                
+            logging.info(f"Group {parent_group_name} main_strands before adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
+            # Add new strand to group
+            self.canvas.groups[parent_group_name]['layers'].append(new_strand.layer_name)
+            self.canvas.groups[parent_group_name]['strands'].append(new_strand)
+            logging.info(f"Added new strand {new_strand.layer_name} to group {parent_group_name}")
+            logging.info(f"Group {parent_group_name} main_strands after adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
 
-        # Emit the new signal
-        logging.info(f"Emitting strand_attached signal for parent: {parent_strand.layer_name}, new: {new_strand.layer_name}")
+        # Call canvas's attach_strand method
+        self.canvas.attach_strand(parent_strand, new_strand)
+        
+        # Emit signals
         self.strand_attached.emit(parent_strand, new_strand)
 
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):

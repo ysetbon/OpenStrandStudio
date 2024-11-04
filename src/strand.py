@@ -1070,6 +1070,7 @@ class MaskedStrand(Strand):
         self._has_circles = [False, False]
         self.is_selected = False
         self.custom_mask_path = None  # Add this line for custom mask support
+        self.deletion_rectangles = []  # Add this line to store deletion rectangles
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
@@ -1142,27 +1143,44 @@ class MaskedStrand(Strand):
     def set_custom_mask(self, mask_path):
         """Set a custom mask path for this masked strand."""
         self.custom_mask_path = mask_path
-        logging.info(f"Set custom mask for masked strand {self.layer_name}")
+        # Save the current state of deletion rectangles
+        if hasattr(self, 'deletion_rectangles'):
+            logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
 
     def reset_mask(self):
         """Reset to the default intersection mask."""
         self.custom_mask_path = None
-        logging.info(f"Reset mask for masked strand {self.layer_name}")
+        self.deletion_rectangles = []  # Clear the deletion rectangles
+        logging.info(f"Reset mask and cleared deletion rectangles for masked strand {self.layer_name}")
 
     def get_mask_path(self):
         """Get the path representing the masked area."""
-        if self.custom_mask_path is not None:
-            return self.custom_mask_path
-
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
 
-        # Get the stroked paths of both selected strands
+        # Get the base intersection path
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        result_path = path1.intersected(path2)
 
-        # Return the intersection of the two paths
-        return path1.intersected(path2)
+        # If we have a custom mask path, use that instead
+        if self.custom_mask_path is not None:
+            result_path = self.custom_mask_path
+
+        # Apply any saved deletion rectangles
+        if hasattr(self, 'deletion_rectangles'):
+            for rect in self.deletion_rectangles:
+                deletion_path = QPainterPath()
+                deletion_path.addRect(QRectF(
+                    rect['x'],
+                    rect['y'],
+                    rect['width'],
+                    rect['height']
+                ))
+                result_path = result_path.subtracted(deletion_path)
+                logging.debug(f"Applied deletion rectangle: {rect}")
+
+        return result_path
 
     def get_stroked_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""

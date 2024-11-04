@@ -1455,16 +1455,25 @@ class StrandDrawingCanvas(QWidget):
 
     def mouseReleaseEvent(self, event):
         if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
-            # Create a path from the rectangle
+            # Save the deletion rectangle information
+            if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
+                self.editing_masked_strand.deletion_rectangles = []
+                
+            # Store the rectangle coordinates
+            rect_data = {
+                'x': self.current_erase_rect.x(),
+                'y': self.current_erase_rect.y(),
+                'width': self.current_erase_rect.width(),
+                'height': self.current_erase_rect.height()
+            }
+            self.editing_masked_strand.deletion_rectangles.append(rect_data)
+            logging.info(f"Saved deletion rectangle: {rect_data}")
+            
+            # Create and apply the erase path
             erase_path = QPainterPath()
             erase_path.addRect(self.current_erase_rect)
             
-            # Subtract the rectangle from the mask path
             if self.mask_edit_path and self.editing_masked_strand:
-                logging.info(f"Applying deletion rectangle to mask at: x={self.current_erase_rect.x():.2f}, "
-                           f"y={self.current_erase_rect.y():.2f}, "
-                           f"width={self.current_erase_rect.width():.2f}, "
-                           f"height={self.current_erase_rect.height():.2f}")
                 self.mask_edit_path = self.mask_edit_path.subtracted(erase_path)
                 self.editing_masked_strand.set_custom_mask(self.mask_edit_path)
                 logging.info("Updated mask path after deletion")

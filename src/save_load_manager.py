@@ -46,22 +46,22 @@ def serialize_strand(strand, index=None):
         "is_start_side": getattr(strand, 'is_start_side', True),
     }
 
-    # Safely serialize control points
-    control_points = []
+    # Add control points if they exist
     if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-        point1 = serialize_point(strand.control_point1)
-        point2 = serialize_point(strand.control_point2)
-        if point1 is not None and point2 is not None:
-            control_points = [point1, point2]
-    data["control_points"] = control_points
+        data["control_points"] = [
+            serialize_point(strand.control_point1),
+            serialize_point(strand.control_point2)
+        ]
 
-    if isinstance(strand, AttachedStrand):
-        data["parent_layer_name"] = strand.parent.layer_name if strand.parent else None
-    elif isinstance(strand, MaskedStrand):
-        data["first_selected_strand"] = strand.first_selected_strand.layer_name if strand.first_selected_strand else None
-        data["second_selected_strand"] = strand.second_selected_strand.layer_name if strand.second_selected_strand else None
+    # Handle MaskedStrand specific data
+    if isinstance(strand, MaskedStrand):
+        data.update({
+            "first_selected_strand": strand.first_selected_strand.layer_name if strand.first_selected_strand else None,
+            "second_selected_strand": strand.second_selected_strand.layer_name if strand.second_selected_strand else None,
+            "deletion_rectangles": getattr(strand, 'deletion_rectangles', [])
+        })
+        logging.info(f"Serialized {len(data['deletion_rectangles'])} deletion rectangles for masked strand {strand.layer_name}")
 
-    logging.debug(f"Serialized strand '{strand.layer_name}' of type '{type(strand).__name__}'")
     return data
 
 def save_strands(strands, groups, filename):
@@ -73,64 +73,53 @@ def save_strands(strands, groups, filename):
         json.dump(data, f, indent=2)
     logging.info(f"Saved strands and groups to {filename}")
 
-def deserialize_strand(data, parent_strand=None, first_strand=None, second_strand=None):
-    strand_type = data.get("type", "Strand")
+def deserialize_strand(data, strand_dict=None, parent_strand=None):
+    """Deserialize a strand from saved data."""
     start = deserialize_point(data["start"])
     end = deserialize_point(data["end"])
     width = data["width"]
     color = deserialize_color(data["color"])
     stroke_color = deserialize_color(data["stroke_color"])
     stroke_width = data["stroke_width"]
-    has_circles = data["has_circles"]
-    layer_name = data["layer_name"]
-    set_number = data["set_number"]
-    is_first_strand = data.get("is_first_strand", False)
-    is_start_side = data.get("is_start_side", True)
+    set_number = data.get("set_number")
+    layer_name = data.get("layer_name", "")
+    strand_type = data.get("type", "Strand")
 
-    if strand_type == "Strand":
-        strand = Strand(start, end, width)
-    elif strand_type == "AttachedStrand":
-        if not parent_strand:
-            logging.warning(f"Parent strand not found for attached strand '{layer_name}'")
-            return None
-        strand = AttachedStrand(parent_strand, start)
-    elif strand_type == "MaskedStrand":
-        if not (first_strand and second_strand):
-            logging.warning(f"Selected strands not found for masked strand '{layer_name}'")
-            return None
-        strand = MaskedStrand(first_strand, second_strand)
-    else:
-        logging.warning(f"Unknown strand type: {strand_type}")
-        return None
-
-    strand.end = end
-    strand.color = color
-    strand.stroke_color = stroke_color
-    strand.stroke_width = stroke_width
-    strand.has_circles = has_circles
-    strand.layer_name = layer_name
-    strand.set_number = set_number
-    strand.is_first_strand = is_first_strand
-    strand.is_start_side = is_start_side
-
-    # Set control points for any strand type that has them
-    if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-        control_points = data.get("control_points", [])
-        if len(control_points) == 2:
-            strand.control_point1 = deserialize_point(control_points[0])
-            strand.control_point2 = deserialize_point(control_points[1])
+    # Create the appropriate type of strand
+    if strand_type == "MaskedStrand" and strand_dict:
+        # Get the referenced strands from the strand dictionary
+        first_strand = strand_dict.get(data.get("first_selected_strand"))
+        second_strand = strand_dict.get(data.get("second_selected_strand"))
+        
+        if first_strand and second_strand:
+            strand = MaskedStrand(first_strand, second_strand)
+            strand.set_number = set_number
+            strand.layer_name = layer_name
+            
+            # Restore deletion rectangles if they exist
+            if "deletion_rectangles" in data:
+                strand.deletion_rectangles = data["deletion_rectangles"]
+                logging.info(f"Restored {len(data['deletion_rectangles'])} deletion rectangles for masked strand {layer_name}")
         else:
-            # Initialize default control points if none were saved
-            strand.control_point1 = QPointF(strand.start)
-            strand.control_point2 = QPointF(strand.end)
+            logging.warning(f"Could not create MaskedStrand: missing reference strands")
+            return None
+    elif strand_type == "AttachedStrand" and parent_strand:
+        strand = AttachedStrand(start, end, width, color, stroke_color, stroke_width, parent_strand)
+        strand.set_number = set_number
+        strand.layer_name = layer_name
+    else:
+        strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
 
-    # Ensure the strand is updated with its shape and side line
-    strand.update_shape()
-    strand.update_side_line()
+    # Set common properties
+    strand.has_circles = data.get("has_circles", [False, False])
+    strand.is_first_strand = data.get("is_first_strand", False)
+    strand.is_start_side = data.get("is_start_side", True)
 
-    logging.debug(f"Deserialized strand '{strand.layer_name}' of type '{strand_type}'")
+    # Set control points if they exist
+    if "control_points" in data and len(data["control_points"]) == 2:
+        strand.control_point1 = deserialize_point(data["control_points"][0])
+        strand.control_point2 = deserialize_point(data["control_points"][1])
 
-    return strand
     return strand
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
@@ -174,7 +163,7 @@ def load_strands(filename, canvas):
                     second_strand = strand_dict.get(second_layer_name)
                     if not (first_strand and second_strand):
                         raise ValueError(f"Selected strands '{first_layer_name}' and/or '{second_layer_name}' not yet loaded for MaskedStrand at index {index}")
-                    strand = deserialize_strand(strand_data, first_strand=first_strand, second_strand=second_strand)
+                    strand = deserialize_strand(strand_data, strand_dict=strand_dict)
                 else:
                     logging.warning(f"Unknown strand type: {strand_type} at index {index}")
                     strands_to_remove.append(strand_data)

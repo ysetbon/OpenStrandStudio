@@ -1235,13 +1235,21 @@ class MaskedStrand(Strand):
 
         # Get the mask path - use edited mask if it exists, otherwise use base mask
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-            self.update(self.base_center_point)  # Pass the current base center point to track movement
             logging.info("Using edited mask with deletion rectangles")
             
             # Get the base intersection mask
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
             path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
             mask_path = path1.intersected(path2)
+            
+            # Calculate new center point and update if needed
+            new_center = self._calculate_center_from_path(mask_path)
+            if new_center and self.base_center_point and (
+                abs(new_center.x() - self.base_center_point.x()) > 0.01 or 
+                abs(new_center.y() - self.base_center_point.y()) > 0.01
+            ):
+                logging.info(f"Detected center point movement from ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}) to ({new_center.x():.2f}, {new_center.y():.2f})")
+                self.update(new_center)
 
             # Apply deletion rectangles
             for rect in self.deletion_rectangles:
@@ -1260,12 +1268,6 @@ class MaskedStrand(Strand):
             inverse_path.addRect(QRectF(temp_image.rect()))
             inverse_path = inverse_path.subtracted(mask_path)
 
-            # Clear the masked area
-            temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
-            temp_painter.setBrush(Qt.transparent)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.drawPath(inverse_path)
-
         else:
             logging.info("Using base intersection mask")
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -1276,17 +1278,6 @@ class MaskedStrand(Strand):
             inverse_path = QPainterPath()
             inverse_path.addRect(QRectF(temp_image.rect()))
             inverse_path = inverse_path.subtracted(mask_path)
-
-            # Clear the masked area
-            temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
-            temp_painter.setBrush(Qt.transparent)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.drawPath(inverse_path)
-
-        # Apply the mask
-        inverse_path = QPainterPath()
-        inverse_path.addRect(QRectF(temp_image.rect()))
-        inverse_path = inverse_path.subtracted(mask_path)
 
         # Clear the masked area
         temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
@@ -1313,14 +1304,14 @@ class MaskedStrand(Strand):
             if self.base_center_point:
                 logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
                 temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                temp_painter.setPen(QPen(QColor('blue'), 2))
+                temp_painter.setPen(QPen(QColor('blue'), 6))
                 temp_painter.setBrush(QBrush(QColor('blue')))
-                center_radius = 4
+                center_radius = 8
                 temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
                 
                 # Draw blue crosshair
-                temp_painter.setPen(QPen(QColor('blue'), 2))
-                crosshair_size = 8
+                temp_painter.setPen(QPen(QColor('blue'), 6))
+                crosshair_size = 10
                 temp_painter.drawLine(
                     QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),
                     QPointF(self.base_center_point.x() + crosshair_size, self.base_center_point.y())
@@ -1357,11 +1348,10 @@ class MaskedStrand(Strand):
         logging.info("Completed drawing masked strand")
 
     def update(self, new_position):
-        """Update both selected strands and deletion rectangles with the new position."""
+        """Update deletion rectangles position while maintaining strand positions."""
         if self.first_selected_strand and self.second_selected_strand:
             logging.info(f"\n=== Starting MaskedStrand update for {self.layer_name} ===")
             
-            # Store initial positions
             if not hasattr(self, 'base_center_point'):
                 logging.warning("❌ No base_center_point found before update")
                 return
@@ -1370,77 +1360,85 @@ class MaskedStrand(Strand):
             logging.info(f"📍 Initial base center point: ({old_base_center.x():.2f}, {old_base_center.y():.2f})")
             logging.info(f"📍 New position received: ({new_position.x():.2f}, {new_position.y():.2f})")
             
-            if hasattr(self, 'edited_center_point') and self.edited_center_point:
-                old_edited_center = QPointF(self.edited_center_point)
-                logging.info(f"📍 Initial edited center point: ({old_edited_center.x():.2f}, {old_edited_center.y():.2f})")
-            else:
-                old_edited_center = None
-                logging.info("ℹ️ No initial edited center point")
-            
-            # Calculate movement delta from base center point
+            # Calculate movement delta
             delta_x = new_position.x() - old_base_center.x()
             delta_y = new_position.y() - old_base_center.y()
-            logging.info(f"➡️ Movement delta calculated: dx={delta_x:.2f}, dy={delta_y:.2f}")
             
-            # Store the new base center point
-            self.base_center_point = QPointF(new_position)
-            logging.info(f"📍 Updated base center point to: ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f})")
-            
-            # If we have deletion rectangles, update their positions
-            if hasattr(self, 'deletion_rectangles'):
-                if self.deletion_rectangles:
-                    logging.info(f"🔄 Updating {len(self.deletion_rectangles)} deletion rectangles")
-                    # Update all deletion rectangles by the same delta
-                    for i, rect in enumerate(self.deletion_rectangles):
-                        old_x, old_y = rect['x'], rect['y']
-                        rect['x'] += delta_x
-                        rect['y'] += delta_y
-                        logging.info(f"📦 Rectangle {i}: moved from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
-                    
-                    # Update edited center point position if it exists
-                    if old_edited_center:
-                        old_x, old_y = old_edited_center.x(), old_edited_center.y()
-                        self.edited_center_point = QPointF(
-                            old_edited_center.x() + delta_x,
-                            old_edited_center.y() + delta_y
-                        )
-                        logging.info(f"📍 Edited center point: moved from ({old_x:.2f}, {old_y:.2f}) to ({self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f})")
-                    
-                    # Recalculate the mask path with updated positions
-                    path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
-                    path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-                    self.mask_path = path1.intersected(path2)
-                    
-                    # Apply updated deletion rectangles
-                    for i, rect in enumerate(self.deletion_rectangles):
-                        deletion_path = QPainterPath()
-                        deletion_path.addRect(QRectF(
-                            rect['x'],
-                            rect['y'],
-                            rect['width'],
-                            rect['height']
-                        ))
-                        self.mask_path = self.mask_path.subtracted(deletion_path)
-                        logging.info(f"✂️ Applied deletion rectangle {i} at: x={rect['x']:.2f}, y={rect['y']:.2f}")
-                    
-                    # Force update of the mask path
-                    if hasattr(self, 'update_mask_path'):
-                        logging.info("🔄 Updating mask path with new rectangle positions")
-                        self.update_mask_path()
-                        logging.info("✅ Mask path updated successfully")
-                    
-                    # Recalculate center points after updates
-                    self.calculate_center_point()
-                    logging.info(f"📍 Final base center point: ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f})")
-                    if self.edited_center_point:
-                        logging.info(f"📍 Final edited center point: ({self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f})")
-                else:
-                    logging.info("ℹ️ Deletion rectangles list exists but is empty")
-            else:
-                logging.info("ℹ️ No deletion rectangles to update")
+            # Only proceed if there's actual movement
+            if abs(delta_x) > 0.01 or abs(delta_y) > 0.01:
+                logging.info(f"➡️ Movement delta: dx={delta_x:.2f}, dy={delta_y:.2f}")
                 
+                # Move deletion rectangles based on their stored offsets
+                if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                    for rect in self.deletion_rectangles:
+                        old_x, old_y = rect['x'], rect['y']
+                        
+                        # Initialize offsets if they don't exist
+                        if 'offset_x' not in rect or 'offset_y' not in rect:
+                            rect['offset_x'] = old_x - old_base_center.x()
+                            rect['offset_y'] = old_y - old_base_center.y()
+                            logging.info(f"📐 Initialized rectangle offsets: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f})")
+                        
+                        # Calculate new position based on offset from new base center
+                        rect['x'] = new_position.x() + rect['offset_x']
+                        rect['y'] = new_position.y() + rect['offset_y']
+                        logging.info(f"📦 Moved rectangle from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
+                
+                # Update the base center point
+                self.base_center_point = QPointF(new_position)
+                
+                # Update the mask path with new positions
+                self.update_mask_path()
+                
+                # Recalculate center points
+                self.calculate_center_point()
+                logging.info(f"📍 Final base center point: ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f})")
+                if hasattr(self, 'edited_center_point') and self.edited_center_point:
+                    logging.info(f"📍 Final edited center point: ({self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f})")
+            else:
+                logging.info("ℹ️ No movement detected, skipping updates")
+            
             logging.info(f"=== Completed MaskedStrand update for {self.layer_name} ===\n")
+    def add_deletion_rectangle(self, rect):
+        """Initialize or add a new deletion rectangle."""
+        if not hasattr(self, 'deletion_rectangles'):
+            self.deletion_rectangles = []
+        
+        # Store the initial offset from base center point
+        if hasattr(self, 'base_center_point'):
+            rect['offset_x'] = rect['x'] - self.base_center_point.x()
+            rect['offset_y'] = rect['y'] - self.base_center_point.y()
+            logging.info(f"📐 Calculated rectangle offsets: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f}) from base center")
+        else:
+            rect['offset_x'] = 0
+            rect['offset_y'] = 0
+            logging.warning("⚠️ No base center point found, setting rectangle offsets to 0")
+        
+        self.deletion_rectangles.append(rect)
+        logging.info(f"➕ Added deletion rectangle at: x={rect['x']:.2f}, y={rect['y']:.2f} with offset: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f})")
+        
+        # Update the mask path to include the new rectangle
+        self.update_mask_path()
 
+    def update_mask_path(self):
+        """Update the custom mask path based on current strand and rectangle positions."""
+        # Get the base intersection path
+        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        self.custom_mask_path = path1.intersected(path2)
+        
+        # Apply deletion rectangles
+        if hasattr(self, 'deletion_rectangles'):
+            for rect in self.deletion_rectangles:
+                deletion_path = QPainterPath()
+                deletion_path.addRect(QRectF(
+                    rect['x'],
+                    rect['y'],
+                    rect['width'],
+                    rect['height']
+                ))
+                self.custom_mask_path = self.custom_mask_path.subtracted(deletion_path)
+                logging.info(f"✂️ Applied deletion rectangle at: x={rect['x']:.2f}, y={rect['y']:.2f}")
 
     def set_color(self, color):
         """Set the color of the masked strand while preserving second strand's color."""

@@ -2,8 +2,8 @@
 
 # Set variables
 APP_NAME="OpenStrand Studio"
-VERSION="1.071"
-APP_DATE="27_Oct_2024"
+VERSION="1_072"
+APP_DATE="5_Nov_2024"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatansetbon.openstrandstudio"
 
@@ -78,10 +78,9 @@ cat > "$RESOURCES_DIR/welcome.html" << EOF
     <p>This will install $APP_NAME on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Enhanced mask creation with visual feedback</li>
-        <li>New mask editing features</li>
-        <li>Improved attached strand visualization</li>
-        <li>Optimized for macOS</li>
+        <li>Masks edit are updating when moving the strands related to it.</li>
+        <li>Improved the group updation when adding new attached strands to the strands of the group.</li>
+        <li>Loading and saving loads and saves also the edited masks and the group.</li>
     </ul>
 </body>
 </html>

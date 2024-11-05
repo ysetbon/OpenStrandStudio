@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('settings_icon.png', '.'), ('mp4', 'mp4')],
+    datas=[('box_stitch.icns', '.'), ('settings_icon.png', '.'), ('mp4', 'mp4')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -32,6 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['box_stitch.icns'],
 )
 coll = COLLECT(
     exe,
@@ -45,6 +46,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='OpenStrand Studio.app',
-    icon=None,
+    icon='box_stitch.icns',
     bundle_identifier='com.openstrand.studio',
 )

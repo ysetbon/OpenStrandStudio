@@ -944,6 +944,11 @@
 			<key>symlink</key>
 			<string>../Resources/base_library.zip</string>
 		</dict>
+		<key>Frameworks/box_stitch.icns</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/box_stitch.icns</string>
+		</dict>
 		<key>Frameworks/lib-dynload/_bisect.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>

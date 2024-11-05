@@ -1071,7 +1071,8 @@ class MaskedStrand(Strand):
         self.is_selected = False
         self.custom_mask_path = None  # Add this line for custom mask support
         self.deletion_rectangles = []  # Add this line to store deletion rectangles
-        self.center_point = None  # Initialize center point
+        self.base_center_point = None  # Center point of unedited mask
+        self.edited_center_point = None  # Center point of edited mask
 
         if first_selected_strand and second_selected_strand:
             super().__init__(
@@ -1089,8 +1090,8 @@ class MaskedStrand(Strand):
             self.control_point2 = None
             
             # Calculate initial center point
-            self.center_point = self.calculate_center_point()
-            logging.info(f"Initialized masked strand {self.layer_name} with center point: {self.center_point.x():.2f}, {self.center_point.y():.2f}")
+            self.calculate_center_point()
+            logging.info(f"Initialized masked strand {self.layer_name} with center point: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
         else:
             super().__init__(QPointF(0, 0), QPointF(1, 1), 1)
             self.set_number = set_number
@@ -1136,8 +1137,8 @@ class MaskedStrand(Strand):
             self._end = self.second_selected_strand.end
 
         # Recalculate center point when shape updates
-        self.center_point = self.calculate_center_point()
-        logging.debug(f"Updated center point for {self.layer_name} after shape change: {self.center_point.x():.2f}, {self.center_point.y():.2f}")
+        self.calculate_center_point()
+        logging.debug(f"Updated center point for {self.layer_name} after shape change: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
 
         # Call the base class update without affecting control points
         super().update_shape()
@@ -1153,8 +1154,8 @@ class MaskedStrand(Strand):
         """Set a custom mask path for this masked strand."""
         self.custom_mask_path = mask_path
         # Recalculate center point when mask changes
-        self.center_point = self.calculate_center_point()
-        logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.center_point.x():.2f}, {self.center_point.y():.2f}")
+        self.calculate_center_point()
+        logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
         # Save the current state of deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
             logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
@@ -1204,7 +1205,7 @@ class MaskedStrand(Strand):
         return stroker.createStroke(path)
 
     def draw(self, painter):
-        """Draw the masked strand without control points or highlights."""
+        """Draw the masked strand with editing rectangles directly in the drawing process."""
         if not self.first_selected_strand and not self.second_selected_strand:
             return
 
@@ -1226,8 +1227,24 @@ class MaskedStrand(Strand):
         if self.first_selected_strand:
             self.first_selected_strand.draw(temp_painter)
 
+        # Get the base intersection mask
+        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        mask_path = path1.intersected(path2)
+
+        # Apply deletion rectangles if they exist
+        if hasattr(self, 'deletion_rectangles'):
+            for rect in self.deletion_rectangles:
+                deletion_path = QPainterPath()
+                deletion_path.addRect(QRectF(
+                    rect['x'],
+                    rect['y'],
+                    rect['width'],
+                    rect['height']
+                ))
+                mask_path = mask_path.subtracted(deletion_path)
+
         # Apply the mask
-        mask_path = self.get_mask_path()
         inverse_path = QPainterPath()
         inverse_path.addRect(QRectF(temp_image.rect()))
         inverse_path = inverse_path.subtracted(mask_path)
@@ -1240,6 +1257,7 @@ class MaskedStrand(Strand):
 
         # Draw highlight if selected
         if self.is_selected:
+            # Draw the mask outline
             highlight_pen = QPen(QColor('red'), self.stroke_width)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
@@ -1248,25 +1266,48 @@ class MaskedStrand(Strand):
             temp_painter.setBrush(Qt.NoBrush)
             temp_painter.drawPath(mask_path)
 
-            # Recalculate and draw the center point
-            self.center_point = self.calculate_center_point()  # Force recalculation
-            if self.center_point:
+            # Always recalculate and draw center points based on current masks
+            self.calculate_center_point()
+            
+            if self.base_center_point:
+                # Draw base center point in blue
+                temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
+                temp_painter.setPen(QPen(QColor('blue'), 2))
+                temp_painter.setBrush(QBrush(QColor('blue')))
+                center_radius = 4
+                temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
+                
+                # Draw blue crosshair
+                temp_painter.setPen(QPen(QColor('blue'), 2))
+                crosshair_size = 8
+                temp_painter.drawLine(
+                    QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),
+                    QPointF(self.base_center_point.x() + crosshair_size, self.base_center_point.y())
+                )
+                temp_painter.drawLine(
+                    QPointF(self.base_center_point.x(), self.base_center_point.y() - crosshair_size),
+                    QPointF(self.base_center_point.x(), self.base_center_point.y() + crosshair_size)
+                )
+            
+            if self.edited_center_point:
+                # Draw edited center point in red
+                temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
                 temp_painter.setPen(QPen(QColor('red'), 2))
                 temp_painter.setBrush(QBrush(QColor('red')))
                 center_radius = 4
-                temp_painter.drawEllipse(self.center_point, center_radius, center_radius)
+                temp_painter.drawEllipse(self.edited_center_point, center_radius, center_radius)
                 
-                # Draw a crosshair with QPointF
+                # Draw red crosshair
+                temp_painter.setPen(QPen(QColor('red'), 2))
                 crosshair_size = 8
                 temp_painter.drawLine(
-                    QPointF(self.center_point.x() - crosshair_size, self.center_point.y()),
-                    QPointF(self.center_point.x() + crosshair_size, self.center_point.y())
+                    QPointF(self.edited_center_point.x() - crosshair_size, self.edited_center_point.y()),
+                    QPointF(self.edited_center_point.x() + crosshair_size, self.edited_center_point.y())
                 )
                 temp_painter.drawLine(
-                    QPointF(self.center_point.x(), self.center_point.y() - crosshair_size),
-                    QPointF(self.center_point.x(), self.center_point.y() + crosshair_size)
+                    QPointF(self.edited_center_point.x(), self.edited_center_point.y() - crosshair_size),
+                    QPointF(self.edited_center_point.x(), self.edited_center_point.y() + crosshair_size)
                 )
-                logging.debug(f"Updated and drew center point for {self.layer_name} at: {self.center_point.x():.2f}, {self.center_point.y():.2f}")
 
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
@@ -1279,6 +1320,8 @@ class MaskedStrand(Strand):
         if self.second_selected_strand:
             self.second_selected_strand.update(new_end)
         self.update_shape()
+        # Recalculate both center points after moving
+        self.calculate_center_point()
 
     def set_color(self, color):
         """Set the color of the masked strand while preserving second strand's color."""
@@ -1368,14 +1411,24 @@ class MaskedStrand(Strand):
             self.color = color
 
     def calculate_center_point(self):
-        """Calculate the center point using sampling approach."""
-        mask_path = self.get_mask_path()
+        """Calculate both base and edited center points."""
+        # Calculate base center point from unedited mask
+        base_path = self.get_base_mask_path()
+        self.base_center_point = self._calculate_center_from_path(base_path)
         
-        if mask_path.isEmpty():
-            logging.warning(f"Empty mask path for strand {self.layer_name}, cannot calculate center")
+        # Calculate edited center point including deletion rectangles
+        edited_path = self.get_mask_path()  # This includes deletion rectangles
+        self.edited_center_point = self._calculate_center_from_path(edited_path)
+        
+        return self.edited_center_point  # Return edited center point for display
+        
+    def _calculate_center_from_path(self, path):
+        """Helper method to calculate center point from a given path."""
+        if path.isEmpty():
+            logging.warning(f"Empty path for strand {self.layer_name}, cannot calculate center")
             return None
             
-        bounds = mask_path.boundingRect()
+        bounds = path.boundingRect()
         samples_x = 50
         samples_y = 50
         
@@ -1389,28 +1442,31 @@ class MaskedStrand(Strand):
                 y = bounds.y() + (j + 0.5) * bounds.height() / samples_y
                 point = QPointF(x, y)
                 
-                if mask_path.contains(point):
+                if path.contains(point):
                     sum_x += x
                     sum_y += y
                     total_points += 1
         
-        if total_points == 0:
-            center = QPointF(
-                bounds.x() + bounds.width() / 2,
-                bounds.y() + bounds.height() / 2
-            )
-            logging.info(f"No points found in mask for {self.layer_name}, using bounding rect center: {center.x():.2f}, {center.y():.2f}")
+        if total_points > 0:
+            center = QPointF(sum_x / total_points, sum_y / total_points)
+            logging.info(f"Calculated center point for {self.layer_name}: {center.x():.2f}, {center.y():.2f} from {total_points} points")
             return center
-        
-        center = QPointF(sum_x / total_points, sum_y / total_points)
-        logging.info(f"Calculated center point for {self.layer_name}: {center.x():.2f}, {center.y():.2f} from {total_points} points")
-        return center
+        return None
+
+    def get_base_mask_path(self):
+        """Get the mask path without any deletion rectangles."""
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return QPainterPath()
+            
+        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        return path1.intersected(path2)
 
     def get_center_point(self):
         """Return the cached center point or recalculate if needed."""
-        if self.center_point is None:
-            self.center_point = self.calculate_center_point()
-        return self.center_point
+        if self.edited_center_point is None:
+            self.calculate_center_point()
+        return self.edited_center_point
         
 
 

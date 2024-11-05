@@ -136,7 +136,7 @@ Fonctionnalités Corrigées :
 
 ## Version 1.061 (Sortie : 23/09/2024)
 
-### Nouvelles Fonctionnalit��s :
+### Nouvelles Fonctionnalités :
 
 1. Dialogue de Paramètres :
    - Introduction d'un nouveau dialogue de paramètres avec les options suivantes :
@@ -234,5 +234,19 @@ Cette version représente une avancée significative dans les capacités d'OpenS
    - Les demi-cercles sont maintenant correctement masqués lors de l'intersection avec d'autres brins
 
 Ces mises à jour améliorent le flux de travail du masquage et la qualité visuelle des brins attachés, rendant le processus de design plus intuitif et visuellement précis.
+
+------
+
+## Version 1.072 (Sortie : 05/11/2024)
+
+### Améliorations :
+
+1. **Gestion des Groupes Améliorée :**
+   - Les groupes se mettent à jour correctement lors de l'attachement de nouveaux brins
+   - Assure des mouvements, rotations et ajustements d'angles appropriés pour les éléments groupés
+
+2. **Fonctionnalité de Masque Améliorée :**
+   - Les masques édités mettent à jour correctement leur position lors du déplacement des brins associés
+   - Amélioration de la visualisation des brins attachés avec des demi-cercles correctement masqués
 
 ------

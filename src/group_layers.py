@@ -986,9 +986,14 @@ class GroupPanel(QWidget):
             # Update control points data
             group_data['control_points'] = {}
             for strand in all_strands:
+                # Skip masked strands
+                if isinstance(strand, MaskedStrand):
+                    logging.info(f"Skipping control point update for masked strand {strand.layer_name}")
+                    continue
+
                 group_data['control_points'][strand.layer_name] = {
-                    'control_point1': QPointF(strand.control_point1),
-                    'control_point2': QPointF(strand.control_point2)
+                    'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
+                    'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
                 }
             
             logging.info(f"Updated group '{group_name}' data after angle adjustment with {len(all_strands)} strands")
@@ -2283,7 +2288,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QDateTime, QTimer
 from PyQt5.QtGui import QDoubleValidator, QColor, QBrush
 from math import atan2, degrees, radians, cos, sin
 import logging
-
+import math
 
 class FloatDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -2905,6 +2910,11 @@ class StrandAngleEditDialog(QDialog):
 
 
     def update_strand_angle(self, strand, new_angle, update_linked=True):
+        # Skip masked strands
+        if isinstance(strand, MaskedStrand):
+            logging.info(f"Skipping angle update for masked strand {strand.layer_name}")
+            return
+
         if not hasattr(strand, 'start') or not hasattr(strand, 'end'):
             return
 
@@ -2913,8 +2923,8 @@ class StrandAngleEditDialog(QDialog):
             strand.pre_rotation_points = {
                 'start': QPointF(strand.start),
                 'end': QPointF(strand.end),
-                'control_point1': QPointF(strand.control_point1),
-                'control_point2': QPointF(strand.control_point2),
+                'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
+                'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end),
                 'last_angle': self.calculate_angle(strand)  # Store current angle
             }
 
@@ -2927,6 +2937,8 @@ class StrandAngleEditDialog(QDialog):
 
         # Helper function to rotate a point around the center
         def rotate_point(point, angle_rad):
+            if point is None:
+                return None
             dx = point.x() - center.x()
             dy = point.y() - center.y()
             cos_angle = cos(angle_rad)
@@ -2940,8 +2952,8 @@ class StrandAngleEditDialog(QDialog):
 
         # Rotate end point and control points
         strand.end = rotate_point(strand.end, angle_rad)
-        strand.control_point1 = rotate_point(strand.control_point1, angle_rad)
-        strand.control_point2 = rotate_point(strand.control_point2, angle_rad)
+        strand.control_point1 = rotate_point(strand.control_point1, angle_rad) if strand.control_point1 is not None else None
+        strand.control_point2 = rotate_point(strand.control_point2, angle_rad) if strand.control_point2 is not None else None
 
         # Update the strand's shape
         strand.update_shape()

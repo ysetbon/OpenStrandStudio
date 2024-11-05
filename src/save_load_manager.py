@@ -25,8 +25,11 @@ def deserialize_color(data):
     return QColor(data["r"], data["g"], data["b"], data["a"])
 
 def serialize_point(point):
-    if point is None:
-        return None
+    """Serialize a point to a dictionary format."""
+    # If point is already a dictionary with x,y keys, return it as is
+    if isinstance(point, dict) and 'x' in point and 'y' in point:
+        return point
+    # Otherwise assume it's a QPointF and convert it
     return {"x": point.x(), "y": point.y()}
 
 def serialize_strand(strand, index=None):
@@ -104,27 +107,41 @@ def deserialize_strand(data, strand_dict=None, parent_strand=None):
             logging.warning(f"Could not create MaskedStrand: missing reference strands")
             return None
     elif strand_type == "AttachedStrand" and parent_strand:
-        strand = AttachedStrand(start, end, width, color, stroke_color, stroke_width, parent_strand)
-        strand.set_number = set_number
-        strand.layer_name = layer_name
+        strand = AttachedStrand(parent_strand, end)
+        strand.start = start
     else:
         strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
 
-    # Set common properties
+    # Set basic properties
+    strand.width = width
+    strand.color = color
+    strand.stroke_color = stroke_color
+    strand.stroke_width = stroke_width
+    strand.set_number = set_number
+    strand.layer_name = layer_name
     strand.has_circles = data.get("has_circles", [False, False])
     strand.is_first_strand = data.get("is_first_strand", False)
     strand.is_start_side = data.get("is_start_side", True)
 
-    # Set control points if they exist
+    # Set control points if they exist in the data
     if "control_points" in data and len(data["control_points"]) == 2:
-        strand.control_point1 = deserialize_point(data["control_points"][0])
-        strand.control_point2 = deserialize_point(data["control_points"][1])
+        control_point1 = deserialize_point(data["control_points"][0])
+        control_point2 = deserialize_point(data["control_points"][1])
+        strand.control_point1 = control_point1
+        strand.control_point2 = control_point2
+        
+        # Force path and side line updates
+        if hasattr(strand, 'update_shape'):
+            strand.update_shape()
+        if hasattr(strand, 'update_side_line'):
+            strand.update_side_line()
 
     return strand
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
         data = json.load(f)
 
+    logging.info(f"Starting to load strands from {filename}")
     logging.debug(f"Loaded data from {filename}: {data}")
 
     # Check if the data contains the expected keys
@@ -134,68 +151,77 @@ def load_strands(filename, canvas):
 
     strands = []
     strand_dict = {}
-    
     data_strands = data["strands"]
-    strands_remaining = data_strands.copy()
-    processed_indices = set()
     
-    while strands_remaining:
-        progress_made = False
-        strands_to_remove = []
+    # First pass: Load basic Strands
+    logging.info("First pass: Loading basic Strands")
+    for strand_data in data_strands:
+        if strand_data.get("type") == "Strand":
+            logging.debug(f"Processing Strand with index {strand_data.get('index')}")
+            strand = deserialize_strand(strand_data)
+            if strand:
+                strands.append(strand)
+                strand_dict[strand.layer_name] = strand
+                logging.info(f"Successfully loaded basic Strand: {strand.layer_name}")
 
-        for strand_data in strands_remaining:
-            strand_type = strand_data.get("type", "Strand")
+    # Second pass: Load AttachedStrands
+    logging.info("Second pass: Loading AttachedStrands")
+    for strand_data in data_strands:
+        if strand_data.get("type") == "AttachedStrand":
             index = strand_data.get("index")
-            logging.debug(f"Attempting to deserialize strand at index {index} with type '{strand_type}'")
-            try:
-                if strand_type == "Strand":
-                    strand = deserialize_strand(strand_data)
-                elif strand_type == "AttachedStrand":
-                    parent_layer_name = strand_data.get("parent_layer_name")
-                    parent_strand = strand_dict.get(parent_layer_name)
-                    if not parent_strand:
-                        raise ValueError(f"Parent strand '{parent_layer_name}' not yet loaded for AttachedStrand at index {index}")
-                    strand = deserialize_strand(strand_data, parent_strand=parent_strand)
-                elif strand_type == "MaskedStrand":
-                    first_layer_name = strand_data.get("first_selected_strand")
-                    second_layer_name = strand_data.get("second_selected_strand")
-                    first_strand = strand_dict.get(first_layer_name)
-                    second_strand = strand_dict.get(second_layer_name)
-                    if not (first_strand and second_strand):
-                        raise ValueError(f"Selected strands '{first_layer_name}' and/or '{second_layer_name}' not yet loaded for MaskedStrand at index {index}")
-                    strand = deserialize_strand(strand_data, strand_dict=strand_dict)
-                else:
-                    logging.warning(f"Unknown strand type: {strand_type} at index {index}")
-                    strands_to_remove.append(strand_data)
-                    continue
-
+            layer_name = strand_data.get("layer_name")
+            # Get the base number before the underscore for parent
+            parent_layer_name = f"{layer_name.split('_')[0]}_1"  # e.g., "1_2" -> "1_1"
+            logging.debug(f"Processing AttachedStrand {layer_name}, looking for parent {parent_layer_name}")
+            
+            parent_strand = strand_dict.get(parent_layer_name)
+            if parent_strand:
+                strand = deserialize_strand(strand_data, parent_strand=parent_strand)
                 if strand:
                     strands.append(strand)
                     strand_dict[strand.layer_name] = strand
-                    processed_indices.add(index)
-                    
-                    # If it's an AttachedStrand, add to the parent's attached_strands
-                    if strand_type == "AttachedStrand" and parent_strand:
-                        parent_strand.attached_strands.append(strand)
-                        
-                    strands_to_remove.append(strand_data)
-                    progress_made = True
-                else:
-                    logging.warning(f"Failed to deserialize strand at index {index}")
-            except ValueError as e:
-                logging.debug(str(e))
-                continue  # Dependencies not yet met; will retry in next iteration
+                    parent_strand.attached_strands.append(strand)
+                    logging.info(f"Successfully loaded AttachedStrand: {layer_name} with parent {parent_layer_name}")
+            else:
+                logging.warning(f"Parent strand {parent_layer_name} not found for AttachedStrand {layer_name}")
 
-        if not progress_made:
-            logging.error("Could not make progress in loading strands. Check for missing dependencies or cyclic references.")
-            break
+    # Third pass: Load MaskedStrands
+    logging.info("Third pass: Loading MaskedStrands")
+    for strand_data in data_strands:
+        if strand_data.get("type") == "MaskedStrand":
+            index = strand_data.get("index")
+            first_layer_name = strand_data.get("first_selected_strand")
+            second_layer_name = strand_data.get("second_selected_strand")
+            logging.debug(f"Processing MaskedStrand {strand_data.get('layer_name')} with strands {first_layer_name} and {second_layer_name}")
 
-        for strand_data in strands_to_remove:
-            strands_remaining.remove(strand_data)
+            first_strand = strand_dict.get(first_layer_name)
+            second_strand = strand_dict.get(second_layer_name)
 
-    logging.debug("Strand dictionary contents after deserialization:")
+            if first_strand and second_strand:
+                strand = deserialize_strand(strand_data, strand_dict=strand_dict)
+                if strand:
+                    strands.append(strand)
+                    strand_dict[strand.layer_name] = strand
+                    logging.info(f"Successfully loaded MaskedStrand: {strand.layer_name}")
+            else:
+                logging.warning(f"Missing reference strands for MaskedStrand {strand_data.get('layer_name')}. "
+                              f"First strand ({first_layer_name}) found: {bool(first_strand)}, "
+                              f"Second strand ({second_layer_name}) found: {bool(second_strand)}")
+
+    # Log final results
+    logging.info(f"Completed loading strands. Total loaded: {len(strands)}")
+    logging.debug("Final strand dictionary contents:")
     for layer_name, strand in strand_dict.items():
-        logging.debug(f"Layer: {layer_name}, Strand: {strand}, Type: {type(strand).__name__}")
+        logging.debug(f"Layer: {layer_name}, Type: {type(strand).__name__}")
+
+    # Check for missing strands
+    original_count = len(data_strands)
+    if len(strands) < original_count:
+        logging.warning(f"Not all strands were loaded. Original count: {original_count}, Loaded count: {len(strands)}")
+        loaded_indices = {s.layer_name for s in strands}
+        original_indices = {s.get('layer_name') for s in data_strands}
+        missing_indices = original_indices - loaded_indices
+        logging.warning(f"Missing strands: {missing_indices}")
 
     # Apply loaded strands to canvas
     apply_loaded_strands(canvas, strands, data.get("groups", {}))

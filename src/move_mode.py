@@ -551,17 +551,17 @@ class MoveMode:
 
         if moving_side == 0:
             # Update control points if they coincide with the start point
-            if strand.control_point1 == strand.start:
+            if hasattr(strand, 'control_point1') and strand.control_point1 == strand.start:
                 strand.control_point1 = new_pos
-            if strand.control_point2 == strand.start:
+            if hasattr(strand, 'control_point2') and strand.control_point2 == strand.start:
                 strand.control_point2 = new_pos
             strand.start = new_pos
 
         elif moving_side == 1:
             # Update control points if they coincide with the end point
-            if strand.control_point1 == strand.end:
+            if hasattr(strand, 'control_point1') and strand.control_point1 == strand.end:
                 strand.control_point1 = new_pos
-            if strand.control_point2 == strand.end:
+            if hasattr(strand, 'control_point2') and strand.control_point2 == strand.end:
                 strand.control_point2 = new_pos
             strand.end = new_pos
 
@@ -580,10 +580,19 @@ class MoveMode:
 
         # If it's a MaskedStrand, update both selected strands
         if isinstance(strand, MaskedStrand):
-            if strand.first_selected_strand:
+            if strand.first_selected_strand and hasattr(strand.first_selected_strand, 'update'):
                 strand.first_selected_strand.update(new_pos)
-            if strand.second_selected_strand:
-                strand.second_selected_strand.update(new_pos)
+            if strand.second_selected_strand and hasattr(strand.second_selected_strand, 'update'):
+                # For non-AttachedStrand, manually update position
+                if not hasattr(strand.second_selected_strand, 'update'):
+                    if moving_side == 0:
+                        strand.second_selected_strand.start = new_pos
+                    else:
+                        strand.second_selected_strand.end = new_pos
+                    strand.second_selected_strand.update_shape()
+                    strand.second_selected_strand.update_side_line()
+                else:
+                    strand.second_selected_strand.update(new_pos)
 
         # Force a redraw of the canvas
         self.canvas.update()

@@ -235,3 +235,17 @@ This version represents a significant leap forward in OpenStrand Studio's capabi
 These updates enhance the masking workflow and improve the visual quality of attached strands, making the design process more intuitive and visually accurate.
 
 ------
+
+## Version 1.072 (Released: 5/11/2024)
+
+### Improvements:
+
+1. **Enhanced Group Management:**
+   - Groups now correctly update when new strands are attached
+   - Ensures proper movement, rotation, and angle adjustments for grouped elements
+
+2. **Improved Mask Functionality:**
+   - Edited masks now properly update their position when moving associated strands
+   - Enhanced attached strand visualization with properly masked half-circles
+
+------

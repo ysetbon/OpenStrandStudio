@@ -559,16 +559,19 @@ class Strand:
         contains_end = self.get_end_selection_path().contains(pos)
         return contains_start or contains_end
     def update_control_points_from_geometry(self):
-        """Update control points based on current start, end, and desired control point positions."""
-        # For simplicity, we can set control points at 1/3 and 2/3 along the line
+        """Update control points based on current start and end positions."""
+        # Calculate control points at 1/3 and 2/3 along the line
+        dx = self.end.x() - self.start.x()
+        dy = self.end.y() - self.start.y()
+        
         self.control_point1 = QPointF(
-            self.start.x(),
-            self.start.y()
+            self.start.x() + dx / 3,
+            self.start.y() + dy / 3
         )
         self.control_point2 = QPointF(
-            self.start.x(),
-            self.start.y()
-        )    
+            self.start.x() + 2 * dx / 3,
+            self.start.y() + 2 * dy / 3
+        )   
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker
@@ -1382,13 +1385,13 @@ class MaskedStrand(Strand):
             if self.base_center_point:
                 logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
                 temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                temp_painter.setPen(QPen(QColor('blue'), 6))
-                temp_painter.setBrush(QBrush(QColor('blue')))
+                temp_painter.setPen(QPen(QColor('transparent'), 6))
+                temp_painter.setBrush(QBrush(QColor('transparent')))
                 center_radius = 8
                 temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
                 
                 # Draw blue crosshair
-                temp_painter.setPen(QPen(QColor('blue'), 6))
+                temp_painter.setPen(QPen(QColor('transparent'), 6))
                 crosshair_size = 10
                 temp_painter.drawLine(
                     QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),

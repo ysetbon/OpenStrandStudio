@@ -1128,17 +1128,95 @@ class MaskedStrand(Strand):
         self._has_circles = value
 
     def update_shape(self):
-        """Update the shape of the masked strand without control points."""
+        """Update the shape of the masked strand and any associated deletion rectangles."""
+        old_start = QPointF(self._start) if hasattr(self, '_start') else None
+        old_center = self.base_center_point if hasattr(self, 'base_center_point') else None
+        
+        # Update strand positions from selected strands
         if self.first_selected_strand:
-            self._start = self.first_selected_strand.start  # Set private attribute directly
+            self._start = self.first_selected_strand.start
             self._end = self.first_selected_strand.end
         elif self.second_selected_strand:
             self._start = self.second_selected_strand.start
             self._end = self.second_selected_strand.end
 
-        # Recalculate center point when shape updates
-        self.calculate_center_point()
-        logging.debug(f"Updated center point for {self.layer_name} after shape change: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+        # Handle deletion rectangles updates
+        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+            # Log initial rectangle positions
+            for i, rect in enumerate(self.deletion_rectangles):
+                logging.info(f"Rectangle {i} initial position: x={rect['x']:.2f}, y={rect['y']:.2f}, w={rect['width']:.2f}, h={rect['height']:.2f}")
+
+            # Recalculate the base center point
+            self.calculate_center_point()
+            new_center = self.base_center_point
+
+            if old_center and new_center and (
+                abs(new_center.x() - old_center.x()) > 0.01 or 
+                abs(new_center.y() - old_center.y()) > 0.01
+            ):
+                logging.info(f"Updating shape for {self.layer_name}")
+                logging.info(f"Center point moved from ({old_center.x():.2f}, {old_center.y():.2f}) to ({new_center.x():.2f}, {new_center.y():.2f})")
+                
+                # Calculate rotation angle between old and new positions relative to group center
+                if hasattr(self, 'canvas') and hasattr(self.canvas, 'group_center'):
+                    group_center = self.canvas.group_center
+                    old_angle = math.atan2(old_center.y() - group_center.y(), old_center.x() - group_center.x())
+                    new_angle = math.atan2(new_center.y() - group_center.y(), new_center.x() - group_center.x())
+                    angle_diff = new_angle - old_angle
+                    
+                    logging.info(f"Rotation angle: {math.degrees(angle_diff):.2f} degrees around group center: ({group_center.x():.2f}, {group_center.y():.2f})")
+                else:
+                    angle_diff = 0
+                    group_center = new_center
+
+                # Update rectangle positions based on their offsets from center
+                for i, rect in enumerate(self.deletion_rectangles):
+                    old_x, old_y = rect['x'], rect['y']
+                    logging.info(f"Rectangle {i} before update: x={old_x:.2f}, y={old_y:.2f}")
+                    
+                    # Initialize offsets if they don't exist
+                    if 'offset_x' not in rect or 'offset_y' not in rect:
+                        rect['offset_x'] = old_x - old_center.x()
+                        rect['offset_y'] = old_y - old_center.y()
+                        logging.info(f"Initialized rectangle {i} offsets: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f})")
+                    
+                    if abs(angle_diff) > 0.01:
+                        # Rotate the offset vector around the group center
+                        cos_angle = math.cos(angle_diff)
+                        sin_angle = math.sin(angle_diff)
+                        
+                        # Calculate position relative to group center
+                        rel_x = old_x - group_center.x()
+                        rel_y = old_y - group_center.y()
+                        
+                        # Apply rotation
+                        new_rel_x = rel_x * cos_angle - rel_y * sin_angle
+                        new_rel_y = rel_x * sin_angle + rel_y * cos_angle
+                        
+                        # Convert back to absolute coordinates
+                        rect['x'] = group_center.x() + new_rel_x
+                        rect['y'] = group_center.y() + new_rel_y
+                        
+                        # Update offsets for future calculations
+                        rect['offset_x'] = rect['x'] - new_center.x()
+                        rect['offset_y'] = rect['y'] - new_center.y()
+                        
+                        logging.info(f"Rectangle {i} rotated from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
+                    else:
+                        # Just update position based on offset from new center if no rotation
+                        rect['x'] = new_center.x() + rect['offset_x']
+                        rect['y'] = new_center.y() + rect['offset_y']
+                        logging.info(f"Rectangle {i} moved from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
+
+                # Log final rectangle positions
+                for i, rect in enumerate(self.deletion_rectangles):
+                    logging.info(f"Rectangle {i} final position: x={rect['x']:.2f}, y={rect['y']:.2f}, w={rect['width']:.2f}, h={rect['height']:.2f}")
+
+                # Update the mask path with new positions
+                self.update_mask_path()
+
+            # Log final center points
+            logging.debug(f"Updated center point after shape change: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
 
         # Call the base class update without affecting control points
         super().update_shape()
@@ -1400,25 +1478,43 @@ class MaskedStrand(Strand):
             
             logging.info(f"=== Completed MaskedStrand update for {self.layer_name} ===\n")
     def add_deletion_rectangle(self, rect):
-        """Initialize or add a new deletion rectangle."""
+        """Initialize or add a new deletion rectangle with proper offset tracking."""
         if not hasattr(self, 'deletion_rectangles'):
             self.deletion_rectangles = []
+            logging.info("📦 Initializing deletion rectangles array")
         
-        # Store the initial offset from base center point
-        if hasattr(self, 'base_center_point'):
-            rect['offset_x'] = rect['x'] - self.base_center_point.x()
-            rect['offset_y'] = rect['y'] - self.base_center_point.y()
-            logging.info(f"📐 Calculated rectangle offsets: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f}) from base center")
-        else:
-            rect['offset_x'] = 0
-            rect['offset_y'] = 0
-            logging.warning("⚠️ No base center point found, setting rectangle offsets to 0")
+        # Ensure base center point exists
+        if not hasattr(self, 'base_center_point') or self.base_center_point is None:
+            self.calculate_center_point()
+            if self.base_center_point:
+                logging.info(f"📍 Calculated initial base center point: ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f})")
+            else:
+                logging.error("❌ Failed to calculate base center point")
+                return
         
-        self.deletion_rectangles.append(rect)
-        logging.info(f"➕ Added deletion rectangle at: x={rect['x']:.2f}, y={rect['y']:.2f} with offset: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f})")
+        # Deep copy the rectangle to avoid reference issues
+        new_rect = rect.copy()
         
-        # Update the mask path to include the new rectangle
+        # Calculate and store offsets from base center
+        new_rect['offset_x'] = rect['x'] - self.base_center_point.x()
+        new_rect['offset_y'] = rect['y'] - self.base_center_point.y()
+        
+        # Store original position
+        new_rect['x'] = rect['x']
+        new_rect['y'] = rect['y']
+        new_rect['width'] = rect['width']
+        new_rect['height'] = rect['height']
+        
+        logging.info(f"📐 New rectangle position: ({new_rect['x']:.2f}, {new_rect['y']:.2f})")
+        logging.info(f"📏 Calculated offsets from base center: dx={new_rect['offset_x']:.2f}, dy={new_rect['offset_y']:.2f}")
+        
+        self.deletion_rectangles.append(new_rect)
+        
+        # Update the mask path with the new rectangle
         self.update_mask_path()
+        
+        logging.info(f"✅ Added deletion rectangle #{len(self.deletion_rectangles)} with dimensions: {new_rect['width']}x{new_rect['height']}")
+        logging.info(f"📊 Total deletion rectangles: {len(self.deletion_rectangles)}")
 
     def update_mask_path(self):
         """Update the custom mask path based on current strand and rectangle positions."""

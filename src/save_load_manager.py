@@ -262,6 +262,7 @@ def serialize_groups(groups):
     for group_name, group_data in groups.items():
         logging.info(f"Serializing group '{group_name}'")
         
+        # Handle regular strands list
         strands_list = []
         for strand in group_data.get("strands", []):
             # Handle both Strand objects and dictionaries
@@ -275,12 +276,24 @@ def serialize_groups(groups):
                 logging.warning(f"Invalid strand object in group {group_name}")
                 continue
 
+        # Handle main strands list similarly
+        main_strands_list = []
+        for strand in group_data.get("main_strands", []):
+            if isinstance(strand, (Strand, AttachedStrand, MaskedStrand)):
+                main_strands_list.append(strand.layer_name)
+            elif isinstance(strand, str):
+                main_strands_list.append(strand)
+            else:
+                logging.warning(f"Invalid main strand object in group {group_name}")
+                continue
+
         # Debug: Log the strands being serialized
         logging.debug(f"Strands for group '{group_name}': {strands_list}")
+        logging.debug(f"Main strands for group '{group_name}': {main_strands_list}")
 
         serialized_groups[group_name] = {
             "layers": group_data.get("layers", []),
-            "main_strands": list(group_data.get("main_strands", [])),
+            "main_strands": main_strands_list,
             "strands": strands_list,
             "control_points": {
                 layer_name: {

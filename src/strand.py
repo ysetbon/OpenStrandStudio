@@ -1228,13 +1228,32 @@ class MaskedStrand(Strand):
 
         # Draw highlight if selected
         if self.is_selected:
-            highlight_pen = QPen(QColor('red'), self.stroke_width )
+            highlight_pen = QPen(QColor('red'), self.stroke_width)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             temp_painter.setPen(highlight_pen)
             temp_painter.setBrush(Qt.NoBrush)
             temp_painter.drawPath(mask_path)
+
+            # Draw the center point
+            center = self.get_center_point()
+            if center:
+                temp_painter.setPen(QPen(QColor('red'), 2))
+                temp_painter.setBrush(QBrush(QColor('red')))
+                center_radius = 4
+                temp_painter.drawEllipse(center, center_radius, center_radius)
+                
+                # Draw a crosshair with QPointF
+                crosshair_size = 8
+                temp_painter.drawLine(
+                    QPointF(center.x() - crosshair_size, center.y()),
+                    QPointF(center.x() + crosshair_size, center.y())
+                )
+                temp_painter.drawLine(
+                    QPointF(center.x(), center.y() - crosshair_size),
+                    QPointF(center.x(), center.y() + crosshair_size)
+                )
 
         temp_painter.end()
         painter.drawImage(0, 0, temp_image)
@@ -1335,6 +1354,51 @@ class MaskedStrand(Strand):
         # (since the mask inherits its primary color from the first strand)
         if self.first_selected_strand and self.first_selected_strand.set_number == set_number:
             self.color = color
+
+    def get_center_point(self):
+        """
+        Calculate the center point (centroid) of the masked strand path 
+        using a sampling approach for better accuracy.
+        """
+        mask_path = self.get_mask_path()
+        
+        if mask_path.isEmpty():
+            return None
+            
+        # Get the bounding rect
+        bounds = mask_path.boundingRect()
+        
+        # Number of sample points
+        samples_x = 50
+        samples_y = 50
+        
+        total_points = 0
+        sum_x = 0
+        sum_y = 0
+        
+        # Sample points within the bounding rect
+        for i in range(samples_x):
+            for j in range(samples_y):
+                x = bounds.x() + (i + 0.5) * bounds.width() / samples_x
+                y = bounds.y() + (j + 0.5) * bounds.height() / samples_y
+                
+                point = QPointF(x, y)
+                
+                # If the point is inside the path, include it in the calculation
+                if mask_path.contains(point):
+                    sum_x += x
+                    sum_y += y
+                    total_points += 1
+        
+        # If no points were found inside the path, fall back to bounding rect center
+        if total_points == 0:
+            return QPointF(
+                bounds.x() + bounds.width() / 2,
+                bounds.y() + bounds.height() / 2
+            )
+        
+        # Calculate the average position (centroid)
+        return QPointF(sum_x / total_points, sum_y / total_points)
         
 
 

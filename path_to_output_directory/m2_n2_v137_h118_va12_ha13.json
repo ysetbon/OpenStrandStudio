@@ -1,0 +1,1605 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 364.0,
+        "y": 504.0
+      },
+      "end": {
+        "x": 420.0,
+        "y": 280.0
+      },
+      "width": 46,
+      "color": {
+        "r": 20,
+        "g": 217,
+        "b": 182,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 364.0,
+          "y": 504.0
+        },
+        {
+          "x": 364.0,
+          "y": 504.0
+        }
+      ]
+    },
+    {
+      "type": "Strand",
+      "index": 1,
+      "start": {
+        "x": 476.0,
+        "y": 504.0
+      },
+      "end": {
+        "x": 532.0,
+        "y": 280.0
+      },
+      "width": 46,
+      "color": {
+        "r": 89,
+        "g": 148,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 476.0,
+          "y": 504.0
+        },
+        {
+          "x": 476.0,
+          "y": 504.0
+        }
+      ]
+    },
+    {
+      "type": "Strand",
+      "index": 2,
+      "start": {
+        "x": 336.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 560.0,
+        "y": 364.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "3_1",
+      "set_number": 3,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 336.0,
+          "y": 308.0
+        },
+        {
+          "x": 336.0,
+          "y": 308.0
+        }
+      ]
+    },
+    {
+      "type": "Strand",
+      "index": 3,
+      "start": {
+        "x": 336.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 560.0,
+        "y": 476.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "4_1",
+      "set_number": 4,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 336.0,
+          "y": 420.0
+        },
+        {
+          "x": 336.0,
+          "y": 420.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 364.0,
+        "y": 504.0
+      },
+      "end": {
+        "x": 364.0,
+        "y": 129.0
+      },
+      "width": 46,
+      "color": {
+        "r": 20,
+        "g": 217,
+        "b": 182,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 364.0,
+          "y": 504.0
+        },
+        {
+          "x": 364.0,
+          "y": 504.0
+        }
+      ],
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 5,
+      "start": {
+        "x": 420.0,
+        "y": 280.0
+      },
+      "end": {
+        "x": 420.0,
+        "y": 655.0
+      },
+      "width": 46,
+      "color": {
+        "r": 20,
+        "g": 217,
+        "b": 182,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 420.0,
+          "y": 280.0
+        },
+        {
+          "x": 420.0,
+          "y": 280.0
+        }
+      ],
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 6,
+      "start": {
+        "x": 476.0,
+        "y": 504.0
+      },
+      "end": {
+        "x": 476.0,
+        "y": 129.0
+      },
+      "width": 46,
+      "color": {
+        "r": 89,
+        "g": 148,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_2",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 476.0,
+          "y": 504.0
+        },
+        {
+          "x": 476.0,
+          "y": 504.0
+        }
+      ],
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 7,
+      "start": {
+        "x": 532.0,
+        "y": 280.0
+      },
+      "end": {
+        "x": 532.0,
+        "y": 655.0
+      },
+      "width": 46,
+      "color": {
+        "r": 89,
+        "g": 148,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_3",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 532.0,
+          "y": 280.0
+        },
+        {
+          "x": 532.0,
+          "y": 280.0
+        }
+      ],
+      "parent_layer_name": "2_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 8,
+      "start": {
+        "x": 336.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "3_2",
+      "set_number": 3,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 336.0,
+          "y": 308.0
+        },
+        {
+          "x": 336.0,
+          "y": 308.0
+        }
+      ],
+      "parent_layer_name": "3_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 9,
+      "start": {
+        "x": 560.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "3_3",
+      "set_number": 3,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 560.0,
+          "y": 364.0
+        },
+        {
+          "x": 560.0,
+          "y": 364.0
+        }
+      ],
+      "parent_layer_name": "3_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 10,
+      "start": {
+        "x": 336.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "4_2",
+      "set_number": 4,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 336.0,
+          "y": 420.0
+        },
+        {
+          "x": 336.0,
+          "y": 420.0
+        }
+      ],
+      "parent_layer_name": "4_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 11,
+      "start": {
+        "x": 560.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "4_3",
+      "set_number": 4,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 560.0,
+          "y": 476.0
+        },
+        {
+          "x": 560.0,
+          "y": 476.0
+        }
+      ],
+      "parent_layer_name": "4_1"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 12,
+      "start": {
+        "x": 560.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_2_3_3",
+      "set_number": 3,
+      "first_selected_strand": "1_2",
+      "second_selected_strand": "3_3",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 364.0,
+        "y": 364.0
+      },
+      "edited_center_point": {
+        "x": 364.0,
+        "y": 364.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 13,
+      "start": {
+        "x": 336.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_3_3_2",
+      "set_number": 3,
+      "first_selected_strand": "1_3",
+      "second_selected_strand": "3_2",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 420.0,
+        "y": 308.0
+      },
+      "edited_center_point": {
+        "x": 420.0,
+        "y": 308.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 14,
+      "start": {
+        "x": 560.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_2_4_3",
+      "set_number": 4,
+      "first_selected_strand": "1_2",
+      "second_selected_strand": "4_3",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 364.0,
+        "y": 476.0
+      },
+      "edited_center_point": {
+        "x": 364.0,
+        "y": 476.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 15,
+      "start": {
+        "x": 336.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_3_4_2",
+      "set_number": 4,
+      "first_selected_strand": "1_3",
+      "second_selected_strand": "4_2",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 420.0,
+        "y": 420.0
+      },
+      "edited_center_point": {
+        "x": 420.0,
+        "y": 420.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 16,
+      "start": {
+        "x": 560.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_2_3_3",
+      "set_number": 3,
+      "first_selected_strand": "2_2",
+      "second_selected_strand": "3_3",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 476.0,
+        "y": 364.0
+      },
+      "edited_center_point": {
+        "x": 476.0,
+        "y": 364.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 17,
+      "start": {
+        "x": 336.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_3_3_2",
+      "set_number": 3,
+      "first_selected_strand": "2_3",
+      "second_selected_strand": "3_2",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 532.0,
+        "y": 308.0
+      },
+      "edited_center_point": {
+        "x": 532.0,
+        "y": 308.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 18,
+      "start": {
+        "x": 560.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_2_4_3",
+      "set_number": 4,
+      "first_selected_strand": "2_2",
+      "second_selected_strand": "4_3",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 476.0,
+        "y": 476.0
+      },
+      "edited_center_point": {
+        "x": 476.0,
+        "y": 476.0
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 19,
+      "start": {
+        "x": 336.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_3_4_2",
+      "set_number": 4,
+      "first_selected_strand": "2_3",
+      "second_selected_strand": "4_2",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 532.0,
+        "y": 420.0
+      },
+      "edited_center_point": {
+        "x": 532.0,
+        "y": 420.0
+      }
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 20,
+      "start": {
+        "x": 364.0,
+        "y": 129.0
+      },
+      "end": {
+        "x": 453.4,
+        "y": 549.6
+      },
+      "width": 46,
+      "color": {
+        "r": 20,
+        "g": 217,
+        "b": 182,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_4",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 364.0,
+          "y": 129.0
+        },
+        {
+          "x": 364.0,
+          "y": 129.0
+        }
+      ],
+      "parent_layer_name": "1_2"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 21,
+      "start": {
+        "x": 420.0,
+        "y": 655.0
+      },
+      "end": {
+        "x": 330.6,
+        "y": 234.4
+      },
+      "width": 46,
+      "color": {
+        "r": 20,
+        "g": 217,
+        "b": 182,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_5",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 420.0,
+          "y": 655.0
+        },
+        {
+          "x": 420.0,
+          "y": 655.0
+        }
+      ],
+      "parent_layer_name": "1_3"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 22,
+      "start": {
+        "x": 476.0,
+        "y": 129.0
+      },
+      "end": {
+        "x": 565.4,
+        "y": 549.6
+      },
+      "width": 46,
+      "color": {
+        "r": 89,
+        "g": 148,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_4",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 476.0,
+          "y": 129.0
+        },
+        {
+          "x": 476.0,
+          "y": 129.0
+        }
+      ],
+      "parent_layer_name": "2_2"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 23,
+      "start": {
+        "x": 532.0,
+        "y": 655.0
+      },
+      "end": {
+        "x": 442.6,
+        "y": 234.4
+      },
+      "width": 46,
+      "color": {
+        "r": 89,
+        "g": 148,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_5",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 532.0,
+          "y": 655.0
+        },
+        {
+          "x": 532.0,
+          "y": 655.0
+        }
+      ],
+      "parent_layer_name": "2_3"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 24,
+      "start": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 400.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "3_4",
+      "set_number": 3,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 692.0,
+          "y": 308.0
+        },
+        {
+          "x": 692.0,
+          "y": 308.0
+        }
+      ],
+      "parent_layer_name": "3_2"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 25,
+      "start": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 271.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "3_5",
+      "set_number": 3,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 204.0,
+          "y": 364.0
+        },
+        {
+          "x": 204.0,
+          "y": 364.0
+        }
+      ],
+      "parent_layer_name": "3_3"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 26,
+      "start": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 271.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_4_3_5",
+      "set_number": 3,
+      "first_selected_strand": "1_4",
+      "second_selected_strand": "3_5",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 404.1299411295962,
+        "y": 317.79925323387226
+      },
+      "edited_center_point": {
+        "x": 404.1299411295962,
+        "y": 317.79925323387226
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 27,
+      "start": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 400.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_5_3_4",
+      "set_number": 3,
+      "first_selected_strand": "1_5",
+      "second_selected_strand": "3_4",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 362.4162087223653,
+        "y": 384.0856531166313
+      },
+      "edited_center_point": {
+        "x": 362.4162087223653,
+        "y": 384.0856531166313
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 28,
+      "start": {
+        "x": 204.0,
+        "y": 364.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 271.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_4_3_5",
+      "set_number": 3,
+      "first_selected_strand": "2_4",
+      "second_selected_strand": "3_5",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 510.89129283991974,
+        "y": 293.15299517304527
+      },
+      "edited_center_point": {
+        "x": 510.89129283991974,
+        "y": 293.15299517304527
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 29,
+      "start": {
+        "x": 692.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 400.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 131,
+        "b": 7,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_5_3_4",
+      "set_number": 3,
+      "first_selected_strand": "2_5",
+      "second_selected_strand": "3_4",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 469.1775604326888,
+        "y": 359.4393950558043
+      },
+      "edited_center_point": {
+        "x": 469.1775604326888,
+        "y": 359.4393950558043
+      }
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 30,
+      "start": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 512.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "4_4",
+      "set_number": 4,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 692.0,
+          "y": 420.0
+        },
+        {
+          "x": 692.0,
+          "y": 420.0
+        }
+      ],
+      "parent_layer_name": "4_2"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 31,
+      "start": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 383.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "4_5",
+      "set_number": 4,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 204.0,
+          "y": 476.0
+        },
+        {
+          "x": 204.0,
+          "y": 476.0
+        }
+      ],
+      "parent_layer_name": "4_3"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 32,
+      "start": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 383.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_4_4_5",
+      "set_number": 4,
+      "first_selected_strand": "1_4",
+      "second_selected_strand": "4_5",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 426.8224395673112,
+        "y": 424.5606049441957
+      },
+      "edited_center_point": {
+        "x": 426.8224395673112,
+        "y": 424.5606049441957
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 33,
+      "start": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 512.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_5_4_4",
+      "set_number": 4,
+      "first_selected_strand": "1_5",
+      "second_selected_strand": "4_4",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 385.10870716008026,
+        "y": 490.8470048269548
+      },
+      "edited_center_point": {
+        "x": 385.10870716008026,
+        "y": 490.8470048269548
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 34,
+      "start": {
+        "x": 204.0,
+        "y": 476.0
+      },
+      "end": {
+        "x": 604.47,
+        "y": 383.55
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_4_4_5",
+      "set_number": 4,
+      "first_selected_strand": "2_4",
+      "second_selected_strand": "4_5",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 533.5837912776346,
+        "y": 399.9143468833687
+      },
+      "edited_center_point": {
+        "x": 533.5837912776346,
+        "y": 399.9143468833687
+      }
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 35,
+      "start": {
+        "x": 692.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 291.53,
+        "y": 512.45
+      },
+      "width": 46,
+      "color": {
+        "r": 100,
+        "g": 163,
+        "b": 201,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_5_4_4",
+      "set_number": 4,
+      "first_selected_strand": "2_5",
+      "second_selected_strand": "4_4",
+      "deletion_rectangles": [],
+      "custom_mask_path": null,
+      "base_center_point": {
+        "x": 491.8700588704038,
+        "y": 466.20074676612774
+      },
+      "edited_center_point": {
+        "x": 491.8700588704038,
+        "y": 466.20074676612774
+      }
+    }
+  ],
+  "groups": {}
+}

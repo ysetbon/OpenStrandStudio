@@ -1,0 +1,528 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 636.0,
+        "y": 252.0
+      },
+      "end": {
+        "x": 1055.9893724517212,
+        "y": 448.0227717067827
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 747.9908910374271,
+          "y": 420.00607228503117
+        },
+        {
+          "x": 972.003035772113,
+          "y": 196.01821767821062
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 1056.0,
+        "y": 448.0
+      },
+      "end": {
+        "x": 1392.009672551109,
+        "y": 559.9709781688838
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 1279.983070006662,
+          "y": 251.98065312222172
+        },
+        {
+          "x": 1140.002418137777,
+          "y": 475.992744542221
+        }
+      ],
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 636.0,
+        "y": 252.0
+      },
+      "end": {
+        "x": 524.0166985683037,
+        "y": 448.00954109547285
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 468.0000006096835,
+          "y": 252.0143127101555
+        },
+        {
+          "x": 412.0071571679891,
+          "y": 336.0190833086989
+        }
+      ],
+      "parent_layer_name": "1_1"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 3,
+      "start": {
+        "x": 524.0,
+        "y": 448.0
+      },
+      "end": {
+        "x": 776.0048651319789,
+        "y": 559.989052812376
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_4",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 664.0097306074105,
+          "y": 671.993918076452
+        },
+        {
+          "x": 692.0085142385527,
+          "y": 643.992701760433
+        }
+      ],
+      "parent_layer_name": "1_3"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 776.0,
+        "y": 560.0
+      },
+      "end": {
+        "x": 915.9999670004838,
+        "y": 531.9998350029246
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_5",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 776.0001979965139,
+          "y": 727.9999999998834
+        },
+        {
+          "x": 860.0001649970366,
+          "y": 699.9999010016459
+        }
+      ],
+      "parent_layer_name": "1_4"
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 5,
+      "start": {
+        "x": 916.0,
+        "y": 532.0
+      },
+      "end": {
+        "x": 1224.006072079252,
+        "y": 643.9833003724692
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_6",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 1055.9999997942207,
+          "y": 531.9924093350421
+        },
+        {
+          "x": 916.0091087979495,
+          "y": 699.9999997530649
+        }
+      ],
+      "parent_layer_name": "1_5"
+    },
+    {
+      "type": "Strand",
+      "index": 6,
+      "start": {
+        "x": 506.0,
+        "y": 739.0
+      },
+      "end": {
+        "x": 953.999000198116,
+        "y": 198.999170536296
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 506.0,
+          "y": 739.0
+        },
+        {
+          "x": 506.0,
+          "y": 739.0
+        }
+      ]
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 7,
+      "start": {
+        "x": 636.0,
+        "y": 252.0
+      },
+      "end": {
+        "x": 1055.9893724517212,
+        "y": 448.0227717067827
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_1_2_1",
+      "set_number": 12,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 636.0,
+          "y": 252.0
+        },
+        {
+          "x": 636.0,
+          "y": 252.0
+        }
+      ],
+      "first_selected_strand": "1_1",
+      "second_selected_strand": "2_1"
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 8,
+      "start": {
+        "x": 524.0,
+        "y": 448.0
+      },
+      "end": {
+        "x": 776.0048651319789,
+        "y": 559.989052812376
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_4_2_1",
+      "set_number": 12,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 524.0,
+          "y": 448.0
+        },
+        {
+          "x": 524.0,
+          "y": 448.0
+        }
+      ],
+      "first_selected_strand": "1_4",
+      "second_selected_strand": "2_1"
+    }
+  ],
+  "groups": {
+    "asd": {
+      "layers": [
+        "1_1",
+        "1_2",
+        "1_3",
+        "1_4",
+        "1_5",
+        "1_6",
+        "2_1",
+        "1_1_2_1",
+        "1_4_2_1"
+      ],
+      "main_strands": [],
+      "strands": [
+        "1_1",
+        "1_2",
+        "1_3",
+        "1_4",
+        "1_5",
+        "1_6",
+        "2_1",
+        "1_1_2_1",
+        "1_4_2_1"
+      ],
+      "control_points": {
+        "1_1": {
+          "control_point1": {
+            "x": 560.0,
+            "y": 420.0
+          },
+          "control_point2": {
+            "x": 784.0,
+            "y": 196.0
+          }
+        },
+        "1_2": {
+          "control_point1": {
+            "x": 1092.0,
+            "y": 252.0
+          },
+          "control_point2": {
+            "x": 952.0,
+            "y": 476.0
+          }
+        },
+        "1_3": {
+          "control_point1": {
+            "x": 280.0,
+            "y": 252.0
+          },
+          "control_point2": {
+            "x": 224.0,
+            "y": 336.0
+          }
+        },
+        "1_4": {
+          "control_point1": {
+            "x": 476.0,
+            "y": 672.0
+          },
+          "control_point2": {
+            "x": 504.0,
+            "y": 644.0
+          }
+        },
+        "1_5": {
+          "control_point1": {
+            "x": 588.0,
+            "y": 728.0
+          },
+          "control_point2": {
+            "x": 672.0,
+            "y": 700.0
+          }
+        },
+        "1_6": {
+          "control_point1": {
+            "x": 868.0,
+            "y": 532.0
+          },
+          "control_point2": {
+            "x": 728.0,
+            "y": 700.0
+          }
+        },
+        "2_1": {
+          "control_point1": {
+            "x": 318.0,
+            "y": 739.0
+          },
+          "control_point2": {
+            "x": 318.0,
+            "y": 739.0
+          }
+        },
+        "1_1_2_1": {
+          "control_point1": {
+            "x": 448.0,
+            "y": 252.0
+          },
+          "control_point2": {
+            "x": 448.0,
+            "y": 252.0
+          }
+        },
+        "1_4_2_1": {
+          "control_point1": {
+            "x": 336.0,
+            "y": 448.0
+          },
+          "control_point2": {
+            "x": 336.0,
+            "y": 448.0
+          }
+        }
+      }
+    }
+  }
+}

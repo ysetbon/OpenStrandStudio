@@ -1,0 +1,16 @@
+# For Windows
+pyinstaller --onefile --windowed --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-data "mp4;mp4" main.py
+
+# For Mac
+pyinstaller --windowed \
+--icon=box_stitch.icns \
+--add-data "box_stitch.icns:." \
+--add-data "settings_icon.png:." \
+--add-data "mp4:mp4" \
+--name "OpenStrand Studio" \
+--osx-bundle-identifier "com.openstrand.studio" \
+main.py
+
+use : pyinstaller OpenStrandStudio.spec
+then use : chmod +x build_installer.sh
+and then run : ./build_installer.sh

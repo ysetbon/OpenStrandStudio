@@ -1,0 +1,137 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 660,
+        "y": 291
+      },
+      "end": {
+        "x": 466,
+        "y": 509
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 660.0,
+          "y": 291.0
+        },
+        {
+          "x": 660.0,
+          "y": 291.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 660,
+        "y": 291
+      },
+      "end": {
+        "x": 1008.0,
+        "y": 336.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_2",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 660.0,
+          "y": 291.0
+        },
+        {
+          "x": 660.0,
+          "y": 291.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 466,
+        "y": 509
+      },
+      "end": {
+        "x": 672.0,
+        "y": 728.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_3",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "control_points": [
+        {
+          "x": 466.0,
+          "y": 509.0
+        },
+        {
+          "x": 466.0,
+          "y": 509.0
+        }
+      ]
+    }
+  ],
+  "groups": {}
+}

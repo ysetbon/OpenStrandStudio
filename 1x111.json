@@ -1,0 +1,130 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 616.0,
+        "y": 336.0
+      },
+      "end": {
+        "x": 896.0,
+        "y": 336.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 616.0,
+          "y": 336.0
+        },
+        {
+          "x": 616.0,
+          "y": 336.0
+        }
+      ]
+    },
+    {
+      "type": "Strand",
+      "index": 1,
+      "start": {
+        "x": 684,
+        "y": 572
+      },
+      "end": {
+        "x": 807,
+        "y": 181
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 840.0,
+          "y": 532.0
+        },
+        {
+          "x": 684.0,
+          "y": 572.0
+        }
+      ]
+    },
+    {
+      "type": "MaskedStrand",
+      "index": 2,
+      "start": {
+        "x": 616.0,
+        "y": 336.0
+      },
+      "end": {
+        "x": 896.0,
+        "y": 336.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_1_2_1",
+      "set_number": 12,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "first_selected_strand": "1_1",
+      "second_selected_strand": "2_1",
+      "deletion_rectangles": []
+    }
+  ],
+  "groups": {}
+}

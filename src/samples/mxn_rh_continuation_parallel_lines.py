@@ -576,9 +576,9 @@ def main():
 
     # Angle ranges
     minimum_angle_h = 40  # For n
-    maximum_angle_h = 50  # For n
+    maximum_angle_h = 89  # For n
     minimum_angle_v = 70  # For m
-    maximum_angle_v = 71  # For m
+    maximum_angle_v = 80  # For m
     angle_step = 1
 
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)

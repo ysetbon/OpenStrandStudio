@@ -5,12 +5,23 @@ from copy import deepcopy
 from pathlib import Path
 import numpy as np
 
-def generate_multiplier_map(n):
-    """Generate multiplier map for any n value (odd or even)"""
+def generate_multiplier_map(size, is_vertical=False):
+    """Generate multiplier map based on size (n or m) and orientation
+    Args:
+        size: The size (n for horizontal, m for vertical)
+        is_vertical: True if generating map for vertical strands (m)
+    """
     multiplier_map = {}
     
-    if n % 2 == 0:
-        middle = n // 2
+    # Special case for vertical strands when m=1
+    if is_vertical and size == 1:
+        multiplier_map[(1, 2)] = 1
+        multiplier_map[(1, 3)] = 1
+        return multiplier_map
+    
+    # Regular logic for horizontal strands (n) and other vertical cases
+    if size % 2 == 0:
+        middle = size // 2
         for i in range(middle):
             pos1 = middle - i
             pos2 = middle + 1 + i
@@ -26,12 +37,12 @@ def generate_multiplier_map(n):
                 multiplier_map[(pos1, 3)] = 2 * i + 1
                 multiplier_map[(pos2, 3)] = 2 * i + 2
         
-        multiplier_map[(n, 2)] = n
-        multiplier_map[(1, 3)] = n
-        multiplier_map[(n, 3)] = n - 1
-        multiplier_map[(1, 2)] = n - 1
+        multiplier_map[(size, 2)] = size
+        multiplier_map[(1, 3)] = size
+        multiplier_map[(size, 3)] = size - 1
+        multiplier_map[(1, 2)] = size - 1
     else:
-        middle = (n + 1) // 2
+        middle = (size + 1) // 2
         multiplier_map[(middle, 2)] = 1
         multiplier_map[(middle, 3)] = 1
         
@@ -44,8 +55,8 @@ def generate_multiplier_map(n):
         if middle > 2:
             multiplier_map[(1, 2)] = 3
             multiplier_map[(1, 3)] = 3
-            multiplier_map[(n, 2)] = 3
-            multiplier_map[(n, 3)] = 3
+            multiplier_map[(size, 2)] = 3
+            multiplier_map[(size, 3)] = 3
     
     return multiplier_map
 
@@ -162,12 +173,24 @@ def process_json_file(input_path, output_path, m, n):
         data = json.load(f)
     
     # Generate separate multiplier maps for horizontal and vertical strands
-    horizontal_multiplier_map = generate_multiplier_map(n)
-    vertical_multiplier_map = generate_multiplier_map(m)
+    horizontal_multiplier_map = generate_multiplier_map(n, is_vertical=False)
+    vertical_multiplier_map = generate_multiplier_map(m, is_vertical=True)
+    
+    print("\nVertical Strand Pairs (m):")
+    for i in range(1, m + 1):
+        mult2 = vertical_multiplier_map.get((i, 2), 'N/A')
+        mult3 = vertical_multiplier_map.get((i, 3), 'N/A')
+        print(f"Set {i}: {i}_2 and {i}_3 = multipliers: {mult2}, {mult3}")
+    
+    print("\nHorizontal Strand Pairs (n):")
+    for i in range(1, n + 1):
+        mult2 = horizontal_multiplier_map.get((i, 2), 'N/A')
+        mult3 = horizontal_multiplier_map.get((i, 3), 'N/A')
+        print(f"Set {i}: {i+m}_2 and {i+m}_3 = multipliers: {mult2}, {mult3}")
     
     modified_data = deepcopy(data)
     
-    strand_width = 46
+    strand_width = 56
     tolerance = 0.1
     
     strands_dict = {}
@@ -181,8 +204,7 @@ def process_json_file(input_path, output_path, m, n):
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
         
-        # Process x2-x3 pairs (keep existing logic)
-        if '_2' in layer_name:
+        if '_2' in layer_name and len(layer_name.split('_')) == 2:
             set_number = int(layer_name.split('_')[0])
             is_horizontal = set_number > m
             
@@ -192,16 +214,29 @@ def process_json_file(input_path, output_path, m, n):
             x3_strand = strands_dict.get(x3_identifier)
             x4_strand = find_attached_x4_strand(layer_name,strands_dict)
             x5_strand = find_attached_x5_strand(x3_identifier,strands_dict)
+            
             if x3_strand:
                 # Use appropriate multiplier map based on strand orientation
                 multiplier_map = horizontal_multiplier_map if is_horizontal else vertical_multiplier_map
+                # For vertical strands, use the actual position in the vertical grid
                 position = set_number - m if is_horizontal else set_number
                 
-                x2_multiplier = multiplier_map.get((position, 2), 1)
-                x3_multiplier = multiplier_map.get((position, 3), 1)
+                # Get multipliers from the correct map based on orientation
+                if is_horizontal:
+                    x2_multiplier = horizontal_multiplier_map.get((position, 2), 1)
+                    x3_multiplier = horizontal_multiplier_map.get((position, 3), 1)
+                else:
+                    x2_multiplier = vertical_multiplier_map.get((position, 2), 1)
+                    x3_multiplier = vertical_multiplier_map.get((position, 3), 1)
+                
+                print(f"Debug - Strand {layer_name}:")
+                print(f"Position: {position}")
+                print(f"x2_multiplier: {x2_multiplier}")
+                print(f"x3_multiplier: {x3_multiplier}")
                 
                 # Calculate target distance based on maximum multiplier
-                target_distance = strand_width * 4 * max(x2_multiplier, x3_multiplier)
+                target_distance = strand_width * 4 * x2_multiplier
+                
                 
                 # Calculate current distance
                 current_distance = calculate_distance(x2_strand['end'], x3_strand['end'])
@@ -211,7 +246,7 @@ def process_json_file(input_path, output_path, m, n):
                 
                 # Only adjust if current distance is less than target
                 if current_distance < target_distance - tolerance:
-                    # Calculate unit vectors
+                    # Calculate unit vectors with orientation consideration
                     x2_vector = {
                         'x': x2_strand['end']['x'] - x2_strand['start']['x'],
                         'y': x2_strand['end']['y'] - x2_strand['start']['y']
@@ -220,6 +255,8 @@ def process_json_file(input_path, output_path, m, n):
                         'x': x3_strand['end']['x'] - x3_strand['start']['x'],
                         'y': x3_strand['end']['y'] - x3_strand['start']['y']
                     }
+
+                    
                     x4_vector = {
                         'x': x4_strand['end']['x'] - x4_strand['start']['x'],
                         'y': x4_strand['end']['y'] - x4_strand['start']['y']
@@ -227,7 +264,8 @@ def process_json_file(input_path, output_path, m, n):
                     x5_vector = {
                         'x': x5_strand['end']['x'] - x5_strand['start']['x'],
                         'y': x5_strand['end']['y'] - x5_strand['start']['y']
-                    }                    
+                    }
+                    
                     x2_length = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
                     x3_length = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
                     x4_length = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
@@ -240,22 +278,35 @@ def process_json_file(input_path, output_path, m, n):
                         'x': x3_vector['x'] / x3_length,
                         'y': x3_vector['y'] / x3_length
                     }
-                    
+                    x4_unit = {
+                        'x': x4_vector['x'] / x4_length,
+                        'y': x4_vector['y'] / x4_length
+                    }
+                    x5_unit = {
+                        'x': x5_vector['x'] / x5_length,
+                        'y': x5_vector['y'] / x5_length
+                    }                    
                     # Extend both strands until target distance is reached
                     step = 0.01
                     while current_distance < target_distance - tolerance:
-                        x2_strand['end']['x'] += x2_unit['x'] * step
-                        x2_strand['end']['y'] += x2_unit['y'] * step
-                        x3_strand['end']['x'] += x3_unit['x'] * step
-                        x3_strand['end']['y'] += x3_unit['y'] * step
-                        x4_strand['start']['x'] += x2_unit['x'] * step
-                        x4_strand['start']['y'] += x2_unit['y'] * step
-                        x5_strand['start']['x'] += x3_unit['x'] * step
-                        x5_strand['start']['y'] += x3_unit['y'] * step
-                        x4_strand['end']['x'] += x2_unit['x'] * step
-                        x4_strand['end']['y'] += x2_unit['y'] * step
-                        x5_strand['end']['x'] += x3_unit['x'] * step
-                        x5_strand['end']['y'] += x3_unit['y'] * step                                                   
+                    
+                        if is_horizontal:
+                           # For horizontal strands, only move in x direction
+                           x2_strand['end']['x'] += x2_unit['x'] * step
+                           x3_strand['end']['x'] += x3_unit['x'] * step
+                           x4_strand['start']['x'] += x2_unit['x'] * step
+                           x4_strand['end']['x'] += x2_unit['x'] * step
+                           x5_strand['start']['x'] += x3_unit['x'] * step
+                           x5_strand['end']['x'] += x3_unit['x'] * step
+                        else:
+                           # For vertical strands, only move in y direction
+                           x2_strand['end']['y'] += x2_unit['y'] * step
+                           x3_strand['end']['y'] += x3_unit['y'] * step
+                           x4_strand['start']['y'] += x2_unit['y'] * step
+                           x4_strand['end']['y'] += x2_unit['y'] * step
+                           x5_strand['start']['y'] += x3_unit['y'] * step
+                           x5_strand['end']['y'] += x3_unit['y'] * step
+                       
                         current_distance = calculate_distance(x2_strand['end'], x3_strand['end'])
                     
                     # Update control points

@@ -230,7 +230,8 @@ def process_json_file(input_path, output_path, m, n):
                     }                    
                     x2_length = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
                     x3_length = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
-                    
+                    x4_length = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
+                    x5_length = math.sqrt(x5_vector['x']**2 + x5_vector['y']**2)                    
                     x2_unit = {
                         'x': x2_vector['x'] / x2_length,
                         'y': x2_vector['y'] / x2_length

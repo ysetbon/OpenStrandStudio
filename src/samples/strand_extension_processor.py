@@ -167,6 +167,17 @@ def calculate_distance(point1, point2):
     """Calculate distance between two points"""
     return math.sqrt((point2['x'] - point1['x'])**2 + (point2['y'] - point1['y'])**2)
 
+def calculate_point_to_line_distance(point, line_start, line_end):
+    """Calculate perpendicular distance from a point to a line defined by two points"""
+    # Convert to numpy arrays for easier calculation
+    p = np.array([point['x'], point['y']])
+    a = np.array([line_start['x'], line_start['y']])
+    b = np.array([line_end['x'], line_end['y']])
+    
+    # Calculate perpendicular distance
+    d = np.abs(np.cross(b-a, p-a)) / np.linalg.norm(b-a)
+    return d
+
 def process_json_file(input_path, output_path, m, n):
     """Process a single JSON file to extend strands according to multiplier map"""
     with open(input_path, 'r') as f:
@@ -214,7 +225,7 @@ def process_json_file(input_path, output_path, m, n):
             x3_strand = strands_dict.get(x3_identifier)
             x4_strand = find_attached_x4_strand(layer_name,strands_dict)
             x5_strand = find_attached_x5_strand(x3_identifier,strands_dict)
-            
+            flag = 1
             if x3_strand:
                 # Use appropriate multiplier map based on strand orientation
                 multiplier_map = horizontal_multiplier_map if is_horizontal else vertical_multiplier_map
@@ -235,98 +246,110 @@ def process_json_file(input_path, output_path, m, n):
                 print(f"x3_multiplier: {x3_multiplier}")
                 
                 # Calculate target distance based on maximum multiplier
-                target_distance = strand_width * 4 * x2_multiplier
-                
+                if flag == 1:
+                    target_distance = strand_width  * x2_multiplier
+                else:
+                    target_distance = strand_width  * x3_multiplier
+                flag *= -1
                 
                 # Calculate current distance
-                current_distance = calculate_distance(x2_strand['end'], x3_strand['end'])
-                
-                print(f"Pair: {x2_strand['layer_name']} - {x3_strand['layer_name']}")
-                print(f"Target distance: {target_distance}, Current distance: {current_distance}")
-                
-                # Only adjust if current distance is less than target
-                if current_distance < target_distance - tolerance:
-                    # Calculate unit vectors with orientation consideration
-                    x2_vector = {
-                        'x': x2_strand['end']['x'] - x2_strand['start']['x'],
-                        'y': x2_strand['end']['y'] - x2_strand['start']['y']
-                    }
-                    x3_vector = {
-                        'x': x3_strand['end']['x'] - x3_strand['start']['x'],
-                        'y': x3_strand['end']['y'] - x3_strand['start']['y']
-                    }
+                if x4_strand and x5_strand:
+                    current_distance = calculate_point_to_line_distance(
+                        x4_strand['start'],
+                        x5_strand['start'],
+                        x5_strand['end']
+                    )
+                    
+   
+                    # Only adjust if current distance is less than target
+                    if current_distance < target_distance - tolerance:
+                        # Calculate unit vectors with orientation consideration
+                        x2_vector = {
+                            'x': x2_strand['end']['x'] - x2_strand['start']['x'],
+                            'y': x2_strand['end']['y'] - x2_strand['start']['y']
+                        }
+                        x3_vector = {
+                            'x': x3_strand['end']['x'] - x3_strand['start']['x'],
+                            'y': x3_strand['end']['y'] - x3_strand['start']['y']
+                        }
 
-                    
-                    x4_vector = {
-                        'x': x4_strand['end']['x'] - x4_strand['start']['x'],
-                        'y': x4_strand['end']['y'] - x4_strand['start']['y']
-                    }
-                    x5_vector = {
-                        'x': x5_strand['end']['x'] - x5_strand['start']['x'],
-                        'y': x5_strand['end']['y'] - x5_strand['start']['y']
-                    }
-                    
-                    x2_length = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
-                    x3_length = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
-                    x4_length = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
-                    x5_length = math.sqrt(x5_vector['x']**2 + x5_vector['y']**2)                    
-                    x2_unit = {
-                        'x': x2_vector['x'] / x2_length,
-                        'y': x2_vector['y'] / x2_length
-                    }
-                    x3_unit = {
-                        'x': x3_vector['x'] / x3_length,
-                        'y': x3_vector['y'] / x3_length
-                    }
-                    x4_unit = {
-                        'x': x4_vector['x'] / x4_length,
-                        'y': x4_vector['y'] / x4_length
-                    }
-                    x5_unit = {
-                        'x': x5_vector['x'] / x5_length,
-                        'y': x5_vector['y'] / x5_length
-                    }                    
-                    # Extend both strands until target distance is reached
-                    step = 0.01
-                    while current_distance < target_distance - tolerance:
-                    
-                        if is_horizontal:
-                           # For horizontal strands, only move in x direction
-                           x2_strand['end']['x'] += x2_unit['x'] * step
-                           x3_strand['end']['x'] += x3_unit['x'] * step
-                           x4_strand['start']['x'] += x2_unit['x'] * step
-                           x4_strand['end']['x'] += x2_unit['x'] * step
-                           x5_strand['start']['x'] += x3_unit['x'] * step
-                           x5_strand['end']['x'] += x3_unit['x'] * step
-                        else:
-                           # For vertical strands, only move in y direction
-                           x2_strand['end']['y'] += x2_unit['y'] * step
-                           x3_strand['end']['y'] += x3_unit['y'] * step
-                           x4_strand['start']['y'] += x2_unit['y'] * step
-                           x4_strand['end']['y'] += x2_unit['y'] * step
-                           x5_strand['start']['y'] += x3_unit['y'] * step
-                           x5_strand['end']['y'] += x3_unit['y'] * step
-                       
-                        current_distance = calculate_distance(x2_strand['end'], x3_strand['end'])
-                    
-                    # Update control points
-                    x2_strand['control_points'] = [
-                        {'x': x2_strand['start']['x'], 'y': x2_strand['start']['y']},
-                        {'x': x2_strand['end']['x'], 'y': x2_strand['end']['y']}
-                    ]
-                    x3_strand['control_points'] = [
-                        {'x': x3_strand['start']['x'], 'y': x3_strand['start']['y']},
-                        {'x': x3_strand['end']['x'], 'y': x3_strand['end']['y']}
-                    ]
-                    # Update control points
-                    x5_strand['control_points'] = [
-                        {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
-                        {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
-                    ]
-                    x4_strand['control_points'] = [
-                        {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
-                        {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
-                    ]            
+                        
+                        x4_vector = {
+                            'x': x4_strand['end']['x'] - x4_strand['start']['x'],
+                            'y': x4_strand['end']['y'] - x4_strand['start']['y']
+                        }
+                        x5_vector = {
+                            'x': x5_strand['end']['x'] - x5_strand['start']['x'],
+                            'y': x5_strand['end']['y'] - x5_strand['start']['y']
+                        }
+                        
+                        x2_length = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
+                        x3_length = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
+                        x4_length = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
+                        x5_length = math.sqrt(x5_vector['x']**2 + x5_vector['y']**2)                    
+                        x2_unit = {
+                            'x': x2_vector['x'] / x2_length,
+                            'y': x2_vector['y'] / x2_length
+                        }
+                        x3_unit = {
+                            'x': x3_vector['x'] / x3_length,
+                            'y': x3_vector['y'] / x3_length
+                        }
+                        x4_unit = {
+                            'x': x4_vector['x'] / x4_length,
+                            'y': x4_vector['y'] / x4_length
+                        }
+                        x5_unit = {
+                            'x': x5_vector['x'] / x5_length,
+                            'y': x5_vector['y'] / x5_length
+                        }                    
+                        # Extend both strands until target distance is reached
+                        step = 1
+                        while current_distance < target_distance - tolerance:
+                            print(f"Pair: {x2_strand['layer_name']} - {x3_strand['layer_name']}")
+                            print(f"Target distance: {target_distance}, Current distance: {current_distance}")
+                                         
+                            if is_horizontal:
+                               # For horizontal strands, only move in x direction
+                               x2_strand['end']['x'] += x2_unit['x'] * step
+                               x3_strand['end']['x'] += x3_unit['x'] * step
+                               x4_strand['start']['x'] += x2_unit['x'] * step
+                               x4_strand['end']['x'] += x2_unit['x'] * step
+                               x5_strand['start']['x'] += x3_unit['x'] * step
+                               x5_strand['end']['x'] += x3_unit['x'] * step
+                            else:
+                               # For vertical strands, only move in y direction
+                               x2_strand['end']['y'] += x2_unit['y'] * step
+                               x3_strand['end']['y'] += x3_unit['y'] * step
+                               x4_strand['start']['y'] += x2_unit['y'] * step
+                               x4_strand['end']['y'] += x2_unit['y'] * step
+                               x5_strand['start']['y'] += x3_unit['y'] * step
+                               x5_strand['end']['y'] += x3_unit['y'] * step
+                           
+                            current_distance = calculate_point_to_line_distance(
+                                x4_strand['start'],
+                                x5_strand['start'],
+                                x5_strand['end']
+                            )
+                        
+                        # Update control points
+                        x2_strand['control_points'] = [
+                            {'x': x2_strand['start']['x'], 'y': x2_strand['start']['y']},
+                            {'x': x2_strand['end']['x'], 'y': x2_strand['end']['y']}
+                        ]
+                        x3_strand['control_points'] = [
+                            {'x': x3_strand['start']['x'], 'y': x3_strand['start']['y']},
+                            {'x': x3_strand['end']['x'], 'y': x3_strand['end']['y']}
+                        ]
+                        # Update control points
+                        x5_strand['control_points'] = [
+                            {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
+                            {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
+                        ]
+                        x4_strand['control_points'] = [
+                            {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
+                            {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
+                        ]            
 
     # Save modified data
     with open(output_path, 'w') as f:

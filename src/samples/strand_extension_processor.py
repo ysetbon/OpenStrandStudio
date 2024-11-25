@@ -10,52 +10,64 @@ def generate_multiplier_map(size, is_vertical=False):
     Args:
         size: The size (n for horizontal, m for vertical)
         is_vertical: True if generating map for vertical strands (m)
+    Returns:
+        dict: A map of (position, strand_type) -> multiplier values
+        where strand_type is either 2 or 3
     """
     multiplier_map = {}
     
-    # Special case for vertical strands when m=1
+    # Special case: For vertical strands when m=1, both strands get multiplier of 1
     if is_vertical and size == 1:
-        multiplier_map[(1, 2)] = 1
-        multiplier_map[(1, 3)] = 1
+        multiplier_map[(1, 2)] = 1  # First strand type 2
+        multiplier_map[(1, 3)] = 1  # First strand type 3
         return multiplier_map
     
-    # Regular logic for horizontal strands (n) and other vertical cases
+    # Handle even-sized grids (size % 2 == 0)
     if size % 2 == 0:
         middle = size // 2
+        # Iterate from middle outwards
         for i in range(middle):
-            pos1 = middle - i
-            pos2 = middle + 1 + i
+            pos1 = middle - i      # Position left/above middle
+            pos2 = middle + 1 + i  # Position right/below middle
             
+            # Special case for the innermost pair (i=0)
             if i == 0:
-                multiplier_map[(pos1, 2)] = 1
-                multiplier_map[(pos2, 3)] = 1
-                multiplier_map[(pos1, 3)] = 2
-                multiplier_map[(pos2, 2)] = 2
+                multiplier_map[(pos1, 2)] = 1  # Inner left/top strand_2
+                multiplier_map[(pos2, 3)] = 1  # Inner right/bottom strand_3
+                multiplier_map[(pos1, 3)] = 3  # Inner left/top strand_3
+                multiplier_map[(pos2, 2)] = 3  # Inner right/bottom strand_2
             else:
-                multiplier_map[(pos1, 2)] = 2 * i + 2
-                multiplier_map[(pos2, 2)] = 2 * i + 1
-                multiplier_map[(pos1, 3)] = 2 * i + 1
-                multiplier_map[(pos2, 3)] = 2 * i + 2
+                # For outer pairs, multipliers increase by 2 each step outward
+                multiplier_map[(pos1, 2)] = 2 * i + 2  # Left/top strand_2
+                multiplier_map[(pos2, 2)] = 2 * i + 1  # Right/bottom strand_2
+                multiplier_map[(pos1, 3)] = 2 * i + 1  # Left/top strand_3
+                multiplier_map[(pos2, 3)] = 2 * i + 2  # Right/bottom strand_3
         
-        multiplier_map[(size, 2)] = size
-        multiplier_map[(1, 3)] = size
-        multiplier_map[(size, 3)] = size - 1
-        multiplier_map[(1, 2)] = size - 1
+        # Edge cases for outermost strands
+        multiplier_map[(size, 2)] = size+  1     # Rightmost/bottom strand_2
+        multiplier_map[(1, 3)] = size +  1      # Leftmost/top strand_3
+        multiplier_map[(size, 3)] = size - 1  # Rightmost/bottom strand_3
+        multiplier_map[(1, 2)] = size - 1     # Leftmost/top strand_2
+    
+    # Handle odd-sized grids
     else:
         middle = (size + 1) // 2
+        # Center strand gets multiplier of 1
         multiplier_map[(middle, 2)] = 1
         multiplier_map[(middle, 3)] = 1
         
+        # First pair adjacent to center gets multiplier of 2
         if middle > 1:
-            multiplier_map[(middle - 1, 2)] = 2
+            multiplier_map[(middle - 1, 2)] = 2  # Left/top of center
             multiplier_map[(middle - 1, 3)] = 2
-            multiplier_map[(middle + 1, 2)] = 2
+            multiplier_map[(middle + 1, 2)] = 2  # Right/bottom of center
             multiplier_map[(middle + 1, 3)] = 2
         
+        # Outermost pairs get multiplier of 3
         if middle > 2:
-            multiplier_map[(1, 2)] = 3
+            multiplier_map[(1, 2)] = 3    # Leftmost/top
             multiplier_map[(1, 3)] = 3
-            multiplier_map[(size, 2)] = 3
+            multiplier_map[(size, 2)] = 3  # Rightmost/bottom
             multiplier_map[(size, 3)] = 3
     
     return multiplier_map
@@ -202,7 +214,7 @@ def process_json_file(input_path, output_path, m, n):
     modified_data = deepcopy(data)
     
     strand_width = 56
-    tolerance = 0.1
+    tolerance = 0.01
     
     strands_dict = {}
     
@@ -210,7 +222,6 @@ def process_json_file(input_path, output_path, m, n):
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
         strands_dict[layer_name] = strand
-    
     # Process both x2-x3 and x4-x5 pairs
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
@@ -225,131 +236,114 @@ def process_json_file(input_path, output_path, m, n):
             x3_strand = strands_dict.get(x3_identifier)
             x4_strand = find_attached_x4_strand(layer_name,strands_dict)
             x5_strand = find_attached_x5_strand(x3_identifier,strands_dict)
-            flag = 1
-            if x3_strand:
+            
+            print(f"\nProcessing strand {layer_name}:")
+            print(f"Found opposite strand: {x3_identifier}")
+            print(f"Found x4 strand: {x4_strand['layer_name'] if x4_strand else None}")
+            print(f"Found x5 strand: {x5_strand['layer_name'] if x5_strand else None}")
+            
+            if x3_strand and x4_strand and x5_strand:
                 # Use appropriate multiplier map based on strand orientation
                 multiplier_map = horizontal_multiplier_map if is_horizontal else vertical_multiplier_map
-                # For vertical strands, use the actual position in the vertical grid
                 position = set_number - m if is_horizontal else set_number
                 
-                # Get multipliers from the correct map based on orientation
-                if is_horizontal:
-                    x2_multiplier = horizontal_multiplier_map.get((position, 2), 1)
-                    x3_multiplier = horizontal_multiplier_map.get((position, 3), 1)
-                else:
-                    x2_multiplier = vertical_multiplier_map.get((position, 2), 1)
-                    x3_multiplier = vertical_multiplier_map.get((position, 3), 1)
+                # Always use x2_multiplier for target distance
+                target_distance = strand_width * multiplier_map.get((position, 2), 1)
                 
-                print(f"Debug - Strand {layer_name}:")
-                print(f"Position: {position}")
-                print(f"x2_multiplier: {x2_multiplier}")
-                print(f"x3_multiplier: {x3_multiplier}")
+                print(f"\nDetailed debug for pair: {layer_name} - {x3_identifier}")
+                print(f"Target distance: {target_distance}")
                 
-                # Calculate target distance based on maximum multiplier
-                if flag == 1:
-                    target_distance = strand_width  * x2_multiplier
-                else:
-                    target_distance = strand_width  * x3_multiplier
-                flag *= -1
+                # Calculate and print initial positions
+                print(f"x4 strand start: ({x4_strand['start']['x']}, {x4_strand['start']['y']})")
+                print(f"x5 strand start: ({x5_strand['start']['x']}, {x5_strand['start']['y']})")
+                print(f"x5 strand end: ({x5_strand['end']['x']}, {x5_strand['end']['y']})")
                 
                 # Calculate current distance
-                if x4_strand and x5_strand:
-                    current_distance = calculate_point_to_line_distance(
-                        x4_strand['start'],
-                        x5_strand['start'],
-                        x5_strand['end']
-                    )
+                current_distance = calculate_point_to_line_distance(
+                    x4_strand['start'],
+                    x5_strand['start'],
+                    x5_strand['end']
+                )
+                print(f"Initial distance: {current_distance}")
+                
+                # Only proceed with adjustments if we need to increase the distance
+                if current_distance >= target_distance:
+                    print(f"No adjustment needed: current distance ({current_distance:.2f}) is already larger than target ({target_distance:.2f})")
+                else:
+                    # Determine step size (only positive since we need to increase distance)
+                    step = 0.1
                     
-   
-                    # Only adjust if current distance is less than target
-                    if current_distance < target_distance - tolerance:
-                        # Calculate unit vectors with orientation consideration
-                        x2_vector = {
-                            'x': x2_strand['end']['x'] - x2_strand['start']['x'],
-                            'y': x2_strand['end']['y'] - x2_strand['start']['y']
-                        }
-                        x3_vector = {
-                            'x': x3_strand['end']['x'] - x3_strand['start']['x'],
-                            'y': x3_strand['end']['y'] - x3_strand['start']['y']
-                        }
-
+                    # Calculate unit vectors for x2 and x3 strands
+                    x2_vector = {
+                        'x': x2_strand['end']['x'] - x2_strand['start']['x'],
+                        'y': x2_strand['end']['y'] - x2_strand['start']['y']
+                    }
+                    x3_vector = {
+                        'x': x3_strand['end']['x'] - x3_strand['start']['x'],
+                        'y': x3_strand['end']['y'] - x3_strand['start']['y']
+                    }
+                    
+                    # Normalize vectors to get unit vectors
+                    x2_magnitude = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
+                    x3_magnitude = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
+                    
+                    x2_unit = {
+                        'x': x2_vector['x'] / x2_magnitude if x2_magnitude != 0 else 0,
+                        'y': x2_vector['y'] / x2_magnitude if x2_magnitude != 0 else 0
+                    }
+                    x3_unit = {
+                        'x': x3_vector['x'] / x3_magnitude if x3_magnitude != 0 else 0,
+                        'y': x3_vector['y'] / x3_magnitude if x3_magnitude != 0 else 0
+                    }
+                    
+                    # Adjust strands until target distance is reached
+                    while current_distance < target_distance:
+                        print(f"Pair: {x2_strand['layer_name']} - {x3_strand['layer_name']}")
+                        print(f"Target distance: {target_distance}, Current distance: {current_distance}")
                         
-                        x4_vector = {
-                            'x': x4_strand['end']['x'] - x4_strand['start']['x'],
-                            'y': x4_strand['end']['y'] - x4_strand['start']['y']
-                        }
-                        x5_vector = {
-                            'x': x5_strand['end']['x'] - x5_strand['start']['x'],
-                            'y': x5_strand['end']['y'] - x5_strand['start']['y']
-                        }
-                        
-                        x2_length = math.sqrt(x2_vector['x']**2 + x2_vector['y']**2)
-                        x3_length = math.sqrt(x3_vector['x']**2 + x3_vector['y']**2)
-                        x4_length = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
-                        x5_length = math.sqrt(x5_vector['x']**2 + x5_vector['y']**2)                    
-                        x2_unit = {
-                            'x': x2_vector['x'] / x2_length,
-                            'y': x2_vector['y'] / x2_length
-                        }
-                        x3_unit = {
-                            'x': x3_vector['x'] / x3_length,
-                            'y': x3_vector['y'] / x3_length
-                        }
-                        x4_unit = {
-                            'x': x4_vector['x'] / x4_length,
-                            'y': x4_vector['y'] / x4_length
-                        }
-                        x5_unit = {
-                            'x': x5_vector['x'] / x5_length,
-                            'y': x5_vector['y'] / x5_length
-                        }                    
-                        # Extend both strands until target distance is reached
-                        step = 1
-                        while current_distance < target_distance - tolerance:
-                            print(f"Pair: {x2_strand['layer_name']} - {x3_strand['layer_name']}")
-                            print(f"Target distance: {target_distance}, Current distance: {current_distance}")
-                                         
-                            if is_horizontal:
-                               # For horizontal strands, only move in x direction
-                               x2_strand['end']['x'] += x2_unit['x'] * step
-                               x3_strand['end']['x'] += x3_unit['x'] * step
-                               x4_strand['start']['x'] += x2_unit['x'] * step
-                               x4_strand['end']['x'] += x2_unit['x'] * step
-                               x5_strand['start']['x'] += x3_unit['x'] * step
-                               x5_strand['end']['x'] += x3_unit['x'] * step
-                            else:
-                               # For vertical strands, only move in y direction
-                               x2_strand['end']['y'] += x2_unit['y'] * step
-                               x3_strand['end']['y'] += x3_unit['y'] * step
-                               x4_strand['start']['y'] += x2_unit['y'] * step
-                               x4_strand['end']['y'] += x2_unit['y'] * step
-                               x5_strand['start']['y'] += x3_unit['y'] * step
-                               x5_strand['end']['y'] += x3_unit['y'] * step
-                           
-                            current_distance = calculate_point_to_line_distance(
-                                x4_strand['start'],
-                                x5_strand['start'],
-                                x5_strand['end']
-                            )
-                        
-                        # Update control points
-                        x2_strand['control_points'] = [
-                            {'x': x2_strand['start']['x'], 'y': x2_strand['start']['y']},
-                            {'x': x2_strand['end']['x'], 'y': x2_strand['end']['y']}
-                        ]
-                        x3_strand['control_points'] = [
-                            {'x': x3_strand['start']['x'], 'y': x3_strand['start']['y']},
-                            {'x': x3_strand['end']['x'], 'y': x3_strand['end']['y']}
-                        ]
-                        # Update control points
-                        x5_strand['control_points'] = [
-                            {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
-                            {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
-                        ]
-                        x4_strand['control_points'] = [
-                            {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
-                            {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
-                        ]            
+                        if is_horizontal:
+                            # For horizontal strands, only move in x direction
+                            x2_strand['end']['x'] += x2_unit['x'] * step
+                            x3_strand['end']['x'] += x3_unit['x'] * step
+                            x4_strand['start']['x'] += x2_unit['x'] * step
+                            x4_strand['end']['x'] += x2_unit['x'] * step
+                            x5_strand['start']['x'] += x3_unit['x'] * step
+                            x5_strand['end']['x'] += x3_unit['x'] * step
+                        else:
+                            # For vertical strands, only move in y direction
+                            x2_strand['end']['y'] += x2_unit['y'] * step
+                            x3_strand['end']['y'] += x3_unit['y'] * step
+                            x4_strand['start']['y'] += x2_unit['y'] * step
+                            x4_strand['end']['y'] += x2_unit['y'] * step
+                            x5_strand['start']['y'] += x3_unit['y'] * step
+                            x5_strand['end']['y'] += x3_unit['y'] * step
+                       
+                        current_distance = calculate_point_to_line_distance(
+                            x4_strand['start'],
+                            x5_strand['start'],
+                            x5_strand['end']
+                        )
+                
+                # Update control points
+                x2_strand['control_points'] = [
+                    {'x': x2_strand['start']['x'], 'y': x2_strand['start']['y']},
+                    {'x': x2_strand['end']['x'], 'y': x2_strand['end']['y']}
+                ]
+                x3_strand['control_points'] = [
+                    {'x': x3_strand['start']['x'], 'y': x3_strand['start']['y']},
+                    {'x': x3_strand['end']['x'], 'y': x3_strand['end']['y']}
+                ]
+                # Update control points
+                x5_strand['control_points'] = [
+                    {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
+                    {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
+                ]
+                x4_strand['control_points'] = [
+                    {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
+                    {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
+                ]            
+            else:
+                print(f"No movement needed: current distance ({current_distance}) is already close to or greater than target ({target_distance})")
 
     # Save modified data
     with open(output_path, 'w') as f:
@@ -362,7 +356,8 @@ def process_directory(input_dir, output_dir, m, n):
     for filename in os.listdir(input_dir):
         if filename.endswith('.json'):
             input_path = os.path.join(input_dir, filename)
-            output_path = os.path.join(output_dir, f"extended_{filename}")
+            file_name_without_json = os.path.splitext(filename)[0]
+            output_path = os.path.join(output_dir, f"{file_name_without_json}_extended.json")
             process_json_file(input_path, output_path, m, n)
             print(f"Processed {filename}")
 

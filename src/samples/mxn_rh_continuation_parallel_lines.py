@@ -79,7 +79,10 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, base_spacing
         "y": x3_vector["y"] / x3_length
     }
     
-    # Calculate rotated vectors for x4 and x5
+    # Normalize angles to -180 to 180 range
+    x4_angle = ((x4_angle + 180) % 360) - 180
+    x5_angle = ((x5_angle + 180) % 360) - 180
+    
     x4_rad = math.radians(x4_angle)
     x5_rad = math.radians(x5_angle)
     
@@ -576,7 +579,7 @@ def main():
 
     # Angle ranges
     minimum_angle_h = 40  # For n
-    maximum_angle_h = 40  # For n
+    maximum_angle_h = 42  # For n
     minimum_angle_v = 70  # For m
     maximum_angle_v = 70  # For m
     angle_step = 1

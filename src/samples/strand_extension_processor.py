@@ -65,6 +65,118 @@ def generate_multiplier_map(size, is_vertical=False):
                     multiplier += 2
     
     return multiplier_map
+def get_direction_vector(point, line_start, line_end):
+    """Calculate direction vector from point to closest point on line
+    Args:
+        point: The point from the first strand
+        line_start: Start point of the line segment on the second strand
+        line_end: End point of the line segment on the second strand
+    Returns:
+        Normalized direction vector from point to closest point on line
+    """
+    # Convert to numpy arrays
+    p = np.array([point['x'], point['y']])
+    a = np.array([line_start['x'], line_start['y']])
+    b = np.array([line_end['x'], line_end['y']])
+    
+    # Calculate closest point on line
+    ab = b - a  # line vector
+    ap = p - a  # point to line start vector
+    t = np.dot(ap, ab) / np.dot(ab, ab)
+    t = np.clip(t, 0, 1)  # Ensure point is on line segment
+    
+    closest = a + t * ab
+    
+    # Return direction vector from point to closest point
+    direction = closest - p
+    return direction / np.linalg.norm(direction)  # Normalize vector
+
+def check_strand_directions(strands_dict, m, n):
+    """Validates that all strand pair direction vectors are similar.
+    
+    For m=1, checks the sequence:
+    2_5->2_4 (internal) -> 2_4->3_5 (bridge) -> 3_5->4_4 (bridge) -> 4_4->4_5 (internal) ...
+    
+    Returns True only if all direction vectors are within ~25 degrees of each other
+    (dot product >= 0.9 between any two normalized vectors).
+    """
+    def get_normalized_pair_direction(left_strand_id, right_strand_id):
+        left_strand = strands_dict.get(left_strand_id)
+        right_strand = strands_dict.get(right_strand_id)
+        
+        if not (left_strand and right_strand):
+            return None
+            
+        # Get direction vector
+        direction = get_direction_vector(
+            left_strand['start'],
+            right_strand['start'],
+            right_strand['end']
+        )
+        
+        # Normalize the vector
+        norm = np.linalg.norm(direction)
+        if norm == 0:
+            return None
+        return direction / norm
+    
+    if m == 1:
+        # Generate sequence of pairs to check
+        pairs_sequence = []
+        current_set = 2
+        
+        while current_set <= n + 1:
+            # Internal pair
+            pairs_sequence.append({
+                'left': f"{current_set}_5",
+                'right': f"{current_set}_4",
+                'type': 'internal'
+            })
+            
+            # Bridge pairs
+            if current_set < n + 1:
+                pairs_sequence.append({
+                    'left': f"{current_set}_4",
+                    'right': f"{current_set + 1}_5",
+                    'type': 'bridge'
+                })
+                
+                if current_set + 1 < n + 1:
+                    pairs_sequence.append({
+                        'left': f"{current_set + 1}_5",
+                        'right': f"{current_set + 2}_4",
+                        'type': 'bridge'
+                    })
+                current_set += 2
+            else:
+                current_set += 1
+        
+        # Calculate all normalized direction vectors
+        direction_vectors = []
+        for pair in pairs_sequence:
+            curr_dir = get_normalized_pair_direction(pair['left'], pair['right'])
+            if curr_dir is not None:
+                direction_vectors.append({
+                    'vector': curr_dir,
+                    'pair': pair
+                })
+                print(f"Normalized direction vector for {pair['left']}->{pair['right']}: [{curr_dir[0]:.4f}, {curr_dir[1]:.4f}]")
+        
+        # Check all pairs of vectors against each other
+        for i in range(len(direction_vectors)):
+            for j in range(i + 1, len(direction_vectors)):
+                dot_product = np.dot(direction_vectors[i]['vector'], 
+                                   direction_vectors[j]['vector'])
+                if dot_product < 0.9:  # More than ~25 degrees difference
+                    print(f"\nDirection mismatch found between:")
+                    print(f"Pair 1: {direction_vectors[i]['pair']['left']} -> {direction_vectors[i]['pair']['right']}")
+                    print(f"Pair 2: {direction_vectors[j]['pair']['left']} -> {direction_vectors[j]['pair']['right']}")
+                    print(f"Dot product: {dot_product}")
+                    return False
+                    
+        return len(direction_vectors) > 0  # Return True only if we had vectors to check
+    
+    return True  # For m>1 cases (you might want to implement validation for these)
 
 def find_opposite_x3_pair(x2_identifier, m, n):
     """Find the opposite x3 pair for a given x2 strand based on multiplier map logic"""
@@ -146,8 +258,6 @@ def find_attached_x4_strand(x2_identifier, strands_dict):
     set_number = x2_identifier.split('_')[0]
     x4_identifier = f"{set_number}_4"
     
-    print(f"Looking for x4 strand: {x4_identifier}")
-    print(f"Available strands: {[k for k in strands_dict.keys() if '_4' in k]}")
     
     # Simply return the x4 strand if it exists
     x4_strand = strands_dict.get(x4_identifier)
@@ -160,8 +270,6 @@ def find_attached_x5_strand(x3_identifier, strands_dict):
     set_number = x3_identifier.split('_')[0]
     x5_identifier = f"{set_number}_5"
     
-    print(f"Looking for x5 strand: {x5_identifier}")
-    print(f"Available strands: {[k for k in strands_dict.keys() if '_5' in k]}")
     
     # Simply return the x5 strand if it exists
     x5_strand = strands_dict.get(x5_identifier)
@@ -183,7 +291,32 @@ def calculate_point_to_line_distance(point, line_start, line_end):
     # Calculate perpendicular distance
     d = np.abs(np.cross(b-a, p-a)) / np.linalg.norm(b-a)
     return d
+def print_direction_vectors(strands_dict, m, n):
+    """Print direction vectors for each pair after extension"""
+    
+    # Print horizontal groups
+    for i in range(m + 1, m + n + 1):
+        x4_strand = strands_dict.get(f"{i}_4")
+        x5_strand = strands_dict.get(f"{i}_5")
+        
+        if x4_strand and x5_strand:
+            dir_vector = get_direction_vector(
+                x5_strand['start'],
+                x4_strand['start'],
+                x4_strand['end']
+            )
 
+
+    for i in range(1, m + 1):
+        x4_strand = strands_dict.get(f"{i}_4")
+        x5_strand = strands_dict.get(f"{i}_5")
+        
+        if x4_strand and x5_strand:
+            dir_vector = get_direction_vector(
+                x5_strand['start'],
+                x4_strand['start'],
+                x4_strand['end']
+            )
 def process_json_file(input_path, output_path, m, n):
     """Process a single JSON file to extend strands according to multiplier map"""
     with open(input_path, 'r') as f:
@@ -193,18 +326,14 @@ def process_json_file(input_path, output_path, m, n):
     horizontal_multiplier_map = generate_multiplier_map(n, is_vertical=False)
     vertical_multiplier_map = generate_multiplier_map(m, is_vertical=True)
     
-    print("\nVertical Strand Pairs (m):")
     for i in range(1, m + 1):
         mult2 = vertical_multiplier_map.get((i, 2), 'N/A')
         mult3 = vertical_multiplier_map.get((i, 3), 'N/A')
-        print(f"Set {i}: {i}_2 and {i}_3 = multipliers: {mult2}, {mult3}")
-    
-    print("\nHorizontal Strand Pairs (n):")
+
     for i in range(1, n + 1):
         mult2 = horizontal_multiplier_map.get((i, 2), 'N/A')
         mult3 = horizontal_multiplier_map.get((i, 3), 'N/A')
-        print(f"Set {i}: {i+m}_2 and {i+m}_3 = multipliers: {mult2}, {mult3}")
-    
+
     modified_data = deepcopy(data)
     
     strands_dict = {}
@@ -256,7 +385,6 @@ def process_json_file(input_path, output_path, m, n):
             # If middle distance > 56, update strand_width
             if middle_distance > 56:
                 strand_width = middle_distance
-                print(f"Updated strand width to {strand_width} based on middle pair distance")
     # Process both x2-x3 and x4-x5 pairs
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
@@ -271,11 +399,7 @@ def process_json_file(input_path, output_path, m, n):
             x3_strand = strands_dict.get(x3_identifier)
             x4_strand = find_attached_x4_strand(layer_name,strands_dict)
             x5_strand = find_attached_x5_strand(x3_identifier,strands_dict)
-            
-            print(f"\nProcessing strand {layer_name}:")
-            print(f"Found opposite strand: {x3_identifier}")
-            print(f"Found x4 strand: {x4_strand['layer_name'] if x4_strand else None}")
-            print(f"Found x5 strand: {x5_strand['layer_name'] if x5_strand else None}")
+
             
             if x3_strand and x4_strand and x5_strand:
                 # Use appropriate multiplier map based on strand orientation
@@ -285,13 +409,7 @@ def process_json_file(input_path, output_path, m, n):
                 # Always use x2_multiplier for target distance
                 target_distance = strand_width * multiplier_map.get((position, 2), 1)
                 
-                print(f"\nDetailed debug for pair: {layer_name} - {x3_identifier}")
-                print(f"Target distance: {target_distance}")
-                
-                # Calculate and print initial positions
-                print(f"x4 strand start: ({x4_strand['start']['x']}, {x4_strand['start']['y']})")
-                print(f"x5 strand start: ({x5_strand['start']['x']}, {x5_strand['start']['y']})")
-                print(f"x5 strand end: ({x5_strand['end']['x']}, {x5_strand['end']['y']})")
+
                 
                 # Calculate current distance
                 current_distance = calculate_point_to_line_distance(
@@ -299,7 +417,6 @@ def process_json_file(input_path, output_path, m, n):
                     x5_strand['start'],
                     x5_strand['end']
                 )
-                print(f"Initial distance: {current_distance}")
                 
                 # Only proceed with adjustments if we need to increase the distance
                 if current_distance >= target_distance:
@@ -333,9 +450,7 @@ def process_json_file(input_path, output_path, m, n):
                     
                     # Adjust strands until target distance is reached
                     while current_distance < target_distance:
-                        print(f"Pair: {x2_strand['layer_name']} - {x3_strand['layer_name']}")
-                        print(f"Target distance: {target_distance}, Current distance: {current_distance}")
-                        
+
                         if is_horizontal:
                             # For horizontal strands, only move in x direction
                             x2_strand['end']['x'] += x2_unit['x'] * step
@@ -380,9 +495,18 @@ def process_json_file(input_path, output_path, m, n):
             else:
                 print(f"No movement needed: current distance ({current_distance}) is already close to or greater than target ({target_distance})")
 
-    # Save modified data
-    with open(output_path, 'w') as f:
-        json.dump(modified_data, f)
+    # After all strand processing, print directions
+    print(f"\nAnalyzing file: {os.path.basename(input_path)}")
+    print_direction_vectors(strands_dict, m, n)
+    # After all strand processing, before saving:
+    if check_strand_directions(strands_dict, m, n):
+        # Save modified data
+        with open(output_path, 'w') as f:
+            json.dump(modified_data, f)
+        print("Strand directions verified - JSON saved successfully")
+    else:
+        print("Warning: Inconsistent strand directions detected - JSON not saved")
+
 
 def process_directory(input_dir, output_dir, m, n):
     """Process all JSON files in a directory"""
@@ -399,8 +523,10 @@ def process_directory(input_dir, output_dir, m, n):
 def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
-    for m in [1]:
-        for n in [3]:
+    m_values =[1]
+    n_values = [3]
+    for m in m_values:
+        for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             

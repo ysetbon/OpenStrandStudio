@@ -206,8 +206,8 @@ def main():
     suppress_qt_warnings()
 
     # Define your directories
-    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn2_rh_continuation"  # Replace with your actual path
-    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn2_rh_continuation\New folder"  # Replace with your actual path
+    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn3_rh_continuation"  # Replace with your actual path
+    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn3_rh_continuation\New folder"  # Replace with your actual path
 
     # Create output directory if it doesn't exist
     os.makedirs(output_directory, exist_ok=True)

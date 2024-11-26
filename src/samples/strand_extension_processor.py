@@ -22,53 +22,47 @@ def generate_multiplier_map(size, is_vertical=False):
         multiplier_map[(1, 3)] = 1  # First strand type 3
         return multiplier_map
     
-    # Handle even-sized grids (size % 2 == 0)
-    if size % 2 == 0:
-        middle = size // 2
-        # Iterate from middle outwards
-        for i in range(middle):
-            pos1 = middle - i      # Position left/above middle
-            pos2 = middle + 1 + i  # Position right/below middle
+    # For horizontal strands (n)
+    if not is_vertical:
+        # Find middle based on pattern
+        if size % 2 == 0:  # Even n
+            middle = (size + 1) // 2
+            # Middle pairs
+            multiplier_map[(middle, 2)] = 1     # middle_2
+            multiplier_map[(middle + 1, 3)] = 1 # (middle+1)_3
+            multiplier_map[(middle + 1, 2)] = 3 # (middle+1)_2
+            multiplier_map[(middle, 3)] = 3     # middle_3
             
-            # Special case for the innermost pair (i=0)
-            if i == 0:
-                multiplier_map[(pos1, 2)] = 1  # Inner left/top strand_2
-                multiplier_map[(pos2, 3)] = 1  # Inner right/bottom strand_3
-                multiplier_map[(pos1, 3)] = 3  # Inner left/top strand_3
-                multiplier_map[(pos2, 2)] = 3  # Inner right/bottom strand_2
-            else:
-                # For outer pairs, multipliers increase by 2 each step outward
-                multiplier_map[(pos1, 2)] = 2 * i + 2  # Left/top strand_2
-                multiplier_map[(pos2, 2)] = 2 * i + 1  # Right/bottom strand_2
-                multiplier_map[(pos1, 3)] = 2 * i + 1  # Left/top strand_3
-                multiplier_map[(pos2, 3)] = 2 * i + 2  # Right/bottom strand_3
-        
-        # Edge cases for outermost strands
-        multiplier_map[(size, 2)] = size+  1     # Rightmost/bottom strand_2
-        multiplier_map[(1, 3)] = size +  1      # Leftmost/top strand_3
-        multiplier_map[(size, 3)] = size - 1  # Rightmost/bottom strand_3
-        multiplier_map[(1, 2)] = size - 1     # Leftmost/top strand_2
-    
-    # Handle odd-sized grids
-    else:
-        middle = (size + 1) // 2
-        # Center strand gets multiplier of 1
-        multiplier_map[(middle, 2)] = 1
-        multiplier_map[(middle, 3)] = 1
-        
-        # First pair adjacent to center gets multiplier of 2
-        if middle > 1:
-            multiplier_map[(middle - 1, 2)] = 2  # Left/top of center
-            multiplier_map[(middle - 1, 3)] = 2
-            multiplier_map[(middle + 1, 2)] = 2  # Right/bottom of center
-            multiplier_map[(middle + 1, 3)] = 2
-        
-        # Outermost pairs get multiplier of 3
-        if middle > 2:
-            multiplier_map[(1, 2)] = 3    # Leftmost/top
-            multiplier_map[(1, 3)] = 3
-            multiplier_map[(size, 2)] = 3  # Rightmost/bottom
-            multiplier_map[(size, 3)] = 3
+            # For positions away from middle
+            multiplier = 5
+            for i in range(middle - 1, 0, -1):  # Going towards start
+                multiplier_map[(i, 2)] = multiplier
+                multiplier_map[(size - i + 2, 3)] = multiplier
+                multiplier += 2
+            
+            multiplier = 7
+            for i in range(middle + 2, size + 1):  # Going towards end
+                multiplier_map[(i, 2)] = multiplier
+                multiplier_map[(size - i + 2, 3)] = multiplier
+                multiplier += 2
+                
+        else:  # Odd n
+            middle = (size + 2) // 2
+            # Middle position
+            multiplier_map[(middle, 2)] = 1  # middle_2
+            multiplier_map[(middle, 3)] = 1  # middle_3
+            
+            # For positions away from middle
+            multiplier = 3
+            for i in range(1, size + 1):
+                if i != middle:
+                    if i < middle:
+                        multiplier_map[(i, 2)] = multiplier
+                        multiplier_map[(size - i + 2, 3)] = multiplier
+                    else:
+                        multiplier_map[(i, 2)] = multiplier
+                        multiplier_map[(size - i + 2, 3)] = multiplier
+                    multiplier += 2
     
     return multiplier_map
 
@@ -213,15 +207,56 @@ def process_json_file(input_path, output_path, m, n):
     
     modified_data = deepcopy(data)
     
-    strand_width = 56
-    tolerance = 0.01
-    
     strands_dict = {}
-    
     # Index all strands
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
         strands_dict[layer_name] = strand
+    
+    strand_width = 56
+    tolerance = 0.01
+    # Find the middle horizontal pair
+    middle_n = (n + 1) // 2
+    middle_horizontal_set = m + middle_n
+    middle_x2_identifier = f"{middle_horizontal_set}_2"
+    
+    # Handle even/odd n differently for finding x3 pair
+    if n % 2 == 0:
+        # For even n, use same identifier
+        middle_x3_identifier = middle_x2_identifier
+    else:
+        # For odd n, use find_opposite_x3_pair function
+        middle_x3_identifier = find_opposite_x3_pair(middle_x2_identifier, m, n)
+
+    # Get the middle strands
+    middle_x2_strand = None
+    middle_x3_strand = None
+    middle_x4_strand = None 
+    middle_x5_strand = None
+
+    # Find the middle strands in the data
+    for strand in data['strands']:
+        if strand['layer_name'] == middle_x2_identifier:
+            middle_x2_strand = strand
+        elif strand['layer_name'] == middle_x3_identifier:
+            middle_x3_strand = strand
+
+    if middle_x2_strand and middle_x3_strand:
+        middle_x4_strand = find_attached_x4_strand(middle_x2_identifier, strands_dict)
+        middle_x5_strand = find_attached_x5_strand(middle_x3_identifier, strands_dict)
+
+        if middle_x4_strand and middle_x5_strand:
+            # Calculate current distance for middle pair
+            middle_distance = calculate_point_to_line_distance(
+                middle_x4_strand['start'],
+                middle_x5_strand['start'], 
+                middle_x5_strand['end']
+            )
+            
+            # If middle distance > 56, update strand_width
+            if middle_distance > 56:
+                strand_width = middle_distance
+                print(f"Updated strand width to {strand_width} based on middle pair distance")
     # Process both x2-x3 and x4-x5 pairs
     for strand in modified_data['strands']:
         layer_name = strand['layer_name']
@@ -365,7 +400,7 @@ def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
     for m in [1]:
-        for n in [2]:
+        for n in [3]:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             

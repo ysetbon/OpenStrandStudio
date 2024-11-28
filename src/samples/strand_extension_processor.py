@@ -336,14 +336,12 @@ def process_json_file(input_path, output_path, m, n):
     
     # Calculate middle position
     if((n + m)%2==0):
-        middle_n_4 = middle_n_5 = ((n + m) // 2)
+        middle_n_4 = middle_n_5 = ((n + m) // 2)+1
+        print (f"asdasd{middle_n_4}")
     else:
         middle_n_4 = ((n + m) // 2)-1
         middle_n_5 = ((n + m) // 2)+1
-    def process_strand_pair(x4_strand, x5_strand, is_horizontal):
-        if not (x4_strand and x5_strand):
-            return
-            
+    def process_strand_pair(x4_strand, x5_strand, is_horizontal,is_x4,strand_width):
 
         # Calculate target distance using x2 multiplier
         target_distance = strand_width 
@@ -356,55 +354,110 @@ def process_json_file(input_path, output_path, m, n):
         )
         
         if current_distance >= target_distance:
-            print(f"No adjustment needed: current distance ({current_distance:.2f}) is already larger than target ({target_distance:.2f})")
-            return
+            print("the current distance is larger")
+            # Calculate temporary distance with small step
+            temp_distance = current_distance
+            if is_horizontal:
+                if is_x4:
+                    temp_x4_start = {'x': x4_strand['start']['x'] + 1, 'y': x4_strand['start']['y']}
+                    temp_x4_end = {'x': x4_strand['end']['x'] + 1, 'y': x4_strand['end']['y']}
+                    temp_distance = calculate_point_to_line_distance(
+                        temp_x4_start,
+                        x5_strand['start'],
+                        x5_strand['end']
+                    )
+                else:
+                    temp_x5_start = {'x': x5_strand['start']['x'] - 1, 'y': x5_strand['start']['y']}
+                    temp_x5_end = {'x': x5_strand['end']['x'] - 1, 'y': x5_strand['end']['y']}
+                    temp_distance = calculate_point_to_line_distance(
+                        x4_strand['start'],
+                        temp_x5_start,
+                        temp_x5_end
+                    )
+            else:
+                if is_x4:
+                    temp_x4_start = {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y'] + 1}
+                    temp_x4_end = {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y'] + 1}
+                    temp_distance = calculate_point_to_line_distance(
+                        temp_x4_start,
+                        x5_strand['start'],
+                        x5_strand['end']
+                    )
+                else:
+                    temp_x5_start = {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y'] - 1}
+                    temp_x5_end = {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y'] - 1}
+                    temp_distance = calculate_point_to_line_distance(
+                        x4_strand['start'],
+                        temp_x5_start,
+                        temp_x5_end
+                    )
+            print(f"tempdistance-currcentdistance={temp_distance-current_distance}")
+            if temp_distance < current_distance:
+                # Since distance is decreasing, adjust until we reach target distance
+                step = 1
+                while current_distance > target_distance:
+                    if is_horizontal:
+                        if is_x4:
+                            x4_strand['start']['x'] += step
+                            x4_strand['end']['x'] += step
+                        else:
+                            x5_strand['start']['x'] -= step 
+                            x5_strand['end']['x'] -= step
+                    else:
+                        if is_x4:
+                            x4_strand['start']['y'] += step
+                            x4_strand['end']['y'] += step
+                        else:
+                            x5_strand['start']['y'] -= step
+                            x5_strand['end']['y'] -= step
+                    
+                    current_distance = calculate_point_to_line_distance(
+                        x4_strand['start'],
+                        x5_strand['start'],
+                        x5_strand['end']
+                    )
+                    print(f"current_distance is: {current_distance}")
+                        # Update control points
+                x4_strand['control_points'] = [
+                    {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
+                    {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
+                ]
+                x5_strand['control_points'] = [
+                    {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
+                    {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
+                ]
+                return
             
         # Determine step size
-        step = 0.1
-        
-        # Calculate vectors
-        x4_vector = {
-            'x': x4_strand['end']['x'] - x4_strand['start']['x'],
-            'y': x4_strand['end']['y'] - x4_strand['start']['y']
-        }
-        x5_vector = {
-            'x': x5_strand['end']['x'] - x5_strand['start']['x'],
-            'y': x5_strand['end']['y'] - x5_strand['start']['y']
-        }
-        
-        # Normalize vectors
-        x4_magnitude = math.sqrt(x4_vector['x']**2 + x4_vector['y']**2)
-        x5_magnitude = math.sqrt(x5_vector['x']**2 + x5_vector['y']**2)
-        
-        x4_unit = {
-            'x': x4_vector['x'] / x4_magnitude if x4_magnitude != 0 else 0,
-            'y': x4_vector['y'] / x4_magnitude if x4_magnitude != 0 else 0
-        }
-        x5_unit = {
-            'x': x5_vector['x'] / x5_magnitude if x5_magnitude != 0 else 0,
-            'y': x5_vector['y'] / x5_magnitude if x5_magnitude != 0 else 0
-        }
+        step = 1
+                
         
         # Adjust strands until target distance is reached
         while current_distance < target_distance:
             if is_horizontal:
-                # For horizontal strands, only move in x direction
-                x4_strand['start']['x'] -= x4_unit['x'] * step
-                x4_strand['end']['x'] -= x4_unit['x'] * step
-                x5_strand['start']['x'] -= x5_unit['x'] * step
-                x5_strand['end']['x'] -= x5_unit['x'] * step
+                if is_x4:
+                    # For horizontal strands, only move in x direction
+                    x4_strand['start']['x'] += 1 * step
+                    x4_strand['end']['x'] += 1 * step
+                else:
+                    x5_strand['start']['x'] -= 1 * step
+                    x5_strand['end']['x'] -= 1 * step
             else:
                 # For vertical strands, only move in y direction
-                x4_strand['start']['y'] -= x4_unit['y'] * step
-                x4_strand['end']['y'] -= x4_unit['y'] * step
-                x5_strand['start']['y'] = x5_unit['y'] * step
-                x5_strand['end']['y'] -= x5_unit['y'] * step
+                if is_x4:
+                    x4_strand['start']['y'] += 1 * step
+                    x4_strand['end']['y'] += 1 * step
+                else:
+                    x5_strand['start']['y'] -= 1 * step
+                    x5_strand['end']['y'] -= 1 * step
             
             current_distance = calculate_point_to_line_distance(
                 x4_strand['start'],
                 x5_strand['start'],
                 x5_strand['end']
             )
+
+            print(f"current_distance is: {current_distance}")
         
         # Update control points
         x4_strand['control_points'] = [
@@ -415,72 +468,113 @@ def process_json_file(input_path, output_path, m, n):
             {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
             {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
         ]
+    # Extend middle strands first
+    # Middle x5 strand
+    x4_identifier = f"{middle_n_4}_4"
+    x5_identifier = f"{middle_n_5}_5"
     
+    x4_strand = strands_dict.get(x4_identifier)
+    x5_strand = strands_dict.get(x5_identifier)
+    strand_width_temp = 26
+    
+    # Print debug info
+    print(f"Before adjustment - Distance between middle strands: {calculate_point_to_line_distance(x4_strand['start'], x5_strand['start'], x5_strand['end'])}")
+    
+    # Process middle pair once with proper parameters
+    process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp)
+    process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+
+    print(f"After adjustment - Distance between middle strands: {calculate_point_to_line_distance(x4_strand['start'], x5_strand['start'], x5_strand['end'])}")
+
+    # Print debug info
+
     # First loop: from middle outward to the right
-    current_set = m + middle_n_5
-    
+
+    current_set = middle_n_4+1   
     # Process pairs in zigzag pattern
-    while current_set <= m + n:
+    while current_set <= m+n :
         # First pair: current_4 with (current+1)_5 (bridge connection)
-        if current_set < m + n:  # Only if not at last set
-            x4_identifier = f"{current_set}_4"
-            x5_identifier = f"{current_set + 1}_5"
-            
+        if current_set <= m + n:  # Only if not at last set
+            x4_identifier = f"{current_set-1}_4"
+            x5_identifier = f"{current_set }_5"
             x4_strand = strands_dict.get(x4_identifier)
             x5_strand = strands_dict.get(x5_identifier)
             
-            process_strand_pair(x4_strand, x5_strand, True)
+            process_strand_pair(x4_strand, x5_strand, True,False,strand_width)
         
         # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
-        if current_set < m + n:  # Only if not at last set
-            x4_identifier = f"{current_set + 1}_4"
-            x5_identifier = f"{current_set + 1}_5"
-            
-            x4_strand = strands_dict.get(x4_identifier)
-            x5_strand = strands_dict.get(x5_identifier)
-            
-            process_strand_pair(x4_strand, x5_strand, True)
-        
-        current_set += 1
-    
-    # Second loop: from middle outward to the left
-    current_set = m + middle_n_4    
-    # Process pairs in zigzag pattern
-    while current_set <= m + n:
-        # First pair: current_4 with (current+1)_5 (bridge connection)
-        if current_set < m + n:  # Only if not at last set
-            x4_identifier = f"{current_set-1}_4"
+        if current_set <= m + n:  # Only if not at last set
+            x4_identifier = f"{current_set}_4"
             x5_identifier = f"{current_set}_5"
             
             x4_strand = strands_dict.get(x4_identifier)
             x5_strand = strands_dict.get(x5_identifier)
             
-            process_strand_pair(x4_strand, x5_strand, True)
+            process_strand_pair(x4_strand, x5_strand, True,True,strand_width)
         
-        # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
-        if current_set < m + n:  # Only if not at last set
-            x4_identifier = f"{current_set-1}_4"
-            x5_identifier = f"{current_set-1}_5"
-            
+        current_set += 1
+    
+    current_set = middle_n_4-1
+    # Process pairs in zigzag pattern
+    while current_set > m :
+        # First pair: current_4 with (current+1)_5 (bridge connection)
+        if current_set > m:  # Only if not at last set
+            x4_identifier = f"{current_set}_4"
+            x5_identifier = f"{current_set+1 }_5"
+            print(f"current set_4 : {x4_identifier}")
+            print(f"current set_5 : {x5_identifier}")            
             x4_strand = strands_dict.get(x4_identifier)
             x5_strand = strands_dict.get(x5_identifier)
             
-            process_strand_pair(x4_strand, x5_strand, True)
+            process_strand_pair(x4_strand, x5_strand, True,True,strand_width)
         
-        current_set += 1
+        # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
+        if current_set > m:  # Only if not at last set
+            x4_identifier = f"{current_set}_4"
+            x5_identifier = f"{current_set}_5"
+            x4_identifier = f"{current_set}_4"
+            x5_identifier = f"{current_set }_5"            
+            x4_strand = strands_dict.get(x4_identifier)
+            x5_strand = strands_dict.get(x5_identifier)
+            
+            process_strand_pair(x4_strand, x5_strand, True,False,strand_width)
+        
+        current_set -= 1
     
     # After all strand processing, print directions
     print(f"\nAnalyzing file: {os.path.basename(input_path)}")
     print_direction_vectors(strands_dict, m, n)
     
-    # Verify strand directions before saving
-    if check_strand_directions(strands_dict, m, n):
-        with open(output_path, 'w') as f:
-            json.dump(modified_data, f)
-        print("Strand directions verified - JSON saved successfully")
-    else:
-        print("Warning: Inconsistent strand directions detected - JSON not saved")
 
+
+    # After processing the strand pairs, align the endpoints
+    for strand_id, strand in strands_dict.items():
+        if strand_id.endswith('_2'):
+            x4_strand = find_attached_x4_strand(strand_id, strands_dict)
+            if x4_strand:
+                # Make x2's end point match x4's start point
+                strand['end']['x'] = x4_strand['start']['x']
+                strand['end']['y'] = x4_strand['start']['y']
+                # Update control points
+                strand['control_points'] = [
+                    {'x': strand['start']['x'], 'y': strand['start']['y']},
+                    {'x': strand['end']['x'], 'y': strand['end']['y']}
+                ]
+        elif strand_id.endswith('_3'):
+            x5_strand = find_attached_x5_strand(strand_id, strands_dict)
+            if x5_strand:
+                # Make x3's end point match x5's start point
+                strand['end']['x'] = x5_strand['start']['x']
+                strand['end']['y'] = x5_strand['start']['y']
+                # Update control points
+                strand['control_points'] = [
+                    {'x': strand['start']['x'], 'y': strand['start']['y']},
+                    {'x': strand['end']['x'], 'y': strand['end']['y']}
+                ]
+
+    # After all the processing is done, save the modified data
+    with open(output_path, 'w') as f:
+        json.dump(modified_data, f, indent=2)
 
 def process_directory(input_dir, output_dir, m, n):
     """Process all JSON files in a directory"""
@@ -497,7 +591,17 @@ def process_directory(input_dir, output_dir, m, n):
 def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
-    m_values =[1]
+    # Remove existing _extended files
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if '_extended.json' in file:
+                try:
+                    os.remove(os.path.join(root, file))
+                    print(f"Removed existing extended file: {file}")
+                except Exception as e:
+                    print(f"Error removing file {file}: {e}")
+    
+    m_values = [1]
     n_values = [5]
     for m in m_values:
         for n in n_values:

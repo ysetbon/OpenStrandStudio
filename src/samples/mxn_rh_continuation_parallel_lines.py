@@ -578,16 +578,16 @@ def main():
     x5_length_extension = 55
 
     # Angle ranges
-    minimum_angle_h = 50  # For n
-    maximum_angle_h = 85  # For n
-    minimum_angle_v = 70  # For m
-    maximum_angle_v = 70  # For m
+    minimum_angle_h = 70  # For n
+    maximum_angle_h = 70  # For n
+    minimum_angle_v = 73  # For m
+    maximum_angle_v = 73  # For m
     angle_step = 1
 
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [5]
+    n_values = [4]
     m_values = [1]
 
     # Process configurations

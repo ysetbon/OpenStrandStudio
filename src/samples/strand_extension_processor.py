@@ -170,7 +170,7 @@ def check_strand_directions(strands_dict, m, n):
                     print(f"Pair 1: {direction_vectors[i]['pair']['left']} -> {direction_vectors[i]['pair']['right']}")
                     print(f"Pair 2: {direction_vectors[j]['pair']['left']} -> {direction_vectors[j]['pair']['right']}")
                     print(f"Dot product: {dot_product}")
-                    return True
+                    return False
                     
         return len(direction_vectors) > 0  # Return True only if we had vectors to check
     
@@ -666,21 +666,38 @@ def process_json_file(input_path, output_path, m, n):
                     {'x': strand['end']['x'], 'y': strand['end']['y']}
                 ]
 
-    # After all the processing is done, save the modified data
-    with open(output_path, 'w') as f:
-        json.dump(modified_data, f, indent=2)
+    # After all the processing is done, check directions before saving
+    if check_strand_directions(strands_dict, m, n):
+        # Save the modified data only if directions are valid
+        with open(output_path, 'w') as f:
+            json.dump(modified_data, f, indent=2)
+        print(f"Successfully processed and saved {os.path.basename(input_path)}")
+        return True
+    else:
+        print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
+        return False
 
 def process_directory(input_dir, output_dir, m, n):
     """Process all JSON files in a directory"""
     os.makedirs(output_dir, exist_ok=True)
+    
+    processed_count = 0
+    skipped_count = 0
     
     for filename in os.listdir(input_dir):
         if filename.endswith('.json') and not filename.endswith('_extended.json'):
             input_path = os.path.join(input_dir, filename)
             file_name_without_json = os.path.splitext(filename)[0]
             output_path = os.path.join(output_dir, f"{file_name_without_json}_extended.json")
-            process_json_file(input_path, output_path, m, n)
-            print(f"Processed {filename}")
+            
+            if process_json_file(input_path, output_path, m, n):
+                processed_count += 1
+            else:
+                skipped_count += 1
+    
+    print(f"\nProcessing summary:")
+    print(f"Successfully processed: {processed_count}")
+    print(f"Skipped due to invalid directions: {skipped_count}")
 
 def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
@@ -696,7 +713,7 @@ def main():
                     print(f"Error removing file {file}: {e}")
     
     m_values = [1]  # Adjust as needed
-    n_values = [4]  # Adjust as needed
+    n_values = [3]  # Adjust as needed
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

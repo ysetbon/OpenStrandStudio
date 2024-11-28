@@ -578,8 +578,8 @@ def main():
     x5_length_extension = 55
 
     # Angle ranges
-    minimum_angle_h = 70  # For n
-    maximum_angle_h = 70  # For n
+    minimum_angle_h = 50  # For n
+    maximum_angle_h = 85  # For n
     minimum_angle_v = 73  # For m
     maximum_angle_v = 73  # For m
     angle_step = 1

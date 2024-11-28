@@ -65,6 +65,7 @@ def generate_multiplier_map(size, is_vertical=False):
                     multiplier += 2
     
     return multiplier_map
+
 def get_direction_vector(point, line_start, line_end):
     """Calculate direction vector from point to closest point on line
     Args:
@@ -163,7 +164,7 @@ def check_strand_directions(strands_dict, m, n):
         for i in range(len(direction_vectors)):
             for j in range(i + 1, len(direction_vectors)):
                 dot_product = np.dot(direction_vectors[i]['vector'], 
-                                   direction_vectors[j]['vector'])
+                                direction_vectors[j]['vector'])
                 if dot_product < 0.9:  # More than ~25 degrees difference
                     print(f"\nDirection mismatch found between:")
                     print(f"Pair 1: {direction_vectors[i]['pair']['left']} -> {direction_vectors[i]['pair']['right']}")
@@ -179,7 +180,7 @@ def find_opposite_x3_pair(x2_identifier, m, n):
     """Find the opposite x3 pair for a given x2 strand based on multiplier map logic"""
     set_number = int(x2_identifier.split('_')[0])
     is_horizontal = set_number > m
-    
+
     if is_horizontal:
         relative_position = set_number - m
         if n % 2 == 0:  # Even number of strands
@@ -220,15 +221,12 @@ def find_opposite_x5_pair(x4_identifier, m, n):
     """Find the opposite x5 pair for a given x4 strand based on multiplier map logic"""
     set_number = int(x4_identifier.split('_')[0])
     is_horizontal = set_number > m
-    
+
     if is_horizontal:
         relative_position = set_number - m
         if n % 2 == 0:
             middle = n // 2
-            if relative_position <= middle:
-                opposite_position = n - relative_position + 1
-            else:
-                opposite_position = n - relative_position + 1
+            opposite_position = n - relative_position + 1
             opposite_set = m + opposite_position
         else:
             middle = (n + 1) // 2
@@ -250,11 +248,11 @@ def find_opposite_x5_pair(x4_identifier, m, n):
                 opposite_set = opposite_position
     
     return f"{opposite_set}_5"
+
 def find_attached_x4_strand(x2_identifier, strands_dict):
     """Find the x4 strand that is attached to the end of x2 strand"""
     set_number = x2_identifier.split('_')[0]
     x4_identifier = f"{set_number}_4"
-    
     
     # Simply return the x4 strand if it exists
     x4_strand = strands_dict.get(x4_identifier)
@@ -262,11 +260,11 @@ def find_attached_x4_strand(x2_identifier, strands_dict):
         return x4_strand
     
     return None
+
 def find_attached_x5_strand(x3_identifier, strands_dict):
     """Find the x5 strand that is attached to the end of x3 strand"""
     set_number = x3_identifier.split('_')[0]
     x5_identifier = f"{set_number}_5"
-    
     
     # Simply return the x5 strand if it exists
     x5_strand = strands_dict.get(x5_identifier)
@@ -274,6 +272,7 @@ def find_attached_x5_strand(x3_identifier, strands_dict):
         return x5_strand
     
     return None
+
 def calculate_distance(point1, point2):
     """Calculate distance between two points"""
     return math.sqrt((point2['x'] - point1['x'])**2 + (point2['y'] - point1['y'])**2)
@@ -288,6 +287,7 @@ def calculate_point_to_line_distance(point, line_start, line_end):
     # Calculate perpendicular distance
     d = np.abs(np.cross(b-a, p-a)) / np.linalg.norm(b-a)
     return d
+
 def print_direction_vectors(strands_dict, m, n):
     """Print direction vectors for each pair after extension"""
     
@@ -303,7 +303,7 @@ def print_direction_vectors(strands_dict, m, n):
                 x4_strand['end']
             )
 
-
+    # Print vertical groups
     for i in range(1, m + 1):
         x4_strand = strands_dict.get(f"{i}_4")
         x5_strand = strands_dict.get(f"{i}_5")
@@ -314,12 +314,12 @@ def print_direction_vectors(strands_dict, m, n):
                 x4_strand['start'],
                 x4_strand['end']
             )
+
 def process_json_file(input_path, output_path, m, n):
     """Process a single JSON file to extend strands according to multiplier map"""
     with open(input_path, 'r') as f:
         data = json.load(f)
     
-
     modified_data = deepcopy(data)
     strands_dict = {}
     
@@ -331,16 +331,17 @@ def process_json_file(input_path, output_path, m, n):
     strand_width = 56
     tolerance = 0.01
     
-    # Calculate middle position
-    if((n + m)%2==0):
-        middle_n_4 = middle_n_5 = ((n + m) // 2)+1
-        print (f"asdasd{middle_n_4}")
+    # Calculate middle position for horizontal strands
+    total_strands = m + n
+    if total_strands % 2 == 0:
+        middle_n_4_horizontal = middle_n_5_horizontal = (total_strands // 2) + 1
     else:
-        middle_n_4 = ((n + m+1) // 2)
-        middle_n_5 = ((n + m+1) // 2)+1
-    def process_strand_pair(x4_strand, x5_strand, is_horizontal,is_x4,strand_width):
+        middle_n_4_horizontal = ((total_strands + 1) // 2)
+        middle_n_5_horizontal = ((total_strands + 1) // 2) + 1
 
-        # Calculate target distance using x2 multiplier
+    def process_strand_pair(x4_strand, x5_strand, is_horizontal, is_x4, strand_width):
+        """Adjust strands to achieve the target distance"""
+        # Calculate target distance
         target_distance = strand_width 
         
         # Calculate current distance
@@ -351,7 +352,6 @@ def process_json_file(input_path, output_path, m, n):
         )
         
         if current_distance >= target_distance:
-            print("the current distance is larger")
             # Calculate temporary distance with small step
             temp_distance = current_distance
             if is_horizontal:
@@ -388,7 +388,6 @@ def process_json_file(input_path, output_path, m, n):
                         temp_x5_start,
                         temp_x5_end
                     )
-            print(f"tempdistance-currcentdistance={temp_distance-current_distance}")
             if temp_distance < current_distance:
                 # Since distance is decreasing, adjust until we reach target distance
                 step = 1
@@ -413,8 +412,7 @@ def process_json_file(input_path, output_path, m, n):
                         x5_strand['start'],
                         x5_strand['end']
                     )
-                    print(f"current_distance is: {current_distance}")
-                        # Update control points
+                # Update control points
                 x4_strand['control_points'] = [
                     {'x': x4_strand['start']['x'], 'y': x4_strand['start']['y']},
                     {'x': x4_strand['end']['x'], 'y': x4_strand['end']['y']}
@@ -428,7 +426,6 @@ def process_json_file(input_path, output_path, m, n):
         # Determine step size
         step = 1
                 
-        
         # Adjust strands until target distance is reached
         while current_distance < target_distance:
             if is_horizontal:
@@ -453,8 +450,6 @@ def process_json_file(input_path, output_path, m, n):
                 x5_strand['start'],
                 x5_strand['end']
             )
-
-            print(f"current_distance is: {current_distance}")
         
         # Update control points
         x4_strand['control_points'] = [
@@ -465,56 +460,48 @@ def process_json_file(input_path, output_path, m, n):
             {'x': x5_strand['start']['x'], 'y': x5_strand['start']['y']},
             {'x': x5_strand['end']['x'], 'y': x5_strand['end']['y']}
         ]
-    # Extend middle strands first
-    # Middle x5 strand
-    x4_identifier = f"{middle_n_4}_4"
-    x5_identifier = f"{middle_n_5}_5"
+
+    # --- Horizontal Strand Processing (Untouched from Original Code) ---
+    # Extend middle horizontal strands first
+    x4_identifier = f"{middle_n_4_horizontal}_4"
+    x5_identifier = f"{middle_n_5_horizontal}_5"
     
     x4_strand = strands_dict.get(x4_identifier)
     x5_strand = strands_dict.get(x5_identifier)
     strand_width_temp = 28
     if (n%2==1):
-        # Print debug info
-        print(f"Before adjustment - Distance between middle strands: {calculate_point_to_line_distance(x4_strand['start'], x5_strand['start'], x5_strand['end'])}")
-        
-        # Process middle pair once with proper parameters
+        # Process middle pair
         process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp)
         process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
-
-        print(f"After adjustment - Distance between middle strands: {calculate_point_to_line_distance(x4_strand['start'], x5_strand['start'], x5_strand['end'])}")
     else:
-        # Process middle pair once with proper parameters
         process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp*3)
-        process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)        
-        print("x")      
-    # Print debug info
-
+        process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+    
     # First loop: from middle outward to the right
     if (n%2)==1:
-        current_set = middle_n_4+1   
+        current_set = middle_n_4_horizontal+1   
     else:
-        current_set = middle_n_4+1
-        print (f"current middle top x_4 {current_set}")
+        current_set = middle_n_4_horizontal+1
 
     # Process pairs in zigzag pattern
     while current_set <= m+n :
         # First pair: current_4 with (current+1)_5 (bridge connection)
         if current_set <= m + n:  # Only if not at last set
             if(n%2==1):
+                
                 x4_identifier = f"{current_set-1}_4"
                 x5_identifier = f"{current_set }_5"
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
                 
-                process_strand_pair(x4_strand, x5_strand, True,False,strand_width)
+                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
             else:
-                
                 x4_identifier = f"{current_set}_4"
                 x5_identifier = f"{current_set }_5"
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
                 
-                process_strand_pair(x4_strand, x5_strand, True,True,strand_width)                
+                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
         # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
         if current_set <= m + n:  # Only if not at last set
             if(n%2==1):
@@ -524,10 +511,8 @@ def process_json_file(input_path, output_path, m, n):
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
                 
-                process_strand_pair(x4_strand, x5_strand, True,True,strand_width)
-
+                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
             else:
-                
                 if current_set+1 <= m + n:
                     x4_identifier = f"{current_set}_4"
                     x5_identifier = f"{current_set+1}_5"
@@ -535,64 +520,127 @@ def process_json_file(input_path, output_path, m, n):
                     x4_strand = strands_dict.get(x4_identifier)
                     x5_strand = strands_dict.get(x5_identifier)
                     
-                    process_strand_pair(x4_strand, x5_strand, True,False,strand_width)       
+                    process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
         current_set += 1
+
     if n%2==1:
-        current_set = middle_n_4-1
+        current_set = middle_n_4_horizontal-1
     else:
-        current_set = middle_n_4
-        print (f"current middle bottpm x_5 {current_set}")
+        current_set = middle_n_4_horizontal
+
     # Process pairs in zigzag pattern
     while current_set > m :
         # First pair: current_4 with (current+1)_5 (bridge connection)
         if current_set > m:  # Only if not at last set
             if(n%2==1):
-
                 x4_identifier = f"{current_set}_4"
                 x5_identifier = f"{current_set+1 }_5"
-                print(f"current set_4 : {x4_identifier}")
-                print(f"current set_5 : {x5_identifier}")            
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
                 
-                process_strand_pair(x4_strand, x5_strand, True,True,strand_width)
+                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
             else:
-                
                 x4_identifier = f"{current_set}_4"
                 x5_identifier = f"{current_set }_5"
-                print(f"current set_4 : {x4_identifier}")
-                print(f"current set_5 : {x5_identifier}")            
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
                 
-                process_strand_pair(x4_strand, x5_strand, True,False,strand_width)                
+                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
         # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
         if current_set > m:  # Only if not at last set
             if(n%2==1):
-
                 x4_identifier = f"{current_set}_4"
                 x5_identifier = f"{current_set}_5"       
                 x4_strand = strands_dict.get(x4_identifier)
                 x5_strand = strands_dict.get(x5_identifier)
-                
-                #process_strand_pair(x4_strand, x5_strand, True,False,strand_width)
+                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)                
             else:
-                
                 if current_set-1 > m:
                     x4_identifier = f"{current_set-1}_4"
                     x5_identifier = f"{current_set}_5"          
                     x4_strand = strands_dict.get(x4_identifier)
                     x5_strand = strands_dict.get(x5_identifier)
-                    process_strand_pair(x4_strand, x5_strand, True,True,strand_width)
-
+                    process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
         current_set -= 1
+
+    # --- Vertical Strand Processing (Newly Added Logic) ---
+    # Calculate middle positions for vertical strands
+    if m % 2 == 0:
+        middle_m_4_vertical = (m // 2)
+        middle_m_5_vertical = (m // 2) +1
+
+    else:
+        middle_m_4_vertical = ((m + 1) // 2)
+        middle_m_5_vertical = ((m + 1) // 2)
+
+    # Extend middle vertical strands first
+    x4_identifier = f"{middle_m_4_vertical}_4"
+    x5_identifier = f"{middle_m_5_vertical}_5"
     
+    x4_strand = strands_dict.get(x4_identifier)
+    x5_strand = strands_dict.get(x5_identifier)
+    strand_width_temp = 28
+    if(m>1):
+        
+        if m % 2 == 1:
+        # Process middle pair
+            process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp)
+            process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+        else:
+            process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp*3)
+            process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+
+        # First loop: from middle outward to the top
+        if m % 2 == 1:
+            current_set = middle_m_4_vertical + 1
+        else:
+            current_set = middle_m_4_vertical + 1
+
+        while current_set <= m:
+            # First pair: current_4 with (current+1)_5 (bridge connection)
+            if current_set <= m:
+                if (m % 2 == 1):
+                    x4_identifier = f"{current_set - 1}_4"
+                    x5_identifier = f"{current_set}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
+            # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
+            if current_set <= m:
+                x4_identifier = f"{current_set}_4"
+                x5_identifier = f"{current_set}_5"
+                x4_strand = strands_dict.get(x4_identifier)
+                x5_strand = strands_dict.get(x5_identifier)
+                process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+            current_set += 1
+
+        # Second loop: from middle outward to the bottom
+        if m % 2 == 1:
+            current_set = middle_m_4_vertical - 1
+        else:
+            current_set = middle_m_4_vertical
+
+        while current_set > 1:
+            # First pair: current_4 with (current+1)_5 (bridge connection)
+            if current_set >= 1:
+                x4_identifier = f"{current_set}_4"
+                x5_identifier = f"{current_set + 1}_5"
+                x4_strand = strands_dict.get(x4_identifier)
+                x5_strand = strands_dict.get(x5_identifier)
+                process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+            # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
+            if current_set >= 1:
+                x4_identifier = f"{current_set}_4"
+                x5_identifier = f"{current_set}_5"
+                x4_strand = strands_dict.get(x4_identifier)
+                x5_strand = strands_dict.get(x5_identifier)
+                process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
+        current_set -= 1
+
     # After all strand processing, print directions
     print(f"\nAnalyzing file: {os.path.basename(input_path)}")
     print_direction_vectors(strands_dict, m, n)
     
-
-
     # After processing the strand pairs, align the endpoints
     for strand_id, strand in strands_dict.items():
         if strand_id.endswith('_2'):
@@ -627,7 +675,7 @@ def process_directory(input_dir, output_dir, m, n):
     os.makedirs(output_dir, exist_ok=True)
     
     for filename in os.listdir(input_dir):
-        if filename.endswith('.json'):
+        if filename.endswith('.json') and not filename.endswith('_extended.json'):
             input_path = os.path.join(input_dir, filename)
             file_name_without_json = os.path.splitext(filename)[0]
             output_path = os.path.join(output_dir, f"{file_name_without_json}_extended.json")
@@ -647,8 +695,8 @@ def main():
                 except Exception as e:
                     print(f"Error removing file {file}: {e}")
     
-    m_values = [1]
-    n_values = [4]
+    m_values = [1]  # Adjust as needed
+    n_values = [4]  # Adjust as needed
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

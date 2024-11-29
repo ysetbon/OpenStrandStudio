@@ -580,14 +580,14 @@ def main():
     # Angle ranges
     minimum_angle_h = 50  # For n
     maximum_angle_h = 85  # For n
-    minimum_angle_v = 73  # For m
-    maximum_angle_v = 73  # For m
+    minimum_angle_v = 86  # For m
+    maximum_angle_v = 86  # For m
     angle_step = 1
 
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [3]
+    n_values = [9]
     m_values = [1]
 
     # Process configurations

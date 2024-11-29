@@ -124,14 +124,14 @@ def check_strand_directions(strands_dict, m, n):
     if m == 1:
         # Generate sequence of pairs to check
         pairs_sequence = []
-        current_set = 2
+        current_set = m+1
         
-        while current_set <= n + 1:
+        while current_set <= n + m:
             # For each set, we want:
             # x_5 -> x_4 -> (x+1)_5 -> (x+1)_4 and so on
             # This maintains a consistent direction through the zigzag
             
-            if current_set <= n:
+            if current_set <= n+m:
                 # Internal connection within set
                 pairs_sequence.append({
                     'left': f"{current_set}_5",
@@ -140,7 +140,7 @@ def check_strand_directions(strands_dict, m, n):
                 })
                 
                 # Bridge to next set
-                if current_set < n:
+                if current_set+1 <= n+m:
                     pairs_sequence.append({
                         'left': f"{current_set}_4",
                         'right': f"{current_set + 1}_5",
@@ -476,92 +476,92 @@ def process_json_file(input_path, output_path, m, n):
     else:
         process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp*3)
         process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
-    
-    # First loop: from middle outward to the right
-    if (n%2)==1:
-        current_set = middle_n_4_horizontal+1   
-    else:
-        current_set = middle_n_4_horizontal+1
+    if (n > 1):
+        # First loop: from middle outward to the right
+        if (n%2)==1:
+            current_set = middle_n_4_horizontal+1   
+        else:
+            current_set = middle_n_4_horizontal+1
 
-    # Process pairs in zigzag pattern
-    while current_set <= m+n :
-        # First pair: current_4 with (current+1)_5 (bridge connection)
-        if current_set <= m + n:  # Only if not at last set
-            if(n%2==1):
-                
-                x4_identifier = f"{current_set-1}_4"
-                x5_identifier = f"{current_set }_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                
-                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
-            else:
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set }_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                
-                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
-        # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
-        if current_set <= m + n:  # Only if not at last set
-            if(n%2==1):
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set}_5"
-                
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                
-                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
-            else:
-                if current_set+1 <= m + n:
-                    x4_identifier = f"{current_set}_4"
-                    x5_identifier = f"{current_set+1}_5"
+        # Process pairs in zigzag pattern
+        while current_set <= m+n :
+            # First pair: current_4 with (current+1)_5 (bridge connection)
+            if current_set <= m + n:  # Only if not at last set
+                if(n%2==1):
                     
+                    x4_identifier = f"{current_set-1}_4"
+                    x5_identifier = f"{current_set }_5"
                     x4_strand = strands_dict.get(x4_identifier)
                     x5_strand = strands_dict.get(x5_identifier)
                     
                     process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
-        current_set += 1
-
-    if n%2==1:
-        current_set = middle_n_4_horizontal-1
-    else:
-        current_set = middle_n_4_horizontal
-
-    # Process pairs in zigzag pattern
-    while current_set > m :
-        # First pair: current_4 with (current+1)_5 (bridge connection)
-        if current_set > m:  # Only if not at last set
-            if(n%2==1):
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set+1 }_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                
-                process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
-            else:
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set }_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                
-                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
-        # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
-        if current_set > m:  # Only if not at last set
-            if(n%2==1):
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set}_5"       
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                process_strand_pair(x4_strand, x5_strand, True, False, strand_width)                
-            else:
-                if current_set-1 > m:
-                    x4_identifier = f"{current_set-1}_4"
-                    x5_identifier = f"{current_set}_5"          
+                else:
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set }_5"
                     x4_strand = strands_dict.get(x4_identifier)
                     x5_strand = strands_dict.get(x5_identifier)
+                    
                     process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
-        current_set -= 1
+            # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
+            if current_set <= m + n:  # Only if not at last set
+                if(n%2==1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"
+                    
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    
+                    process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
+                else:
+                    if current_set+1 <= m + n:
+                        x4_identifier = f"{current_set}_4"
+                        x5_identifier = f"{current_set+1}_5"
+                        
+                        x4_strand = strands_dict.get(x4_identifier)
+                        x5_strand = strands_dict.get(x5_identifier)
+                        
+                        process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
+            current_set += 1
+
+        if n%2==1:
+            current_set = middle_n_4_horizontal-1
+        else:
+            current_set = middle_n_4_horizontal
+
+        # Process pairs in zigzag pattern
+        while current_set > m :
+            # First pair: current_4 with (current+1)_5 (bridge connection)
+            if current_set > m:  # Only if not at last set
+                if(n%2==1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set+1 }_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    
+                    process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
+                else:
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set }_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    
+                    process_strand_pair(x4_strand, x5_strand, True, False, strand_width)
+            # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
+            if current_set > m:  # Only if not at last set
+                if(n%2==1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"       
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, True, False, strand_width)                
+                else:
+                    if current_set-1 > m:
+                        x4_identifier = f"{current_set-1}_4"
+                        x5_identifier = f"{current_set}_5"          
+                        x4_strand = strands_dict.get(x4_identifier)
+                        x5_strand = strands_dict.get(x5_identifier)
+                        process_strand_pair(x4_strand, x5_strand, True, True, strand_width)
+            current_set -= 1
 
     # --- Vertical Strand Processing (Newly Added Logic) ---
     # Calculate middle positions for vertical strands
@@ -605,13 +605,28 @@ def process_json_file(input_path, output_path, m, n):
                     x4_strand = strands_dict.get(x4_identifier)
                     x5_strand = strands_dict.get(x5_identifier)
                     process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
+                else:
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+
             # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
             if current_set <= m:
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set}_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+                if (m % 2 == 1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+                else:
+                    if current_set + 1 <= m:
+                        x4_identifier = f"{current_set}_4"
+                        x5_identifier = f"{current_set + 1}_5"
+                        x4_strand = strands_dict.get(x4_identifier)
+                        x5_strand = strands_dict.get(x5_identifier)
+                        process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
             current_set += 1
 
         # Second loop: from middle outward to the bottom
@@ -623,19 +638,35 @@ def process_json_file(input_path, output_path, m, n):
         while current_set > 1:
             # First pair: current_4 with (current+1)_5 (bridge connection)
             if current_set >= 1:
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set + 1}_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+                if (m % 2 == 1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set + 1}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+                else:
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
+
             # Second pair: (current+1)_5 with (current+1)_4 (internal connection)
             if current_set >= 1:
-                x4_identifier = f"{current_set}_4"
-                x5_identifier = f"{current_set}_5"
-                x4_strand = strands_dict.get(x4_identifier)
-                x5_strand = strands_dict.get(x5_identifier)
-                process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
-        current_set -= 1
+                if (m % 2 == 1):
+                    x4_identifier = f"{current_set}_4"
+                    x5_identifier = f"{current_set}_5"
+                    x4_strand = strands_dict.get(x4_identifier)
+                    x5_strand = strands_dict.get(x5_identifier)
+                    process_strand_pair(x4_strand, x5_strand, False, False, strand_width)
+                else:
+                    if current_set - 1 >= 1:
+                        x4_identifier = f"{current_set - 1}_4"
+                        x5_identifier = f"{current_set}_5"
+                        x4_strand = strands_dict.get(x4_identifier)
+                        x5_strand = strands_dict.get(x5_identifier)
+                        process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
+            current_set -= 1
 
     # After all strand processing, print directions
     print(f"\nAnalyzing file: {os.path.basename(input_path)}")
@@ -713,7 +744,7 @@ def main():
                     print(f"Error removing file {file}: {e}")
     
     m_values = [1]  # Adjust as needed
-    n_values = [3]  # Adjust as needed
+    n_values = [9]  # Adjust as needed
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

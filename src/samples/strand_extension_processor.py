@@ -4,6 +4,111 @@ import math
 from copy import deepcopy
 from pathlib import Path
 import numpy as np
+def extend_strands_to_distance(x4_strand, x5_strand, target_distance, is_horizontal, step_size=1):
+    """Extends x4 and x5 strands until they reach a target distance from each other.
+    
+    Args:
+        x4_strand: Dictionary containing start and end points of x4 strand
+        x5_strand: Dictionary containing start and end points of x5 strand
+        target_distance: Desired final distance between strands
+        strand_width: Width of the strands
+        is_horizontal: Boolean indicating if strands are horizontal (True) or vertical (False)
+        step_size: Size of each extension step
+        
+    Returns:
+        tuple: (extended_x4_strand, extended_x5_strand) with new end points
+    """
+    extended_x4 = deepcopy(x4_strand)
+    extended_x5 = deepcopy(x5_strand)
+    
+    def calculate_distance():
+        """Calculate perpendicular distance from x4 start to x5 line"""
+        p = np.array([extended_x4['start']['x'], extended_x4['start']['y']])
+        a = np.array([extended_x5['start']['x'], extended_x5['start']['y']])
+        b = np.array([extended_x5['end']['x'], extended_x5['end']['y']])
+        
+        # Calculate perpendicular distance
+        d = np.abs(np.cross(b-a, p-a)) / np.linalg.norm(b-a)
+        return d
+    
+    current_distance = calculate_distance()
+    original_distance = current_distance
+
+    decrease_counter = 0
+    MAX_DECREASES = 100  # Maximum number of decreasing steps before reverting
+
+    if (current_distance < target_distance):  
+        while (current_distance < target_distance):
+            if is_horizontal:
+                extended_x4['start']['x'] += step_size
+                extended_x4['end']['x'] += step_size
+                extended_x5['start']['x'] -= step_size
+                extended_x5['end']['x'] -= step_size
+            else:
+                extended_x4['start']['y'] -= step_size
+                extended_x4['end']['y'] -= step_size
+                extended_x5['start']['y'] += step_size
+                extended_x5['end']['y'] += step_size
+            
+            current_distance_temp = calculate_distance()
+            if current_distance > current_distance_temp:
+                decrease_counter += 1
+                if decrease_counter > MAX_DECREASES:
+                    # Revert to original positions if we've seen too many decreases
+                    extended_x4 = deepcopy(x4_strand)
+                    extended_x5 = deepcopy(x5_strand)
+                    current_distance = original_distance
+                    break
+            else:
+                decrease_counter = 0  # Reset counter if distance increases
+                current_distance = current_distance_temp
+    else:
+        # Keep extending until target distance is reached or max iterations hit
+        while (current_distance > target_distance):
+            if is_horizontal:
+                    print (f"got to horiznotal case larger than taget distance current distance = {current_distance}")
+                    # Move x4 right and x5 left
+                    extended_x4['start']['x'] += step_size
+                    extended_x4['end']['x'] += step_size
+                    extended_x5['start']['x'] -= step_size
+                    extended_x5['end']['x'] -= step_size
+            else:
+                    # Move x4 up and x5 down
+                    extended_x4['start']['y'] -= step_size
+                    extended_x4['end']['y'] -= step_size
+                    extended_x5['start']['y'] += step_size
+                    extended_x5['end']['y'] += step_size
+            
+            current_distance_temp = calculate_distance()
+            if current_distance < current_distance_temp:
+                # Distance is decreasing instead of increasing, stop extending
+                break
+            else:
+                # Distance is decreasing as expected, continue extending
+                current_distance = current_distance_temp            
+    
+
+    
+    # Update control points
+    extended_x4['control_points'] = [
+        {'x': extended_x4['start']['x'], 'y': extended_x4['start']['y']},
+        {'x': extended_x4['end']['x'], 'y': extended_x4['end']['y']}
+    ]
+    extended_x5['control_points'] = [
+        {'x': extended_x5['start']['x'], 'y': extended_x5['start']['y']},
+        {'x': extended_x5['end']['x'], 'y': extended_x5['end']['y']}
+    ]
+
+    # After the while loops, update the original strand objects
+    x4_strand['start'] = extended_x4['start']
+    x4_strand['end'] = extended_x4['end']
+    x4_strand['control_points'] = extended_x4['control_points']
+    
+    x5_strand['start'] = extended_x5['start']
+    x5_strand['end'] = extended_x5['end']
+    x5_strand['control_points'] = extended_x5['control_points']
+
+    return x4_strand, x5_strand
 
 def generate_multiplier_map(size, is_vertical=False):
     """Generate multiplier map based on size (n or m) and orientation
@@ -338,7 +443,7 @@ def process_json_file(input_path, output_path, m, n):
     else:
         middle_n_4_horizontal = ((total_strands + 1) // 2)
         middle_n_5_horizontal = ((total_strands + 1) // 2) + 1
-
+        print (f"middle n4: {middle_n_4_horizontal} midlle n5: {middle_n_5_horizontal}")
     def process_strand_pair(x4_strand, x5_strand, is_horizontal, is_x4, strand_width):
         """Adjust strands to achieve the target distance"""
         # Calculate target distance
@@ -468,14 +573,12 @@ def process_json_file(input_path, output_path, m, n):
     
     x4_strand = strands_dict.get(x4_identifier)
     x5_strand = strands_dict.get(x5_identifier)
-    strand_width_temp = 28
-    if (n%2==1):
-        # Process middle pair
-        process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp)
-        process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
-    else:
-        process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp*3)
-        process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+    print (f"before extending middle n4: {middle_n_4_horizontal} midlle n5: {middle_n_5_horizontal}")
+
+    strand_width_temp = 56
+    # Process middle pair
+    x4_strand, x5_strand = extend_strands_to_distance(x4_strand, x5_strand, strand_width_temp, True)
+
     if (n > 1):
         # First loop: from middle outward to the right
         if (n%2)==1:
@@ -580,15 +683,12 @@ def process_json_file(input_path, output_path, m, n):
     x4_strand = strands_dict.get(x4_identifier)
     x5_strand = strands_dict.get(x5_identifier)
     strand_width_temp = 28
+
+    extend_strands_to_distance(x4_strand, x5_strand, strand_width_temp, False)
+
     if(m>1):
         
-        if m % 2 == 1:
-        # Process middle pair
-            process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp)
-            process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
-        else:
-            process_strand_pair(x4_strand, x5_strand, True, True, strand_width_temp*3)
-            process_strand_pair(x4_strand, x5_strand, True, False, strand_width_temp*2)
+        
 
         # First loop: from middle outward to the top
         if m % 2 == 1:
@@ -744,7 +844,7 @@ def main():
                     print(f"Error removing file {file}: {e}")
     
     m_values = [1]  # Adjust as needed
-    n_values = [9]  # Adjust as needed
+    n_values = [3]  # Adjust as needed
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

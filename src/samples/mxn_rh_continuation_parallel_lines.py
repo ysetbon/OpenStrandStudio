@@ -52,7 +52,7 @@ def get_midpoint(strand):
         "y": (strand["start"]["y"] + strand["end"]["y"]) / 2
     }
 
-def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, base_spacing):
+def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizontal,n,m):
     """
     Calculate x4 and x5 positions maintaining parallel lines and consistent spacing
     """
@@ -109,17 +109,29 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, base_spacing
         "y": strand3["start"]["y"] + x3_length * x3_unit["y"]
     }
     
-    # Calculate end points for x4 and x5 maintaining the base spacing
-    x4_end = {
-        "x": x4_start["x"] + 400 * x4_unit["x"],
-        "y": x4_start["y"] + 400 * x4_unit["y"]
-    }
-    
-    x5_end = {
-        "x": x5_start["x"] + 400 * x5_unit["x"],
-        "y": x5_start["y"] + 400 * x5_unit["y"]
-    }
-    
+    if is_horizontal:
+        # Calculate end points for x4 and x5 maintaining the base spacing
+        x4_end = {
+            "x": x4_start["x"] + (56*m*2+100+56*2) * x4_unit["x"],
+            "y": x4_start["y"] + (56*m*2+100+56*2) * x4_unit["y"]
+        }
+        
+        x5_end = {
+            "x": x5_start["x"] + (56*m*2+100+56*2) * x5_unit["x"],
+            "y": x5_start["y"] + (56*m*2+100+56*2) * x5_unit["y"]
+        }
+
+    else:
+        # Calculate end points for x4 and x5 maintaining the base spacing
+        x4_end = {
+            "x": x4_start["x"] + (56*n*2+100+56*2) * x4_unit["x"],
+            "y": x4_start["y"] + (56*n*2+100+56*2) * x4_unit["y"]
+        }
+        
+        x5_end = {
+            "x": x5_start["x"] + (56*n*2+100+56*2) * x5_unit["x"],
+            "y": x5_start["y"] + (56*n*2+100+56*2) * x5_unit["y"]
+        }        
     return {
         "x4": {"start": x4_start, "end": x4_end},
         "x5": {"start": x5_start, "end": x5_end}
@@ -368,7 +380,7 @@ def generate_json(params):
             positions = calculate_x4_x5_positions(
                 strand2, strand3,
                 x4_vertical_angle, x5_vertical_angle,
-                base_spacing
+                False,n,m
             )
             
             # Update x2 end point and create x4
@@ -432,7 +444,7 @@ def generate_json(params):
             positions = calculate_x4_x5_positions(
                 strand2, strand3,
                 x4_horizontal_angle, x5_horizontal_angle,
-                base_spacing
+                True,n,m
             )
             
             # Update x2 end point and create x4
@@ -578,16 +590,16 @@ def main():
     x5_length_extension = 55
 
     # Angle ranges
-    minimum_angle_h = 65  # For n
-    maximum_angle_h = 75  # For n
-    minimum_angle_v = 70  # For m
-    maximum_angle_v = 71  # For m
+    minimum_angle_h = 60  # For n
+    maximum_angle_h = 80  # For n
+    minimum_angle_v = 80  # For m
+    maximum_angle_v = 85  # For m
     angle_step = 1
 
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [3]
+    n_values = [7]
     m_values = [1]
 
     # Process configurations

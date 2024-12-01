@@ -66,7 +66,6 @@ def extend_strands_to_distance(x4_strand, x5_strand, target_distance, is_horizon
         # Keep extending until target distance is reached or max iterations hit
         while (current_distance > target_distance):
             if is_horizontal:
-                    print (f"got to horiznotal case larger than taget distance current distance = {current_distance}")
                     # Move x4 right and x5 left
                     extended_x4['start']['x'] += step_size
                     extended_x4['end']['x'] += step_size
@@ -110,66 +109,6 @@ def extend_strands_to_distance(x4_strand, x5_strand, target_distance, is_horizon
 
     return x4_strand, x5_strand
 
-def generate_multiplier_map(size, is_vertical=False):
-    """Generate multiplier map based on size (n or m) and orientation
-    Args:
-        size: The size (n for horizontal, m for vertical)
-        is_vertical: True if generating map for vertical strands (m)
-    Returns:
-        dict: A map of (position, strand_type) -> multiplier values
-        where strand_type is either 2 or 3
-    """
-    multiplier_map = {}
-    
-    # Special case: For vertical strands when m=1, both strands get multiplier of 1
-    if is_vertical and size == 1:
-        multiplier_map[(1, 2)] = 1  # First strand type 2
-        multiplier_map[(1, 3)] = 1  # First strand type 3
-        return multiplier_map
-    
-    # For horizontal strands (n)
-    if not is_vertical:
-        # Find middle based on pattern
-        if size % 2 == 0:  # Even n
-            middle = (size + 1) // 2
-            # Middle pairs
-            multiplier_map[(middle, 2)] = 1     # middle_2
-            multiplier_map[(middle + 1, 3)] = 1 # (middle+1)_3
-            multiplier_map[(middle + 1, 2)] = 3 # (middle+1)_2
-            multiplier_map[(middle, 3)] = 3     # middle_3
-            
-            # For positions away from middle
-            multiplier = 5
-            for i in range(middle - 1, 0, -1):  # Going towards start
-                multiplier_map[(i, 2)] = multiplier
-                multiplier_map[(size - i + 2, 3)] = multiplier
-                multiplier += 2
-            
-            multiplier = 7
-            for i in range(middle + 2, size + 1):  # Going towards end
-                multiplier_map[(i, 2)] = multiplier
-                multiplier_map[(size - i + 2, 3)] = multiplier
-                multiplier += 2
-                
-        else:  # Odd n
-            middle = (size + 2) // 2
-            # Middle position
-            multiplier_map[(middle, 2)] = 1  # middle_2
-            multiplier_map[(middle, 3)] = 1  # middle_3
-            
-            # For positions away from middle
-            multiplier = 3
-            for i in range(1, size + 1):
-                if i != middle:
-                    if i < middle:
-                        multiplier_map[(i, 2)] = multiplier
-                        multiplier_map[(size - i + 2, 3)] = multiplier
-                    else:
-                        multiplier_map[(i, 2)] = multiplier
-                        multiplier_map[(size - i + 2, 3)] = multiplier
-                    multiplier += 2
-    
-    return multiplier_map
 
 def get_direction_vector(point, line_start, line_end):
     """Calculate direction vector from point to closest point on line
@@ -263,7 +202,7 @@ def check_strand_directions(strands_dict, m, n):
                     'vector': curr_dir,
                     'pair': pair
                 })
-                print(f"Normalized direction vector for {pair['left']}->{pair['right']}: [{curr_dir[0]:.4f}, {curr_dir[1]:.4f}]")
+                #print(f"Normalized direction vector for {pair['left']}->{pair['right']}: [{curr_dir[0]:.4f}, {curr_dir[1]:.4f}]")
         
         # Check all pairs of vectors against each other
         for i in range(len(direction_vectors)):
@@ -271,10 +210,10 @@ def check_strand_directions(strands_dict, m, n):
                 dot_product = np.dot(direction_vectors[i]['vector'], 
                                 direction_vectors[j]['vector'])
                 if dot_product < 0.9:  # More than ~25 degrees difference
-                    print(f"\nDirection mismatch found between:")
-                    print(f"Pair 1: {direction_vectors[i]['pair']['left']} -> {direction_vectors[i]['pair']['right']}")
-                    print(f"Pair 2: {direction_vectors[j]['pair']['left']} -> {direction_vectors[j]['pair']['right']}")
-                    print(f"Dot product: {dot_product}")
+                    #print(f"\nDirection mismatch found between:")
+                    #print(f"Pair 1: {direction_vectors[i]['pair']['left']} -> {direction_vectors[i]['pair']['right']}")
+                    #print(f"Pair 2: {direction_vectors[j]['pair']['left']} -> {direction_vectors[j]['pair']['right']}")
+                    #print(f"Dot product: {dot_product}")
                     return False
                     
         return len(direction_vectors) > 0  # Return True only if we had vectors to check
@@ -419,6 +358,77 @@ def print_direction_vectors(strands_dict, m, n):
                 x4_strand['start'],
                 x4_strand['end']
             )
+
+def validate_strand_distances(strands_dict, m, n, strand_width, tolerance=1):
+    """Validates that all strand pairs maintain the correct distance.
+    
+    Args:
+        strands_dict: Dictionary of all strands
+        m: Number of vertical sets
+        n: Number of horizontal sets
+        strand_width: Target distance between strands
+        tolerance: Acceptable deviation from target distance
+        
+    Returns:
+        tuple: (bool, list) - (is_valid, list of invalid pairs with their distances)
+    """
+    invalid_pairs = []
+    
+    def check_pair_distance(left_id, right_id, is_horizontal):
+        left_strand = strands_dict.get(left_id)
+        right_strand = strands_dict.get(right_id)
+        
+        if not (left_strand and right_strand):
+            return True  # Skip if either strand doesn't exist
+            
+        distance = calculate_point_to_line_distance(
+            left_strand['start'],
+            right_strand['start'],
+            right_strand['end']
+        )
+        
+        if abs(distance - strand_width) > tolerance:
+            invalid_pairs.append({
+                'left': left_id,
+                'right': right_id,
+                'distance': distance,
+                'difference': abs(distance - strand_width),
+                'type': 'horizontal' if is_horizontal else 'vertical'
+            })
+            return False
+        return True
+
+    # Check horizontal strands (sets > m)
+    for current_set in range(m + 1, m + n + 1):
+        # Check internal connection (x_5 -> x_4)
+        if not check_pair_distance(f"{current_set}_5", f"{current_set}_4", True):
+            print(f"Invalid distance for horizontal internal pair {current_set}_5 -> {current_set}_4")
+        
+        # Check bridge connection (x_4 -> (x+1)_5)
+        if current_set < m + n:
+            if not check_pair_distance(f"{current_set}_4", f"{current_set + 1}_5", True):
+                print(f"Invalid distance for horizontal bridge pair {current_set}_4 -> {current_set + 1}_5")
+
+    # Check vertical strands (sets <= m)
+    for current_set in range(1, m + 1):
+        # Check internal connection (x_5 -> x_4)
+        if not check_pair_distance(f"{current_set}_5", f"{current_set}_4", False):
+            print(f"Invalid distance for vertical internal pair {current_set}_5 -> {current_set}_4")
+        
+        # Check bridge connection (x_4 -> (x+1)_5)
+        if current_set < m:
+            if not check_pair_distance(f"{current_set}_4", f"{current_set + 1}_5", False):
+                print(f"Invalid distance for vertical bridge pair {current_set}_4 -> {current_set + 1}_5")
+
+    is_valid = len(invalid_pairs) == 0
+    
+    if not is_valid:
+        print("\nInvalid distances found:")
+        for pair in invalid_pairs:
+            print(f"{pair['type'].capitalize()} pair {pair['left']} -> {pair['right']}: " +
+                  f"{pair['distance']:.2f} (diff: {pair['difference']:.2f})")
+    
+    return is_valid, invalid_pairs
 
 def process_json_file(input_path, output_path, m, n):
     """Process a single JSON file to extend strands according to multiplier map"""
@@ -573,7 +583,7 @@ def process_json_file(input_path, output_path, m, n):
     
     x4_strand = strands_dict.get(x4_identifier)
     x5_strand = strands_dict.get(x5_identifier)
-    print (f"before extending middle n4: {middle_n_4_horizontal} midlle n5: {middle_n_5_horizontal}")
+    #print (f"before extending middle n4: {middle_n_4_horizontal} midlle n5: {middle_n_5_horizontal}")
 
     strand_width_temp = 56
     # Process middle pair
@@ -682,7 +692,7 @@ def process_json_file(input_path, output_path, m, n):
     
     x4_strand = strands_dict.get(x4_identifier)
     x5_strand = strands_dict.get(x5_identifier)
-    strand_width_temp = 28
+    strand_width_temp = 56
 
     extend_strands_to_distance(x4_strand, x5_strand, strand_width_temp, False)
 
@@ -768,44 +778,54 @@ def process_json_file(input_path, output_path, m, n):
                         process_strand_pair(x4_strand, x5_strand, False, True, strand_width)
             current_set -= 1
 
-    # After all strand processing, print directions
-    print(f"\nAnalyzing file: {os.path.basename(input_path)}")
-    print_direction_vectors(strands_dict, m, n)
+    # After all the processing is done, check directions and distances before saving
+    directions_valid = check_strand_directions(strands_dict, m, n)
+    distances_valid, invalid_pairs = validate_strand_distances(strands_dict, m, n, strand_width)
     
-    # After processing the strand pairs, align the endpoints
-    for strand_id, strand in strands_dict.items():
-        if strand_id.endswith('_2'):
-            x4_strand = find_attached_x4_strand(strand_id, strands_dict)
+    # After all strand extensions are complete, update x2 and x3 endpoints
+    for strand in modified_data['strands']:
+        layer_name = strand['layer_name']
+        if '_2' in layer_name:
+            # Find corresponding x4 strand
+            set_number = layer_name.split('_')[0]
+            x4_id = f"{set_number}_4"
+            x4_strand = strands_dict.get(x4_id)
+            
             if x4_strand:
-                # Make x2's end point match x4's start point
-                strand['end']['x'] = x4_strand['start']['x']
-                strand['end']['y'] = x4_strand['start']['y']
+                # Update x2 endpoint to match x4 start point
+                strand['end'] = deepcopy(x4_strand['start'])
                 # Update control points
                 strand['control_points'] = [
-                    {'x': strand['start']['x'], 'y': strand['start']['y']},
-                    {'x': strand['end']['x'], 'y': strand['end']['y']}
+                    deepcopy(strand['start']),
+                    deepcopy(strand['end'])
                 ]
-        elif strand_id.endswith('_3'):
-            x5_strand = find_attached_x5_strand(strand_id, strands_dict)
+                
+        elif '_3' in layer_name:
+            # Find corresponding x5 strand
+            set_number = layer_name.split('_')[0]
+            x5_id = f"{set_number}_5"
+            x5_strand = strands_dict.get(x5_id)
+            
             if x5_strand:
-                # Make x3's end point match x5's start point
-                strand['end']['x'] = x5_strand['start']['x']
-                strand['end']['y'] = x5_strand['start']['y']
+                # Update x3 endpoint to match x5 start point
+                strand['end'] = deepcopy(x5_strand['start'])
                 # Update control points
                 strand['control_points'] = [
-                    {'x': strand['start']['x'], 'y': strand['start']['y']},
-                    {'x': strand['end']['x'], 'y': strand['end']['y']}
+                    deepcopy(strand['start']),
+                    deepcopy(strand['end'])
                 ]
 
-    # After all the processing is done, check directions before saving
-    if check_strand_directions(strands_dict, m, n):
-        # Save the modified data only if directions are valid
+    if directions_valid and distances_valid:
+        # Save the modified data only if both validations pass
         with open(output_path, 'w') as f:
             json.dump(modified_data, f, indent=2)
-        print(f"Successfully processed and saved {os.path.basename(input_path)}")
+        #print(f"Successfully processed and saved {os.path.basename(input_path)}")
         return True
     else:
-        print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
+        if not directions_valid:
+            print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
+        if not distances_valid:
+            print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand distances")
         return False
 
 def process_directory(input_dir, output_dir, m, n):
@@ -844,7 +864,7 @@ def main():
                     print(f"Error removing file {file}: {e}")
     
     m_values = [1]  # Adjust as needed
-    n_values = [3]  # Adjust as needed
+    n_values = [7]  # Adjust as needed
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

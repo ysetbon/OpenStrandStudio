@@ -178,7 +178,7 @@ class ImageProcessor:
 
         # Save GIF
         gif_path = os.path.join(self.output_directory, "animation.gif")
-        durations = [1000] + [50] * (len(normalized_images) - 2) + [2000] if len(normalized_images) > 2 else [1000, 2000]
+        durations = [1000] + [500] * (len(normalized_images) - 2) + [2000] if len(normalized_images) > 2 else [1000, 2000]
 
         normalized_images[0].save(
             gif_path,
@@ -208,7 +208,7 @@ def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
     # Process for n=1 to n=6
-    for n in range(3, 4):
+    for n in range(7, 8):
         json_directory = os.path.join(base_dir, f"m1xn{n}_rh_continuation")
         output_directory = os.path.join(json_directory, "output")
         
@@ -223,7 +223,7 @@ def main():
             json_files = [
                 (os.path.getctime(os.path.join(json_directory, f)), os.path.join(json_directory, f))
                 for f in os.listdir(json_directory)
-                if f.endswith(".json")
+                if f.endswith("_extended.json")
             ]
 
             print(f"Found {len(json_files)} JSON files")

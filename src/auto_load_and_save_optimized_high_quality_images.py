@@ -207,64 +207,65 @@ def main():
     # Base directory path
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
-    # Process for n=1 to n=6
-    for n in range(7, 8):
-        json_directory = os.path.join(base_dir, f"m1xn{n}_rh_continuation")
-        output_directory = os.path.join(json_directory, "output")
-        
-        print(f"\nProcessing m1xn{n}_rh_continuation:")
-        print(f"Looking for JSON files in: {json_directory}")
-        print(f"Output directory: {output_directory}")
+    # Process for m=1 to m=3 and n=1 to n=6
+    for m in range(3, 4):
+        for n in range(3, 4):
+            json_directory = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
+            output_directory = os.path.join(json_directory, "output")
+            
+            print(f"\nProcessing m{m}xn{n}_rh_continuation:")
+            print(f"Looking for JSON files in: {json_directory}")
+            print(f"Output directory: {output_directory}")
 
-        # Create output directory if it doesn't exist
-        os.makedirs(output_directory, exist_ok=True)
+            # Create output directory if it doesn't exist
+            os.makedirs(output_directory, exist_ok=True)
 
-        try:
-            json_files = [
-                (os.path.getctime(os.path.join(json_directory, f)), os.path.join(json_directory, f))
-                for f in os.listdir(json_directory)
-                if f.endswith("_extended.json")
-            ]
+            try:
+                json_files = [
+                    (os.path.getctime(os.path.join(json_directory, f)), os.path.join(json_directory, f))
+                    for f in os.listdir(json_directory)
+                    if f.endswith("_extended.json")
+                ]
 
-            print(f"Found {len(json_files)} JSON files")
+                print(f"Found {len(json_files)} JSON files")
 
-            if not json_files:
-                print(f"No JSON files found in {json_directory}")
-                continue  # Skip to next n if no files found
+                if not json_files:
+                    print(f"No JSON files found in {json_directory}")
+                    continue  # Skip to next n if no files found
 
-            json_files.sort()
+                json_files.sort()
 
-            # Set number of workers
-            max_workers = min(4, os.cpu_count() or 1)  # Adjust based on your system
-            png_paths = []
+                # Set number of workers
+                max_workers = min(4, os.cpu_count() or 1)  # Adjust based on your system
+                png_paths = []
 
-            print(f"Processing files using {max_workers} parallel processes...")
+                print(f"Processing files using {max_workers} parallel processes...")
 
-            with ProcessPoolExecutor(max_workers=max_workers) as executor:
-                futures = []
-                for _, json_path in json_files:
-                    output_path = os.path.join(
-                        output_directory,
-                        os.path.basename(json_path).replace(".json", ".png")
-                    )
-                    futures.append(
-                        executor.submit(ImageProcessor.process_file, json_path, output_path)
-                    )
+                with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                    futures = []
+                    for _, json_path in json_files:
+                        output_path = os.path.join(
+                            output_directory,
+                            os.path.basename(json_path).replace(".json", ".png")
+                        )
+                        futures.append(
+                            executor.submit(ImageProcessor.process_file, json_path, output_path)
+                        )
 
-                # Show progress bar while processing
-                for future in tqdm(futures, desc="Processing files", unit="file"):
-                    if processed_path := future.result():
-                        png_paths.append(processed_path)
+                    # Show progress bar while processing
+                    for future in tqdm(futures, desc="Processing files", unit="file"):
+                        if processed_path := future.result():
+                            png_paths.append(processed_path)
 
-            # Create GIF from processed files
-            if png_paths:
-                processor = ImageProcessor(json_directory, output_directory)
-                processor.create_gif(png_paths)
+                # Create GIF from processed files
+                if png_paths:
+                    processor = ImageProcessor(json_directory, output_directory)
+                    processor.create_gif(png_paths)
 
-        except Exception as e:
-            print(f"\nAn error occurred: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            except Exception as e:
+                print(f"\nAn error occurred: {str(e)}")
+                import traceback
+                traceback.print_exc()
 
 if __name__ == "__main__":
     # Ensure logging is disabled before starting

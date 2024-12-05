@@ -132,13 +132,31 @@ def process_optimal_solution_image(json_path, output_path):
     finally:
         app.quit()
 
+def summarize_results(directory):
+    summary = []
+    for file in os.listdir(directory):
+        if file.endswith('.json'):
+            file_path = os.path.join(directory, file)
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            max_extension = get_max_extension(data['strands'])
+            summary.append({
+                'file': file,
+                'max_extension': max_extension
+            })
+    return summary
+
 def main():
     # Use the exact path provided
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     print(f"Using base directory: {base_dir}")
     
-    n_values = [2]
-    m_values = [4]
+    n_values = [1,2,3,4]
+    m_values = [1]
+    
+    # Create a directory for all optimal solutions
+    all_optimal_solutions_dir = os.path.join(base_dir, "all_optimal_solutions")
+    os.makedirs(all_optimal_solutions_dir, exist_ok=True)
     
     for m in m_values:
         for n in n_values:
@@ -163,8 +181,17 @@ def main():
                     print(f"Image created successfully: {os.path.basename(output_image)}")
                 else:
                     print("Failed to create image")
+                
+                # Copy JSON and PNG to all_optimal_solutions directory
+                shutil.copy2(output_json, all_optimal_solutions_dir)
+                shutil.copy2(output_image, all_optimal_solutions_dir)
             else:
                 print("No optimal solution found")
+
+    # Summarize results
+    summary = summarize_results(all_optimal_solutions_dir)
+    for result in summary:
+        print(f"File: {result['file']}, Max Extension: {result['max_extension']}")
 
 if __name__ == "__main__":
     main()

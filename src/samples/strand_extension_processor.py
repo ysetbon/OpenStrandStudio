@@ -39,7 +39,7 @@ def extend_strands_to_distance(x4_strand, x5_strand, target_distance, is_horizon
     original_distance = current_distance
 
     decrease_counter = 0
-    MAX_DECREASES = 100  # Maximum number of decreasing steps before reverting
+    MAX_DECREASES = 100+56  # Maximum number of decreasing steps before reverting
 
     if (current_distance < target_distance):  
         while (current_distance < target_distance):
@@ -420,31 +420,36 @@ def validate_strand_distances(strands_dict, m, n, strand_width, tolerance=1):
     for current_set in range(m + 1, m + n + 1):
         # Check internal connection (x_5 -> x_4)
         if not check_pair_distance(f"{current_set}_5", f"{current_set}_4", True):
-            print(f"Invalid distance for horizontal internal pair {current_set}_5 -> {current_set}_4")
+            #print(f"Invalid distance for horizontal internal pair {current_set}_5 -> {current_set}_4")
+            pass
         
         # Check bridge connection (x_4 -> (x+1)_5)
         if current_set < m + n:
             if not check_pair_distance(f"{current_set}_4", f"{current_set + 1}_5", True):
-                print(f"Invalid distance for horizontal bridge pair {current_set}_4 -> {current_set + 1}_5")
+                #print(f"Invalid distance for horizontal bridge pair {current_set}_4 -> {current_set + 1}_5")
+                pass
 
     # Check vertical strands (sets <= m)
     for current_set in range(1, m + 1):
         # Check internal connection (x_5 -> x_4)
         if not check_pair_distance(f"{current_set}_5", f"{current_set}_4", False):
-            print(f"Invalid distance for vertical internal pair {current_set}_5 -> {current_set}_4")
+            #print(f"Invalid distance for vertical internal pair {current_set}_5 -> {current_set}_4")
+            pass
         
         # Check bridge connection (x_4 -> (x+1)_5)
         if current_set < m:
             if not check_pair_distance(f"{current_set}_4", f"{current_set + 1}_5", False):
-                print(f"Invalid distance for vertical bridge pair {current_set}_4 -> {current_set + 1}_5")
+                #print(f"Invalid distance for vertical bridge pair {current_set}_4 -> {current_set + 1}_5")
+                pass
 
     is_valid = len(invalid_pairs) == 0
     
     if not is_valid:
-        print("\nInvalid distances found:")
+        
         for pair in invalid_pairs:
-            print(f"{pair['type'].capitalize()} pair {pair['left']} -> {pair['right']}: " +
-                  f"{pair['distance']:.2f} (diff: {pair['difference']:.2f})")
+            #print(f"{pair['type'].capitalize()} pair {pair['left']} -> {pair['right']}: " +
+                  #f"{pair['distance']:.2f} (diff: {pair['difference']:.2f})")
+            pass
     
     return is_valid, invalid_pairs
 
@@ -471,7 +476,7 @@ def process_json_file(input_path, output_path, m, n):
     else:
         middle_n_4_horizontal = ((n) // 2) + m
         middle_n_5_horizontal = ((n) // 2) + m + 1
-        print (f"middle n4: {middle_n_4_horizontal} midlle n5: {middle_n_5_horizontal}")
+        
     def process_strand_pair(x4_strand, x5_strand, is_horizontal, is_x4, strand_width):
         """Adjust strands to achieve the target distance"""
         # Calculate target distance
@@ -719,7 +724,7 @@ def process_json_file(input_path, output_path, m, n):
             current_set = middle_m_4_vertical+1   
         else:
             current_set = middle_m_4_vertical+1
-        print (f"current_set = {current_set}")
+        
         # Process pairs in zigzag pattern
         while current_set <= m :
             # First pair: current_4 with (current+1)_5 (bridge connection)
@@ -847,9 +852,11 @@ def process_json_file(input_path, output_path, m, n):
         return True
     else:
         if not directions_valid:
-            print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
+            #print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
+            pass
         if not distances_valid:
-            print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand distances")
+            #print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand distances")
+            pass
         return False
 
 def process_directory(input_dir, output_dir, m, n):
@@ -887,8 +894,8 @@ def main():
                 except Exception as e:
                     print(f"Error removing file {file}: {e}")
     
-    n_values = [2]
-    m_values = [4]
+    n_values = [1,2,3,4,5,6,7,8,9]
+    m_values = [4,5,6,7,8,9]
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

@@ -208,8 +208,8 @@ def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     
     # Process for m=1 to m=3 and n=1 to n=6
-    for m in range(3, 4):
-        for n in range(3, 4):
+    for m in range(1, 2):
+        for n in range(2, 5):
             json_directory = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_directory = os.path.join(json_directory, "output")
             

@@ -11,39 +11,36 @@ from tqdm import tqdm
 from multiprocessing import Pool, cpu_count, Process
 import time
 import matplotlib.pyplot as plt
+from numba import njit
+
+@njit
+def calculate_point_to_line_distance_numba(px, py, x1, y1, x2, y2):
+    """Calculate distance from a point to a line segment using Numba."""
+    dx = x2 - x1
+    dy = y2 - y1
+    l2 = dx * dx + dy * dy
+
+    if l2 == 0.0:
+        # Line start and end are the same point
+        return math.hypot(px - x1, py - y1)
+
+    t = ((px - x1) * dx + (py - y1) * dy) / l2
+    t = max(0.0, min(1.0, t))
+
+    proj_x = x1 + t * dx
+    proj_y = y1 + t * dy
+
+    return math.hypot(px - proj_x, py - proj_y)
 
 def calculate_point_to_line_distance_vectorized(point, line_start, line_end):
-    """Vectorized version of point-to-line distance calculation"""
-    points = np.array([[point['x'], point['y']]])
-    line_starts = np.array([[line_start['x'], line_start['y']]])
-    line_ends = np.array([[line_end['x'], line_end['y']]])
-    
-    px = points[:, 0] - line_starts[:, 0]
-    py = points[:, 1] - line_starts[:, 1]
-    
-    lx = line_ends[:, 0] - line_starts[:, 0]
-    ly = line_ends[:, 1] - line_starts[:, 1]
-    
-    l2 = lx*lx + ly*ly
-    
-    # Handle case where line is a point
-    point_mask = l2 == 0
-    point_distances = np.sqrt(px[point_mask]**2 + py[point_mask]**2)
-    
-    # Project points onto lines
-    t = np.clip((px*lx + py*ly) / l2, 0, 1)
-    
-    projection_x = line_starts[:, 0] + t * lx
-    projection_y = line_starts[:, 1] + t * ly
-    
-    dx = points[:, 0] - projection_x
-    dy = points[:, 1] - projection_y
-    distances = np.sqrt(dx*dx + dy*dy)
-    
-    # Combine results
-    distances[point_mask] = point_distances
-    
-    return float(distances[0])
+    """Vectorized version of point-to-line distance calculation using Numba."""
+    px = point['x']
+    py = point['y']
+    x1 = line_start['x']
+    y1 = line_start['y']
+    x2 = line_end['x']
+    y2 = line_end['y']
+    return calculate_point_to_line_distance_numba(px, py, x1, y1, x2, y2)
 
 def get_midpoint(strand):
     """Get midpoint of a strand"""
@@ -52,7 +49,7 @@ def get_midpoint(strand):
         "y": (strand["start"]["y"] + strand["end"]["y"]) / 2
     }
 
-def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizontal,n,m):
+def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizontal, n, m):
     """
     Calculate x4 and x5 positions maintaining parallel lines and consistent spacing
     """
@@ -67,8 +64,8 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizonta
     }
     
     # Normalize vectors
-    x2_length = math.sqrt(x2_vector["x"]**2 + x2_vector["y"]**2)
-    x3_length = math.sqrt(x3_vector["x"]**2 + x3_vector["y"]**2)
+    x2_length = math.hypot(x2_vector["x"], x2_vector["y"])
+    x3_length = math.hypot(x3_vector["x"], x3_vector["y"])
     
     x2_unit = {
         "x": x2_vector["x"] / x2_length,
@@ -111,27 +108,21 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizonta
     
     if is_horizontal:
         # Calculate end points for x4 and x5 maintaining the base spacing
-        x4_end = {
-            "x": x4_start["x"] + (56*m*2+100+56*2) * x4_unit["x"],
-            "y": x4_start["y"] + (56*m*2+100+56*2) * x4_unit["y"]
-        }
-        
-        x5_end = {
-            "x": x5_start["x"] + (56*m*2+100+56*2) * x5_unit["x"],
-            "y": x5_start["y"] + (56*m*2+100+56*2) * x5_unit["y"]
-        }
-
+        length = (56*m*2+100+56*2)
     else:
         # Calculate end points for x4 and x5 maintaining the base spacing
-        x4_end = {
-            "x": x4_start["x"] + (56*n*2+100+56*2) * x4_unit["x"],
-            "y": x4_start["y"] + (56*n*2+100+56*2) * x4_unit["y"]
-        }
-        
-        x5_end = {
-            "x": x5_start["x"] + (56*n*2+100+56*2) * x5_unit["x"],
-            "y": x5_start["y"] + (56*n*2+100+56*2) * x5_unit["y"]
-        }        
+        length = (56*n*2+100+56*2)
+    
+    x4_end = {
+        "x": x4_start["x"] + length * x4_unit["x"],
+        "y": x4_start["y"] + length * x4_unit["y"]
+    }
+    
+    x5_end = {
+        "x": x5_start["x"] + length * x5_unit["x"],
+        "y": x5_start["y"] + length * x5_unit["y"]
+    }
+    
     return {
         "x4": {"start": x4_start, "end": x4_end},
         "x5": {"start": x5_start, "end": x5_end}
@@ -208,9 +199,9 @@ def check_strand_sequence_alignment(strands_dict, is_vertical):
             # Calculate distance between x4 and x5
             midpoint_x4 = get_midpoint(current_x4)
             midpoint_x5 = get_midpoint(current_x5)
-            distance = math.sqrt(
-                (midpoint_x4["x"] - midpoint_x5["x"])**2 + 
-                (midpoint_x4["y"] - midpoint_x5["y"])**2
+            distance = math.hypot(
+                midpoint_x4["x"] - midpoint_x5["x"], 
+                midpoint_x4["y"] - midpoint_x5["y"]
             )
             
             min_length = min(min_length, distance)
@@ -243,11 +234,6 @@ def check_valid_distances(vertical_strands, horizontal_strands, m, n):
 def generate_json(params):
     """Generate JSON data for the given parameters"""
     try:
-        # Create local strands_data dictionary for this process
-        strands_data = {
-            'valid_lengths_vertical': {},
-            'valid_lengths_horizontal': {}
-        }
         mask_index = 0
 
         def create_masked_strand(v_strand, h_strand):
@@ -294,7 +280,8 @@ def generate_json(params):
 
             x = x1 + t * (x2 - x1)
             y = y1 + t * (y2 - y1)
-            return {"x": x, "y": y}        
+            return {"x": x, "y": y}
+
         # Unpack parameters
         (m, n, horizontal_gap, vertical_gap, base_spacing,
          x4_vertical_angle, x5_vertical_angle,
@@ -307,7 +294,7 @@ def generate_json(params):
         horizontal_strands = {i: {} for i in range(m+1, m+n+1)}
 
         def get_color():
-            h, s, l = random.random(), random.uniform(0.2, 0.9), random.uniform(0.1, 0.9)
+            h, l, s = random.random(), random.uniform(0.1, 0.9), random.uniform(0.2, 0.9)
             r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, l, s)]
             return {"r": r, "g": g, "b": b, "a": 255}
 
@@ -380,7 +367,7 @@ def generate_json(params):
             positions = calculate_x4_x5_positions(
                 strand2, strand3,
                 x4_vertical_angle, x5_vertical_angle,
-                False,n,m
+                False, n, m
             )
             
             # Update x2 end point and create x4
@@ -444,7 +431,7 @@ def generate_json(params):
             positions = calculate_x4_x5_positions(
                 strand2, strand3,
                 x4_horizontal_angle, x5_horizontal_angle,
-                True,n,m
+                True, n, m
             )
             
             # Update x2 end point and create x4
@@ -477,7 +464,7 @@ def generate_json(params):
             attached_strands_45_horizontal.append(strand5)
             horizontal_strands[m+i+1]['5'] = strand5
 
-            # Generate masks for x_2 and x_3
+        # Generate masks for x_2 and x_3
         for v_set in vertical_strands.values():
             for h_set in horizontal_strands.values():
                 if '2' in v_set and '3' in h_set:
@@ -506,11 +493,10 @@ def generate_json(params):
             
             attached_strands_23_vertical +
             attached_strands_23_horizontal +
-            masks_strands_23+
-            attached_strands_45_vertical+
+            masks_strands_23 +
+            attached_strands_45_vertical +
             attached_strands_45_horizontal +
             masks_strands_45
-           
         )
 
         # Check if the generated configuration is valid
@@ -576,7 +562,6 @@ def calculate_x4_x5_pair_distances(strands_dict):
 def main():
     start_time = time.time()
     
-    # Remove the Manager and shared dictionaries since we're not using them anymore
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     os.makedirs(base_dir, exist_ok=True)
 
@@ -593,10 +578,10 @@ def main():
     maximum_angle_h = 89  # For n
     minimum_angle_v = 45  # For m
     maximum_angle_v = 89  # For m
-    angle_step = 1
+    angle_step = 0.5
 
-    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 0.5, angle_step)
-    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 0.5, angle_step)
+    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 0.1, angle_step)
+    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 0.1, angle_step)
 
     n_values = [3]
     m_values = [1]
@@ -614,8 +599,8 @@ def main():
             with Pool(processes=max(cpu_count() - 1, 1)) as pool:
                 params_list = [
                     (m, n, horizontal_gap, vertical_gap, base_spacing,
-                     i_angle+90, (i_angle+90 ) % 360,
-                     j_angle+90, (j_angle+90 ) % 360,
+                     i_angle+90, (i_angle+90) % 360,
+                     j_angle+90, (j_angle+90) % 360,
                      x4_length_extension, x5_length_extension,
                      i_angle, j_angle)
                     for i_angle in vertical_angles
@@ -623,8 +608,8 @@ def main():
                 ]
                 
                 for result in tqdm(pool.imap_unordered(generate_json, params_list),
-                                 total=total_combinations,
-                                 desc=f"m{m}xn{n}"):
+                                   total=total_combinations,
+                                   desc=f"m{m}xn{n}"):
                     if result is not None:
                         data, (m, n, i_angle, j_angle) = result
                         
@@ -638,4 +623,4 @@ def main():
     print(f"Total time: {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
-    main() 
+    main()

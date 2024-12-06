@@ -109,20 +109,22 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             parent_strand = strand_dict.get(parent_layer_name)
             
             if parent_strand:
-                # Check if the parent is a first strand and if this attached strand connects to its start
-                is_connected_to_start = (parent_strand.is_first_strand and 
-                                       start.x() == parent_strand.start.x() and 
-                                       start.y() == parent_strand.start.y())
+                # Determine if the attached strand should connect to the start or end of the main strand
+                is_connected_to_start = (
+                    start.x() == parent_strand.start.x() and 
+                    start.y() == parent_strand.start.y()
+                )
                 
                 if is_connected_to_start:
-                    # Create AttachedStrand connected to the start point
+                    # Connect to the start point of the main strand
                     strand = AttachedStrand(parent_strand, end)
                     strand.start = parent_strand.start
                 else:
-                    # Normal case - connect to end point
+                    # Connect to the end point of the main strand
                     strand = AttachedStrand(parent_strand, end)
                     strand.start = parent_strand.end
                 
+                # Set properties for the attached strand
                 strand.end = end
                 strand.width = width
                 strand.color = color
@@ -131,8 +133,17 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 strand.set_number = set_number
                 strand.layer_name = layer_name
                 
+                # Connect layers in the canvas
                 if hasattr(canvas, 'layer_state_manager'):
                     canvas.layer_state_manager.connect_layers(parent_layer_name, layer_name)
+                
+                # Update the parent strand's connections
+                if not hasattr(parent_strand, 'connections'):
+                    parent_strand.connections = []
+                parent_strand.connections.append(layer_name)
+                
+                # Update the parent strand's position if needed
+                update_parent_strand_position(parent_strand, strand)
             else:
                 logging.error(f"Parent strand {parent_layer_name} not found for AttachedStrand {layer_name}")
                 return None
@@ -207,26 +218,63 @@ def load_strands(filename, canvas):
     logging.info(f"Starting to load strands from {filename}")
 
     # Initialize collections
-    strands = []
+    strands = [None] * len(data["strands"])  # Pre-allocate list with correct size
     strand_dict = {}
-    masked_strands_data = []  # Store masked strand data for later processing
+    masked_strands_data = []
     
-    # First pass: Create all basic strands and store them in strand_dict
+    # First pass: Create all basic strands
     for strand_data in data["strands"]:
-        if strand_data["type"] in ["Strand", "AttachedStrand"]:
-            strand = deserialize_strand(strand_data, canvas, strand_dict)
+        if strand_data["type"] == "Strand":
+            strand = deserialize_strand(strand_data, canvas)
             if strand:
-                index = strand_data.get("index", len(strands))
-                while len(strands) <= index:
-                    strands.append(None)
+                index = strand_data["index"]
                 strands[index] = strand
                 strand_dict[strand.layer_name] = strand
-                if hasattr(strand, 'attached_strands'): 
-                    strand.attached_strands = []
+                strand.attached_strands = []  # Initialize attached_strands list
         elif strand_data["type"] == "MaskedStrand":
-            masked_strands_data.append(strand_data)  # Save for second pass
+            masked_strands_data.append(strand_data)
 
-    # Second pass: Create MaskedStrands after all other strands exist
+    # Second pass: Create attached strands
+    for strand_data in data["strands"]:
+        if strand_data["type"] == "AttachedStrand":
+            parent_layer_name = strand_data["attached_to"]
+            parent_strand = strand_dict.get(parent_layer_name)
+            
+            if parent_strand:
+                # Create the attached strand
+                start = deserialize_point(strand_data["start"])
+                end = deserialize_point(strand_data["end"])
+                strand = AttachedStrand(parent_strand, end)
+                
+                # Set all properties exactly as in saved data
+                strand.start = start
+                strand.end = end
+                strand.width = strand_data["width"]
+                strand.color = deserialize_color(strand_data["color"])
+                strand.stroke_color = deserialize_color(strand_data["stroke_color"])
+                strand.stroke_width = strand_data["stroke_width"]
+                strand.layer_name = strand_data["layer_name"]
+                strand.set_number = strand_data["set_number"]
+                strand.has_circles = strand_data["has_circles"]
+                strand.is_first_strand = strand_data["is_first_strand"]
+                strand.is_start_side = strand_data["is_start_side"]
+                
+                # Add to collections
+                index = strand_data["index"]
+                strands[index] = strand
+                strand_dict[strand.layer_name] = strand
+                parent_strand.attached_strands.append(strand)
+                
+                # Set control points if they exist
+                if "control_points" in strand_data and all(cp is not None for cp in strand_data["control_points"]):
+                    strand.control_point1 = deserialize_point(strand_data["control_points"][0])
+                    strand.control_point2 = deserialize_point(strand_data["control_points"][1])
+                
+                # Update the canvas's layer state manager
+                if hasattr(canvas, 'layer_state_manager'):
+                    canvas.layer_state_manager.connect_layers(parent_layer_name, strand.layer_name)
+
+    # Third pass: Create masked strands
     for masked_data in masked_strands_data:
         parts = masked_data["layer_name"].split('_')
         if len(parts) >= 4:
@@ -237,32 +285,25 @@ def load_strands(filename, canvas):
             second_strand = strand_dict.get(second_layer)
             
             if first_strand and second_strand:
-                logging.info(f"Creating MaskedStrand between {first_layer} and {second_layer}")
-                masked_strand = MaskedStrand(first_strand, second_strand)
-                masked_strand.width = masked_data["width"]
-                masked_strand.color = deserialize_color(masked_data["color"])
-                masked_strand.stroke_color = deserialize_color(masked_data["stroke_color"])
-                masked_strand.stroke_width = masked_data["stroke_width"]
-                masked_strand.layer_name = masked_data["layer_name"]
-                masked_strand.set_number = masked_data.get("set_number")
-                masked_strand.has_circles = masked_data.get("has_circles", [False, False])
-                masked_strand.is_first_strand = masked_data.get("is_first_strand", False)
-                masked_strand.is_start_side = masked_data.get("is_start_side", True)
+                strand = MaskedStrand(first_strand, second_strand)
+                # Set all properties exactly as in saved data
+                strand.start = deserialize_point(masked_data["start"])
+                strand.end = deserialize_point(masked_data["end"])
+                strand.width = masked_data["width"]
+                strand.color = deserialize_color(masked_data["color"])
+                strand.stroke_color = deserialize_color(masked_data["stroke_color"])
+                strand.stroke_width = masked_data["stroke_width"]
+                strand.layer_name = masked_data["layer_name"]
+                strand.set_number = masked_data["set_number"]
+                strand.has_circles = masked_data["has_circles"]
+                strand.is_first_strand = masked_data["is_first_strand"]
+                strand.is_start_side = masked_data["is_start_side"]
                 
-                # Update the mask path
-                if hasattr(masked_strand, 'update_mask_path'):
-                    masked_strand.update_mask_path()
-                
-                index = masked_data.get("index", len(strands))
-                while len(strands) <= index:
-                    strands.append(None)
-                strands[index] = masked_strand
-                strand_dict[masked_strand.layer_name] = masked_strand
-                logging.info(f"Successfully created MaskedStrand {masked_strand.layer_name}")
-            else:
-                logging.error(f"Could not find strands for masked strand {masked_data['layer_name']}")
+                index = masked_data["index"]
+                strands[index] = strand
+                strand_dict[strand.layer_name] = strand
 
-    # Remove any None values
+    # Remove any None values (shouldn't be any if indexes are correct)
     strands = [s for s in strands if s is not None]
     
     # Apply loaded strands to canvas
@@ -432,6 +473,40 @@ def deserialize_groups(groups_data, strand_dict):
     
     logging.info("Completed deserialization of all groups.")
     return deserialized_groups
+
+def update_parent_strand_position(parent_strand, attached_strand):
+    """
+    Update the position of the parent strand based on the attached strand's position.
+    """
+    if attached_strand.start == parent_strand.start:
+        parent_strand.start = attached_strand.start
+    elif attached_strand.start == parent_strand.end:
+        parent_strand.end = attached_strand.start
+
+    parent_strand.update_shape()
+    parent_strand.update_side_line()
+
+    # Propagate position changes to attached strands
+    if hasattr(parent_strand, 'attached_strands'):
+        for child_strand in parent_strand.attached_strands:
+            update_attached_strand_position(parent_strand, child_strand)
+
+def update_attached_strand_position(parent_strand, attached_strand):
+    """
+    Update the position of an attached strand based on the parent strand's position.
+    """
+    if attached_strand.is_start_side:
+        attached_strand.start = parent_strand.start
+    else:
+        attached_strand.start = parent_strand.end
+
+    attached_strand.update_shape()
+    attached_strand.update_side_line()
+
+    # Recursively update any strands attached to this strand
+    if hasattr(attached_strand, 'attached_strands'):
+        for child_strand in attached_strand.attached_strands:
+            update_attached_strand_position(attached_strand, child_strand)
 
 
 

@@ -212,7 +212,6 @@ class AttachMode(QObject):
                     parent_group = group_data
                     parent_group_name = group_name
                     logging.info(f"[AttachMode.start_attachment] Found parent strand in group: {group_name}")
-                    logging.info(f"[AttachMode.start_attachment] Group main strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in group_data.get('main_strands', [])]}")
                     break
         
         new_strand = AttachedStrand(parent_strand, attach_point)
@@ -220,10 +219,15 @@ class AttachMode(QObject):
         self.affected_strand = new_strand
         
         # Set properties from parent strand
-        new_strand.set_color(parent_strand.color)
+        new_strand.color = parent_strand.color  # Directly set color property
         new_strand.set_number = parent_strand.set_number
         new_strand.is_first_strand = False
         new_strand.is_start_side = False
+        
+        # Ensure the color is properly set in the canvas's color management system
+        if hasattr(self.canvas, 'strand_colors'):
+            self.canvas.strand_colors[new_strand.set_number] = parent_strand.color
+            logging.info(f"[AttachMode.start_attachment] Set color for set {new_strand.set_number} to {parent_strand.color}")
         
         # Update parent strand
         parent_strand.attached_strands.append(new_strand)

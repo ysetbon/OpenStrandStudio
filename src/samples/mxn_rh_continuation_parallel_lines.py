@@ -145,19 +145,40 @@ def calculate_control_points(start, end):
     ]
 
 def create_strand(start, end=None, length=None, angle_deg=None, color=None, 
-                 layer_name="", set_number=0, strand_type="Strand"):
-    """Create a strand with the given parameters"""
-    is_main_strand = layer_name.split('_')[1] == '1'
+                  layer_name="", set_number=0, strand_type="Strand"):
+    # Determine strand properties based on type and layer_name
+    parts = layer_name.split('_')
+    segment = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 1
     
+    if strand_type == "Strand":
+        # Main strand
+        has_circles = [True, True]
+        is_first_strand = True
+        is_start_side = True
+    elif strand_type == "AttachedStrand":
+        # Attached strands
+        if segment in [2, 3]:
+            has_circles = [True, True]
+        else:
+            has_circles = [True, False]
+        is_first_strand = False
+        is_start_side = False
+    elif strand_type == "MaskedStrand":
+        # Masked strands
+        has_circles = [False, False]
+        is_first_strand = False
+        is_start_side = True
+    else:
+        # Default fallback
+        has_circles = [True, True]
+        is_first_strand = False
+        is_start_side = False
+
     if end is None and length is not None and angle_deg is not None:
-        # Calculate end point using length and angle
         angle_rad = math.radians(angle_deg)
         dx = length * math.cos(angle_rad)
         dy = length * math.sin(angle_rad)
-        end = {
-            "x": start["x"] + dx,
-            "y": start["y"] + dy
-        }
+        end = {"x": start["x"] + dx, "y": start["y"] + dy}
     
     strand = {
         "type": strand_type,
@@ -167,24 +188,16 @@ def create_strand(start, end=None, length=None, angle_deg=None, color=None,
         "color": color,
         "stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
         "stroke_width": 4,
-        "has_circles": [True, True] if is_main_strand else [True, False],
+        "has_circles": has_circles,
         "layer_name": layer_name,
         "set_number": set_number,
-        "is_first_strand": strand_type == "Strand",
-        "is_start_side": True,
+        "is_first_strand": is_first_strand,
+        "is_start_side": is_start_side,
         "control_points": calculate_control_points(start, end)
     }
-    
-    if strand_type == "AttachedStrand":
-        strand["parent_layer_name"] = f"{set_number}_1"
-        strand_number = layer_name.split('_')[1]
-        
-        if strand_number == '4':
-            strand["parent_layer_name"] = f"{set_number}_2"
-        elif strand_number == '5':
-            strand["parent_layer_name"] = f"{set_number}_3"
-    
+
     return strand
+
 
 def check_strand_sequence_alignment(strands_dict, is_vertical):
     """Check sequence alignment for all consecutive pairs."""
@@ -258,7 +271,7 @@ def generate_json(params):
 
             masked_strand = {
                 "type": "MaskedStrand",
-                "index": mask_index,  # Use the counter
+                "index": mask_index,
                 "start": h_strand["start"].copy(),
                 "end": h_strand["end"].copy(),
                 "width": 46,
@@ -268,13 +281,13 @@ def generate_json(params):
                 "has_circles": [False, False],
                 "layer_name": f"{v_strand['layer_name']}_{h_strand['layer_name']}",
                 "set_number": h_strand["set_number"],
+                "is_first_strand": False,
+                "is_start_side": True,
                 "first_selected_strand": v_strand["layer_name"],
                 "second_selected_strand": h_strand["layer_name"],
-                "deletion_rectangles": [],
-                "custom_mask_path": None,
-                "base_center_point": intersection,
-                "edited_center_point": intersection.copy(),
+                "deletion_rectangles": []
             }
+
             mask_index += 1  # Increment counter
             return masked_strand
 
@@ -590,15 +603,15 @@ def main():
 
     # Angle ranges
     minimum_angle_h = 45  # For n
-    maximum_angle_h = 89  # For n
+    maximum_angle_h = 46  # For n
     minimum_angle_v = 45  # For m
-    maximum_angle_v = 89  # For m
+    maximum_angle_v = 46  # For m
     angle_step = 1
 
-    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 0.5, angle_step)
-    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 0.5, angle_step)
+    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
+    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [3]
+    n_values = [1]
     m_values = [1]
 
     # Process configurations

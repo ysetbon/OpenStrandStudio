@@ -35,7 +35,7 @@ def serialize_point(point):
     # Otherwise assume it's a QPointF and convert it
     return {"x": point.x(), "y": point.y()}
 
-def serialize_strand(strand, index=None):
+def serialize_strand(strand, canvas, index=None):
     data = {
         "type": type(strand).__name__,
         "index": index,
@@ -52,124 +52,154 @@ def serialize_strand(strand, index=None):
         "is_start_side": getattr(strand, 'is_start_side', True),
     }
 
-    # Add control points if they exist and are not None
-    if (hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') and 
-        strand.control_point1 is not None and strand.control_point2 is not None):
+    # Add attached_to information for AttachedStrands
+    if isinstance(strand, AttachedStrand):
+        # Get the connections from LayerStateManager
+        layer_name = strand.layer_name
+        # Find the parent by looking at who this strand is connected to
+        connected_to = None
+        if hasattr(canvas, 'layer_state_manager'):
+            for potential_parent, connections in canvas.layer_state_manager.getConnections().items():
+                if layer_name in connections:
+                    connected_to = potential_parent
+                    break
+        
+        data["attached_to"] = connected_to
+        logging.info(f"Serializing AttachedStrand {strand.layer_name} attached to {connected_to}")
+
+    if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
         data["control_points"] = [
             serialize_point(strand.control_point1),
             serialize_point(strand.control_point2)
         ]
 
-    # Handle MaskedStrand specific data
-    if isinstance(strand, MaskedStrand):
-        data.update({
-            "first_selected_strand": strand.first_selected_strand.layer_name if strand.first_selected_strand else None,
-            "second_selected_strand": strand.second_selected_strand.layer_name if strand.second_selected_strand else None,
-            "deletion_rectangles": getattr(strand, 'deletion_rectangles', [])
-        })
-        logging.info(f"Serialized {len(data['deletion_rectangles'])} deletion rectangles for masked strand {strand.layer_name}")
-
     return data
 
-def save_strands(strands, groups, filename):
+def save_strands(strands, groups, filename, canvas):
     data = {
-        "strands": [serialize_strand(strand, i) for i, strand in enumerate(strands)],
+        "strands": [serialize_strand(strand, canvas, i) for i, strand in enumerate(strands)],
         "groups": serialize_groups(groups),
     }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
     logging.info(f"Saved strands and groups to {filename}")
 
-def deserialize_strand(data, strand_dict=None, parent_strand=None):
+def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
     """Deserialize a strand from saved data."""
-    # Exact point deserialization
-    start = QPointF(data["start"]["x"], data["start"]["y"])
-    end = QPointF(data["end"]["x"], data["end"]["y"])
-    width = data["width"]
-    color = deserialize_color(data["color"])
-    stroke_color = deserialize_color(data["stroke_color"])
-    stroke_width = data["stroke_width"]
-    set_number = data.get("set_number")
-    layer_name = data.get("layer_name", "")
-    strand_type = data.get("type", "Strand")
+    try:
+        start = deserialize_point(data["start"])
+        end = deserialize_point(data["end"])
+        width = data["width"]
+        color = deserialize_color(data["color"])
+        stroke_color = deserialize_color(data["stroke_color"])
+        stroke_width = data["stroke_width"]
+        set_number = data.get("set_number")
+        layer_name = data.get("layer_name", "")
+        strand_type = data.get("type", "Strand")
 
-    # Create the appropriate type of strand based on the type field
-    if strand_type == "Strand":
-        strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
-        # Explicitly set has_circles from saved data
-        strand.has_circles = data.get("has_circles", [False, False])
-        strand.both_ends_attached = all(strand.has_circles)
+        strand = None
+
+        if strand_type == "Strand":
+            strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
         
-    elif strand_type == "AttachedStrand" and parent_strand:
-        strand = AttachedStrand(parent_strand, end)
-        # Explicitly set all properties to match saved data exactly
-        strand.start = start
-        strand.end = end
-        strand.width = width
-        strand.color = color
-        strand.stroke_color = stroke_color
-        strand.stroke_width = stroke_width
-        strand.set_number = set_number
-        strand.layer_name = layer_name
+        elif strand_type == "AttachedStrand":
+            parent_layer_name = data.get("attached_to")
+            if strand_dict is None:
+                strand_dict = {}
+            parent_strand = strand_dict.get(parent_layer_name)
+            
+            if parent_strand:
+                # Check if the parent is a first strand and if this attached strand connects to its start
+                is_connected_to_start = (parent_strand.is_first_strand and 
+                                       start.x() == parent_strand.start.x() and 
+                                       start.y() == parent_strand.start.y())
+                
+                if is_connected_to_start:
+                    # Create AttachedStrand connected to the start point
+                    strand = AttachedStrand(parent_strand, end)
+                    strand.start = parent_strand.start
+                else:
+                    # Normal case - connect to end point
+                    strand = AttachedStrand(parent_strand, end)
+                    strand.start = parent_strand.end
+                
+                strand.end = end
+                strand.width = width
+                strand.color = color
+                strand.stroke_color = stroke_color
+                strand.stroke_width = stroke_width
+                strand.set_number = set_number
+                strand.layer_name = layer_name
+                
+                if hasattr(canvas, 'layer_state_manager'):
+                    canvas.layer_state_manager.connect_layers(parent_layer_name, layer_name)
+            else:
+                logging.error(f"Parent strand {parent_layer_name} not found for AttachedStrand {layer_name}")
+                return None
         
-        # Explicitly set has_circles from saved data
-        strand.has_circles = data.get("has_circles", [False, False])
-        # Update both_ends_attached based on has_circles
-        strand.both_ends_attached = all(strand.has_circles)
-        
-    elif strand_type == "MaskedStrand" and strand_dict:
-        first_strand = strand_dict.get(data.get("first_selected_strand"))
-        second_strand = strand_dict.get(data.get("second_selected_strand"))
-        
-        if first_strand and second_strand:
-            strand = MaskedStrand(first_strand, second_strand)
-            # Explicitly set all properties to match saved data exactly
-            strand.start = start
-            strand.end = end
-            strand.width = width
-            strand.color = color
-            strand.stroke_color = stroke_color
-            strand.stroke_width = stroke_width
-            strand.set_number = set_number
-            strand.layer_name = layer_name
-            strand.has_circles = data.get("has_circles", [False, False])
-            strand.both_ends_attached = all(strand.has_circles)
-            strand.deletion_rectangles = data.get("deletion_rectangles", [])
-        else:
-            logging.error(f"Could not create MaskedStrand: missing reference strands")
+        elif strand_type == "MaskedStrand":
+            parts = layer_name.split('_')
+            if len(parts) >= 4:
+                first_layer = f"{parts[0]}_{parts[1]}"
+                second_layer = f"{parts[2]}_{parts[3]}"
+                
+                if strand_dict:
+                    first_strand = strand_dict.get(first_layer)
+                    second_strand = strand_dict.get(second_layer)
+                    
+                    if first_strand and second_strand:
+                        strand = MaskedStrand(first_strand, second_strand)
+                        strand.width = width
+                        strand.color = color
+                        strand.stroke_color = stroke_color
+                        strand.stroke_width = stroke_width
+                        strand.layer_name = layer_name
+                        strand.set_number = set_number
+                        
+                        # Initialize MaskedStrand-specific properties
+                        strand._has_circles = [False, False]
+                        strand.is_selected = False
+                        strand.custom_mask_path = None
+                        strand.deletion_rectangles = []
+                        strand.base_center_point = None
+                        strand.edited_center_point = None
+                        strand._attached_strands = []
+                        
+                        # Update the mask path
+                        if hasattr(strand, 'update_mask_path'):
+                            strand.update_mask_path()
+                        
+                        logging.info(f"Successfully created MaskedStrand {layer_name}")
+                    else:
+                        logging.error(f"Could not find both strands for masked strand {layer_name}")
+                        return None
+            else:
+                logging.error(f"Invalid layer name format for masked strand: {layer_name}")
+                return None
+
+        if strand is None:
+            logging.error(f"Failed to create strand of type {strand_type}")
             return None
-    else:
-        logging.error(f"Unknown strand type: {strand_type}")
+
+        # Set common properties
+        strand.has_circles = data.get("has_circles", [False, False])
+        strand.is_first_strand = data.get("is_first_strand", False)
+        strand.is_start_side = data.get("is_start_side", True)
+
+        # Set control points if they exist
+        if "control_points" in data:
+            control_points = data["control_points"]
+            if control_points[0]:
+                strand.control_point1 = deserialize_point(control_points[0])
+            if control_points[1]:
+                strand.control_point2 = deserialize_point(control_points[1])
+
+        return strand
+
+    except Exception as e:
+        logging.error(f"Error deserializing strand: {str(e)}")
         return None
 
-    # Set common properties exactly as in saved data
-    strand.has_circles = data.get("has_circles", [False, False])
-    strand.both_ends_attached = all(strand.has_circles)
-    strand.is_first_strand = data.get("is_first_strand", False)
-    strand.is_start_side = data.get("is_start_side", True)
-
-    # Set control points exactly as in saved data
-    if "control_points" in data and len(data["control_points"]) == 2:
-        strand.control_point1 = QPointF(
-            data["control_points"][0]["x"],
-            data["control_points"][0]["y"]
-        )
-        strand.control_point2 = QPointF(
-            data["control_points"][1]["x"],
-            data["control_points"][1]["y"]
-        )
-    else:
-        # If no control points in data, initialize them based on geometry
-        strand.update_control_points_from_geometry()
-
-    # Force updates after setting all properties
-    if hasattr(strand, 'update_shape'):
-        strand.update_shape()
-    if hasattr(strand, 'update_side_line'):
-        strand.update_side_line()
-
-    logging.info(f"Deserialized {strand_type} '{layer_name}' with has_circles={strand.has_circles}")
-    return strand
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
         data = json.load(f)
@@ -179,56 +209,62 @@ def load_strands(filename, canvas):
     # Initialize collections
     strands = []
     strand_dict = {}
+    masked_strands_data = []  # Store masked strand data for later processing
     
-    # Process all strands in exact JSON order
+    # First pass: Create all basic strands and store them in strand_dict
     for strand_data in data["strands"]:
-        if strand_data["type"] == "Strand":
-            strand = deserialize_strand(strand_data)
+        if strand_data["type"] in ["Strand", "AttachedStrand"]:
+            strand = deserialize_strand(strand_data, canvas, strand_dict)
             if strand:
-                strands.append(strand)
+                index = strand_data.get("index", len(strands))
+                while len(strands) <= index:
+                    strands.append(None)
+                strands[index] = strand
                 strand_dict[strand.layer_name] = strand
-                logging.info(f"Created basic strand: {strand.layer_name}")
-                
-        elif strand_data["type"] == "AttachedStrand":
-            base_name = strand_data["layer_name"].split('_')[0]
-            parent_name = f"{base_name}_1"
-            parent_strand = strand_dict.get(parent_name)
-            
-            if parent_strand:
-                strand = deserialize_strand(strand_data, parent_strand=parent_strand)
-                if strand:
-                    strands.append(strand)
-                    strand_dict[strand.layer_name] = strand
-                    parent_strand.attached_strands.append(strand)
-                    logging.info(f"Created attached strand: {strand.layer_name} -> {parent_name}")
-            else:
-                logging.error(f"Parent strand {parent_name} not found for {strand_data['layer_name']}")
-                
+                if hasattr(strand, 'attached_strands'): 
+                    strand.attached_strands = []
         elif strand_data["type"] == "MaskedStrand":
-            first_strand_name = strand_data["first_selected_strand"]
-            second_strand_name = strand_data["second_selected_strand"]
+            masked_strands_data.append(strand_data)  # Save for second pass
+
+    # Second pass: Create MaskedStrands after all other strands exist
+    for masked_data in masked_strands_data:
+        parts = masked_data["layer_name"].split('_')
+        if len(parts) >= 4:
+            first_layer = f"{parts[0]}_{parts[1]}"
+            second_layer = f"{parts[2]}_{parts[3]}"
             
-            first_strand = strand_dict.get(first_strand_name)
-            second_strand = strand_dict.get(second_strand_name)
+            first_strand = strand_dict.get(first_layer)
+            second_strand = strand_dict.get(second_layer)
             
             if first_strand and second_strand:
-                strand = MaskedStrand(first_strand, second_strand)
-                # Copy properties from saved data
-                strand.layer_name = strand_data["layer_name"]
-                strand.set_number = strand_data["set_number"]
-                strand.width = strand_data["width"]
-                strand.color = deserialize_color(strand_data["color"])
-                strand.stroke_color = deserialize_color(strand_data["stroke_color"])
-                strand.stroke_width = strand_data["stroke_width"]
-                strand.has_circles = strand_data["has_circles"]
-                strand.deletion_rectangles = strand_data.get("deletion_rectangles", [])
+                logging.info(f"Creating MaskedStrand between {first_layer} and {second_layer}")
+                masked_strand = MaskedStrand(first_strand, second_strand)
+                masked_strand.width = masked_data["width"]
+                masked_strand.color = deserialize_color(masked_data["color"])
+                masked_strand.stroke_color = deserialize_color(masked_data["stroke_color"])
+                masked_strand.stroke_width = masked_data["stroke_width"]
+                masked_strand.layer_name = masked_data["layer_name"]
+                masked_strand.set_number = masked_data.get("set_number")
+                masked_strand.has_circles = masked_data.get("has_circles", [False, False])
+                masked_strand.is_first_strand = masked_data.get("is_first_strand", False)
+                masked_strand.is_start_side = masked_data.get("is_start_side", True)
                 
-                strands.append(strand)
-                strand_dict[strand.layer_name] = strand
-                logging.info(f"Created masked strand: {strand.layer_name}")
+                # Update the mask path
+                if hasattr(masked_strand, 'update_mask_path'):
+                    masked_strand.update_mask_path()
+                
+                index = masked_data.get("index", len(strands))
+                while len(strands) <= index:
+                    strands.append(None)
+                strands[index] = masked_strand
+                strand_dict[masked_strand.layer_name] = masked_strand
+                logging.info(f"Successfully created MaskedStrand {masked_strand.layer_name}")
             else:
-                logging.error(f"Missing reference strands for masked strand {strand_data['layer_name']}")
+                logging.error(f"Could not find strands for masked strand {masked_data['layer_name']}")
 
+    # Remove any None values
+    strands = [s for s in strands if s is not None]
+    
     # Apply loaded strands to canvas
     canvas.strands = strands
     

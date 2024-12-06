@@ -8,42 +8,37 @@ import colorsys
 import math
 import numpy as np
 from tqdm import tqdm
-from multiprocessing import Pool, cpu_count, Process
+from multiprocessing import Pool, cpu_count
 import time
 import matplotlib.pyplot as plt
-from numba import njit
-
-@njit
-def calculate_point_to_line_distance_numba(px, py, x1, y1, x2, y2):
-    """Calculate distance from a point to a line segment using Numba."""
-    dx = x2 - x1
-    dy = y2 - y1
-    l2 = dx * dx + dy * dy
-
-    if l2 == 0.0:
-        # Line start and end are the same point
-        return math.hypot(px - x1, py - y1)
-
-    t = ((px - x1) * dx + (py - y1) * dy) / l2
-    t = max(0.0, min(1.0, t))
-
-    proj_x = x1 + t * dx
-    proj_y = y1 + t * dy
-
-    return math.hypot(px - proj_x, py - proj_y)
 
 def calculate_point_to_line_distance_vectorized(point, line_start, line_end):
-    """Vectorized version of point-to-line distance calculation using Numba."""
-    px = point['x']
-    py = point['y']
-    x1 = line_start['x']
-    y1 = line_start['y']
-    x2 = line_end['x']
-    y2 = line_end['y']
-    return calculate_point_to_line_distance_numba(px, py, x1, y1, x2, y2)
+    points = np.array([[point['x'], point['y']]])
+    line_starts = np.array([[line_start['x'], line_start['y']]])
+    line_ends = np.array([[line_end['x'], line_end['y']]])
+    
+    px = points[:, 0] - line_starts[:, 0]
+    py = points[:, 1] - line_starts[:, 1]
+    
+    lx = line_ends[:, 0] - line_starts[:, 0]
+    ly = line_ends[:, 1] - line_starts[:, 1]
+    
+    l2 = lx*lx + ly*ly
+    point_mask = l2 == 0
+    point_distances = np.sqrt(px[point_mask]**2 + py[point_mask]**2)
+    
+    t = np.clip((px*lx + py*ly) / l2, 0, 1)
+    projection_x = line_starts[:, 0] + t * lx
+    projection_y = line_starts[:, 1] + t * ly
+    
+    dx = points[:, 0] - projection_x
+    dy = points[:, 1] - projection_y
+    distances = np.sqrt(dx*dx + dy*dy)
+    distances[point_mask] = point_distances
+    
+    return float(distances[0])
 
 def get_midpoint(strand):
-    """Get midpoint of a strand"""
     return {
         "x": (strand["start"]["x"] + strand["end"]["x"]) / 2,
         "y": (strand["start"]["y"] + strand["end"]["y"]) / 2
@@ -51,9 +46,9 @@ def get_midpoint(strand):
 
 def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizontal, n, m):
     """
-    Calculate x4 and x5 positions maintaining parallel lines and consistent spacing
+    Calculate x4 and x5 positions ensuring that x4 starts where x2 ends and x5 starts where x3 ends.
     """
-    # Calculate the base direction vectors when angle is 0
+    # Direction vectors of x2 and x3
     x2_vector = {
         "x": strand2["end"]["x"] - strand2["start"]["x"],
         "y": strand2["end"]["y"] - strand2["start"]["y"]
@@ -63,9 +58,8 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizonta
         "y": strand3["end"]["y"] - strand3["start"]["y"]
     }
     
-    # Normalize vectors
-    x2_length = math.hypot(x2_vector["x"], x2_vector["y"])
-    x3_length = math.hypot(x3_vector["x"], x3_vector["y"])
+    x2_length = math.sqrt(x2_vector["x"]**2 + x2_vector["y"]**2)
+    x3_length = math.sqrt(x3_vector["x"]**2 + x3_vector["y"]**2)
     
     x2_unit = {
         "x": x2_vector["x"] / x2_length,
@@ -76,51 +70,38 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizonta
         "y": x3_vector["y"] / x3_length
     }
     
-    # Normalize angles to -180 to 180 range
+    # Normalize angles
     x4_angle = ((x4_angle + 180) % 360) - 180
     x5_angle = ((x5_angle + 180) % 360) - 180
     
     x4_rad = math.radians(x4_angle)
     x5_rad = math.radians(x5_angle)
     
-    # Rotate x2 direction to get x4 direction
+    # Rotate x2 and x3 directions
     x4_unit = {
         "x": x2_unit["x"] * math.cos(x4_rad) - x2_unit["y"] * math.sin(x4_rad),
         "y": x2_unit["x"] * math.sin(x4_rad) + x2_unit["y"] * math.cos(x4_rad)
     }
-    
-    # Rotate x3 direction to get x5 direction
     x5_unit = {
         "x": x3_unit["x"] * math.cos(x5_rad) - x3_unit["y"] * math.sin(x5_rad),
         "y": x3_unit["x"] * math.sin(x5_rad) + x3_unit["y"] * math.cos(x5_rad)
     }
     
-    # Calculate new end points for x2 and x3 (which become start points for x4 and x5)
-    x4_start = {
-        "x": strand2["start"]["x"] + x2_length * x2_unit["x"],
-        "y": strand2["start"]["y"] + x2_length * x2_unit["y"]
-    }
+    # **Key change here**:
+    # Instead of recalculating these start points, we directly use the end points of x2 and x3.
+    x4_start = strand2["end"]
+    x5_start = strand3["end"]
     
-    x5_start = {
-        "x": strand3["start"]["x"] + x3_length * x3_unit["x"],
-        "y": strand3["start"]["y"] + x3_length * x3_unit["y"]
-    }
-    
-    if is_horizontal:
-        # Calculate end points for x4 and x5 maintaining the base spacing
-        length = (56*m*2+100+56*2)
-    else:
-        # Calculate end points for x4 and x5 maintaining the base spacing
-        length = (56*n*2+100+56*2)
+    # Compute end points based on spacing
+    length_factor = (56*m*2+100+56*2) if is_horizontal else (56*n*2+100+56*2)
     
     x4_end = {
-        "x": x4_start["x"] + length * x4_unit["x"],
-        "y": x4_start["y"] + length * x4_unit["y"]
+        "x": x4_start["x"] + length_factor * x4_unit["x"],
+        "y": x4_start["y"] + length_factor * x4_unit["y"]
     }
-    
     x5_end = {
-        "x": x5_start["x"] + length * x5_unit["x"],
-        "y": x5_start["y"] + length * x5_unit["y"]
+        "x": x5_start["x"] + length_factor * x5_unit["x"],
+        "y": x5_start["y"] + length_factor * x5_unit["y"]
     }
     
     return {
@@ -129,26 +110,41 @@ def calculate_x4_x5_positions(strand2, strand3, x4_angle, x5_angle, is_horizonta
     }
 
 def calculate_control_points(start, end):
-    """Calculate control points for a strand"""
     return [
         {"x": start["x"], "y": start["y"]},
         {"x": start["x"], "y": start["y"]}
     ]
 
 def create_strand(start, end=None, length=None, angle_deg=None, color=None, 
-                 layer_name="", set_number=0, strand_type="Strand"):
-    """Create a strand with the given parameters"""
-    is_main_strand = layer_name.split('_')[1] == '1'
+                  layer_name="", set_number=0, strand_type="Strand"):
+    parts = layer_name.split('_')
+    segment = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 1
     
+    if strand_type == "Strand":
+        has_circles = [True, True]
+        is_first_strand = True
+        is_start_side = True
+    elif strand_type == "AttachedStrand":
+        if segment in [2, 3]:
+            has_circles = [True, True]
+        else:
+            has_circles = [True, False]
+        is_first_strand = False
+        is_start_side = False
+    elif strand_type == "MaskedStrand":
+        has_circles = [False, False]
+        is_first_strand = False
+        is_start_side = True
+    else:
+        has_circles = [True, True]
+        is_first_strand = False
+        is_start_side = False
+
     if end is None and length is not None and angle_deg is not None:
-        # Calculate end point using length and angle
         angle_rad = math.radians(angle_deg)
         dx = length * math.cos(angle_rad)
         dy = length * math.sin(angle_rad)
-        end = {
-            "x": start["x"] + dx,
-            "y": start["y"] + dy
-        }
+        end = {"x": start["x"] + dx, "y": start["y"] + dy}
     
     strand = {
         "type": strand_type,
@@ -158,37 +154,24 @@ def create_strand(start, end=None, length=None, angle_deg=None, color=None,
         "color": color,
         "stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
         "stroke_width": 4,
-        "has_circles": [True, True] if is_main_strand else [True, False],
+        "has_circles": has_circles,
         "layer_name": layer_name,
         "set_number": set_number,
-        "is_first_strand": strand_type == "Strand",
-        "is_start_side": True,
+        "is_first_strand": is_first_strand,
+        "is_start_side": is_start_side,
         "control_points": calculate_control_points(start, end)
     }
-    
-    if strand_type == "AttachedStrand":
-        strand["parent_layer_name"] = f"{set_number}_1"
-        strand_number = layer_name.split('_')[1]
-        
-        if strand_number == '4':
-            strand["parent_layer_name"] = f"{set_number}_2"
-        elif strand_number == '5':
-            strand["parent_layer_name"] = f"{set_number}_3"
-    
     return strand
 
 def check_strand_sequence_alignment(strands_dict, is_vertical):
-    """Check sequence alignment for all consecutive pairs."""
     set_numbers = sorted(strands_dict.keys())
-    
     if len(set_numbers) == 0:
-        return True, None, None  # No strands to check
+        return True, None, None
 
     strand_width = 26
     min_length = float('inf')
     max_length = 0
 
-    # Check distances between consecutive strands
     for i in range(len(set_numbers)):
         current_set = set_numbers[i]
         
@@ -196,35 +179,29 @@ def check_strand_sequence_alignment(strands_dict, is_vertical):
             current_x5 = strands_dict[current_set]['5']
             current_x4 = strands_dict[current_set]['4']
             
-            # Calculate distance between x4 and x5
             midpoint_x4 = get_midpoint(current_x4)
             midpoint_x5 = get_midpoint(current_x5)
-            distance = math.hypot(
-                midpoint_x4["x"] - midpoint_x5["x"], 
-                midpoint_x4["y"] - midpoint_x5["y"]
+            distance = math.sqrt(
+                (midpoint_x4["x"] - midpoint_x5["x"])**2 + 
+                (midpoint_x4["y"] - midpoint_x5["y"])**2
             )
             
             min_length = min(min_length, distance)
             max_length = max(max_length, distance)
 
     if min_length != float('inf'):
-        # Check if distances are within acceptable range
         if max_length - min_length > 4:
             return False, min_length, max_length
-
         if min_length < strand_width * 2:
             return False, min_length, max_length
 
     return True, min_length, max_length
 
 def check_valid_distances(vertical_strands, horizontal_strands, m, n):
-    """Check if distances between strands are valid"""
-    # Check vertical strands
     v_aligned, v_min, v_max = check_strand_sequence_alignment(vertical_strands, True)
     if not v_aligned:
         return False
 
-    # Check horizontal strands
     h_aligned, h_min, h_max = check_strand_sequence_alignment(horizontal_strands, False)
     if not h_aligned:
         return False
@@ -232,19 +209,22 @@ def check_valid_distances(vertical_strands, horizontal_strands, m, n):
     return True
 
 def generate_json(params):
-    """Generate JSON data for the given parameters"""
     try:
+        strands_data = {
+            'valid_lengths_vertical': {},
+            'valid_lengths_horizontal': {}
+        }
         mask_index = 0
 
         def create_masked_strand(v_strand, h_strand):
-            nonlocal mask_index  # Access the outer index counter
+            nonlocal mask_index
             intersection = calculate_precise_intersection(v_strand, h_strand)
             if intersection is None:
                 return None
 
             masked_strand = {
                 "type": "MaskedStrand",
-                "index": mask_index,  # Use the counter
+                "index": mask_index,
                 "start": h_strand["start"].copy(),
                 "end": h_strand["end"].copy(),
                 "width": 46,
@@ -254,14 +234,13 @@ def generate_json(params):
                 "has_circles": [False, False],
                 "layer_name": f"{v_strand['layer_name']}_{h_strand['layer_name']}",
                 "set_number": h_strand["set_number"],
+                "is_first_strand": False,
+                "is_start_side": True,
                 "first_selected_strand": v_strand["layer_name"],
                 "second_selected_strand": h_strand["layer_name"],
-                "deletion_rectangles": [],
-                "custom_mask_path": None,
-                "base_center_point": intersection,
-                "edited_center_point": intersection.copy(),
+                "deletion_rectangles": []
             }
-            mask_index += 1  # Increment counter
+            mask_index += 1
             return masked_strand
 
         def calculate_precise_intersection(strand1, strand2):
@@ -282,26 +261,23 @@ def generate_json(params):
             y = y1 + t * (y2 - y1)
             return {"x": x, "y": y}
 
-        # Unpack parameters
         (m, n, horizontal_gap, vertical_gap, base_spacing,
          x4_vertical_angle, x5_vertical_angle,
          x4_horizontal_angle, x5_horizontal_angle,
          x4_length_extension, x5_length_extension,
          i_angle, j_angle) = params
 
-        all_strands = []
         vertical_strands = {i: {} for i in range(1, m+1)}
         horizontal_strands = {i: {} for i in range(m+1, m+n+1)}
 
         def get_color():
-            h, l, s = random.random(), random.uniform(0.1, 0.9), random.uniform(0.2, 0.9)
+            h, s, l = random.random(), random.uniform(0.2, 0.9), random.uniform(0.1, 0.9)
             r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, l, s)]
             return {"r": r, "g": g, "b": b, "a": 255}
 
         colors = {i+1: get_color() for i in range(m+n)}
         base_x, base_y = 168.0*2, 168.0*2
 
-        # Instead of adding strands directly to all_strands, we'll create separate lists
         main_strands_horizontal = []
         main_strands_vertical = []
         attached_strands_23_horizontal = []
@@ -311,7 +287,7 @@ def generate_json(params):
         masks_strands_23 = []
         masks_strands_45 = []
 
-        # Generate main strands (x_1) for vertical
+        # Main vertical strands
         for i in range(m):
             start_x = base_x + i * base_spacing - 2 * horizontal_gap
             start_y = base_y - (n-1) * 4 * vertical_gap - 2 * vertical_gap
@@ -323,22 +299,21 @@ def generate_json(params):
             main_strands_vertical.append(main_strand)
             vertical_strands[i+1]['main'] = main_strand
 
-        # Generate main strands (x_1) for horizontal
+        # Main horizontal strands
         for i in range(n):
             start_x = base_x + (m-1) * 4 * vertical_gap - (m-1) * 4 * horizontal_gap
             start_y = base_y + i * base_spacing
             main_strand = create_strand(
                 {"x": start_x, "y": start_y + horizontal_gap},
-                {"x": start_x + base_spacing - (m-1) * 4 * vertical_gap, "y": start_y - horizontal_gap},
+                {"x": start_x + base_spacing - (m-1)*4*vertical_gap, "y": start_y - horizontal_gap},
                 color=colors[m+i+1], layer_name=f"{m+i+1}_1", set_number=m+i+1
             )
             main_strands_horizontal.append(main_strand)
             horizontal_strands[m+i+1]['main'] = main_strand
 
-        # Generate x2 and x3 strands for horizontal and vertical
+        # x2, x3 for vertical
         for i in range(m):
             main_strand = vertical_strands[i+1]['main']
-            
             strand2 = create_strand(
                 main_strand["start"],
                 {"x": main_strand["end"]["x"] + 2*vertical_gap,
@@ -359,51 +334,50 @@ def generate_json(params):
             attached_strands_23_vertical.append(strand3)
             vertical_strands[i+1]['3'] = strand3
 
-        # Generate x4 and x5 strands for horizontal and vertical
+        # x4, x5 for vertical (now correctly chaining from x2 and x3)
         for i in range(m):
             strand2 = vertical_strands[i+1]['2']
             strand3 = vertical_strands[i+1]['3']
-            
+
             positions = calculate_x4_x5_positions(
                 strand2, strand3,
                 x4_vertical_angle, x5_vertical_angle,
                 False, n, m
             )
-            
-            # Update x2 end point and create x4
+
             strand2["end"] = positions["x4"]["start"]
             strand2["control_points"] = calculate_control_points(strand2["start"], strand2["end"])
             
             strand4 = create_strand(
-                positions["x4"]["start"],
+                strand2["end"],
                 positions["x4"]["end"],
                 color=colors[i+1],
                 layer_name=f"{i+1}_4",
                 set_number=i+1,
                 strand_type="AttachedStrand"
             )
+            strand4["control_points"] = calculate_control_points(strand4["start"], strand4["end"])
             attached_strands_45_vertical.append(strand4)
             vertical_strands[i+1]['4'] = strand4
-            
-            # Update x3 end point and create x5
+
             strand3["end"] = positions["x5"]["start"]
             strand3["control_points"] = calculate_control_points(strand3["start"], strand3["end"])
-            
+
             strand5 = create_strand(
-                positions["x5"]["start"],
+                strand3["end"],
                 positions["x5"]["end"],
                 color=colors[i+1],
                 layer_name=f"{i+1}_5",
                 set_number=i+1,
                 strand_type="AttachedStrand"
             )
+            strand5["control_points"] = calculate_control_points(strand5["start"], strand5["end"])
             attached_strands_45_vertical.append(strand5)
             vertical_strands[i+1]['5'] = strand5
 
-        # Similar process for horizontal strands
+        # x2, x3 for horizontal
         for i in range(n):
             main_strand = horizontal_strands[m+i+1]['main']
-            
             strand2 = create_strand(
                 main_strand["start"],
                 {"x": main_strand["end"]["x"] - 0.5*horizontal_gap,
@@ -433,38 +407,38 @@ def generate_json(params):
                 x4_horizontal_angle, x5_horizontal_angle,
                 True, n, m
             )
-            
-            # Update x2 end point and create x4
+
             strand2["end"] = positions["x4"]["start"]
             strand2["control_points"] = calculate_control_points(strand2["start"], strand2["end"])
             
             strand4 = create_strand(
-                positions["x4"]["start"],
+                strand2["end"],
                 positions["x4"]["end"],
                 color=colors[m+i+1],
                 layer_name=f"{m+i+1}_4",
                 set_number=m+i+1,
                 strand_type="AttachedStrand"
             )
+            strand4["control_points"] = calculate_control_points(strand4["start"], strand4["end"])
             attached_strands_45_horizontal.append(strand4)
             horizontal_strands[m+i+1]['4'] = strand4
             
-            # Update x3 end point and create x5
             strand3["end"] = positions["x5"]["start"]
             strand3["control_points"] = calculate_control_points(strand3["start"], strand3["end"])
-            
+
             strand5 = create_strand(
-                positions["x5"]["start"],
+                strand3["end"],
                 positions["x5"]["end"],
                 color=colors[m+i+1],
                 layer_name=f"{m+i+1}_5",
                 set_number=m+i+1,
                 strand_type="AttachedStrand"
             )
+            strand5["control_points"] = calculate_control_points(strand5["start"], strand5["end"])
             attached_strands_45_horizontal.append(strand5)
             horizontal_strands[m+i+1]['5'] = strand5
 
-        # Generate masks for x_2 and x_3
+        # Masks for x_2 and x_3
         for v_set in vertical_strands.values():
             for h_set in horizontal_strands.values():
                 if '2' in v_set and '3' in h_set:
@@ -475,6 +449,8 @@ def generate_json(params):
                     mask = create_masked_strand(v_set['3'], h_set['2'])
                     if mask:
                         masks_strands_23.append(mask)
+
+        # Masks for x_4 and x_5
         for v_set in vertical_strands.values():
             for h_set in horizontal_strands.values():
                 if '4' in v_set and '5' in h_set:
@@ -486,11 +462,9 @@ def generate_json(params):
                     if mask:
                         masks_strands_45.append(mask)
 
-        # Combine all strands in the desired order
         all_strands_final = (
             main_strands_vertical +
             main_strands_horizontal +
-            
             attached_strands_23_vertical +
             attached_strands_23_horizontal +
             masks_strands_23 +
@@ -499,11 +473,9 @@ def generate_json(params):
             masks_strands_45
         )
 
-        # Check if the generated configuration is valid
         if not check_valid_distances(vertical_strands, horizontal_strands, m, n):
             return None
 
-        # Update indices
         for i, strand in enumerate(all_strands_final):
             strand["index"] = i
 
@@ -519,14 +491,8 @@ def generate_json(params):
         return None
 
 def calculate_x4_x5_pair_distances(strands_dict):
-    """
-    Calculate distances between x4-x5 pairs, starting from last x4 to first x5.
-    Returns a list of minimum distances between paired strands.
-    """
     set_numbers = sorted(strands_dict.keys())
     distances = []
-    
-    # Get all x4 and x5 strands
     x4_strands = []
     x5_strands = []
     for set_num in set_numbers:
@@ -534,26 +500,21 @@ def calculate_x4_x5_pair_distances(strands_dict):
             x4_strands.append(strands_dict[set_num]['4'])
             x5_strands.append(strands_dict[set_num]['5'])
     
-    # Reverse x4_strands to pair last x4 with first x5
     x4_strands.reverse()
     
-    # Calculate distances for each pair
     for x4, x5 in zip(x4_strands, x5_strands):
-        # Calculate distance from x4 start point to x5 line
         dist1 = calculate_point_to_line_distance_vectorized(
             x4['start'],
             x5['start'],
             x5['end']
         )
         
-        # Calculate distance from x4 end point to x5 line
         dist2 = calculate_point_to_line_distance_vectorized(
             x4['end'],
             x5['start'],
             x5['end']
         )
         
-        # Take the minimum distance
         min_distance = min(dist1, dist2)
         distances.append(min_distance)
     
@@ -561,11 +522,9 @@ def calculate_x4_x5_pair_distances(strands_dict):
 
 def main():
     start_time = time.time()
-    
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     os.makedirs(base_dir, exist_ok=True)
 
-    # Configuration parameters
     strand_width = 28
     horizontal_gap = -28
     vertical_gap = -28
@@ -573,20 +532,18 @@ def main():
     x4_length_extension = 55
     x5_length_extension = 55
 
-    # Angle ranges
-    minimum_angle_h = 45  # For n
-    maximum_angle_h = 89  # For n
-    minimum_angle_v = 45  # For m
-    maximum_angle_v = 89  # For m
-    angle_step = 0.5
+    minimum_angle_h = 45
+    maximum_angle_h = 46
+    minimum_angle_v = 45
+    maximum_angle_v = 46
+    angle_step = 1
 
-    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 0.1, angle_step)
-    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 0.1, angle_step)
+    vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
+    horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [3]
+    n_values = [1]
     m_values = [1]
 
-    # Process configurations
     for m in m_values:
         for n in n_values:
             output_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
@@ -599,8 +556,8 @@ def main():
             with Pool(processes=max(cpu_count() - 1, 1)) as pool:
                 params_list = [
                     (m, n, horizontal_gap, vertical_gap, base_spacing,
-                     i_angle+90, (i_angle+90) % 360,
-                     j_angle+90, (j_angle+90) % 360,
+                     i_angle+90, (i_angle+90 ) % 360,
+                     j_angle+90, (j_angle+90 ) % 360,
                      x4_length_extension, x5_length_extension,
                      i_angle, j_angle)
                     for i_angle in vertical_angles
@@ -612,7 +569,6 @@ def main():
                                    desc=f"m{m}xn{n}"):
                     if result is not None:
                         data, (m, n, i_angle, j_angle) = result
-                        
                         filename = f"m{m}_n{n}_va{i_angle}_ha{j_angle}.json"
                         filepath = os.path.join(output_dir, filename)
                         

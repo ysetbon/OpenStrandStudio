@@ -998,14 +998,37 @@ class MainWindow(QMainWindow):
     def load_project(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if filename:
-            strands, groups = load_strands(filename, self.canvas)
-            apply_loaded_strands(self.canvas, strands, groups)
-            logging.info(f"Project loaded from {filename}")
+            try:
+                # Load strands and groups from file
+                strands, groups = load_strands(filename, self.canvas)
+                
+                # Clear existing canvas state
+                self.canvas.strands = []
+                self.canvas.groups = {}
+                
+                # Apply the loaded strands and groups
+                apply_loaded_strands(self.canvas, strands, groups)
+                
+                # Ensure control points are visible after loading
+                self.toggle_control_points_button.setChecked(True)
+                self.canvas.show_control_points = True
+                
+                # Update the layer panel
+                if hasattr(self.canvas, 'layer_panel'):
+                    self.canvas.layer_panel.refresh()
+                
+                # Force a canvas redraw
+                self.canvas.update()
+                
+                logging.info(f"Project successfully loaded from {filename}")
+                
+                # Save initial state after loading
+                self.layer_state_manager.save_initial_state()
+                
+            except Exception as e:
+                logging.error(f"Error loading project from {filename}: {str(e)}")
+                # You might want to show an error dialog to the user here
 
-            # Ensure control points are visible after loading
-            self.toggle_control_points_button.setChecked(True)
-            self.canvas.show_control_points = True  # Set the attribute directly
-            self.canvas.update()  # Redraw the canvas to reflect changes
     def open_settings_dialog(self):
         settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
         settings_dialog.theme_changed.connect(self.apply_theme)
@@ -1556,7 +1579,7 @@ class MainWindow(QMainWindow):
             groups = self.group_layer_manager.get_group_data()
             logging.debug(f"Group data before saving: {groups}")
             # Save the strands and groups
-            save_strands(self.canvas.strands, groups, filename)
+            save_strands(self.canvas.strands, groups, filename, self.canvas)
             logging.info(f"Project saved to {filename}")
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:

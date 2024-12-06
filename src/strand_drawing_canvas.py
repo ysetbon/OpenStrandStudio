@@ -22,6 +22,9 @@ from translations import translations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main_window import MainWindow  # This prevents circular imports
+
+from save_load_manager import save_strands
+
 class StrandDrawingCanvas(QWidget):
     # Define signals
     strand_created = pyqtSignal(object)   # Emitting the strand object
@@ -2683,4 +2686,7 @@ class StrandDrawingCanvas(QWidget):
                 strand.reset_mask()
                 logging.info(f"Reset mask for strand {strand_index}")
                 self.update()
+
+    def save_strands(self, filename):
+        save_strands(self.strands, self.groups, filename, self)
 # End of StrandDrawingCanvas class

@@ -455,6 +455,68 @@ def validate_strand_distances(strands_dict, m, n, strand_width, tolerance=1):
     
     return is_valid, invalid_pairs
 
+def validate_extension_limits(strands_dict, m, n, strand_width):
+    """Validates that strand extensions don't exceed maximum allowed limits
+    
+    Args:
+        strands_dict: Dictionary of all strands
+        m: Number of vertical sets
+        n: Number of horizontal sets
+        strand_width: Width of strands
+        
+    Returns:
+        bool: True if extensions are within limits, False otherwise
+    """
+    # Check horizontal strands (sets > m)
+    max_horizontal_extension = 0
+    for current_set in range(m + 1, m + n + 1):
+        x2_id = f"{current_set}_2"
+        x3_id = f"{current_set}_3"
+        
+        x2_strand = strands_dict.get(x2_id)
+        x3_strand = strands_dict.get(x3_id)
+        
+        if x2_strand:
+            # Calculate total horizontal extension
+            total_extension = abs(x2_strand['start']['x'] - x2_strand['end']['x'])
+            max_horizontal_extension = max(max_horizontal_extension, total_extension)
+            
+        if x3_strand:
+            # Calculate total horizontal extension
+            total_extension = abs(x3_strand['start']['x'] - x3_strand['end']['x'])
+            max_horizontal_extension = max(max_horizontal_extension, total_extension)
+    
+    # Check vertical strands (sets <= m)
+    max_vertical_extension = 0
+    for current_set in range(1, m + 1):
+        x2_id = f"{current_set}_2"
+        x3_id = f"{current_set}_3"
+        
+        x2_strand = strands_dict.get(x2_id)
+        x3_strand = strands_dict.get(x3_id)
+        
+        if x2_strand:
+            # Calculate total vertical extension
+            total_extension = abs(x2_strand['start']['y'] - x2_strand['end']['y'])
+            max_vertical_extension = max(max_vertical_extension, total_extension)
+            
+        if x3_strand:
+            # Calculate total vertical extension
+            total_extension = abs(x3_strand['start']['y'] - x3_strand['end']['y'])
+            max_vertical_extension = max(max_vertical_extension, total_extension)
+    
+    # Check against limits
+    horizontal_limit = n * strand_width * 4 
+    vertical_limit = m * strand_width * 4
+    
+    if max_horizontal_extension > horizontal_limit:
+        return False
+    
+    if max_vertical_extension > vertical_limit:
+        return False
+    
+    return True
+
 def process_json_file(input_path, output_path, m, n):
     """Process a single JSON file to extend strands according to multiplier map"""
     with open(input_path, 'r') as f:
@@ -843,21 +905,19 @@ def process_json_file(input_path, output_path, m, n):
                     deepcopy(strand['start']),
                     deepcopy(strand['end'])
                 ]
+    extensions_valid = validate_extension_limits(strands_dict, m, n, strand_width)
 
-    #enabling all options
-    ###directions_valid=distances_valid = True
-    if directions_valid and distances_valid:
-        # Save the modified data only if both validations pass
+    if directions_valid and distances_valid and extensions_valid:
+        # Save the modified data only if all validations pass
         with open(output_path, 'w') as f:
             json.dump(modified_data, f, indent=2)
-        #print(f"Successfully processed and saved {os.path.basename(input_path)}")
         return True
     else:
         if not directions_valid:
-            #print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand directions")
             pass
         if not distances_valid:
-            #print(f"Warning: Skipped saving {os.path.basename(input_path)} due to invalid strand distances")
+            pass
+        if not extensions_valid:
             pass
         return False
 
@@ -896,8 +956,8 @@ def main():
                 except Exception as e:
                     print(f"Error removing file {file}: {e}")
     
-    n_values = [1,2,3,4,5,6,7,8,9]
-    m_values = [4,5,6,7,8,9]
+    n_values = [1]
+    m_values = [1]
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

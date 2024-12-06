@@ -173,13 +173,48 @@ class ImageProcessor:
             bg = Image.new('RGB', (max_width, max_height), 'white')
             # Center the image
             offset = ((max_width - img.width) // 2, (max_height - img.height) // 2)
-            bg.paste(img, offset, mask=img.split()[3] if img.mode == 'RGBA' else None)
+            if img.mode == 'RGBA':
+                bg.paste(img, offset, mask=img.split()[3])
+            else:
+                bg.paste(img, offset)
             normalized_images.append(bg)
+
+        # Calculate durations:
+        # Default: first frame = 1s, last frame = 2s, each middle = 0.5s (500ms)
+        if len(normalized_images) == 1:
+            # Only one image, just show it for 2 seconds
+            durations = [2000]
+        elif len(normalized_images) == 2:
+            # Two images: first for 1s, last for 2s
+            durations = [1000, 2000]
+        else:
+            # More than two images
+            # First frame: 1s
+            # Last frame: 2s
+            # Middle frames: initially 0.5s (500ms) each
+            number_of_middle_frames = len(normalized_images) - 2
+            per_frame_ms = 30  # default 0.5s per middle frame
+            total_middle_ms = number_of_middle_frames * per_frame_ms
+
+            # Ensure total middle frames duration does not exceed 2 minutes (120,000 ms)
+            max_total_middle_ms = 120000  # 2 minutes in ms
+
+            if total_middle_ms > max_total_middle_ms:
+                # Adjust per-frame time to fit within 2 minutes total
+                # We'll reduce each frame so that total = 120,000 ms
+                per_frame_ms = max_total_middle_ms // number_of_middle_frames
+
+                # If per_frame_ms is more than 500ms, we don't need to reduce since we can keep them at 500ms
+                # But since we are here because total_middle_ms > max_total_middle_ms at 500ms,
+                # it means per_frame_ms will necessarily be <= 500.
+                # Still, let's ensure we never exceed 500ms per the instructions.
+                per_frame_ms = min(per_frame_ms, 500)
+
+            # Construct the duration list
+            durations = [1000] + [per_frame_ms] * number_of_middle_frames + [2000]
 
         # Save GIF
         gif_path = os.path.join(self.output_directory, "animation.gif")
-        durations = [1000] + [500] * (len(normalized_images) - 2) + [2000] if len(normalized_images) > 2 else [1000, 2000]
-
         normalized_images[0].save(
             gif_path,
             save_all=True,
@@ -189,6 +224,7 @@ class ImageProcessor:
             disposal=2
         )
         print(f"GIF created at: {gif_path}")
+
 
 def suppress_qt_warnings():
     # Suppress Qt logging
@@ -209,7 +245,7 @@ def main():
     
     # Process for m=1 to m=3 and n=1 to n=6
     for m in range(1, 2):
-        for n in range(2, 5):
+        for n in range(1, 2):
             json_directory = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_directory = os.path.join(json_directory, "output")
             

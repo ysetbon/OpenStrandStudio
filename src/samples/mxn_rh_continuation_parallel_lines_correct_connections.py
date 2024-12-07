@@ -153,14 +153,11 @@ def create_strand(start, end=None, length=None, angle_deg=None, color=None,
         "is_start_side": is_start_side
     }
 
-    # Add control_points only if not a MaskedStrand
-    # For MaskedStrand we add [None, None] as per user's request
     if strand_type == "MaskedStrand":
         strand["control_points"] = [None, None]
     else:
         strand["control_points"] = calculate_control_points(start, end)
 
-    # Add attached_to field if it's an AttachedStrand and attached_to is provided
     if strand_type == "AttachedStrand" and attached_to is not None:
         strand["attached_to"] = attached_to
 
@@ -211,6 +208,64 @@ def check_valid_distances(vertical_strands, horizontal_strands, m, n):
 
     return True
 
+# Deterministic color generation function
+def deterministic_color(m, n, strand_number):
+    # Normalize strand_number to be between 0 and 1
+    strand_norm = (strand_number - 1) / (m + n)
+    
+    # Normalize m so 0 < m_norm < 1
+    m_norm = m / (m + 1.0)
+    asin_m = math.asin(m_norm)
+    n_norm = n / (n + 1.0)
+    asin_n = math.asin(n_norm)
+    # Avoid division by zero in denominator
+    denom = asin_m + asin_n + strand_norm
+    base_val = ((m/denom) + (n / denom))
+
+    # Generate different channels using trig transformations
+    def channel_val(scale):
+        arg = (math.sin(base_val * scale) + math.cos(base_val * scale * 0.5)) / 2.0
+        arg = max(min(arg, 1.0), -1.0)
+        return math.sqrt(1 - arg*arg)  # sin(arccos(arg)) pattern
+
+    if (n<m):
+        if strand_number %3:
+            h = channel_val(m/3 + strand_norm)
+            s = 0.65
+            v = 0.85
+        elif strand_number % 3 == 1:
+            h = channel_val(m/4 + strand_norm)
+            s = 0.75
+            v = 0.95
+        else:
+            h = channel_val(m/5 + strand_norm)
+            s = 0.85
+            v = 0.75
+    else:
+        if strand_number %3:
+            h = channel_val(n/4 + strand_norm)
+            s = 0.95
+            v = 0.85
+        elif strand_number % 3 == 1:
+            h = channel_val(n/5 + strand_norm)
+            s = 0.55
+            v = 0.95
+        else:
+            h = channel_val(n/6 + strand_norm)
+            s = 0.75
+            v = 0.65
+    
+    # Convert HSV to RGB
+    rgb = colorsys.hsv_to_rgb(h, s, v)
+    R = int(rgb[0] * 255)
+    G = int(rgb[1] * 255)
+    B = int(rgb[2] * 255)
+    return {"r": R, "g": G, "b": B, "a": 255}
+
+def get_color_palette(m, n):
+    # Generate a palette of (m+n) colors deterministically for this (m,n)
+    return [deterministic_color(m, n, i) for i in range(1, m+n+1)]
+
 def generate_json(params):
     try:
         strands_data = {
@@ -225,7 +280,6 @@ def generate_json(params):
             if intersection is None:
                 return None
 
-            # Masked strand with control_points = [None, None]
             masked_strand = create_strand(
                 h_strand["start"],
                 end=h_strand["end"],
@@ -268,12 +322,9 @@ def generate_json(params):
         vertical_strands = {i: {} for i in range(1, m+1)}
         horizontal_strands = {i: {} for i in range(m+1, m+n+1)}
 
-        def get_color():
-            h, s, l = random.random(), random.uniform(0.2, 0.9), random.uniform(0.1, 0.9)
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, l, s)]
-            return {"r": r, "g": g, "b": b, "a": 255}
+        # Use the deterministic color palette instead of random
+        colors = {i+1: c for i, c in enumerate(get_color_palette(m, n))}
 
-        colors = {i+1: get_color() for i in range(m+n)}
         base_x, base_y = 168.0*2, 168.0*2
 
         main_strands_horizontal = []
@@ -319,19 +370,19 @@ def generate_json(params):
                  "y": main_strand["end"]["y"] + 0.5*vertical_gap},
                 color=colors[i+1], layer_name=f"{i+1}_2", set_number=i+1,
                 strand_type="AttachedStrand",
-                attached_to=f"{i+1}_1"  # attach x_2 to main x_1
+                attached_to=f"{i+1}_1"
             )
             vertical_strands[i+1]['2'] = strand2
             attached_strands_23_vertical.append(strand2)
 
-            # x_3 attached to x_1 (end side) 
+            # x_3 attached to x_1 (end side)
             strand3 = create_strand(
                 main_strand["end"],
                 {"x": main_strand["start"]["x"] - 2*vertical_gap,
                  "y": main_strand["start"]["y"] - 0.5*vertical_gap},
                 color=colors[i+1], layer_name=f"{i+1}_3", set_number=i+1,
                 strand_type="AttachedStrand",
-                attached_to=f"{i+1}_1"  # attach x_3 to main x_1
+                attached_to=f"{i+1}_1"
             )
             vertical_strands[i+1]['3'] = strand3
             attached_strands_23_vertical.append(strand3)
@@ -393,7 +444,7 @@ def generate_json(params):
                 layer_name=f"{m+i+1}_2",
                 set_number=m+i+1,
                 strand_type="AttachedStrand",
-                attached_to=f"{m+i+1}_1"  # attach x_2 to main x_1
+                attached_to=f"{m+i+1}_1"
             )
             horizontal_strands[m+i+1]['2'] = strand2
             attached_strands_23_horizontal.append(strand2)
@@ -407,7 +458,7 @@ def generate_json(params):
                 layer_name=f"{m+i+1}_3",
                 set_number=m+i+1,
                 strand_type="AttachedStrand",
-                attached_to=f"{m+i+1}_1"  # attach x_3 to main x_1
+                attached_to=f"{m+i+1}_1"
             )
             horizontal_strands[m+i+1]['3'] = strand3
             attached_strands_23_horizontal.append(strand3)
@@ -572,7 +623,7 @@ def main():
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [1]
+    n_values = [1,2,3]
     m_values = [1]
 
     for m in m_values:
@@ -599,8 +650,8 @@ def main():
                                    total=total_combinations,
                                    desc=f"m{m}xn{n}"):
                     if result is not None:
-                        data, (m, n, i_angle, j_angle) = result
-                        filename = f"m{m}_n{n}_va{i_angle}_ha{j_angle}.json"
+                        data, (m_, n_, i_angle, j_angle) = result
+                        filename = f"m{m_}_n{n_}_va{i_angle}_ha{j_angle}.json"
                         filepath = os.path.join(output_dir, filename)
                         
                         with open(filepath, 'w') as f:

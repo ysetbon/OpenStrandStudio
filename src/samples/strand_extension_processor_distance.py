@@ -506,8 +506,8 @@ def validate_extension_limits(strands_dict, m, n, strand_width):
             max_vertical_extension = max(max_vertical_extension, total_extension)
     
     # Check against limits
-    horizontal_limit = n * strand_width * 4 
-    vertical_limit = m * strand_width * 4
+    horizontal_limit = m * strand_width * 4
+    vertical_limit = n * strand_width * 4
     
     if max_horizontal_extension > horizontal_limit:
         return False
@@ -918,7 +918,7 @@ def process_json_file(input_path, output_path, m, n):
         if not distances_valid:
             pass
         if not extensions_valid:
-            pass
+            print ("extensions issue")
         return False
 
 def process_directory(input_dir, output_dir, m, n):

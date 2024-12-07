@@ -193,7 +193,7 @@ class ImageProcessor:
             # Last frame: 2s
             # Middle frames: initially 0.5s (500ms) each
             number_of_middle_frames = len(normalized_images) - 2
-            per_frame_ms = 30  # default 0.5s per middle frame
+            per_frame_ms = 60  # default 0.5s per middle frame
             total_middle_ms = number_of_middle_frames * per_frame_ms
 
             # Ensure total middle frames duration does not exceed 2 minutes (120,000 ms)
@@ -245,7 +245,7 @@ def main():
     
     # Process for m=1 to m=3 and n=1 to n=6
     for m in range(1, 2):
-        for n in range(1, 2):
+        for n in range(1, 4):
             json_directory = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_directory = os.path.join(json_directory, "output")
             

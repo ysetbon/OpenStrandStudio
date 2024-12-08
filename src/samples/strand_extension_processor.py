@@ -955,8 +955,8 @@ def main():
                 except Exception as e:
                     print(f"Error removing file {file}: {e}")
     
-    n_values = [1,2,3]
-    m_values = [1]
+    n_values = [1,2,3,4]
+    m_values = [1,2]
     for m in m_values:
         for n in n_values:
             input_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

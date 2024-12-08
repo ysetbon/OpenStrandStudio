@@ -210,61 +210,54 @@ def check_valid_distances(vertical_strands, horizontal_strands, m, n):
 
 # Deterministic color generation function
 def deterministic_color(m, n, strand_number):
-    # Normalize strand_number to be between 0 and 1
-    strand_norm = (strand_number - 1) / (m + n)
+    """
+    Generate a deterministic color based on m, n, and strand number.
+    Returns RGB colors in dictionary format {r, g, b, a}.
+    """
+    # Normalize inputs for consistent color generation
+    total_strands = m + n
+    strand_norm = (strand_number) / (total_strands+1)
+    m_norm = m / (m + n)
     
-    # Normalize m so 0 < m_norm < 1
-    m_norm = m / (m + 1.0)
-    asin_m = math.asin(m_norm)
-    n_norm = n / (n + 1.0)
-    asin_n = math.asin(n_norm)
-    # Avoid division by zero in denominator
-    denom = asin_m + asin_n + strand_norm
-    base_val = ((m/denom) + (n / denom))
-
-    # Generate different channels using trig transformations
-    def channel_val(scale):
-        arg = (math.sin(base_val * scale) + math.cos(base_val * scale * 0.5)) / 2.0
-        arg = max(min(arg, 1.0), -1.0)
-        return math.sqrt(1 - arg*arg)  # sin(arccos(arg)) pattern
-
-    if (n<m):
-        if strand_number %3:
-            h = channel_val(m/3 + strand_norm)
-            s = 0.65
-            v = 0.85
-        elif strand_number % 3 == 1:
-            h = channel_val(m/4 + strand_norm)
-            s = 0.75
-            v = 0.95
-        else:
-            h = channel_val(m/5 + strand_norm)
-            s = 0.85
-            v = 0.75
+    # Use phi (golden ratio) for optimal color spacing
+    PHI = 1.618033988749895
+    
+    # Determine if this should be a special color (white or dark)
+    whitish_threshold = 0.05  # 5% chance for whitish colors
+    is_special = strand_norm < whitish_threshold
+    
+    if is_special:
+        # Generate white/light colors
+        h = (strand_number * PHI + m_norm) % 1  # Slight hue variation
+        s = 0.15 + (strand_number * 0.05)      # Very low saturation
+        v = 0.95 - (strand_number * 0.05)      # Very high brightness
     else:
-        if strand_number %3:
-            h = channel_val(n/4 + strand_norm)
-            s = 0.95
-            v = 0.85
-        elif strand_number % 3 == 1:
-            h = channel_val(n/5 + strand_norm)
-            s = 0.55
-            v = 0.95
-        else:
-            h = channel_val(n/6 + strand_norm)
-            s = 0.75
-            v = 0.65
+        # For normal colors (95% of cases), use mathematical functions to create well-distributed colors
+        # Base hue on position and total number of strands
+        base_h = (strand_number * PHI + m_norm) % 1
+        
+        # Use trigonometric functions to create variations
+        angle = 2 * math.pi * strand_norm
+        h = (base_h + math.sin(angle * (m+n*PHI)) * 0.1) % 1
+        
+        # Higher saturation range for more vibrant colors
+        s = 0.7 + math.sin(angle * n) * 0.3    # Saturation between 0.4 and 1.0
+        
+        # Moderate to high brightness for visibility
+        v = 0.6 + math.sin(angle * (m + n)) * 0.4  # Brightness between 0.2 and 1.0
     
     # Convert HSV to RGB
     rgb = colorsys.hsv_to_rgb(h, s, v)
-    R = int(rgb[0] * 255)
-    G = int(rgb[1] * 255)
-    B = int(rgb[2] * 255)
-    return {"r": R, "g": G, "b": B, "a": 255}
+    
+    # Convert to 0-255 range and return as dict
+    return {
+        "r": int(rgb[0] * 255),
+        "g": int(rgb[1] * 255),
+        "b": int(rgb[2] * 255),
+        "a": 255
+    }
 
-def get_color_palette(m, n):
-    # Generate a palette of (m+n) colors deterministically for this (m,n)
-    return [deterministic_color(m, n, i) for i in range(1, m+n+1)]
+
 
 def generate_json(params):
     try:
@@ -323,7 +316,7 @@ def generate_json(params):
         horizontal_strands = {i: {} for i in range(m+1, m+n+1)}
 
         # Use the deterministic color palette instead of random
-        colors = {i+1: c for i, c in enumerate(get_color_palette(m, n))}
+        colors = {i: c for i in range(1, m+n+1) for c in [deterministic_color(m, n, i)]}
 
         base_x, base_y = 168.0*2, 168.0*2
 
@@ -624,8 +617,39 @@ def main():
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
     n_values = [1,2,3]
-    m_values = [1]
+    m_values = [1,2]
+    # Generate consolidated color information file
+    color_filepath = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\color_information.txt"
+    with open(color_filepath, 'w') as f:
+        f.write("Consolidated Color Information for All Configurations\n")
+        f.write("=" * 50 + "\n\n")
 
+        for m in m_values:
+            for n in n_values:
+                # Create the color dictionary directly
+                colors = {i: c for i in range(1, m+n+1) for c in [deterministic_color(m, n, i)]}  
+                print(colors[1])            
+                print(f"\nColors for m={m}, n={n}:")
+                for i in range(1, m+n+1):
+                    color = colors[i]
+                    print(f"Color {i}: RGB({color['r']}, {color['g']}, {color['b']})")
+                
+                f.write(f"Configuration: m={m}, n={n}\n")
+                f.write("-" * 30 + "\n")
+                
+                # Vertical strands (1 to m)
+                f.write("Vertical Strands:\n")
+                for i in range(1, m+1):
+                    color = colors[i]
+                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
+                f.write("\n")
+                
+                # Horizontal strands (m+1 to m+n)
+                f.write("Horizontal Strands:\n")
+                for i in range(m+1, m+n+1):
+                    color = colors[i]
+                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
+                f.write("\n\n")
     for m in m_values:
         for n in n_values:
             output_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")

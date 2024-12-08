@@ -331,8 +331,32 @@ def apply_loaded_strands(canvas, strands, groups):
 
     # Update the LayerPanel with the loaded strands
     if hasattr(canvas, 'layer_panel'):
+        # Update set_counts and track highest set number
+        set_counts = {}
+        highest_set = 0
+        
+        # Filter out masked strands and get set numbers from layer names
+        for strand in strands:
+            if not isinstance(strand, MaskedStrand):
+                try:
+                    # Extract set number from layer_name (format: "set_count")
+                    set_num = int(strand.layer_name.split('_')[0])
+                    set_counts[set_num] = set_counts.get(set_num, 0) + 1
+                    highest_set = max(highest_set, set_num)
+                except (ValueError, IndexError, AttributeError):
+                    logging.warning(f"Could not parse set number from layer name: {strand.layer_name}")
+                    continue
+        
+        # Update layer panel's set_counts and current_set
+        canvas.layer_panel.set_counts = set_counts
+        canvas.layer_panel.current_set = highest_set + 1
+        
+        logging.info(f"Updated set numbering - Next set: {canvas.layer_panel.current_set}, "
+                    f"Current set counts: {set_counts} (Based on layer names)")
+        
+        # Refresh the panel
         canvas.layer_panel.refresh()
-        logging.info("LayerPanel refreshed with loaded strands.")
+        logging.info(f"LayerPanel refreshed with loaded strands. Set counts: {set_counts}")
 
     for group_name, group_info in groups.items():
         logging.info(f"Deserializing group '{group_name}'")

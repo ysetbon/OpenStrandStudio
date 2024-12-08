@@ -1,0 +1,228 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 308.0,
+        "y": 224.0
+      },
+      "end": {
+        "x": 504.0,
+        "y": 224.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 308.0,
+          "y": 224.0
+        },
+        {
+          "x": 308.0,
+          "y": 224.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 504.0,
+        "y": 224.0
+      },
+      "end": {
+        "x": 504.0,
+        "y": 420.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "attached_to": "1_1",
+      "control_points": [
+        {
+          "x": 504.0,
+          "y": 224.0
+        },
+        {
+          "x": 504.0,
+          "y": 224.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 504.0,
+        "y": 420.0
+      },
+      "end": {
+        "x": 616.0,
+        "y": 364.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "attached_to": "1_2",
+      "control_points": [
+        {
+          "x": 504.0,
+          "y": 420.0
+        },
+        {
+          "x": 504.0,
+          "y": 420.0
+        }
+      ]
+    },
+    {
+      "type": "Strand",
+      "index": 3,
+      "start": {
+        "x": 836,
+        "y": 529
+      },
+      "end": {
+        "x": 735,
+        "y": 233
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 836.0,
+          "y": 529.0
+        },
+        {
+          "x": 836.0,
+          "y": 529.0
+        }
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 735,
+        "y": 233
+      },
+      "end": {
+        "x": 672.0,
+        "y": 392.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "2_2",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "attached_to": "2_1",
+      "control_points": [
+        {
+          "x": 735.0,
+          "y": 233.0
+        },
+        {
+          "x": 735.0,
+          "y": 233.0
+        }
+      ]
+    }
+  ],
+  "groups": {}
+}

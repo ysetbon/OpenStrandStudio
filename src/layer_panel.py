@@ -1180,19 +1180,27 @@ class LayerPanel(QWidget):
 
     def start_new_set(self):
         """Start a new set of strands."""
-        # Get all existing set numbers from the canvas strands, excluding masked strands
-        existing_sets = set(
-            strand.set_number
-            for strand in self.canvas.strands
-            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
-        )
-        logging.info(f"Existing sets: {existing_sets}")
-        # Determine the next available set number
-        self.current_set = max(existing_sets, default=0) + 1
-        # Initialize count and color for the new set
+        # Get all existing set numbers from non-masked strands
+        existing_sets = set()
+        for strand in self.canvas.strands:
+            if not isinstance(strand, MaskedStrand):
+                try:
+                    # Extract set number from layer name
+                    set_num = int(strand.layer_name.split('_')[0])
+                    existing_sets.add(set_num)
+                except (ValueError, IndexError, AttributeError):
+                    continue
+        
+        # Find the next available set number
+        next_set = 1
+        while next_set in existing_sets:
+            next_set += 1
+        
+        self.current_set = next_set
         self.set_counts[self.current_set] = 0
         self.set_colors[self.current_set] = QColor('purple')
-        logging.info(f"Starting new set. Assigned set number: {self.current_set}")
+        
+        logging.info(f"Starting new set {self.current_set} (Existing sets: {sorted(existing_sets)})")
 
     def delete_strand(self, index):
         """

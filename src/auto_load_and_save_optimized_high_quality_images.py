@@ -44,6 +44,8 @@ class ImageProcessor:
 
         try:
             strands, groups = load_strands(json_path, canvas)
+            
+            
             apply_loaded_strands(canvas, strands, groups)
 
             canvas.show_grid = False
@@ -94,13 +96,16 @@ class ImageProcessor:
         # Make the image square by using the larger dimension
         size = max(width, height)
 
-        # Create image with transparent background
-        image = QImage(QSize(size, size), QImage.Format_ARGB32_Premultiplied)
+        # Create image with transparent background using RGBA format
+        image = QImage(QSize(size, size), QImage.Format_RGBA8888)  # Changed to RGBA8888
         image.fill(Qt.transparent)
 
-        # Create a painter to draw on the image
+        # Create a painter with color-preserving settings
         painter = QPainter(image)
         painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Set color-preserving composition mode
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
 
         # Calculate centering offsets
         x_offset = (size - width) / 2 + padding - min_x
@@ -245,7 +250,7 @@ def main():
     
     # Process for m=1 to m=3 and n=1 to n=6
     for m in range(1, 3):
-        for n in range(1, 5):
+        for n in range(1, 4):
             json_directory = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
             output_directory = os.path.join(json_directory, "output")
             
@@ -304,6 +309,6 @@ def main():
                 traceback.print_exc()
 
 if __name__ == "__main__":
-    # Ensure logging is disabled before starting
-    logging.getLogger().disabled = True
+    # Comment out or remove these logging suppressions
+    # logging.getLogger().disabled = True
     main()

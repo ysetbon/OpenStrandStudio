@@ -1,0 +1,66 @@
+Consolidated Color Information for All Configurations
+==================================================
+
+Configuration: m=1, n=1
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(6, 227, 61)
+
+Horizontal Strands:
+  Strand 2: RGB(85, 119, 168)
+
+
+Configuration: m=1, n=2
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(214, 85, 17)
+
+Horizontal Strands:
+  Strand 2: RGB(173, 148, 251)
+  Strand 3: RGB(171, 81, 171)
+
+
+Configuration: m=1, n=3
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(194, 206, 86)
+
+Horizontal Strands:
+  Strand 2: RGB(91, 215, 164)
+  Strand 3: RGB(190, 172, 80)
+  Strand 4: RGB(22, 173, 133)
+
+
+Configuration: m=2, n=1
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(38, 147, 157)
+  Strand 2: RGB(79, 107, 159)
+
+Horizontal Strands:
+  Strand 3: RGB(235, 4, 75)
+
+
+Configuration: m=2, n=2
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(138, 222, 120)
+  Strand 2: RGB(107, 203, 168)
+
+Horizontal Strands:
+  Strand 3: RGB(179, 44, 9)
+  Strand 4: RGB(85, 88, 206)
+
+
+Configuration: m=2, n=3
+------------------------------
+Vertical Strands:
+  Strand 1: RGB(143, 221, 251)
+  Strand 2: RGB(162, 10, 244)
+
+Horizontal Strands:
+  Strand 3: RGB(8, 72, 162)
+  Strand 4: RGB(175, 186, 124)
+  Strand 5: RGB(121, 237, 159)
+
+

@@ -257,10 +257,48 @@ def deterministic_color(m, n, strand_number):
         "a": 255
     }
 
-
+def generate_random_color_sets(m_values, n_values):
+    """
+    Generate random color sets for all m,n combinations once at the start
+    Returns a dictionary with (m,n) tuples as keys and color dictionaries as values
+    """
+    color_sets = {}
+    for m in m_values:
+        for n in n_values:
+            # Generate random colors for this m,n combination
+            colors = {}
+            
+            for i in range(1, m+n+1):
+                h = np.random.random()  # Random hue between 0 and 1
+                
+                # Adjust saturation range based on total number of strands
+                if m + n > 4:
+                    s = 0.3 + np.random.random() * 0.7  # Saturation between 0.3 and 0.7
+                else:
+                    s = 0.4 + np.random.random() * 0.6  # Saturation between 0.5 and 1.0
+                    
+                v = 0.6 + np.random.random() * 0.4  # Value between 0.6 and 1.0
+                
+                rgb = colorsys.hsv_to_rgb(h, s, v)
+                colors[i] = {
+                    "r": int(rgb[0] * 255),
+                    "g": int(rgb[1] * 255),
+                    "b": int(rgb[2] * 255),
+                    "a": 255
+                }
+            
+            color_sets[(m,n)] = colors
+    
+    return color_sets
 
 def generate_json(params):
     try:
+        (m, n, horizontal_gap, vertical_gap, base_spacing,
+         x4_vertical_angle, x5_vertical_angle,
+         x4_horizontal_angle, x5_horizontal_angle,
+         x4_length_extension, x5_length_extension,
+         i_angle, j_angle, colors) = params  # Unpack the colors from params
+        
         strands_data = {
             'valid_lengths_vertical': {},
             'valid_lengths_horizontal': {}
@@ -306,17 +344,8 @@ def generate_json(params):
             y = y1 + t * (y2 - y1)
             return {"x": x, "y": y}
 
-        (m, n, horizontal_gap, vertical_gap, base_spacing,
-         x4_vertical_angle, x5_vertical_angle,
-         x4_horizontal_angle, x5_horizontal_angle,
-         x4_length_extension, x5_length_extension,
-         i_angle, j_angle) = params
-
         vertical_strands = {i: {} for i in range(1, m+1)}
         horizontal_strands = {i: {} for i in range(m+1, m+n+1)}
-
-        # Use the deterministic color palette instead of random
-        colors = {i: c for i in range(1, m+n+1) for c in [deterministic_color(m, n, i)]}
 
         base_x, base_y = 168.0*2, 168.0*2
 
@@ -600,6 +629,38 @@ def main():
     base_dir = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073"
     os.makedirs(base_dir, exist_ok=True)
 
+    # Define parameters
+    n_values = [1,2,3]
+    m_values = [1,2]
+    
+    # Generate color sets once at the start
+    np.random.seed(42)  # For reproducibility
+    color_sets = generate_random_color_sets(m_values, n_values)
+    
+    # Save color information to file
+    color_filepath = os.path.join(base_dir, "color_information.txt")
+    with open(color_filepath, 'w') as f:
+        f.write("Consolidated Color Information for All Configurations\n")
+        f.write("=" * 50 + "\n\n")
+        
+        for m in m_values:
+            for n in n_values:
+                colors = color_sets[(m,n)]
+                f.write(f"Configuration: m={m}, n={n}\n")
+                f.write("-" * 30 + "\n")
+                
+                f.write("Vertical Strands:\n")
+                for i in range(1, m+1):
+                    color = colors[i]
+                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
+                f.write("\n")
+                
+                f.write("Horizontal Strands:\n")
+                for i in range(m+1, m+n+1):
+                    color = colors[i]
+                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
+                f.write("\n\n")
+
     strand_width = 28
     horizontal_gap = -28
     vertical_gap = -28
@@ -616,40 +677,6 @@ def main():
     vertical_angles = np.arange(minimum_angle_v, maximum_angle_v + 1, angle_step)
     horizontal_angles = np.arange(minimum_angle_h, maximum_angle_h + 1, angle_step)
 
-    n_values = [1,2,3]
-    m_values = [1,2]
-    # Generate consolidated color information file
-    color_filepath = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\color_information.txt"
-    with open(color_filepath, 'w') as f:
-        f.write("Consolidated Color Information for All Configurations\n")
-        f.write("=" * 50 + "\n\n")
-
-        for m in m_values:
-            for n in n_values:
-                # Create the color dictionary directly
-                colors = {i: c for i in range(1, m+n+1) for c in [deterministic_color(m, n, i)]}  
-                print(colors[1])            
-                print(f"\nColors for m={m}, n={n}:")
-                for i in range(1, m+n+1):
-                    color = colors[i]
-                    print(f"Color {i}: RGB({color['r']}, {color['g']}, {color['b']})")
-                
-                f.write(f"Configuration: m={m}, n={n}\n")
-                f.write("-" * 30 + "\n")
-                
-                # Vertical strands (1 to m)
-                f.write("Vertical Strands:\n")
-                for i in range(1, m+1):
-                    color = colors[i]
-                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
-                f.write("\n")
-                
-                # Horizontal strands (m+1 to m+n)
-                f.write("Horizontal Strands:\n")
-                for i in range(m+1, m+n+1):
-                    color = colors[i]
-                    f.write(f"  Strand {i}: RGB({color['r']}, {color['g']}, {color['b']})\n")
-                f.write("\n\n")
     for m in m_values:
         for n in n_values:
             output_dir = os.path.join(base_dir, f"m{m}xn{n}_rh_continuation")
@@ -665,7 +692,8 @@ def main():
                      i_angle+90, (i_angle+90 ) % 360,
                      j_angle+90, (j_angle+90 ) % 360,
                      x4_length_extension, x5_length_extension,
-                     i_angle, j_angle)
+                     i_angle, j_angle,
+                     color_sets[(m,n)])  # Pass the color set as an additional parameter
                     for i_angle in vertical_angles
                     for j_angle in horizontal_angles
                 ]

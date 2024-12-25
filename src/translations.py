@@ -6,14 +6,14 @@ translations = {
         'attach_mode': 'Attach',
         'move_mode': 'Move',
         'rotate_mode': 'Rotate',
-        'toggle_grid': 'Show/Hide the Grid',
-        'angle_adjust_mode': 'Adjust Angle/Length',
-        'select_mode': 'Select Strand',
+        'toggle_grid': 'Grid',
+        'angle_adjust_mode': 'Angle/Length',
+        'select_mode': 'Select',
         'mask_mode': 'Mask',
-        'new_strand_mode': 'New Strand',
+        'new_strand_mode': 'New',
         'save': 'Save',
         'load': 'Load',
-        'save_image': 'Save as Image',  # Added this line
+        'save_image': 'Image',
         'settings': 'Settings',
         'light': 'Light',
         'dark': 'Dark',
@@ -23,10 +23,10 @@ translations = {
         'default': 'Default',
         'light': 'Light',
         'dark': 'Dark',
-        'layer_state': 'Layer State',
-        'layer_state_log_title': 'Layer State Log',
-        'layer_state_info_title': 'Layer State Information',
-        'layer_state_info_tooltip': 'Layer State Info',
+        'layer_state': 'State',
+        'layer_state_log_title': 'Log',
+        'layer_state_info_title': 'Info',
+        'layer_state_info_tooltip': 'Info',
         'close': 'Close',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -142,8 +142,8 @@ translations = {
         'x_movement': 'X Movement',
         'y_movement': 'Y Movement',
         'move_group': 'Move Group',
-        'toggle_control_points': 'Toggle Control Points',
-        'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',  # Note: use \n not /n
+        'toggle_control_points': 'Points',
+        'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',
         'mask_edit_mode_exited': 'Mask edit mode exited',
         'edit_mask': 'Edit Mask',
         'reset_mask': 'Reset Mask'
@@ -152,17 +152,17 @@ translations = {
         # MainWindow translations
         'play_video': 'Lire la vidéo',
         'main_window_title': 'OpenStrand Studio',
-        'attach_mode': 'Lier',  # Shorter than 'Attacher'
-        'move_mode': 'Bouger',  # Shorter than 'Déplacer'
-        'rotate_mode': 'Pivoter',  # Shorter than 'Tourner'
-        'toggle_grid': 'Grille',  # Shorter than 'Afficher/Cacher la Grille'
-        'angle_adjust_mode': 'Angle/Long',  # Shorter than 'Ajuster l'Angle/Longueur'
-        'select_mode': 'Choisir',  # Shorter than 'Sélectionner le Brin'
-        'mask_mode': 'Masque',  # Shorter than 'Masquer'
-        'new_strand_mode': 'Nouveau',  # Shorter than 'Nouveau Brin'
-        'save': 'Sauver',  # Already short
-        'load': 'Ouvrir',  # Shorter than 'Charger'
-        'save_image': 'Image',  # Shorter than 'Enregistrer comme Image'
+        'attach_mode': 'Lier',
+        'move_mode': 'Bouger',
+        'rotate_mode': 'Pivoter',
+        'toggle_grid': 'Grille',
+        'angle_adjust_mode': 'Angle/Longueur',
+        'select_mode': 'Choisir',
+        'mask_mode': 'Masque',
+        'new_strand_mode': 'Nouveau',
+        'save': 'Sauver',
+        'load': 'Ouvrir',
+        'save_image': 'Image',
         'settings': 'Paramètres',
         'light': 'Clair',
         'dark': 'Sombre',
@@ -172,10 +172,10 @@ translations = {
         'default': 'Par défaut',
         'light': 'Clair',
         'dark': 'Sombre',
-        'layer_state': 'État',  # Shorter than 'État des Couches'
-        'layer_state_log_title': 'Journal',  # Shorter than 'Journal de l'État des Couches'
-        'layer_state_info_title': 'Infos',  # Shorter than 'Informations sur l'État des Couches'
-        'layer_state_info_tooltip': 'Infos',  # Shorter than 'Infos État des Couches'
+        'layer_state': 'État',
+        'layer_state_log_title': 'Journal',
+        'layer_state_info_title': 'Infos',
+        'layer_state_info_tooltip': 'Infos',
         'close': 'Fermer',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -275,24 +275,24 @@ translations = {
         'select_main_strands': 'Sélectionner les principaux axes',
         'select_main_strands_to_include_in_the_group': 'Sélectionner les principaux axes à inclure dans le groupe:',
         # New translation keys for Layer State Log
-        'current_layer_state': 'État Actuel',  # Shorter than 'État Actuel des Couches'
-        'order': 'Ordre',  # Already short
-        'connections': 'Liens',  # Shorter than 'Connexions'
-        'groups': 'Groupes',  # Already short
-        'masked_layers': 'Masques',  # Shorter than 'Couches Masquées'
-        'colors': 'Couleurs',  # Already short
-        'positions': 'Positions',  # Already short
-        'selected_strand': 'Sélection',  # Shorter than 'Brin Sélectionné'
-        'newest_strand': 'Nouveau Brin',  # Already concise
-        'newest_layer': 'Nouvelle',  # Shorter than 'Dernière Couche'
+        'current_layer_state': 'État Actuel',
+        'order': 'Ordre',
+        'connections': 'Liens',
+        'groups': 'Groupes',
+        'masked_layers': 'Masques',
+        'colors': 'Couleurs',
+        'positions': 'Positions',
+        'selected_strand': 'Sélection',
+        'newest_strand': 'Nouveau Brin',
+        'newest_layer': 'Nouvelle',
         'x_movement': 'Mouvement X',
         'y_movement': 'Mouvement Y',
         'move_group': 'Déplacer le Groupe',
-        'toggle_control_points': 'Points',  # Shorter than 'Basculer les Points de Contrôle'
+        'toggle_control_points': 'Points',
         'edit_mask': 'Éditer Masque',
         'reset_mask': 'Réinit Masque',
-        'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',  # French version with newline
-        'mask_edit_mode_exited': 'Mode édition masque terminé'  # Already concise
+        'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',
+        'mask_edit_mode_exited': 'Mode édition masque terminé'
     }
 }
 

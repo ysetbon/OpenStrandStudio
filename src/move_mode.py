@@ -133,23 +133,32 @@ class MoveMode:
     def mouseMoveEvent(self, event):
         """
         Handle mouse move events.
-
-        Args:
-            event (QMouseEvent): The mouse event.
         """
         if self.is_moving and self.moving_point:
             new_pos = event.pos()
-            self.target_pos = self.canvas.snap_to_grid(new_pos)
-            if not self.move_timer.isActive():
-                self.move_timer.start(16)  # ~60 FPS
+            # 1) Move freely (no grid snap) in real time
+            self.update_strand_position(new_pos)
+
+            # 2) (Remove or comment out the pointer centering call here)
+            # self.update_cursor_position(new_pos)
+
+            # Redraw for smooth result
+            self.canvas.update()
 
     def mouseReleaseEvent(self, event):
         """
         Handle mouse release events.
-
-        Args:
-            event (QMouseEvent): The mouse event.
         """
+        if self.is_moving and self.moving_point:
+            # 3) Snap the final position once on release
+            final_snapped_pos = self.canvas.snap_to_grid(event.pos())
+            self.update_strand_position(final_snapped_pos)
+
+            # (Optional) Finally recenter the cursor here, if you truly want it:
+            # self.update_cursor_position(final_snapped_pos)
+
+            self.canvas.update()
+
         # Deselect all strands
         for strand in self.canvas.strands:
             strand.is_selected = False
@@ -179,35 +188,10 @@ class MoveMode:
         self.canvas.update()
 
     def gradual_move(self):
-        """Perform gradual movement of the strand point."""
-        if not self.is_moving or not self.target_pos or not self.last_snapped_pos or getattr(self.affected_strand, 'deleted', False):
-            self.move_timer.stop()
-            return
-
-        # Calculate the distance to move
-        dx = self.target_pos.x() - self.last_snapped_pos.x()
-        dy = self.target_pos.y() - self.last_snapped_pos.y()
-
-        # Calculate the step size, limited by move_speed
-        step_x = min(abs(dx), self.move_speed * self.canvas.grid_size) * (1 if dx > 0 else -1)
-        step_y = min(abs(dy), self.move_speed * self.canvas.grid_size) * (1 if dy > 0 else -1)
-
-        # Calculate the new position
-        new_x = self.last_snapped_pos.x() + step_x
-        new_y = self.last_snapped_pos.y() + step_y
-
-        new_pos = self.canvas.snap_to_grid(QPointF(new_x, new_y))
-
-        if new_pos != self.last_snapped_pos:
-            # Update the strand position and cursor
-            self.update_strand_position(new_pos)
-            self.update_cursor_position(new_pos)
-            self.last_snapped_pos = new_pos
-
-        if new_pos == self.target_pos:
-            # If we've reached the target, stop the timer
-            self.move_timer.stop()
-
+        """
+        (Optional) No-op or minimal version if you no longer want incremental movement.
+        """
+        pass
 
     def handle_strand_movement(self, pos):
         """

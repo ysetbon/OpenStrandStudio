@@ -36,6 +36,13 @@ class AttachMode(QObject):
 
     def mouseReleaseEvent(self, event):
         """Handle mouse release events."""
+        if self.canvas.current_strand:
+            # Snap the final position to the grid once on release
+            final_snapped_pos = self.canvas.snap_to_grid(event.pos())
+            self.canvas.current_strand.end = final_snapped_pos
+            self.canvas.current_strand.update_shape()
+            self.canvas.update()
+
         if self.canvas.is_first_strand:
             # If it's the first strand and it has a non-zero length, create it
             if self.canvas.current_strand and self.canvas.current_strand.start != self.canvas.current_strand.end:
@@ -95,10 +102,15 @@ class AttachMode(QObject):
     def mouseMoveEvent(self, event):
         """Handle mouse move events."""
         if self.canvas.current_strand:
-            # Update target position for both first strand and attachments
-            self.target_pos = self.canvas.snap_to_grid(event.pos())
+            # 1) Move freely, no snap, for a smooth drag
+            free_pos = event.pos()
+            self.canvas.current_strand.end = free_pos
+            self.canvas.current_strand.update_shape()
+
             if not self.move_timer.isActive():
-                self.move_timer.start(16)  # ~60 FPS
+                self.move_timer.start(16)
+
+            self.canvas.update()
 
     def gradual_move(self):
         """Perform gradual movement of the strand end point."""

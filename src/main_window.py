@@ -280,8 +280,8 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.splitter)
 
         # Set minimum widths
-        left_widget.setMinimumWidth(200)
-        self.layer_panel.setMinimumWidth(100)
+        left_widget.setMinimumWidth(380)
+        self.layer_panel.setMinimumWidth(380)
 
         # Apply button styles
         self.setup_button_styles()

@@ -1203,32 +1203,74 @@ class MaskedStrand(Strand):
                         logging.info(f"Initialized rectangle {i} offsets: ({rect['offset_x']:.2f}, {rect['offset_y']:.2f})")
                     
                     if abs(angle_diff) > 0.01:
-                        # Rotate the offset vector around the group center
-                        cos_angle = math.cos(angle_diff)
-                        sin_angle = math.sin(angle_diff)
-                        
-                        # Calculate position relative to group center
-                        rel_x = old_x - group_center.x()
-                        rel_y = old_y - group_center.y()
-                        
-                        # Apply rotation
-                        new_rel_x = rel_x * cos_angle - rel_y * sin_angle
-                        new_rel_y = rel_x * sin_angle + rel_y * cos_angle
-                        
-                        # Convert back to absolute coordinates
-                        rect['x'] = group_center.x() + new_rel_x
-                        rect['y'] = group_center.y() + new_rel_y
-                        
-                        # Update offsets for future calculations
-                        rect['offset_x'] = rect['x'] - new_center.x()
-                        rect['offset_y'] = rect['y'] - new_center.y()
-                        
-                        logging.info(f"Rectangle {i} rotated from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
+                        # Create a QTransform around group_center
+                        transform = QTransform()
+                        transform.translate(group_center.x(), group_center.y())
+                        transform.rotate(math.degrees(angle_diff))
+                        transform.translate(-group_center.x(), -group_center.y())
+                        def apply_transform_to_strand(strand, transform):
+                            """
+                            Apply the given QTransform to a strand's start, end, and any control points,
+                            then update the strand's shape.
+                            """
+                            # Rotate the start point
+                            rotated_start = transform.map(strand.start)
+                            strand.start = rotated_start
+
+                            # Rotate the end point
+                            rotated_end = transform.map(strand.end)
+                            strand.end = rotated_end
+
+                            # If the strand has control points, rotate them too
+                            if strand.control_point1 is not None:
+                                strand.control_point1 = transform.map(strand.control_point1)
+                            if strand.control_point2 is not None:
+                                strand.control_point2 = transform.map(strand.control_point2)
+
+                            # Finally, recalculate internal geometry
+                            strand.update_shape()
+                        # Rotate each selected strand
+                        if self.first_selected_strand:
+                            apply_transform_to_strand(self.first_selected_strand, transform)
+                        if self.second_selected_strand:
+                            apply_transform_to_strand(self.second_selected_strand, transform)
+
+                        # Rotate each deletion rectangle by the same transform
+                        for i, rect in enumerate(self.deletion_rectangles):
+                            top_left = QPointF(rect['x'], rect['y'])
+                            top_right = QPointF(rect['x'] + rect['width'], rect['y'])
+                            bottom_left = QPointF(rect['x'], rect['y'] + rect['height'])
+                            bottom_right = QPointF(rect['x'] + rect['width'], rect['y'] + rect['height'])
+
+                            top_left = transform.map(top_left)
+                            top_right = transform.map(top_right)
+                            bottom_left = transform.map(bottom_left)
+                            bottom_right = transform.map(bottom_right)
+
+                            # Rebuild the rectangle
+                            new_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
+                            new_y = min(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
+                            max_x = max(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
+                            max_y = max(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
+
+                            rect['x'] = new_x
+                            rect['y'] = new_y
+                            rect['width'] = max_x - new_x
+                            rect['height'] = max_y - new_y
+
+                            # Recompute offsets for future moves
+                            rect['offset_x'] = rect['x'] - new_center.x()
+                            rect['offset_y'] = rect['y'] - new_center.y()
+
+                            logging.info(f"Rotated rectangle {i} around ({group_center.x():.2f}, {group_center.y():.2f})")
                     else:
-                        # Just update position based on offset from new center if no rotation
-                        rect['x'] = new_center.x() + rect['offset_x']
-                        rect['y'] = new_center.y() + rect['offset_y']
-                        logging.info(f"Rectangle {i} moved from ({old_x:.2f}, {old_y:.2f}) to ({rect['x']:.2f}, {rect['y']:.2f})")
+                        # If angle_diff ~ 0, just shift based on offsets
+                        for i, rect in enumerate(self.deletion_rectangles):
+                            rect['x'] = new_center.x() + rect['offset_x']
+                            rect['y'] = new_center.y() + rect['offset_y']
+
+                    # Rebuild the mask path after rotating everything
+                    self.update_mask_path()
 
                 # Log final rectangle positions
                 for i, rect in enumerate(self.deletion_rectangles):

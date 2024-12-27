@@ -205,6 +205,9 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             if control_points[1]:
                 strand.control_point2 = deserialize_point(control_points[1])
 
+            # Now call the new method on the Strand class that preserves control points
+            strand.update_control_points(reset_control_points=False)
+
         return strand
 
     except Exception as e:
@@ -269,6 +272,9 @@ def load_strands(filename, canvas):
                 if "control_points" in strand_data and all(cp is not None for cp in strand_data["control_points"]):
                     strand.control_point1 = deserialize_point(strand_data["control_points"][0])
                     strand.control_point2 = deserialize_point(strand_data["control_points"][1])
+
+                    # Now call the new method on the Strand class that preserves control points
+                    strand.update_control_points(reset_control_points=False)
                 
                 # Update the canvas's layer state manager
                 if hasattr(canvas, 'layer_state_manager'):

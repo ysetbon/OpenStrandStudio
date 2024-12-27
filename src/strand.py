@@ -572,6 +572,16 @@ class Strand:
             self.start.x() + 2 * dx / 3,
             self.start.y() + 2 * dy / 3
         )   
+
+    def update_control_points(self, reset_control_points=True):
+        """
+        If reset_control_points=False, do not recalculate them from geometry,
+        only re-run update_shape() so we keep the loaded control points.
+        """
+        if reset_control_points:
+            self.update_control_points_from_geometry()
+        self.update_shape()
+
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker
@@ -1061,6 +1071,15 @@ class AttachedStrand(Strand):
             self.start.x(),
             self.start.y()
         )
+
+    def update_control_points(self, reset_control_points=True):
+        """
+        Same idea, but for AttachedStrand.
+        """
+        if reset_control_points:
+            self.update_control_points_from_geometry()
+        self.update_shape()
+
 class MaskedStrand(Strand):
     """
     Represents a strand that is a result of masking two other strands, without control points.

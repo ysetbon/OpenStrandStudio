@@ -1035,26 +1035,14 @@ class StrandDrawingCanvas(QWidget):
             strand.draw(painter)
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
-        """Draw a highlighted version of a masked strand."""
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
-        temp_image.fill(Qt.transparent)
-        temp_painter = QPainter(temp_image)
-        temp_painter.setRenderHint(QPainter.Antialiasing)
+        # Draw the masked strand normally (filling it in, etc.)
+        masked_strand.draw(painter)
 
-        masked_strand.draw(temp_painter)
-
-        highlight_pen = QPen(self.highlight_color, self.stroke_width+4)
-        highlight_pen.setJoinStyle(Qt.MiterJoin)
-        highlight_pen.setCapStyle(Qt.SquareCap)
-        temp_painter.setPen(highlight_pen)
-        temp_painter.drawPath(masked_strand.get_mask_path())
-
-        temp_painter.end()
-
-        painter.drawImage(0, 0, temp_image)
+        # Now call the new "masked_strand.draw_highlight" method
+        masked_strand.draw_highlight(painter)
 
         painter.restore()
 
@@ -1462,15 +1450,27 @@ class StrandDrawingCanvas(QWidget):
             if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
                 self.editing_masked_strand.deletion_rectangles = []
                 
-            # Store the rectangle coordinates
+            # Store the rectangle coordinates by corners instead of x/y/width/height
             rect_data = {
-                'x': self.current_erase_rect.x(),
-                'y': self.current_erase_rect.y(),
-                'width': self.current_erase_rect.width(),
-                'height': self.current_erase_rect.height()
+                'top_left': (
+                    self.current_erase_rect.topLeft().x(),
+                    self.current_erase_rect.topLeft().y()
+                ),
+                'top_right': (
+                    self.current_erase_rect.topRight().x(),
+                    self.current_erase_rect.topRight().y()
+                ),
+                'bottom_left': (
+                    self.current_erase_rect.bottomLeft().x(),
+                    self.current_erase_rect.bottomLeft().y()
+                ),
+                'bottom_right': (
+                    self.current_erase_rect.bottomRight().x(),
+                    self.current_erase_rect.bottomRight().y()
+                )
             }
             self.editing_masked_strand.deletion_rectangles.append(rect_data)
-            logging.info(f"Saved deletion rectangle: {rect_data}")
+            logging.info(f"Saved deletion rectangle by corners: {rect_data}")
             
             # Create and apply the erase path
             erase_path = QPainterPath()

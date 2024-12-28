@@ -73,6 +73,9 @@ def serialize_strand(strand, canvas, index=None):
             serialize_point(strand.control_point2)
         ]
 
+    if isinstance(strand, MaskedStrand):
+        data["deletion_rectangles"] = getattr(strand, 'deletion_rectangles', [])
+
     return data
 
 def save_strands(strands, groups, filename, canvas):
@@ -208,6 +211,13 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             # Now call the new method on the Strand class that preserves control points
             strand.update_control_points(reset_control_points=False)
 
+        if strand_type == "MaskedStrand" and "deletion_rectangles" in data:
+            strand.deletion_rectangles = data["deletion_rectangles"]
+            strand.update_mask_path()
+            logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
+
+
+
         return strand
 
     except Exception as e:
@@ -305,6 +315,11 @@ def load_strands(filename, canvas):
                 strand.is_first_strand = masked_data["is_first_strand"]
                 strand.is_start_side = masked_data["is_start_side"]
                 
+                if "deletion_rectangles" in masked_data:
+                    strand.deletion_rectangles = masked_data["deletion_rectangles"]
+                    strand.update_mask_path()
+                    logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
+
                 index = masked_data["index"]
                 strands[index] = strand
                 strand_dict[strand.layer_name] = strand

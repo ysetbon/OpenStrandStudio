@@ -864,7 +864,7 @@ class GroupPanel(QWidget):
         """
         logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
         self.start_smooth_rotation(group_name, angle, steps=1, interval=1)
-        self.finish_group_rotation(group_name)
+
 
 
     def finish_group_rotation(self, group_name):
@@ -1070,7 +1070,30 @@ class GroupPanel(QWidget):
             return True
             
         logging.warning(f"Group {group_name} not found in self.groups")
-        return False      
+        return False 
+
+    def rotate_any_group(self, group_name: str, new_angle: float):
+        """
+        Rotate the specified group by the given new_angle.
+        This ensures rotating_group_name is set for both masked/unmasked groups.
+        """
+        if not group_name:
+            return
+
+        if not hasattr(self, 'canvas'):
+            logging.error("No canvas available to rotate the group.")
+            return
+
+        # 1) Mark the group as active
+        self.canvas.start_group_rotation(group_name)
+
+        # 2) Perform actual rotation
+        self.canvas.rotate_group(group_name, new_angle)
+
+        # 3) Finish the rotation
+        self.canvas.finish_group_rotation(group_name)
+
+        logging.info(f"rotate_any_group finished for '{group_name}' with angle {new_angle}")     
     def update_group_after_angle_edit(self, group_name):
         """Update group data after angle adjustments."""
         if group_name in self.groups and self.canvas:
@@ -2275,13 +2298,14 @@ class GroupRotateDialog(QDialog):
         self.group_name = group_name
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         # Connect our rotation_updated signal to a local slot so we can rotate immediately.
-        self.rotation_updated.connect(self.on_rotation_updated)
         self.group_panel = parent  # Now we can access pre_rotation_state
-
+        # Connect the signal to our unified slot
                 # Define the language code, defaulting to 'en' if not available
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
-        
+        self.original_angle = self.canvas.current_rotation_angle or 0.0
+        self.rotation_updated.connect(self.on_angle_changed)
+
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
@@ -2319,32 +2343,29 @@ class GroupRotateDialog(QDialog):
         layout.addWidget(ok_button)
 
     def update_angle_from_slider(self):
-        self.angle = self.angle_slider.value()
-        self.angle_input.setText(str(self.angle))
-        self.rotation_updated.emit(self.group_name, self.angle)
+        offset = self.angle_slider.value()
+        self.angle_input.setText(str(offset))
+        # Emit the absolute angle
+        self.rotation_updated.emit(self.group_name, offset)
+
 
     def update_angle_from_input(self):
-        """
-        Called whenever the user types a new angle in the QLineEdit.
-        We ensure the angle is treated as a float (e.g., 37.5) rather
-        than converting it to an integer. Then, we emit rotation_updated
-        with the float value, so the rotation logic (which also
-        rotates any deletion_rectangles) uses the precise angle.
-        """
         try:
-            typed_angle_str = self.angle_input.text()
-            typed_angle_val = float(typed_angle_str)
-
-            # Update our 'angle' attribute
-            self.angle = typed_angle_val
-
-            # If the slider is integer-based, sync it approximately:
-            self.angle_slider.setValue(int(round(typed_angle_val)))
-
-            # Emit the precise float angle so the rotation code can rotate corners properly:
-            self.rotation_updated.emit(self.group_name, self.angle)
+            offset = float(self.angle_input.text())
+            self.angle_slider.setValue(int(offset))
+            # Emit the absolute angle
+            self.rotation_updated.emit(self.group_name, offset)
         except ValueError:
-            pass  # The user is in the middle of typing an invalid float
+            pass
+    def on_angle_changed(self, group_name, new_angle):
+        logging.info(f"[GroupRotateDialog] on_angle_changed: new_angle={new_angle}")
+        # Call GroupPanel’s update_group_rotation (which should rotate absolutely)
+        if self.group_panel:
+            self.group_panel.update_group_rotation(group_name, new_angle)
+        else:
+            logging.warning("GroupRotateDialog has no group_panel to update rotation.")
+
+
     def on_rotation_updated(self, group_name, angle):
         """
         A slot that’s called whenever rotation_updated is emitted.

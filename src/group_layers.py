@@ -705,31 +705,99 @@ class GroupPanel(QWidget):
                             updated_strands.append(attached_strand)
         group_data['strands'] = updated_strands
 
-    def update_group_rotation(self, group_name, angle):
+    def start_smooth_rotation(self, group_name, final_angle, steps=1, interval=1):
         """
-        Update group rotation using the absolute angle from the dialog.
-        This version rotates both normal strands and any deletion_rectangles
-        in MaskedStrands around the computed 'center'.
+        Prepare a smooth rotation using small increments.
+        This will rotate from the current angle to final_angle
+        in 'steps' increments at 'interval' ms intervals.
         """
-        logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
+        if not hasattr(self, '_smooth_rotation_timer'):
+            self._smooth_rotation_timer = QTimer(self)
+            self._smooth_rotation_timer.timeout.connect(self._perform_smooth_rotation_step)
 
+        # Cancel any running rotation steps
+        if self._smooth_rotation_timer.isActive():
+            self._smooth_rotation_timer.stop()
+
+        # Store key info for incremental updates
+        self._smooth_rotation_group = group_name
+        if not hasattr(self, '_current_group_angles'):
+            self._current_group_angles = {}
+        # If we do not have a stored angle yet, assume 0
+        current_angle = self._current_group_angles.get(group_name, 0.0)
+
+        # Calculate how far we need to rotate
+        self._smooth_angle_delta = (final_angle - current_angle) / float(steps)
+        self._smooth_angle_iterations_left = steps
+        self._current_group_angles[group_name] = current_angle  # Preserve for the loop
+
+        logging.info(f"start_smooth_rotation: from {current_angle:.2f} to {final_angle:.2f}, delta={self._smooth_angle_delta:.2f} over {steps} steps")
+
+        # Start the timer
+        self._smooth_rotation_timer.start(interval)
+    def _perform_smooth_rotation_step(self):
+        """
+        Perform one rotation step as part of a short incremental smoothing.
+        """
+        group_name = getattr(self, '_smooth_rotation_group', None)
+        if not group_name or group_name not in self.groups:
+            if self._smooth_rotation_timer.isActive():
+                self._smooth_rotation_timer.stop()
+            return
+
+        if self._smooth_angle_iterations_left <= 0:
+            # No more steps left
+            if self._smooth_rotation_timer.isActive():
+                self._smooth_rotation_timer.stop()
+            return
+
+        # Grab current stored angle
+        current_angle = self._current_group_angles.get(group_name, 0.0)
+        new_angle = current_angle + self._smooth_angle_delta
+
+        # Call our own rotation method instead of super() to avoid recursion errors
+        self._perform_immediate_group_rotation(group_name, new_angle)
+        logging.debug(f"_perform_smooth_rotation_step: angle={new_angle:.2f} (remaining={self._smooth_angle_iterations_left})")
+
+        # Save the partially updated angle
+        self._current_group_angles[group_name] = new_angle
+        self._smooth_angle_iterations_left -= 1
+    def _perform_immediate_group_rotation(self, group_name, angle):
+        """
+        Rotate all strands in the active group around the computed 'center.'
+        This version also accounts for MaskedStrand deletion_rectangles
+        when calculating the center of the group.
+        'angle' is expected in degrees (float).
+        """
         if group_name == self.active_group_name and hasattr(self, 'pre_rotation_state'):
-            if self.canvas:
+            if self.canvas and group_name in self.canvas.groups:
                 group_data = self.canvas.groups[group_name]
 
-                # Compute the rotation center from the pre-rotation state
+                # -------------------------------------------------
+                # 1) Calculate the center of rotation (including deletion rectangle corners).
+                # -------------------------------------------------
                 center = QPointF(0, 0)
                 num_points = 0
+
                 for layer_name, positions in self.pre_rotation_state.items():
                     center += positions['start']
                     center += positions['end']
                     num_points += 2
-                center /= num_points
 
+                    # Add rectangle corners if present
+                    rect_corners = positions.get('deletion_rectangles', [])
+                    for rect_info in rect_corners:
+                        center += rect_info['top_left']
+                        center += rect_info['top_right']
+                        center += rect_info['bottom_left']
+                        center += rect_info['bottom_right']
+                        num_points += 4
+
+                if num_points != 0:
+                    center /= num_points
+
+                # Utility function to rotate a point around pivot by angle_degrees
                 def rotate_point(point: QPointF, pivot: QPointF, angle_degrees: float) -> QPointF:
-                    """
-                    Rotate 'point' around 'pivot' by 'angle_degrees' (in degrees).
-                    """
                     angle_radians = math.radians(angle_degrees)
                     dx = point.x() - pivot.x()
                     dy = point.y() - pivot.y()
@@ -739,56 +807,64 @@ class GroupPanel(QWidget):
                     new_y = pivot.y() + dx * sin_a + dy * cos_a
                     return QPointF(new_x, new_y)
 
-                # Rotate each strand in the group
+                # -------------------------------------------------
+                # 2) Rotate all strands (and masked rect corners) around 'center'.
+                # -------------------------------------------------
                 for strand in group_data['strands']:
-                    # Retrieve state from before rotation started
                     pre_rotation_pos = self.pre_rotation_state.get(strand.layer_name)
                     if not pre_rotation_pos:
                         continue
 
-                    # Rotate the main geometry: start, end, (control points if not MaskedStrand)
+                    # Rotate main geometry
                     strand.start = rotate_point(pre_rotation_pos['start'], center, angle)
-                    strand.end   = rotate_point(pre_rotation_pos['end'],   center, angle)
+                    strand.end   = rotate_point(pre_rotation_pos['end'], center, angle)
 
                     if not isinstance(strand, MaskedStrand):
                         strand.control_point1 = rotate_point(pre_rotation_pos['control_point1'], center, angle)
                         strand.control_point2 = rotate_point(pre_rotation_pos['control_point2'], center, angle)
 
-                        # Store updated control points in group data
+                        # Update the group’s control_points
                         if 'control_points' not in self.canvas.groups[group_name]:
                             self.canvas.groups[group_name]['control_points'] = {}
                         self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
                             'control_point1': strand.control_point1,
                             'control_point2': strand.control_point2
                         }
-                    if isinstance(strand, MaskedStrand) and hasattr(strand, 'deletion_rectangles'):
-                        # ----------------------------------------------------------------------
-                        # UPDATED: Rotate from original corners stored in pre_rotation_state.
+                    else:
+                        # Rotate deletion rectangles for MaskedStrand.
                         original_corners = pre_rotation_pos.get('deletion_rectangles', [])
-                        for rect, orig in zip(strand.deletion_rectangles, original_corners):
-                            tl = rotate_point(orig['top_left'], center, angle)
-                            tr = rotate_point(orig['top_right'], center, angle)
-                            bl = rotate_point(orig['bottom_left'], center, angle)
-                            br = rotate_point(orig['bottom_right'], center, angle)
+                        for rect, orig_corners in zip(strand.deletion_rectangles, original_corners):
+                            tl = rotate_point(orig_corners['top_left'], center, angle)
+                            tr = rotate_point(orig_corners['top_right'], center, angle)
+                            bl = rotate_point(orig_corners['bottom_left'], center, angle)
+                            br = rotate_point(orig_corners['bottom_right'], center, angle)
 
+                            # Store them back in float-tuple form if needed
                             rect['top_left']     = (tl.x(), tl.y())
                             rect['top_right']    = (tr.x(), tr.y())
                             rect['bottom_left']  = (bl.x(), bl.y())
                             rect['bottom_right'] = (br.x(), br.y())
-                        # ----------------------------------------------------------------------
 
-
-                    # Update shape & side lines after rotation
+                    # Update each strand’s shape after rotation, plus side_lines
                     strand.update_shape()
                     if hasattr(strand, 'update_side_line'):
                         strand.update_side_line()
 
-                # Repaint the canvas after all updates
+                # -------------------------------------------------
+                # 3) Redraw the canvas with the updated positions.
+                # -------------------------------------------------
                 self.canvas.update()
             else:
-                logging.error("Canvas not properly connected to GroupPanel")
+                logging.error("Canvas or group data not found in _perform_immediate_group_rotation")
         else:
-            logging.warning(f"Attempted to rotate without proper pre-rotation state")
+            logging.warning("Attempted to rotate without proper pre-rotation state or no active group")
+    def update_group_rotation(self, group_name, angle):
+        """
+        Public method that starts a smooth rotation toward 'angle'.
+        """
+        logging.info(f"GroupPanel: Updating group rotation for '{group_name}' by angle={angle}")
+        self.start_smooth_rotation(group_name, angle, steps=1, interval=1)
+        self.finish_group_rotation(group_name)
 
 
     def finish_group_rotation(self, group_name):
@@ -2197,13 +2273,15 @@ class GroupRotateDialog(QDialog):
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
         self.group_name = group_name
-        self.group_name = group_name
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
+        # Connect our rotation_updated signal to a local slot so we can rotate immediately.
+        self.rotation_updated.connect(self.on_rotation_updated)
+        self.group_panel = parent  # Now we can access pre_rotation_state
 
                 # Define the language code, defaulting to 'en' if not available
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
-
+        
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
@@ -2246,25 +2324,140 @@ class GroupRotateDialog(QDialog):
         self.rotation_updated.emit(self.group_name, self.angle)
 
     def update_angle_from_input(self):
+        """
+        Called whenever the user types a new angle in the QLineEdit.
+        We ensure the angle is treated as a float (e.g., 37.5) rather
+        than converting it to an integer. Then, we emit rotation_updated
+        with the float value, so the rotation logic (which also
+        rotates any deletion_rectangles) uses the precise angle.
+        """
         try:
-            self.angle = float(self.angle_input.text())
-            self.angle_slider.setValue(int(self.angle))
+            typed_angle_str = self.angle_input.text()
+            typed_angle_val = float(typed_angle_str)
+
+            # Update our 'angle' attribute
+            self.angle = typed_angle_val
+
+            # If the slider is integer-based, sync it approximately:
+            self.angle_slider.setValue(int(round(typed_angle_val)))
+
+            # Emit the precise float angle so the rotation code can rotate corners properly:
             self.rotation_updated.emit(self.group_name, self.angle)
         except ValueError:
-            pass  # Ignore invalid input
-
+            pass  # The user is in the middle of typing an invalid float
+    def on_rotation_updated(self, group_name, angle):
+        """
+        A slot that’s called whenever rotation_updated is emitted.
+        Here we call the actual rotation logic (rotate_group_strands).
+        """
+        self.angle = angle
+        self.rotate_group_strands()
     # Update the group's strands rotation
     def rotate_group_strands(self):
-        if self.canvas and self.group_name in self.canvas.groups:
-            group_data = self.canvas.groups[self.group_name]
-            rotation_center = self.calculate_group_center(group_data['strands'])
-            angle_radians = radians(self.angle)
-            for strand in group_data['strands']:
-                self.rotate_strand_around_point(strand, rotation_center, angle_radians)
-            self.canvas.update()
-        else:
-            logging.error(f"Group '{self.group_name}' not found in canvas.")
+        """
+        Similar to your existing rotation logic:
+        - retrieves pre_rotation_state from self.group_panel
+        - computes the group’s center
+        - rotates every strand’s start/end and (if masked) its deletion rect corners
+          around that center by `self.angle`.
+        """
+        if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
+            logging.error("Canvas or group data not found, cannot proceed with rotation.")
+            return
 
+        group_data = self.canvas.groups[self.group_name]
+
+        # 1) Calculate rotation center. 
+        rotation_center = self.calculate_group_center(group_data['strands'])
+
+        # 2) Convert the user-typed angle to radians
+        angle_radians = math.radians(self.angle)
+
+        # 3) Retrieve the snapshot of original geometry
+        if hasattr(self.group_panel, 'pre_rotation_state'):
+            pre_state = self.group_panel.pre_rotation_state
+        else:
+            pre_state = {}
+
+        # 4) Rotate each strand from original positions
+        for strand in group_data['strands']:
+            layer_name = strand.layer_name
+            if layer_name in pre_state:
+                original_positions = pre_state[layer_name]
+
+                # Rotate the main geometry (start/end)
+                strand.start = self.rotate_point(original_positions['start'], rotation_center, angle_radians)
+                strand.end   = self.rotate_point(original_positions['end'],   rotation_center, angle_radians)
+                if 'control_point1' in original_positions:
+                    strand.control_point1 = self.rotate_point(original_positions['control_point1'], rotation_center, angle_radians)
+                if 'control_point2' in original_positions:
+                    strand.control_point2 = self.rotate_point(original_positions['control_point2'], rotation_center, angle_radians)
+                # If MaskedStrand, also rotate deletion rectangle corners
+                if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in original_positions:
+                    for rect_idx, corners in enumerate(original_positions['deletion_rectangles']):
+                        tl = self.rotate_point(corners['top_left'],     rotation_center, angle_radians)
+                        tr = self.rotate_point(corners['top_right'],    rotation_center, angle_radians)
+                        bl = self.rotate_point(corners['bottom_left'],  rotation_center, angle_radians)
+                        br = self.rotate_point(corners['bottom_right'], rotation_center, angle_radians)
+
+                        # Store them back as float tuples
+                        strand.deletion_rectangles[rect_idx]['top_left']     = (tl.x(), tl.y())
+                        strand.deletion_rectangles[rect_idx]['top_right']    = (tr.x(), tr.y())
+                        strand.deletion_rectangles[rect_idx]['bottom_left']  = (bl.x(), bl.y())
+                        strand.deletion_rectangles[rect_idx]['bottom_right'] = (br.x(), br.y())
+
+                # Update the strand’s shape
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+
+        # 5) Redraw the canvas
+        self.canvas.update()
+
+    def rotate_point(self, point: QPointF, pivot: QPointF, angle_radians: float) -> QPointF:
+        dx = point.x() - pivot.x()
+        dy = point.y() - pivot.y()
+        cos_a = math.cos(angle_radians)
+        sin_a = math.sin(angle_radians)
+        rotated_x = pivot.x() + dx * cos_a - dy * sin_a
+        rotated_y = pivot.y() + dx * sin_a + dy * cos_a
+        return QPointF(rotated_x, rotated_y)
+    def calculate_group_center(self, strands):
+        """
+        Example: compute the average of all start/end points & rectangle corners
+        or use your existing approach to find the center.
+        """
+        center_sum = QPointF(0, 0)
+        total_points = 0
+
+        if hasattr(self.group_panel, 'pre_rotation_state'):
+            pre_state = self.group_panel.pre_rotation_state
+        else:
+            pre_state = {}
+
+        for strand in strands:
+            st = pre_state.get(strand.layer_name)
+            if not st:
+                continue
+
+            # start, end
+            center_sum += st['start']
+            center_sum += st['end']
+            total_points += 2
+
+            # If masked, add rectangle corners
+            if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in st:
+                for corners in st['deletion_rectangles']:
+                    center_sum += corners['top_left']
+                    center_sum += corners['top_right']
+                    center_sum += corners['bottom_left']
+                    center_sum += corners['bottom_right']
+                    total_points += 4
+
+        if total_points > 0:
+            return QPointF(center_sum.x() / total_points, center_sum.y() / total_points)
+        else:
+            return QPointF(0, 0)  # fallback if nothing found
     def on_ok_clicked(self):
         try:
             final_angle = float(self.angle_input.text())

@@ -98,6 +98,8 @@ class MainWindow(QMainWindow):
 
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
+        self.toggle_control_points_button.clicked.connect(self.on_toggle_control_points_button_clicked)
+
     # Add the update_translations method here
     def update_translations(self):
         _ = translations[self.language_code]
@@ -207,7 +209,7 @@ class MainWindow(QMainWindow):
         self.settings_button = QPushButton()
         self.settings_button.setFixedSize(32, 32)
         self.settings_button.setObjectName("settingsButton")  # Assign an object name for stylesheet targeting
-
+        self.attach_button.setMinimumWidth(190)
         # Set the gear icon or fallback to Unicode character if the image is not found
         gear_icon_path = os.path.join(base_path, 'settings_icon.png')
         logging.info(f"Searching for gear icon at: {gear_icon_path}")
@@ -236,7 +238,7 @@ class MainWindow(QMainWindow):
         # Create the toggle control points button
         self.toggle_control_points_button = QPushButton("Toggle Control Points")
         self.toggle_control_points_button.setCheckable(True)
-        self.toggle_control_points_button.setChecked(True)
+        self.toggle_control_points_button.setChecked(False)
 
         # Add buttons to the button layout
         button_layout.addWidget(self.mask_button)
@@ -282,7 +284,24 @@ class MainWindow(QMainWindow):
         # Set minimum widths
         left_widget.setMinimumWidth(380)
         self.layer_panel.setMinimumWidth(380)
-
+        # After creating the buttons, set their size policy
+        buttons = [
+            self.attach_button,
+            self.move_button,
+            self.rotate_button,
+            self.toggle_grid_button,
+            self.angle_adjust_button,
+            self.save_button,
+            self.load_button,
+            self.save_image_button,
+            self.select_strand_button,
+            self.mask_button,
+            self.toggle_control_points_button
+        ]
+        
+        for button in buttons:
+            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+            button.setFixedHeight(32)  # Set all buttons to the same height
         # Apply button styles
         self.setup_button_styles()
         logging.info("UI setup completed")
@@ -321,7 +340,7 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Connect the toggle control points button
-        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
+        self.toggle_control_points_button.clicked.connect(self.set_control_points_mode)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -738,36 +757,178 @@ class MainWindow(QMainWindow):
                 background-color: {bg_color};
                 color: {text_color};
                 font-weight: bold;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
+                border: 0px solid black;
+                padding: 4px 26px;
+                border-radius: 6px;
+                height: 32px;
+                min-width: 40px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
+                padding: 5px 24px;  /* Slightly smaller than normal */
             }}
             QPushButton:checked {{
                 background-color: {checked_color};
+                border: 2px solid black;
+                padding: 4px 22px;  /* Even smaller when checked */
+            }}
+            QPushButton:checked:pressed {{
+                /* ENSURE pressed still applies even in checked state */
+                background-color: {pressed_color};
+                padding: 3px 20px;
+            }}
+        """
+
+        # Separate style for non-checkable buttons (no size change on press)
+        non_checkable_button_style = """
+            QPushButton {{
+                background-color: {bg_color};
+                color: {text_color};
+                font-weight: bold;
+                border: 0px solid black;
+                padding: 6px 26px;
+                border-radius: 8px;
+                height: 32px;
+                min-width: 25px;  /* Add minimum width */
+            }}
+            QPushButton:hover {{
+                background-color: {hover_color};
+            }}
+            QPushButton:pressed {{
+                background-color: {pressed_color};
+                /* Keep the same padding so there is no size change */
+                padding: 6px 26px;
             }}
         """
         buttons = [
-            (self.attach_button, "#436A7C", "white", "#AFBDC3", "#34383A", "#133D4D"),
-            (self.move_button, "#AD8D3C", "white", "#B8B35C", "#856A2B", "#856A2B"),
-            (self.rotate_button, "#8D3CAD", "white", "#B35CB8", "#6A2B85", "#6A2B85"),
-            (self.toggle_grid_button, "#DDA0DD", "black", "#DA70D6", "#BA55D3", "#BA55D3"),
-            (self.angle_adjust_button, "#DBAA93", "black", "#C69C6D", "#B38B5D", "#B38B5D"),
-            (self.save_button, "#20B2AA", "white", "#48D1CC", "#008B8B", "#008B8B"),
-            (self.load_button, "#FF69B4", "white", "#FF1493", "#C71585", "#C71585"),
-            (self.save_image_button, "#4CAF50", "white", "#45a049", "#3e8e41", "#3e8e41"),
-            (self.select_strand_button, "#FFA500", "white", "#FFEBC7", "#FF8C00", "#FF8C00"),
-            (self.mask_button, "#800080", "white", "#9932CC", "#4B0082", "#4B0082"),
-            (self.toggle_control_points_button, "#5F9EA0", "white", "#79BEBE", "#4F8E90", "#3F7E80"),
+            # (button_object, normal_bg, normal_fg, hover_bg, pressed_bg, disabled_bg)
+
+            # 1) Mask
+            (
+                self.mask_button,
+                "#199693",    # normal (teal) - fairly dark
+                "black",
+                "#35A8A6",    # hover (lighter teal)
+                "#0F625F",    # pressed (darkest teal)
+                "#0F625F"     # disabled (pastel)
+            ),
+
+            # 2) Select
+            (
+                self.select_strand_button,
+                "#F1C40F",    # normal (bright yellow)
+                "black",
+                "#F5D247",    # hover (lighter yellow)
+                "#BB9A0C",    # pressed (darkest yellow)
+                "#BB9A0C"     # disabled (washed-out yellow)
+            ),
+
+            # 3) Attach
+            (
+                self.attach_button,
+                "#9B59B6",    # normal (purple)
+                "black",
+                "#AF7ABF",    # hover (lighter purple)
+                "#703D80",    # pressed (darkest purple)
+                "#703D80"     # disabled (pastel)
+            ),
+
+            # 4) Move
+            (
+                self.move_button,
+                "#E74C3C",    # normal (red)
+                "black",
+                "#ED746C",    # hover (lighter red)
+                "#B63B2E",    # pressed (darkest red)
+                "#B63B2E"     # disabled (pastel)
+            ),
+
+            # 5) Rotate
+            (
+                self.rotate_button,
+                "#3498DB",    # normal (blue)
+                "black",
+                "#63AFE2",    # hover (lighter blue)
+                "#216B97",    # pressed (darkest blue)
+                "#216B97"     # disabled (pastel)
+            ),
+
+            # 6) Grid
+            (
+                self.toggle_grid_button,
+                "#F39C12",    # normal (orange)
+                "black",
+                "#F6B541",    # hover (lighter orange)
+                "#BD7C0E",    # pressed (darkest orange)
+                "#BD7C0E"     # disabled (pastel)
+            ),
+
+            # 7) Angle/Length
+            (
+                self.angle_adjust_button,
+                "#2ECC71",    # normal (green)
+                "black",
+                "#5CDF94",    # hover (lighter green)
+                "#1F9F56",    # pressed (darkest green)
+                "#1F9F56"     # disabled (pastel)
+            ),
+
+            # 8) Save
+            (
+                self.save_button,
+                "#F78FB3",    # normal (pink)
+                "black",
+                "#FAB0C9",    # hover (lighter pink)
+                "#BF6D8D",    # pressed (darkest pink)
+                "#BF6D8D"     # disabled (pastel)
+            ),
+
+            # 9) Load
+            (
+                self.load_button,
+                "#95A5A6",    # normal (gray)
+                "black",
+                "#AFBBBC",    # hover (lighter gray)
+                "#6C7A7B",    # pressed (darkest gray)
+                "#6C7A7B"     # disabled (pastel)
+            ),
+
+            # 10) Image (Save Image)
+            (
+                self.save_image_button,
+                "#8E44AD",    # normal (purple)
+                "black",
+                "#A269BF",    # hover (lighter purple)
+                "#5C2E79",    # pressed (darkest purple)
+                "#5C2E79"     # disabled (pastel)
+            ),
+
+            # 11) Points (Toggle Control Points)
+            (
+                self.toggle_control_points_button,
+                "#5F7A93",  # normal (lighter blue-gray)
+                "black",
+                "#7C92A9",  # hover (even lighter blue-gray)
+                "#45596E",  # pressed (still darker, but lighter than the old darkest)
+                "#394857"   # checked (slightly different dark shade)
+            )
         ]
+
         for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:
-            # Avoid applying styles to the settings button
-            if button != self.settings_button:
+            if button in [self.save_button, self.load_button, self.save_image_button]:
+                # Save/Load/Image: no size change on press, not checkable
+                button.setStyleSheet(non_checkable_button_style.format(
+                    bg_color=bg_color,
+                    text_color=text_color,
+                    hover_color=hover_color,
+                    pressed_color=pressed_color
+                ))
+                button.setCheckable(False)
+            else:
+                # All other buttons: slight size change on press, checkable
                 button.setStyleSheet(button_style.format(
                     bg_color=bg_color,
                     text_color=text_color,
@@ -775,6 +936,8 @@ class MainWindow(QMainWindow):
                     pressed_color=pressed_color,
                     checked_color=checked_color
                 ))
+                if button == self.toggle_control_points_button:
+                    logging.info(f"Applying style to toggle_control_points_button: {button.styleSheet()}")
                 button.setCheckable(True)
         self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
             QPushButton {
@@ -880,26 +1043,7 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Style for toggle control points button
-        self.toggle_control_points_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4B0082;  /* Indigo */
-                color: white;
-                font-weight: bold;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #6A0DAD;
-            }
-            QPushButton:pressed {
-                background-color: #380066;
-            }
-            QPushButton:checked {
-                background-color: #2E0051;
-            }
-        """)
+
 
 
     def update_button_states(self, active_mode):
@@ -948,8 +1092,8 @@ class MainWindow(QMainWindow):
         self.mask_button.clicked.connect(self.set_mask_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
-        # Connect the layer_state_button clicked signal to the method
-        self.layer_state_button.clicked.connect(self.show_layer_state_log)
+        # Connect the toggle control points button
+        self.toggle_control_points_button.clicked.connect(self.set_control_points_mode)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -981,7 +1125,7 @@ class MainWindow(QMainWindow):
 
         # Connect toggle control points button
         self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
-        self.toggle_control_points_button.setChecked(True)  # Start with control points visible
+        self.toggle_control_points_button.setChecked(False)  # Start with control points visible
 
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
@@ -1375,6 +1519,8 @@ class MainWindow(QMainWindow):
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(False)
+        elif mode == "control_points":
+            self.toggle_control_points_button.setEnabled(False)
 
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)
@@ -1587,6 +1733,10 @@ class MainWindow(QMainWindow):
             dialog = StrandAngleEditDialog(group_name, group_data, canvas=self.canvas)
             dialog.angle_changed.connect(self.canvas.update_strand_angle)
             dialog.exec_()
+    def set_control_points_mode(self):
+        # Make sure we switch to an actual mode object rather than a string.
+        self.canvas.toggle_control_points() 
+
 
     def set_rotate_mode(self):
         self.update_mode("rotate")
@@ -1658,3 +1808,18 @@ class MainWindow(QMainWindow):
             self.canvas.update_translations()
         if self.settings_dialog.isVisible():
             self.settings_dialog.update_translations()
+
+    def on_toggle_control_points_button_clicked(self, checked):
+        """
+        The logic is inverted so that unchecking the button will show (paint) control points,
+        and checking it will hide them.
+        """
+        if checked:
+            # If button is checked => hide control points
+            self.canvas.show_control_points = False
+        
+        else:
+            # If button is unchecked => show control points
+            self.canvas.show_control_points = True
+        
+        self.canvas.update()

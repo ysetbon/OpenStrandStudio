@@ -15,7 +15,8 @@ class AttachMode(QObject):
         """Initialize the AttachMode."""
         super().__init__()
         self.canvas = canvas
-        self.affected_strand = None  # Add this line
+        self.affected_strand = None
+        self.affected_point = None
         self.initialize_properties()
         self.setup_timer()
 
@@ -239,9 +240,11 @@ class AttachMode(QObject):
                     logging.info(f"[AttachMode.start_attachment] Found parent strand in group: {group_name}")
                     break
         
+        self.affected_strand = parent_strand
+        self.affected_point = side
+
         new_strand = AttachedStrand(parent_strand, attach_point)
         new_strand.canvas = self.canvas
-        self.affected_strand = new_strand
         
         # Set properties from parent strand
         new_strand.color = parent_strand.color  # Directly set color property

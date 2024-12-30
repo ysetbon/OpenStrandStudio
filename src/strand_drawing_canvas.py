@@ -933,30 +933,81 @@ class StrandDrawingCanvas(QWidget):
                 self.draw_strand_label(painter, strand)
 
         # Draw selection area if in MoveMode
-        if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
+        if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
             painter.save()
-            painter.setBrush(QBrush(Qt.transparent))
-            painter.setPen(QPen(Qt.red, 2, Qt.DashLine))
 
-            if isinstance(self.current_mode.selected_rectangle, QPainterPath):
-                painter.drawPath(self.current_mode.selected_rectangle)
-            elif isinstance(self.current_mode.selected_rectangle, QRectF):
-                painter.drawRect(self.current_mode.selected_rectangle)
+            # Draw squares around each strand's start/end
+            for strand in self.strands:
+                if not isinstance(strand, MaskedStrand):
+                    if hasattr(strand, 'start') and hasattr(strand, 'end'):
+                        square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
+                        painter.setBrush(QBrush(square_color))
+                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                                            
+                        # Increased square size for better visibility
+                        square_size = 120
+                        half_size = square_size / 2
+                        square_control_size = 30
+                        half_control_size = square_control_size / 2
+                        # Draw square around start point
+                        start_rect = QRectF(
+                            strand.start.x() - half_size,
+                            strand.start.y() - half_size,
+                            square_size,
+                            square_size
+                        )
+                        painter.drawRect(start_rect)
+
+                        # Draw square around end point 
+                        end_rect = QRectF(
+                            strand.end.x() - half_size,
+                            strand.end.y() - half_size,
+                            square_size,
+                            square_size
+                        )
+                        painter.drawRect(end_rect)
+
+                        # Draw squares around control points if present (and not MaskedStrand)
+                        if not isinstance(strand, MaskedStrand):
+                            square_color = QColor(0, 100, 0, 100)  # Red with 50% transparency
+                            painter.setBrush(QBrush(square_color))
+                            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                            
+                            
+                            if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
+                                cp1_rect = QRectF(
+                                    strand.control_point1.x() - half_control_size,
+                                    strand.control_point1.y() - half_control_size,
+                                    square_control_size,
+                                    square_control_size
+                                )
+                                painter.drawRect(cp1_rect)
+
+                            if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
+                                cp2_rect = QRectF(
+                                    strand.control_point2.x() - half_control_size,
+                                    strand.control_point2.y() - half_control_size,
+                                    square_control_size,
+                                    square_control_size
+                                )
+                                painter.drawRect(cp2_rect)
+            # Set up semi-transparent red color
+            square_color = QColor(255, 255, 20, 170)  # Red with 50% transparency
+            painter.setBrush(QBrush(square_color))
+            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+            
+            # Draw the selection rectangle if it exists
+            if self.current_mode.selected_rectangle:
+                if isinstance(self.current_mode.selected_rectangle, QPainterPath):
+                    painter.drawPath(self.current_mode.selected_rectangle)
+                elif isinstance(self.current_mode.selected_rectangle, QRectF):
+                    painter.drawRect(self.current_mode.selected_rectangle)
 
             painter.restore()
 
         # Draw the angle adjustment visualization if in angle adjust mode
         if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
             self.angle_adjust_mode.draw(painter)
-
-        # Highlight the strand being created in attach mode
-        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
-            affected_strand = self.current_mode.affected_strand
-            painter.save()
-            highlight_pen = QPen(Qt.yellow, self.strand_width + 4)  # Wider width and different color
-            painter.setPen(highlight_pen)
-            affected_strand.draw(painter)
-            painter.restore()
 
         # Draw mask mode selections (this is the single implementation we want to keep)
         if isinstance(self.current_mode, MaskMode):
@@ -992,6 +1043,73 @@ class StrandDrawingCanvas(QWidget):
         )
 
         painter.end()
+
+        # ADD new painter to draw on top of everything:
+        # ---------------------------------------------------------
+        overlay_painter = QPainter(self)
+        overlay_painter.setRenderHint(QPainter.Antialiasing)
+
+        # 1) Draw attach-mode highlight on top (if needed)
+        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
+            overlay_painter.save()
+            highlight_pen = QPen(Qt.yellow, self.strand_width + 4)
+            overlay_painter.setPen(highlight_pen)
+            self.current_mode.affected_strand.draw(overlay_painter)
+            overlay_painter.restore()
+
+        # 2) Draw attach-mode circles on top
+        if isinstance(self.current_mode, AttachMode):
+            overlay_painter.save()
+            for strand in self.strands:
+                if isinstance(strand, MaskedStrand):
+                    continue
+
+                # Draw the start circle if index 0 is free
+                if strand.has_circles[0] == False:
+                    # Highlight if currently affected
+                    if (getattr(self.current_mode, 'affected_strand', None) == strand and 
+                        getattr(self.current_mode, 'affected_point', None) == 0):
+                        circle_color = QColor(255, 255, 20, 170)  # Yellow highlight
+                    else:
+                        circle_color = QColor(255, 0, 0, 50)      # Default blue
+
+                    overlay_painter.setBrush(QBrush(circle_color))
+                    overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+                    circle_size = 120
+                    radius = circle_size / 2
+                    start_ellipse = QRectF(
+                        strand.start.x() - radius,
+                        strand.start.y() - radius,
+                        circle_size,
+                        circle_size
+                    )
+                    overlay_painter.drawEllipse(start_ellipse)
+
+                # Draw the end circle if index 1 is free
+                if strand.has_circles[1] == False:
+                    # Highlight if currently affected
+                    if (getattr(self.current_mode, 'affected_strand', None) == strand and 
+                        getattr(self.current_mode, 'affected_point', None) == 1):
+                        circle_color = QColor(255, 255, 20, 170)  # Yellow highlight
+                    else:
+                        circle_color = QColor(0, 0, 255, 50)      # Default red
+
+                    overlay_painter.setBrush(QBrush(circle_color))
+                    overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+                    circle_size = 120
+                    radius = circle_size / 2
+                    end_ellipse = QRectF(
+                        strand.end.x() - radius,
+                        strand.end.y() - radius,
+                        circle_size,
+                        circle_size
+                    )
+                    overlay_painter.drawEllipse(end_ellipse)
+
+            overlay_painter.restore()
+        # ---------------------------------------------------------
+        overlay_painter.end()
+        # ---------------------------------------------------------
 
     def toggle_control_points(self):
         """Toggle the visibility of control points."""
@@ -1713,6 +1831,9 @@ class StrandDrawingCanvas(QWidget):
         elif mode == "rotate":
             self.current_mode = self.rotate_mode
             self.setCursor(Qt.SizeAllCursor)
+        elif mode == "control_points":
+            self.toggle_control_points()
+            self.current_mode = "control_points"
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
@@ -2031,13 +2152,17 @@ class StrandDrawingCanvas(QWidget):
         return self.selected_strand
 
     def clear_selection(self):
-        """Clear the current strand selection."""
-        logging.info(f"Clearing selection. Current selected strand: {self.selected_strand}")
+        # Instead of referencing self.selected_strand directly in the f-string:
+        # logging.info(f"Clearing selection. Current selected strand: {self.selected_strand}")
+
+        # First, capture a non-logging property (like layer_name), or safely handle None:
+        strand_desc = self.selected_strand.layer_name if self.selected_strand else "None"
+        logging.info(f"Clearing selection. Current selected strand: {strand_desc}")
+
+        # Then proceed with clearing selection
         self.selected_strand = None
         self.selected_strand_index = None
-        self.selected_attached_strand = None
         self.update()
-        logging.info("Selection cleared")
 
     def refresh_canvas(self):
         """Refresh the entire canvas, updating all strands."""

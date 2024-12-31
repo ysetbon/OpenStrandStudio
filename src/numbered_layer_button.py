@@ -102,17 +102,22 @@ class NumberedLayerButton(QPushButton):
 
     def update_style(self):
         """Update the button's style based on its current state."""
+        # Use "rgba(...)" so that alpha is respected
+        normal_rgba = f"rgba({self.color.red()}, {self.color.green()}, {self.color.blue()}, {self.color.alpha()/255})"
+        hovered_rgba = f"rgba({self.color.lighter().red()}, {self.color.lighter().green()}, {self.color.lighter().blue()}, {self.color.lighter().alpha()/255})"
+        checked_rgba = f"rgba({self.color.darker().red()}, {self.color.darker().green()}, {self.color.darker().blue()}, {self.color.darker().alpha()/255})"
+
         style = f"""
             QPushButton {{
-                background-color: {self.color.name()};
+                background-color: {normal_rgba};
                 border: none;
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: {self.color.lighter().name()};
+                background-color: {hovered_rgba};
             }}
             QPushButton:checked {{
-                background-color: {self.color.darker().name()};
+                background-color: {checked_rgba};
             }}
         """
         if self.border_color:
@@ -239,7 +244,10 @@ class NumberedLayerButton(QPushButton):
 
     def change_color(self):
         """Open a color dialog to change the button's color."""
-        color = QColorDialog.getColor()
+        color_dialog = QColorDialog(self)
+        # Enable alpha channel (transparency) option
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color = color_dialog.getColor(initial=self.color, options=QColorDialog.ShowAlphaChannel)
         if color.isValid():
             self.set_color(color)
             # Extract the set number from the button's text

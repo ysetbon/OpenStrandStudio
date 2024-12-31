@@ -14,7 +14,7 @@ class Strand:
     """
     def __init__(
         self, start, end, width,
-        color=QColor('purple'), stroke_color=QColor(0, 0, 0), stroke_width=4,
+        color=QColor(QColor(128, 0, 128, 255)), stroke_color=QColor(0, 0, 0, 255), stroke_width=4,
         set_number=None, layer_name=""
     ):
         self._start = start
@@ -23,7 +23,7 @@ class Strand:
         self.color = color
         self.stroke_color = stroke_color
         self.stroke_width = stroke_width
-        self.side_line_color = QColor('purple')
+        self.side_line_color = QColor(0, 0, 0, 255)
         self.attached_strands = []  # List to store attached strands
         self.has_circles = [False, False]  # Flags for circles at start and end
         self.is_first_strand = False
@@ -272,7 +272,7 @@ class Strand:
     def set_color(self, new_color):
         """Set the color of the strand and its side line."""
         self.color = new_color
-        self.side_line_color = new_color
+        self.side_line_color = self.color
 
     def update_shape(self):
         """Update the shape of the strand based on its start, end, and control points."""
@@ -477,11 +477,16 @@ class Strand:
         painter.setBrush(self.color)
         painter.drawPath(fill_path)
 
-        # Draw black lines covering the sides of the squared ends
+        # Draw the end line
         side_pen = QPen(self.stroke_color, self.stroke_width)
         side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+        side_pen.setColor(side_color)
+
         painter.setPen(side_pen)
-        painter.setBrush(Qt.NoBrush)
         painter.drawLine(self.start_line_start, self.start_line_end)
         painter.drawLine(self.end_line_start, self.end_line_end)
 
@@ -968,6 +973,14 @@ class AttachedStrand(Strand):
         # Draw the end line
         side_pen = QPen(self.stroke_color, self.stroke_width)
         side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
         temp_painter.setPen(side_pen)
         temp_painter.drawLine(self.end_line_start, self.end_line_end)
 
@@ -1318,13 +1331,13 @@ class MaskedStrand(Strand):
         if self.is_selected:
             logging.info("Drawing selected strand highlights")
             # Draw the mask outline
-            highlight_pen = QPen(QColor('red'), self.stroke_width)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(highlight_pen)
-            temp_painter.setBrush(Qt.NoBrush)
-            temp_painter.drawPath(mask_path)
+            highlight_pen = QPen(Qt.transparent, 0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+
+            # Draw the mask path with our highlight pen
+            if hasattr(self, 'get_mask_path'):
+                painter.drawPath(self.get_mask_path())
 
             # Always recalculate and draw center points based on current masks
             self.calculate_center_point()

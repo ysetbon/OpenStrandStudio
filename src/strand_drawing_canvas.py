@@ -56,7 +56,7 @@ class StrandDrawingCanvas(QWidget):
         self.new_strand_set_number = None
         self.new_strand_start_point = None
         self.new_strand_end_point = None
-        self.stroke_color = Qt.black
+        self.stroke_color = QColor(0, 0, 0, 255)
         self.strand_width = 46  # Width of strands
         self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
@@ -792,8 +792,8 @@ class StrandDrawingCanvas(QWidget):
         self.strands = []  # List to store all strands
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
-        self.strand_color = QColor('purple')  # Default color for strands
-        self.stroke_color = Qt.black  # Color for strand outlines
+        self.strand_color = QColor(128, 0, 128, 255)  # Default color for strands
+        self.stroke_color = QColor(0, 0, 0, 255)  # Color for strand outlines
         self.stroke_width = 4  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
@@ -863,7 +863,9 @@ class StrandDrawingCanvas(QWidget):
         """
         super().paintEvent(event)
         painter = QPainter(self)
+
         painter.setRenderHint(QPainter.Antialiasing)
+
 
         # Draw the grid, if applicable
         if self.show_grid:
@@ -909,7 +911,7 @@ class StrandDrawingCanvas(QWidget):
                 strand_color = self.strand_colors[self.new_strand_set_number]
             else:
                 # If it's the first strand (no existing colors), use the default color
-                strand_color = QColor('purple')
+                strand_color = QColor( QColor(128, 0, 128, 255))
 
             # Create a temporary Strand object for drawing
             temp_strand = Strand(
@@ -1266,10 +1268,10 @@ class StrandDrawingCanvas(QWidget):
                 pen.setCapStyle(Qt.SquareCap)
                 painter.setPen(pen)
 
-            set_highlight_pen()
+            set_highlight_pen()          # Thicker stroke
             painter.drawPath(strand.get_path())
 
-            set_highlight_pen(0.5)
+            set_highlight_pen(0.5)       # Slightly thinner stroke for the circles
             for i, has_circle in enumerate(strand.has_circles):
                 if has_circle:
                     center = strand.start if i == 0 else strand.end
@@ -1308,10 +1310,6 @@ class StrandDrawingCanvas(QWidget):
 
 
     def update_color_for_set(self, set_number, color):
-        """
-        Update the color for strands in a set.
-        Only recolors strands that start with the same set number (e.g., '1_' for set_number=1)
-        """
         logging.info(f"Updating color for set {set_number} to {color.name()}")
         self.strand_colors[set_number] = color
         
@@ -1320,23 +1318,36 @@ class StrandDrawingCanvas(QWidget):
         
         for strand in self.strands:
             if not hasattr(strand, 'layer_name') or not strand.layer_name:
-                logging.info(f"Skipping strand without layer_name")
+                logging.info("Skipping strand without layer_name")
                 continue
-                
+
             logging.info(f"Checking strand: {strand.layer_name}")
-            
+
             # Check if the strand's layer_name starts with our set_prefix
             if strand.layer_name.startswith(set_prefix):
                 strand.set_color(color)
+
+                # NEW: Ensure the black stroke also respects the alpha
+                if hasattr(strand, 'stroke_color') and isinstance(strand.stroke_color, QColor):
+                    stroke_with_alpha = QColor(strand.stroke_color)
+                    stroke_with_alpha.setAlpha(color.alpha())
+                    strand.stroke_color = stroke_with_alpha
+
                 logging.info(f"Updated color for strand: {strand.layer_name}")
-                
-            # For masked strands, only update if the first part matches our set_number
+
             elif isinstance(strand, MaskedStrand):
                 first_part = strand.layer_name.split('_')[0]  # Get the first number only
                 if first_part == str(set_number):
                     strand.set_color(color)
+
+                    # NEW: Ensure the black stroke also respects the alpha
+                    if hasattr(strand, 'stroke_color') and isinstance(strand.stroke_color, QColor):
+                        stroke_with_alpha = QColor(strand.stroke_color)
+                        stroke_with_alpha.setAlpha(color.alpha())
+                        strand.stroke_color = stroke_with_alpha
+
                     logging.info(f"Updated color for masked strand: {strand.layer_name}")
-        
+
         self.update()
         logging.info(f"Finished updating color for set {set_number}")
 
@@ -2940,4 +2951,6 @@ class StrandDrawingCanvas(QWidget):
 
     def save_strands(self, filename):
         save_strands(self.strands, self.groups, filename, self)
+
+
 # End of StrandDrawingCanvas class

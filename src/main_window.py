@@ -839,11 +839,12 @@ class MainWindow(QMainWindow):
             # 4) Move
             (
                 self.move_button,
-                "#E74C3C",    # normal (red)
-                "black",
-                "#ED746C",    # hover (lighter red)
-                "#B63B2E",    # pressed (darkest red)
-                "#B63B2E"     # disabled (pastel)
+                
+                "#D35400",   # normal (orange)
+                "black",     # text color
+                "#DB722c",   # hover (lighter orange)
+                "#A84300",   # pressed (deeper orange)
+                "#A84300"    # checked/disabled (darkest orange)
             ),
 
             # 5) Rotate
@@ -859,11 +860,11 @@ class MainWindow(QMainWindow):
             # 6) Grid
             (
                 self.toggle_grid_button,
-                "#F39C12",    # normal (orange)
-                "black",
-                "#F6B541",    # hover (lighter orange)
-                "#BD7C0E",    # pressed (darkest orange)
-                "#BD7C0E"     # disabled (pastel)
+                "#E93E3E",  # normal (dark red)
+                "black",    # text color for best contrast
+                "#EB5050",  # hover (slightly brighter red)
+                "#ab2e2e",  # pressed (deeper red)
+                "#ab2e2e"   # disabled/checked (deepest red)
             ),
 
             # 7) Angle/Length
@@ -889,22 +890,23 @@ class MainWindow(QMainWindow):
             # 9) Load
             (
                 self.load_button,
-                "#95A5A6",    # normal (gray)
-                "black",
-                "#AFBBBC",    # hover (lighter gray)
-                "#6C7A7B",    # pressed (darkest gray)
-                "#6C7A7B"     # disabled (pastel)
+                "#8D6E63",  # normal (medium brown)
+                "black",    # text color
+                "#A1887F",  # hover (lighter brown)
+                "#5D4037",  # pressed (darker brown)
+                "#4E342E"   # checked/disabled (darkest brown)
             ),
 
             # 10) Image (Save Image)
             (
                 self.save_image_button,
-                "#8E44AD",    # normal (purple)
-                "black",
-                "#A269BF",    # hover (lighter purple)
-                "#5C2E79",    # pressed (darkest purple)
-                "#5C2E79"     # disabled (pastel)
+                "#7D344D",  # normal (a deep pinkish-maroon)
+                "black",    # text color
+                "#A8535D",  # hover (slightly lighter)
+                "#6B2630",  # pressed (darker)
+                "#4A1A1F"   # checked/disabled (deepest shade)
             ),
+
 
             # 11) Points (Toggle Control Points)
             (

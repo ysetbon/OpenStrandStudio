@@ -1,0 +1,49 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 392.0,
+        "y": 308.0
+      },
+      "end": {
+        "x": 1008.0,
+        "y": 420.0
+      },
+      "width": 46,
+      "color": {
+        "r": 128,
+        "g": 0,
+        "b": 128,
+        "a": 80
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 80
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "control_points": [
+        {
+          "x": 392.0,
+          "y": 308.0
+        },
+        {
+          "x": 392.0,
+          "y": 308.0
+        }
+      ]
+    }
+  ],
+  "groups": {}
+}

@@ -50,27 +50,41 @@ class AngleAdjustMode:
             self.update_strand_end()
 
     def update_strand_end(self):
-        if self.selected_strand:
-            angle_rad = math.radians(self.current_angle)
-            new_end = QPointF(
-                self.selected_strand.start.x() + self.current_length * math.cos(angle_rad),
-                self.selected_strand.start.y() + self.current_length * math.sin(angle_rad)
-            )
-            old_end = self.selected_strand.end
-            self.selected_strand.end = new_end
-            self.selected_strand.update_shape()
-            self.selected_strand.update_side_line()
-            
-            # Update attached strands
-            for attached_strand, attach_point in self.attached_strands:
-                if attach_point == 'start':
-                    attached_strand.start = new_end
-                else:
-                    attached_strand.end = new_end
+        if not self.selected_strand:
+            return
+
+        old_end = QPointF(self.selected_strand.end)  # Save old end
+
+        angle_rad = math.radians(self.current_angle)
+        new_end = QPointF(
+            self.selected_strand.start.x() + self.current_length * math.cos(angle_rad),
+            self.selected_strand.start.y() + self.current_length * math.sin(angle_rad)
+        )
+        self.selected_strand.end = new_end
+        self.selected_strand.update_shape()
+        self.selected_strand.update_side_line()
+
+        # Shift any attached strands so they remain connected
+        for attached_strand, attach_point in self.attached_strands:
+            # If that attached strand’s start or end was exactly the old_end,
+            # move it by (new_end - old_end)
+            if attach_point == 'start' and attached_strand.start == old_end:
+                offset = new_end - old_end
+                attached_strand.start += offset
+                if attached_strand.control_point1:
+                    attached_strand.control_point1 += offset
                 attached_strand.update_shape()
                 attached_strand.update_side_line()
 
-            self.canvas.update()
+            elif attach_point == 'end' and attached_strand.end == old_end:
+                offset = new_end - old_end
+                attached_strand.end += offset
+                if attached_strand.control_point2:
+                    attached_strand.control_point2 += offset
+                attached_strand.update_shape()
+                attached_strand.update_side_line()
+
+        self.canvas.update()
 
     def handle_key_press(self, event):
         if self.selected_strand:

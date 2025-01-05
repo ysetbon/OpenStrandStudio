@@ -106,7 +106,9 @@ class GroupedLayerTree(QTreeWidget):
             pass
         else:
             logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy)
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
+)
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                               QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView)
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF
@@ -2418,7 +2420,7 @@ class GroupRotateDialog(QDialog):
             pass
     def on_angle_changed(self, group_name, new_angle):
         logging.info(f"[GroupRotateDialog] on_angle_changed: new_angle={new_angle}")
-        # Call GroupPanel's update_group_rotation (which should rotate absolutely)
+        # Call GroupPanel’s update_group_rotation (which should rotate absolutely)
         if self.group_panel:
             self.group_panel.update_group_rotation(group_name, new_angle)
         else:
@@ -2427,7 +2429,7 @@ class GroupRotateDialog(QDialog):
 
     def on_rotation_updated(self, group_name, angle):
         """
-        A slot that's called whenever rotation_updated is emitted.
+        A slot that’s called whenever rotation_updated is emitted.
         Here we call the actual rotation logic (rotate_group_strands).
         """
         self.angle = angle
@@ -2437,8 +2439,8 @@ class GroupRotateDialog(QDialog):
         """
         Similar to your existing rotation logic:
         - retrieves pre_rotation_state from self.group_panel
-        - computes the group's center
-        - rotates every strand's start/end and (if masked) its deletion rect corners
+        - computes the group’s center
+        - rotates every strand’s start/end and (if masked) its deletion rect corners
           around that center by `self.angle`.
         """
         if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
@@ -2486,7 +2488,7 @@ class GroupRotateDialog(QDialog):
                         strand.deletion_rectangles[rect_idx]['bottom_left']  = (bl.x(), bl.y())
                         strand.deletion_rectangles[rect_idx]['bottom_right'] = (br.x(), br.y())
 
-                # Update the strand's shape
+                # Update the strand’s shape
                 strand.update_shape()
                 if hasattr(strand, 'update_side_line'):
                     strand.update_side_line()
@@ -3281,45 +3283,12 @@ class StrandAngleEditDialog(QDialog):
             if hasattr(self, 'x_angle_input'):
                 self.x_angle_input.setText(f"{new_angle:.2f}")
 
-        # ---------------------------------
-        # ADDED CODE: fix for attached strands
-        # ---------------------------------
-        if update_linked and self.canvas:
-            attached_strands = self.canvas.find_attached_strands(strand)
-            # If we saved the old coords, use them:
-            old_coords = getattr(strand, 'pre_rotation_points', None)
-            if not old_coords:
-                # If there's no old geometry snapshot, nothing to do
-                self.canvas.update()
-                return
+        # Update linked strands if needed
+        if update_linked:
+            self.update_linked_strands(current_strand=strand)
 
-            # Identify old_end vs. new_end
-            old_end = old_coords.get('end', strand.end)
-            new_end = strand.end
-
-            for attached_strand in attached_strands:
-                # If attached_strand.start was old_end, we move it by (new_end - old_end)
-                if attached_strand.start == old_end:
-                    offset = new_end - old_end
-                    attached_strand.start += offset
-                    # If it has control_point1, also shift that
-                    if attached_strand.control_point1 is not None:
-                        attached_strand.control_point1 += offset
-                    attached_strand.update_shape()
-                    if hasattr(attached_strand, 'update_side_line'):
-                        attached_strand.update_side_line()
-
-                # Or if attached_strand.end was old_end, shift that
-                elif attached_strand.end == old_end:
-                    offset = new_end - old_end
-                    attached_strand.end += offset
-                    if attached_strand.control_point2 is not None:
-                        attached_strand.control_point2 += offset
-                    attached_strand.update_shape()
-                    if hasattr(attached_strand, 'update_side_line'):
-                        attached_strand.update_side_line()
-
-            # Finally, update the canvas
+        # Update the canvas
+        if self.canvas:
             self.canvas.update()
 
     def update_linked_strands(self, current_strand=None):

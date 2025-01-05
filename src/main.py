@@ -2,13 +2,14 @@ import sys
 import os
 import logging
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
 from main_window import MainWindow
 
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # At the start of your main.py
-os.environ['QT_MAC_WANTS_LAYER'] = '1'
+# os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
 def load_user_settings():
     from PyQt5.QtCore import QStandardPaths
@@ -56,6 +57,11 @@ if __name__ == '__main__':
     window = MainWindow()
     window.set_language(language_code)
     window.apply_theme(theme)
+    
+    # Show and maximize window
     window.show()
+    window.setWindowState(Qt.WindowMaximized | window.windowState())
+    window.raise_()
+    window.activateWindow()
 
     sys.exit(app.exec_())

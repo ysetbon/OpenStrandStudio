@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.language_changed.connect(self.update_translations)
         self.theme_changed.connect(self.apply_theme_to_widgets)
 
-        # Replace full-screen mode with maximized window
+        # Show window maximized with standard window decorations
         self.showMaximized()
 
         # Load user settings from file
@@ -99,6 +99,19 @@ class MainWindow(QMainWindow):
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
         self.toggle_control_points_button.clicked.connect(self.on_toggle_control_points_button_clicked)
+
+    def showEvent(self, event):
+        """Override showEvent to ensure proper window state"""
+        super().showEvent(event)
+        # Get the screen size
+        screen = QApplication.primaryScreen()
+        screen_size = screen.availableGeometry()
+        
+        # Set window to use almost all available space
+        self.setGeometry(screen_size)
+        
+        # Then maximize
+        self.setWindowState(Qt.WindowMaximized)
 
     # Add the update_translations method here
     def update_translations(self):
@@ -260,7 +273,8 @@ class MainWindow(QMainWindow):
         # Create a layout for the layer state button
         layer_state_layout = QHBoxLayout()
         self.layer_state_button = QPushButton("Layer State")
-        self.layer_state_button.setFixedSize(100, 30)
+        self.layer_state_button.setCheckable(True)
+        self.layer_state_button.clicked.connect(self.show_layer_state_log)
         layer_state_layout.addWidget(self.layer_state_button)
 
         button_layout.addLayout(layer_state_layout)
@@ -372,9 +386,16 @@ class MainWindow(QMainWindow):
 
 
     def open_settings_dialog(self):
-        # Open the settings dialog and connect theme change signal
-        self.settings_dialog.theme_changed.connect(self.apply_theme)
-        self.settings_dialog.exec_()
+        """Open the settings dialog if it's not already open."""
+        # Check if dialog is already open
+        if self.settings_dialog.isVisible():
+            # Bring existing dialog to front
+            self.settings_dialog.raise_()
+            self.settings_dialog.activateWindow()
+        else:
+            # Connect theme change signal and show dialog
+            self.settings_dialog.theme_changed.connect(self.apply_theme)
+            self.settings_dialog.show()
 
 
 
@@ -749,288 +770,189 @@ class MainWindow(QMainWindow):
                 return
             
             self.previous_mode = self.current_mode  # Store the current mode
-
+            self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
+            self.update_mode("angle_adjust")
+        else:
+            print("No strand selected. Please select a strand before adjusting its angle.")
+            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def setup_button_styles(self):
         button_style = """
             QPushButton {{
                 background-color: {bg_color};
-                color: {text_color};
+                color: black;
                 font-weight: bold;
                 border: 0px solid black;
-                padding: 4px 26px;
                 border-radius: 6px;
-                height: 32px;
-                min-width: 40px;
+                height: 35px;
+                min-width: 100px;
+                position: relative;
+                padding: 0px 0px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
-                padding: 5px 24px;  /* Slightly smaller than normal */
+                height: 35px;
+                min-width: 100px;
+                margin: 1px 1px;
             }}
             QPushButton:checked {{
                 background-color: {checked_color};
-                border: 2px solid black;
-                padding: 4px 22px;  /* Even smaller when checked */
+                border: 4px solid black;
+                border-radius: 6px;
+                padding: 0px 0px;
             }}
             QPushButton:checked:pressed {{
-                /* ENSURE pressed still applies even in checked state */
                 background-color: {pressed_color};
-                padding: 3px 20px;
+                padding: 0px 0px;
+                height: 35px;
+                min-width: 100px;
+                margin: 2px 2px;
+                border: 4px solid #2C2C2C;
             }}
         """
+
+        # Special style for angle adjust button with larger min-width
+        angle_adjust_button_style = button_style.replace("min-width: 100px;", "min-width: 140px;")
 
         # Separate style for non-checkable buttons (no size change on press)
         non_checkable_button_style = """
             QPushButton {{
                 background-color: {bg_color};
-                color: {text_color};
+                color: black;
                 font-weight: bold;
                 border: 0px solid black;
                 padding: 6px 26px;
                 border-radius: 8px;
                 height: 32px;
-                min-width: 25px;  /* Add minimum width */
+                min-width: 25px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
-                /* Keep the same padding so there is no size change */
                 padding: 6px 26px;
             }}
         """
-        buttons = [
-            # (button_object, normal_bg, normal_fg, hover_bg, pressed_bg, disabled_bg)
 
-            # 1) Mask
+        buttons = [
+            # (button_object, normal_bg, hover_bg, pressed_bg, disabled_bg)
             (
                 self.mask_button,
-                "#199693",    # normal (teal) - fairly dark
-                "black",
+                "#199693",    # normal (teal)
                 "#35A8A6",    # hover (lighter teal)
                 "#0F625F",    # pressed (darkest teal)
-                "#0F625F"     # disabled (pastel)
+                "#0F625F"     # disabled
             ),
-
-            # 2) Select
             (
                 self.select_strand_button,
-                "#F1C40F",    # normal (bright yellow)
-                "black",
-                "#F5D247",    # hover (lighter yellow)
-                "#BB9A0C",    # pressed (darkest yellow)
-                "#BB9A0C"     # disabled (washed-out yellow)
+                "#F1C40F",    # normal (yellow)
+                "#F5D247",    # hover
+                "#BB9A0C",    # pressed
+                "#BB9A0C"     # disabled
             ),
-
-            # 3) Attach
             (
                 self.attach_button,
                 "#9B59B6",    # normal (purple)
-                "black",
-                "#AF7ABF",    # hover (lighter purple)
-                "#703D80",    # pressed (darkest purple)
-                "#703D80"     # disabled (pastel)
+                "#AF7ABF",    # hover
+                "#703D80",    # pressed
+                "#703D80"     # disabled
             ),
-
-            # 4) Move
             (
                 self.move_button,
-                
-                "#D35400",   # normal (orange)
-                "black",     # text color
-                "#DB722c",   # hover (lighter orange)
-                "#A84300",   # pressed (deeper orange)
-                "#A84300"    # checked/disabled (darkest orange)
+                "#D35400",    # normal (orange)
+                "#DB722c",    # hover
+                "#A84300",    # pressed
+                "#A84300"     # disabled
             ),
-
-            # 5) Rotate
             (
                 self.rotate_button,
                 "#3498DB",    # normal (blue)
-                "black",
-                "#63AFE2",    # hover (lighter blue)
-                "#216B97",    # pressed (darkest blue)
-                "#216B97"     # disabled (pastel)
+                "#63AFE2",    # hover
+                "#216B97",    # pressed
+                "#216B97"     # disabled
             ),
-
-            # 6) Grid
             (
                 self.toggle_grid_button,
-                "#E93E3E",  # normal (dark red)
-                "black",    # text color for best contrast
-                "#EB5050",  # hover (slightly brighter red)
-                "#ab2e2e",  # pressed (deeper red)
-                "#ab2e2e"   # disabled/checked (deepest red)
+                "#E93E3E",    # normal (red)
+                "#EB5050",    # hover
+                "#ab2e2e",    # pressed
+                "#ab2e2e"     # disabled
             ),
-
-            # 7) Angle/Length
             (
                 self.angle_adjust_button,
                 "#2ECC71",    # normal (green)
-                "black",
-                "#5CDF94",    # hover (lighter green)
-                "#1F9F56",    # pressed (darkest green)
-                "#1F9F56"     # disabled (pastel)
+                "#5CDF94",    # hover
+                "#1F9F56",    # pressed
+                "#1F9F56"     # disabled
             ),
-
-            # 8) Save
             (
                 self.save_button,
                 "#F78FB3",    # normal (pink)
-                "black",
-                "#FAB0C9",    # hover (lighter pink)
-                "#BF6D8D",    # pressed (darkest pink)
-                "#BF6D8D"     # disabled (pastel)
+                "#FAB0C9",    # hover
+                "#BF6D8D",    # pressed
+                "#BF6D8D"     # disabled
             ),
-
-            # 9) Load
             (
                 self.load_button,
-                "#8D6E63",  # normal (medium brown)
-                "black",    # text color
-                "#A1887F",  # hover (lighter brown)
-                "#5D4037",  # pressed (darker brown)
-                "#4E342E"   # checked/disabled (darkest brown)
+                "#8D6E63",    # normal (brown)
+                "#A1887F",    # hover
+                "#8D6E63",    # pressed
+                "#8D6E63"    # disabled
             ),
-
-            # 10) Image (Save Image)
             (
                 self.save_image_button,
-                "#7D344D",  # normal (a deep pinkish-maroon)
-                "black",    # text color
-                "#A8535D",  # hover (slightly lighter)
-                "#6B2630",  # pressed (darker)
-                "#4A1A1F"   # checked/disabled (deepest shade)
+                "#7D344D",    # normal (maroon)
+                "#A8535D",    # hover
+                "#7D344D",    # pressed
+                "#7D344D"    # disabled
             ),
-
-
-            # 11) Points (Toggle Control Points)
             (
                 self.toggle_control_points_button,
-                "#5F7A93",  # normal (lighter blue-gray)
-                "black",
-                "#7C92A9",  # hover (even lighter blue-gray)
-                "#45596E",  # pressed (still darker, but lighter than the old darkest)
-                "#394857"   # checked (slightly different dark shade)
+                "#5F7A93",    # normal (blue-gray)
+                "#7C92A9",    # hover
+                "#45596E",    # pressed
+                "#394857"     # disabled
             )
         ]
 
-        for button, bg_color, text_color, hover_color, pressed_color, checked_color in buttons:
+        # Apply styles to buttons
+        for button, bg_color, hover_color, pressed_color, checked_color in buttons:
             if button in [self.save_button, self.load_button, self.save_image_button]:
-                # Save/Load/Image: no size change on press, not checkable
+                # Non-checkable buttons
                 button.setStyleSheet(non_checkable_button_style.format(
                     bg_color=bg_color,
-                    text_color=text_color,
                     hover_color=hover_color,
                     pressed_color=pressed_color
                 ))
                 button.setCheckable(False)
             else:
-                # All other buttons: slight size change on press, checkable
-                button.setStyleSheet(button_style.format(
-                    bg_color=bg_color,
-                    text_color=text_color,
-                    hover_color=hover_color,
-                    pressed_color=pressed_color,
-                    checked_color=checked_color
-                ))
-                if button == self.toggle_control_points_button:
-                    logging.info(f"Applying style to toggle_control_points_button: {button.styleSheet()}")
+                # Checkable buttons
+                if button == self.angle_adjust_button:
+                    # Use special style for angle adjust button
+                    button.setStyleSheet(angle_adjust_button_style.format(
+                        bg_color=bg_color,
+                        hover_color=hover_color,
+                        pressed_color=pressed_color,
+                        checked_color=checked_color
+                    ))
+                else:
+                    # Use standard style for other buttons
+                    button.setStyleSheet(button_style.format(
+                        bg_color=bg_color,
+                        hover_color=hover_color,
+                        pressed_color=pressed_color,
+                        checked_color=checked_color
+                    ))
                 button.setCheckable(True)
-        self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3; /* Blue background */
-                color: white;              /* White text */
-                font-weight: bold;
-                border: none;
-                padding: 10px 24px;
-                text-align: center;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2; /* Darker blue on hover */
-            }
-            QPushButton:pressed {
-                background-color: #1565C0;
-            }
-        """)
-        # Style specific buttons that don't follow the generic pattern
-        self.layer_panel.lock_layers_button.setStyleSheet("""
-            QPushButton {
-                background-color: orange;
-                color: white;
-                font-weight: bold;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: darkorange;
-            }
-            QPushButton:pressed {
-                background-color: #FF8C00;
-            }
-        """)
 
-        self.layer_panel.draw_names_button.setStyleSheet("""
-            QPushButton {
-                background-color: #E6E6FA;
-                color: black;
-                font-weight: bold;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #D8BFD8;
-            }
-            QPushButton:pressed {
-                background-color: #DDA0DD;
-            }
-        """)
-
-        self.layer_panel.add_new_strand_button.setStyleSheet("""
-            QPushButton {
-                background-color: lightgreen;
-                font-weight: bold;
-                color: black;                                           
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #6EB56E;
-            }
-            QPushButton:pressed {
-                background-color: #4D804D;
-            }
-        """)
-
-        self.layer_panel.deselect_all_button.setStyleSheet("""
-            QPushButton {
-                background-color: lightyellow;
-                font-weight: bold;
-                color: black;                                                                                      
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #D7D9A3;
-            }
-            QPushButton:pressed {
-                background-color: #C0C286;
-            }
-        """)
-
-        # Style the layer_state_button
+        # Style for layer state button
         self.layer_state_button.setStyleSheet("""
             QPushButton {
-                background-color: #FFD700;  /* Gold background */
+                background-color: #FFD700;
                 color: black;
                 font-weight: bold;
                 border: none;
@@ -1038,15 +960,12 @@ class MainWindow(QMainWindow):
                 border-radius: 0px;
             }
             QPushButton:hover {
-                background-color: #FFC200;  /* Darker gold on hover */
+                background-color: #FFC200;
             }
             QPushButton:pressed {
                 background-color: #FFB700;
             }
         """)
-
-
-
 
     def update_button_states(self, active_mode):
         buttons = {
@@ -1060,7 +979,7 @@ class MainWindow(QMainWindow):
         for mode, button in buttons.items():
             button.setChecked(mode == active_mode)
 
-
+        self.layer_state_button.clicked.connect(self.show_layer_state_log)
     def setup_connections(self):
         # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize
@@ -1176,26 +1095,49 @@ class MainWindow(QMainWindow):
                 # You might want to show an error dialog to the user here
 
     def open_settings_dialog(self):
-        settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
-        settings_dialog.theme_changed.connect(self.apply_theme)
-        settings_dialog.exec_()
+        """Open the settings dialog if it's not already open."""
+        # Check if dialog is already open
+        if self.settings_dialog.isVisible():
+            # Bring existing dialog to front
+            self.settings_dialog.raise_()
+            self.settings_dialog.activateWindow()
+        else:
+            # Connect theme change signal and show dialog
+            self.settings_dialog.theme_changed.connect(self.apply_theme)
+            self.settings_dialog.show()
 
     def show_layer_state_log(self):
         """Display the current layer state information."""
-        _ = self.translations  # Access the current translations
+        # If button is not checked, just return
+        if not self.layer_state_button.isChecked():
+            return
+            
+        # Store the current mode before opening the dialog
+        self._previous_state_mode = self.current_mode
 
-        # Retrieve the current state from the LayerStateManager
-        order = self.layer_state_manager.getOrder()
-        connections = self.layer_state_manager.getConnections()
-        masked_layers = self.layer_state_manager.getMaskedLayers()
-        colors = self.layer_state_manager.getColors()
-        positions = self.layer_state_manager.getPositions()
-        selected_strand = self.layer_state_manager.getSelectedStrand()
-        newest_strand = self.layer_state_manager.getNewestStrand()
-        newest_layer = self.layer_state_manager.getNewestLayer()
+        # Create a new dialog if it doesn't exist or isn't visible
+        if not hasattr(self, '_layer_state_dialog') or not self._layer_state_dialog or not self._layer_state_dialog.isVisible():
+            logging.info("Opening layer state log dialog")
+            _ = self.translations
 
-        # Format the state information using translated labels
-        state_info = f"""
+            # Store the dialog reference
+            self._layer_state_dialog = QDialog(self)
+            dialog = self._layer_state_dialog
+            
+            # Set up dialog to handle close events properly
+            dialog.closeEvent = lambda event: self.handle_dialog_close(event)
+            
+            # Retrieve the current state from the LayerStateManager
+            order = self.layer_state_manager.getOrder()
+            connections = self.layer_state_manager.getConnections()
+            masked_layers = self.layer_state_manager.getMaskedLayers()
+            colors = self.layer_state_manager.getColors()
+            positions = self.layer_state_manager.getPositions()
+            selected_strand = self.layer_state_manager.getSelectedStrand()
+            newest_strand = self.layer_state_manager.getNewestStrand()
+            newest_layer = self.layer_state_manager.getNewestLayer()
+
+            state_info = f"""
 {_['current_layer_state']}:
 
 {_['order']}:
@@ -1223,48 +1165,92 @@ class MainWindow(QMainWindow):
 {newest_layer}
 """
 
-        # Display the state information in a dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle(_['layer_state_log_title'])
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # Remove the question mark
-        layout = QVBoxLayout(dialog)
+            dialog.setWindowTitle(_['layer_state_log_title'])
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            layout = QVBoxLayout(dialog)
 
-        # Create a horizontal layout for the title and info button
-        title_layout = QHBoxLayout()
-        title_label = QLabel(_['layer_state_log_title'])
-        title_layout.addWidget(title_label)
+            title_layout = QHBoxLayout()
+            title_label = QLabel(_['layer_state_log_title'])
+            title_layout.addWidget(title_label)
+
+            info_button = QPushButton("?")
+            info_button.setFixedSize(40, 40)
+            info_button.clicked.connect(self.show_layer_state_info)
+            title_layout.addWidget(info_button)
+            title_layout.addStretch()
+
+            layout.addLayout(title_layout)
+
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+            text_edit.setPlainText(state_info)
+            layout.addWidget(text_edit)
+
+            close_button = QPushButton(_['close'])
+            close_button.clicked.connect(lambda: self.close_layer_state_dialog(dialog))
+            layout.addWidget(close_button)
+
+            default_width, default_height = 400, 600
+            dialog.resize(default_width, default_height)
+
+            canvas_geometry = self.canvas.geometry()
+            canvas_top_right = self.canvas.mapToGlobal(canvas_geometry.topRight())
+            dialog.move(canvas_top_right.x() - default_width, canvas_top_right.y())
+
+            dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
+
+            dialog.finished.connect(self.on_layer_state_dialog_closed)
+            logging.info("Showing layer state log dialog")
+            dialog.exec_()
+        else:
+            # If dialog exists and is visible, just bring it to front
+            self._layer_state_dialog.raise_()
+            self._layer_state_dialog.activateWindow()
+
+    def handle_dialog_close(self, event):
+        """Handle the dialog close event."""
+        logging.info("Handling dialog close event")
+        self.layer_state_button.setChecked(False)
         
-        # Add the info button
-        info_button = QPushButton("?")
-        info_button.setFixedSize(40, 40)
-        info_button.clicked.connect(self.show_layer_state_info)
-        title_layout.addWidget(info_button)
-        title_layout.addStretch()  # This will push the button to the right
+        # Just accept the event - cleanup will be handled by on_layer_state_dialog_closed
+        event.accept()
+
+    def close_layer_state_dialog(self, dialog):
+        """
+        Closes the layer state dialog and ensures proper cleanup.
+        """
+        logging.info("Closing the layer state dialog")
         
-        layout.addLayout(title_layout)
+        # Uncheck the layer state button
+        self.layer_state_button.setChecked(False)
+        
+        # Restore previous mode
+        if hasattr(self, '_previous_state_mode') and self._previous_state_mode is not None:
+            self.update_mode(self._previous_state_mode)
+            self._previous_state_mode = None
 
-        text_edit = QTextEdit()
-        text_edit.setReadOnly(True)
-        text_edit.setPlainText(state_info)
-        layout.addWidget(text_edit)
+        # Close the dialog first
+        if dialog and dialog.isVisible():
+            dialog.close()
 
-        close_button = QPushButton(_['close'])
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
+        # Clean up the reference
+            self._layer_state_dialog = None
 
-        # Set a default size for the dialog (width, height)
-        default_width, default_height = 400, 600
-        dialog.resize(default_width, default_height)
-
-        # Position the dialog at the top right corner of the canvas
-        canvas_geometry = self.canvas.geometry()
-        canvas_top_right = self.canvas.mapToGlobal(canvas_geometry.topRight())
-        dialog.move(canvas_top_right.x() - default_width, canvas_top_right.y())
-
-        # Allow resizing
-        dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
-
-        dialog.exec_()
+    def on_layer_state_dialog_closed(self):
+        """Handle cleanup when layer state dialog is closed."""
+        logging.info("Layer state log dialog closed")
+        
+        # Ensure button is unchecked
+        self.layer_state_button.setChecked(False)
+        
+        # Restore previous mode
+        if hasattr(self, '_previous_state_mode') and self._previous_state_mode is not None:
+            self.update_mode(self._previous_state_mode)
+            self._previous_state_mode = None
+        
+        # Clean up the reference
+        if hasattr(self, '_layer_state_dialog'):
+            self._layer_state_dialog = None
 
     def show_layer_state_info(self):
         """Display information explaining each piece of layer state data."""
@@ -1472,57 +1458,62 @@ class MainWindow(QMainWindow):
         self.canvas.set_mode(mode)
         self.update_button_states(mode)
 
+        # Update button states based on mode
         if mode == "select":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(False)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "attach":
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "move":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "angle_adjust":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(False)  # Keep it enabled
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "mask":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "new_strand":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "rotate":
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
-            self.angle_adjust_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(False)
         elif mode == "control_points":
             self.toggle_control_points_button.setEnabled(False)
+
+        # Always keep angle_adjust_button visible and enabled
+        self.angle_adjust_button.setVisible(True)
+        self.angle_adjust_button.setEnabled(True)
 
         if self.canvas.selected_strand_index is not None:
             self.canvas.highlight_selected_strand(self.canvas.selected_strand_index)

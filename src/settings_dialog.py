@@ -216,7 +216,8 @@ class SettingsDialog(QDialog):
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
-        self.about_label.setText(_['about_info'])
+        # Update about text browser instead of label
+        self.about_text_browser.setHtml(_['about_info'])
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])

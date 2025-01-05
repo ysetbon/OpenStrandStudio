@@ -2424,7 +2424,7 @@ class StrandDrawingCanvas(QWidget):
         
         self.is_angle_adjusting = not self.is_angle_adjusting
         if self.is_angle_adjusting:
-            self.angle_adjust_mode.activate(strand)
+            self.angle_adjust_mode.activate(strand)  # Pass the selected strand
         else:
             self.angle_adjust_mode.confirm_adjustment()
             self.angle_adjust_completed.emit()  # Add this line

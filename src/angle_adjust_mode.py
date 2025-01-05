@@ -13,6 +13,8 @@ class AngleAdjustMode:
     def __init__(self, canvas):
         self.canvas = canvas
         self.active_strand = None
+        self.selected_strand = None
+        self.attached_strands = []
         self.initial_length = 0
         self.max_length = 0
         self.angle_step = 1  # Degrees to adjust per key press
@@ -26,22 +28,66 @@ class AngleAdjustMode:
         self.initial_cp2_vector = None
 
     def activate(self, strand):
-        self.active_strand = strand
-        self.initial_angle = self.calculate_angle(strand.start, strand.end)
-        self.initial_length = self.calculate_length(strand.start, strand.end)
-        self.max_length = math.ceil(self.initial_length * 2 / 10) * 10  # Round up to nearest multiple of 10
-
-        # Store the initial control point vectors relative to the start point
+        self.selected_strand = strand
+        self.active_strand = strand   # Ensure active_strand is set
+        self.original_length = self.calculate_length(strand.start, strand.end)
+        self.current_length = self.original_length
+        self.current_angle = self.calculate_angle(strand.start, strand.end)
+        self.initial_length = self.original_length  # Add this line
+        
+        # Fix: Initialize the control point vectors relative to the start point
         self.initial_cp1_vector = strand.control_point1 - strand.start
         self.initial_cp2_vector = strand.control_point2 - strand.start
+        
+        # Fix: ensure initial_angle is set to a numeric value
+        self.initial_angle = self.current_angle
 
+        self.find_attached_strands()
+        
+        # Immediately show the dialog without requiring a mouse press:
         self.prompt_for_adjustments()
 
+    def find_attached_strands(self):
+        """Previously expected (attached_strand, attach_type) but now just uses attached_strand."""
+        self.attached_strands.clear()
+        if not self.selected_strand:
+            return
+        for attached_strand in self.selected_strand.attached_strands:
+            if attached_strand in self.canvas.strands:
+                self.attached_strands.append(attached_strand)
+
+    def update_strand_end(self):
+        # Move self.selected_strand
+        angle_rad = math.radians(self.current_angle)
+        new_end = QPointF(
+            self.selected_strand.start.x() + self.current_length * math.cos(angle_rad),
+            self.selected_strand.start.y() + self.current_length * math.sin(angle_rad)
+        )
+        self.selected_strand.end = new_end
+        self.selected_strand.update_shape()
+        self.selected_strand.update_side_line()
+
+        # Now move attached strands so they match new geometry
+        # Previously used "(attached_strand, attach_type) in self.attached_strands";
+        # now we just loop over each attached_strand reference:
+        for attached_strand in self.attached_strands:
+            # If you previously used attach_type logic, remove or replace it:
+            #
+            # Example: if attach_type == 'start_to_sel_end':
+            #     offset = new_end - attached_strand.start
+            #     ...
+            #
+            # For now, below is a basic shape update without attach_type checks:
+            attached_strand.update_shape()
+            attached_strand.update_side_line()
+        
+        self.canvas.update()
+
     def mousePressEvent(self, event):
+        # If you still want the mouse click to open the dialog, ensure active_strand is set
         if self.active_strand:
             self.prompt_for_adjustments()
         else:
-            # If no strand is active, we might want to select one or do nothing
             pass
 
     def mouseMoveEvent(self, event):
@@ -279,23 +325,77 @@ class AngleAdjustMode:
 
     def update_attached_strands(self, old_pos, new_pos):
         """Update attached strands when the active strand is adjusted."""
+        if not self.active_strand:
+            return
+        
         for attached_strand in self.active_strand.attached_strands:
-            if attached_strand.start == old_pos:
-                # Store the original control points relative to the start point
+            # Check if this attached strand starts at the end of the active strand
+            if (attached_strand.start - old_pos).manhattanLength() < 1:
+                # Store the original end point and control points
+                original_end = QPointF(attached_strand.end)
                 cp1_vector = attached_strand.control_point1 - old_pos
                 cp2_vector = attached_strand.control_point2 - old_pos
                 
-                # Update the start point of the attached strand
-                attached_strand.start = new_pos
+                # Update the start point to exactly match the new end position
+                attached_strand.start = QPointF(new_pos)
                 
-                # Restore control points relative to the new start position
-                attached_strand.control_point1 = new_pos + cp1_vector
-                attached_strand.control_point2 = new_pos + cp2_vector
+                # Keep the end point fixed
+                attached_strand.end = original_end
+                
+                # Calculate and update the angle based on the strand's own geometry
+                new_angle = math.degrees(math.atan2(
+                    attached_strand.end.y() - attached_strand.start.y(),
+                    attached_strand.end.x() - attached_strand.start.x()
+                ))
+                
+                # Update the strand's current_angle property for circle drawing
+                attached_strand.current_angle = new_angle
+                
+                # Update control points relative to the new start position
+                attached_strand.control_point1 = attached_strand.start + cp1_vector
+                attached_strand.control_point2 = attached_strand.start + cp2_vector
 
+                # Update the strand's shape and side line
                 attached_strand.update_shape()
                 attached_strand.update_side_line()
 
-                # Recursively update any strands attached to the attached strand
+                # Recursively update any strands attached to this strand
+                self.update_attached_strands_recursive(attached_strand)
+
+    def update_attached_strands_recursive(self, strand):
+        """Recursively update any strands attached to the given strand."""
+        for attached_strand in strand.attached_strands:
+            # Check if this attached strand starts at the end of the parent strand
+            if (attached_strand.start - strand.end).manhattanLength() < 1:
+                # Store the original end point and control points
+                original_end = QPointF(attached_strand.end)
+                cp1_vector = attached_strand.control_point1 - attached_strand.start
+                cp2_vector = attached_strand.control_point2 - attached_strand.start
+                
+                # Update the start point to exactly match the parent's end position
+                attached_strand.start = QPointF(strand.end)
+                
+                # Keep the end point fixed
+                attached_strand.end = original_end
+                
+                # Calculate and update the angle based on the strand's own geometry
+                new_angle = math.degrees(math.atan2(
+                    attached_strand.end.y() - attached_strand.start.y(),
+                    attached_strand.end.x() - attached_strand.start.x()
+                ))
+                
+                # Update the strand's current_angle property for circle drawing
+                attached_strand.current_angle = new_angle
+                
+                # Update control points relative to the new start position
+                attached_strand.control_point1 = attached_strand.start + cp1_vector
+                attached_strand.control_point2 = attached_strand.start + cp2_vector
+
+                # Update the strand's shape and side line
+                attached_strand.update_shape()
+                attached_strand.update_side_line()
+
+                # Continue recursively updating attached strands
                 self.update_attached_strands_recursive(attached_strand)
 
     def rotate_attached_strand(self, strand, angle_diff, pivot):
@@ -306,31 +406,6 @@ class AngleAdjustMode:
 
         # Rotate control points
         self.rotate_control_points(strand, angle_diff, pivot)
-
-    def update_attached_strands_recursive(self, strand):
-        """Recursively update any strands attached to the attached strand."""
-        for attached_strand in strand.attached_strands:
-            if attached_strand.start == strand.end:
-                # Since the end point of the current strand hasn't changed,
-                # the start point of the attached strand remains the same
-                pass
-            elif attached_strand.start == strand.start:
-                # Store the original control points relative to the start point
-                cp1_vector = attached_strand.control_point1 - attached_strand.start
-                cp2_vector = attached_strand.control_point2 - attached_strand.start
-                
-                # Update the start point
-                attached_strand.start = strand.start
-                
-                # Restore control points relative to the new start position
-                attached_strand.control_point1 = attached_strand.start + cp1_vector
-                attached_strand.control_point2 = attached_strand.start + cp2_vector
-
-                attached_strand.update_shape()
-                attached_strand.update_side_line()
-
-                # Recursively update further attached strands
-                self.update_attached_strands_recursive(attached_strand)
 
     def set_strand_length(self, new_length):
         """Set the length of the active strand and adjust control points."""

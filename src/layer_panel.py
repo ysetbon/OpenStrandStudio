@@ -142,29 +142,102 @@ class LayerPanel(QWidget):
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
-
+        
+        # Draw Names button
         self.draw_names_button = QPushButton("Draw Names")
-        self.draw_names_button.setStyleSheet("font-weight: bold; background-color: #E6E6FA;")
+        self.draw_names_button.setStyleSheet("""
+            QPushButton {
+                background-color: #B0C4DE;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #CAD7EC; /* lighter on hover */
+            }
+            QPushButton:pressed {
+                background-color: #96AAC4; /* darker on press */
+            }
+        """)
         self.draw_names_button.clicked.connect(self.request_draw_names)
 
+        # Lock Layers button
         self.lock_layers_button = QPushButton("Lock Layers")
-        self.lock_layers_button.setStyleSheet("font-weight: bold; color: black; background-color: orange;")
+        self.lock_layers_button.setStyleSheet("""
+            QPushButton {
+                background-color: orange;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #FFB84D; /* lighter on hover */
+            }
+            QPushButton:pressed {
+                background-color: #E69500; /* darker on press */
+            }
+        """)
         self.lock_layers_button.setCheckable(True)
         self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
 
+        # Add New Strand button
         self.add_new_strand_button = QPushButton("Add New Strand")
-        self.add_new_strand_button.setStyleSheet("font-weight: bold; background-color: lightgreen;")
-        ### Inside LayerPanel __init__ method ###
-
+        self.add_new_strand_button.setStyleSheet("""
+            QPushButton {
+                background-color: lightgreen;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #98FB98; /* lighter on hover */
+            }
+            QPushButton:pressed {
+                background-color: #7BBF7B; /* darker on press */
+            }
+        """)
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
+        # Delete Strand button
         self.delete_strand_button = QPushButton("Delete Strand (beta)")
-        self.delete_strand_button.setStyleSheet("font-weight: bold; color: black; background-color: #FF6B6B;")
-        self.delete_strand_button.clicked.connect(self.request_delete_strand)
+        self.delete_strand_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF6B6B;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #FF8282; /* lighter on hover */
+            }
+            QPushButton:pressed {
+                background-color: #E05C5C; /* darker on press */
+            }
+        """)
         self.delete_strand_button.setEnabled(False)
+        self.delete_strand_button.clicked.connect(self.request_delete_strand)
 
+        # Deselect All button
         self.deselect_all_button = QPushButton("Deselect All")
-        self.deselect_all_button.setStyleSheet("font-weight: bold; background-color: lightyellow;")
+        self.deselect_all_button.setStyleSheet("""
+            QPushButton {
+                background-color: lightyellow;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #FFFACD; /* lighter on hover */
+            }
+            QPushButton:pressed {
+                background-color: #FFEB8A; /* darker on press */
+            }
+        """)
         self.deselect_all_button.clicked.connect(self.deselect_all)
 
         # Add buttons to bottom panel in the desired order
@@ -202,7 +275,7 @@ class LayerPanel(QWidget):
         self.layer_buttons = []  # List to store layer buttons
         self.current_set = 1  # Current set number
         self.set_counts = {1: 0}  # Dictionary to keep track of counts for each set
-        self.set_colors = {1: QColor('purple')}  # Dictionary to store colors for each set
+        self.set_colors = {1: QColor(200, 170, 230, 255) }  # Dictionary to store colors for each set
 
         # Initialize masked mode variables
         self.masked_mode = False
@@ -311,7 +384,29 @@ class LayerPanel(QWidget):
         button.clicked.connect(partial(self.select_layer, index))
         button.color_changed.connect(self.on_color_changed)
 
-        # Set up context menu for masked strands
+        # -------------------------------------------------------------------------
+        # ADD THESE LINES TO PROVIDE HOVER/PRESS FEEDBACK USING A STYLESHEET
+        original_hex = strand.color.name()  # Convert the QColor to hex string
+        button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {original_hex};
+                border-radius: 4px;
+                border: 1px solid #888;
+                color: black;
+            }}
+            QPushButton:hover {{
+                background-color: #E0E0E0; /* Lighter on hover */
+            }}
+            QPushButton:pressed {{
+                background-color: #C0C0C0; /* Darker on press */
+            }}
+            QPushButton:checked {{
+                background-color: {original_hex}; /* Revert to original color when released */
+            }}
+        """)
+        # -------------------------------------------------------------------------
+
+        # If this is a MaskedStrand, set up context menu, etc.
         if isinstance(strand, MaskedStrand):
             button.set_border_color(strand.second_selected_strand.color)
             button.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -370,7 +465,7 @@ class LayerPanel(QWidget):
         if theme_name == "dark":
             palette = self.palette()
             palette.setColor(QPalette.Window, QColor("#2C2C2C"))
-            palette.setColor(QPalette.WindowText, QColor("white"))
+            palette.setColor(QPalette.WindowText, QColor("black"))
             self.setPalette(palette)
             self.setAutoFillBackground(True)
 
@@ -1120,7 +1215,7 @@ class LayerPanel(QWidget):
                 new_set_number = set_number - 1
                 new_text = f"{new_set_number}_{parts[1]}"
                 button.setText(new_text)
-                button.set_color(self.set_colors.get(new_set_number, QColor('purple')))
+                button.set_color(self.set_colors.get(new_set_number, QColor(200, 170, 230, 255) ))
 
         self.update_layer_button_states()
 
@@ -1198,7 +1293,8 @@ class LayerPanel(QWidget):
         
         self.current_set = next_set
         self.set_counts[self.current_set] = 0
-        self.set_colors[self.current_set] = QColor('purple')
+        self.set_colors[self.current_set] = QColor(200, 170, 230, 255) 
+
         
         logging.info(f"Starting new set {self.current_set} (Existing sets: {sorted(existing_sets)})")
 
@@ -1398,7 +1494,8 @@ class LayerPanel(QWidget):
         
         # Update color for the set if needed
         if set_number not in self.set_colors:
-            self.set_colors[set_number] = QColor('purple')  # Default color
+            self.set_colors[set_number] = QColor(200, 170, 230, 255) 
+  # Default color
         self.update_colors_for_set(set_number, self.set_colors[set_number])  # Changed from update_color_for_set
         
         logging.info("Finished on_strand_created")
@@ -1441,7 +1538,7 @@ class LayerPanel(QWidget):
             self.set_counts[set_number] += 1
             
             # Use the strand's actual color
-            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number, QColor('purple'))
+            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number,QColor(200, 170, 230, 255) )
             
             button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], strand_color)
             button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))

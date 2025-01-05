@@ -23,28 +23,32 @@ class AngleAdjustMode:
         self.angle_adjustment = 0  # Total angle adjustment
         self.x_pressed = False
 
+        # Add a new attribute to track cumulative length changes
+        self.length_adjustment = 0
+
         # Add these lines to store initial control point vectors
         self.initial_cp1_vector = None
         self.initial_cp2_vector = None
 
     def activate(self, strand):
         self.selected_strand = strand
-        self.active_strand = strand   # Ensure active_strand is set
+        self.active_strand = strand
         self.original_length = self.calculate_length(strand.start, strand.end)
         self.current_length = self.original_length
         self.current_angle = self.calculate_angle(strand.start, strand.end)
-        self.initial_length = self.original_length  # Add this line
+        self.initial_length = self.original_length
         
-        # Fix: Initialize the control point vectors relative to the start point
+        # Reset the cumulative length adjustment each time we activate
+        self.length_adjustment = 0
+        
+        # Store initial control point positions relative to start
         self.initial_cp1_vector = strand.control_point1 - strand.start
         self.initial_cp2_vector = strand.control_point2 - strand.start
         
-        # Fix: ensure initial_angle is set to a numeric value
         self.initial_angle = self.current_angle
-
-        self.find_attached_strands()
+        self.max_length = max(10, int(self.original_length * 2))
         
-        # Immediately show the dialog without requiring a mouse press:
+        self.find_attached_strands()
         self.prompt_for_adjustments()
 
     def find_attached_strands(self):
@@ -252,13 +256,18 @@ class AngleAdjustMode:
         self.rotate_strand(new_angle)
 
     def adjust_length(self, delta):
+        """Adjust the length of the active strand by adding to a cumulative change."""
         if not self.active_strand:
             return
 
-        current_length = self.calculate_length(self.active_strand.start, self.active_strand.end)
-        new_length = max(10, min(current_length + delta, self.max_length))
+        # Accumulate the length changes rather than setting it directly
+        self.length_adjustment += delta
+        new_length = self.initial_length + self.length_adjustment
+        new_length = max(10, min(new_length, self.max_length))
         new_length = round(new_length / 5) * 5  # Round to nearest multiple of 5
+        
         self.set_strand_length(new_length)
+        self.canvas.update()
 
     def rotate_strand(self, new_angle):
         """Rotate the active strand to the new angle and adjust control points."""
@@ -413,38 +422,34 @@ class AngleAdjustMode:
             return
 
         start = self.active_strand.start
+
         # Calculate the current angle (including any rotations that have been applied)
         current_angle = self.calculate_angle(start, self.active_strand.end)
 
         # Store old end position before updating
-        old_end = self.active_strand.end
+        old_end = QPointF(self.active_strand.end)
 
         # Update the end point based on the current angle and new length
         dx = new_length * math.cos(math.radians(current_angle))
         dy = new_length * math.sin(math.radians(current_angle))
-        new_end = start + QPointF(dx, dy)
+        new_end = QPointF(start.x() + dx, start.y() + dy)
         self.active_strand.end = new_end
 
-        # Ensure initial control point vectors are set if they're None
-        if self.initial_cp1_vector is None:
-            self.initial_cp1_vector = self.active_strand.control_point1 - start
-        if self.initial_cp2_vector is None:
-            self.initial_cp2_vector = self.active_strand.control_point2 - start
+        # Recalculate control points based on the scale factor from the original length
+        if self.initial_length > 0:
+            scale_factor = new_length / self.initial_length
+            self.active_strand.control_point1 = start + (self.initial_cp1_vector * scale_factor)
+            self.active_strand.control_point2 = start + (self.initial_cp2_vector * scale_factor)
 
-        # Calculate the rotation angle relative to the initial angle
-        rotation_angle = current_angle - self.initial_angle
-
-        # First scale the control points
-        self.update_control_points_for_length_change(new_length)
-
-        # Then rotate them to match the current angle
-        self.rotate_control_points_to_new_angle(current_angle)
-
+        # Update the strand's shape
         self.active_strand.update_shape()
         self.active_strand.update_side_line()
 
         # Update attached strands
         self.update_attached_strands(old_end, new_end)
+        
+        # Update the canvas
+        self.canvas.update()
 
     def update_control_points_for_length_change(self, new_length):
         """Adjust control points when the length is changed."""

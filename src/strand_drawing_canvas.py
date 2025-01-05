@@ -792,7 +792,7 @@ class StrandDrawingCanvas(QWidget):
         self.strands = []  # List to store all strands
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
-        self.strand_color = QColor(128, 0, 128, 255)  # Default color for strands
+        self.strand_color = QColor(200, 170, 230, 255)   # Default color for strands
         self.stroke_color = QColor(0, 0, 0, 255)  # Color for strand outlines
         self.stroke_width = 4  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
@@ -822,7 +822,7 @@ class StrandDrawingCanvas(QWidget):
         
         # **Add this line to ensure the color is set**
         if set_number not in self.strand_colors:
-            self.strand_colors[set_number] = QColor('purple')  # Or get the color from LayerPanel
+            self.strand_colors[set_number] = QColor(200, 170, 230, 255)   # Or get the color from LayerPanel
         
         logging.info(f"Entered new strand mode for set: {set_number}")
     def setup_modes(self):
@@ -911,7 +911,7 @@ class StrandDrawingCanvas(QWidget):
                 strand_color = self.strand_colors[self.new_strand_set_number]
             else:
                 # If it's the first strand (no existing colors), use the default color
-                strand_color = QColor( QColor(128, 0, 128, 255))
+                strand_color = QColor(200, 170, 230, 255) 
 
             # Create a temporary Strand object for drawing
             temp_strand = Strand(
@@ -1397,7 +1397,7 @@ class StrandDrawingCanvas(QWidget):
             if self.layer_panel and set_number in self.layer_panel.set_colors:
                 self.strand_colors[set_number] = self.layer_panel.set_colors[set_number]
             else:
-                self.strand_colors[set_number] = QColor('purple')
+                self.strand_colors[set_number] = QColor(200, 170, 230, 255) 
         strand.set_color(self.strand_colors[set_number])
 
         # Add the new strand to the strands list

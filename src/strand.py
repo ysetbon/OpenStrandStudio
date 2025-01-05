@@ -14,7 +14,7 @@ class Strand:
     """
     def __init__(
         self, start, end, width,
-        color=QColor(QColor(128, 0, 128, 255)), stroke_color=QColor(0, 0, 0, 255), stroke_width=4,
+        color=QColor(200, 170, 230, 255) , stroke_color=QColor(0, 0, 0, 255), stroke_width=4,
         set_number=None, layer_name=""
     ):
         self._start = start

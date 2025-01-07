@@ -446,16 +446,9 @@ class MoveMode:
         self.last_snapped_pos = snapped_pos
         self.target_pos = snapped_pos
 
-        # Find any other strands connected to this point
-        connected_strand = None
+        # Find any other strands connected to this point using layer_state_manager
         moving_point = strand.start if side == 0 else strand.end
-        
-        for other_strand in self.canvas.strands:
-            if other_strand != strand:
-                if (side == 0 and self.points_are_close(other_strand.end, moving_point)) or \
-                   (side == 1 and self.points_are_close(other_strand.start, moving_point)):
-                    connected_strand = other_strand
-                    break
+        connected_strand = self.find_connected_strand(strand, side, moving_point)
 
         # Set both strands as selected
         if isinstance(strand, AttachedStrand):
@@ -697,6 +690,38 @@ class MoveMode:
         print(f"Temp selected strand: {self.temp_selected_strand}")
         print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
         print(f"Strand to highlight: {strand_to_highlight}")
+
+    def find_connected_strand(self, strand, side, moving_point):
+        """Find a strand connected to the given strand at the specified side."""
+        if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
+            return None
+
+        connections = self.canvas.layer_state_manager.getConnections()
+        strand_connections = connections.get(strand.layer_name, [])
+
+        # Get prefix of the current strand
+        prefix = strand.layer_name.split('_')[0]
+
+        for connected_layer_name in strand_connections:
+            # Only check strands with the same prefix
+            if not connected_layer_name.startswith(f"{prefix}_"):
+                continue
+
+            # Find the connected strand
+            connected_strand = next(
+                (s for s in self.canvas.strands 
+                 if s.layer_name == connected_layer_name 
+                 and not isinstance(s, MaskedStrand)), 
+                None
+            )
+
+            if connected_strand and connected_strand != strand:
+                # Check if the connection point matches the side we're moving
+                if (side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
+                   (side == 1 and self.points_are_close(connected_strand.start, moving_point)):
+                    return connected_strand
+
+        return None
 
 
 

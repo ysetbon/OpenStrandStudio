@@ -873,7 +873,7 @@ class StrandDrawingCanvas(QWidget):
 
         logging.info(f"Painting {len(self.strands)} strands")
 
-        # Draw existing strands
+        # Draw ALL existing strands first (background)
         for strand in self.strands:
             logging.info(f"Drawing strand '{strand.layer_name}'")
             if not hasattr(strand, 'canvas'):
@@ -885,35 +885,16 @@ class StrandDrawingCanvas(QWidget):
             else:
                 strand.draw(painter)
 
-        # Draw the current strand being created (either first strand or attached)
+        # Draw the temporary strand (whether it's a new strand or an attached strand)
         if self.current_strand:
             if not hasattr(self.current_strand, 'canvas'):
-                self.current_strand.canvas = self  # Ensure current strand has canvas reference
-            # For the first strand, draw with a special highlight
-            if self.is_first_strand:
-                painter.save()
-                # Draw a preview shadow
-                shadow_pen = QPen(QColor(255, 255, 0, 100), self.strand_width + 4)  # Semi-transparent yellow
-                painter.setPen(shadow_pen)
-                self.current_strand.draw(painter)
-                
-                # Draw the actual strand
-                painter.setPen(QPen(self.strand_color, self.strand_width))
-                self.current_strand.draw(painter)
-                painter.restore()
-            else:
-                self.current_strand.draw(painter)
-
-        # Draw the new strand being created
-        if self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
-            # Determine the color for the new strand
+                self.current_strand.canvas = self
+            self.current_strand.draw(painter)
+        elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             if self.new_strand_set_number in self.strand_colors:
                 strand_color = self.strand_colors[self.new_strand_set_number]
             else:
-                # If it's the first strand (no existing colors), use the default color
-                strand_color = QColor(200, 170, 230, 255) 
-
-            # Create a temporary Strand object for drawing
+                strand_color = QColor(200, 170, 230, 255)
             temp_strand = Strand(
                 self.new_strand_start_point,
                 self.new_strand_end_point,
@@ -922,8 +903,31 @@ class StrandDrawingCanvas(QWidget):
                 stroke_color=self.stroke_color,
                 stroke_width=self.stroke_width
             )
-            temp_strand.canvas = self  # Set canvas reference for the temporary strand
+            temp_strand.canvas = self
             temp_strand.draw(painter)
+
+        # Draw the connection circle last (always on top)
+        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
+            if self.current_mode.affected_point == 0:
+                circle_color = QColor(255, 0, 0, 100)  # Red for start point
+            else:
+                circle_color = QColor(0, 0, 255, 100)  # Blue for end point
+                
+            painter.setBrush(QBrush(circle_color))
+            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+            circle_size = 120
+            radius = circle_size / 2
+            
+            point = (self.current_mode.affected_strand.start if self.current_mode.affected_point == 0 
+                    else self.current_mode.affected_strand.end)
+            
+            circle_rect = QRectF(
+                point.x() - radius,
+                point.y() - radius,
+                circle_size,
+                circle_size
+            )
+            painter.drawEllipse(circle_rect)
 
         # Only draw control points if they're enabled
         if self.show_control_points:  # Simplified check
@@ -1051,29 +1055,22 @@ class StrandDrawingCanvas(QWidget):
         overlay_painter = QPainter(self)
         overlay_painter.setRenderHint(QPainter.Antialiasing)
 
-        # 1) Draw attach-mode highlight on top (if needed)
-        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
-            overlay_painter.save()
-            highlight_pen = QPen(Qt.yellow, self.strand_width + 4)
-            overlay_painter.setPen(highlight_pen)
-            self.current_mode.affected_strand.draw(overlay_painter)
-            overlay_painter.restore()
-
-        # 2) Draw attach-mode circles on top
+        # Draw attach-mode circles on top
         if isinstance(self.current_mode, AttachMode):
             overlay_painter.save()
             for strand in self.strands:
                 if isinstance(strand, MaskedStrand):
                     continue
 
-                # Draw the start circle if index 0 is free
-                if strand.has_circles[0] == False:
+                # Draw circles regardless of proximity to other points
+                # Start circle
+                if not strand.start_attached:  # Only check the strand's own attachment state
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 0):
-                        circle_color = QColor(255, 255, 20, 170)  # Yellow highlight
+                        circle_color = QColor(255, 255, 20, 150)  # Yellow highlight
                     else:
-                        circle_color = QColor(255, 0, 0, 50)      # Default blue
+                        circle_color = QColor(255, 0, 0, 100)  # Default red
 
                     overlay_painter.setBrush(QBrush(circle_color))
                     overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -1087,14 +1084,14 @@ class StrandDrawingCanvas(QWidget):
                     )
                     overlay_painter.drawEllipse(start_ellipse)
 
-                # Draw the end circle if index 1 is free
-                if strand.has_circles[1] == False:
+                # End circle
+                if not strand.end_attached:  # Only check the strand's own attachment state
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 1):
-                        circle_color = QColor(255, 255, 20, 170)  # Yellow highlight
+                        circle_color = QColor(255, 255, 20, 150)  # Yellow highlight
                     else:
-                        circle_color = QColor(0, 0, 255, 50)      # Default red
+                        circle_color = QColor(0, 0, 255, 100)  # Default blue
 
                     overlay_painter.setBrush(QBrush(circle_color))
                     overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -2625,42 +2622,48 @@ class StrandDrawingCanvas(QWidget):
             return
 
         connections = self.layer_state_manager.getConnections()
-        strand_dict = {strand.layer_name: strand for strand in self.strands if not isinstance(strand, MaskedStrand)}
-
-        # First pass: Reset all attachment states
+        
+        # Group strands by their prefix (e.g., "1_" or "2_")
+        strand_groups = {}
         for strand in self.strands:
             if isinstance(strand, MaskedStrand):
                 continue
-            strand.start_attached = False
-            strand.end_attached = False
-            strand.has_circles = [False, False]  # Reset circles
-            logging.info(f"Reset state for {strand.layer_name}: has_circles={strand.has_circles}")
+            # Get prefix (everything before the underscore)
+            prefix = strand.layer_name.split('_')[0]
+            if prefix not in strand_groups:
+                strand_groups[prefix] = []
+            strand_groups[prefix].append(strand)
 
-        # Second pass: Update based on actual connections
-        for strand in self.strands:
-            if isinstance(strand, MaskedStrand):
-                continue
 
-            # Get all strands this strand is connected to
-            for other_strand in self.strands:
-                if isinstance(other_strand, MaskedStrand) or other_strand == strand:
-                    continue
+        # Second pass: Update based on connections from layer_state_manager
+        for prefix, strands_in_group in strand_groups.items():
+            for strand in strands_in_group:
+                # Get connections for this strand from layer_state_manager
+                strand_connections = connections.get(strand.layer_name, [])
+                
+                for connected_layer_name in strand_connections:
+                    # Find the connected strand in the same group
+                    connected_strand = next(
+                        (s for s in strands_in_group if s.layer_name == connected_layer_name), 
+                        None
+                    )
+                    
+                    if connected_strand:
+                    # Check start point connections
+                        if self.points_are_close(strand.start, connected_strand.start) or \
+                           self.points_are_close(strand.start, connected_strand.end):
+                            strand.start_attached = True
+                            strand.has_circles[0] = True
+                            logging.info(f"Found start connection for {strand.layer_name} with {connected_strand.layer_name}")
 
-                # Check start point connections
-                if self.points_are_close(strand.start, other_strand.start) or \
-                   self.points_are_close(strand.start, other_strand.end):
-                    strand.start_attached = True
-                    strand.has_circles[0] = True
-                    logging.info(f"Found start connection for {strand.layer_name} with {other_strand.layer_name}")
+                    # Check end point connections
+                        if self.points_are_close(strand.end, connected_strand.start) or \
+                           self.points_are_close(strand.end, connected_strand.end):
+                            strand.end_attached = True
+                            strand.has_circles[1] = True
+                            logging.info(f"Found end connection for {strand.layer_name} with {connected_strand.layer_name}")
 
-                # Check end point connections
-                if self.points_are_close(strand.end, other_strand.start) or \
-                   self.points_are_close(strand.end, other_strand.end):
-                    strand.end_attached = True
-                    strand.has_circles[1] = True
-                    logging.info(f"Found end connection for {strand.layer_name} with {other_strand.layer_name}")
-
-            logging.info(f"Final state for {strand.layer_name}: has_circles={strand.has_circles}")
+                logging.info(f"Final state for {strand.layer_name}: has_circles={strand.has_circles}")
 
     def set_layer_state_manager(self, layer_state_manager):
         self.layer_state_manager = layer_state_manager

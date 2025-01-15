@@ -129,7 +129,7 @@ class SettingsDialog(QDialog):
 
         self.video_buttons = []
 
-        for i in range(7):  # Assuming you have 7 tutorials
+        for i in range(5):  # Changed from 7 to 5 tutorials
             # Explanation Label
             explanation_label = QLabel(_[f'gif_explanation_{i+1}'])
             tutorial_layout.addWidget(explanation_label)
@@ -226,7 +226,7 @@ class SettingsDialog(QDialog):
         self.language_combobox.setItemText(0, _['english'])
         self.language_combobox.setItemText(1, _['french'])
         # Update tutorial explanations and play buttons
-        for i in range(7):
+        for i in range(5):  # Changed from 7 to 5
             index = i * 2  # Since each explanation and button are added sequentially
             explanation_label = self.tutorial_widget.layout().itemAt(index + 1).widget()
             explanation_label.setText(_[f'gif_explanation_{i+1}'])
@@ -289,10 +289,8 @@ class SettingsDialog(QDialog):
             os.path.join(mp4_directory, 'tutorial_1.mp4'),
             os.path.join(mp4_directory, 'tutorial_2.mp4'),
             os.path.join(mp4_directory, 'tutorial_3.mp4'),
-            os.path.join(mp4_directory, 'tutorial_4_1.mp4'),
-            os.path.join(mp4_directory, 'tutorial_4_2.mp4'),
-            os.path.join(mp4_directory, 'tutorial_5.mp4'),
-            os.path.join(mp4_directory, 'tutorial_6.mp4'),
+            os.path.join(mp4_directory, 'tutorial_4.mp4'),  # Previously tutorial_6.mp4
+            os.path.join(mp4_directory, 'tutorial_5.mp4'),  # Previously tutorial_7.mp4
         ]
 
         # Optional: Log the video paths for debugging

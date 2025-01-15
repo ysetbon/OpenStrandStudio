@@ -147,17 +147,17 @@ class LayerPanel(QWidget):
         self.draw_names_button = QPushButton("Draw Names")
         self.draw_names_button.setStyleSheet("""
             QPushButton {
-                background-color: #B0C4DE;
+                background-color: #e07bdb;
                 font-weight: bold;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #CAD7EC; /* lighter on hover */
+                background-color: #e694e2; /* lighter on hover */
             }
             QPushButton:pressed {
-                background-color: #96AAC4; /* darker on press */
+                background-color: #ba62b5; /* darker on press */
             }
         """)
         self.draw_names_button.clicked.connect(self.request_draw_names)
@@ -193,7 +193,7 @@ class LayerPanel(QWidget):
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #98FB98; /* lighter on hover */
+                background-color: #BFFFBF; /* even lighter on hover */
             }
             QPushButton:pressed {
                 background-color: #7BBF7B; /* darker on press */
@@ -212,7 +212,7 @@ class LayerPanel(QWidget):
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #FF8282; /* lighter on hover */
+                background-color: #FFA5A5; /* even lighter on hover */
             }
             QPushButton:pressed {
                 background-color: #E05C5C; /* darker on press */
@@ -225,17 +225,17 @@ class LayerPanel(QWidget):
         self.deselect_all_button = QPushButton("Deselect All")
         self.deselect_all_button.setStyleSheet("""
             QPushButton {
-                background-color: lightyellow;
+                background-color: #76acdc;
                 font-weight: bold;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #FFFACD; /* lighter on hover */
+                background-color: #9bc2e6; /* lighter on hover */
             }
             QPushButton:pressed {
-                background-color: #FFEB8A; /* darker on press */
+                background-color: #5890c0; /* darker on press */
             }
         """)
         self.deselect_all_button.clicked.connect(self.deselect_all)

@@ -843,77 +843,77 @@ class MainWindow(QMainWindow):
             (
                 self.mask_button,
                 "#199693",    # normal (teal)
-                "#35A8A6",    # hover (lighter teal)
+                "#4CCBC8",    # hover (much lighter teal)
                 "#0F625F",    # pressed (darkest teal)
                 "#0F625F"     # disabled
             ),
             (
                 self.select_strand_button,
                 "#F1C40F",    # normal (yellow)
-                "#F5D247",    # hover
+                "#F9E287",    # hover (brighter yellow)
                 "#BB9A0C",    # pressed
                 "#BB9A0C"     # disabled
             ),
             (
                 self.attach_button,
                 "#9B59B6",    # normal (purple)
-                "#AF7ABF",    # hover
+                "#D5A6E6",    # hover (much lighter purple)
                 "#703D80",    # pressed
                 "#703D80"     # disabled
             ),
             (
                 self.move_button,
                 "#D35400",    # normal (orange)
-                "#DB722c",    # hover
+                "#FFA366",    # hover (much lighter orange)
                 "#A84300",    # pressed
                 "#A84300"     # disabled
             ),
             (
                 self.rotate_button,
                 "#3498DB",    # normal (blue)
-                "#63AFE2",    # hover
+                "#92C9F0",    # hover (much lighter blue)
                 "#216B97",    # pressed
                 "#216B97"     # disabled
             ),
             (
                 self.toggle_grid_button,
                 "#E93E3E",    # normal (red)
-                "#EB5050",    # hover
+                "#FF7070",    # hover (brighter red)
                 "#ab2e2e",    # pressed
                 "#ab2e2e"     # disabled
             ),
             (
                 self.angle_adjust_button,
                 "#2ECC71",    # normal (green)
-                "#5CDF94",    # hover
+                "#86E5AD",    # hover (much lighter green)
                 "#1F9F56",    # pressed
                 "#1F9F56"     # disabled
             ),
             (
                 self.save_button,
-                "#F78FB3",    # normal (pink)
-                "#FAB0C9",    # hover
-                "#BF6D8D",    # pressed
-                "#BF6D8D"     # disabled
+                "#E75480",    # normal (pink)
+                "#FF9FBB",    # hover (much lighter pink)
+                "#B64064",    # pressed
+                "#B64064"     # disabled
             ),
             (
                 self.load_button,
                 "#8D6E63",    # normal (brown)
-                "#A1887F",    # hover
+                "#BEA499",    # hover (much lighter brown)
                 "#8D6E63",    # pressed
                 "#8D6E63"    # disabled
             ),
             (
                 self.save_image_button,
                 "#7D344D",    # normal (maroon)
-                "#A8535D",    # hover
+                "#B36E89",    # hover (much lighter maroon)
                 "#7D344D",    # pressed
                 "#7D344D"    # disabled
             ),
             (
                 self.toggle_control_points_button,
                 "#5F7A93",    # normal (blue-gray)
-                "#7C92A9",    # hover
+                "#9CB3CC",    # hover (much lighter blue-gray)
                 "#45596E",    # pressed
                 "#394857"     # disabled
             )

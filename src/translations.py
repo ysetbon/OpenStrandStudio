@@ -76,7 +76,7 @@ translations = {
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:13px;">
-            © 2024 OpenStrand Studio
+            © 2025 OpenStrand Studio - Version 1.080
         </p>
         ''',
 
@@ -223,7 +223,7 @@ translations = {
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:13px;">
-            © 2024 OpenStrand Studio
+            © 2025 OpenStrand Studio - Version 1.080
         </p>
         ''',
         # LayerPanel translations

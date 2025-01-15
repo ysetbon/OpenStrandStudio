@@ -264,3 +264,25 @@ Ces mises à jour améliorent le flux de travail du masquage et la qualité visu
    - Amélioration de la stabilité de la gestion des calques
 
 ------
+
+## Version 1.080 (Sortie : 16/01/2025)
+
+### Améliorations :
+
+1. **Mode Déplacement et Attachement Amélioré :**
+   - Fonctionnalité de déplacement et d'attachement plus intuitive et conviviale
+   - Indicateurs visuels plus clairs pour les actions disponibles
+   - Meilleure orientation de l'utilisateur pour la manipulation des brins
+
+2. **Corrections de la Gestion des Groupes :**
+   - Résolution des problèmes d'attachement survenant après la création de groupes
+   - Correction des problèmes d'attachement des brins lors de l'utilisation du dialogue d'angle des brins
+
+3. **Amélioration de l'Interface Utilisateur :**
+   - Amélioration des couleurs et du style des boutons dans la fenêtre principale
+   - Meilleure cohérence visuelle dans toute l'application
+   - Éléments d'interface utilisateur améliorés pour plus de clarté
+
+Ces mises à jour se concentrent sur l'amélioration de l'expérience utilisateur en rendant l'interface plus intuitive et en corrigeant les problèmes clés de fonctionnalité avec les groupes et les attachements.
+
+------

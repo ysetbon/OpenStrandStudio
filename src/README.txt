@@ -263,3 +263,25 @@ These updates enhance the masking workflow and improve the visual quality of att
    - Improved layer management stability
 
 ------
+
+## Version 1.080 (Released: 16/01/2025)
+
+### Improvements:
+
+1. **Enhanced Move and Attach Mode:**
+   - Made the move and attach functionality more intuitive and user-friendly
+   - Clearer visual indicators for available actions
+   - Improved user guidance for strand manipulation
+
+2. **Group Management Fixes:**
+   - Resolved attachment issues that occurred after creating groups
+   - Fixed problems with strand attachments when using the angle strand dialog
+
+3. **UI Enhancement:**
+   - Improved colors and styling of buttons in the main window
+   - Better visual consistency across the application
+   - Enhanced user interface elements for better clarity
+
+These updates focus on improving the user experience by making the interface more intuitive and fixing key functionality issues with groups and attachments.
+
+------

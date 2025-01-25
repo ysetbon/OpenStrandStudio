@@ -638,6 +638,9 @@ class AttachedStrand(Strand):
         if hasattr(parent, 'canvas'):
             self.canvas = parent.canvas
 
+        # 1) NEW: Add default black circle stroke color
+        self.circle_stroke_color = QColor(0, 0, 0, 255)  # default is solid black
+
     @property
     def start(self):
         """Getter for the start point."""
@@ -1020,7 +1023,7 @@ class AttachedStrand(Strand):
         outer_mask = outer_circle.subtracted(mask_rect)
         
         temp_painter.setPen(Qt.NoPen)
-        temp_painter.setBrush(self.stroke_color)
+        temp_painter.setBrush(self.circle_stroke_color)
         temp_painter.drawPath(outer_mask)
 
         # Then draw the inner circle (fill)
@@ -1175,9 +1178,15 @@ class MaskedStrand(Strand):
     def set_custom_mask(self, mask_path):
         """Set a custom mask path for this masked strand."""
         self.custom_mask_path = mask_path
-        # Recalculate center point when mask changes
-        self.calculate_center_point()
-        logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+        self.edited_center_point = self._calculate_center_from_path(mask_path)
+        
+        # Add a check before accessing self.edited_center_point:
+        if self.edited_center_point is None:
+            logging.warning(f"No valid center point for {self.layer_name}, path might be empty.")
+            return
+        
+        logging.info(f"Updated center point after custom mask set for {self.layer_name}: "
+                     f"{self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
         # Save the current state of deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
             logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
@@ -1650,7 +1659,7 @@ class MaskedStrand(Strand):
         
     def draw_highlight(self, painter):
         """
-        Draw a thicker and red stroke around this masked strand’s mask path
+        Draw a thicker and red stroke around this masked strand's mask path
         to highlight it similarly to other strands.
         """
         painter.save()

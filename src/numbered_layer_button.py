@@ -8,7 +8,7 @@ class NumberedLayerButton(QPushButton):
     color_changed = pyqtSignal(int, QColor)
     attachable_changed = pyqtSignal(int, bool)
 
-    def __init__(self, text, count, color=QColor('purple'), parent=None):
+    def __init__(self, text, count, color=QColor('purple'), parent=None, layer_context=None):
         """
         Initialize the NumberedLayerButton.
 
@@ -17,6 +17,7 @@ class NumberedLayerButton(QPushButton):
             count (int): The count or number associated with this layer.
             color (QColor): The initial color of the button (default is purple).
             parent (QWidget): The parent widget (default is None).
+            layer_context (object): The layer context object that has the all_strands attribute.
         """
         super().__init__(parent)
         self._text = text  # Store the text privately
@@ -30,6 +31,7 @@ class NumberedLayerButton(QPushButton):
         self.locked = False
         self.selectable = False
         self.attachable = False  # Property to indicate if strand can be attached
+        self.layer_context = layer_context
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
 
@@ -203,6 +205,18 @@ class NumberedLayerButton(QPushButton):
             painter.setBrush(green_color)
             painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
 
+    def set_transparent_circle_stroke(self):
+        """
+        Sets the attached strand's circle stroke color to transparent.
+        """
+        self.set_circle_stroke_color(Qt.transparent)
+
+    def reset_default_circle_stroke(self):
+        """
+        Resets the attached strand's circle stroke color to solid black.
+        """
+        self.set_circle_stroke_color(QColor(0, 0, 0, 255))
+
     def show_context_menu(self, pos):
         """
         Show a context menu when the button is right-clicked.
@@ -240,6 +254,17 @@ class NumberedLayerButton(QPushButton):
             change_color_action = QAction("Change Color", self)
             change_color_action.triggered.connect(self.change_color)
             context_menu.addAction(change_color_action)
+
+            # Treat anything not ending in "_1" as an attached strand
+            if not self.text().endswith('_1'):
+                print("AttachedStrand found")
+                transparent_stroke_action = context_menu.addAction("Set Transparent Circle Stroke")
+                reset_stroke_action = context_menu.addAction("Reset Default Stroke")
+
+                # Connect directly to helper methods
+                transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
+                reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
+
             context_menu.exec_(self.mapToGlobal(pos))
 
     def change_color(self):
@@ -289,3 +314,74 @@ class NumberedLayerButton(QPushButton):
         self.masked_mode = False  # Reset masked mode flag
         self.update_style()  # This will use the original color
         self.update()  # Force a visual update
+
+    def set_circle_stroke_color(self, color):
+        """
+        Helper that sets circle_stroke_color on the correct AttachedStrand,
+        making sure only the specific strand matching our button text is updated.
+        """
+        button_text = self.text()
+        if '_' not in button_text:
+            print(f"Button text '{button_text}' does not have an underscore; skipping stroke color change.")
+            return
+
+        found = False
+
+        if self.layer_context and hasattr(self.layer_context, "all_strands"):
+            for strand in self.layer_context.all_strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                    strand.circle_stroke_color = color
+                    if hasattr(strand, 'update'):
+                        strand.update()
+                    found = True
+        else:
+            parent = self.parent()
+            while parent is not None:
+                if hasattr(parent, 'layer_context') and hasattr(parent.layer_context, 'all_strands'):
+                    for strand in parent.layer_context.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update()
+                    found = True
+                    break
+                elif hasattr(parent, 'all_strands'):
+                    for strand in parent.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update()
+                    found = True
+                    break
+                parent = parent.parent()
+
+            # Fallback: search for the LayerPanel (which has canvas.strands)
+            if not found:
+                layer_panel = None
+                parent2 = self.parent()
+                while parent2 is not None:
+                    if hasattr(parent2, 'canvas') and hasattr(parent2.canvas, 'strands'):
+                        layer_panel = parent2
+                        break
+                    parent2 = parent2.parent()
+
+                if layer_panel:
+                    for strand in layer_panel.canvas.strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update()
+                    found = True
+
+                if not found:
+                    print("Warning: Could not find a parent or layer_context with 'all_strands' to update.")
+
+        # ---------------------------------------------
+        # NEW: Force a canvas or widget repaint if we found the strand
+        if found:
+            if 'layer_panel' in locals() and layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update()
+            else:
+                # Fall back to just updating ourselves or the parent widget
+                self.update()
+        # ---------------------------------------------

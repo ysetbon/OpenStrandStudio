@@ -144,7 +144,9 @@ translations = {
         'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',
         'mask_edit_mode_exited': 'Mask edit mode exited',
         'edit_mask': 'Edit Mask',
-        'reset_mask': 'Reset Mask'
+        'reset_mask': 'Reset Mask',
+        'transparent_stroke': 'Transparent Stroke',
+        'restore_default_stroke': 'Restore Default Stroke'
     },
     'fr': {
         # MainWindow translations
@@ -288,7 +290,9 @@ translations = {
         'edit_mask': 'Éditer Masque',
         'reset_mask': 'Réinit Masque',
         'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',
-        'mask_edit_mode_exited': 'Mode édition masque terminé'
+        'mask_edit_mode_exited': 'Mode édition masque terminé',
+        'transparent_stroke': 'Tracé Transparent',
+        'restore_default_stroke': 'Restaurer Tracé Par Défaut'
     }
 }
 

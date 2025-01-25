@@ -282,6 +282,15 @@ These updates enhance the masking workflow and improve the visual quality of att
    - Better visual consistency across the application
    - Enhanced user interface elements for better clarity
 
+4. **Save/Load Functionality Improvements:**
+   - Enhanced layer loading to maintain correct creation order from JSON saves
+   - More reliable and consistent project file handling
+
+5. **Mask Editing Enhancements:**
+   - Improved mask editing behavior when working with groups
+   - Better rotation handling of edited masks based on group center
+   - Enhanced overall mask manipulation (work in progress but functional)
+
 These updates focus on improving the user experience by making the interface more intuitive and fixing key functionality issues with groups and attachments.
 
 ------

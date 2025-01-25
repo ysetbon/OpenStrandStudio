@@ -283,6 +283,15 @@ Ces mises à jour améliorent le flux de travail du masquage et la qualité visu
    - Meilleure cohérence visuelle dans toute l'application
    - Éléments d'interface utilisateur améliorés pour plus de clarté
 
+4. **Améliorations de la Sauvegarde/Chargement :**
+   - Chargement amélioré des calques pour maintenir l'ordre de création correct depuis les sauvegardes JSON
+   - Gestion des fichiers de projet plus fiable et cohérente
+
+5. **Améliorations de l'Édition des Masques :**
+   - Amélioration du comportement d'édition des masques lors du travail avec des groupes
+   - Meilleure gestion de la rotation des masques édités basée sur le centre du groupe
+   - Amélioration globale de la manipulation des masques (en développement mais fonctionnel)
+
 Ces mises à jour se concentrent sur l'amélioration de l'expérience utilisateur en rendant l'interface plus intuitive et en corrigeant les problèmes clés de fonctionnalité avec les groupes et les attachements.
 
 ------

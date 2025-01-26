@@ -1477,11 +1477,11 @@ class MaskedStrand(Strand):
         if self.is_selected:
             logging.info("Drawing selected strand highlights")
             # Draw the mask outline
-            highlight_pen = QPen(Qt.transparent, 0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
+            painter.setBrush(QBrush(QColor(255, 0, 0, 64)))  # Slight transparency fill
 
-            # Draw the mask path with our highlight pen
+            # Draw the mask path with our highlight pen and brush
             if hasattr(self, 'get_mask_path'):
                 painter.drawPath(self.get_mask_path())
 
@@ -1796,17 +1796,18 @@ class MaskedStrand(Strand):
     def draw_highlight(self, painter):
         """
         Draw a thicker and red stroke around this masked strand's mask path
-        to highlight it similarly to other strands.
+        to highlight it similarly to other strands. Now uses semi-transparent
+        pen and brush for a visible highlight.
         """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Use a thicker red pen to draw the mask outline
-        highlight_pen = QPen(Qt.transparent, 0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        # Use a semi-transparent red pen and brush
+        highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         painter.setPen(highlight_pen)
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(QBrush(QColor(255, 0, 0, 64)))  # Slight transparency fill
 
-        # Draw the mask path with our highlight pen
+        # Draw the mask path with our highlight pen and brush
         if hasattr(self, 'get_mask_path'):
             painter.drawPath(self.get_mask_path())
 

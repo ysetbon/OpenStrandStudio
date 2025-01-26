@@ -276,6 +276,19 @@ class LayerStateManager(QObject):
                     strand_dict[masked_layer_name] = masked_strand
                     logging.info(f"Created masked strand: {masked_layer_name}")
 
+        # Now read the 'connections' from state_data.
+        connections = state_data['connections']
+        for parent_name, child_names in connections.items():
+            parent_strand = strand_dict.get(parent_name)
+            if not parent_strand:
+                continue
+
+            for child_name in child_names:
+                child_strand = strand_dict.get(child_name)
+                if child_strand and child_strand is not parent_strand:
+                    # This is where "connectLayers" is used 
+                    self.connectLayers(parent_strand, child_strand)
+
         # Update UI
         if self.layer_panel:
             self.layer_panel.rebuild_layer_buttons()
@@ -396,6 +409,33 @@ class LayerStateManager(QObject):
     def getConnections(self):
         """Return the current layer connections."""
         return self.layer_state.get('connections', {})
+
+    def connectLayers(self, parent_strand, child_strand):
+        """
+        Called after loading or attaching a child_strand to a parent_strand.
+        Currently sets the child's circle_stroke_color to black or parent's color 
+        unconditionally. Let's fix that to avoid overwriting pre-existing transparency.
+        """
+
+        logging.info(f"Connected layers: {parent_strand.layer_name} and {child_strand.layer_name}")
+
+        old_color = child_strand.circle_stroke_color
+        # If child had absolutely no color at all, copy the parent's color
+        if old_color is None:
+            child_strand.circle_stroke_color = parent_strand.circle_stroke_color
+            logging.info(
+                f"For child {child_strand.layer_name}, circle color was None. Using parent's color: "
+                f"rgba({parent_strand.circle_stroke_color.red()}, "
+                f"{parent_strand.circle_stroke_color.green()}, "
+                f"{parent_strand.circle_stroke_color.blue()}, "
+                f"{parent_strand.circle_stroke_color.alpha()})"
+            )
+        else:
+            # If the child's alpha=0 came from JSON, let it stand
+            logging.info(
+                f"For child {child_strand.layer_name}, leaving already-loaded circle color: "
+                f"rgba({old_color.red()}, {old_color.green()}, {old_color.blue()}, {old_color.alpha()})"
+            )
 
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 

@@ -24,7 +24,14 @@ def serialize_color(color):
         return {"r": 0, "g": 0, "b": 0, "a": 255}
 
 def deserialize_color(data):
-    return QColor(data["r"], data["g"], data["b"], data["a"])
+    """Deserialize a color from saved data."""
+    if not isinstance(data, dict) or not all(k in data for k in ['r','g','b','a']):
+        logging.warning(f"Invalid color data format: {data}")
+        return QColor(0, 0, 0, 255)
+    
+    color = QColor(data["r"], data["g"], data["b"], data["a"])
+    logging.info(f"Deserialized color from {data} to QColor({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
+    return color
 
 def serialize_point(point):
     """Serialize a point to a dictionary format."""
@@ -155,6 +162,15 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 
                 # Update the parent strand's position if needed
                 update_parent_strand_position(parent_strand, strand)
+
+                # Explicitly apply any circle_stroke_color from JSON so alpha=0 isn't lost:
+                if "circle_stroke_color" in data and data["circle_stroke_color"] is not None:
+                    raw_color = data["circle_stroke_color"]
+                    loaded_color = deserialize_color(raw_color)
+                    strand.circle_stroke_color = loaded_color
+                    logging.info(f"Loaded circle_stroke_color for {strand.layer_name}: "
+                                f"rgba({loaded_color.red()}, {loaded_color.green()}, "
+                                f"{loaded_color.blue()}, {loaded_color.alpha()})")
             else:
                 logging.error(f"Parent strand {parent_layer_name} not found for AttachedStrand {layer_name}")
                 return None
@@ -208,32 +224,51 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.is_first_strand = data.get("is_first_strand", False)
         strand.is_start_side = data.get("is_start_side", True)
 
-        # Set control points if they exist
+        # Now handle control_points if present
         if "control_points" in data:
             control_points = data["control_points"]
             if control_points[0]:
                 strand.control_point1 = deserialize_point(control_points[0])
             if control_points[1]:
                 strand.control_point2 = deserialize_point(control_points[1])
-
-            # Now call the new method on the Strand class that preserves control points
             strand.update_control_points(reset_control_points=False)
+
+        # NEW: Circle stroke color logic similar to control_points
+        if "circle_stroke_color" in data and data["circle_stroke_color"] is not None:
+            raw_color = data["circle_stroke_color"]
+            logging.info(f"Raw circle_stroke_color from JSON for {data.get('layer_name', 'unknown')}: {raw_color}")
+            loaded_color = deserialize_color(raw_color)
+
+            # Only actually set the property if we have something non-null
+            strand.circle_stroke_color = loaded_color
+            if loaded_color.alpha() == 0:
+                logging.info(f"[DEBUG] {strand.layer_name} loaded with a transparent circle_stroke_color (alpha=0).")
+            else:
+                logging.info(f"[DEBUG] {strand.layer_name} circle stroke alpha after load: {loaded_color.alpha()}")
+
+            logging.info(
+                f"Loaded circle_stroke_color for {data.get('layer_name', 'unknown')}: "
+                f"(r={loaded_color.red()}, g={loaded_color.green()}, "
+                f"b={loaded_color.blue()}, a={loaded_color.alpha()})"
+            )
+        else:
+            # If the JSON did not contain circle_stroke_color, we do NOT overwrite with black
+            logging.info(f"No circle_stroke_color found for {strand.layer_name}, leaving as-is.")
 
         if strand_type == "MaskedStrand" and "deletion_rectangles" in data:
             strand.deletion_rectangles = data["deletion_rectangles"]
             strand.update_mask_path()
             logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
 
-        # Set circle_stroke_color if present
-        if "circle_stroke_color" in data and hasattr(strand, 'circle_stroke_color'):
-            loaded_color = deserialize_color(data["circle_stroke_color"])
-            strand.circle_stroke_color = loaded_color
-            # Log the exact RGBA to confirm we have alpha=0 if the JSON says so
-            r, g, b, a = strand.circle_stroke_color.getRgb()
-            logging.info(f"Loaded circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
-
         if hasattr(strand, 'update'):
             strand.update(None, False)
+
+        # Add verification logging after strand creation
+        if hasattr(strand, 'circle_stroke_color'):
+            final_color = strand.circle_stroke_color
+            logging.info(f"Final circle_stroke_color for {strand.layer_name}: "
+                        f"(r={final_color.red()}, g={final_color.green()}, "
+                        f"b={final_color.blue()}, a={final_color.alpha()})")
 
         return strand
 
@@ -271,7 +306,6 @@ def load_strands(filename, canvas):
             parent_strand = strand_dict.get(parent_layer_name)
             
             if parent_strand:
-                # Create the attached strand
                 start = deserialize_point(strand_data["start"])
                 end = deserialize_point(strand_data["end"])
                 strand = AttachedStrand(parent_strand, end)
@@ -288,6 +322,17 @@ def load_strands(filename, canvas):
                 strand.has_circles = strand_data["has_circles"]
                 strand.is_first_strand = strand_data["is_first_strand"]
                 strand.is_start_side = strand_data["is_start_side"]
+                
+                # NEW: explicitly apply any circle_stroke_color from JSON
+                if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
+                    raw_color = strand_data["circle_stroke_color"]
+                    loaded_color = deserialize_color(raw_color)
+                    strand.circle_stroke_color = loaded_color
+                    logging.info(
+                        f"AttachedStrand {strand.layer_name} circle color from JSON: "
+                        f"(r={loaded_color.red()}, g={loaded_color.green()}, "
+                        f"b={loaded_color.blue()}, a={loaded_color.alpha()})"
+                    )
                 
                 # Add to collections
                 index = strand_data["index"]

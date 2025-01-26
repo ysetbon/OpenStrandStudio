@@ -48,12 +48,10 @@ class Strand:
 
         self.layer_name = layer_name
         self.set_number = set_number
+        self._circle_stroke_color = None
         self.update_attachable()
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
-
-        # Give every Strand at least a placeholder for circle_stroke_color
-        self.circle_stroke_color = None
 
     @property
     def start(self):
@@ -82,6 +80,28 @@ class Strand:
         self._end = value
         self.update_shape()
 
+    @property
+    def circle_stroke_color(self):
+        # If nothing was set or loaded, return black as the default:
+        if self._circle_stroke_color is None:
+            return QColor(0, 0, 0, 255)
+        return self._circle_stroke_color
+
+    @circle_stroke_color.setter
+    def circle_stroke_color(self, value):
+        if value is not None and isinstance(value, (Qt.GlobalColor, int)):
+            value = QColor(value)
+
+        if value is None:
+            logging.info(f"Setting default circle_stroke_color for {self.layer_name}")
+            # If setter is called with None, revert to default black
+            self._circle_stroke_color = QColor(0, 0, 0, 255)
+        else:
+            logging.info(
+                f"Setting circle_stroke_color for {self.layer_name} to "
+                f"rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})"
+            )
+            self._circle_stroke_color = value
 
     def draw_selection_path(self, painter):
         """Draws the selection area of the strand."""
@@ -637,11 +657,23 @@ class AttachedStrand(Strand):
         self.start_selected = False
         self.end_selected = False
 
-        # Inherit canvas reference from parent strand
         if hasattr(parent, 'canvas'):
             self.canvas = parent.canvas
-        if self.circle_stroke_color is None:
-            self.circle_stroke_color = QColor(0, 0, 0, 255)  # default is solid black
+
+        # --------------------------------------------------------------------
+        # Removed the force-default to black if circle_stroke_color is None.
+        # Instead, keep the color from JSON if it has been deserialized.
+        #
+        # OLD CODE (removed):
+        # if self.circle_stroke_color is None:
+        #     self.circle_stroke_color = QColor(0, 0, 0, 255)
+        # elif self.circle_stroke_color.alpha() == 0:
+        #     logging.info("Circle stroke was loaded with alpha=0, leaving it fully transparent.")
+        #
+        # NEW CODE to log alpha = 0 if needed:
+        if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
+            logging.info("Circle stroke was loaded with alpha=0, leaving it fully transparent.")
+        # --------------------------------------------------------------------
 
     @property
     def start(self):
@@ -1020,10 +1052,17 @@ class AttachedStrand(Strand):
         transform.translate(-self.start.x(), -self.start.y())
         mask_rect = transform.map(mask_rect)
 
-
         outer_circle = QPainterPath()
         outer_circle.addEllipse(self.start, circle_radius, circle_radius)
         outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
         temp_painter.setPen(Qt.NoPen)
         temp_painter.setBrush(self.circle_stroke_color)
         temp_painter.drawPath(outer_mask)
@@ -1674,6 +1713,8 @@ class MaskedStrand(Strand):
             painter.drawPath(self.get_mask_path())
 
         painter.restore()
+
+
 
 
 

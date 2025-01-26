@@ -17,6 +17,8 @@ def serialize_color(color):
     elif isinstance(color, int):  # Handle Qt.GlobalColor enums
         qcolor = QColor(color)
         return {"r": qcolor.red(), "g": qcolor.green(), "b": qcolor.blue(), "a": qcolor.alpha()}
+    elif isinstance(color, dict) and all(k in color for k in ['r','g','b','a']):
+        return color
     else:
         # Default to black color
         return {"r": 0, "g": 0, "b": 0, "a": 255}
@@ -51,6 +53,12 @@ def serialize_strand(strand, canvas, index=None):
         "is_first_strand": getattr(strand, 'is_first_strand', False),
         "is_start_side": getattr(strand, 'is_start_side', True),
     }
+
+    # Only save circle_stroke_color if it exists
+    if hasattr(strand, 'circle_stroke_color'):
+        data["circle_stroke_color"] = serialize_color(strand.circle_stroke_color)
+    else:
+        data["circle_stroke_color"] = None
 
     # Add attached_to information for AttachedStrands
     if isinstance(strand, AttachedStrand):
@@ -216,7 +224,16 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             strand.update_mask_path()
             logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
 
+        # Set circle_stroke_color if present
+        if "circle_stroke_color" in data and hasattr(strand, 'circle_stroke_color'):
+            loaded_color = deserialize_color(data["circle_stroke_color"])
+            strand.circle_stroke_color = loaded_color
+            # Log the exact RGBA to confirm we have alpha=0 if the JSON says so
+            r, g, b, a = strand.circle_stroke_color.getRgb()
+            logging.info(f"Loaded circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
 
+        if hasattr(strand, 'update'):
+            strand.update(None, False)
 
         return strand
 

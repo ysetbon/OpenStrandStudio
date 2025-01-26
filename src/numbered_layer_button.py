@@ -332,7 +332,7 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                     strand.circle_stroke_color = color
                     if hasattr(strand, 'update'):
-                        strand.update()
+                        strand.update(None, False)
                     found = True
         else:
             parent = self.parent()
@@ -342,7 +342,7 @@ class NumberedLayerButton(QPushButton):
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.circle_stroke_color = color
                             if hasattr(strand, 'update'):
-                                strand.update()
+                                strand.update(None, False)
                     found = True
                     break
                 elif hasattr(parent, 'all_strands'):
@@ -350,7 +350,7 @@ class NumberedLayerButton(QPushButton):
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.circle_stroke_color = color
                             if hasattr(strand, 'update'):
-                                strand.update()
+                                strand.update(None, False)
                     found = True
                     break
                 parent = parent.parent()
@@ -370,7 +370,7 @@ class NumberedLayerButton(QPushButton):
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.circle_stroke_color = color
                             if hasattr(strand, 'update'):
-                                strand.update()
+                                strand.update(None, False)
                     found = True
 
                 if not found:

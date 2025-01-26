@@ -52,6 +52,9 @@ class Strand:
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
 
+        # Give every Strand at least a placeholder for circle_stroke_color
+        self.circle_stroke_color = None
+
     @property
     def start(self):
         """Getter for the start point."""
@@ -637,9 +640,8 @@ class AttachedStrand(Strand):
         # Inherit canvas reference from parent strand
         if hasattr(parent, 'canvas'):
             self.canvas = parent.canvas
-
-        # 1) NEW: Add default black circle stroke color
-        self.circle_stroke_color = QColor(0, 0, 0, 255)  # default is solid black
+        if self.circle_stroke_color is None:
+            self.circle_stroke_color = QColor(0, 0, 0, 255)  # default is solid black
 
     @property
     def start(self):
@@ -923,6 +925,8 @@ class AttachedStrand(Strand):
                     return 0.0
         
         return math.atan2(tangent.y(), tangent.x())
+    
+
     def draw(self, painter):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save()
@@ -1016,21 +1020,18 @@ class AttachedStrand(Strand):
         transform.translate(-self.start.x(), -self.start.y())
         mask_rect = transform.map(mask_rect)
 
-        # Draw the circle parts
-        # First draw the outer circle (stroke)
+
         outer_circle = QPainterPath()
         outer_circle.addEllipse(self.start, circle_radius, circle_radius)
         outer_mask = outer_circle.subtracted(mask_rect)
-        
         temp_painter.setPen(Qt.NoPen)
         temp_painter.setBrush(self.circle_stroke_color)
         temp_painter.drawPath(outer_mask)
 
-        # Then draw the inner circle (fill)
+        # Then draw the fill for the inner circle:
         inner_circle = QPainterPath()
-        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
         inner_mask = inner_circle.subtracted(mask_rect)
-        
         temp_painter.setBrush(self.color)
         temp_painter.drawPath(inner_mask)
 
@@ -1317,7 +1318,6 @@ class MaskedStrand(Strand):
             # Apply the edited mask
             inverse_path = QPainterPath()
             inverse_path.addRect(QRectF(temp_image.rect()))
-            inverse_path = inverse_path.subtracted(mask_path)
 
         else:
             logging.info("Using base intersection mask")
@@ -1494,7 +1494,6 @@ class MaskedStrand(Strand):
                 top_right = QPointF(*rect['top_right'])
                 bottom_left = QPointF(*rect['bottom_left'])
                 bottom_right = QPointF(*rect['bottom_right'])
-                deletion_path = QPainterPath()
 
                 min_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
                 max_x = max(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())

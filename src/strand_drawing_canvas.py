@@ -1259,18 +1259,30 @@ class StrandDrawingCanvas(QWidget):
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
 
-            def set_highlight_pen(width_adjustment=0):
-                pen = QPen(self.highlight_color, self.highlight_width + width_adjustment)
+            # Modified set_highlight_pen: allow a flag "use_transparent" for the highlight
+            def set_highlight_pen(width_adjustment=0, use_transparent=False):
+                if use_transparent:
+                    pen = QPen(QColor(0, 0, 0, 0), self.highlight_width + width_adjustment)
+                else:
+                    pen = QPen(self.highlight_color, self.highlight_width + width_adjustment)
                 pen.setJoinStyle(Qt.MiterJoin)
                 pen.setCapStyle(Qt.SquareCap)
                 painter.setPen(pen)
 
-            set_highlight_pen()          # Thicker stroke
+            # Thicker stroke for the main path
+            set_highlight_pen()
             painter.drawPath(strand.get_path())
 
-            set_highlight_pen(0.5)       # Slightly thinner stroke for the circles
+            # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
                 if has_circle:
+                    # If we're dealing with the start circle (i == 0) and
+                    # circle_stroke_color is fully transparent, use_transparent=True
+                    if i == 0 and strand.circle_stroke_color.alpha() == 0:
+                        set_highlight_pen(0.5, use_transparent=True)
+                    else:
+                        set_highlight_pen(0.5, use_transparent=False)
+
                     center = strand.start if i == 0 else strand.end
                     painter.drawEllipse(center, strand.width / 2, strand.width / 2)
 

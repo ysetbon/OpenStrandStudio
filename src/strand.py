@@ -1035,6 +1035,7 @@ class AttachedStrand(Strand):
             highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
+            
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(stroke_path)

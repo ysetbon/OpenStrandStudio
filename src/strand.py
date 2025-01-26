@@ -566,6 +566,62 @@ class Strand:
             logging.error(f"Error drawing control points: {e}")
             # Continue drawing even if control points fail
 
+        # ----------------------------------------------------------------
+        # NEW CODE: also draw an ending circle if self.has_circles == [False, True]
+        if self.has_circles == [False, True]:
+            # Re-create a temp image so we can blend a half-circle on the end
+            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            temp_image.fill(Qt.transparent)
+            temp_painter = QPainter(temp_image)
+            temp_painter.setRenderHint(QPainter.Antialiasing)
+
+            # Compute tangent & angle at the end (t=1.0)
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+            # We'll do the same half-circle approach
+            total_diameter = self.width + self.stroke_width * 2
+            circle_radius = total_diameter / 2
+
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke with self.circle_stroke_color or self.stroke_color (your preference)
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.circle_stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle again (no mask) so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
     def remove_attached_strands(self):
         """Recursively remove all attached strands."""
         for attached_strand in self.attached_strands:
@@ -1033,19 +1089,12 @@ class AttachedStrand(Strand):
 
         # Create the masking rectangle for half circle
         mask_rect = QPainterPath()
-
-        # Calculate rectangle dimensions for masking half of the circle
-        rect_width = total_diameter * 2  # Make it wide enough to cover the circle
-        rect_height = total_diameter * 2  # Make it tall enough to cover the circle
-
-        # Calculate rectangle position
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
         rect_x = self.start.x() - rect_width/2
-        rect_y = self.start.y()  # Position at the center vertically
-        
-        # Create the masking rectangle
+        rect_y = self.start.y()
         mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
 
-        # Create and apply the transform
         transform = QTransform()
         transform.translate(self.start.x(), self.start.y())
         transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
@@ -1080,7 +1129,55 @@ class AttachedStrand(Strand):
         inner_circle.addEllipse(self.start, self.width/2, self.width/2)
         temp_painter.drawPath(inner_circle)
         painter.drawImage(0, 0, temp_image)
-        
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute an angle for the end by flipping the start angle 180°.
+            angle_end = angle + math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2))
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+        # ----------------------------------------------------------------
+
         temp_painter.end()
         painter.restore()
 

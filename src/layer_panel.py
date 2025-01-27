@@ -417,27 +417,46 @@ class LayerPanel(QWidget):
         return button
 
     def show_masked_layer_context_menu(self, strand_index, position):
-        """Show context menu for masked layer buttons."""
+        """
+        # SECOND DEFINITION (kept)
+        Show context menu for masked layer buttons, with translations.
+        """
         if strand_index >= 0 and isinstance(self.canvas.strands[strand_index], MaskedStrand):
             menu = QMenu(self)
-            
-            # Add Edit Mask action
-            edit_action = menu.addAction("Edit Mask")
+            _ = translations[self.language_code]
+
+            edit_action = menu.addAction(_['edit_mask'])
             edit_action.triggered.connect(
-                lambda: self.request_edit_mask(strand_index)
+                lambda: self.on_edit_mask_click(menu, strand_index)
             )
-            
-            # Add Reset Mask action
-            reset_action = menu.addAction("Reset Mask")
+
+            reset_action = menu.addAction(_['reset_mask'])
             reset_action.triggered.connect(
-                lambda: self.reset_mask(strand_index)
+                lambda: (self.reset_mask(strand_index), menu.close())
             )
-            
-            # Get the button that triggered the menu
+
             button = self.layer_buttons[strand_index]
-            menu.exec_(button.mapToGlobal(position))
+            global_pos = button.mapToGlobal(button.rect().topRight())
+            menu.exec_(global_pos)
 
+    def on_edit_mask_click(self, menu, strand_index):
+        """
+        Disconnect context-menu for that button, close the menu,
+        then switch to mask-edit mode.
+        """
+        # Close the QMenu:
+        menu.close()
+        menu.hide()
 
+        # Disconnect the old context-menu request from this button:
+        button = self.layer_buttons[strand_index]
+        try:
+            button.customContextMenuRequested.disconnect()
+        except TypeError:
+            pass
+
+        # Now actually enter mask-edit mode:
+        self.request_edit_mask(strand_index)
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""
@@ -888,63 +907,38 @@ class LayerPanel(QWidget):
         QTimer.singleShot(10, lambda: scrollbar.setValue(current_scroll))
         
         return button
-    def show_masked_layer_context_menu(self, strand_index, position):
-        """Show context menu for masked layer buttons."""
-        if strand_index >= 0 and isinstance(self.canvas.strands[strand_index], MaskedStrand):
-            menu = QMenu(self)
-            _ = translations[self.language_code]
-            
-            # Add Edit Mask action with translation
-            edit_action = menu.addAction(_['edit_mask'])
-            edit_action.triggered.connect(
-                lambda: self.request_edit_mask(strand_index)
-            )
-            
-            # Add Reset Mask action with translation
-            reset_action = menu.addAction(_['reset_mask'])
-            reset_action.triggered.connect(
-                lambda: self.reset_mask(strand_index)
-            )
-            
-            # Get the button that triggered the menu
-            button = self.layer_buttons[strand_index]
-            
-            # Map the button's position to global coordinates
-            global_pos = button.mapToGlobal(button.rect().topRight())
-            
-            # Show menu at the button's right side
-            menu.exec_(global_pos)
-
-
-
-    def reset_mask(self, strand_index):
-        """Reset the mask to its original intersection."""
-        if self.canvas:
-            logging.info(f"Resetting mask for strand {strand_index}")
-            self.canvas.reset_mask(strand_index)
 
     def request_edit_mask(self, strand_index):
         """
         Enter mask editing mode for a specific strand.
-        
+
         Args:
             strand_index (int): Index of the masked strand to edit
         """
         if self.canvas:
-            # Enter mask editing mode
+            # Make sure the index is within bounds.
+            if strand_index < 0 or strand_index >= len(self.canvas.strands):
+                logging.warning(f"request_edit_mask called with invalid index {strand_index}.")
+                return
+
+            # Ensure the strand is actually a MaskedStrand before editing.
+            if not isinstance(self.canvas.strands[strand_index], MaskedStrand):
+                logging.warning(f"request_edit_mask called on a non-masked strand at index {strand_index}.")
+                return
+
             self.mask_editing = True
-            
-            # Visual feedback that we're in mask editing mode
             _ = translations[self.language_code]
             message = _['mask_edit_mode_message']
             self.mask_edit_label.setText(message)
-            self.mask_edit_label.adjustSize()  # Adjust size to fit the text
+            self.mask_edit_label.adjustSize()
             self.mask_edit_label.show()
-            
+
             # Disable all layer buttons except the one being edited
             for i, button in enumerate(self.layer_buttons):
                 button.setEnabled(i == strand_index)
                 if i == strand_index:
+                    # Temporarily disable context menu on this button
+                    button.setContextMenuPolicy(Qt.NoContextMenu)
                     button.setStyleSheet("""
                         QPushButton {
                             border: 2px solid red;
@@ -952,44 +946,50 @@ class LayerPanel(QWidget):
                         }
                     """)
                 else:
+                    # Also disable context menus on the others to be safe
+                    button.setContextMenuPolicy(Qt.NoContextMenu)
                     button.setStyleSheet("QPushButton { opacity: 0.5; }")
-            
-            # Disable other controls during mask editing
+
             self.disable_controls()
-            
+            if self.parent_window:
+                self.parent_window.disable_all_mainwindow_buttons()
+
             logging.info(f"Entered mask edit mode for strand {strand_index}")
             self.canvas.enter_mask_edit_mode(strand_index)
-            self.canvas.setFocus()  # Ensure canvas has focus to receive key events
+            self.canvas.setFocus()
 
     def exit_mask_edit_mode(self):
         """Clean up and exit mask editing mode."""
         if not self.mask_editing:
             return
-
+            
         self.mask_editing = False
-        
-        # Hide the mask editing label
         self.mask_edit_label.hide()
         
-        # Re-enable all layer buttons and restore their appearance
-        for button in self.layer_buttons:
+        # Re-enable all layer buttons
+        for i, button in enumerate(self.layer_buttons):
             button.setEnabled(True)
+            button.setContextMenuPolicy(Qt.CustomContextMenu)
             if isinstance(button, NumberedLayerButton):
-                button.restore_original_style()  # Use the button's own restore method
-                button.update()  # Force a visual update
-        
-        # Re-enable controls
+                button.restore_original_style()
+            button.update()
+            # If this strand is MaskedStrand, reconnect context menu:
+            if i < len(self.canvas.strands) and isinstance(self.canvas.strands[i], MaskedStrand):
+                # Reconnect our customContextMenuRequested 
+                button.customContextMenuRequested.connect(
+                    lambda pos, idx=i: self.show_masked_layer_context_menu(idx, pos)
+                )
+
         self.enable_controls()
-        
-        # Reset the main window state if available
+        if self.parent_window:
+            self.parent_window.enable_all_mainwindow_buttons()
+
         if hasattr(self, 'parent_window'):
             self.parent_window.exit_mask_edit_mode()
         
         _ = translations[self.language_code]
         logging.info("Exited mask edit mode")
         self.show_notification(_['mask_edit_mode_exited'])
-        
-        # Force update of the panel
         self.update()
 
     def disable_controls(self):

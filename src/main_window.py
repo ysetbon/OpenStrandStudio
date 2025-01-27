@@ -901,14 +901,14 @@ class MainWindow(QMainWindow):
                 "#8D6E63",    # normal (brown)
                 "#BEA499",    # hover (much lighter brown)
                 "#8D6E63",    # pressed
-                "#8D6E63"    # disabled
+                "#8D6E63"     # disabled
             ),
             (
                 self.save_image_button,
                 "#7D344D",    # normal (maroon)
                 "#B36E89",    # hover (much lighter maroon)
                 "#7D344D",    # pressed
-                "#7D344D"    # disabled
+                "#7D344D"     # disabled
             ),
             (
                 self.toggle_control_points_button,
@@ -1737,11 +1737,14 @@ class MainWindow(QMainWindow):
 
     def exit_mask_edit_mode(self):
         """Handle exiting mask edit mode."""
-        self.update_mode("select")  # Reset to select mode
+        self.update_mode("select")
         self.mask_button.setChecked(False)
         self.select_strand_button.setChecked(True)
-        # Update button states
         self.update_button_states("select")
+
+        # NEW: Re-enable mainwindow buttons if they were disabled for mask edit
+        self.enable_all_mainwindow_buttons()
+
     def set_language(self, language_code):
         """Set the application language and update all UI elements."""
         self.language_code = language_code
@@ -1816,3 +1819,42 @@ class MainWindow(QMainWindow):
             self.canvas.show_control_points = True
         
         self.canvas.update()
+
+    # NEW: Add these methods in MainWindow to disable/enable all buttons
+    def disable_all_mainwindow_buttons(self):
+        """Disable all main window buttons so they cannot be pressed."""
+        for button in [
+            self.attach_button,
+            self.move_button,
+            self.rotate_button,
+            self.toggle_grid_button,
+            self.angle_adjust_button,
+            self.select_strand_button,
+            self.mask_button,
+            self.save_button,
+            self.load_button,
+            self.save_image_button,
+            self.toggle_control_points_button,
+            self.settings_button,
+            self.layer_state_button
+        ]:
+            button.setEnabled(False)
+
+    def enable_all_mainwindow_buttons(self):
+        """Re-enable all main window buttons."""
+        for button in [
+            self.attach_button,
+            self.move_button,
+            self.rotate_button,
+            self.toggle_grid_button,
+            self.angle_adjust_button,
+            self.select_strand_button,
+            self.mask_button,
+            self.save_button,
+            self.load_button,
+            self.save_image_button,
+            self.toggle_control_points_button,
+            self.settings_button,
+            self.layer_state_button
+        ]:
+            button.setEnabled(True)

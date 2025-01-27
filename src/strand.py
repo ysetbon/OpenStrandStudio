@@ -622,6 +622,56 @@ class Strand:
             temp_painter.end()
         # ----------------------------------------------------------------
 
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+        # ----------------------------------------------------------------
+
     def remove_attached_strands(self):
         """Recursively remove all attached strands."""
         for attached_strand in self.attached_strands:
@@ -1134,8 +1184,11 @@ class AttachedStrand(Strand):
         # ----------------------------------------------------------------
         # NEW CODE: Also draw an ending circle if has_circles == [True, True]
         if self.has_circles == [True, True]:
-            # We'll compute an angle for the end by flipping the start angle 180°.
-            angle_end = angle + math.pi
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
 
             # Create another temporary painter so we can blend the circle on the end.
             temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
@@ -1150,7 +1203,7 @@ class AttachedStrand(Strand):
 
             transform_end = QTransform()
             transform_end.translate(self.end.x(), self.end.y())
-            transform_end.rotate(math.degrees(angle_end - math.pi / 2))
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
             transform_end.translate(-self.end.x(), -self.end.y())
             mask_rect_end = transform_end.map(mask_rect_end)
 

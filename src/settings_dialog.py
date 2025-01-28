@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
@@ -34,6 +34,11 @@ class SettingsDialog(QDialog):
         _ = translations[self.parent_window.language_code]
         main_layout = QHBoxLayout(self)
 
+        # Calculate hover colors based on current theme
+        theme_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
+        lang_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
+        selection_color = "#222222" if self.current_theme == 'dark' else "#666666"  # New variable
+
         # Left side: categories list
         self.categories_list = QListWidget()
         self.categories_list.setFixedWidth(180)
@@ -61,12 +66,50 @@ class SettingsDialog(QDialog):
         theme_layout = QHBoxLayout()
         self.theme_label = QLabel(_['select_theme'])
         self.theme_combobox = QComboBox()
-
-        # Add items with associated internal theme identifiers
-        self.theme_combobox.addItem(_['default'], 'default')
-        self.theme_combobox.addItem(_['light'], 'light')
-        self.theme_combobox.addItem(_['dark'], 'dark')
-
+        
+        # Modified theme combobox stylesheet
+        self.theme_combobox.setStyleSheet(f"""
+            QComboBox {{
+                padding: 8px;
+                padding-right: 24px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                min-width: 150px;
+                font-size: 14px;
+            }}
+            QComboBox:hover {{
+                background-color: {theme_hover_color};
+                
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                width: 24px;
+                height: 24px;
+            }}
+            QComboBox::down-arrow:after {{
+                content: "▼";
+                color: #666666;
+                position: absolute;
+                top: 0;
+                right: 8px;
+                font-size: 12px;
+            }}
+            QComboBox QAbstractItemView {{
+                padding: 8px;
+                selection-background-color: {selection_color};
+                
+            }}
+        """)
+        
+        # Add theme items with color preview icons
+        self.add_theme_item(_['default'], 'default')
+        self.add_theme_item(_['light'], 'light')
+        self.add_theme_item(_['dark'], 'dark')
+        
         # Set the current theme
         current_theme = getattr(self, 'current_theme', 'default')
         index = self.theme_combobox.findData(current_theme)
@@ -97,10 +140,47 @@ class SettingsDialog(QDialog):
         self.language_label = QLabel(_['select_language'])
         self.language_combobox = QComboBox()
 
-        # Add items with associated language codes
-        self.language_combobox.addItem(_['english'], 'en')
-        self.language_combobox.addItem(_['french'], 'fr')
-
+        # Modified language combobox stylesheet
+        self.language_combobox.setStyleSheet(f"""
+            QComboBox {{
+                padding: 8px;
+                padding-right: 24px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                min-width: 200px;
+                font-size: 14px;
+            }}
+            QComboBox:hover {{
+                background-color: {lang_hover_color};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                width: 24px;
+                height: 24px;
+            }}
+            QComboBox::down-arrow:after {{
+                content: "▼";
+                color: #666666;
+                position: absolute;
+                top: 0;
+                right: 8px;
+                font-size: 12px;
+            }}
+            QComboBox QAbstractItemView {{
+                padding: 8px;
+                min-width: 200px;
+                selection-background-color: {selection_color};
+            }}
+        """)
+        
+        # Add language items with generated icons
+        self.add_lang_item_en(_['english'], 'en')
+        self.add_lang_item_fr(_['french'], 'fr')
+        
         # Set the current language
         current_language = getattr(self, 'current_language', 'en')
         index = self.language_combobox.findData(current_language)
@@ -322,6 +402,85 @@ class SettingsDialog(QDialog):
                 "Video Not Found",
                 f"The video file was not found:\n{video_path}"
             )
+
+    def add_theme_item(self, text, data):
+        # Create a 26x26 pixmap with theme colors preview
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(Qt.black)  # Initialize with transparent background
+        painter = QPainter(pixmap)
+        
+        # Set colors based on theme
+        if data == 'default':
+            fill = QColor(230, 230, 230)    # Medium-light gray
+            border = QColor(200, 200, 200)  # Light gray
+        elif data == 'light':
+            fill = QColor(255, 255, 255)    # White
+            border = QColor(200, 200, 200)  # Light gray
+        elif data == 'dark':
+            fill = QColor(44, 44, 44)       # Dark gray
+            border = QColor(102, 102, 102)  # Medium gray
+        else:
+            fill = Qt.white
+            border = Qt.black
+
+        # Draw the preview with improved anti-aliasing and precise measurements
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        
+        # Use integer coordinates and adjust pen alignment
+        painter.setBrush(fill)
+        pen = QPen(border, 1)
+        pen.setJoinStyle(Qt.MiterJoin)  # Sharp corners
+        painter.setPen(pen)
+        
+        # Draw slightly inset to avoid edge artifacts
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        
+        painter.end()
+        
+        # Create icon and add to combobox
+        icon = QIcon(pixmap)
+        self.theme_combobox.addItem(icon, text, data)
+
+    def add_lang_item_en(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(QColor("#cccccc"))
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(QColor("#000000"), 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the US flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇺🇸")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+    def add_lang_item_fr(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(QColor("#cccccc"))
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(QColor("#000000"), 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the French flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇫🇷")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+
 
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):

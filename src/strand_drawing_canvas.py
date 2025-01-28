@@ -2298,6 +2298,9 @@ class StrandDrawingCanvas(QWidget):
         elif is_attached_strand:
             self.update_layer_names_for_attached_strand_deletion(set_number)
 
+        # Newly added step: re-check attachments via geometry
+        self.refresh_geometry_based_attachments()
+
         # Force a complete redraw of the canvas
         self.update()
         QTimer.singleShot(0, self.update)
@@ -2993,6 +2996,40 @@ class StrandDrawingCanvas(QWidget):
 
     def save_strands(self, filename):
         save_strands(self.strands, self.groups, filename, self)
+
+    def refresh_geometry_based_attachments(self):
+        """
+        Quickly scan all existing strands and reset their start/end attachments
+        by checking if any two strands share endpoints.
+        """
+        # First reset all attachments
+        for s in self.strands:
+            s.start_attached = False
+            s.end_attached = False
+            if hasattr(s, 'has_circles'):
+                s.has_circles = [False, False]
+
+        # Now re-check which endpoints coincide
+        for s1 in self.strands:
+            if isinstance(s1, MaskedStrand):
+                continue
+            for s2 in self.strands:
+                if s1 == s2 or isinstance(s2, MaskedStrand):
+                    continue
+
+                # Check s1 start
+                if self.points_are_close(s1.start, s2.start) or self.points_are_close(s1.start, s2.end):
+                    s1.start_attached = True
+                    if hasattr(s1, 'has_circles'):
+                        s1.has_circles[0] = True
+
+                # Check s1 end
+                if self.points_are_close(s1.end, s2.start) or self.points_are_close(s1.end, s2.end):
+                    s1.end_attached = True
+                    if hasattr(s1, 'has_circles'):
+                        s1.has_circles[1] = True
+
+        logging.info("Refreshed attachments via geometry scan, updated start/end attachments.")
 
 
 # End of StrandDrawingCanvas class

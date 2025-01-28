@@ -255,15 +255,13 @@ class NumberedLayerButton(QPushButton):
             change_color_action.triggered.connect(self.change_color)
             context_menu.addAction(change_color_action)
 
-            # Treat anything not ending in "_1" as an attached strand
-            if not self.text().endswith('_1'):
-                print("AttachedStrand found")
-                transparent_stroke_action = context_menu.addAction("Set Transparent Circle Stroke")
-                reset_stroke_action = context_menu.addAction("Reset Default Stroke")
 
-                # Connect directly to helper methods
-                transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
-                reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
+            transparent_stroke_action = context_menu.addAction("Set Transparent Circle Stroke")
+            reset_stroke_action = context_menu.addAction("Reset Default Stroke")
+
+            # Connect directly to helper methods
+            transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
+            reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
 
             context_menu.exec_(self.mapToGlobal(pos))
 

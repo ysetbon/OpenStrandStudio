@@ -295,3 +295,22 @@ Ces mises à jour améliorent le flux de travail du masquage et la qualité visu
 Ces mises à jour se concentrent sur l'amélioration de l'expérience utilisateur en rendant l'interface plus intuitive et en corrigeant les problèmes clés de fonctionnalité avec les groupes et les attachements.
 
 ------
+
+## Version 1.081 (Sortie : 28/01/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1. **Améliorations Sauvegarde/Chargement :**
+   - Maintien de l'ordre correct des calques lors du chargement JSON
+   - Gestion plus fiable des fichiers de projet
+
+2. **Édition des Masques :**
+   - Meilleure gestion de la rotation basée sur le centre du groupe
+   - Manipulation améliorée des masques avec groupes
+
+3. **Autres Améliorations :**
+   - Visualisation du contour de cercle transparent lors du clic droit
+   - Meilleur rendu des polices dans les paramètres
+   - Mise à jour de la visualisation des points d'attache lors de la suppression
+
+------

@@ -294,3 +294,22 @@ These updates enhance the masking workflow and improve the visual quality of att
 These updates focus on improving the user experience by making the interface more intuitive and fixing key functionality issues with groups and attachments.
 
 ------
+
+## Version 1.081 (Released: 28/01/2025)
+
+### Improvements and New Features:
+
+1. **Save/Load Improvements:**
+   - Maintains correct layer order when loading from JSON
+   - More reliable project file handling
+
+2. **Mask Editing:**
+   - Better rotation handling based on group center
+   - Improved mask manipulation with groups
+
+3. **Additional Improvements:**
+   - Transparent circle stroke visualization during right-click
+   - Better font rendering in settings dialog
+   - Updated attachment point visualization when deleting strands
+
+------

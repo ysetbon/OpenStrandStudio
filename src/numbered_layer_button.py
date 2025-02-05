@@ -217,10 +217,19 @@ class NumberedLayerButton(QPushButton):
         """
         self.set_circle_stroke_color(QColor(0, 0, 0, 255))
 
+    # NEW: Helper method to fetch the current theme from parent chain
+    def get_parent_theme(self):
+        parent = self.parent()
+        while parent:
+            if hasattr(parent, "current_theme"):
+                return parent.current_theme
+            parent = parent.parent()
+        return "default"
+
     def show_context_menu(self, pos):
         """
         Show a context menu when the button is right-clicked.
-
+    
         Args:
             pos (QPoint): The position where the menu should be shown.
         """
@@ -251,10 +260,20 @@ class NumberedLayerButton(QPushButton):
         else:
             # For regular layers, show color change option
             context_menu = QMenu(self)
+            # Determine the current theme from parent chain
+            theme = self.get_parent_theme()
+            if theme == "dark":
+                # In dark theme, normal state is dark background and white text,
+                # and hovered items have a light background with dark text.
+                context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
+            else:
+                # In light/default themes, normal state is light background with dark text,
+                # and hovered items have a dark background with white text.
+                context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; } QMenu::item:selected { background-color: #333333; color: white; }")
+
             change_color_action = QAction("Change Color", self)
             change_color_action.triggered.connect(self.change_color)
             context_menu.addAction(change_color_action)
-
 
             transparent_stroke_action = context_menu.addAction("Set Transparent Circle Stroke")
             reset_stroke_action = context_menu.addAction("Reset Default Stroke")

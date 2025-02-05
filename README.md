@@ -44,7 +44,6 @@ Find usage tutorials on the [LanYarD YouTube channel](https://www.youtube.com/@1
 
 - Python 3.9+
 - PyQt5
-- Check [Contributing Guidelines](CONTRIBUTING.md)
 
 ## License
 

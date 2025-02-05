@@ -1436,15 +1436,9 @@ class MaskedStrand(Strand):
     def set_custom_mask(self, mask_path):
         """Set a custom mask path for this masked strand."""
         self.custom_mask_path = mask_path
-        self.edited_center_point = self._calculate_center_from_path(mask_path)
-        
-        # Add a check before accessing self.edited_center_point:
-        if self.edited_center_point is None:
-            logging.warning(f"No valid center point for {self.layer_name}, path might be empty.")
-            return
-        
-        logging.info(f"Updated center point after custom mask set for {self.layer_name}: "
-                     f"{self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+        # Recalculate center point when mask changes
+        self.calculate_center_point()
+        logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
         # Save the current state of deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
             logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
@@ -1575,6 +1569,7 @@ class MaskedStrand(Strand):
             # Apply the edited mask
             inverse_path = QPainterPath()
             inverse_path.addRect(QRectF(temp_image.rect()))
+            inverse_path = inverse_path.subtracted(mask_path)
 
         else:
             logging.info("Using base intersection mask")
@@ -1593,30 +1588,36 @@ class MaskedStrand(Strand):
         temp_painter.setPen(Qt.NoPen)
         temp_painter.drawPath(inverse_path)
 
-        # Draw highlight if selected
+        temp_painter.end()
+        painter.drawImage(0, 0, temp_image)
+        painter.restore()
+
+        # Now handle the highlight or debug drawing
         if self.is_selected:
             logging.info("Drawing selected strand highlights")
-            # Draw the mask outline
+            # Draw the mask outline and fill with a semi-transparent red
             highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             painter.setPen(highlight_pen)
-            painter.setBrush(QBrush(QColor(255, 0, 0, 64)))  # Slight transparency fill
+            painter.setBrush(QBrush(QColor(255, 0, 0, 128)))
 
-            # Draw the mask path with our highlight pen and brush
-            if hasattr(self, 'get_mask_path'):
-                painter.drawPath(self.get_mask_path())
+            # Acquire the mask path and set a winding fill rule so the region gets filled.
+            mask_path = self.get_mask_path()
+            mask_path.setFillRule(Qt.WindingFill)
+            painter.drawPath(mask_path)
 
             # Always recalculate and draw center points based on current masks
             self.calculate_center_point()
-            
+
             # Always show base center point in blue
             if self.base_center_point:
                 logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
+                temp_painter = QPainter(painter.device())  # a new painter for the crosshair
                 temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
                 temp_painter.setPen(QPen(QColor('transparent'), 0))
                 temp_painter.setBrush(QBrush(QColor('transparent')))
                 center_radius = 0
                 temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
-                
+
                 # Draw blue crosshair
                 temp_painter.setPen(QPen(QColor('transparent'), 0))
                 crosshair_size = 0
@@ -1628,16 +1629,18 @@ class MaskedStrand(Strand):
                     QPointF(self.base_center_point.x(), self.base_center_point.y() - crosshair_size),
                     QPointF(self.base_center_point.x(), self.base_center_point.y() + crosshair_size)
                 )
-            
+                temp_painter.end()
+
             # Only show edited center point if there are deletion rectangles
             if self.edited_center_point and hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
                 logging.info(f"Drawing edited center point at: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+                temp_painter = QPainter(painter.device())  # a new painter for the crosshair
                 temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
                 temp_painter.setPen(QPen(QColor('transparent'), 0))
                 temp_painter.setBrush(QBrush(QColor('transparent')))
                 center_radius = 0
                 temp_painter.drawEllipse(self.edited_center_point, center_radius, center_radius)
-                
+
                 # Draw red crosshair
                 temp_painter.setPen(QPen(QColor('transparent'), 0))
                 crosshair_size = 0
@@ -1649,10 +1652,8 @@ class MaskedStrand(Strand):
                     QPointF(self.edited_center_point.x(), self.edited_center_point.y() - crosshair_size),
                     QPointF(self.edited_center_point.x(), self.edited_center_point.y() + crosshair_size)
                 )
+                temp_painter.end()
 
-        temp_painter.end()
-        painter.drawImage(0, 0, temp_image)
-        painter.restore()
         logging.info("Completed drawing masked strand")
 
     def update(self, new_position):
@@ -1751,6 +1752,7 @@ class MaskedStrand(Strand):
                 top_right = QPointF(*rect['top_right'])
                 bottom_left = QPointF(*rect['bottom_left'])
                 bottom_right = QPointF(*rect['bottom_right'])
+                deletion_path = QPainterPath()
 
                 min_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
                 max_x = max(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
@@ -1916,32 +1918,18 @@ class MaskedStrand(Strand):
     def draw_highlight(self, painter):
         """
         Draw a thicker and red stroke around this masked strand's mask path
-        to highlight it similarly to other strands. Now uses semi-transparent
-        pen and brush for a visible highlight.
+        to highlight it similarly to other strands.
         """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Use a semi-transparent red pen and brush
-        highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        # Use a thicker red pen to draw the mask outline
+        highlight_pen = QPen(Qt.transparent, 0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         painter.setPen(highlight_pen)
-        painter.setBrush(QBrush(QColor(255, 0, 0, 64)))  # Slight transparency fill
+        painter.setBrush(Qt.NoBrush)
 
-        # Draw the mask path with our highlight pen and brush
+        # Draw the mask path with our highlight pen
         if hasattr(self, 'get_mask_path'):
             painter.drawPath(self.get_mask_path())
 
         painter.restore()
-
-
-
-
-
-
-
-
-
-
-
-
-

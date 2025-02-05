@@ -23,7 +23,7 @@ making complex patterns clear and easy to understand.
 
 1. Clone the repository, best to use:
 ```bash
-git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio /e/githubFiles/OpenStrandStudio
+git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio <your-desired-folder>
 ```
 
 2. Install dependencies:
@@ -52,6 +52,5 @@ GNU General Public License v3.0
 ## Contact
 
 Created by Yonatan Setbon
-- ysetbon@gmail.com
 - [LinkedIn](https://www.linkedin.com/in/yonatan-setbon-4a980986/)
 - [Instagram](https://www.instagram.com/ysetbon/)

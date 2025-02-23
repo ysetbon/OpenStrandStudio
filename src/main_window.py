@@ -3,7 +3,7 @@ import sys
 import logging
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
-    QSplitter, QFileDialog
+    QSplitter, QFileDialog, QScrollArea
 )
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
@@ -207,6 +207,9 @@ class MainWindow(QMainWindow):
 
         # Create the horizontal layout for buttons
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(10)  # Ensure consistent spacing between buttons
+        button_layout.setContentsMargins(10, 5, 10, 5)  # Set uniform margins for left, top, right, bottom
+
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
         self.rotate_button = QPushButton("Rotate Mode")
@@ -222,7 +225,8 @@ class MainWindow(QMainWindow):
         self.settings_button = QPushButton()
         self.settings_button.setFixedSize(32, 32)
         self.settings_button.setObjectName("settingsButton")  # Assign an object name for stylesheet targeting
-        self.attach_button.setMinimumWidth(190)
+        # self.attach_button.setMinimumWidth(190)  # Removed to allow dynamic resizing
+
         # Set the gear icon or fallback to Unicode character if the image is not found
         gear_icon_path = os.path.join(base_path, 'settings_icon.png')
         logging.info(f"Searching for gear icon at: {gear_icon_path}")
@@ -282,11 +286,42 @@ class MainWindow(QMainWindow):
         # Add the settings button
         button_layout.addWidget(self.settings_button)
 
+        button_layout.setSpacing(10)  # Ensure consistent spacing between buttons
+
         # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.addLayout(button_layout)
+
+        # Wrap the button layout in a container widget
+        button_container = QWidget()
+        button_container.setLayout(button_layout)
+
+        # Place the button container inside a scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(button_container)
+        scroll_area.setWidgetResizable(True)  # Enable widget resizing so that the container can adjust its size
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # Set the scroll area height to accommodate the button container plus a margin
+        scroll_area.setFixedHeight(button_container.sizeHint().height() + 10)
+
+        # Remove border from scroll area
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+            }
+        """)
+
+        # Disable vertical scrolling by overriding the wheelEvent
+        def disable_vertical_scroll(event):
+            if event.angleDelta().y() != 0:
+                event.ignore()
+            else:
+                QScrollArea.wheelEvent(scroll_area, event)
+        scroll_area.wheelEvent = disable_vertical_scroll
+
+        left_layout.addWidget(scroll_area)
         left_layout.addWidget(self.canvas)
         self.splitter.addWidget(left_widget)
         self.splitter.addWidget(self.layer_panel)
@@ -314,8 +349,17 @@ class MainWindow(QMainWindow):
         ]
         
         for button in buttons:
-            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-            button.setFixedHeight(32)  # Set all buttons to the same height
+            # Change size policy to Preferred so buttons expand based on their content.
+            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            button.setFixedHeight(32)  # Maintain consistent height
+            # Removed the fixed minimum width for all buttons here:
+            # button.setMinimumWidth(100)
+        
+        # Special handling for buttons with longer text
+        long_text_buttons = [self.save_button, self.load_button, self.save_image_button]
+        for button in long_text_buttons:
+            button.setMinimumWidth(120)  # Allow more width for longer text
+
         # Apply button styles
         self.setup_button_styles()
         logging.info("UI setup completed")
@@ -384,149 +428,216 @@ class MainWindow(QMainWindow):
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
 
+        # Connect toggle control points button
+        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
+        self.toggle_control_points_button.setChecked(False)  # Start with control points visible
+
+        # Connect mask edit mode signals
+        self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
+        
+        # Make sure the canvas has focus policy set
+        self.canvas.setFocusPolicy(Qt.StrongFocus)
+
+        # Connect mask edit mode signals
+        if hasattr(self.canvas, 'mask_edit_exited'):
+            self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
+        else:
+            logging.error("Canvas does not have mask_edit_exited signal")
 
     def open_settings_dialog(self):
         """Open the settings dialog if it's not already open."""
-        # Check if dialog is already open
-        if self.settings_dialog.isVisible():
-            # Bring existing dialog to front
-            self.settings_dialog.raise_()
-            self.settings_dialog.activateWindow()
-        else:
-            # Connect theme change signal and show dialog
-            self.settings_dialog.theme_changed.connect(self.apply_theme)
-            self.settings_dialog.show()
-
-
+        if not hasattr(self, '_settings_dialog'):
+            # Create the dialog only once and store it
+            self._settings_dialog = self.settings_dialog
+            self._settings_dialog.setFixedSize(800, 600)
+            # Set the current theme
+            self._settings_dialog.current_theme = self.current_theme
+            # Connect theme change signal
+            self._settings_dialog.theme_changed.connect(self.apply_theme)
+            # Apply current theme to dialog
+            self._settings_dialog.apply_dialog_theme(self.current_theme)
+        
+        # Show the existing dialog
+        self._settings_dialog.show()
+        self._settings_dialog.raise_()
+        self._settings_dialog.activateWindow()
 
     def apply_theme(self, theme_name):
+        # Store the current theme
+        self.current_theme = theme_name
+        
         if theme_name == "dark":
             style_sheet = """
             QWidget {
                 background-color: #2C2C2C;
                 color: white;
             }
-            /* Styles for labels */
-            QLabel {
-                color: white;
-            }
-            /* Styles for push buttons */
             QPushButton {
-                background-color: #3C3C3C;
+                background-color: #2C2C2C;
                 color: white;
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #4D4D4D;
+                background-color: #3D3D3D;
             }
             QPushButton:pressed {
-                background-color: #5D5D5D;
+                background-color: #2D2D2D;
             }
-            /* Styles for spin boxes */
-            QSpinBox, QDoubleSpinBox {
-                background-color: #3C3C3C;
+            QPushButton:checked {
+                background-color: #505050;
+                border: 2px solid #808080;
+                padding: 8px 16px;
+            }
+            QPushButton:disabled {
+                background-color: #1A1A1A;
+                color: #808080;
+            }
+            QPushButton:checked:disabled {
+                background-color: #505050;
+                border: 2px solid #808080;
+            }
+            QPushButton:checked:disabled:hover {
+                background-color: #505050;
+            }
+            QPushButton:checked:disabled:pressed {
+                background-color: #505050;
+                border: 2px solid #808080;
+            }
+            
+            /* Dialog button styling */
+            QDialog QPushButton {
+                background-color: #252525;
                 color: white;
-                border: 1px solid #5D5D5D;
+                font-weight: normal;  /* Changed from bold to normal */
+                border: 2px solid #000000;
+                padding: 10px;
+                border-radius: 4px;
+                min-width: 80px;
             }
-            /* Styles for sliders */
-            QSlider {
-                background-color: transparent;
+            QDialog QPushButton:hover {
+                background-color: #505050;
             }
-            QSlider::groove:horizontal {
-                background: #3C3C3C;
-                height: 6px;
-                border-radius: 3px;
+            QDialog QPushButton:pressed {
+                background-color: #151515;
+                border: 2px solid #000000;
             }
-            QSlider::handle:horizontal {
-                background: #5D5D5D;
-                width: 14px;
-                height: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
-            }
-            /* Styles for combo boxes */
-            QComboBox {
-                background-color: #3C3C3C;
-                color: white;
-                border: 1px solid #5D5D5D;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #3C3C3C;
-                color: white;
-                selection-background-color: #4D4D4D;
-            }
-            /* Styles for check boxes */
-            QCheckBox {
-                color: white;
-            }
-            QCheckBox::indicator {
-                border: 1px solid #5D5D5D;
-                width: 16px;
-                height: 16px;
-                background: #3C3C3C;
-            }
-            QCheckBox::indicator:checked {
-                image: url(:/icons/checkbox_checked_white.png);
-            }
-            /* Styles for the Angle Adjust Dialog */
-            QDialog#AngleAdjustDialog {
+
+
+            /* Style for QScrollArea and scrolling areas in dark mode */
+            QAbstractScrollArea {
                 background-color: #2C2C2C;
-                color: white;
+                border: none;
             }
-            QDialog#AngleAdjustDialog QLabel {
-                color: white;
+            QScrollArea > QWidget {
+                background-color: #2C2C2C;
             }
-            QDialog#AngleAdjustDialog QPushButton {
-                background-color: #3C3C3C;
+            QScrollBar:horizontal {
+                background-color: #1A1A1A;
+                border: none;
+                height: 12px;
+            }
+            QScrollBar::handle:horizontal {
+                background-color: #2D2D2D;
+                border: none;
+                border-radius: 6px;
+            }
+            QScrollBar:vertical {
+                background-color: #1A1A1A;
+                background-image: none;
+                width: 10px;
+                margin: 0px;
+            }
+            QScrollArea::corner {
+                background-color: #2C2C2C;
+                background-image: none;
+                margin: 0;
+                padding: 0;
+            }
+            QScrollArea::viewport {
+                background-color: #2C2C2C;
+                background-image: none;
+                border: none;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #2D2D2D;
+                border: none;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                background: none;
+                border: none;
+            }
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: #1A1A1A;
+            }
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: #1A1A1A;
+            }
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                background: none;
+                border: none;
+            }
+            
+            /* Style for group-related buttons in dark mode */
+            QPushButton[groupButton="true"] {
+                background-color: #2A2A2A;  /* Slightly lighter shade */
                 color: white;
-                border: 1px solid #5D5D5D;
-                padding: 5px 10px;
+                font-weight: bold;
+                border: 2px solid #000000;  /* Black border */
+                padding: 10px;
                 border-radius: 4px;
             }
-            QDialog#AngleAdjustDialog QPushButton:hover {
-                background-color: #4D4D4D;
+            QPushButton[groupButton="true"]:hover {
+                background-color: #505050;  /* Slightly lighter on hover */
             }
-            QDialog#AngleAdjustDialog QPushButton:pressed {
-                background-color: #5D5D5D;
+            QPushButton[groupButton="true"]:pressed {
+                background-color: #606060;  /* Even darker when pressed */
+                border: 2px solid #000000;
             }
-            QDialog#AngleAdjustDialog QSpinBox, QDialog#AngleAdjustDialog QDoubleSpinBox {
-                background-color: #3C3C3C;
-                color: white;
-                border: 1px solid #5D5D5D;
+            QPushButton[groupButton="true"]:default {
+                background-color: #1A1A1A;
+                border: 2px solid #000000;
             }
-            QDialog#AngleAdjustDialog QSlider {
-                background-color: transparent;
+            QPushButton[groupButton="true"]:default:hover {
+                background-color: #252525;
             }
-            QDialog#AngleAdjustDialog QSlider::groove:horizontal {
-                background: #3C3C3C;
-                height: 6px;
-                border-radius: 3px;
-            }
-            QDialog#AngleAdjustDialog QSlider::handle:horizontal {
-                background: #5D5D5D;
-                width: 14px;
-                height: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
+            QPushButton[groupButton="true"]:default:pressed {
+                background-color: #151515;
             }
             """
-            # Style for create_group_button
+            # Update create_group_button style in dark mode
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #4A4845;
+                    background-color: #2A2A2A;  /* Slightly lighter shade */
                     color: white;
                     font-weight: bold;
-                    border: none;
+                    border: 2px solid #000000;  /* Black border */
                     padding: 10px;
-                    border-radius: 0;
+                    border-radius: 4px;
                 }
                 QPushButton:hover {
-                    background-color: #62605D;
+                    background-color: #505050;  /* Slightly lighter on hover */
                 }
                 QPushButton:pressed {
-                    background-color: #2C2A27;
+                    background-color: #606060;  /* Even darker when pressed */
+                    border: 2px solid #000000;
+                }
+                QPushButton:default {
+                    background-color: #1A1A1A;
+                    border: 2px solid #000000;
+                }
+                QPushButton:default:hover {
+                    background-color: #252525;
+                }
+                QPushButton:default:pressed {
+                    background-color: #151515;
                 }
             """)
         elif theme_name == "light":
@@ -554,7 +665,7 @@ class MainWindow(QMainWindow):
             QSpinBox, QDoubleSpinBox {
                 background-color: #FFFFFF;
                 color: black;
-                border: 1px solid #CCCCCC;
+                border: 2px solid #CCCCCC;
             }
             QSlider {
                 background-color: transparent;
@@ -574,7 +685,7 @@ class MainWindow(QMainWindow):
             QComboBox {
                 background-color: #FFFFFF;
                 color: black;
-                border: 1px solid #CCCCCC;
+              
             }
             QComboBox QAbstractItemView {
                 background-color: #FFFFFF;
@@ -585,7 +696,7 @@ class MainWindow(QMainWindow):
                 color: black;
             }
             QCheckBox::indicator {
-                border: 1px solid #CCCCCC;
+                
                 width: 16px;
                 height: 16px;
                 background: #FFFFFF;
@@ -593,46 +704,98 @@ class MainWindow(QMainWindow):
             QCheckBox::indicator:checked {
                 image: url(:/icons/checkbox_checked_black.png);
             }
-            /* Styles for the Angle Adjust Dialog */
-            QDialog#AngleAdjustDialog {
-                background-color: #FFFFFF;
-                color: black;
-            }
-            QDialog#AngleAdjustDialog QLabel {
-                color: black;
-            }
-            QDialog#AngleAdjustDialog QPushButton {
+            /* Dialog button styling (updated to match light theme) */
+            QDialog QPushButton {
                 background-color: #F0F0F0;
                 color: black;
-                border: 1px solid #CCCCCC;
-                padding: 5px 10px;
+                font-weight: normal;
+                border: 2px solid #CCCCCC;
+                padding: 10px;
                 border-radius: 4px;
+                min-width: 80px;
             }
-            QDialog#AngleAdjustDialog QPushButton:hover {
+            QDialog QPushButton:hover {
                 background-color: #E0E0E0;
             }
-            QDialog#AngleAdjustDialog QPushButton:pressed {
+            QDialog QPushButton:pressed {
                 background-color: #D0D0D0;
+                border: 2px solid #B0B0B0;
             }
-            QDialog#AngleAdjustDialog QSpinBox, QDialog#AngleAdjustDialog QDoubleSpinBox {
+
+
+            /* Styles for scrollbars in light mode */
+            QScrollBar:horizontal {
+                 background: #F5F5F5;
+                 border: none;
+                 height: 12px;
+                 margin: 0px;
+            }
+            QScrollBar::handle:horizontal {
+                 background: #D4D4D4;
+                 border-radius: 6px;
+            }
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-line:horizontal {
+                 background: none;
+            }
+            /* Disable vertical scrollbar in light mode */
+            QScrollBar:vertical {
+                 width: 0px;
+                 background: none;
+                 margin: 0px;
+            }
+            /* --- Added new rule for darker left/right edges of scroll area viewport in light mode --- */
+            QScrollArea::viewport {
                 background-color: #FFFFFF;
-                color: black;
-                border: 1px solid #CCCCCC;
+                background-image: none;
+                border: none;
             }
-            QDialog#AngleAdjustDialog QSlider {
-                background-color: transparent;
+            QScrollArea {
+                background-color: #FFFFFF;
+                border: none;
             }
-            QDialog#AngleAdjustDialog QSlider::groove:horizontal {
-                background: #E0E0E0;
-                height: 6px;
-                border-radius: 3px;
+            /* Styles for scrollbars in light theme */
+            QScrollBar:horizontal {
+                background: #F5F5F5;
+                border: none;
+                height: 12px;
+                margin: 0px;
             }
-            QDialog#AngleAdjustDialog QSlider::handle:horizontal {
-                background: #CCCCCC;
-                width: 14px;
-                height: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
+            QScrollBar::handle:horizontal {
+                background: #D4D4D4;
+                border: none;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                background: none;
+                border: none;
+            }
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: #F5F5F5;
+            }
+            QScrollBar:vertical {
+                background: #F5F5F5;
+                border: none;
+                width: 12px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #D4D4D4;
+                border: none;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                background: none;
+                border: none;
+            }
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: #F5F5F5;
             }
             """
             # Style for create_group_button
@@ -677,7 +840,6 @@ class MainWindow(QMainWindow):
             QSpinBox, QDoubleSpinBox {
                 background-color: #FFFFFF;
                 color: black;
-                border: 1px solid #CCCCCC;
             }
             QSlider {
                 background-color: transparent;
@@ -694,36 +856,96 @@ class MainWindow(QMainWindow):
                 margin: -4px 0;
                 border-radius: 7px;
             }
-            QDialog {
-                background-color: #ECECEC;
-                color: black;
-            }
-            QDialog QLabel {
-                color: black;
-            }
+            /* Dialog button styling (updated to match default theme) */
             QDialog QPushButton {
                 background-color: #E8E8E8;
                 color: black;
-                border: 1px solid #CCCCCC;
-                padding: 5px 10px;
+                font-weight: normal;
+                border: 2px solid #B0B0B0;
+                padding: 10px;
                 border-radius: 4px;
+                min-width: 80px;
             }
             QDialog QPushButton:hover {
                 background-color: #DADADA;
             }
             QDialog QPushButton:pressed {
                 background-color: #C8C8C8;
+                border: 2px solid #A0A0A0;
             }
-            QDialog QSpinBox, QDialog QDoubleSpinBox, QDialog QLineEdit {
-                background-color: #FFFFFF;
-                color: black;
-                border: 1px solid #CCCCCC;
+
+            /* Styles for scrollbars in default mode */
+            QScrollBar:horizontal {
+                 background: #DADADA;
+                 border: none;
+                 height: 12px;
+                 margin: 0px;
+            }
+            QScrollBar::handle:horizontal {
+                 background: #BFBFBF;
+                 border: none;
+                 border-radius: 6px;
+            }
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                 background: none;
+                 width: 0px;
+            }
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                 background: none;
+            }
+            /* Disable vertical scrollbar in default mode */
+            QScrollBar:vertical {
+                 width: 0px;
+                 background: none;
+                 margin: 0px;
+            }
+            /* --- Updated scroll area viewport rule: no explicit borders --- */
+            QScrollArea::viewport {
+                background-color: #ECECEC;
+                background-image: none;
+                border: none;  /* Removed explicit left/right borders */
+            }
+            QScrollBar:vertical {
+                background-color: #DADADA;
+                border: none;
+                width: 10px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #BFBFBF;
+                border: none;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                background: none;
+                border: none;
+            }
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: #DADADA;
+            }
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: #DADADA;
+            }
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                background: none;
+                border: none;
+            }
+            /* Remove any default borders for panels for consistency */
+            QWidget, QFrame, QScrollArea, QScrollArea::viewport {
+                border: none;
             }
             """
-            # Style for create_group_button in default theme
+            # Style for create_group_button in default theme - ensure no borders
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #96938F;  /* A middle-ground color between light and dark themes */
+                    background-color: #96938F;
                     color: white;
                     font-weight: bold;
                     border: none;
@@ -754,6 +976,11 @@ class MainWindow(QMainWindow):
 
         # Update the canvas dark mode flag
         self.canvas.is_dark_mode = theme_name == "dark"
+
+        # If settings dialog exists, update its theme
+        if hasattr(self, '_settings_dialog'):
+            self._settings_dialog.current_theme = theme_name
+            self._settings_dialog.apply_dialog_theme(theme_name)
 
         # Emit the theme_changed signal
         self.theme_changed.emit(theme_name)
@@ -813,7 +1040,6 @@ class MainWindow(QMainWindow):
                 border: 4px solid #2C2C2C;
             }}
         """
-
         # Special style for angle adjust button with larger min-width
         angle_adjust_button_style = button_style.replace("min-width: 100px;", "min-width: 140px;")
 
@@ -824,17 +1050,19 @@ class MainWindow(QMainWindow):
                 color: black;
                 font-weight: bold;
                 border: 0px solid black;
-                padding: 6px 26px;
+                padding: 6px 12px;
                 border-radius: 8px;
-                height: 32px;
-                min-width: 25px;
+                height: 35px;
+                min-width: 70px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
-                padding: 6px 26px;
+                padding: 6px 12px;
+                height: 35px;
+                min-width: 70px;
             }}
         """
 
@@ -1093,18 +1321,6 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 logging.error(f"Error loading project from {filename}: {str(e)}")
                 # You might want to show an error dialog to the user here
-
-    def open_settings_dialog(self):
-        """Open the settings dialog if it's not already open."""
-        # Check if dialog is already open
-        if self.settings_dialog.isVisible():
-            # Bring existing dialog to front
-            self.settings_dialog.raise_()
-            self.settings_dialog.activateWindow()
-        else:
-            # Connect theme change signal and show dialog
-            self.settings_dialog.theme_changed.connect(self.apply_theme)
-            self.settings_dialog.show()
 
     def show_layer_state_log(self):
         """Display the current layer state information."""

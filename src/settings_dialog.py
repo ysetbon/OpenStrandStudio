@@ -22,26 +22,39 @@ class SettingsDialog(QDialog):
         super(SettingsDialog, self).__init__(parent)
         self.canvas = canvas
         self.parent_window = parent
-        self.current_theme = 'default'  # Initialize current_theme
-        self.current_language = self.parent_window.language_code  # Initialize current_language
+        self.current_theme = getattr(parent, 'current_theme', 'default')
+        self.current_language = self.parent_window.language_code
         self.setWindowTitle(translations[self.current_language]['settings'])
-        self.setMinimumSize(600, 400)
+        
+        # Set fixed size for the dialog
+        self.setFixedSize(800, 600)
+        
+        # Set window flags to prevent resizing
+        self.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
+        
         self.video_paths = []  # Initialize the list to store video paths
         self.setup_ui()
-        self.load_video_paths()  # Load video paths after setting up the UI
+        self.load_video_paths()
+        
+        # Apply initial theme
+        self.apply_dialog_theme(self.current_theme)
 
     def setup_ui(self):
         _ = translations[self.parent_window.language_code]
         main_layout = QHBoxLayout(self)
+        
+        # Set layout margins to ensure consistent spacing
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
 
-        # Calculate hover colors based on current theme
+        # Calculate hover colors based on actual current theme
         theme_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
         lang_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
-        selection_color = "#222222" if self.current_theme == 'dark' else "#666666"  # New variable
+        selection_color = "#222222" if self.current_theme == 'dark' else "#666666"
 
         # Left side: categories list
         self.categories_list = QListWidget()
-        self.categories_list.setFixedWidth(180)
+        self.categories_list.setFixedWidth(200)  # Increased width for better appearance
         self.categories_list.itemClicked.connect(self.change_category)
 
         categories = [
@@ -110,9 +123,8 @@ class SettingsDialog(QDialog):
         self.add_theme_item(_['light'], 'light')
         self.add_theme_item(_['dark'], 'dark')
         
-        # Set the current theme
-        current_theme = getattr(self, 'current_theme', 'default')
-        index = self.theme_combobox.findData(current_theme)
+        # Set the current theme in the combobox
+        index = self.theme_combobox.findData(self.current_theme)
         if index >= 0:
             self.theme_combobox.setCurrentIndex(index)
         theme_layout.addWidget(self.theme_label)
@@ -234,13 +246,278 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(self.about_text_browser)
         self.stacked_widget.addWidget(self.about_widget)
 
-        # Add widgets to main layout
+        # Ensure consistent sizes for all pages
+        self.general_settings_widget.setMinimumWidth(550)  # Set minimum width for content
+        self.change_language_widget.setMinimumWidth(550)
+        self.tutorial_widget.setMinimumWidth(550)
+        self.about_widget.setMinimumWidth(550)
+
+        # Add widgets to main layout with proper spacing
         main_layout.addWidget(self.categories_list)
         main_layout.addWidget(self.stacked_widget)
+
+        # Prevent dialog from being resizable
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinimizeButtonHint)
 
         # Set default category
         self.categories_list.setCurrentRow(0)
         self.stacked_widget.setCurrentIndex(0)
+
+        # Style the buttons consistently
+        self.style_dialog_buttons()
+
+    def style_dialog_buttons(self):
+        """Apply consistent styling to all buttons in the dialog"""
+        buttons = [
+            self.apply_button,
+            self.language_ok_button,
+            *self.video_buttons,  # Unpack video buttons list
+        ]
+        
+        for button in buttons:
+            button.setFixedHeight(32)  # Match MainWindow button height
+            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            button.setMinimumWidth(120)  # Set minimum width for buttons
+
+    def apply_dialog_theme(self, theme_name):
+        """Apply theme to dialog components"""
+        if theme_name == "dark":
+            button_style = """
+                /* Main dialog background */
+                QDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                
+                /* Buttons */
+                QPushButton {
+                    background-color: #3D3D3D;
+                    color: white;
+                    border: 1px solid #505050;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    height: 32px;
+                    min-width: 120px;
+                }
+                QPushButton:hover {
+                    background-color: #4D4D4D;
+                }
+                QPushButton:pressed {
+                    background-color: #2D2D2D;
+                }
+                QPushButton:checked {
+                    background-color: #505050;
+                    border: 2px solid #808080;
+                }
+                
+                /* ComboBox */
+                QComboBox {
+                    background-color: #3D3D3D;
+                    color: white;
+                    border: 1px solid #505050;
+                    padding: 5px;
+                    border-radius: 4px;
+                    min-width: 150px;
+                }
+                QComboBox:hover {
+                    background-color: #4D4D4D;
+                }
+                QComboBox:drop-down {
+                    border: none;
+                    padding-right: 8px;
+                }
+                QComboBox::down-arrow {
+                    image: none;
+                    border: none;
+                }
+                QComboBox QAbstractItemView {
+                    background-color: #3D3D3D;
+                    color: white;
+                    selection-background-color: #505050;
+                    selection-color: white;
+                    border: 1px solid #505050;
+                }
+                
+                /* List Widget */
+                QListWidget {
+                    background-color: #3D3D3D;
+                    color: white;
+                    border: 1px solid #505050;
+                    border-radius: 4px;
+                }
+                QListWidget::item {
+                    padding: 8px;
+                }
+                QListWidget::item:selected {
+                    background-color: #505050;
+                    color: white;
+                }
+                QListWidget::item:hover {
+                    background-color: #4D4D4D;
+                }
+                
+                /* Labels */
+                QLabel {
+                    color: white;
+                }
+                
+                /* Text Browser */
+                QTextBrowser {
+                    background-color: #3D3D3D;
+                    color: white;
+                    border: 1px solid #505050;
+                    border-radius: 4px;
+                    padding: 8px;
+                }
+                
+                /* Scroll Bars */
+                QScrollBar:vertical {
+                    background-color: #2C2C2C;
+                    width: 12px;
+                    border-radius: 6px;
+                }
+                QScrollBar::handle:vertical {
+                    background-color: #505050;
+                    border-radius: 6px;
+                    min-height: 20px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background-color: #606060;
+                }
+                QScrollBar::add-line:vertical,
+                QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+                QScrollBar::add-page:vertical,
+                QScrollBar::sub-page:vertical {
+                    background-color: #2C2C2C;
+                }
+                
+                /* Horizontal Scroll Bar */
+                QScrollBar:horizontal {
+                    background-color: #2C2C2C;
+                    height: 12px;
+                    border-radius: 6px;
+                }
+                QScrollBar::handle:horizontal {
+                    background-color: #505050;
+                    border-radius: 6px;
+                    min-width: 20px;
+                }
+                QScrollBar::handle:horizontal:hover {
+                    background-color: #606060;
+                }
+                QScrollBar::add-line:horizontal,
+                QScrollBar::sub-line:horizontal {
+                    width: 0px;
+                }
+                QScrollBar::add-page:horizontal,
+                QScrollBar::sub-page:horizontal {
+                    background-color: #2C2C2C;
+                }
+                
+                /* Widgets */
+                QWidget {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                
+                /* Stacked Widget */
+                QStackedWidget {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+            """
+        elif theme_name == "light":
+            button_style = """
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    height: 32px;
+                    min-width: 120px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                }
+                QPushButton:checked {
+                    background-color: #E0E0E0;
+                    border: 2px solid #A0A0A0;
+                }
+                QComboBox {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                    padding: 5px;
+                    border-radius: 4px;
+                    min-width: 150px;
+                }
+                QListWidget {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                }
+                QLabel {
+                    color: black;
+                }
+                QTextBrowser {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                }
+            """
+        else:  # default theme
+            button_style = """
+                QPushButton {
+                    background-color: #E8E8E8;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    height: 32px;
+                    min-width: 120px;
+                }
+                QPushButton:hover {
+                    background-color: #DADADA;
+                }
+                QPushButton:pressed {
+                    background-color: #C8C8C8;
+                }
+                QPushButton:checked {
+                    background-color: #D0D0D0;
+                    border: 2px solid #A0A0A0;
+                }
+                QComboBox {
+                    background-color: #F5F5F5;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                    padding: 5px;
+                    border-radius: 4px;
+                    min-width: 150px;
+                }
+                QListWidget {
+                    background-color: #F5F5F5;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                }
+                QLabel {
+                    color: black;
+                }
+                QTextBrowser {
+                    background-color: #F5F5F5;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                }
+            """
+
+        self.setStyleSheet(button_style)
+        self.style_dialog_buttons()
 
     def apply_all_settings(self):
         # Apply Theme Settings
@@ -273,8 +550,9 @@ class SettingsDialog(QDialog):
         # Save settings to file
         self.save_settings_to_file()
 
-        # Close the settings dialog
-        self.accept()
+        # Apply the theme to the dialog before hiding
+        self.apply_dialog_theme(self.current_theme)
+        self.hide()
 
     def change_category(self, item):
         index = self.categories_list.row(item)

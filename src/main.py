@@ -56,12 +56,14 @@ if __name__ == '__main__':
     # Initialize the main window with settings
     window = MainWindow()
     window.set_language(language_code)
-    window.apply_theme(theme)
     
-    # Show and maximize window
+    # Show and maximize window before applying theme to ensure all widgets exist
     window.show()
     window.setWindowState(Qt.WindowMaximized | window.windowState())
     window.raise_()
     window.activateWindow()
+    
+    # Apply theme after window is shown to ensure all widgets are created
+    window.apply_theme(theme)
 
     sys.exit(app.exec_())

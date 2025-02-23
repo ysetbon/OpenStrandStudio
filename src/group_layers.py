@@ -106,8 +106,7 @@ class GroupedLayerTree(QTreeWidget):
             pass
         else:
             logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
 )
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                               QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView)
@@ -164,7 +163,16 @@ class CollapsibleGroupWidget(QWidget):
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
-
+        self.group_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 2px solid #3C3C3C;
+            }
+            QPushButton:hover {
+                color: black;                       
+                background-color: #D3D3D3;  /* Light gray background on hover */
+            }
+        """)
         # Content widget (collapsible content)
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
@@ -222,34 +230,68 @@ class CollapsibleGroupWidget(QWidget):
         """Handle dynamic theme changes by updating styles."""
         self.apply_theme()
     def apply_theme(self):
-        self.layers_list.setStyleSheet("""
-            QListWidget {
-                background-color: transparent;
-                border: none;
-            }
+        """Set a fixed theme for this widget regardless of the current canvas theme."""
+        # The style below will always be used for the CollapsibleGroupWidget, ensuring consistent appearance.
+        self.setStyleSheet("""
             QListWidget::item {
-                background-color: rgba(35, 35, 35, 255);
-                color: white;
+                background-color: rgba(255, 255, 255, 0.5);
+                color: black;
                 padding: 5px;
+                border: 2px solid #505050;
+                border-radius: 3px;
+                margin: 2px;
             }
             QListWidget::item:hover {
-                background-color: rgba(30, 30, 30, 230);
+                background-color: #4C4C4C;
+                border: 2px solid #606060;
+                color: white;
+            }
+            QListWidget::item:selected {
+                background-color: #505050;
+                border: 2px solid #707070;
+                color: white;
             }
         """)
     def show_context_menu(self, position):
         _ = translations[self.language_code]
         context_menu = QMenu(self)
-
-        # Apply theme-specific styles to the context menu
-        self.apply_context_menu_style(context_menu)
-
+        # NEW: Set context menu stylesheet to style hover/selected items for both dark and light themes
+        if self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode:
+            context_menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2C2C2C;
+                    border: 1px solid #555;
+                }
+                QMenu::item {
+                    padding: 5px 25px;
+                    color: white;
+                }
+                QMenu::item:selected {
+                    background-color: #505050;
+                }
+            """)
+        else:
+            context_menu.setStyleSheet("""
+                QMenu {
+                    background-color: #FFFFFF;
+                    border: 1px solid #CCC;
+                }
+                QMenu::item {
+                    padding: 5px 25px;
+                    color: black;
+                }
+                QMenu::item:selected {
+                    background-color: #D3D3D3;
+                }
+            """)
+            
         move_strands_action = context_menu.addAction(_['move_group_strands'])
         rotate_strands_action = context_menu.addAction(_['rotate_group_strands'])
         edit_angles_action = context_menu.addAction(_['edit_strand_angles'])
         delete_group_action = context_menu.addAction(_['delete_group'])
-
+        
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
-
+        
         if action == move_strands_action:
             self.group_panel.start_group_move(self.group_name)
         elif action == rotate_strands_action:
@@ -259,44 +301,7 @@ class CollapsibleGroupWidget(QWidget):
         elif action == delete_group_action:
             self.group_panel.delete_group(self.group_name)
 
-    def apply_context_menu_style(self, menu):
-        """Apply styles to the context menu based on the current theme."""
-        is_dark_mode = False
-        if self.canvas and hasattr(self.canvas, 'is_dark_mode'):
-            is_dark_mode = self.canvas.is_dark_mode
 
-        if is_dark_mode:
-            # Dark mode styles
-            menu.setStyleSheet("""
-                QMenu {
-                    background-color: #2B2B2B;
-                    color: #FFFFFF;
-                    border: 1px solid #3C3C3C;
-                }
-                QMenu::item {
-                    background-color: transparent;
-                    padding: 5px 20px 5px 20px;
-                }
-                QMenu::item:selected {
-                    background-color: #3C3C3C;  /* Lighter on hover */
-                }
-            """)
-        else:
-            # Light mode styles
-            menu.setStyleSheet("""
-                QMenu {
-                    background-color: #FFFFFF;
-                    color: #000000;
-                    border: 1px solid #CCCCCC;
-                }
-                QMenu::item {
-                    background-color: transparent;
-                    padding: 5px 20px 5px 20px;
-                }
-                QMenu::item:selected {
-                    background-color: #E0E0E0;  /* Darker on hover */
-                }
-            """)
     def toggle_collapse(self):
         self.is_collapsed = not self.is_collapsed
         self.content_widget.setVisible(not self.is_collapsed)
@@ -1746,45 +1751,69 @@ class GroupLayerManager:
             is_dark_mode = False  # Default to light mode
 
         if is_dark_mode:
-            # Dark theme stylesheet
+            # Dark theme stylesheet - updated to match "name the group" dialog style
             dark_stylesheet = """
-                QDialog, QWidget {
-                    background-color: #1C1C1C;
-                    color: #FFFFFF;
-                }
-                QLabel {
-                    color: #FFFFFF;
-                }
-                QCheckBox {
-                    color: #FFFFFF;
-                    background-color: transparent;
-                    padding: 2px;
-                }
-                QCheckBox::indicator {
-                    border: 1px solid #777777;
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 3px;
-                    background-color: #2B2B2B;  /* Dark background when unchecked */
-                }
-                QCheckBox::indicator:checked {
-                    background-color: #FFFFFF;  /* Light background when checked */
-                }
-                QPushButton {
-                    background-color: #2B2B2B;
-                    color: #FFFFFF;
-                    border: 1px solid #777777;
-                    border-radius: 5px;
-                    min-width: 50px;
-                    min-height: 30px;
-                }
-                QPushButton:hover {
-                    background-color: #3C3C3C;
-                }
-                QPushButton:pressed {
-                    background-color: #1C1C1C;
-                }
-            """
+            QDialog {
+                background-color: #2C2C2C;
+                color: white;
+            }
+            QWidget {
+                background-color: #2C2C2C;
+                color: white;
+            }
+            QLabel {
+                color: white;
+                font-weight: bold;
+            }
+            QCheckBox {
+                color: white;
+                background-color: transparent;
+                padding: 5px;
+                font-size: 14px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border: 2px solid #808080;
+                border-radius: 4px;
+                background-color: #2C2C2C;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #505050;
+                border: 2px solid #808080;
+            }
+            QCheckBox::indicator:hover {
+                border: 2px solid #A0A0A0;
+            }
+            QPushButton {
+                background-color: #252525;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #000000;
+                padding: 10px;
+                border-radius: 4px;
+                min-width: 80px;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+            QPushButton:pressed {
+                background-color: #151515;
+                border: 2px solid #000000;
+            }
+            QPushButton[default="true"] {
+                background-color: #1A1A1A;
+                border: 2px solid #000000;
+                font-weight: bold;
+            }
+            QPushButton[default="true"]:hover {
+                background-color: #252525;
+            }
+            QPushButton[default="true"]:pressed {
+                background-color: #151515;
+                border: 2px solid #000000;
+            }
+        """
             dialog.setStyleSheet(dark_stylesheet)
         else:
             # Light theme stylesheet
@@ -2420,7 +2449,7 @@ class GroupRotateDialog(QDialog):
             pass
     def on_angle_changed(self, group_name, new_angle):
         logging.info(f"[GroupRotateDialog] on_angle_changed: new_angle={new_angle}")
-        # Call GroupPanel’s update_group_rotation (which should rotate absolutely)
+        # Call GroupPanel's update_group_rotation (which should rotate absolutely)
         if self.group_panel:
             self.group_panel.update_group_rotation(group_name, new_angle)
         else:
@@ -2429,7 +2458,7 @@ class GroupRotateDialog(QDialog):
 
     def on_rotation_updated(self, group_name, angle):
         """
-        A slot that’s called whenever rotation_updated is emitted.
+        A slot that's called whenever rotation_updated is emitted.
         Here we call the actual rotation logic (rotate_group_strands).
         """
         self.angle = angle
@@ -2439,8 +2468,8 @@ class GroupRotateDialog(QDialog):
         """
         Similar to your existing rotation logic:
         - retrieves pre_rotation_state from self.group_panel
-        - computes the group’s center
-        - rotates every strand’s start/end and (if masked) its deletion rect corners
+        - computes the group's center
+        - rotates every strand's start/end and (if masked) its deletion rect corners
           around that center by `self.angle`.
         """
         if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
@@ -2488,7 +2517,7 @@ class GroupRotateDialog(QDialog):
                         strand.deletion_rectangles[rect_idx]['bottom_left']  = (bl.x(), bl.y())
                         strand.deletion_rectangles[rect_idx]['bottom_right'] = (br.x(), br.y())
 
-                # Update the strand’s shape
+                # Update the strand's shape
                 strand.update_shape()
                 if hasattr(strand, 'update_side_line'):
                     strand.update_side_line()

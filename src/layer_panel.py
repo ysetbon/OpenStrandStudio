@@ -262,15 +262,22 @@ class LayerPanel(QWidget):
         self.right_layout.addWidget(self.group_layer_manager.create_group_button)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
-        # Configure the right panel (group panel)
-        self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # Set a fixed width for the right panel (e.g., 200 pixels)
+        self.right_panel.setFixedWidth(135)  # Adjust this value as needed
 
-        # Create a splitter to allow resizing between left and right panels
+        # Configure the right panel (group panel)
+        self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+
+        # Create a splitter to separate left and right panels
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.left_panel)
-        self.splitter.addWidget(self.right_panel)  # Add right_panel to the splitter, not directly to the layout
+        self.splitter.addWidget(self.right_panel)
+
+        # Disable resizing by setting the splitter handle to non-movable
+        self.splitter.setChildrenCollapsible(False)  # Prevent collapsing
         self.splitter.setStretchFactor(0, 1)  # Left panel can stretch
         self.splitter.setStretchFactor(1, 0)  # Right panel does not stretch
+        self.splitter.handle(1).setEnabled(False)  # Disable the splitter handle
 
         # Add the splitter to the main layout
         self.layout.addWidget(self.splitter)

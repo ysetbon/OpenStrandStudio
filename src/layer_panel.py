@@ -12,7 +12,7 @@ from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
-    QSplitter 
+    QSplitter, QSizePolicy
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
@@ -256,19 +256,23 @@ class LayerPanel(QWidget):
         self.right_layout = QVBoxLayout(self.right_panel)
 
         # Create GroupLayerManager
-        # In layer_panel.py, inside LayerPanel.__init__
         self.group_layer_manager = GroupLayerManager(parent=self, layer_panel=self, canvas=self.canvas)
 
         # Add the create_group_button and group_panel to right layout
         self.right_layout.addWidget(self.group_layer_manager.create_group_button)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
+        # Configure the right panel (group panel)
+        self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
         # Create a splitter to allow resizing between left and right panels
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.left_panel)
-        self.splitter.addWidget(self.right_panel)
+        self.splitter.addWidget(self.right_panel)  # Add right_panel to the splitter, not directly to the layout
+        self.splitter.setStretchFactor(0, 1)  # Left panel can stretch
+        self.splitter.setStretchFactor(1, 0)  # Right panel does not stretch
 
-        # Add splitter to main layout
+        # Add the splitter to the main layout
         self.layout.addWidget(self.splitter)
 
         # Initialize variables for managing layers

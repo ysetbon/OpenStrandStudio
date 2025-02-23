@@ -15,7 +15,7 @@ class SplitterHandle(QWidget):
         :param parent: The parent widget (default is None)
         """
         super().__init__(parent)
-        self.setFixedHeight(20)  # Set a fixed height for the handle
+        self.setFixedHeight(10)  # Set a fixed height for the handle
         self.setCursor(Qt.SplitHCursor)  # Set the cursor to a horizontal split cursor
 
         # Override the parent's resize event if a parent is provided
@@ -29,7 +29,7 @@ class SplitterHandle(QWidget):
         :param event: The paint event
         """
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(200, 200, 200))  # Fill with light gray color
+        painter.fillRect(self.rect(), QColor(200, 200, 200, 100))  # Fill with light gray color
 
     def updateSize(self):
         """

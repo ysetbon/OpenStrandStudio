@@ -65,5 +65,8 @@ if __name__ == '__main__':
     
     # Apply theme after window is shown to ensure all widgets are created
     window.apply_theme(theme)
+    
+    # Set the initial splitter sizes to make the layer panel narrower
+    window.set_initial_splitter_sizes()
 
     sys.exit(app.exec_())

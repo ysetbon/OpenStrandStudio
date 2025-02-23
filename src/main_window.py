@@ -290,8 +290,9 @@ class MainWindow(QMainWindow):
 
         # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
-        left_widget = QWidget()
-        left_layout = QVBoxLayout(left_widget)
+        
+        self.left_widget = QWidget()  # store as instance variable
+        left_layout = QVBoxLayout(self.left_widget)
 
         # Wrap the button layout in a container widget
         button_container = QWidget()
@@ -323,16 +324,23 @@ class MainWindow(QMainWindow):
 
         left_layout.addWidget(scroll_area)
         left_layout.addWidget(self.canvas)
-        self.splitter.addWidget(left_widget)
+        self.splitter.addWidget(self.left_widget)
         self.splitter.addWidget(self.layer_panel)
 
         # Configure splitter and main layout
         self.splitter.setHandleWidth(0)
         main_layout.addWidget(self.splitter)
 
-        # Set minimum widths
-        left_widget.setMinimumWidth(380)
-        self.layer_panel.setMinimumWidth(380)
+        # Set minimum widths and enforce them using size policies
+        self.left_widget.setMinimumWidth(280)
+        self.left_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layer_panel.setMinimumWidth(280)
+        self.layer_panel.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        # Set splitter stretch factors to enforce the minimum widths
+        self.splitter.setStretchFactor(-1, False)
+
+
         # After creating the buttons, set their size policy
         buttons = [
             self.attach_button,
@@ -363,7 +371,16 @@ class MainWindow(QMainWindow):
         # Apply button styles
         self.setup_button_styles()
         logging.info("UI setup completed")
-
+    def set_initial_splitter_sizes(self):
+        """
+        Set the initial sizes of the splitter to make the layer panel narrower.
+        The layer panel is set to its minimum width (280 pixels), and the left widget
+        takes the remaining space.
+        """
+        layer_panel_width = self.layer_panel.minimumWidth()  # 280 pixels
+        total_width = self.width()  # Current maximized window width
+        left_width = total_width - layer_panel_width
+        self.splitter.setSizes([left_width, layer_panel_width])
     def setup_connections(self):
         # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize

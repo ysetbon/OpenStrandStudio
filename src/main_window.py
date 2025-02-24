@@ -207,8 +207,9 @@ class MainWindow(QMainWindow):
 
         # Create the horizontal layout for buttons
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)  # Ensure consistent spacing between buttons
-        button_layout.setContentsMargins(10, 5, 10, 5)  # Set uniform margins for left, top, right, bottom
+        button_layout.setSpacing(10)
+        button_layout.setContentsMargins(10, 5, 10, 5)
+        button_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)  # Align buttons to the left and center vertically
 
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
@@ -297,23 +298,41 @@ class MainWindow(QMainWindow):
         # Wrap the button layout in a container widget
         button_container = QWidget()
         button_container.setLayout(button_layout)
+        button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # No vertical resizing
 
-        # Place the button container inside a scroll area
+        # Get the button container's height and fix its height
+        button_height = button_container.sizeHint().height()
+        button_container.setFixedHeight(button_height)
+
+        # Set up the scroll area
         scroll_area = QScrollArea()
         scroll_area.setWidget(button_container)
-        scroll_area.setWidgetResizable(True)  # Enable widget resizing so that the container can adjust its size
+        scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # Set the scroll area height to accommodate the button container plus a margin
-        scroll_area.setFixedHeight(button_container.sizeHint().height() + 10)
-
-        # Remove border from scroll area
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # Explicitly disable vertical scrollbar
+        scroll_area.setFixedHeight(button_height + 15)  # Fixed height for scroll area
+        
         scroll_area.setStyleSheet("""
             QScrollArea {
                 border: none;
+                margin: 0px;
+                padding: 0px;
+            }
+            QScrollArea > QWidget > QWidget {
+                margin: 0px;
+                padding: 0px;
+            }
+            QScrollBar:horizontal {
+                border: none;
+                height: 12px;
+                margin: 0px;
+            }
+            QScrollBar::handle:horizontal {
+                border: none;
+                border-radius: 6px;
             }
         """)
-
+        
         # Disable vertical scrolling by overriding the wheelEvent
         def disable_vertical_scroll(event):
             if event.angleDelta().y() != 0:
@@ -332,9 +351,9 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.splitter)
 
         # Set minimum widths and enforce them using size policies
-        self.left_widget.setMinimumWidth(280)
+        self.left_widget.setMinimumWidth(300)
         self.left_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.layer_panel.setMinimumWidth(280)
+        self.layer_panel.setMinimumWidth(300)
         self.layer_panel.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # Set splitter stretch factors to enforce the minimum widths
@@ -466,7 +485,12 @@ class MainWindow(QMainWindow):
         if not hasattr(self, '_settings_dialog'):
             # Create the dialog only once and store it
             self._settings_dialog = self.settings_dialog
-            self._settings_dialog.setFixedSize(800, 600)
+            # Remove fixed size and use expanding size policy
+            self._settings_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            # Set initial size (optional, can be adjusted based on content)
+            self._settings_dialog.resize(800, 600)
+            # Add margins to prevent content clipping
+            self._settings_dialog.layout().setContentsMargins(10, 10, 10, 10)
             # Set the current theme
             self._settings_dialog.current_theme = self.current_theme
             # Connect theme change signal
@@ -485,520 +509,487 @@ class MainWindow(QMainWindow):
         
         if theme_name == "dark":
             style_sheet = """
-            QWidget {
-                background-color: #2C2C2C;
-                color: white;
-            }
-            QPushButton {
-                background-color: #2C2C2C;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #3D3D3D;
-            }
-            QPushButton:pressed {
-                background-color: #2D2D2D;
-            }
-            QPushButton:checked {
-                background-color: #505050;
-                border: 2px solid #808080;
-                padding: 8px 16px;
-            }
-            QPushButton:disabled {
-                background-color: #1A1A1A;
-                color: #808080;
-            }
-            QPushButton:checked:disabled {
-                background-color: #505050;
-                border: 2px solid #808080;
-            }
-            QPushButton:checked:disabled:hover {
-                background-color: #505050;
-            }
-            QPushButton:checked:disabled:pressed {
-                background-color: #505050;
-                border: 2px solid #808080;
-            }
-            
-            /* Dialog button styling */
-            QDialog QPushButton {
-                background-color: #252525;
-                color: white;
-                font-weight: normal;  /* Changed from bold to normal */
-                border: 2px solid #000000;
-                padding: 10px;
-                border-radius: 4px;
-                min-width: 80px;
-            }
-            QDialog QPushButton:hover {
-                background-color: #505050;
-            }
-            QDialog QPushButton:pressed {
-                background-color: #151515;
-                border: 2px solid #000000;
-            }
-
-
-            /* Style for QScrollArea and scrolling areas in dark mode */
-            QAbstractScrollArea {
-                background-color: #2C2C2C;
-                border: none;
-            }
-            QScrollArea > QWidget {
-                background-color: #2C2C2C;
-            }
-            QScrollBar:horizontal {
-                background-color: #1A1A1A;
-                border: none;
-                height: 12px;
-            }
-            QScrollBar::handle:horizontal {
-                background-color: #2D2D2D;
-                border: none;
-                border-radius: 6px;
-            }
-            QScrollBar:vertical {
-                background-color: #1A1A1A;
-                background-image: none;
-                width: 10px;
-                margin: 0px;
-            }
-            QScrollArea::corner {
-                background-color: #2C2C2C;
-                background-image: none;
-                margin: 0;
-                padding: 0;
-            }
-            QScrollArea::viewport {
-                background-color: #2C2C2C;
-                background-image: none;
-                border: none;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #2D2D2D;
-                border: none;
-                border-radius: 5px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                background: none;
-                border: none;
-            }
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: #1A1A1A;
-            }
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-page:horizontal {
-                background: #1A1A1A;
-            }
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal {
-                background: none;
-                border: none;
-            }
-            
-            /* Style for group-related buttons in dark mode */
-            QPushButton[groupButton="true"] {
-                background-color: #2A2A2A;  /* Slightly lighter shade */
-                color: white;
-                font-weight: bold;
-                border: 2px solid #000000;  /* Black border */
-                padding: 10px;
-                border-radius: 4px;
-            }
-            QPushButton[groupButton="true"]:hover {
-                background-color: #505050;  /* Slightly lighter on hover */
-            }
-            QPushButton[groupButton="true"]:pressed {
-                background-color: #606060;  /* Even darker when pressed */
-                border: 2px solid #000000;
-            }
-            QPushButton[groupButton="true"]:default {
-                background-color: #1A1A1A;
-                border: 2px solid #000000;
-            }
-            QPushButton[groupButton="true"]:default:hover {
-                background-color: #252525;
-            }
-            QPushButton[groupButton="true"]:default:pressed {
-                background-color: #151515;
-            }
+        QWidget {
+            background-color: #2C2C2C;
+            color: white;
+        }
+        QPushButton {
+            background-color: #2C2C2C;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #3D3D3D;
+        }
+        QPushButton:pressed {
+            background-color: #2D2D2D;
+        }
+        QPushButton:checked {
+            background-color: #505050;
+            border: 2px solid #808080;
+            padding: 8px 16px;
+        }
+        QPushButton:disabled {
+            background-color: #1A1A1A;
+            color: #808080;
+        }
+        QPushButton:checked:disabled {
+            background-color: #505050;
+            border: 2px solid #808080;
+        }
+        QPushButton:checked:disabled:hover {
+            background-color: #505050;
+        }
+        QPushButton:checked:disabled:pressed {
+            background-color: #505050;
+            border: 2px solid #808080;
+        }
+        
+        /* Dialog button styling */
+        QDialog QPushButton {
+            background-color: #252525;
+            color: white;
+            font-weight: normal;  /* Changed from bold to normal */
+            border: 2px solid #000000;
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 80px;
+        }
+        QDialog QPushButton:hover {
+            background-color: #505050;
+        }
+        QDialog QPushButton:pressed {
+            background-color: #151515;
+            border: 2px solid #000000;
+        }
+    
+        /* Style for QScrollArea and scrolling areas in dark mode */
+        QAbstractScrollArea {
+            background-color: #2C2C2C;
+            border: none;
+        }
+        QScrollArea > QWidget {
+            background-color: #2C2C2C;
+        }
+        QScrollBar:horizontal {
+            background-color: #1A1A1A;
+            border: none;
+            height: 12px;
+        }
+        QScrollBar::handle:horizontal {
+            background-color: #181818;  /* Updated darker shade */
+            border: none;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background-color: #4A4A4A;
+        }
+        QScrollBar::handle:horizontal:pressed {
+            background-color: #606060;
+        }
+        QScrollBar:vertical {
+            background-color: #1A1A1A;
+            background-image: none;
+            width: 10px;
+            margin: 0px;
+        }
+        QScrollArea::corner {
+            background-color: #2C2C2C;
+            background-image: none;
+            margin: 0;
+            padding: 0;
+        }
+        QScrollArea::viewport {
+            background-color: #2C2C2C;
+            background-image: none;
+            border: none;
+        }
+        QScrollBar::handle:vertical {
+            background-color: #2D2D2D;
+            border: none;
+            border-radius: 5px;
+            min-height: 20px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background-color: #4A4A4A;
+        }
+        QScrollBar::handle:vertical:pressed {
+            background-color: #606060;
+        }
+        QScrollBar::add-line:vertical,
+        QScrollBar::sub-line:vertical {
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:vertical,
+        QScrollBar::sub-page:vertical {
+            background: #1A1A1A;
+        }
+        QScrollBar::add-page:horizontal,
+        QScrollBar::sub-page:horizontal {
+            background: #010101;
+        }
+        QScrollBar::add-line:horizontal,
+        QScrollBar::sub-line:horizontal {
+            background: none;
+            border: none;
+        }
             """
             # Update create_group_button style in dark mode
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #2A2A2A;  /* Slightly lighter shade */
-                    color: white;
-                    font-weight: bold;
-                    border: 2px solid #000000;  /* Black border */
-                    padding: 10px;
-                    border-radius: 4px;
-                }
-                QPushButton:hover {
-                    background-color: #505050;  /* Slightly lighter on hover */
-                }
-                QPushButton:pressed {
-                    background-color: #606060;  /* Even darker when pressed */
-                    border: 2px solid #000000;
-                }
-                QPushButton:default {
-                    background-color: #1A1A1A;
-                    border: 2px solid #000000;
-                }
-                QPushButton:default:hover {
-                    background-color: #252525;
-                }
-                QPushButton:default:pressed {
-                    background-color: #151515;
-                }
+        QPushButton {
+            background-color: #2A2A2A;
+            color: white;
+            font-weight: bold;
+            border: 2px solid #000000;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #505050;
+        }
+        QPushButton:pressed {
+            background-color: #606060;
+            border: 2px solid #000000;
+        }
+        QPushButton:default {
+            background-color: #1A1A1A;
+            border: 2px solid #000000;
+        }
+        QPushButton:default:hover {
+            background-color: #252525;
+        }
+        QPushButton:default:pressed {
+            background-color: #151515;
+        }
             """)
         elif theme_name == "light":
             style_sheet = """
-            QWidget {
-                background-color: #FFFFFF;
-                color: black;
-            }
-            QLabel {
-                color: black;
-            }
-            QPushButton {
-                background-color: #F0F0F0;
-                color: black;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #E0E0E0;
-            }
-            QPushButton:pressed {
-                background-color: #D0D0D0;
-            }
-            QSpinBox, QDoubleSpinBox {
-                background-color: #FFFFFF;
-                color: black;
-                border: 2px solid #CCCCCC;
-            }
-            QSlider {
-                background-color: transparent;
-            }
-            QSlider::groove:horizontal {
-                background: #E0E0E0;
-                height: 6px;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: #CCCCCC;
-                width: 14px;
-                height: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
-            }
-            QComboBox {
-                background-color: #FFFFFF;
-                color: black;
-              
-            }
-            QComboBox QAbstractItemView {
-                background-color: #FFFFFF;
-                color: black;
-                selection-background-color: #E0E0E0;
-            }
-            QCheckBox {
-                color: black;
-            }
-            QCheckBox::indicator {
-                
-                width: 16px;
-                height: 16px;
-                background: #FFFFFF;
-            }
-            QCheckBox::indicator:checked {
-                image: url(:/icons/checkbox_checked_black.png);
-            }
-            /* Dialog button styling (updated to match light theme) */
-            QDialog QPushButton {
-                background-color: #F0F0F0;
-                color: black;
-                font-weight: normal;
-                border: 2px solid #CCCCCC;
-                padding: 10px;
-                border-radius: 4px;
-                min-width: 80px;
-            }
-            QDialog QPushButton:hover {
-                background-color: #E0E0E0;
-            }
-            QDialog QPushButton:pressed {
-                background-color: #D0D0D0;
-                border: 2px solid #B0B0B0;
-            }
+        QWidget {
+            background-color: #FFFFFF;
+            color: black;
+        }
+        QLabel {
+            color: black;
+        }
+        QPushButton {
+            background-color: #F0F0F0;
+            color: black;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #E0E0E0;
+        }
+        QPushButton:pressed {
+            background-color: #D0D0D0;
+        }
+        QSpinBox, QDoubleSpinBox {
+            background-color: #FFFFFF;
+            color: black;
+            border: 2px solid #CCCCCC;
+        }
+        QSlider {
+            background-color: transparent;
+        }
+        QSlider::groove:horizontal {
+            background: #E0E0E0;
+            height: 6px;
+            border-radius: 3px;
+        }
+        QSlider::handle:horizontal {
+            background: #CCCCCC;
+            width: 14px;
+            height: 14px;
+            margin: -4px 0;
+            border-radius: 7px;
+        }
+        QComboBox {
+            background-color: #FFFFFF;
+            color: black;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #FFFFFF;
+            color: black;
+            selection-background-color: #E0E0E0;
+        }
+        QCheckBox {
+            color: black;
+        }
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            background: #FFFFFF;
+        }
+        QCheckBox::indicator:checked {
+            image: url(:/icons/checkbox_checked_black.png);
+        }
+        /* Dialog button styling (updated to match light theme) */
+        QDialog QPushButton {
+            background-color: #F0F0F0;
+            color: black;
+            font-weight: normal;
+            border: 2px solid #CCCCCC;
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 80px;
+        }
+        QDialog QPushButton:hover {
+            background-color: #E0E0E0;
+        }
+        QDialog QPushButton:pressed {
+            background-color: #D0D0D0;
+            border: 2px solid #B0B0B0;
+        }
 
-
-            /* Styles for scrollbars in light mode */
-            QScrollBar:horizontal {
-                 background: #F5F5F5;
-                 border: none;
-                 height: 12px;
-                 margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                 background: #D4D4D4;
-                 border-radius: 6px;
-            }
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-line:horizontal {
-                 background: none;
-            }
-            /* Disable vertical scrollbar in light mode */
-            QScrollBar:vertical {
-                 width: 0px;
-                 background: none;
-                 margin: 0px;
-            }
-            /* --- Added new rule for darker left/right edges of scroll area viewport in light mode --- */
-            QScrollArea::viewport {
-                background-color: #FFFFFF;
-                background-image: none;
-                border: none;
-            }
-            QScrollArea {
-                background-color: #FFFFFF;
-                border: none;
-            }
-            /* Styles for scrollbars in light theme */
-            QScrollBar:horizontal {
-                background: #F5F5F5;
-                border: none;
-                height: 12px;
-                margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                background: #D4D4D4;
-                border: none;
-                border-radius: 5px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal {
-                background: none;
-                border: none;
-            }
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-page:horizontal {
-                background: #F5F5F5;
-            }
-            QScrollBar:vertical {
-                background: #F5F5F5;
-                border: none;
-                width: 12px;
-                margin: 0px;
-            }
-            QScrollBar::handle:vertical {
-                background: #D4D4D4;
-                border: none;
-                border-radius: 5px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                background: none;
-                border: none;
-            }
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: #F5F5F5;
-            }
+        /* Styles for scrollbars in light mode */
+        QScrollBar:horizontal {
+            background: #F5F5F5;
+            border: none;
+            height: 12px;
+            margin: 0px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #D4D4D4;
+            border: none;
+            border-radius: 5px;
+            min-height: 20px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background: #B0B0B0;  /* Darker gray for hover in light theme */
+        }
+        QScrollBar::handle:horizontal:pressed {
+            background: #909090;  /* Even darker gray for pressed in light theme */
+        }
+        QScrollBar::add-line:horizontal,
+        QScrollBar::sub-line:horizontal {
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:horizontal,
+        QScrollBar::sub-page:horizontal {
+            background: #F5F5F5;
+        }
+        QScrollBar:vertical {
+            background: #F5F5F5;
+            border: none;
+            width: 12px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background: #D4D4D4;
+            border: none;
+            border-radius: 5px;
+            min-height: 20px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #B0B0B0;  /* Darker gray for hover in light theme */
+        }
+        QScrollBar::handle:vertical:pressed {
+            background: #909090;  /* Even darker gray for pressed in light theme */
+        }
+        QScrollBar::add-line:vertical,
+        QScrollBar::sub-line:vertical {
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:vertical,
+        QScrollBar::sub-page:vertical {
+            background: #F5F5F5;
+        }
+        QScrollArea::viewport {
+            background-color: #FFFFFF;
+            background-image: none;
+            border: none;
+        }
+        QScrollArea {
+            background-color: #FFFFFF;
+            border: none;
+        }
             """
             # Style for create_group_button
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #A6A19A;
-                    color: black;
-                    font-weight: bold;
-                    border: none;
-                    padding: 10px;
-                    border-radius: 0;
-                }
-                QPushButton:hover {
-                    background-color: #B6B1AA;
-                }
-                QPushButton:pressed {
-                    background-color: #86817A;
-                }
+        QPushButton {
+            background-color: #A6A19A;
+            color: black;
+            font-weight: bold;
+            border: none;
+            padding: 10px;
+            border-radius: 0;
+        }
+        QPushButton:hover {
+            background-color: #B6B1AA;
+        }
+        QPushButton:pressed {
+            background-color: #86817A;
+        }
             """)
         elif theme_name == "default":
             style_sheet = """
-            QWidget {
-                background-color: #ECECEC;
-                color: black;
-            }
-            QLabel {
-                color: black;
-            }
-            QPushButton {
-                background-color: #E8E8E8;
-                color: black;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #DADADA;
-            }
-            QPushButton:pressed {
-                background-color: #C8C8C8;
-            }
-            QSpinBox, QDoubleSpinBox {
-                background-color: #FFFFFF;
-                color: black;
-            }
-            QSlider {
-                background-color: transparent;
-            }
-            QSlider::groove:horizontal {
-                background: #E0E0E0;
-                height: 6px;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: #CCCCCC;
-                width: 14px;
-                height: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
-            }
-            /* Dialog button styling (updated to match default theme) */
-            QDialog QPushButton {
-                background-color: #E8E8E8;
-                color: black;
-                font-weight: normal;
-                border: 2px solid #B0B0B0;
-                padding: 10px;
-                border-radius: 4px;
-                min-width: 80px;
-            }
-            QDialog QPushButton:hover {
-                background-color: #DADADA;
-            }
-            QDialog QPushButton:pressed {
-                background-color: #C8C8C8;
-                border: 2px solid #A0A0A0;
-            }
+        QWidget {
+            background-color: #ECECEC;
+            color: black;
+        }
+        QLabel {
+            color: black;
+        }
+        QPushButton {
+            background-color: #E8E8E8;
+            color: black;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #DADADA;
+        }
+        QPushButton:pressed {
+            background-color: #C8C8C8;
+        }
+        QSpinBox, QDoubleSpinBox {
+            background-color: #FFFFFF;
+            color: black;
+        }
+        QSlider {
+            background-color: transparent;
+        }
+        QSlider::groove:horizontal {
+            background: #E0E0E0;
+            height: 6px;
+            border-radius: 3px;
+        }
+        QSlider::handle:horizontal {
+            background: #CCCCCC;
+            width: 14px;
+            height: 14px;
+            margin: -4px 0;
+            border-radius: 7px;
+        }
+        /* Dialog button styling (updated to match default theme) */
+        QDialog QPushButton {
+            background-color: #E8E8E8;
+            color: black;
+            font-weight: normal;
+            border: 2px solid #B0B0B0;
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 80px;
+        }
+        QDialog QPushButton:hover {
+            background-color: #DADADA;
+        }
+        QDialog QPushButton:pressed {
+            background-color: #C8C8C8;
+            border: 2px solid #A0A0A0;
+        }
 
-            /* Styles for scrollbars in default mode */
-            QScrollBar:horizontal {
-                 background: #DADADA;
-                 border: none;
-                 height: 12px;
-                 margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                 background: #BFBFBF;
-                 border: none;
-                 border-radius: 6px;
-            }
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal {
-                 background: none;
-                 width: 0px;
-            }
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-page:horizontal {
-                 background: none;
-            }
-            /* Disable vertical scrollbar in default mode */
-            QScrollBar:vertical {
-                 width: 0px;
-                 background: none;
-                 margin: 0px;
-            }
-            /* --- Updated scroll area viewport rule: no explicit borders --- */
-            QScrollArea::viewport {
-                background-color: #ECECEC;
-                background-image: none;
-                border: none;  /* Removed explicit left/right borders */
-            }
-            QScrollBar:vertical {
-                background-color: #DADADA;
-                border: none;
-                width: 10px;
-                margin: 0px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #BFBFBF;
-                border: none;
-                border-radius: 5px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                background: none;
-                border: none;
-            }
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: #DADADA;
-            }
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-page:horizontal {
-                background: #DADADA;
-            }
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal {
-                background: none;
-                border: none;
-            }
-            /* Remove any default borders for panels for consistency */
-            QWidget, QFrame, QScrollArea, QScrollArea::viewport {
-                border: none;
-            }
+        /* Styles for scrollbars in default mode */
+        QScrollBar:horizontal {
+            background: #DADADA;
+            border: none;
+            height: 12px;
+            margin: 0px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #BFBFBF;
+            border: none;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background: #A0A0A0;  /* Darker gray for hover in default theme */
+        }
+        QScrollBar::handle:horizontal:pressed {
+            background: #808080;  /* Even darker gray for pressed in default theme */
+        }
+        QScrollBar::add-line:horizontal,
+        QScrollBar::sub-line:horizontal {
+            background: none;
+            width: 0px;
+        }
+        QScrollBar::add-page:horizontal,
+        QScrollBar::sub-page:horizontal {
+            background: #DADADA;
+        }
+        QScrollBar:vertical {
+            background-color: #DADADA;
+            border: none;
+            width: 10px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background-color: #BFBFBF;
+            border: none;
+            border-radius: 5px;
+            min-height: 20px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #A0A0A0;  /* Darker gray for hover in default theme */
+        }
+        QScrollBar::handle:vertical:pressed {
+            background: #808080;  /* Even darker gray for pressed in default theme */
+        }
+        QScrollBar::add-line:vertical,
+        QScrollBar::sub-line:vertical {
+            background: none;
+            border: none;
+        }
+        QScrollBar::add-page:vertical,
+        QScrollBar::sub-page:vertical {
+            background: #DADADA;
+        }
+        QScrollArea::viewport {
+            background-color: #ECECEC;
+            background-image: none;
+            border: none;  /* Removed explicit left/right borders */
+        }
+        /* Remove any default borders for panels for consistency */
+        QWidget, QFrame, QScrollArea, QScrollArea::viewport {
+            border: none;
+        }
             """
             # Style for create_group_button in default theme - ensure no borders
             self.layer_panel.group_layer_manager.create_group_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #96938F;
-                    color: white;
-                    font-weight: bold;
-                    border: none;
-                    padding: 10px;
-                    border-radius: 0;
-                }
-                QPushButton:hover {
-                    background-color: #A8A5A1;
-                }
-                QPushButton:pressed {
-                    background-color: #7E7B77;
-                }
+        QPushButton {
+            background-color: #96938F;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px;
+            border-radius: 0;
+        }
+        QPushButton:hover {
+            background-color: #A8A5A1;
+        }
+        QPushButton:pressed {
+            background-color: #7E7B77;
+        }
             """)
         else:
             # If an unknown theme is selected, default to using no stylesheet
             style_sheet = ""
-
+    
         # Apply the style sheet to the application
         QApplication.instance().setStyleSheet(style_sheet)
-
+    
         # Update the canvas theme if needed
         self.canvas.set_theme(theme_name)
         self.canvas.update()
-
+    
         # Update the layer panel theme
         if hasattr(self.layer_panel, 'set_theme'):
             self.layer_panel.set_theme(theme_name)
-
+    
         # Update the canvas dark mode flag
         self.canvas.is_dark_mode = theme_name == "dark"
-
+    
         # If settings dialog exists, update its theme
         if hasattr(self, '_settings_dialog'):
             self._settings_dialog.current_theme = theme_name
             self._settings_dialog.apply_dialog_theme(theme_name)
-
+    
         # Emit the theme_changed signal
         self.theme_changed.emit(theme_name)
     def update_strand_attachable(self, set_number, attachable):

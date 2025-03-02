@@ -1625,31 +1625,35 @@ class MaskedStrand(Strand):
             except ImportError:
                 from src.shader_utils import draw_mask_strand_shadow,draw_circle_shadow
             
-            logging.info(f"Drawing shadow for MaskedStrand {self.layer_name} with {len(self.canvas.strands)} other strands in canvas")
-            
-            # Only draw shadows where actual strands exist
-            # Get the combined path of both strands to limit shadow area
-            strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
-            strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
-            combined_strand_area = QPainterPath(strand1_path)
-            combined_strand_area.addPath(strand2_path)
-            
-            # Get shadow path and intersect with combined strand area
-            masked_shadow_path = self.get_masked_shadow_path()
-            if masked_shadow_path and not masked_shadow_path.isEmpty():
-                # Limit shadow only to areas where strands exist
-                limited_shadow_path = masked_shadow_path.intersected(combined_strand_area)
+            # Only draw shadows if shadow rendering is enabled in the canvas
+            if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'shadow_enabled') and self.canvas.shadow_enabled:
+                logging.info(f"Drawing shadow for MaskedStrand {self.layer_name} with {len(self.canvas.strands)} other strands in canvas")
                 
-                # Draw shadow on top of strands with proper composition mode
-                temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                draw_mask_strand_shadow(temp_painter, limited_shadow_path, self)
+                # Only draw shadows where actual strands exist
+                # Get the combined path of both strands to limit shadow area
+                strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
+                strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
+                combined_strand_area = QPainterPath(strand1_path)
+                combined_strand_area.addPath(strand2_path)
                 
-                # Also draw circle shadows if this masked strand has circles
-                if hasattr(self, 'has_circles') and any(self.has_circles):
-                    draw_circle_shadow(temp_painter, self)
+                # Get shadow path and intersect with combined strand area
+                masked_shadow_path = self.get_masked_shadow_path()
+                if masked_shadow_path and not masked_shadow_path.isEmpty():
+                    # Limit shadow only to areas where strands exist
+                    limited_shadow_path = masked_shadow_path.intersected(combined_strand_area)
+                    
+                    # Draw shadow on top of strands with proper composition mode
+                    temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self)
+                    
+                    # Also draw circle shadows if this masked strand has circles
+                    if hasattr(self, 'has_circles') and any(self.has_circles):
+                        draw_circle_shadow(temp_painter, self)
                 
+                else:
+                    logging.warning(f"Empty shadow path for masked strand {self.layer_name}")
             else:
-                logging.warning(f"Empty shadow path for masked strand {self.layer_name}")
+                logging.info("Skipping shadow drawing for masked strand due to shadow toggle off")
         except Exception as e:
             logging.error(f"Error applying masked strand shadow: {e}")
 
@@ -1731,119 +1735,135 @@ class MaskedStrand(Strand):
         # This creates the effect of the first strand being on top at the intersection, when doing so have a recalculate the shadow area inside this try.
         try:
             if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
-                # Get the paths for both strands
-                path1_stroked = self.get_stroked_path_for_strand(self.first_selected_strand)
-                # Get the base paths for both strands
-                # Use moderate shadow size for realistic effect
-                shadow_width_offset = 15  # Adjusted from 20 for more realistic effect
+                # Check if shadow rendering is enabled - if not, skip this shadow rendering
+                if not (hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'shadow_enabled') and self.canvas.shadow_enabled):
+                    logging.info("Skipping first strand top shadow due to shadow toggle off")
+                    # We still need to draw the first strand on top, just without shadow effects
+                    final_buffer = QImage(
+                        painter.device().size(),
+                        QImage.Format_ARGB32_Premultiplied
+                    )
+                    final_buffer.fill(Qt.transparent)
+                    final_painter = QPainter(final_buffer)
+                    final_painter.setRenderHint(QPainter.Antialiasing, True)
+                    self.first_selected_strand.draw(final_painter)
+                    final_painter.end()
+                    painter.drawImage(0, 0, final_buffer)
+                else:
+                    # Get the paths for both strands
+                    path1_stroked = self.get_stroked_path_for_strand(self.first_selected_strand)
+                    # Get the base paths for both strands
+                    # Use moderate shadow size for realistic effect
+                    shadow_width_offset = 15  # Adjusted from 20 for more realistic effect
 
-                path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
-                shadow_stroker = QPainterPathStroker()
-                shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
-                shadow_stroker.setJoinStyle(Qt.MiterJoin)
-                shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
-                shadow_path1 = shadow_stroker.createStroke(path1)
+                    path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
+                    shadow_stroker = QPainterPathStroker()
+                    shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+                    shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                    shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
+                    shadow_path1 = shadow_stroker.createStroke(path1)
+                    
+                    # Rest of the shadow drawing code remains the same
+                    path2 = self.second_selected_strand.get_path()
+                    shadow_stroker = QPainterPathStroker()
+                    shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+                    shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                    shadow_stroker.setCapStyle(Qt.RoundCap)
+                    shadow_path2 = shadow_stroker.createStroke(path2)
 
-                path2 = self.second_selected_strand.get_path()  # Get actual path instead of the strand object
-                shadow_stroker = QPainterPathStroker()
-                shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
-                shadow_stroker.setJoinStyle(Qt.MiterJoin)
-                shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
-                shadow_path2 = shadow_stroker.createStroke(path2)
+                    # First get the basic intersection of the two strands
+                    intersection_path = shadow_path1.intersected(shadow_path2)
+                    
+                    # Create the shadow path by stroking the intersection
+                    path_shadow = intersection_path
+                    
+                    # Log information about the shadow path
+                    logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+                    
+                    # Apply any saved deletion rectangles to the shadow path
+                    if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                        for rect in self.deletion_rectangles:
+                            # Use corner-based data:
+                            top_left = QPointF(*rect['top_left'])
+                            top_right = QPointF(*rect['top_right'])
+                            bottom_left = QPointF(*rect['bottom_left'])
+                            bottom_right = QPointF(*rect['bottom_right'])
+                            # Create a polygonal path from the four corners
+                            deletion_path = QPainterPath()
 
-                # First get the basic intersection of the two strands
-                intersection_path = shadow_path1.intersected(shadow_path2)
-                
-                # Create the shadow path by stroking the intersection
-                path_shadow = intersection_path
-                
-                # Log information about the shadow path
-                logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
-                
-                # Apply any saved deletion rectangles to the shadow path
-                if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-                    for rect in self.deletion_rectangles:
-                        # Use corner-based data:
-                        top_left = QPointF(*rect['top_left'])
-                        top_right = QPointF(*rect['top_right'])
-                        bottom_left = QPointF(*rect['bottom_left'])
-                        bottom_right = QPointF(*rect['bottom_right'])
-                        # Create a polygonal path from the four corners
-                        deletion_path = QPainterPath()
+                            deletion_path.moveTo(top_left)
+                            deletion_path.lineTo(top_right)
+                            deletion_path.lineTo(bottom_right)
+                            deletion_path.lineTo(bottom_left)
+                            deletion_path.closeSubpath()
 
-                        deletion_path.moveTo(top_left)
-                        deletion_path.lineTo(top_right)
-                        deletion_path.lineTo(bottom_right)
-                        deletion_path.lineTo(bottom_left)
-                        deletion_path.closeSubpath()
-
-                        path_shadow = path_shadow.subtracted(deletion_path)
-                
-                # Log information about the final shadow path
-                logging.info(f"Final shadow path for clipping: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
-                
-                # COMPLETELY NEW APPROACH: Use multiple buffers with soft-edge feathering to eliminate all aliasing
-                
-                # Create a dedicated high-quality buffer for the final strand layer
-                final_buffer = QImage(
-                    painter.device().size(),
-                    QImage.Format_ARGB32_Premultiplied
-                )
-                final_buffer.fill(Qt.transparent)
-                final_painter = QPainter(final_buffer)
-                
-                # Enable maximum quality rendering
-                final_painter.setRenderHint(QPainter.Antialiasing, True)
-                final_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                final_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-                
-                # Draw the first strand completely to this buffer
-                self.first_selected_strand.draw(final_painter)
-                
-                # Create a soft mask buffer for the intersection with feathered edges
-                mask_buffer = QImage(
-                    painter.device().size(),
-                    QImage.Format_ARGB32_Premultiplied
-                )
-                mask_buffer.fill(Qt.transparent)
-                mask_painter = QPainter(mask_buffer)
-                mask_painter.setRenderHint(QPainter.Antialiasing, True)
-                mask_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                mask_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-                
-                # Create a soft feathered mask from the intersection region
-                # Draw the core mask with solid opacity
-                mask_painter.setPen(Qt.NoPen)
-                mask_painter.setBrush(QBrush(Qt.black))
-                mask_painter.drawPath(path_shadow)
-                
-                # Create and draw the feathered edge for smooth transitions
-                feather_width = 4.0  # Use a wider feather for smoother edges
-                feather_stroker = QPainterPathStroker()
-                feather_stroker.setWidth(feather_width)
-                feather_stroker.setJoinStyle(Qt.RoundJoin)
-                feather_stroker.setCapStyle(Qt.RoundCap)
-                feathered_edge = feather_stroker.createStroke(path_shadow)
-                
-                # Draw feathered edge with gradient opacity
-                feather_path = QPainterPath(feathered_edge)
-                feather_path = feather_path.subtracted(path_shadow)
-                if not feather_path.isEmpty():
-                    mask_painter.setBrush(QBrush(QColor(0, 0, 0, 128)))  # Half-transparent for feathering
-                    mask_painter.drawPath(feather_path)
-                
-                mask_painter.end()
-                
-                # Apply the soft mask to the final buffer
-                final_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-                final_painter.drawImage(0, 0, mask_buffer)
-                final_painter.end()
-                
-                # Draw the result with perfect antialiasing to the main painter
-                painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                painter.drawImage(0, 0, final_buffer)
-                
-                logging.info("Finished drawing first strand with completely new feathering technique")
+                            path_shadow = path_shadow.subtracted(deletion_path)
+                    
+                    # Log information about the final shadow path
+                    logging.info(f"Final shadow path for clipping: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+                    
+                    # COMPLETELY NEW APPROACH: Use multiple buffers with soft-edge feathering to eliminate all aliasing
+                    
+                    # Create a dedicated high-quality buffer for the final strand layer
+                    final_buffer = QImage(
+                        painter.device().size(),
+                        QImage.Format_ARGB32_Premultiplied
+                    )
+                    final_buffer.fill(Qt.transparent)
+                    final_painter = QPainter(final_buffer)
+                    
+                    # Enable maximum quality rendering
+                    final_painter.setRenderHint(QPainter.Antialiasing, True)
+                    final_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                    final_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    
+                    # Draw the first strand completely to this buffer
+                    self.first_selected_strand.draw(final_painter)
+                    
+                    # Create a soft mask buffer for the intersection with feathered edges
+                    mask_buffer = QImage(
+                        painter.device().size(),
+                        QImage.Format_ARGB32_Premultiplied
+                    )
+                    mask_buffer.fill(Qt.transparent)
+                    mask_painter = QPainter(mask_buffer)
+                    mask_painter.setRenderHint(QPainter.Antialiasing, True)
+                    mask_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                    mask_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    
+                    # Create a soft feathered mask from the intersection region
+                    # Draw the core mask with solid opacity
+                    mask_painter.setPen(Qt.NoPen)
+                    mask_painter.setBrush(QBrush(Qt.black))
+                    mask_painter.drawPath(path_shadow)
+                    
+                    # Create and draw the feathered edge for smooth transitions
+                    feather_width = 4.0  # Use a wider feather for smoother edges
+                    feather_stroker = QPainterPathStroker()
+                    feather_stroker.setWidth(feather_width)
+                    feather_stroker.setJoinStyle(Qt.RoundJoin)
+                    feather_stroker.setCapStyle(Qt.RoundCap)
+                    feathered_edge = feather_stroker.createStroke(path_shadow)
+                    
+                    # Draw feathered edge with gradient opacity
+                    feather_path = QPainterPath(feathered_edge)
+                    feather_path = feather_path.subtracted(path_shadow)
+                    if not feather_path.isEmpty():
+                        mask_painter.setBrush(QBrush(QColor(0, 0, 0, 128)))  # Half-transparent for feathering
+                        mask_painter.drawPath(feather_path)
+                    
+                    mask_painter.end()
+                    
+                    # Apply the soft mask to the final buffer
+                    final_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+                    final_painter.drawImage(0, 0, mask_buffer)
+                    final_painter.end()
+                    
+                    # Draw the result with perfect antialiasing to the main painter
+                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                    painter.drawImage(0, 0, final_buffer)
+                    
+                    logging.info("Finished drawing first strand with completely new feathering technique")
         except Exception as e:
             logging.error(f"Error drawing first strand on top: {str(e)}")
         

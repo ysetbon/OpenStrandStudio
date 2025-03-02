@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
-                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView)
+                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea,
+                             QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF
 from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
 from PyQt5.QtCore import QMimeData, QPoint
@@ -1922,6 +1923,28 @@ class GroupLayerManager:
         if not ok or not group_name:
             logging.info("Group creation cancelled - no name provided")
             return
+
+        # Check if group already exists and confirm if user wants to replace it
+        if group_name in self.canvas.groups and hasattr(self, 'group_panel'):
+            confirm = QMessageBox.question(
+                self.layer_panel,
+                _['group_exists'],
+                _['group_replace_confirm'].format(group_name),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if confirm != QMessageBox.Yes:
+                logging.info(f"User cancelled replacing existing group '{group_name}'")
+                return
+            
+            # If replacing, remove the existing group
+            if hasattr(self.group_panel, 'delete_group'):
+                self.group_panel.delete_group(group_name)
+            elif hasattr(self.group_panel, 'remove_group'):
+                self.group_panel.remove_group(group_name)
+            if group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
+            logging.info(f"Removed existing group '{group_name}' for replacement")
 
         # Get the available main strands
         main_strands = self.get_unique_main_strands()

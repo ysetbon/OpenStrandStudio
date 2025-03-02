@@ -134,7 +134,7 @@ class LayerStateManager(QObject):
                             for strand in self.canvas.strands},
                 'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
                 'newest_strand': self.canvas.newest_strand.layer_name if self.canvas.newest_strand else None,
-                'newest_layer': list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands))[-1] if self.canvas.strands else None
+                'newest_layer': self.canvas.strands[-1].layer_name if self.canvas.strands else None
             }
             
             print("LayerStateManager: Current state saved")

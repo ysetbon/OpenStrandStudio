@@ -28,6 +28,8 @@ translations = {
         'layer_state_info_title': 'Info',
         'layer_state_info_tooltip': 'Info',
         'close': 'Close',
+        'toggle_control_points': 'Points',
+        'toggle_shadow': 'Shadow',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -140,13 +142,16 @@ translations = {
         'x_movement': 'X Movement',
         'y_movement': 'Y Movement',
         'move_group': 'Move Group',
-        'toggle_control_points': 'Points',
+        'toggle_shadow': 'Shadow',
         'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',
         'mask_edit_mode_exited': 'Mask edit mode exited',
         'edit_mask': 'Edit Mask',
         'reset_mask': 'Reset Mask',
         'transparent_stroke': 'Transparent Stroke',
-        'restore_default_stroke': 'Restore Default Stroke'
+        'restore_default_stroke': 'Restore Default Stroke',
+        # Group-related translations
+        'group_exists': 'Group Exists',
+        'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?'
     },
     'fr': {
         # MainWindow translations
@@ -177,6 +182,8 @@ translations = {
         'layer_state_info_title': 'Infos',
         'layer_state_info_tooltip': 'Infos',
         'close': 'Fermer',
+        'toggle_control_points': 'Points',
+        'toggle_shadow': 'Ombres',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>
@@ -286,13 +293,16 @@ translations = {
         'x_movement': 'Mouvement X',
         'y_movement': 'Mouvement Y',
         'move_group': 'Déplacer le Groupe',
-        'toggle_control_points': 'Points',
-        'edit_mask': 'Éditer Masque',
-        'reset_mask': 'Réinit Masque',
+        'toggle_shadow': 'Ombres',
         'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',
         'mask_edit_mode_exited': 'Mode édition masque terminé',
+        'edit_mask': 'Éditer Masque',
+        'reset_mask': 'Réinit Masque',
         'transparent_stroke': 'Tracé Transparent',
-        'restore_default_stroke': 'Restaurer Tracé Par Défaut'
+        'restore_default_stroke': 'Restaurer Tracé Par Défaut',
+        # Group-related translations
+        'group_exists': 'Groupe Existant',
+        'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?'
     }
 }
 

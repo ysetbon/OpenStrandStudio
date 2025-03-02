@@ -66,26 +66,179 @@ class MaskMode(QObject):
             logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
             
             if not self.mask_exists(strand1, strand2):
-                # Store original colors before any operations
+                # Store original colors and other relevant properties
                 strand1_color = strand1.color
                 strand2_color = strand2.color
-                logging.info(f"Storing original colors - Strand1: {strand1_color.name()}, Strand2: {strand2_color.name()}")
+                
+                # Store any other properties that might be modified during masking
+                # This helps us detect and fix any changes to the strands
+                strand1_props = {
+                    'color': strand1.color,
+                    'start': strand1.start,
+                    'end': strand1.end,
+                    'width': strand1.width,
+                    'stroke_color': strand1.stroke_color,
+                    'stroke_width': strand1.stroke_width,
+                    'layer_name': strand1.layer_name
+                }
+                
+                strand2_props = {
+                    'color': strand2.color,
+                    'start': strand2.start,
+                    'end': strand2.end,
+                    'width': strand2.width,
+                    'stroke_color': strand2.stroke_color,
+                    'stroke_width': strand2.stroke_width,
+                    'layer_name': strand2.layer_name
+                }
+                
+                logging.info(f"Storing original properties for strands")
+                
+                # Store original strand order
+                original_strands = self.canvas.strands.copy()
                 
                 # Create the masked layer
+                logging.info("Emitting mask_created signal...")
                 self.mask_created.emit(strand1, strand2)
+                
+                # Check if strands have been modified
+                prop_changes1 = {}
+                prop_changes2 = {}
+                
+                for prop, orig_val in strand1_props.items():
+                    if hasattr(strand1, prop):
+                        current_val = getattr(strand1, prop)
+                        if current_val != orig_val and prop != 'color':  # We expect color to change
+                            prop_changes1[prop] = (orig_val, current_val)
+                
+                for prop, orig_val in strand2_props.items():
+                    if hasattr(strand2, prop):
+                        current_val = getattr(strand2, prop)
+                        if current_val != orig_val and prop != 'color':  # We expect color to change
+                            prop_changes2[prop] = (orig_val, current_val)
+                
+                if prop_changes1:
+                    logging.warning(f"Strand1 properties changed during masking: {prop_changes1}")
+                if prop_changes2:
+                    logging.warning(f"Strand2 properties changed during masking: {prop_changes2}")
                 
                 # Find the newly created masked strand
                 masked_strand = self.find_masked_strand(strand1, strand2)
                 if masked_strand:
-                    # Move masked strand to top of drawing order
-                    if masked_strand in self.canvas.strands:
-                        self.canvas.strands.remove(masked_strand)
-                        self.canvas.strands.append(masked_strand)
-                        logging.info(f"Moved masked strand {masked_strand.layer_name} to top")
+                    # Log current state
+                    current_strand_names = [s.layer_name for s in self.canvas.strands]
+                    logging.info(f"Current strand order after mask creation: {current_strand_names}")
                     
-                    # Ensure the second strand keeps its original color
-                    strand2.color = strand2_color
-                    logging.info(f"Restored color for {strand2.layer_name} to {strand2_color.name()}")
+                    # Save the original order exactly as it was before mask creation
+                    # Excluding the newly created masked strand
+                    original_order_without_mask = [s for s in original_strands if s in self.canvas.strands]
+                    
+                    # Create the new order by taking the original order and adding the masked strand at the end
+                    new_order = original_order_without_mask.copy()
+                    new_order.append(masked_strand)
+                    
+                    # Fix attached strand ordering - ensure parent strands are beneath their attached strands
+                    # This is critical for proper rendering and shading
+                    ordered_strands = []
+                    processed_strands = set()
+                    
+                    # Helper function to process a strand and its attachments in correct order
+                    def process_strand_hierarchy(strand):
+                        if strand in processed_strands:
+                            return
+                        
+                        # First add the base strand to maintain proper z-order
+                        if strand not in ordered_strands:
+                            ordered_strands.append(strand)
+                            processed_strands.add(strand)
+                        
+                        # Then add any attached strands that should be on top of this one
+                        for s in new_order:
+                            if isinstance(s, AttachedStrand) and hasattr(s, 'parent') and s.parent == strand:
+                                if s not in ordered_strands:
+                                    ordered_strands.append(s)
+                                    processed_strands.add(s)
+                                    # Recursively process any strands attached to this attached strand
+                                    process_strand_hierarchy(s)
+                    
+                    # Process all strands in the new order
+                    for strand in new_order:
+                        process_strand_hierarchy(strand)
+                    
+                    # If we missed any strands, add them at the end
+                    for strand in new_order:
+                        if strand not in ordered_strands:
+                            ordered_strands.append(strand)
+                    
+                    # Make sure the masked strand is still at the end
+                    if masked_strand in ordered_strands:
+                        ordered_strands.remove(masked_strand)
+                    
+                    # Find any strands attached to the masked strand
+                    masked_strand_attachments = []
+                    for s in new_order:
+                        if isinstance(s, AttachedStrand) and hasattr(s, 'parent') and s.parent == masked_strand:
+                            if s in ordered_strands:
+                                ordered_strands.remove(s)
+                            masked_strand_attachments.append(s)
+                    
+                    # Add the masked strand
+                    ordered_strands.append(masked_strand)
+                    
+                    # Then add any attached strands on top of it
+                    ordered_strands.extend(masked_strand_attachments)
+                    
+                    # Update canvas with the properly ordered strands
+                    self.canvas.strands = ordered_strands
+                    final_order = [s.layer_name for s in self.canvas.strands]
+                    logging.info(f"Final strand order after hierarchy-based reordering: {final_order}")
+                    
+                    # Restore all original properties to strands
+                    for prop, val in strand1_props.items():
+                        if hasattr(strand1, prop) and prop != 'layer_name':  # Don't change the name
+                            setattr(strand1, prop, val)
+                    
+                    for prop, val in strand2_props.items():
+                        if hasattr(strand2, prop) and prop != 'layer_name':  # Don't change the name
+                            setattr(strand2, prop, val)
+                            
+                    logging.info(f"Restored all original properties to strands")
+                    
+                    # Explicitly fix any attachment relationships that might have been affected
+                    # This is critical for strands like 1_1 and 1_2 to maintain their proper relationship
+                    if hasattr(self.canvas, "refresh_geometry_based_attachments"):
+                        logging.info("Refreshing geometry-based attachments to fix any connection issues")
+                        self.canvas.refresh_geometry_based_attachments()
+                    
+                    # Update attachable states for all strands
+                    for strand in self.canvas.strands:
+                        if hasattr(strand, "update_attachable"):
+                            strand.update_attachable()
+                    
+                    # Force update layer order in layer_state_manager to ensure shadows render correctly
+                    if hasattr(self.canvas, "layer_state_manager") and self.canvas.layer_state_manager:
+                        # Update the layer manager with the current strand order
+                        logging.info("Updating layer_state_manager with current strand order")
+                        layer_names = [s.layer_name for s in self.canvas.strands]
+                        
+                        # Instead of using a non-existent setOrder method, update the order properly
+                        if hasattr(self.canvas.layer_state_manager, "order"):
+                            # If there's a direct order attribute, update it
+                            self.canvas.layer_state_manager.order = layer_names
+                            logging.info(f"Updated layer order by setting order attribute directly: {self.canvas.layer_state_manager.getOrder()}")
+                        else:
+                            # Otherwise try to find an appropriate update method
+                            update_methods = [attr for attr in dir(self.canvas.layer_state_manager) if "update" in attr.lower() and callable(getattr(self.canvas.layer_state_manager, attr))]
+                            if update_methods:
+                                # Try the first update method found
+                                update_method = getattr(self.canvas.layer_state_manager, update_methods[0])
+                                try:
+                                    update_method(layer_names)
+                                    logging.info(f"Updated layer order using {update_methods[0]}: {self.canvas.layer_state_manager.getOrder()}")
+                                except Exception as e:
+                                    logging.error(f"Failed to update layer order: {e}")
+                            else:
+                                logging.warning("No method found to update layer_state_manager order. Shadows may not render correctly.")
                     
                     # Clear selection and refresh
                     self.canvas.clear_selection()
@@ -97,7 +250,7 @@ class MaskMode(QObject):
                     
                     # Update the canvas
                     self.canvas.update()
-                    logging.info(f"Completed masked layer creation and moved to top")
+                    logging.info(f"Completed masked layer creation with restored properties")
             else:
                 logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
                 self.clear_selection()

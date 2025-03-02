@@ -129,6 +129,9 @@ class MainWindow(QMainWindow):
         self.save_button.setText(_['save'])
         self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
+        self.layer_state_button.setText(_['layer_state'])
+        self.toggle_control_points_button.setText(_['toggle_control_points'])
+        self.toggle_shadow_button.setText(_['toggle_shadow'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
@@ -258,6 +261,12 @@ class MainWindow(QMainWindow):
         self.toggle_control_points_button.setCheckable(True)
         self.toggle_control_points_button.setChecked(False)
 
+        # Create the toggle shadow button
+        self.toggle_shadow_button = QPushButton("Toggle Shadow")
+        self.toggle_shadow_button.setCheckable(True)
+        self.toggle_shadow_button.setChecked(True)  # Shadow is enabled by default
+        self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
+        
         # Add buttons to the button layout
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
@@ -270,6 +279,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_image_button)
         button_layout.addWidget(self.toggle_control_points_button)
+        button_layout.addWidget(self.toggle_shadow_button)
 
         # Add a horizontal spacer to push the layer state button to the right
         spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -372,7 +382,8 @@ class MainWindow(QMainWindow):
             self.save_image_button,
             self.select_strand_button,
             self.mask_button,
-            self.toggle_control_points_button
+            self.toggle_control_points_button,
+            self.toggle_shadow_button
         ]
         
         for button in buttons:
@@ -467,6 +478,10 @@ class MainWindow(QMainWindow):
         # Connect toggle control points button
         self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
         self.toggle_control_points_button.setChecked(False)  # Start with control points visible
+
+        # Connect the toggle shadow button
+        self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
+        self.toggle_shadow_button.setChecked(True)  # Start with shadows enabled
 
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
@@ -1120,10 +1135,10 @@ class MainWindow(QMainWindow):
             ),
             (
                 self.angle_adjust_button,
-                "#2ECC71",    # normal (green)
-                "#86E5AD",    # hover (much lighter green)
-                "#1F9F56",    # pressed
-                "#1F9F56"     # disabled
+                "#B89EE6",    # normal (lighter blueviolet)
+                "#D4C2F2",    # hover (even lighter blueviolet) 
+                "#9B84C9",    # pressed
+                "#7D6AA6"     # disabled                
             ),
             (
                 self.save_button,
@@ -1148,10 +1163,17 @@ class MainWindow(QMainWindow):
             ),
             (
                 self.toggle_control_points_button,
-                "#5F7A93",    # normal (blue-gray)
-                "#9CB3CC",    # hover (much lighter blue-gray)
-                "#45596E",    # pressed
-                "#394857"     # disabled
+                "#4CAF50",    # normal (bright green)
+                "#81C784",    # hover (lighter bright green) 
+                "#388E3C",    # pressed
+                "#388E3C"     # disabled
+            ),
+            (
+                self.toggle_shadow_button,
+                "rgba(176, 190, 197, 0.7)",    # normal (semi-transparent #b0bec5)
+                "rgba(196, 207, 212, 0.7)",    # hover (semi-transparent lighter #b0bec5)
+                "rgba(156, 173, 182, 0.7)",    # pressed (semi-transparent darker #b0bec5)
+                "rgba(136, 156, 167, 0.7)"     # disabled (semi-transparent darkest #b0bec5)
             )
         ]
 
@@ -1283,6 +1305,10 @@ class MainWindow(QMainWindow):
         # Connect toggle control points button
         self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
         self.toggle_control_points_button.setChecked(False)  # Start with control points visible
+
+        # Connect the toggle shadow button
+        self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
+        self.toggle_shadow_button.setChecked(True)  # Start with shadows enabled
 
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
@@ -2014,6 +2040,7 @@ class MainWindow(QMainWindow):
         self.save_image_button.setText(_['save_image'])
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
+        self.toggle_shadow_button.setText(_['toggle_shadow'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])

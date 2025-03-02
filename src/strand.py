@@ -2,7 +2,7 @@
 
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
-    QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage
+    QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
 )
 import math
 import logging
@@ -21,6 +21,7 @@ class Strand:
         self._end = end
         self.width = width
         self.color = color
+        self.shadow_color = QColor(0, 0, 0, 100)  # Semi-transparent black shadow for overlaps
         self.stroke_color = stroke_color
         self.stroke_width = stroke_width
         self.side_line_color = QColor(0, 0, 0, 255)
@@ -474,6 +475,21 @@ class Strand:
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Draw strand body shadow
+            draw_strand_shadow(painter, self)
+            
+            # Draw circle shadows if this strand has circles
+            if hasattr(self, 'has_circles') and any(self.has_circles):
+                draw_circle_shadow(painter, self)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
 
         # Only draw highlight if this is not a MaskedStrand
         if self.is_selected and not isinstance(self, MaskedStrand):
@@ -1145,6 +1161,22 @@ class AttachedStrand(Strand):
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
+        
+        # Draw shadow for overlapping strands - using the utility function
+        # This must be called before drawing the strand itself
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Draw strand body shadow
+            draw_strand_shadow(painter, self)
+            
+            # Draw circle shadows if this strand has circles
+            if hasattr(self, 'has_circles') and any(self.has_circles):
+                draw_circle_shadow(painter, self)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
 
         # Draw highlight if selected (only when directly selected)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -1402,13 +1434,10 @@ class MaskedStrand(Strand):
 
     @property
     def attached_strands(self):
-        """Get all attached strands from both selected strands."""
-        attached = self._attached_strands.copy()
-        if self.first_selected_strand:
-            attached.extend(self.first_selected_strand.attached_strands)
-        if self.second_selected_strand:
-            attached.extend(self.second_selected_strand.attached_strands)
-        return attached
+        """Get only the strands directly attached to this masked strand."""
+        # Only return the strands directly attached to this masked strand
+        # NOT the attached strands of the component strands
+        return self._attached_strands.copy()
 
     @attached_strands.setter
     def attached_strands(self, value):
@@ -1448,7 +1477,62 @@ class MaskedStrand(Strand):
         self.custom_mask_path = None
         self.deletion_rectangles = []  # Clear the deletion rectangles
         logging.info(f"Reset mask and cleared deletion rectangles for masked strand {self.layer_name}")
+    def get_masked_shadow_path(self):
+        """
+        Get the path representing the shadow of the masked area.
+        This is used for visual effects like highlighting the intersection.
+        """
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return QPainterPath()
 
+        # Get the base paths for both strands
+        # Use moderate shadow size for realistic effect
+        shadow_width_offset = 12  # Adjusted from 20 for more realistic effect
+
+        path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
+        shadow_stroker = QPainterPathStroker()
+        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+        shadow_stroker.setJoinStyle(Qt.MiterJoin)
+        shadow_stroker.setCapStyle(Qt.FlatCap)
+        shadow_path1 = shadow_stroker.createStroke(path1)
+
+        path2 = self.second_selected_strand.get_path()  # Get actual path instead of the strand object
+        shadow_stroker = QPainterPathStroker()
+        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+        shadow_stroker.setJoinStyle(Qt.MiterJoin)
+        shadow_stroker.setCapStyle(Qt.FlatCap)
+        shadow_path2 = shadow_stroker.createStroke(path2)
+
+        # First get the basic intersection of the two strands
+        intersection_path = shadow_path1.intersected(shadow_path2)
+        
+        # Create the shadow path by stroking the intersection
+        path_shadow = intersection_path
+        
+        # Log information about the shadow path
+        logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+        
+        # Apply any saved deletion rectangles to the shadow path
+        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+            for rect in self.deletion_rectangles:
+                # Use corner-based data:
+                top_left = QPointF(*rect['top_left'])
+                top_right = QPointF(*rect['top_right'])
+                bottom_left = QPointF(*rect['bottom_left'])
+                bottom_right = QPointF(*rect['bottom_right'])
+                # Create a polygonal path from the four corners
+                deletion_path = QPainterPath()
+
+                deletion_path.moveTo(top_left)
+                deletion_path.lineTo(top_right)
+                deletion_path.lineTo(bottom_right)
+                deletion_path.lineTo(bottom_left)
+                deletion_path.closeSubpath()
+
+                path_shadow = path_shadow.subtracted(deletion_path)
+
+        return path_shadow
+        
     def get_mask_path(self):
         """
         Get the path representing the masked area.
@@ -1457,9 +1541,11 @@ class MaskedStrand(Strand):
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
 
-        # Get the base intersection path
+        # Get the base paths for both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        
+        # Create the final mask by intersecting the path1 shadow with path2
         result_path = path1.intersected(path2)
 
         # If we have a custom mask path, use that instead
@@ -1506,24 +1592,66 @@ class MaskedStrand(Strand):
             return
 
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
+        # Enable high-quality antialiasing for the entire drawing process
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
 
-        # Create temporary image for masking
+        # Create temporary image for masking with premultiplied alpha for better blending
         temp_image = QImage(
             painter.device().size(),
             QImage.Format_ARGB32_Premultiplied
         )
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
-        temp_painter.setRenderHint(QPainter.Antialiasing)
-
-        # Draw the strands
+        # Enable high-quality antialiasing for the temporary painter too
+        temp_painter.setRenderHint(QPainter.Antialiasing, True)
+        temp_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        temp_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+        
+        # Draw the strands FIRST
         if self.second_selected_strand:
             self.second_selected_strand.draw(temp_painter)
             logging.info("Drew second selected strand")
         if self.first_selected_strand:
             self.first_selected_strand.draw(temp_painter)
             logging.info("Drew first selected strand")
+            
+        # Draw shadows for overlapping strands AFTER drawing the strands
+        try:
+            # Try different import approaches for robustness
+            try:
+                from shader_utils import draw_mask_strand_shadow,draw_circle_shadow
+            except ImportError:
+                from src.shader_utils import draw_mask_strand_shadow,draw_circle_shadow
+            
+            logging.info(f"Drawing shadow for MaskedStrand {self.layer_name} with {len(self.canvas.strands)} other strands in canvas")
+            
+            # Only draw shadows where actual strands exist
+            # Get the combined path of both strands to limit shadow area
+            strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
+            strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
+            combined_strand_area = QPainterPath(strand1_path)
+            combined_strand_area.addPath(strand2_path)
+            
+            # Get shadow path and intersect with combined strand area
+            masked_shadow_path = self.get_masked_shadow_path()
+            if masked_shadow_path and not masked_shadow_path.isEmpty():
+                # Limit shadow only to areas where strands exist
+                limited_shadow_path = masked_shadow_path.intersected(combined_strand_area)
+                
+                # Draw shadow on top of strands with proper composition mode
+                temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                draw_mask_strand_shadow(temp_painter, limited_shadow_path, self)
+                
+                # Also draw circle shadows if this masked strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(temp_painter, self)
+                
+            else:
+                logging.warning(f"Empty shadow path for masked strand {self.layer_name}")
+        except Exception as e:
+            logging.error(f"Error applying masked strand shadow: {e}")
 
         # Get the mask path - use edited mask if it exists, otherwise use base mask
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
@@ -1570,26 +1698,159 @@ class MaskedStrand(Strand):
             inverse_path = QPainterPath()
             inverse_path.addRect(QRectF(temp_image.rect()))
             inverse_path = inverse_path.subtracted(mask_path)
-
+            
+            # Use the temp_painter to clip out the parts outside our mask
+            temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(Qt.black)
+            temp_painter.drawPath(mask_path)
         else:
-            logging.info("Using base intersection mask")
+            # Get the base intersection mask
+            logging.info("Using default intersection mask")
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
             path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
             mask_path = path1.intersected(path2)
+            
+            # Use the temp_painter to clip out the parts outside our mask
+            temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(Qt.black)
+            temp_painter.drawPath(mask_path)
 
-            # Apply the base mask
-            inverse_path = QPainterPath()
-            inverse_path.addRect(QRectF(temp_image.rect()))
-            inverse_path = inverse_path.subtracted(mask_path)
-
-        # Clear the masked area
-        temp_painter.setCompositionMode(QPainter.CompositionMode_Clear)
-        temp_painter.setBrush(Qt.transparent)
-        temp_painter.setPen(Qt.NoPen)
-        temp_painter.drawPath(inverse_path)
-
+        # End painting on the temporary image
         temp_painter.end()
+        
+        # Make sure we're using the correct composition mode to transfer the temp image
+        # to the main painter - this is critical for shadow visibility
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        
+        # Draw the temp image onto the main painter
         painter.drawImage(0, 0, temp_image)
+        
+        # FINAL LAYER: Draw part of the first strand that intersects with the shadow area
+        # This creates the effect of the first strand being on top at the intersection, when doing so have a recalculate the shadow area inside this try.
+        try:
+            if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
+                # Get the paths for both strands
+                path1_stroked = self.get_stroked_path_for_strand(self.first_selected_strand)
+                # Get the base paths for both strands
+                # Use moderate shadow size for realistic effect
+                shadow_width_offset = 15  # Adjusted from 20 for more realistic effect
+
+                path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
+                shadow_stroker = QPainterPathStroker()
+                shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+                shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
+                shadow_path1 = shadow_stroker.createStroke(path1)
+
+                path2 = self.second_selected_strand.get_path()  # Get actual path instead of the strand object
+                shadow_stroker = QPainterPathStroker()
+                shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+                shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
+                shadow_path2 = shadow_stroker.createStroke(path2)
+
+                # First get the basic intersection of the two strands
+                intersection_path = shadow_path1.intersected(shadow_path2)
+                
+                # Create the shadow path by stroking the intersection
+                path_shadow = intersection_path
+                
+                # Log information about the shadow path
+                logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+                
+                # Apply any saved deletion rectangles to the shadow path
+                if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                    for rect in self.deletion_rectangles:
+                        # Use corner-based data:
+                        top_left = QPointF(*rect['top_left'])
+                        top_right = QPointF(*rect['top_right'])
+                        bottom_left = QPointF(*rect['bottom_left'])
+                        bottom_right = QPointF(*rect['bottom_right'])
+                        # Create a polygonal path from the four corners
+                        deletion_path = QPainterPath()
+
+                        deletion_path.moveTo(top_left)
+                        deletion_path.lineTo(top_right)
+                        deletion_path.lineTo(bottom_right)
+                        deletion_path.lineTo(bottom_left)
+                        deletion_path.closeSubpath()
+
+                        path_shadow = path_shadow.subtracted(deletion_path)
+                
+                # Log information about the final shadow path
+                logging.info(f"Final shadow path for clipping: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+                
+                # COMPLETELY NEW APPROACH: Use multiple buffers with soft-edge feathering to eliminate all aliasing
+                
+                # Create a dedicated high-quality buffer for the final strand layer
+                final_buffer = QImage(
+                    painter.device().size(),
+                    QImage.Format_ARGB32_Premultiplied
+                )
+                final_buffer.fill(Qt.transparent)
+                final_painter = QPainter(final_buffer)
+                
+                # Enable maximum quality rendering
+                final_painter.setRenderHint(QPainter.Antialiasing, True)
+                final_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                final_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                
+                # Draw the first strand completely to this buffer
+                self.first_selected_strand.draw(final_painter)
+                
+                # Create a soft mask buffer for the intersection with feathered edges
+                mask_buffer = QImage(
+                    painter.device().size(),
+                    QImage.Format_ARGB32_Premultiplied
+                )
+                mask_buffer.fill(Qt.transparent)
+                mask_painter = QPainter(mask_buffer)
+                mask_painter.setRenderHint(QPainter.Antialiasing, True)
+                mask_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                mask_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                
+                # Create a soft feathered mask from the intersection region
+                # Draw the core mask with solid opacity
+                mask_painter.setPen(Qt.NoPen)
+                mask_painter.setBrush(QBrush(Qt.black))
+                mask_painter.drawPath(path_shadow)
+                
+                # Create and draw the feathered edge for smooth transitions
+                feather_width = 4.0  # Use a wider feather for smoother edges
+                feather_stroker = QPainterPathStroker()
+                feather_stroker.setWidth(feather_width)
+                feather_stroker.setJoinStyle(Qt.RoundJoin)
+                feather_stroker.setCapStyle(Qt.RoundCap)
+                feathered_edge = feather_stroker.createStroke(path_shadow)
+                
+                # Draw feathered edge with gradient opacity
+                feather_path = QPainterPath(feathered_edge)
+                feather_path = feather_path.subtracted(path_shadow)
+                if not feather_path.isEmpty():
+                    mask_painter.setBrush(QBrush(QColor(0, 0, 0, 128)))  # Half-transparent for feathering
+                    mask_painter.drawPath(feather_path)
+                
+                mask_painter.end()
+                
+                # Apply the soft mask to the final buffer
+                final_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+                final_painter.drawImage(0, 0, mask_buffer)
+                final_painter.end()
+                
+                # Draw the result with perfect antialiasing to the main painter
+                painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                painter.drawImage(0, 0, final_buffer)
+                
+                logging.info("Finished drawing first strand with completely new feathering technique")
+        except Exception as e:
+            logging.error(f"Error drawing first strand on top: {str(e)}")
+        
+        # Debug output
+        logging.info(f"Transferred masked strand image to main painter for {self.layer_name}")
+        
+        # Restore the painter state
         painter.restore()
 
         # Now handle the highlight or debug drawing
@@ -1742,7 +2003,20 @@ class MaskedStrand(Strand):
         """Update the custom mask path based on current strand and rectangle positions."""
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-        self.custom_mask_path = path1.intersected(path2)
+        
+        # Create a shadow stroke for path1
+        shadow_stroker = QPainterPathStroker()
+        # Use the strand width plus stroke width plus shadow offset
+        shadow_width = 15  # Shadow width offset
+        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width + shadow_width)
+        shadow_stroker.setJoinStyle(Qt.MiterJoin)
+        shadow_stroker.setCapStyle(Qt.RoundCap)
+        
+        # Create the shadow path for path1
+        path1_shadow = shadow_stroker.createStroke(path1)
+        
+        # Create the final mask by intersecting the path1 shadow with path2
+        self.custom_mask_path = path1_shadow.intersected(path2)
         
         # Apply deletion rectangles
         if hasattr(self, 'deletion_rectangles'):

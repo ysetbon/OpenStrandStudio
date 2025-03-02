@@ -97,6 +97,9 @@ class StrandDrawingCanvas(QWidget):
         self.mask_edit_path = None
         self.erase_start_pos = None
         self.current_erase_rect = None
+        
+        # Add shadow rendering control
+        self.shadow_enabled = True  # Enable shadows by default
 
 
 
@@ -1149,6 +1152,12 @@ class StrandDrawingCanvas(QWidget):
                 
         self.update()  # Force a redraw of the canvas
 
+    def toggle_shadow(self):
+        """Toggle shadow rendering on or off."""
+        self.shadow_enabled = not self.shadow_enabled
+        logging.info(f"Shadow rendering toggled: {self.shadow_enabled}")
+        self.update()  # Force a redraw of the canvas to apply the change
+
 
 
 
@@ -1832,6 +1841,10 @@ class StrandDrawingCanvas(QWidget):
             
             # Force a canvas update to show the selection
             self.update()
+            
+            # Add this line to emit the strand_created signal
+            # This is crucial for updating the layer_state_manager and enabling proper shading
+            self.strand_created.emit(new_strand)
             
             logging.info(f"Created and selected new main strand: {new_strand.layer_name}, index: {new_strand_index}")
         else:

@@ -15,11 +15,11 @@ def draw_mask_strand_shadow(painter, path, shadow_color=None):
     # Fall back to default if no valid color was found
     if not shadow_color or not isinstance(shadow_color, QColor):
         # Use a shadow with moderate opacity for realistic effect
-        shadow_color = QColor(0, 0, 0, 160)  # 160/255 = ~63% opacity
+        shadow_color = QColor(0, 0, 0, 150)  # 160/255 = ~63% opacity
     
     # Make sure the color doesn't exceed reasonable opacity
-    if shadow_color.alpha() > 180:  # Cap at ~70% opacity for natural look
-        shadow_color.setAlpha(180)
+    if shadow_color.alpha() > 150:  # Cap at ~70% opacity for natural look
+        shadow_color.setAlpha(150)
         
     logging.info(f"Drawing masked strand shadow with color {shadow_color.name()} alpha={shadow_color.alpha()}")
     

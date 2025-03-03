@@ -1,5 +1,5 @@
 import logging
-from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor
+from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QRectF
 
 
@@ -7,24 +7,33 @@ def draw_mask_strand_shadow(painter, path, shadow_color=None):
     """
     Draw shadow for a masked strand 
     """
+    # Use lower opacity for masked strand shadows to prevent darkening
+    # when combined with regular strand shadows
+    shadow_opacity = 100  # Reduced from 150 to prevent double-shadow effect
+    
     # Handle the case when a strand object is passed instead of a color
     if shadow_color and not isinstance(shadow_color, QColor):
-        # Try to get shadow_color attribute from the strand
-        shadow_color = getattr(shadow_color, 'shadow_color', None)
+        # Always use standard shadow color with consistent opacity
+        shadow_color = QColor(0, 0, 0, shadow_opacity)
+    else:
+        # If a QColor was passed directly, ensure it has standard opacity
+        if isinstance(shadow_color, QColor):
+            # Create new color with same RGB but reduced opacity
+            color_to_use = QColor(shadow_color)
+            # Cap opacity at a lower level for masked strands
+            color_to_use.setAlpha(shadow_opacity)
+            shadow_color = color_to_use
+        else:
+            shadow_color = QColor(0, 0, 0, shadow_opacity)
     
-    # Fall back to default if no valid color was found
-    if not shadow_color or not isinstance(shadow_color, QColor):
-        # Use a shadow with moderate opacity for realistic effect
-        shadow_color = QColor(0, 0, 0, 150)  # 160/255 = ~63% opacity
-    
-    # Make sure the color doesn't exceed reasonable opacity
-    if shadow_color.alpha() > 150:  # Cap at ~70% opacity for natural look
-        shadow_color.setAlpha(150)
-        
     logging.info(f"Drawing masked strand shadow with color {shadow_color.name()} alpha={shadow_color.alpha()}")
     
     # Save painter state
     painter.save()
+    
+    # IMPORTANT FIX: Use SourceOver composition mode to prevent shadow darkening
+    # when overlapping with other shadows
+    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     # Set up painter for shadow
     painter.setPen(Qt.NoPen)
@@ -130,43 +139,21 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
             if other_layer not in layer_order:
                 continue
             
-            # Check if this layer should be above the other layer
-            should_be_above = False
-            
-            # 1. First check the special mask case: if this layer is the first component of a masked strand
-            # and the other layer is between this layer and the masked strand in the order
-            if strand.__class__.__name__ != 'MaskedStrand':
-                for s in canvas.strands:
-                    if s.__class__.__name__ == 'MaskedStrand' and hasattr(s, 'first_selected_strand'):
-                        # If this strand is the first component of a masked strand
-                        if strand == s.first_selected_strand:
-                            # Get masked strand's layer name
-                            masked_layer = s.layer_name
-                            if masked_layer in layer_order and this_layer in layer_order and other_layer in layer_order:
-                                # Check positions in layer order
-                                self_index = layer_order.index(this_layer)
-                                masked_index = layer_order.index(masked_layer)
-                                other_index = layer_order.index(other_layer)
-                                
-                                # Only cast shadow if:
-                                # 1. Masked strand is above the other strand AND
-                                # 2. This layer is below the other layer in normal order AND
-                                # 3. The other layer is not part of the masked strand name (to avoid casting on components like '1_3' in '1_1_1_3')
-                                if (masked_index > other_index and 
-                                    self_index < other_index and 
-                                    '_' + other_layer not in masked_layer):
-                                    should_be_above = True
-                                    logging.info(f"Circle for layer {this_layer} is above {other_layer} because it's the first component of masked layer {masked_layer} which is above {other_layer}")
-                                    break
-            
-            # 2. If no special case, use normal order rules
-            if not should_be_above:
-                # Get positions in layer order
+            # Get positions in layer order
+            if this_layer in layer_order and other_layer in layer_order:
                 self_index = layer_order.index(this_layer)
                 other_index = layer_order.index(other_layer)
                 
                 # Standard layer order: higher index is above lower index
                 should_be_above = self_index > other_index
+                
+                # Debug info
+                if should_be_above:
+                    logging.info(f"Layer {this_layer} (index {self_index}) should cast shadow on {other_layer} (index {other_index})")
+                else:
+                    logging.info(f"Layer {this_layer} (index {self_index}) should NOT cast shadow on {other_layer} (index {other_index})")
+            else:
+                logging.warning(f"Layer index issue: {this_layer} or {other_layer} not in layer_order")
             
             # Only draw shadow if this strand should be above the other
             if should_be_above:
@@ -248,6 +235,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         strand: The strand to draw shadow for
         shadow_color: Custom shadow color or None to use strand's shadow_color
     """
+
+        
     if not hasattr(strand, 'canvas') or not strand.canvas:
         return
         
@@ -272,12 +261,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     
     logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
-    # Normal strand handling (or fallback for masked strand if error above)
+    # Normal strand handling
     path = strand.get_path()
-    
+    shadow_width = 10
     # Create base shadow path without circles first
     shadow_stroker = QPainterPathStroker()
-    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2 + 10)
+    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2 + shadow_width)
     shadow_stroker.setJoinStyle(Qt.MiterJoin)
     shadow_stroker.setCapStyle(Qt.FlatCap)
     shadow_path = shadow_stroker.createStroke(path)
@@ -361,6 +350,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
         manager = canvas.layer_state_manager
         layer_order = manager.getOrder()
+        connections = manager.getConnections()  # Get the connections map
         
         # Get this strand's layer name
         this_layer = strand.layer_name
@@ -368,6 +358,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         # Log layer order for debugging
         logging.info(f"Current layer order: {layer_order}")
         logging.info(f"Current strand being processed: {this_layer}")
+        logging.info(f"Current connections: {connections}")
         
         # Check against all other strands
         for other_strand in canvas.strands:
@@ -381,86 +372,52 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                 logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
                 continue
             
-            # Check if this layer should be above the other layer
-            should_be_above = False
+            # Normal layer order rules apply
+            if this_layer in layer_order and other_layer in layer_order:
+                self_index = layer_order.index(this_layer)
+                other_index = layer_order.index(other_layer)
+                should_be_above = self_index > other_index
             
-            # 1. First check the special mask case: if this layer is the first component of a masked strand
-            # and the other layer is between this layer and the masked strand in the order
-            if strand.__class__.__name__ != 'MaskedStrand':
-                for s in canvas.strands:
-                    if s.__class__.__name__ == 'MaskedStrand' and hasattr(s, 'first_selected_strand'):
-                        # If this strand is the first component of a masked strand
-                        if strand == s.first_selected_strand:
-                            # Get masked strand's layer name
-                            masked_layer = s.layer_name
-                            if masked_layer in layer_order and this_layer in layer_order and other_layer in layer_order:
-                                # Check positions in layer order
-                                self_index = layer_order.index(this_layer)
-                                masked_index = layer_order.index(masked_layer)
-                                other_index = layer_order.index(other_layer)
+                # Only draw shadow if this strand should be above the other
+                if should_be_above:
+                    # Quick reject using bounding rectangles
+                    if not strand.boundingRect().intersects(other_strand.boundingRect()):
+                        logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
+                        continue
+                        
+                    try:
+                        # Get other strand's path
+                        other_path = other_strand.get_path()
+                        other_stroker = QPainterPathStroker()
+                        other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
+                        other_stroker.setJoinStyle(Qt.MiterJoin)
+                        other_stroker.setCapStyle(Qt.FlatCap)
+                        other_stroke_path = other_stroker.createStroke(other_path)
+                        
+                        # Calculate intersection
+                        intersection = QPainterPath(shadow_path)
+                        intersection = intersection.intersected(other_stroke_path)
+                        
+                        # Only draw if there's an actual intersection
+                        if not intersection.isEmpty():
+                            # Draw shadow
+                            painter.setPen(Qt.NoPen)
+                            painter.setBrush(color_to_use)
+                            
+                            # IMPORTANT FIX: Use SourceOver composition mode to prevent shadow darkening
+                            # for ALL strands to ensure consistent shadow opacity
+                            old_composition = painter.compositionMode()
+                            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                            painter.drawPath(intersection)
+                            painter.setCompositionMode(old_composition)
                                 
-                                # Only cast shadow if:
-                                # 1. Masked strand is above the other strand AND
-                                # 2. This layer is below the other layer in normal order AND
-                                # 3. The other layer is not part of the masked strand name (to avoid casting on components like '1_3' in '1_1_1_3')
-                                if (masked_index > other_index and 
-                                    self_index < other_index and 
-                                    '_' + other_layer not in masked_layer):
-                                    should_be_above = True
-                                    logging.info(f"Layer {this_layer} is above {other_layer} because it's the first component of masked layer {masked_layer} which is above {other_layer}")
-                                    break
-            
-            # 2. If no special case, use normal order rules
-            if not should_be_above:
-                # Get positions in layer order
-                if this_layer in layer_order and other_layer in layer_order:
-                    self_index = layer_order.index(this_layer)
-                    other_index = layer_order.index(other_layer)
-                    
-                    # Standard layer order: higher index is above lower index
-                    should_be_above = self_index > other_index
-                    
-                    # Debug info
-                    if self_index > other_index:
-                        logging.info(f"Layer {this_layer} (index {self_index}) should cast shadow on {other_layer} (index {other_index})")
-                    else:
-                        logging.info(f"Layer {this_layer} (index {self_index}) should NOT cast shadow on {other_layer} (index {other_index})")
+                            logging.info(f"Drew shadow from {this_layer} onto {other_layer}")
+                        else:
+                            logging.info(f"No intersection between {this_layer} and {other_layer} paths")
+                    except Exception as e:
+                        logging.error(f"Error drawing strand shadow: {e}")
                 else:
-                    logging.warning(f"Layer index issue: {this_layer} or {other_layer} not in layer_order")
-            
-            # Only draw shadow if this strand should be above the other
-            if should_be_above:
-                # Quick reject using bounding rectangles
-                if not strand.boundingRect().intersects(other_strand.boundingRect()):
-                    logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
-                    continue
-                    
-                try:
-                    # Get other strand's path
-                    other_path = other_strand.get_path()
-                    other_stroker = QPainterPathStroker()
-                    other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
-                    other_stroker.setJoinStyle(Qt.MiterJoin)
-                    other_stroker.setCapStyle(Qt.FlatCap)
-                    other_stroke_path = other_stroker.createStroke(other_path)
-                    
-                    # Calculate intersection
-                    intersection = QPainterPath(shadow_path)
-                    intersection = intersection.intersected(other_stroke_path)
-                    
-                    # Only draw if there's an actual intersection
-                    if not intersection.isEmpty():
-                        # Draw shadow
-                        painter.setPen(Qt.NoPen)
-                        painter.setBrush(color_to_use)
-                        painter.drawPath(intersection)
-                        logging.info(f"Drew shadow from {this_layer} onto {other_layer}")
-                    else:
-                        logging.info(f"No intersection between {this_layer} and {other_layer} paths")
-                except Exception as e:
-                    logging.error(f"Error drawing strand shadow: {e}")
-            else:
-                logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow drawn")
+                    logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow drawn")
     else:
         # If no layer manager available, draw simple shadow
         # This is a fallback method

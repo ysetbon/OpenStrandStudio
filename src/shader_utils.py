@@ -3,13 +3,27 @@ from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor,
 from PyQt5.QtCore import Qt, QRectF
 
 
-def draw_mask_strand_shadow(painter, path, shadow_color=None):
+def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     """
     Draw shadow for a masked strand 
     """
     # Use lower opacity for masked strand shadows to prevent darkening
     # when combined with regular strand shadows
-    shadow_opacity = 100  # Reduced from 150 to prevent double-shadow effect
+    # Use strand's shadow color with the exact same opacity as the strand shadow
+    # to ensure perfect matching between circle and strand shadows
+    if shadow_color:
+        # If custom color provided, use it
+        shadow_opacity = QColor(shadow_color)
+    elif hasattr(strand, 'shadow_color') and strand.shadow_color:
+        # If strand has a shadow color, create a copy without modifying opacity
+        shadow_opacity = QColor(strand.shadow_color)
+    else:
+        # Default shadow color - match the strand shadow default exactly (150 alpha)
+        shadow_opacity = QColor(0, 0, 0, 150)
+    
+    # Cap opacity at the same level as strand shadows for perfect consistency
+    if shadow_opacity.alpha() > 150:
+        shadow_opacity.setAlpha(150)
     
     # Handle the case when a strand object is passed instead of a color
     if shadow_color and not isinstance(shadow_color, QColor):
@@ -22,25 +36,25 @@ def draw_mask_strand_shadow(painter, path, shadow_color=None):
             if hasattr(masked_strand, 'color') and masked_strand.color:
                 # Derive shadow color from strand color, with proper opacity
                 strand_color = masked_strand.color
-                shadow_color = QColor(0, 0, 0, shadow_opacity)  # Default to black with lower opacity
+                shadow_color = QColor(0, 0, 0, shadow_opacity.alpha())  # Default to black with lower opacity
             else:
                 # Always use standard shadow color with consistent opacity
-                shadow_color = QColor(0, 0, 0, shadow_opacity)
+                shadow_color = QColor(0, 0, 0, shadow_opacity.alpha())
                 
             logging.info(f"Using proper MaskedStrand shadow properties for {getattr(masked_strand, 'layer_name', 'unknown')}")
         else:
             # Not a MaskedStrand, use standard shadow
-            shadow_color = QColor(0, 0, 0, shadow_opacity)
+            shadow_color = QColor(0, 0, 0, shadow_opacity.alpha())
     else:
         # If a QColor was passed directly, ensure it has standard opacity
         if isinstance(shadow_color, QColor):
             # Create new color with same RGB but reduced opacity
             color_to_use = QColor(shadow_color)
             # Cap opacity at a lower level for masked strands
-            color_to_use.setAlpha(shadow_opacity)
+            color_to_use.setAlpha(shadow_opacity.alpha())
             shadow_color = color_to_use
         else:
-            shadow_color = QColor(0, 0, 0, shadow_opacity)
+            shadow_color = QColor(0, 0, 0, shadow_opacity.alpha())
     
     logging.info(f"Drawing masked strand shadow with color {shadow_color.name()} alpha={shadow_color.alpha()}")
     
@@ -399,6 +413,25 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         logging.info(f"Current strand being processed: {this_layer}")
         logging.info(f"Current connections: {connections}")
         
+        # Track masked strands and their components for special handling
+        masked_strands_map = {}
+        
+        # First pass: identify all masked strands and their components
+        for s in canvas.strands:
+            if hasattr(s, '__class__') and s.__class__.__name__ == 'MaskedStrand':
+                if hasattr(s, 'first_selected_strand') and hasattr(s, 'second_selected_strand'):
+                    # Store the masked strand and its components
+                    first_layer = s.first_selected_strand.layer_name if hasattr(s.first_selected_strand, 'layer_name') else None
+                    second_layer = s.second_selected_strand.layer_name if hasattr(s.second_selected_strand, 'layer_name') else None
+                    
+                    if first_layer and second_layer:
+                        masked_name = s.layer_name if hasattr(s, 'layer_name') else f"{first_layer}_{second_layer}"
+                        masked_strands_map[masked_name] = {
+                            'masked_strand': s,
+                            'components': [first_layer, second_layer]
+                        }
+                        logging.info(f"Identified masked strand {masked_name} with components {first_layer} and {second_layer}")
+        
         # Check against all other strands
         for other_strand in canvas.strands:
             # Skip self or strands without layer names
@@ -448,6 +481,31 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
+                        
+                        # Special case: Check if the other strand is a component of a masked strand
+                        # and if this strand should be above the masked strand
+                        for masked_name, masked_info in masked_strands_map.items():
+                            if other_layer in masked_info['components']:
+                                masked_strand = masked_info['masked_strand']
+                                masked_layer = masked_name
+                                
+                                # Check if this strand should be above the masked strand
+                                if masked_layer in layer_order:
+                                    masked_index = layer_order.index(masked_layer)
+                                    should_be_above_masked = self_index > masked_index
+                                    
+                                    if should_be_above_masked:
+                                        # This strand should be above both the component and the masked strand
+                                        # Get the masked area to exclude from shadow
+                                        try:
+                                            mask_path = get_proper_masked_strand_path(masked_strand)
+                                            
+                                            # Remove the masked area from the intersection
+                                            # This prevents shadow from appearing on the z_w component in the masked area
+                                            intersection = intersection.subtracted(mask_path)
+                                            logging.info(f"Excluded masked area of {masked_layer} from shadow of {this_layer} on {other_layer}")
+                                        except Exception as e:
+                                            logging.error(f"Error excluding masked area: {e}")
                         
                         # Only draw if there's an actual intersection
                         if not intersection.isEmpty():

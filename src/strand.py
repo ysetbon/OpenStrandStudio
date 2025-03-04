@@ -21,7 +21,7 @@ class Strand:
         self._end = end
         self.width = width
         self.color = color
-        self.shadow_color = QColor(0, 0, 0, 100)  # Semi-transparent black shadow for overlaps
+        self.shadow_color = QColor(0, 0, 0, 150)  # Semi-transparent black shadow for overlaps
         self.stroke_color = stroke_color
         self.stroke_width = stroke_width
         self.side_line_color = QColor(0, 0, 0, 255)
@@ -1405,7 +1405,7 @@ class MaskedStrand(Strand):
         self.deletion_rectangles = []
         self.base_center_point = None
         self.edited_center_point = None
-
+        self.shadow_color = QColor(0, 0, 0, 150)
         if first_selected_strand and second_selected_strand:
             super().__init__(
                 first_selected_strand.start,

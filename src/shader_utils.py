@@ -13,8 +13,24 @@ def draw_mask_strand_shadow(painter, path, shadow_color=None):
     
     # Handle the case when a strand object is passed instead of a color
     if shadow_color and not isinstance(shadow_color, QColor):
-        # Always use standard shadow color with consistent opacity
-        shadow_color = QColor(0, 0, 0, shadow_opacity)
+        # Check if this is a MaskedStrand object
+        if hasattr(shadow_color, 'get_mask_path') and hasattr(shadow_color, 'deletion_rectangles'):
+            # It's a masked strand, use its properties
+            masked_strand = shadow_color
+            
+            # Check for custom display color
+            if hasattr(masked_strand, 'color') and masked_strand.color:
+                # Derive shadow color from strand color, with proper opacity
+                strand_color = masked_strand.color
+                shadow_color = QColor(0, 0, 0, shadow_opacity)  # Default to black with lower opacity
+            else:
+                # Always use standard shadow color with consistent opacity
+                shadow_color = QColor(0, 0, 0, shadow_opacity)
+                
+            logging.info(f"Using proper MaskedStrand shadow properties for {getattr(masked_strand, 'layer_name', 'unknown')}")
+        else:
+            # Not a MaskedStrand, use standard shadow
+            shadow_color = QColor(0, 0, 0, shadow_opacity)
     else:
         # If a QColor was passed directly, ensure it has standard opacity
         if isinstance(shadow_color, QColor):
@@ -39,6 +55,12 @@ def draw_mask_strand_shadow(painter, path, shadow_color=None):
     painter.setPen(Qt.NoPen)
     painter.setBrush(QBrush(shadow_color))
     
+    # Check if the path is empty
+    if path.isEmpty():
+        logging.warning("Attempt to draw empty masked strand shadow path, skipping")
+        painter.restore()
+        return
+    
     # Draw the shadow path
     painter.drawPath(path)
     
@@ -60,6 +82,11 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
         
     # Check if shadowing is disabled in the canvas
     if hasattr(strand.canvas, 'shadow_enabled') and not strand.canvas.shadow_enabled:
+        return
+    
+    # Skip drawing circle shadows for MaskedStrands - they don't have real circles
+    if hasattr(strand, 'get_masked_shadow_path'):
+        logging.info(f"Skipping circle shadow for MaskedStrand {strand.layer_name}")
         return
     
     # Use strand's shadow color with the exact same opacity as the strand shadow
@@ -178,6 +205,18 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
                         other_stroker.setCapStyle(Qt.FlatCap)
                         other_stroke_path = other_stroker.createStroke(other_path)
                         
+                        # Special handling for masked strands
+                        # If the other strand is a MaskedStrand, use its actual mask path
+                        # instead of just the stroke path to get the correct intersection area
+                        if hasattr(other_strand, 'get_mask_path'):
+                            try:
+                                # Get the actual mask path which represents the true intersection area
+                                # using our helper function
+                                other_stroke_path = get_proper_masked_strand_path(other_strand)
+                                logging.info(f"Using mask path for circle interaction with MaskedStrand {other_layer}")
+                            except Exception as e:
+                                logging.error(f"Error getting mask path from MaskedStrand {other_layer} for circle shadow: {e}")
+                        
                         # Subtract the strand body path from the circle shadow to avoid double shadows
                         final_shadow_path = QPainterPath(shadow_path)
                         if strand_body_path:
@@ -261,8 +300,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     
     logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
-    # Normal strand handling
-    path = strand.get_path()
+    # Normal strand handling - use helper function to get proper path for any type of strand
+    path = get_proper_masked_strand_path(strand)
     shadow_width = 10
     # Create base shadow path without circles first
     shadow_stroker = QPainterPathStroker()
@@ -365,7 +404,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
             # Skip self or strands without layer names
             if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
                 continue
-            
+
             # Skip if other strand isn't in layer order
             other_layer = other_strand.layer_name
             if other_layer not in layer_order:
@@ -393,6 +432,18 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         other_stroker.setJoinStyle(Qt.MiterJoin)
                         other_stroker.setCapStyle(Qt.FlatCap)
                         other_stroke_path = other_stroker.createStroke(other_path)
+                        
+                        # Special handling for masked strands
+                        # If the other strand is a MaskedStrand, use its actual mask path
+                        # instead of just the stroke path to get the correct intersection area
+                        if hasattr(other_strand, 'get_mask_path'):
+                            try:
+                                # Get the actual mask path which represents the true intersection area
+                                # using our helper function
+                                other_stroke_path = get_proper_masked_strand_path(other_strand)
+                                logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
+                            except Exception as e:
+                                logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
                         
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
@@ -422,3 +473,35 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         # If no layer manager available, draw simple shadow
         # This is a fallback method
         logging.info("No layer state manager available for shadow drawing") 
+
+def get_proper_masked_strand_path(strand):
+    """
+    Helper function to get the proper path for a masked strand.
+    This ensures we use the actual mask path that accounts for all deletions.
+    
+    Args:
+        strand: The strand to get path from, which might be a MaskedStrand
+        
+    Returns:
+        QPainterPath: The correct path to use for the strand
+    """
+    # Check if this is a masked strand
+    if hasattr(strand, 'get_mask_path'):
+        try:
+            # Get the actual mask path which includes all deletions
+            mask_path = strand.get_mask_path()
+            if not mask_path.isEmpty():
+                logging.info(f"Using mask path for MaskedStrand {strand.layer_name if hasattr(strand, 'layer_name') else 'unknown'}")
+                return mask_path
+            else:
+                logging.warning(f"Empty mask path for MaskedStrand, falling back to standard path")
+        except Exception as e:
+            logging.error(f"Error getting mask path: {e}, falling back to standard path")
+    
+    # For normal strands or fallback, use the regular path
+    if hasattr(strand, 'get_path'):
+        path = strand.get_path()
+    else:
+        path = QPainterPath()  # Empty path as last resort
+        
+    return path 

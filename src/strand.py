@@ -560,35 +560,14 @@ class Strand:
         painter.drawPath(self.get_selection_path())
         painter.restore()
 
-        # Draw control points with safer checks
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This prevents duplicate drawing of control points
+        # By keeping the try-except for compatibility but disabling the actual drawing
         try:
-            should_show_controls = (
-                hasattr(self, 'canvas') and 
-                self.canvas is not None and 
-                self.canvas.show_control_points  # Simplified check
-            )
-            
-            if should_show_controls:
-                painter.save()
-                painter.setRenderHint(QPainter.Antialiasing)
-                
-                # Draw lines connecting control points
-                control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
-                painter.setPen(control_line_pen)
-                painter.drawLine(self.start, self.control_point1)
-                painter.drawLine(self.end, self.control_point2)
-                
-                # Draw control points
-                control_point_pen = QPen(QColor('green'), 2)
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-                painter.drawEllipse(self.control_point1, 6, 6)
-                painter.drawEllipse(self.control_point2, 6, 6)
-                
-                painter.restore()
-                
+            # Control point drawing code removed to avoid conflicts with canvas drawing
+            pass
         except Exception as e:
-            logging.error(f"Error drawing control points: {e}")
+            logging.error(f"Error with control points: {e}")
             # Continue drawing even if control points fail
 
         # ----------------------------------------------------------------
@@ -1354,6 +1333,9 @@ class AttachedStrand(Strand):
         temp_painter.end()
         painter.restore()
 
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
         # Draw control points if needed
         if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
             painter.save()
@@ -1373,6 +1355,7 @@ class AttachedStrand(Strand):
             painter.drawEllipse(self.control_point2, 4, 4)
             
             painter.restore()
+        """
 
     def get_path(self):
         """Get the path representing the strand as a cubic Bézier curve."""

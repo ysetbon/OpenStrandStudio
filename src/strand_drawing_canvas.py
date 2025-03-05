@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF
 import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
@@ -2599,7 +2599,7 @@ class StrandDrawingCanvas(QWidget):
         """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        control_point_radius = 4  # Adjust as needed
+        control_point_radius = 7  # Adjust as needed
 
         for strand in self.strands:
             # Skip masked strands and strands without control points
@@ -2619,7 +2619,39 @@ class StrandDrawingCanvas(QWidget):
             control_point_pen = QPen(QColor('green'), 2)
             painter.setPen(control_point_pen)
             painter.setBrush(QBrush(QColor('green')))
-            painter.drawEllipse(strand.control_point1, control_point_radius, control_point_radius)
+            
+            # Draw control_point1 as a perfect equilateral triangle
+            # All points exactly control_point_radius away from center
+            triangle = QPolygonF()
+            
+            # For an equilateral triangle, use angles 0°, 120°, and 240°
+            # Note: In Qt, Y-axis goes down, so we need to negate y calculations
+            
+            # Calculate the points of an equilateral triangle
+            # First vertex (top)
+            angle1 = math.radians(270)  # Points up
+            triangle.append(QPointF(
+                strand.control_point1.x() + control_point_radius * math.cos(angle1),
+                strand.control_point1.y() + control_point_radius * math.sin(angle1)
+            ))
+            
+            # Second vertex (bottom right)
+            angle2 = math.radians(30)  # 270° + 120°
+            triangle.append(QPointF(
+                strand.control_point1.x() + control_point_radius * math.cos(angle2),
+                strand.control_point1.y() + control_point_radius * math.sin(angle2)
+            ))
+            
+            # Third vertex (bottom left)
+            angle3 = math.radians(150)  # 270° + 240°
+            triangle.append(QPointF(
+                strand.control_point1.x() + control_point_radius * math.cos(angle3),
+                strand.control_point1.y() + control_point_radius * math.sin(angle3)
+            ))
+            
+            painter.drawPolygon(triangle)
+            
+            # Draw control_point2 as a circle
             painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
 
         painter.restore()

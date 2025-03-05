@@ -3535,4 +3535,11 @@ class StrandAngleEditDialog(QDialog):
 
     def accept(self):
         # Perform any final actions before closing the dialog
+        
+        # Update the layer state manager's connections to reflect the new strand positions
+        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            # Save the current state to update connections in the layer state manager
+            self.canvas.layer_state_manager.save_current_state()
+            logging.info("Updated layer state manager connections after angle adjustments")
+        
         super().accept()

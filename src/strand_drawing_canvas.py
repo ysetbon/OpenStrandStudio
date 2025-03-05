@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette
 import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
@@ -2599,7 +2599,9 @@ class StrandDrawingCanvas(QWidget):
         """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        control_point_radius = 7  # Adjust as needed
+        control_point_radius = 11  # Adjust as needed
+          
+        stroke_color = QColor('black')
 
         for strand in self.strands:
             # Skip masked strands and strands without control points
@@ -2615,44 +2617,89 @@ class StrandDrawingCanvas(QWidget):
             painter.drawLine(strand.start, strand.control_point1)
             painter.drawLine(strand.end, strand.control_point2)
 
-            # Draw control points
-            control_point_pen = QPen(QColor('green'), 2)
-            painter.setPen(control_point_pen)
+            # Draw control points with stroke
+            # First, prepare the stroke and fill brushes
+            stroke_pen = QPen(stroke_color, 5)
+            control_point_pen = QPen(QColor('green'), 1)
             painter.setBrush(QBrush(QColor('green')))
             
             # Draw control_point1 as a perfect equilateral triangle
             # All points exactly control_point_radius away from center
             triangle = QPolygonF()
             
-            # For an equilateral triangle, use angles 0°, 120°, and 240°
-            # Note: In Qt, Y-axis goes down, so we need to negate y calculations
+            center_x = strand.control_point1.x()
+            center_y = strand.control_point1.y()
             
-            # Calculate the points of an equilateral triangle
+            # Using exactly 120° spacing for a perfect equilateral triangle
+            
             # First vertex (top)
-            angle1 = math.radians(270)  # Points up
+            angle1 = math.radians(270)  # 270° = pointing up
             triangle.append(QPointF(
-                strand.control_point1.x() + control_point_radius * math.cos(angle1),
-                strand.control_point1.y() + control_point_radius * math.sin(angle1)
+                center_x + control_point_radius * math.cos(angle1),
+                center_y + control_point_radius * math.sin(angle1)
             ))
             
             # Second vertex (bottom right)
-            angle2 = math.radians(30)  # 270° + 120°
+            angle2 = math.radians(30)  # 30° = bottom right (270° + 120° = 390° = 30°)
             triangle.append(QPointF(
-                strand.control_point1.x() + control_point_radius * math.cos(angle2),
-                strand.control_point1.y() + control_point_radius * math.sin(angle2)
+                center_x + control_point_radius * math.cos(angle2),
+                center_y + control_point_radius * math.sin(angle2)
             ))
             
             # Third vertex (bottom left)
-            angle3 = math.radians(150)  # 270° + 240°
+            angle3 = math.radians(150)  # 150° = bottom left (270° + 240° = 510° = 150°)
             triangle.append(QPointF(
-                strand.control_point1.x() + control_point_radius * math.cos(angle3),
-                strand.control_point1.y() + control_point_radius * math.sin(angle3)
+                center_x + control_point_radius * math.cos(angle3),
+                center_y + control_point_radius * math.sin(angle3)
             ))
             
+            # Draw stroke for triangle
+            painter.setPen(stroke_pen)
+            painter.setBrush(Qt.NoBrush)  # No fill for the stroke
             painter.drawPolygon(triangle)
             
-            # Draw control_point2 as a circle
+            # Draw fill for triangle
+            painter.setPen(control_point_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            
+            # Create a slightly smaller triangle for the fill
+            filled_triangle = QPolygonF()
+            # Scale factor to create a slightly smaller triangle (about 1px inset)
+            scale_factor = (control_point_radius - 1) / control_point_radius
+            
+            # Calculate the center point
+            center_x = strand.control_point1.x()
+            center_y = strand.control_point1.y()
+            
+            # Add scaled points relative to center
+            for point in triangle:
+                # Calculate vector from center to point
+                vec_x = point.x() - center_x
+                vec_y = point.y() - center_y
+                
+                # Scale the vector
+                scaled_x = vec_x * scale_factor
+                scaled_y = vec_y * scale_factor
+                
+                # Add the scaled point
+                filled_triangle.append(QPointF(
+                    center_x + scaled_x,
+                    center_y + scaled_y
+                ))
+            
+            # Draw the filled inner triangle
+            painter.drawPolygon(filled_triangle)
+            
+            # Draw control_point2 as a circle with stroke
+            # First draw the stroke (black/white outline)
+            painter.setPen(stroke_pen)
+            painter.setBrush(Qt.NoBrush)  # No fill for the stroke
             painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+            
+            # Then draw the green fill
+            painter.setPen(control_point_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
 
         painter.restore()
     def handle_strand_selection(self, pos):

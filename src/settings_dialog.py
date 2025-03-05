@@ -28,16 +28,22 @@ class SettingsDialog(QDialog):
         
         self.canvas = canvas
         self.parent_window = parent
+        
+        # Initialize with default values
         self.current_theme = getattr(parent, 'current_theme', 'default')
         self.current_language = self.parent_window.language_code
+        self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
+        
+        # Try to load settings from file first
+        self.load_settings_from_file()
+        
         self.setWindowTitle(translations[self.current_language]['settings'])
         
         # Set fixed size for the dialog
         self.setFixedSize(800, 600)
         
-        # Initialize shadow color from canvas if available
-        self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
-        if canvas:
+        # If no settings were loaded, initialize shadow color from canvas if available
+        if self.shadow_color == QColor(0, 0, 0, 150) and canvas:
             if hasattr(canvas, 'shadow_color'):
                 # Get shadow color directly from canvas if available
                 self.shadow_color = canvas.shadow_color
@@ -51,6 +57,51 @@ class SettingsDialog(QDialog):
         
         # Apply initial theme
         self.apply_dialog_theme(self.current_theme)
+
+    def load_settings_from_file(self):
+        """Load user settings from file to initialize dialog with saved settings."""
+        # Use the appropriate directory for each OS
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':  # macOS
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"SettingsDialog: Looking for settings file at: {file_path}")
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    logging.info("SettingsDialog: Reading settings from user_settings.txt")
+                    
+                    for line in file:
+                        line = line.strip()
+                        
+                        if line.startswith('Theme:'):
+                            self.current_theme = line.split(':', 1)[1].strip()
+                            logging.info(f"SettingsDialog: Found Theme: {self.current_theme}")
+                        elif line.startswith('Language:'):
+                            self.current_language = line.split(':', 1)[1].strip()
+                            logging.info(f"SettingsDialog: Found Language: {self.current_language}")
+                        elif line.startswith('ShadowColor:'):
+                            # Parse the RGBA values
+                            rgba_str = line.split(':', 1)[1].strip()
+                            try:
+                                r, g, b, a = map(int, rgba_str.split(','))
+                                # Create a fresh QColor instance
+                                self.shadow_color = QColor(r, g, b, a)
+                                logging.info(f"SettingsDialog: Successfully parsed shadow color: {r},{g},{b},{a}")
+                            except Exception as e:
+                                logging.error(f"SettingsDialog: Error parsing shadow color values: {e}. Using default shadow color.")
+                
+                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
+            except Exception as e:
+                logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
+        else:
+            logging.info(f"SettingsDialog: Settings file not found at {file_path}. Using default settings.")
 
     def setup_ui(self):
         _ = translations[self.parent_window.language_code]

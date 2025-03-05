@@ -155,6 +155,7 @@ class MainWindow(QMainWindow):
     def load_settings_from_file(self):
         # Use the AppData directory
         from PyQt5.QtCore import QStandardPaths
+        from PyQt5.QtGui import QColor
 
         app_name = "OpenStrand Studio"
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
@@ -166,6 +167,7 @@ class MainWindow(QMainWindow):
 
         theme_name = 'default'
         language_code = 'en'
+        # Note: Shadow color is now handled in main.py, not here
 
         if os.path.exists(file_path):
             try:
@@ -175,6 +177,7 @@ class MainWindow(QMainWindow):
                             theme_name = line.strip().split(':', 1)[1].strip()
                         elif line.startswith('Language:'):
                             language_code = line.strip().split(':', 1)[1].strip()
+                        # Note: ShadowColor handling removed from here
             except Exception as e:
                 logging.error(f"Error reading user settings: {e}")
         else:
@@ -183,6 +186,8 @@ class MainWindow(QMainWindow):
         # Apply the theme and language
         self.apply_theme(theme_name)
         self.set_language(language_code)
+        
+        # Note: Shadow color application removed from here
 
     def setup_ui(self):
         logging.info("Entered setup_ui")
@@ -514,6 +519,8 @@ class MainWindow(QMainWindow):
             self._settings_dialog.apply_dialog_theme(self.current_theme)
         
         # Show the existing dialog
+        # Ensure the question mark button is removed
+        self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self._settings_dialog.show()
         self._settings_dialog.raise_()
         self._settings_dialog.activateWindow()

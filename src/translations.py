@@ -30,6 +30,7 @@ translations = {
         'close': 'Close',
         'toggle_control_points': 'Points',
         'toggle_shadow': 'Shadow',
+        'shadow_color': 'Shadow Color',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -184,6 +185,7 @@ translations = {
         'close': 'Fermer',
         'toggle_control_points': 'Points',
         'toggle_shadow': 'Ombres',
+        'shadow_color': 'Couleur d\'ombre',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>

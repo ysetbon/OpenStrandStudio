@@ -21,9 +21,9 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
         # Default shadow color - match the strand shadow default exactly (150 alpha)
         shadow_opacity = QColor(0, 0, 0, 150)
     
-    # Cap opacity at the same level as strand shadows for perfect consistency
-    if shadow_opacity.alpha() > 150:
-        shadow_opacity.setAlpha(150)
+    # Remove the cap on opacity to respect user's chosen alpha value
+    # if shadow_opacity.alpha() > 150:
+    #     shadow_opacity.setAlpha(150)
     
     # Handle the case when a strand object is passed instead of a color
     if shadow_color and not isinstance(shadow_color, QColor):
@@ -115,9 +115,9 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
         # Default shadow color - match the strand shadow default exactly (150 alpha)
         color_to_use = QColor(0, 0, 0, 150)
     
-    # Cap opacity at the same level as strand shadows for perfect consistency
-    if color_to_use.alpha() > 150:
-        color_to_use.setAlpha(150)
+    # Remove the cap on opacity to respect user's chosen alpha value
+    # if color_to_use.alpha() > 150:
+    #     color_to_use.setAlpha(150)
     
     logging.info(f"Drawing circle shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
@@ -308,9 +308,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         # Default shadow color with moderate opacity
         color_to_use = QColor(0, 0, 0, 150)  # ~59% opacity
     
-    # Cap opacity at a reasonable level for consistent shadows
-    if color_to_use.alpha() > 150:
-        color_to_use.setAlpha(150)
+    # Remove the cap on opacity to respect user's chosen alpha value
+    # if color_to_use.alpha() > 150:
+    #     color_to_use.setAlpha(150)
     
     logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     

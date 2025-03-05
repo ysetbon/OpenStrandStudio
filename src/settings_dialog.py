@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
-    QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider
+    QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
+    QColorDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap
@@ -20,6 +21,11 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None, canvas=None):
         super(SettingsDialog, self).__init__(parent)
+        
+        # Set window flags directly in the constructor - explicitly remove help button
+        flags = self.windowFlags() & ~Qt.WindowContextHelpButtonHint
+        self.setWindowFlags(flags)
+        
         self.canvas = canvas
         self.parent_window = parent
         self.current_theme = getattr(parent, 'current_theme', 'default')
@@ -29,8 +35,15 @@ class SettingsDialog(QDialog):
         # Set fixed size for the dialog
         self.setFixedSize(800, 600)
         
-        # Set window flags to prevent resizing
-        self.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
+        # Initialize shadow color from canvas if available
+        self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
+        if canvas:
+            if hasattr(canvas, 'shadow_color'):
+                # Get shadow color directly from canvas if available
+                self.shadow_color = canvas.shadow_color
+            elif hasattr(canvas, 'strands') and canvas.strands:
+                # Fall back to the first strand's shadow color if canvas shadow color is not available
+                self.shadow_color = canvas.strands[0].shadow_color
         
         self.video_paths = []  # Initialize the list to store video paths
         self.setup_ui()
@@ -130,6 +143,17 @@ class SettingsDialog(QDialog):
         theme_layout.addWidget(self.theme_label)
         theme_layout.addWidget(self.theme_combobox)
 
+        # Shadow Color Selection
+        shadow_layout = QHBoxLayout()
+        self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
+        self.shadow_color_button = QPushButton()
+        self.shadow_color_button.setFixedSize(30, 30)
+        self.update_shadow_color_button()
+        self.shadow_color_button.clicked.connect(self.choose_shadow_color)
+        shadow_layout.addWidget(self.shadow_color_label)
+        shadow_layout.addWidget(self.shadow_color_button)
+        shadow_layout.addStretch()
+
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
         self.apply_button.clicked.connect(self.apply_all_settings)
@@ -139,6 +163,7 @@ class SettingsDialog(QDialog):
 
         # Add controls to general settings layout
         general_layout.addLayout(theme_layout)
+        general_layout.addLayout(shadow_layout)
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
 
@@ -263,7 +288,7 @@ class SettingsDialog(QDialog):
         # Set default category
         self.categories_list.setCurrentRow(0)
         self.stacked_widget.setCurrentIndex(0)
-
+  
         # Style the buttons consistently
         self.style_dialog_buttons()
 
@@ -531,6 +556,14 @@ class SettingsDialog(QDialog):
 
         # Emit signal to notify main window of theme change
         self.theme_changed.emit(selected_theme)
+        
+        # Apply Shadow Color Settings
+        if self.canvas:
+            # Use the new set_shadow_color method to update all strands
+            self.canvas.set_shadow_color(self.shadow_color)
+            # Store the shadow color in the main window
+            if hasattr(self.parent_window, 'canvas'):
+                self.parent_window.canvas.default_shadow_color = self.shadow_color
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
@@ -543,11 +576,11 @@ class SettingsDialog(QDialog):
         else:
             # Emit language_changed signal from the parent window
             self.parent_window.language_changed.emit()
-
-        # Store the selected language code
+        
+        # Store the selected language
         self.current_language = language_code
-
-        # Save settings to file
+        
+        # Save all settings to file
         self.save_settings_to_file()
 
         # Apply the theme to the dialog before hiding
@@ -568,6 +601,7 @@ class SettingsDialog(QDialog):
         self.categories_list.item(3).setText(_['about'])
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
+        self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
@@ -595,6 +629,13 @@ class SettingsDialog(QDialog):
         # Use the stored current theme and language
         current_theme = getattr(self, 'current_theme', 'default')
         current_language = getattr(self, 'current_language', 'en')
+        
+        # Make sure we have a shadow color to save
+        if not hasattr(self, 'shadow_color') or not self.shadow_color:
+            if self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                self.shadow_color = self.canvas.default_shadow_color
+            else:
+                self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
 
         # Use the appropriate directory for each OS
         app_name = "OpenStrand Studio"
@@ -604,6 +645,10 @@ class SettingsDialog(QDialog):
         else:
             program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
             settings_dir = program_data_dir  # AppDataLocation already includes the app name
+        
+        # Print the settings directory to help with troubleshooting
+        print(f"Saving settings to directory: {settings_dir}")
+        logging.info(f"Saving settings to directory: {settings_dir}")
         
         # Ensure directory exists with proper permissions
         if not os.path.exists(settings_dir):
@@ -615,13 +660,30 @@ class SettingsDialog(QDialog):
                 return
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
+        print(f"Full settings file path: {file_path}")
+        logging.info(f"Full settings file path: {file_path}")
         
         # Write the settings to the file with error handling
         try:
             with open(file_path, 'w', encoding='utf-8') as file:
                 file.write(f"Theme: {self.current_theme}\n")
                 file.write(f"Language: {self.current_language}\n")
-            logging.info(f"Settings saved to {file_path}")
+                # Save shadow color in RGBA format
+                file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
+            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
+            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
+            
+            # Create a copy in the root directory for easier viewing (optional)
+            try:
+                local_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'user_settings.txt')
+                with open(local_file_path, 'w', encoding='utf-8') as local_file:
+                    local_file.write(f"Theme: {self.current_theme}\n")
+                    local_file.write(f"Language: {self.current_language}\n")
+                    local_file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
+                print(f"Created copy of settings at: {local_file_path}")
+            except Exception as e:
+                print(f"Could not create settings copy: {e}")
+                
         except Exception as e:
             logging.error(f"Error saving settings to {file_path}: {e}")
             # Optionally show an error message to the user
@@ -758,6 +820,37 @@ class SettingsDialog(QDialog):
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
 
+    def update_shadow_color_button(self):
+        """Update the shadow color button appearance to reflect the current shadow color."""
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(self.shadow_color)
+        self.shadow_color_button.setIcon(QIcon(pixmap))
+        self.shadow_color_button.setIconSize(pixmap.size())
+        
+    def choose_shadow_color(self):
+        """Open a color dialog to choose a new shadow color."""
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(self.shadow_color)
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        
+        if color_dialog.exec_():
+            self.shadow_color = color_dialog.currentColor()
+            self.update_shadow_color_button()
+            
+            # Apply the shadow color change to the canvas
+            if self.canvas:
+                self.canvas.set_shadow_color(self.shadow_color)
+                self.canvas.update()
+                # Store the shadow color in the main window
+                if hasattr(self.parent_window, 'canvas'):
+                    self.parent_window.canvas.default_shadow_color = self.shadow_color
+            
+            # Store the current settings
+            self.current_theme = self.theme_combobox.currentData()
+            self.current_language = self.language_combobox.currentData()
+            
+            # Save settings to file to persist the change
+            self.save_settings_to_file()
 
 
 class VideoPlayerDialog(QDialog):

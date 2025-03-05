@@ -483,12 +483,19 @@ class Strand:
             
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                # Draw strand body shadow
-                draw_strand_shadow(painter, self)
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
                 
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):
-                    draw_circle_shadow(painter, self)
+                    draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
@@ -826,6 +833,8 @@ class AttachedStrand(Strand):
         self.length = 140
         self.min_length = 40
         self.has_circles = [True, False]
+        # Inherit shadow color from parent
+        self.shadow_color = parent.shadow_color
         self.update_end()
 
         # Initialize control points at 1/3 and 2/3 along the strand
@@ -1172,12 +1181,19 @@ class AttachedStrand(Strand):
             
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                # Draw strand body shadow
-                draw_strand_shadow(painter, self)
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
                 
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):
-                    draw_circle_shadow(painter, self)
+                    draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
@@ -1405,7 +1421,8 @@ class MaskedStrand(Strand):
         self.deletion_rectangles = []
         self.base_center_point = None
         self.edited_center_point = None
-        self.shadow_color = QColor(0, 0, 0, 150)
+        # Inherit shadow color from first selected strand if available
+        self.shadow_color = first_selected_strand.shadow_color if first_selected_strand else QColor(0, 0, 0, 150)
         if first_selected_strand and second_selected_strand:
             super().__init__(
                 first_selected_strand.start,
@@ -1624,7 +1641,12 @@ class MaskedStrand(Strand):
             if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'shadow_enabled') and self.canvas.shadow_enabled:
                 logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
-
+                # Get the shadow color directly from the canvas if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Also update the strand's shadow color for future reference
+                    self.shadow_color = QColor(shadow_color)
                 
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -1642,7 +1664,7 @@ class MaskedStrand(Strand):
                     
                     # Draw shadow on top of strands with proper composition mode
                     temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self)
+                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self, shadow_color)
 
  
         except Exception as e:

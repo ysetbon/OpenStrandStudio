@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
@@ -56,7 +56,7 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Applied shadow color from settings during canvas initialization: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
         
         self.setup_modes()
-        self.highlight_color = QColor(255, 0, 0, 255)  # Semi-transparent red
+        self.highlight_color = QColor(255, 0, 0, 0)  # Semi-transparent red
         # Add the signal if not already present
         self.setFocusPolicy(Qt.StrongFocus)  # Add this to enable key events
         angle_adjust_completed = pyqtSignal()
@@ -895,7 +895,7 @@ class StrandDrawingCanvas(QWidget):
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
         self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
-        self.selection_color = QColor(255, 0, 0, 128)  # Color for selection rectangle
+        self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
         self.selected_strand_index = None  # Index of the currently selected strand
         self.layer_panel = None  # Reference to the layer panel
         self.selected_strand = None  # Currently selected strand
@@ -1012,9 +1012,9 @@ class StrandDrawingCanvas(QWidget):
         # Draw the connection circle last (always on top)
         if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
             if self.current_mode.affected_point == 0:
-                circle_color = QColor(255, 0, 0, 100)  # Red for start point
+                circle_color = QColor(255, 0, 0, 60)  # Red for start point
             else:
-                circle_color = QColor(0, 0, 255, 100)  # Blue for end point
+                circle_color = QColor(0, 0, 255, 60)  # Blue for end point
                 
             painter.setBrush(QBrush(circle_color))
             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -1049,7 +1049,7 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 if not isinstance(strand, MaskedStrand):
                     if hasattr(strand, 'start') and hasattr(strand, 'end'):
-                        square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
+                        square_color = QColor(255, 0, 0, 60)  # Red with 50% transparency
                         painter.setBrush(QBrush(square_color))
                         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                                             
@@ -1078,7 +1078,7 @@ class StrandDrawingCanvas(QWidget):
 
                         # Draw squares around control points if present (and not MaskedStrand)
                         if not isinstance(strand, MaskedStrand):
-                            square_color = QColor(0, 100, 0, 100)  # Red with 50% transparency
+                            square_color = QColor(0, 100, 0, 60)  # Red with 50% transparency
                             painter.setBrush(QBrush(square_color))
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                             
@@ -1171,9 +1171,9 @@ class StrandDrawingCanvas(QWidget):
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 0):
-                        circle_color = QColor(255, 255, 20, 150)  # Yellow highlight
+                        circle_color = QColor(255, 255, 20, 100)  # Yellow highlight
                     else:
-                        circle_color = QColor(255, 0, 0, 100)  # Default red
+                        circle_color = QColor(255, 0, 0, 60)  # Default red
 
                     overlay_painter.setBrush(QBrush(circle_color))
                     overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -1192,9 +1192,9 @@ class StrandDrawingCanvas(QWidget):
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 1):
-                        circle_color = QColor(255, 255, 20, 150)  # Yellow highlight
+                        circle_color = QColor(255, 255, 20, 100)  # Yellow highlight
                     else:
-                        circle_color = QColor(0, 0, 255, 100)  # Default blue
+                        circle_color = QColor(0, 0, 255, 60)  # Default blue
 
                     overlay_painter.setBrush(QBrush(circle_color))
                     overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -1384,49 +1384,91 @@ class StrandDrawingCanvas(QWidget):
 
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
-        painter.save()
-        highlight_pen = QPen(QColor('transparent'), strand.stroke_width + 2)
-        highlight_pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(highlight_pen)
-        painter.setBrush(Qt.NoBrush)
-        strand.draw_path(painter)  # Use the new draw_path method
-        painter.restore()
 
         if isinstance(strand, MaskedStrand):
             self.draw_highlighted_masked_strand(painter, strand)
         else:
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing)
+            # Get the path representing the strand as a cubic Bézier curve
+            path = strand.get_path()
 
-            # Modified set_highlight_pen: allow a flag "use_transparent" for the highlight
-            def set_highlight_pen(width_adjustment=0, use_transparent=False):
-                if use_transparent:
-                    pen = QPen(QColor(0, 0, 0, 0), self.highlight_width + width_adjustment)
-                else:
-                    pen = QPen(self.highlight_color, self.highlight_width + width_adjustment)
-                pen.setJoinStyle(Qt.MiterJoin)
-                pen.setCapStyle(Qt.SquareCap)
-                painter.setPen(pen)
+            # Create a stroker for the stroke path with squared ends - EXACTLY like in strand.draw()
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+            stroke_path = stroke_stroker.createStroke(path)
 
-            # Thicker stroke for the main path
-            set_highlight_pen()
-            painter.drawPath(strand.get_path())
-
+        
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+            # Draw the regular strand
+            strand.draw(painter)
+            
             # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
                 if has_circle:
-                    # If we're dealing with the start circle (i == 0) and
-                    # circle_stroke_color is fully transparent, use_transparent=True
-                    if i == 0 and strand.circle_stroke_color.alpha() == 0:
-                        set_highlight_pen(0.5, use_transparent=True)
-                    else:
-                        set_highlight_pen(0.5, use_transparent=False)
+                    # Save painter state
+                    painter.save()
+                    
+                
 
                     center = strand.start if i == 0 else strand.end
-                    painter.drawEllipse(center, strand.width / 2, strand.width / 2)
-
+                    
+                    # Calculate the proper radius for the highlight
+                    outer_radius = strand.width / 2 + strand.stroke_width +4
+                    inner_radius = strand.width / 2 + 6
+                    
+                    # Create a full circle path for the outer circle
+                    outer_circle = QPainterPath()
+                    outer_circle.addEllipse(center, outer_radius, outer_radius)
+                    
+                    # Create a path for the inner circle
+                    inner_circle = QPainterPath()
+                    inner_circle.addEllipse(center, inner_radius, inner_radius)
+                    
+                    # Create a ring path by subtracting the inner circle from the outer circle
+                    ring_path = outer_circle.subtracted(inner_circle)
+                    
+                    # Get the tangent angle at the connection point
+                    tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+                    angle = math.atan2(tangent.y(), tangent.x())
+                    
+                    # Create a masking rectangle to create a C-shape
+                    mask_rect = QPainterPath()
+                    rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+                    rect_height = (outer_radius + 5) * 2
+                    rect_x = center.x() - rect_width / 2
+                    rect_y = center.y()
+                    mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+                    
+                    # Apply rotation transform to the masking rectangle
+                    transform = QTransform()
+                    transform.translate(center.x(), center.y())
+                    # Adjust angle based on whether it's start or end point
+                    if i == 0:
+                        transform.rotate(math.degrees(angle - math.pi / 2))
+                    else:
+                        transform.rotate(math.degrees(angle - math.pi / 2) + 180)
+                    transform.translate(-center.x(), -center.y())
+                    mask_rect = transform.map(mask_rect)
+                    
+                    # Create the C-shaped highlight by subtracting the mask from the ring
+                    c_shape_path = ring_path.subtracted(mask_rect)
+                    
+                    # Draw the C-shaped highlight
+                    # First draw the stroke (border) with the strand's stroke color
+                    stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
+                    stroke_pen.setJoinStyle(Qt.MiterJoin)
+                    stroke_pen.setCapStyle(Qt.FlatCap)
+                    painter.setPen(stroke_pen)
+                    painter.setBrush(QColor(255, 0, 0, 255))  # Fill with the strand's color
+                    painter.drawPath(c_shape_path)
+                    
+                    # Restore painter state
+                    painter.restore()
+            
             painter.restore()
-            strand.draw(painter)
+
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
             painter.save()

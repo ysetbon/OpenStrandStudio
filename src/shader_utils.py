@@ -82,15 +82,19 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     painter.restore()
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
+    pass
+
+def draw_strand_shadow(painter, strand, shadow_color=None):
     """
-    Draw shadow for a circle that overlaps with other strands.
-    This function should be called before drawing the circle itself.
+    Draw shadow for a strand that overlaps with other strands.
+    This function should be called before drawing the strand itself.
     
     Args:
         painter: The QPainter to draw with
-        strand: The strand with circle to draw shadow for
+        strand: The strand to draw shadow for
         shadow_color: Custom shadow color or None to use strand's shadow_color
     """
+        
     if not hasattr(strand, 'canvas') or not strand.canvas:
         return
         
@@ -98,32 +102,245 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     if hasattr(strand.canvas, 'shadow_enabled') and not strand.canvas.shadow_enabled:
         return
     
-    # Skip drawing circle shadows for MaskedStrands - they don't have real circles
-    if hasattr(strand, 'get_masked_shadow_path'):
-        logging.info(f"Skipping circle shadow for MaskedStrand {strand.layer_name}")
-        return
-    
-    # Use strand's shadow color with the exact same opacity as the strand shadow
-    # to ensure perfect matching between circle and strand shadows
+    # Use strand's shadow color with consistent opacity
     if shadow_color:
         # If custom color provided, use it
         color_to_use = QColor(shadow_color)
     elif hasattr(strand, 'shadow_color') and strand.shadow_color:
-        # If strand has a shadow color, create a copy without modifying opacity
+        # If strand has a shadow color, create a copy
         color_to_use = QColor(strand.shadow_color)
     else:
-        # Default shadow color - match the strand shadow default exactly (150 alpha)
-        color_to_use = QColor(0, 0, 0, 150)
+        # Default shadow color with moderate opacity
+        color_to_use = QColor(0, 0, 0, 150)  # ~59% opacity
     
     # Remove the cap on opacity to respect user's chosen alpha value
     # if color_to_use.alpha() > 150:
     #     color_to_use.setAlpha(150)
     
-    logging.info(f"Drawing circle shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
+    logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
+    # Normal strand handling - use helper function to get proper path for any type of strand
+    path = get_proper_masked_strand_path(strand)
+    shadow_width = 10
+    # Create base shadow path without circles first
+    shadow_stroker = QPainterPathStroker()
+    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2 + shadow_width)
+    shadow_stroker.setJoinStyle(Qt.MiterJoin)
+    shadow_stroker.setCapStyle(Qt.FlatCap)
+    shadow_path = shadow_stroker.createStroke(path)
+        
+    # Check if this strand has transparent circles that should not get shadows
+    has_transparent_circles = False
+    if hasattr(strand, 'circle_stroke_color'):
+        circle_color = strand.circle_stroke_color
+        # Check if color exists and has zero alpha (fully transparent)
+        if circle_color and circle_color.alpha() == 0:
+            has_transparent_circles = True
+            
+    # If strand has circles at either end and they are transparent, 
+    # we need to exclude circle areas from the shadow
+    if has_transparent_circles and hasattr(strand, 'has_circles'):
+        # For each circle that's enabled, remove its area from shadow
+        for idx, has_circle in enumerate(strand.has_circles):
+            if has_circle:
+                # Determine which point (start or end) to exclude
+                point = strand.start if idx == 0 else strand.end
+                
+                # Create a circle path for exclusion - use larger diameter for complete exclusion
+                # Add extra pixels to the radius to ensure complete removal of the circle shadow
+                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
+                exclude_circle = QPainterPath()
+                exclude_circle.addEllipse(point, circle_radius/2, circle_radius/2)
+                
+                # Subtract the circle area from the shadow path
+                #shadow_path = shadow_path.subtracted(exclude_circle)
+                logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
+
+    # Special case for AttachedStrand
+    if strand.__class__.__name__ == 'AttachedStrand':
+        # Check for transparent circles at the start
+        has_transparent_start_circle = False
+        if hasattr(strand, 'circle_stroke_color'):
+            circle_color = strand.circle_stroke_color
+            if circle_color and circle_color.alpha() == 0:
+                has_transparent_start_circle = True
+        
+        # Special handling for end circle if strand has_circles[1] is True (has end circle)
+        if hasattr(strand, 'has_circles') and len(strand.has_circles) > 1 and strand.has_circles[1]:
+            # Check if end circle should be transparent too (use same transparency as start)
+            if has_transparent_start_circle:
+                # Exclude end circle from shadow with increased radius
+                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
+                exclude_end_circle = QPainterPath()
+                exclude_end_circle.addEllipse(strand.end, circle_radius/2, circle_radius/2)
+                #shadow_path = shadow_path.subtracted(exclude_end_circle)
+                logging.info(f"Excluded transparent end circle for AttachedStrand: {strand.layer_name}")
+            else:
+                # IMPORTANT: Do NOT add end circle to shadow - this will be handled by draw_circle_shadow
+                logging.info(f"End circle shadow for AttachedStrand will be handled by draw_circle_shadow")
+                
+    # Create a combined shadow path that will hold all intersections
+    combined_shadow_path = QPainterPath()
+    has_shadow_content = False
+
+    # Try to get layer ordering from layer state manager
+    canvas = strand.canvas
+    if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
+        manager = canvas.layer_state_manager
+        layer_order = manager.getOrder()
+        connections = manager.getConnections()  # Get the connections map
+        
+        # Get this strand's layer name
+        this_layer = strand.layer_name
+        
+        # Log layer order for debugging
+        logging.info(f"Current layer order: {layer_order}")
+        logging.info(f"Current strand being processed: {this_layer}")
+        logging.info(f"Current connections: {connections}")
+        
+        # Track masked strands and their components for special handling
+        masked_strands_map = {}
+        
+        # First pass: identify all masked strands and their components
+        for s in canvas.strands:
+            if hasattr(s, '__class__') and s.__class__.__name__ == 'MaskedStrand':
+                if hasattr(s, 'first_selected_strand') and hasattr(s, 'second_selected_strand'):
+                    # Store the masked strand and its components
+                    first_layer = s.first_selected_strand.layer_name if hasattr(s.first_selected_strand, 'layer_name') else None
+                    second_layer = s.second_selected_strand.layer_name if hasattr(s.second_selected_strand, 'layer_name') else None
+                    
+                    if first_layer and second_layer:
+                        masked_name = s.layer_name if hasattr(s, 'layer_name') else f"{first_layer}_{second_layer}"
+                        masked_strands_map[masked_name] = {
+                            'masked_strand': s,
+                            'components': [first_layer, second_layer]
+                        }
+                        logging.info(f"Identified masked strand {masked_name} with components {first_layer} and {second_layer}")
+        
+        # Check against all other strands
+        for other_strand in canvas.strands:
+            # Skip self or strands without layer names
+            if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+                continue
+
+            # Skip if other strand isn't in layer order
+            other_layer = other_strand.layer_name
+            if other_layer not in layer_order:
+                logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
+                continue
+            
+            # Normal layer order rules apply
+            if this_layer in layer_order and other_layer in layer_order:
+                self_index = layer_order.index(this_layer)
+                other_index = layer_order.index(other_layer)
+                should_be_above = self_index > other_index
+            
+                # Only calculate shadow if this strand should be above the other
+                if should_be_above:
+                    # Quick reject using bounding rectangles
+                    if not strand.boundingRect().intersects(other_strand.boundingRect()):
+                        logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
+                        continue
+                        
+                    try:
+                        # Get other strand's path
+                        other_path = other_strand.get_path()
+                        other_stroker = QPainterPathStroker()
+                        other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
+                        other_stroker.setJoinStyle(Qt.MiterJoin)
+                        other_stroker.setCapStyle(Qt.FlatCap)
+                        other_stroke_path = other_stroker.createStroke(other_path)
+                        
+                        # Special handling for masked strands
+                        # If the other strand is a MaskedStrand, use its actual mask path
+                        # instead of just the stroke path to get the correct intersection area
+                        if hasattr(other_strand, 'get_mask_path'):
+                            try:
+                                # Get the actual mask path which represents the true intersection area
+                                # using our helper function
+                                other_stroke_path = get_proper_masked_strand_path(other_strand)
+                                logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
+                            except Exception as e:
+                                logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
+                        
+                        # Calculate intersection
+                        intersection = QPainterPath(shadow_path)
+                        intersection = intersection.intersected(other_stroke_path)
+                        
+                        # Special case: Check if the other strand is a component of a masked strand
+                        # and if this strand should be above the masked strand
+                        for masked_name, masked_info in masked_strands_map.items():
+                            if other_layer in masked_info['components']:
+                                masked_strand = masked_info['masked_strand']
+                                masked_layer = masked_name
+                                
+                                # Check if this strand should be above the masked strand
+                                if masked_layer in layer_order:
+                                    masked_index = layer_order.index(masked_layer)
+                                    should_be_above_masked = self_index > masked_index
+                                    
+                                    if should_be_above_masked:
+                                        # This strand should be above both the component and the masked strand
+                                        # Get the masked area to exclude from shadow
+                                        try:
+                                            mask_path = get_proper_masked_strand_path(masked_strand)
+                                            
+                                            # Remove the masked area from the intersection
+                                            # This prevents shadow from appearing on the z_w component in the masked area
+                                            intersection = intersection.subtracted(mask_path)
+                                            logging.info(f"Excluded masked area of {masked_layer} from shadow of {this_layer} on {other_layer}")
+                                        except Exception as e:
+                                            logging.error(f"Error excluding masked area: {e}")
+                        
+                        # Only add if there's an actual intersection
+                        if not intersection.isEmpty():
+                            # Add this intersection to the combined path
+                            if has_shadow_content:
+                                combined_shadow_path = combined_shadow_path.united(intersection)
+                            else:
+                                combined_shadow_path = intersection
+                                has_shadow_content = True
+                                
+                            logging.info(f"Added shadow from {this_layer} onto {other_layer} to combined path")
+                        else:
+                            logging.info(f"No intersection between {this_layer} and {other_layer} paths")
+                    except Exception as e:
+                        logging.error(f"Error calculating strand shadow: {e}")
+                else:
+                    logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow calculated")
+        
+        # Draw the combined shadow path once
+        if has_shadow_content and not combined_shadow_path.isEmpty():
+            # Draw shadow
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(color_to_use))
+            
+            # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
+            old_composition = painter.compositionMode()
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            #painter.drawPath(combined_shadow_path)
+            painter.setCompositionMode(old_composition)
+            
+            # Initialize shadow_paths and all_shadow_paths
+            all_shadow_paths = [combined_shadow_path]
+            
+            logging.info(f"Drew unified shadow path for strand {this_layer}")
+    else:
+        # If no layer manager available, draw simple shadow
+        # This is a fallback method
+        logging.info("No layer state manager available for shadow drawing")
+        # Still use a unified approach even in fallback case
+        if not shadow_path.isEmpty():
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(color_to_use))
+            #painter.drawPath(shadow_path)
+            
+            # Initialize shadow_paths and add shadow_path to all_shadow_paths
+            
+            all_shadow_paths = [shadow_path]
     # Create circle shadow paths for start and end points if they have circles
-    shadow_paths = []
     
+    shadow_paths = []
     if hasattr(strand, 'has_circles'):
         # Get circle radius with added shadow width
         circle_radius = strand.width + strand.stroke_width * 2 + 10
@@ -141,12 +358,11 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
                 point = strand.start if idx == 0 else strand.end
                 circle_path = QPainterPath()
                 circle_path.addEllipse(point, circle_radius/2, circle_radius/2)
+                # Store the circle path and its center point for later processing
                 shadow_paths.append((circle_path, point))
                 logging.info(f"Added circle shadow at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
     
-    # If no circles found, exit early
-    if not shadow_paths:
-        return
+
     
     # Get the strand body path to subtract from circle shadows to avoid double shadows
     strand_body_path = None
@@ -159,6 +375,8 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
         strand_body_path = stroke_stroker.createStroke(path)
     except Exception as e:
         logging.error(f"Error creating strand body path for shadow subtraction: {e}")
+        
+
         
     # Try to get layer ordering from layer state manager
     canvas = strand.canvas
@@ -249,18 +467,15 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
                         intersection = QPainterPath(final_shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         
-                        # Only draw if there's an actual intersection
+                        # Only add if there's an actual intersection
                         if not intersection.isEmpty():
-                            # Draw shadow
-                            painter.setPen(Qt.NoPen)
-                            painter.setBrush(color_to_use)
-                            painter.drawPath(intersection)
+                            all_shadow_paths.append(intersection)
                     except Exception as e:
-                        logging.error(f"Error drawing circle shadow: {e}")
+                        logging.error(f"Error calculating circle shadow: {e}")
     else:
-        # If no layer manager available, draw simple circle shadows
+        # If no layer manager available, prepare simple circle shadows
         logging.info("No layer state manager available for circle shadow drawing")
-        # Draw full circle shadows as fallback
+        # Prepare full circle shadows as fallback
         for shadow_path, _ in shadow_paths:
             # Subtract strand body path from circle shadows
             if strand_body_path:
@@ -273,264 +488,28 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
                 
                 shadow_path = shadow_path.subtracted(smaller_body_path)
             
-            # Draw the shadows
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(color_to_use)
-            painter.drawPath(shadow_path)
-
-def draw_strand_shadow(painter, strand, shadow_color=None):
-    """
-    Draw shadow for a strand that overlaps with other strands.
-    This function should be called before drawing the strand itself.
+            # Add the path to the collection
+            all_shadow_paths.append(shadow_path)
     
-    Args:
-        painter: The QPainter to draw with
-        strand: The strand to draw shadow for
-        shadow_color: Custom shadow color or None to use strand's shadow_color
-    """
-
+    # Draw all shadow paths at once
+    if all_shadow_paths:
+        logging.info(f"Drawing {len(all_shadow_paths)} shadow paths for strand {strand.layer_name}")
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color_to_use)
         
-    if not hasattr(strand, 'canvas') or not strand.canvas:
-        return
-        
-    # Check if shadowing is disabled in the canvas
-    if hasattr(strand.canvas, 'shadow_enabled') and not strand.canvas.shadow_enabled:
-        return
-    
-    # Use strand's shadow color with consistent opacity
-    if shadow_color:
-        # If custom color provided, use it
-        color_to_use = QColor(shadow_color)
-    elif hasattr(strand, 'shadow_color') and strand.shadow_color:
-        # If strand has a shadow color, create a copy
-        color_to_use = QColor(strand.shadow_color)
-    else:
-        # Default shadow color with moderate opacity
-        color_to_use = QColor(0, 0, 0, 150)  # ~59% opacity
-    
-    # Remove the cap on opacity to respect user's chosen alpha value
-    # if color_to_use.alpha() > 150:
-    #     color_to_use.setAlpha(150)
-    
-    logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
-    
-    # Normal strand handling - use helper function to get proper path for any type of strand
-    path = get_proper_masked_strand_path(strand)
-    shadow_width = 10
-    # Create base shadow path without circles first
-    shadow_stroker = QPainterPathStroker()
-    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2 + shadow_width)
-    shadow_stroker.setJoinStyle(Qt.MiterJoin)
-    shadow_stroker.setCapStyle(Qt.FlatCap)
-    shadow_path = shadow_stroker.createStroke(path)
-        
-    # Check if this strand has transparent circles that should not get shadows
-    has_transparent_circles = False
-    if hasattr(strand, 'circle_stroke_color'):
-        circle_color = strand.circle_stroke_color
-        # Check if color exists and has zero alpha (fully transparent)
-        if circle_color and circle_color.alpha() == 0:
-            has_transparent_circles = True
-            
-    # If strand has circles at either end and they are transparent, 
-    # we need to exclude circle areas from the shadow
-    if has_transparent_circles and hasattr(strand, 'has_circles'):
-        # For each circle that's enabled, remove its area from shadow
-        for idx, has_circle in enumerate(strand.has_circles):
-            if has_circle:
-                # Determine which point (start or end) to exclude
-                point = strand.start if idx == 0 else strand.end
-                
-                # Create a circle path for exclusion - use larger diameter for complete exclusion
-                # Add extra pixels to the radius to ensure complete removal of the circle shadow
-                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
-                exclude_circle = QPainterPath()
-                exclude_circle.addEllipse(point, circle_radius/2, circle_radius/2)
-                
-                # Subtract the circle area from the shadow path
-                shadow_path = shadow_path.subtracted(exclude_circle)
-                logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
-
-    # Special case for AttachedStrand
-    if strand.__class__.__name__ == 'AttachedStrand':
-        # Check for transparent circles at the start
-        has_transparent_start_circle = False
-        if hasattr(strand, 'circle_stroke_color'):
-            circle_color = strand.circle_stroke_color
-            if circle_color and circle_color.alpha() == 0:
-                has_transparent_start_circle = True
-        
-        # Special handling for end circle if strand has_circles[1] is True (has end circle)
-        if hasattr(strand, 'has_circles') and len(strand.has_circles) > 1 and strand.has_circles[1]:
-            # Check if end circle should be transparent too (use same transparency as start)
-            if has_transparent_start_circle:
-                # Exclude end circle from shadow with increased radius
-                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
-                exclude_end_circle = QPainterPath()
-                exclude_end_circle.addEllipse(strand.end, circle_radius/2, circle_radius/2)
-                shadow_path = shadow_path.subtracted(exclude_end_circle)
-                logging.info(f"Excluded transparent end circle for AttachedStrand: {strand.layer_name}")
+        # Create a union of all shadow paths
+        total_shadow_path = QPainterPath()
+        for shadow_path in all_shadow_paths:
+            if total_shadow_path.isEmpty():
+                total_shadow_path = shadow_path
             else:
-                # IMPORTANT: Do NOT add end circle to shadow - this will be handled by draw_circle_shadow
-                logging.info(f"End circle shadow for AttachedStrand will be handled by draw_circle_shadow")
+                total_shadow_path = total_shadow_path.united(shadow_path)
                 
-        # Only add start circle shadow if the circle is not transparent AND this is special parent connection
-        # This is the ONLY case where we add circle shadow here instead of draw_circle_shadow
-        if not has_transparent_start_circle and hasattr(strand, 'parent'):
-            if hasattr(strand, 'has_circles') and strand.has_circles and not strand.has_circles[0]:
-                # Add circular area at start point where it connects to parent
-                circle_radius = strand.width + strand.stroke_width * 2 + 10  # Match shadow width
-                circle_rect = QRectF(
-                    strand.start.x() - circle_radius/2,
-                    strand.start.y() - circle_radius/2,
-                    circle_radius,
-                    circle_radius
-                )
-                
-                # Create circle path and add to shadow path
-                circle_path = QPainterPath()
-                circle_path.addEllipse(circle_rect)
-                
-                # Combine with existing shadow path
-                shadow_path.addPath(circle_path)
-                logging.info(f"Added parent connection shadow for AttachedStrand: {strand.layer_name}")
-            else:
-                # Normal case is handled by draw_circle_shadow
-                logging.info(f"Start circle shadow will be handled by draw_circle_shadow")
-
-    # Try to get layer ordering from layer state manager
-    canvas = strand.canvas
-    if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
-        manager = canvas.layer_state_manager
-        layer_order = manager.getOrder()
-        connections = manager.getConnections()  # Get the connections map
-        
-        # Get this strand's layer name
-        this_layer = strand.layer_name
-        
-        # Log layer order for debugging
-        logging.info(f"Current layer order: {layer_order}")
-        logging.info(f"Current strand being processed: {this_layer}")
-        logging.info(f"Current connections: {connections}")
-        
-        # Track masked strands and their components for special handling
-        masked_strands_map = {}
-        
-        # First pass: identify all masked strands and their components
-        for s in canvas.strands:
-            if hasattr(s, '__class__') and s.__class__.__name__ == 'MaskedStrand':
-                if hasattr(s, 'first_selected_strand') and hasattr(s, 'second_selected_strand'):
-                    # Store the masked strand and its components
-                    first_layer = s.first_selected_strand.layer_name if hasattr(s.first_selected_strand, 'layer_name') else None
-                    second_layer = s.second_selected_strand.layer_name if hasattr(s.second_selected_strand, 'layer_name') else None
-                    
-                    if first_layer and second_layer:
-                        masked_name = s.layer_name if hasattr(s, 'layer_name') else f"{first_layer}_{second_layer}"
-                        masked_strands_map[masked_name] = {
-                            'masked_strand': s,
-                            'components': [first_layer, second_layer]
-                        }
-                        logging.info(f"Identified masked strand {masked_name} with components {first_layer} and {second_layer}")
-        
-        # Check against all other strands
-        for other_strand in canvas.strands:
-            # Skip self or strands without layer names
-            if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
-                continue
-
-            # Skip if other strand isn't in layer order
-            other_layer = other_strand.layer_name
-            if other_layer not in layer_order:
-                logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
-                continue
-            
-            # Normal layer order rules apply
-            if this_layer in layer_order and other_layer in layer_order:
-                self_index = layer_order.index(this_layer)
-                other_index = layer_order.index(other_layer)
-                should_be_above = self_index > other_index
-            
-                # Only draw shadow if this strand should be above the other
-                if should_be_above:
-                    # Quick reject using bounding rectangles
-                    if not strand.boundingRect().intersects(other_strand.boundingRect()):
-                        logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
-                        continue
-                        
-                    try:
-                        # Get other strand's path
-                        other_path = other_strand.get_path()
-                        other_stroker = QPainterPathStroker()
-                        other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
-                        other_stroker.setJoinStyle(Qt.MiterJoin)
-                        other_stroker.setCapStyle(Qt.FlatCap)
-                        other_stroke_path = other_stroker.createStroke(other_path)
-                        
-                        # Special handling for masked strands
-                        # If the other strand is a MaskedStrand, use its actual mask path
-                        # instead of just the stroke path to get the correct intersection area
-                        if hasattr(other_strand, 'get_mask_path'):
-                            try:
-                                # Get the actual mask path which represents the true intersection area
-                                # using our helper function
-                                other_stroke_path = get_proper_masked_strand_path(other_strand)
-                                logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
-                            except Exception as e:
-                                logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
-                        
-                        # Calculate intersection
-                        intersection = QPainterPath(shadow_path)
-                        intersection = intersection.intersected(other_stroke_path)
-                        
-                        # Special case: Check if the other strand is a component of a masked strand
-                        # and if this strand should be above the masked strand
-                        for masked_name, masked_info in masked_strands_map.items():
-                            if other_layer in masked_info['components']:
-                                masked_strand = masked_info['masked_strand']
-                                masked_layer = masked_name
-                                
-                                # Check if this strand should be above the masked strand
-                                if masked_layer in layer_order:
-                                    masked_index = layer_order.index(masked_layer)
-                                    should_be_above_masked = self_index > masked_index
-                                    
-                                    if should_be_above_masked:
-                                        # This strand should be above both the component and the masked strand
-                                        # Get the masked area to exclude from shadow
-                                        try:
-                                            mask_path = get_proper_masked_strand_path(masked_strand)
-                                            
-                                            # Remove the masked area from the intersection
-                                            # This prevents shadow from appearing on the z_w component in the masked area
-                                            intersection = intersection.subtracted(mask_path)
-                                            logging.info(f"Excluded masked area of {masked_layer} from shadow of {this_layer} on {other_layer}")
-                                        except Exception as e:
-                                            logging.error(f"Error excluding masked area: {e}")
-                        
-                        # Only draw if there's an actual intersection
-                        if not intersection.isEmpty():
-                            # Draw shadow
-                            painter.setPen(Qt.NoPen)
-                            painter.setBrush(color_to_use)
-                            
-                            # IMPORTANT FIX: Use SourceOver composition mode to prevent shadow darkening
-                            # for ALL strands to ensure consistent shadow opacity
-                            old_composition = painter.compositionMode()
-                            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                            painter.drawPath(intersection)
-                            painter.setCompositionMode(old_composition)
-                                
-                            logging.info(f"Drew shadow from {this_layer} onto {other_layer}")
-                        else:
-                            logging.info(f"No intersection between {this_layer} and {other_layer} paths")
-                    except Exception as e:
-                        logging.error(f"Error drawing strand shadow: {e}")
-                else:
-                    logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow drawn")
+        # Draw the combined path once
+        painter.drawPath(total_shadow_path)
+        logging.info(f"Drew unified shadow path with bounds {total_shadow_path.boundingRect()}")
     else:
-        # If no layer manager available, draw simple shadow
-        # This is a fallback method
-        logging.info("No layer state manager available for shadow drawing") 
+        logging.warning(f"No shadow paths to draw for strand {strand.layer_name}")
 
 def get_proper_masked_strand_path(strand):
     """

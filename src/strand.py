@@ -2281,8 +2281,14 @@ class MaskedStrand(Strand):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Use a thicker red pen to draw the mask outline
-        highlight_pen = QPen(Qt.transparent, 0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        # Use a semi-transparent highlight color
+        if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color'):
+            highlight_color = QColor(self.canvas.highlight_color)
+            highlight_color.setAlpha(128)  # Set 50% transparency
+            highlight_pen = QPen(highlight_color, 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        else:
+            highlight_pen = QPen(QColor(255, 0, 0, 128), 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            
         painter.setPen(highlight_pen)
         painter.setBrush(Qt.NoBrush)
 

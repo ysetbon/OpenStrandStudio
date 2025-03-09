@@ -1,8 +1,7 @@
-from PyQt5.QtCore import QPointF, QRectF, QTimer
-from PyQt5.QtGui import QCursor, QPen
+from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt
+from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform
 from PyQt5.QtWidgets import QApplication
 import math
-from PyQt5.QtCore import QPointF, QRectF
 from PyQt5.QtGui import (
      QPainterPath
 )
@@ -384,8 +383,6 @@ class MoveMode:
 
         return path
 
-
-
     def can_move_side(self, strand, side, strand_index):
         """
         Check if the side of a strand can be moved.
@@ -677,19 +674,139 @@ class MoveMode:
         Args:
             painter (QPainter): The painter object to draw with.
         """
+        # Skip drawing all C-shapes if a main strand's starting point is being moved
+        if self.is_moving and self.affected_strand and not isinstance(self.affected_strand, AttachedStrand) and self.moving_side == 0:
+            return
+            
         # Determine which strand to highlight
         strand_to_highlight = None
         if self.is_moving and self.temp_selected_strand:
             strand_to_highlight = self.temp_selected_strand
         elif not self.is_moving and self.canvas.selected_attached_strand:
             strand_to_highlight = self.canvas.selected_attached_strand
+            
+        # Only highlight the affected strand if it's set, selected, and we're in moving mode
+        if self.is_moving and self.affected_strand and self.affected_strand.is_selected:
+            self.draw_c_shape_for_strand(painter, self.affected_strand)
+            
+            # If the affected strand has attached strands, only draw C-shapes for selected ones
+            if hasattr(self.affected_strand, 'attached_strands') and self.affected_strand.attached_strands:
+                for attached_strand in self.affected_strand.attached_strands:
+                    if attached_strand.is_selected:
+                        self.draw_c_shape_for_strand(painter, attached_strand)
 
+        # Only proceed if we have a strand to highlight and it's selected
+        if strand_to_highlight and strand_to_highlight.is_selected:
+            self.draw_c_shape_for_strand(painter, strand_to_highlight)
 
-        # Log the current state for debugging
-        print(f"Is moving: {self.is_moving}")
-        print(f"Temp selected strand: {self.temp_selected_strand}")
-        print(f"Canvas selected strand: {self.canvas.selected_attached_strand}")
-        print(f"Strand to highlight: {strand_to_highlight}")
+    def draw_c_shape_for_strand(self, painter, strand):
+        """
+        Draw C-shape for a specific strand.
+        
+        Args:
+            painter (QPainter): The painter object to draw with.
+            strand: The strand to draw the C-shape for.
+        """
+        painter.save()
+        
+        # Skip drawing C-shape highlights if this is the main strand that's moving
+        is_main_strand = not isinstance(strand, AttachedStrand)
+        is_moving_strand = self.is_moving and self.affected_strand == strand
+        
+        if is_main_strand and is_moving_strand:
+            painter.restore()
+            return
+        
+        # Draw the circles at connection points
+        for i, has_circle in enumerate(strand.has_circles):
+            # Only draw the start circle (i == 0) for all highlighted strands
+            # For end circles (i == 1), don't draw them at all
+            if i == 1:
+                continue
+                
+            # Check if this is a main strand (not an attached strand)
+            is_main_strand = not isinstance(strand, AttachedStrand)
+            
+            # Skip drawing C-shapes for main strands at attachment points
+            if is_main_strand:
+                # If this is a start point (i == 0) and it has an attachment, skip drawing
+                if i == 0 and strand.has_circles[0]:
+                    continue
+                # If this is an end point (i == 1) and it has an attachment, skip drawing
+                elif i == 1 and strand.has_circles[1]:
+                    continue
+            
+            # Check if the strand has attached strands on both sides
+            has_attached_on_both_sides = False
+            if hasattr(strand, 'has_circles'):
+                has_attached_on_both_sides = all(strand.has_circles)
+            
+            # Skip drawing the C-shape for the starting point of a main strand 
+            # that doesn't have attached strands on both sides
+            if i == 0 and is_main_strand and not has_attached_on_both_sides and not has_circle:
+                continue
+                
+            # Draw the C-shape for the starting point if it has a circle or for attached strands
+            if i == 0 or has_circle:
+                # Save painter state
+                painter.save()
+                
+                center = strand.start if i == 0 else strand.end
+                
+                # Calculate the proper radius for the highlight
+                outer_radius = strand.width / 2 + strand.stroke_width + 4
+                inner_radius = strand.width / 2 + 6
+                
+                # Create a full circle path for the outer circle
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(center, outer_radius, outer_radius)
+                
+                # Create a path for the inner circle
+                inner_circle = QPainterPath()
+                inner_circle.addEllipse(center, inner_radius, inner_radius)
+                
+                # Create a ring path by subtracting the inner circle from the outer circle
+                ring_path = outer_circle.subtracted(inner_circle)
+                
+                # Get the tangent angle at the connection point
+                tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+                angle = math.atan2(tangent.y(), tangent.x())
+                
+                # Create a masking rectangle to create a C-shape
+                mask_rect = QPainterPath()
+                rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+                rect_height = (outer_radius + 5) * 2
+                rect_x = center.x() - rect_width / 2
+                rect_y = center.y()
+                mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+                
+                # Apply rotation transform to the masking rectangle
+                transform = QTransform()
+                transform.translate(center.x(), center.y())
+                # Adjust angle based on whether it's start or end point
+                if i == 0:
+                    transform.rotate(math.degrees(angle - math.pi / 2))
+                else:
+                    transform.rotate(math.degrees(angle - math.pi / 2) + 180)
+                transform.translate(-center.x(), -center.y())
+                mask_rect = transform.map(mask_rect)
+                
+                # Create the C-shaped highlight by subtracting the mask from the ring
+                c_shape_path = ring_path.subtracted(mask_rect)
+                
+                # Draw the C-shaped highlight
+                # First draw the stroke (border) with the strand's stroke color
+                stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
+                stroke_pen.setJoinStyle(Qt.MiterJoin)
+                stroke_pen.setCapStyle(Qt.FlatCap)
+                painter.setPen(stroke_pen)
+                painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
+                painter.drawPath(c_shape_path)
+                
+                # Restore painter state
+                painter.restore()
+        
+        painter.restore()
 
     def find_connected_strand(self, strand, side, moving_point):
         """Find a strand connected to the given strand at the specified side."""
@@ -722,6 +839,16 @@ class MoveMode:
                     return connected_strand
 
         return None
+
+    def draw(self, painter):
+        """
+        Draw method called by the canvas during paintEvent.
+        
+        Args:
+            painter (QPainter): The painter object to draw with.
+        """
+        # Draw the selected attached strand with C-shaped highlights
+        self.draw_selected_attached_strand(painter)
 
 
 

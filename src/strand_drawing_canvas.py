@@ -969,6 +969,10 @@ class StrandDrawingCanvas(QWidget):
 
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Store the yellow rectangle for overlap checking
+        yellow_rectangle = None
+        if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
+            yellow_rectangle = self.current_mode.selected_rectangle
 
         # Draw the grid, if applicable
         if self.show_grid:
@@ -1041,47 +1045,77 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
-        # Draw selection area if in MoveMode
+        # Draw current mode's custom visualizations (including selected attached strand)
+        if hasattr(self.current_mode, 'draw'):
+            self.current_mode.draw(painter)
+
+        # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
         if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
             painter.save()
+
+            # Get the selected rectangle if it exists
+            selected_rect = None
+            selected_strand = None
+            selected_side = None
+            if self.current_mode.selected_rectangle and self.current_mode.affected_strand and self.current_mode.moving_side is not None:
+                selected_strand = self.current_mode.affected_strand
+                selected_side = self.current_mode.moving_side
 
             # Draw squares around each strand's start/end
             for strand in self.strands:
                 if not isinstance(strand, MaskedStrand):
                     if hasattr(strand, 'start') and hasattr(strand, 'end'):
-                        square_color = QColor(255, 0, 0, 60)  # Red with 50% transparency
-                        painter.setBrush(QBrush(square_color))
-                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
-                                            
                         # Increased square size for better visibility
                         square_size = 120
                         half_size = square_size / 2
                         square_control_size = 30
                         half_control_size = square_control_size / 2
-                        # Draw square around start point
+                        
+                        # Skip drawing only the exact selected point, not any overlapping rectangles
+                        skip_start = (strand == selected_strand and selected_side == 0)
+                        skip_end = (strand == selected_strand and selected_side == 1)
+                        
+                        # Create rectangles for checking overlap
                         start_rect = QRectF(
                             strand.start.x() - half_size,
                             strand.start.y() - half_size,
                             square_size,
                             square_size
                         )
-                        painter.drawRect(start_rect)
-
-                        # Draw square around end point 
+                        
                         end_rect = QRectF(
                             strand.end.x() - half_size,
                             strand.end.y() - half_size,
                             square_size,
                             square_size
                         )
-                        painter.drawRect(end_rect)
+                        
+                        # Check if rectangles overlap with yellow rectangle
+                        start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
+                        end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
+                        
+                        # Draw with red color for non-selected rectangles
+                        square_color = QColor(255, 0, 0, 60)  # Red with 50% transparency
+                        painter.setBrush(QBrush(square_color))
+                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                        
+                        # Draw square around start point if not selected and not overlapping with yellow
+                        if not skip_start and not start_overlaps_yellow:
+                            painter.drawRect(start_rect)
+
+                        # Draw square around end point if not selected and not overlapping with yellow
+                        if not skip_end and not end_overlaps_yellow:
+                            painter.drawRect(end_rect)
 
                         # Draw squares around control points if present (and not MaskedStrand)
                         if not isinstance(strand, MaskedStrand):
-                            square_color = QColor(0, 100, 0, 60)  # Red with 50% transparency
-                            painter.setBrush(QBrush(square_color))
-                            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                            # Skip drawing only the exact selected control point
+                            skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
+                            skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
                             
+                            # Create control point rectangles for overlap checking
+                            cp1_rect = None
+                            cp2_rect = None
                             
                             if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
                                 cp1_rect = QRectF(
@@ -1090,8 +1124,7 @@ class StrandDrawingCanvas(QWidget):
                                     square_control_size,
                                     square_control_size
                                 )
-                                painter.drawRect(cp1_rect)
-
+                            
                             if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
                                 cp2_rect = QRectF(
                                     strand.control_point2.x() - half_control_size,
@@ -1099,14 +1132,29 @@ class StrandDrawingCanvas(QWidget):
                                     square_control_size,
                                     square_control_size
                                 )
+                            
+                            # Check if control points overlap with yellow rectangle
+                            cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
+                            cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
+                            
+                            # Draw with green color for non-selected control points
+                            square_color = QColor(0, 100, 0, 60)  # Green with 50% transparency
+                            painter.setBrush(QBrush(square_color))
+                            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                            
+                            if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                painter.drawRect(cp1_rect)
+                            
+                            if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                 painter.drawRect(cp2_rect)
-            # Set up semi-transparent red color
-            square_color = QColor(255, 255, 20, 170)  # Red with 50% transparency
-            painter.setBrush(QBrush(square_color))
-            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
             
-            # Draw the selection rectangle if it exists
+            # Draw the selected rectangle with yellow color
             if self.current_mode.selected_rectangle:
+                # Set up semi-transparent yellow color
+                square_color = QColor(255, 230, 160, 140)  # Yellow with transparency
+                painter.setBrush(QBrush(square_color))
+                painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                
                 if isinstance(self.current_mode.selected_rectangle, QPainterPath):
                     painter.drawPath(self.current_mode.selected_rectangle)
                 elif isinstance(self.current_mode.selected_rectangle, QRectF):
@@ -1118,37 +1166,46 @@ class StrandDrawingCanvas(QWidget):
         if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
             self.angle_adjust_mode.draw(painter)
 
-        # Draw mask mode selections (this is the single implementation we want to keep)
-        if isinstance(self.current_mode, MaskMode):
-            self.current_mode.draw(painter)
-
         # Draw mask editing interface
         if self.mask_edit_mode and self.editing_masked_strand:
-            # Draw the current mask path with semi-transparency
-            painter.setBrush(QColor(255, 0, 0, 100))  # Semi-transparent red
-            painter.setPen(Qt.NoPen)
-            painter.drawPath(self.mask_edit_path)
+            # Check if mask path overlaps with yellow rectangle
+            mask_path_overlaps_yellow = False
+            if yellow_rectangle and self.mask_edit_path:
+                mask_rect = self.mask_edit_path.boundingRect()
+                mask_path_overlaps_yellow = self.rectangles_overlap(mask_rect, yellow_rectangle)
+            
+            # Only draw mask path if it doesn't overlap with yellow rectangle
+            if not mask_path_overlaps_yellow:
+                # Draw the current mask path with semi-transparency
+                painter.setBrush(QColor(255, 0, 0, 100))  # Semi-transparent red
+                painter.setPen(Qt.NoPen)
+                painter.drawPath(self.mask_edit_path)
             
             # Draw the current erase rectangle if it exists
             if self.current_erase_rect:
-                painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
-                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
-                painter.drawRect(self.current_erase_rect)
+                erase_rect_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(self.current_erase_rect, yellow_rectangle)
+                if not erase_rect_overlaps_yellow:
+                    painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
+                    painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                    painter.drawRect(self.current_erase_rect)
             
             # Draw the eraser cursor
             if hasattr(self, 'last_pos'):
-                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
-                painter.setBrush(Qt.NoBrush)
-                painter.drawEllipse(
+                eraser_rect = QRectF(
                     self.last_pos.x() - self.eraser_size/2,
                     self.last_pos.y() - self.eraser_size/2,
                     self.eraser_size,
                     self.eraser_size
                 )
+                eraser_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(eraser_rect, yellow_rectangle)
+                if not eraser_overlaps_yellow:
+                    painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawEllipse(eraser_rect)
 
         logging.info(
             f"Paint event completed. Selected strand: "
-            f"{self.selected_strand.layer_name if self.selected_strand else 'None'}"
+            f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
         )
 
         painter.end()
@@ -3272,6 +3329,22 @@ class StrandDrawingCanvas(QWidget):
                         s1.has_circles[1] = True
 
         logging.info("Refreshed attachments via geometry scan, updated start/end attachments.")
+
+    def rectangles_overlap(self, rect1, rect2):
+        """
+        Check if two QRectF objects overlap.
+        """
+        if isinstance(rect1, QPainterPath) or isinstance(rect2, QPainterPath):
+            # For simplicity, if either is a path, use bounding rectangles
+            if isinstance(rect1, QPainterPath):
+                rect1 = rect1.boundingRect()
+            if isinstance(rect2, QPainterPath):
+                rect2 = rect2.boundingRect()
+        
+        return (rect1.left() < rect2.right() and
+                rect1.right() > rect2.left() and
+                rect1.top() < rect2.bottom() and
+                rect1.bottom() > rect2.top())
 
 
 # End of StrandDrawingCanvas class

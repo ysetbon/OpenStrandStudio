@@ -1471,7 +1471,13 @@ class MaskedStrand(Strand):
         self.custom_mask_path = mask_path
         # Recalculate center point when mask changes
         self.calculate_center_point()
-        logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+        
+        # Add null check before accessing edited_center_point
+        if self.edited_center_point:
+            logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+        else:
+            logging.warning(f"No valid center point calculated for {self.layer_name} after setting custom mask")
+            
         # Save the current state of deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
             logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
@@ -1795,8 +1801,87 @@ class MaskedStrand(Strand):
                     final_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
                     final_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
                     
-                    # Draw the first strand completely to this buffer
-                    self.first_selected_strand.draw(final_painter)
+                    if not path_shadow.isEmpty():
+                            # Get the base paths for both strands
+                        # Use moderate shadow size for realistic effect
+                        shadow_width_offset = 20  # Adjusted from 20 for more realistic effect
+
+                        path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
+                        shadow_stroker = QPainterPathStroker()
+                        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+                        shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                        shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
+                        shadow_path1 = shadow_stroker.createStroke(path1)
+                        
+                        # Rest of the shadow drawing code remains the same
+                        path2 = self.second_selected_strand.get_path()
+                        shadow_stroker = QPainterPathStroker()
+                        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+                        shadow_stroker.setJoinStyle(Qt.MiterJoin)
+                        shadow_stroker.setCapStyle(Qt.RoundCap)
+                        shadow_path2 = shadow_stroker.createStroke(path2)
+
+                        # First get the basic intersection of the two strands
+                        intersection_path = shadow_path1.intersected(shadow_path2)
+                        
+                        # Create the shadow path by stroking the intersection
+                        path_shadow = intersection_path
+                        
+                        # Log information about the shadow path
+                        logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+                        
+                        # Apply any saved deletion rectangles to the shadow path
+                        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                            for rect in self.deletion_rectangles:
+                                # Use corner-based data:
+                                top_left = QPointF(*rect['top_left'])
+                                top_right = QPointF(*rect['top_right'])
+                                bottom_left = QPointF(*rect['bottom_left'])
+                                bottom_right = QPointF(*rect['bottom_right'])
+                                # Create a polygonal path from the four corners
+                                deletion_path = QPainterPath()
+
+                                deletion_path.moveTo(top_left)
+                                deletion_path.lineTo(top_right)
+                                deletion_path.lineTo(bottom_right)
+                                deletion_path.lineTo(bottom_left)
+                                deletion_path.closeSubpath()
+
+                                path_shadow = path_shadow.subtracted(deletion_path)
+                        # Only draw the intersection area, not the entire first strand
+                        # Set clip path to the intersection area first
+                        
+                        # Create a more aggressive inset path to eliminate edge artifacts
+                        shadow_inset_stroker = QPainterPathStroker()
+                        shadow_inset_stroker.setWidth(5)  # Increased inset value
+                        shadow_inset_path = path_shadow.subtracted(shadow_inset_stroker.createStroke(path_shadow))
+                        
+                        # Create a separate buffer for the strand drawing to avoid artifacts
+                        strand_buffer = QImage(
+                            painter.device().size(),
+                            QImage.Format_ARGB32_Premultiplied
+                        )
+                        strand_buffer.fill(Qt.transparent)
+                        
+                        # Draw strand to buffer first
+                        strand_painter = QPainter(strand_buffer)
+                        strand_painter.setRenderHint(QPainter.Antialiasing, True)
+                        strand_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                        strand_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                        
+                        # Completely disable any stroke drawing
+                        strand_painter.setPen(Qt.NoPen)
+                        
+                        # Draw the strand without stroke
+                        self.first_selected_strand.draw(strand_painter)
+                        strand_painter.end()
+                        
+                        # Now draw the clipped strand to the final painter
+                        final_painter.save()
+                        final_painter.setClipPath(shadow_inset_path)
+                        final_painter.setCompositionMode(QPainter.CompositionMode_Source)
+                        final_painter.drawImage(0, 0, strand_buffer)
+                        final_painter.restore()
                     
                     # Create a soft mask buffer for the intersection with feathered edges
                     mask_buffer = QImage(
@@ -1865,57 +1950,62 @@ class MaskedStrand(Strand):
 
             # Acquire the mask path and set a winding fill rule so the region gets filled.
             mask_path = self.get_mask_path()
-            mask_path.setFillRule(Qt.WindingFill)
-            painter.drawPath(mask_path)
+            
+            # Only draw if the mask path is not empty (strands actually intersect)
+            if not mask_path.isEmpty():
+                mask_path.setFillRule(Qt.WindingFill)
+                painter.drawPath(mask_path)
 
-            # Always recalculate and draw center points based on current masks
-            self.calculate_center_point()
+                # Always recalculate and draw center points based on current masks
+                self.calculate_center_point()
 
-            # Always show base center point in blue
-            if self.base_center_point:
-                logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
-                temp_painter = QPainter(painter.device())  # a new painter for the crosshair
-                temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                temp_painter.setPen(QPen(QColor('transparent'), 0))
-                temp_painter.setBrush(QBrush(QColor('transparent')))
-                center_radius = 0
-                temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
+                # Always show base center point in blue
+                if self.base_center_point:
+                    logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
+                    temp_painter = QPainter(painter.device())  # a new painter for the crosshair
+                    temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
+                    temp_painter.setPen(QPen(QColor('transparent'), 0))
+                    temp_painter.setBrush(QBrush(QColor('transparent')))
+                    center_radius = 0
+                    temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
 
-                # Draw blue crosshair
-                temp_painter.setPen(QPen(QColor('transparent'), 0))
-                crosshair_size = 0
-                temp_painter.drawLine(
-                    QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),
-                    QPointF(self.base_center_point.x() + crosshair_size, self.base_center_point.y())
-                )
-                temp_painter.drawLine(
-                    QPointF(self.base_center_point.x(), self.base_center_point.y() - crosshair_size),
-                    QPointF(self.base_center_point.x(), self.base_center_point.y() + crosshair_size)
-                )
-                temp_painter.end()
+                    # Draw blue crosshair
+                    temp_painter.setPen(QPen(QColor('transparent'), 0))
+                    crosshair_size = 0
+                    temp_painter.drawLine(
+                        QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),
+                        QPointF(self.base_center_point.x() + crosshair_size, self.base_center_point.y())
+                    )
+                    temp_painter.drawLine(
+                        QPointF(self.base_center_point.x(), self.base_center_point.y() - crosshair_size),
+                        QPointF(self.base_center_point.x(), self.base_center_point.y() + crosshair_size)
+                    )
+                    temp_painter.end()
 
-            # Only show edited center point if there are deletion rectangles
-            if self.edited_center_point and hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-                logging.info(f"Drawing edited center point at: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
-                temp_painter = QPainter(painter.device())  # a new painter for the crosshair
-                temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                temp_painter.setPen(QPen(QColor('transparent'), 0))
-                temp_painter.setBrush(QBrush(QColor('transparent')))
-                center_radius = 0
-                temp_painter.drawEllipse(self.edited_center_point, center_radius, center_radius)
+                # Only show edited center point if there are deletion rectangles
+                if self.edited_center_point and hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                    logging.info(f"Drawing edited center point at: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+                    temp_painter = QPainter(painter.device())  # a new painter for the crosshair
+                    temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
+                    temp_painter.setPen(QPen(QColor('transparent'), 0))
+                    temp_painter.setBrush(QBrush(QColor('transparent')))
+                    center_radius = 0
+                    temp_painter.drawEllipse(self.edited_center_point, center_radius, center_radius)
 
-                # Draw red crosshair
-                temp_painter.setPen(QPen(QColor('transparent'), 0))
-                crosshair_size = 0
-                temp_painter.drawLine(
-                    QPointF(self.edited_center_point.x() - crosshair_size, self.edited_center_point.y()),
-                    QPointF(self.edited_center_point.x() + crosshair_size, self.edited_center_point.y())
-                )
-                temp_painter.drawLine(
-                    QPointF(self.edited_center_point.x(), self.edited_center_point.y() - crosshair_size),
-                    QPointF(self.edited_center_point.x(), self.edited_center_point.y() + crosshair_size)
-                )
-                temp_painter.end()
+                    # Draw red crosshair
+                    temp_painter.setPen(QPen(QColor('transparent'), 0))
+                    crosshair_size = 0
+                    temp_painter.drawLine(
+                        QPointF(self.edited_center_point.x() - crosshair_size, self.edited_center_point.y()),
+                        QPointF(self.edited_center_point.x() + crosshair_size, self.edited_center_point.y())
+                    )
+                    temp_painter.drawLine(
+                        QPointF(self.edited_center_point.x(), self.edited_center_point.y() - crosshair_size),
+                        QPointF(self.edited_center_point.x(), self.edited_center_point.y() + crosshair_size)
+                    )
+                    temp_painter.end()
+            else:
+                logging.info("Skipping highlight drawing: no intersection between strands")
 
         logging.info("Completed drawing masked strand")
 
@@ -2074,48 +2164,46 @@ class MaskedStrand(Strand):
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
         
-        # Create a shadow stroke for path1
-        shadow_stroker = QPainterPathStroker()
-        # Use the strand width plus stroke width plus shadow offset
-        shadow_width = 10  # Shadow width offset
-        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width + shadow_width)
-        shadow_stroker.setJoinStyle(Qt.MiterJoin)
-        shadow_stroker.setCapStyle(Qt.RoundCap)
+        # Create the final mask by directly intersecting path1 with path2
+        # without applying any shadow stroker to path1
+        self.custom_mask_path = path1.intersected(path2)
         
-        # Create the shadow path for path1
-        path1_shadow = shadow_stroker.createStroke(path1)
+        # Check if the resulting path is empty (strands don't intersect)
+        if self.custom_mask_path.isEmpty():
+            logging.info(f"No intersection between strands for {self.layer_name}")
+            # Even if there's no intersection, we still keep the custom_mask_path
+            # (empty) and preserve any deletion rectangles for when they intersect again
+        else:
+            # Apply deletion rectangles if they exist
+            if hasattr(self, 'deletion_rectangles'):
+                for rect in self.deletion_rectangles:
+                    # Build a bounding rect from corner data
+                    top_left = QPointF(*rect['top_left'])
+                    top_right = QPointF(*rect['top_right'])
+                    bottom_left = QPointF(*rect['bottom_left'])
+                    bottom_right = QPointF(*rect['bottom_right'])
+
+                    # Create deletion path using exact corners for precision
+                    deletion_path = QPainterPath()
+
+                    min_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
+                    max_x = max(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
+                    min_y = min(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
+                    max_y = max(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
+
+                    width = max_x - min_x
+                    height = max_y - min_y
+
+                    deletion_path = QPainterPath()
+                    deletion_path.addRect(QRectF(min_x, min_y, width, height))
+                    self.custom_mask_path = self.custom_mask_path.subtracted(deletion_path)
+                    logging.info(
+                        f"✂️ Applied corner-based deletion rect with corners: "
+                        f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
+                    )
+            
+            logging.info(f"Updated mask path for {self.layer_name}")
         
-        # Create the final mask by intersecting the path1 shadow with path2
-        self.custom_mask_path = path1_shadow.intersected(path2)
-        
-        # Apply deletion rectangles if they exist
-        if hasattr(self, 'deletion_rectangles'):
-            for rect in self.deletion_rectangles:
-                # Build a bounding rect from corner data
-                top_left = QPointF(*rect['top_left'])
-                top_right = QPointF(*rect['top_right'])
-                bottom_left = QPointF(*rect['bottom_left'])
-                bottom_right = QPointF(*rect['bottom_right'])
-
-                # Create deletion path using exact corners for precision
-                deletion_path = QPainterPath()
-
-                min_x = min(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
-                max_x = max(top_left.x(), top_right.x(), bottom_left.x(), bottom_right.x())
-                min_y = min(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
-                max_y = max(top_left.y(), top_right.y(), bottom_left.y(), bottom_right.y())
-
-                width = max_x - min_x
-                height = max_y - min_y
-
-                deletion_path = QPainterPath()
-                deletion_path.addRect(QRectF(min_x, min_y, width, height))
-                self.custom_mask_path = self.custom_mask_path.subtracted(deletion_path)
-                logging.info(
-                    f"✂️ Applied corner-based deletion rect with corners: "
-                    f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
-                )
-
         # Clear any cached paths that depend on the mask
         cached_attrs = ['_shadow_path', '_cached_path', '_cached_mask', '_base_mask_path']
         for attr in cached_attrs:
@@ -2225,6 +2313,18 @@ class MaskedStrand(Strand):
         edited_path = self.get_mask_path()  # This includes deletion rectangles
         self.edited_center_point = self._calculate_center_from_path(edited_path)
         
+        # If edited_center_point is None, try to fall back to base_center_point
+        if self.edited_center_point is None and self.base_center_point is not None:
+            logging.warning(f"Using base center point as fallback for {self.layer_name}")
+            self.edited_center_point = self.base_center_point
+        
+        # If still None, use the midpoint between the strands as fallback
+        if self.edited_center_point is None and self.first_selected_strand and self.second_selected_strand:
+            mid_x = (self.first_selected_strand.start.x() + self.second_selected_strand.start.x()) / 2
+            mid_y = (self.first_selected_strand.start.y() + self.second_selected_strand.start.y()) / 2
+            self.edited_center_point = QPointF(mid_x, mid_y)
+            logging.warning(f"Using fallback midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
+            
         return self.edited_center_point  # Return edited center point for display
         
     def _calculate_center_from_path(self, path):
@@ -2292,8 +2392,11 @@ class MaskedStrand(Strand):
         painter.setPen(highlight_pen)
         painter.setBrush(Qt.NoBrush)
 
-        # Draw the mask path with our highlight pen
+        # Draw the mask path with our highlight pen, but only if it's not empty
         if hasattr(self, 'get_mask_path'):
-            painter.drawPath(self.get_mask_path())
+            mask_path = self.get_mask_path()
+            # Only draw if the path is not empty (strands actually intersect)
+            if not mask_path.isEmpty():
+                painter.drawPath(mask_path)
 
         painter.restore()

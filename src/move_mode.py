@@ -322,7 +322,7 @@ class MoveMode:
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 30  # Size of the area for control point selection
+        size = 35  # Size of the area for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:

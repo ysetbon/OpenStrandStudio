@@ -969,10 +969,7 @@ class StrandDrawingCanvas(QWidget):
 
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Store the yellow rectangle for overlap checking
-        yellow_rectangle = None
-        if isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
-            yellow_rectangle = self.current_mode.selected_rectangle
+        # The yellow rectangle definition has been moved to the MoveMode section below
 
         # Draw the grid, if applicable
         if self.show_grid:
@@ -1057,19 +1054,67 @@ class StrandDrawingCanvas(QWidget):
             selected_rect = None
             selected_strand = None
             selected_side = None
+            # Store the yellow rectangle for overlap checking
+            yellow_rectangle = None
+            
             if self.current_mode.selected_rectangle and self.current_mode.affected_strand and self.current_mode.moving_side is not None:
                 selected_strand = self.current_mode.affected_strand
                 selected_side = self.current_mode.moving_side
+                
+                # Create the yellow rectangle with the consistent size for overlap checking
+                yellow_square_size = 85  # Size for the yellow selection square
+                half_yellow_size = yellow_square_size / 2
+                square_control_size = 35  # Size for control points
+                half_control_size = square_control_size / 2
+                
+                if selected_side == 0:  # Start point
+                    yellow_rectangle = QRectF(
+                        selected_strand.start.x() - half_yellow_size,
+                        selected_strand.start.y() - half_yellow_size,
+                        yellow_square_size,
+                        yellow_square_size
+                    )
+                elif selected_side == 1:  # End point
+                    yellow_rectangle = QRectF(
+                        selected_strand.end.x() - half_yellow_size,
+                        selected_strand.end.y() - half_yellow_size,
+                        yellow_square_size,
+                        yellow_square_size
+                    )
+                elif selected_side == 'control_point1' and hasattr(selected_strand, 'control_point1'):
+                    # Use control point size for control points
+                    yellow_rectangle = QRectF(
+                        selected_strand.control_point1.x() - half_control_size,
+                        selected_strand.control_point1.y() - half_control_size,
+                        square_control_size,
+                        square_control_size
+                    )
+                elif selected_side == 'control_point2' and hasattr(selected_strand, 'control_point2'):
+                    # Use control point size for control points
+                    yellow_rectangle = QRectF(
+                        selected_strand.control_point2.x() - half_control_size,
+                        selected_strand.control_point2.y() - half_control_size,
+                        square_control_size,
+                        square_control_size
+                    )
+            elif isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
+                # Fall back to using MoveMode's selected rectangle if needed
+                yellow_rectangle = self.current_mode.selected_rectangle
+
+            # Track positions where rectangles have been drawn to avoid duplicates
+            drawn_rectangle_positions = []
 
             # Draw squares around each strand's start/end
             for strand in self.strands:
                 if not isinstance(strand, MaskedStrand):
                     if hasattr(strand, 'start') and hasattr(strand, 'end'):
                         # Increased square size for better visibility
-                        square_size = 120
+                        square_size = 85
                         half_size = square_size / 2
-                        square_control_size = 30
+                        square_control_size = 35
                         half_control_size = square_control_size / 2
+                        yellow_square_size = 85  # Size for the yellow selection square
+                        half_yellow_size = yellow_square_size / 2
                         
                         # Skip drawing only the exact selected point, not any overlapping rectangles
                         skip_start = (strand == selected_strand and selected_side == 0)
@@ -1094,18 +1139,30 @@ class StrandDrawingCanvas(QWidget):
                         start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
                         end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
                         
+                        # Check if rectangles already drawn at these positions (to avoid duplicates at connections)
+                        start_already_drawn = False
+                        end_already_drawn = False
+                        
+                        for pos in drawn_rectangle_positions:
+                            if self.points_are_close(strand.start, pos):
+                                start_already_drawn = True
+                            if self.points_are_close(strand.end, pos):
+                                end_already_drawn = True
+                        
                         # Draw with red color for non-selected rectangles
-                        square_color = QColor(255, 0, 0, 60)  # Red with 50% transparency
+                        square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
                         painter.setBrush(QBrush(square_color))
                         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                         
-                        # Draw square around start point if not selected and not overlapping with yellow
-                        if not skip_start and not start_overlaps_yellow:
+                        # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
+                        if not skip_start and not start_overlaps_yellow and not start_already_drawn:
                             painter.drawRect(start_rect)
+                            drawn_rectangle_positions.append(QPointF(strand.start))
 
-                        # Draw square around end point if not selected and not overlapping with yellow
-                        if not skip_end and not end_overlaps_yellow:
+                        # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
+                        if not skip_end and not end_overlaps_yellow and not end_already_drawn:
                             painter.drawRect(end_rect)
+                            drawn_rectangle_positions.append(QPointF(strand.end))
 
                         # Draw squares around control points if present (and not MaskedStrand)
                         if not isinstance(strand, MaskedStrand):
@@ -1138,7 +1195,7 @@ class StrandDrawingCanvas(QWidget):
                             cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
                             
                             # Draw with green color for non-selected control points
-                            square_color = QColor(0, 100, 0, 60)  # Green with 50% transparency
+                            square_color = QColor(0, 100, 0, 100)  # Green with 50% transparency
                             painter.setBrush(QBrush(square_color))
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                             
@@ -1155,7 +1212,48 @@ class StrandDrawingCanvas(QWidget):
                 painter.setBrush(QBrush(square_color))
                 painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                 
-                if isinstance(self.current_mode.selected_rectangle, QPainterPath):
+                # If we have a selected strand and side, create the yellow square directly
+                if self.current_mode.affected_strand and self.current_mode.moving_side is not None:
+                    affected_strand = self.current_mode.affected_strand
+                    moving_side = self.current_mode.moving_side
+                    
+                    # Create a yellow square of the defined size
+                    if moving_side == 0:  # Start point
+                        yellow_rect = QRectF(
+                            affected_strand.start.x() - half_yellow_size,
+                            affected_strand.start.y() - half_yellow_size,
+                            yellow_square_size,
+                            yellow_square_size
+                        )
+                        painter.drawRect(yellow_rect)
+                    elif moving_side == 1:  # End point
+                        yellow_rect = QRectF(
+                            affected_strand.end.x() - half_yellow_size,
+                            affected_strand.end.y() - half_yellow_size,
+                            yellow_square_size,
+                            yellow_square_size
+                        )
+                        painter.drawRect(yellow_rect)
+                    elif moving_side == 'control_point1' and hasattr(affected_strand, 'control_point1'):
+                        # Use control point size for control points
+                        yellow_rect = QRectF(
+                            affected_strand.control_point1.x() - half_control_size,
+                            affected_strand.control_point1.y() - half_control_size,
+                            square_control_size,
+                            square_control_size
+                        )
+                        painter.drawRect(yellow_rect)
+                    elif moving_side == 'control_point2' and hasattr(affected_strand, 'control_point2'):
+                        # Use control point size for control points
+                        yellow_rect = QRectF(
+                            affected_strand.control_point2.x() - half_control_size,
+                            affected_strand.control_point2.y() - half_control_size,
+                            square_control_size,
+                            square_control_size
+                        )
+                        painter.drawRect(yellow_rect)
+                # Fall back to using the selected_rectangle from MoveMode if direct creation not possible
+                elif isinstance(self.current_mode.selected_rectangle, QPainterPath):
                     painter.drawPath(self.current_mode.selected_rectangle)
                 elif isinstance(self.current_mode.selected_rectangle, QRectF):
                     painter.drawRect(self.current_mode.selected_rectangle)
@@ -1168,26 +1266,16 @@ class StrandDrawingCanvas(QWidget):
 
         # Draw mask editing interface
         if self.mask_edit_mode and self.editing_masked_strand:
-            # Check if mask path overlaps with yellow rectangle
-            mask_path_overlaps_yellow = False
-            if yellow_rectangle and self.mask_edit_path:
-                mask_rect = self.mask_edit_path.boundingRect()
-                mask_path_overlaps_yellow = self.rectangles_overlap(mask_rect, yellow_rectangle)
-            
-            # Only draw mask path if it doesn't overlap with yellow rectangle
-            if not mask_path_overlaps_yellow:
-                # Draw the current mask path with semi-transparency
-                painter.setBrush(QColor(255, 0, 0, 100))  # Semi-transparent red
-                painter.setPen(Qt.NoPen)
-                painter.drawPath(self.mask_edit_path)
+            # Draw the current mask path with semi-transparency
+            painter.setBrush(QColor(255, 0, 0, 100))  # Semi-transparent red
+            painter.setPen(Qt.NoPen)
+            painter.drawPath(self.mask_edit_path)
             
             # Draw the current erase rectangle if it exists
             if self.current_erase_rect:
-                erase_rect_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(self.current_erase_rect, yellow_rectangle)
-                if not erase_rect_overlaps_yellow:
-                    painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
-                    painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
-                    painter.drawRect(self.current_erase_rect)
+                painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
+                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                painter.drawRect(self.current_erase_rect)
             
             # Draw the eraser cursor
             if hasattr(self, 'last_pos'):
@@ -1321,9 +1409,33 @@ class StrandDrawingCanvas(QWidget):
         if self.mask_exists(strand1, strand2):
             logging.info(f"Masked layer for {strand1.layer_name} and {strand2.layer_name} already exists.")
             return
-
-        # Create the new masked strand
-        masked_strand = MaskedStrand(strand1, strand2)
+            
+        # Check if the strands actually intersect before creating a masked layer
+        # This prevents creating masked layers for non-intersecting strands
+        try:
+            # Create temporary MaskedStrand to use its helper method
+            temp_masked = MaskedStrand(strand1, strand2)
+            
+            # Get the stroked paths for both strands
+            path1 = temp_masked.get_stroked_path_for_strand(strand1)
+            path2 = temp_masked.get_stroked_path_for_strand(strand2)
+            
+            # Calculate the intersection
+            intersection_path = path1.intersected(path2)
+            
+            # If there's no intersection, don't create a masked layer
+            if intersection_path.isEmpty():
+                logging.info(f"No intersection between {strand1.layer_name} and {strand2.layer_name}. Skipping masked layer creation.")
+                return
+                
+            logging.info(f"Found intersection between {strand1.layer_name} and {strand2.layer_name}. Creating masked layer.")
+            
+            # Use the already created temp_masked instead of creating a new one
+            masked_strand = temp_masked
+        except Exception as e:
+            logging.error(f"Error checking intersection: {e}")
+            # Create the masked strand if the intersection check fails
+            masked_strand = MaskedStrand(strand1, strand2)
         
         # Set the shadow color to the default shadow color
         if hasattr(self, 'default_shadow_color') and self.default_shadow_color:
@@ -1338,7 +1450,6 @@ class StrandDrawingCanvas(QWidget):
         else:
             # Fall back to default shadow color if not set
             masked_strand.shadow_color = QColor(0, 0, 0, 150)
-            logging.info("Using default shadow color (0,0,0,150) for masked strand")
 
         # Add the new masked strand to the canvas
         self.add_strand(masked_strand)
@@ -1363,9 +1474,7 @@ class StrandDrawingCanvas(QWidget):
         # Clear any existing selection
         self.clear_selection()
         
-        # Move the new masked strand to the top of the drawing order
-        self.move_strand_to_top(masked_strand)
-        
+
         # Emit the masked_layer_created signal
         self.update()
         self.masked_layer_created.emit(masked_strand)
@@ -1531,11 +1640,25 @@ class StrandDrawingCanvas(QWidget):
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
 
-            # Draw the masked strand normally (filling it in, etc.)
-            masked_strand.draw(painter)
-
-            # Now call the new "masked_strand.draw_highlight" method
-            masked_strand.draw_highlight(painter)
+            # First check if there's an actual intersection between the strands
+            path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
+            path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)
+            intersection_path = path1.intersected(path2)
+            
+            # Only proceed with drawing if there's an actual intersection
+            if not intersection_path.isEmpty():
+                # Draw the masked strand normally (filling it in, etc.)
+                masked_strand.draw(painter)
+                
+                # Now call the "masked_strand.draw_highlight" method
+                masked_strand.draw_highlight(painter)
+            else:
+                # Just draw the individual strands without highlighting
+                if masked_strand.first_selected_strand:
+                    masked_strand.first_selected_strand.draw(painter)
+                if masked_strand.second_selected_strand:
+                    masked_strand.second_selected_strand.draw(painter)
+                logging.info(f"Skipping masked strand highlights: no intersection between strands for {masked_strand.layer_name}")
 
             painter.restore()
 
@@ -1762,34 +1885,7 @@ class StrandDrawingCanvas(QWidget):
             logging.error(f"Traceback: {traceback.format_exc()}")
             return False
 
-    def move_strand_to_top(self, strand):
-        """Move a strand to the top of the drawing order and update the layer panel."""
-        if strand in self.strands:
-            # Remove the strand from its current position
-            self.strands.remove(strand)
-            # Add the strand to the end of the list (top of the drawing order)
-            self.strands.append(strand)
-            
-            # Update the layer panel to reflect the new order
-            if self.layer_panel:
-                # Get the current index of the strand in the layer panel
-                current_index = self.layer_panel.layer_buttons.index(
-                    next(button for button in self.layer_panel.layer_buttons if button.text() == strand.layer_name)
-                )
-                
-                # Move the corresponding button to the top of the layer panel
-                button = self.layer_panel.layer_buttons.pop(current_index)
-                self.layer_panel.layer_buttons.insert(0, button)
-                
-                # Refresh the layer panel UI
-                self.layer_panel.refresh()
-            
-            # Update the canvas
-            self.update()
-            
-            logging.info(f"Moved strand {strand.layer_name} to top")
-        else:
-            logging.warning(f"Attempted to move non-existent strand to top: {strand.layer_name}")
+
 
 
 
@@ -2175,8 +2271,6 @@ class StrandDrawingCanvas(QWidget):
         # Clear any existing selection
         self.clear_selection()
 
-        # Move the new masked strand to the top of the drawing order
-        self.move_strand_to_top(masked_strand)
 
         # Force a redraw of the canvas
         self.update()
@@ -2927,7 +3021,19 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
         logging.info(f"Moved entire strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
-
+        
+        # Update related masked strands if this strand is part of any masks
+        for i, other_strand in enumerate(self.strands):
+            # Check if this is a masked strand by looking for masked strand attributes
+            if (hasattr(other_strand, 'first_selected_strand') and 
+                hasattr(other_strand, 'second_selected_strand')):
+                # Check if our strand is part of this masked strand
+                if (other_strand.first_selected_strand == strand or 
+                    other_strand.second_selected_strand == strand):
+                    logging.info(f"Updating masked strand {other_strand.layer_name} related to moved strand {strand.layer_name}")
+                    # Force shadow update which will transform custom masks
+                    if hasattr(other_strand, 'force_shadow_update'):
+                        other_strand.force_shadow_update()
 
     def move_strand_and_update(self, strand, dx, dy, updated_strands):
         if not hasattr(strand, 'original_start'):

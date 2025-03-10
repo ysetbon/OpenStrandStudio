@@ -1653,11 +1653,7 @@ class StrandDrawingCanvas(QWidget):
                 # Now call the "masked_strand.draw_highlight" method
                 masked_strand.draw_highlight(painter)
             else:
-                # Just draw the individual strands without highlighting
-                if masked_strand.first_selected_strand:
-                    masked_strand.first_selected_strand.draw(painter)
-                if masked_strand.second_selected_strand:
-                    masked_strand.second_selected_strand.draw(painter)
+                
                 logging.info(f"Skipping masked strand highlights: no intersection between strands for {masked_strand.layer_name}")
 
             painter.restore()

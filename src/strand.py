@@ -1882,7 +1882,9 @@ class MaskedStrand(Strand):
                         final_painter.setCompositionMode(QPainter.CompositionMode_Source)
                         final_painter.drawImage(0, 0, strand_buffer)
                         final_painter.restore()
-                    
+                    else:
+                        # When mask is empty, don't draw the first strand at all
+                        pass
                     # Create a soft mask buffer for the intersection with feathered edges
                     mask_buffer = QImage(
                         painter.device().size(),

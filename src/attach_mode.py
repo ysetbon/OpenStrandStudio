@@ -1,8 +1,9 @@
-from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject
+from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 import logging
+import time
 
 from strand import Strand, AttachedStrand, MaskedStrand
 
@@ -19,6 +20,12 @@ class AttachMode(QObject):
         self.affected_point = None
         self.initialize_properties()
         self.setup_timer()
+        self.last_update_rect = None  # Track the last update region
+        
+        # Store the canvas's control points visibility setting
+        self.original_control_points_visible = False
+        if hasattr(self.canvas, 'show_control_points'):
+            self.original_control_points_visible = self.canvas.show_control_points
 
     def initialize_properties(self):
         """Initialize all properties used in the AttachMode."""
@@ -29,11 +36,264 @@ class AttachMode(QObject):
         self.last_snapped_pos = None  # Last position snapped to grid
         self.accumulated_delta = QPointF(0, 0)  # Accumulated movement delta
         self.move_speed = 1  # Speed of movement in grid units per step
+        self.last_update_time = 0  # Time of last update for frame limiting
+        self.frame_limit_ms = 16  # Min time between updates (~ 60 fps)
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
         self.move_timer = QTimer()
         self.move_timer.timeout.connect(self.gradual_move)
+
+    def partial_update(self):
+        """
+        Update only the current strand being dragged using highly optimized approach.
+        This avoids redrawing all strands on every mouse movement.
+        """
+        if not self.canvas.current_strand:
+            return
+            
+        # Frame limiting - don't update too frequently
+        current_time = int(time.time() * 1000)  # Convert to milliseconds
+        time_since_last = current_time - self.last_update_time
+        if time_since_last < self.frame_limit_ms and self.last_update_time > 0:
+            return
+        self.last_update_time = current_time
+        
+        # Process pending events to ensure UI responsiveness
+        QApplication.instance().processEvents()
+        
+        # Store the current strand and calculate minimal update region
+        strand = self.canvas.current_strand
+        
+        # Setup background caching if needed
+        if not hasattr(self.canvas, 'background_cache'):
+            # Initialize background caching
+            self._setup_background_cache()
+            
+        # If the canvas already has a method to handle this, use it
+        if hasattr(self.canvas, 'set_active_strand_update'):
+            self.canvas.set_active_strand_update(strand, None)
+        else:
+            # Create rectangles for efficient updates
+            current_rect = self._get_strand_bounds()
+            
+            # Store previous rectangle for erasing
+            prev_rect = getattr(self.canvas, 'last_strand_rect', None)
+            update_rect = current_rect
+            
+            if prev_rect:
+                # Union the current and previous rects for complete update
+                update_rect = current_rect.united(prev_rect)
+            
+            # Store for next update
+            self.canvas.last_strand_rect = current_rect
+            
+            # Set active strand
+            self.canvas.active_strand_for_drawing = strand
+            self.canvas.active_strand_update_rect = update_rect
+            
+            # Setup efficient paint handler if needed
+            if not hasattr(self.canvas, 'original_paintEvent'):
+                self._setup_optimized_paint_handler()
+            
+            # Only update the canvas - can't use update(rect) as it's not supported
+            self.canvas.update()
+
+    def _get_strand_bounds(self):
+        """Get the bounding rectangle of the entire canvas."""
+        # Return the full canvas bounds instead of calculating strand-specific bounds
+        if hasattr(self.canvas, 'viewport'):
+            return self.canvas.viewport().rect()
+        return self.canvas.rect()
+            
+    def _setup_background_cache(self):
+        """Setup background caching for efficient updates."""
+        import PyQt5.QtGui as QtGui
+        from PyQt5.QtCore import Qt
+        
+        try:
+            # Create a background cache pixmap the size of the visible area
+            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
+            
+            # Ensure valid dimensions
+            width = max(1, viewport_rect.width())
+            height = max(1, viewport_rect.height())
+            
+            # Create the pixmap and fill it
+            self.canvas.background_cache = QtGui.QPixmap(width, height)
+            # Fill with transparent color, not white
+            self.canvas.background_cache.fill(Qt.transparent)
+            
+            # Create a flag to indicate when the cache needs refreshing
+            self.canvas.background_cache_valid = False
+            
+            # Add method to canvas to invalidate cache when needed
+            def invalidate_cache(self_canvas):
+                self_canvas.background_cache_valid = False
+            
+            self.canvas.invalidate_background_cache = invalidate_cache.__get__(self.canvas, type(self.canvas))
+            
+            logging.info(f"Background cache initialized: {width}x{height} pixels (transparent)")
+        except Exception as e:
+            logging.error(f"Error setting up background cache: {e}")
+            # If we can't set up the cache, set a flag to disable it
+            self.canvas.use_background_cache = False
+
+    def _setup_optimized_paint_handler(self):
+        """Setup a highly optimized paint handler for strand editing."""
+        # Store the original paintEvent only once
+        self.canvas.original_paintEvent = self.canvas.paintEvent
+        
+        def optimized_paint_event(self_canvas, event):
+            """Optimized paint event that uses background caching for efficiency."""
+            import PyQt5.QtGui as QtGui
+            from PyQt5.QtCore import Qt
+            import logging
+            
+            # Regular paint if no active strand
+            if not hasattr(self_canvas, 'active_strand_for_drawing') or self_canvas.active_strand_for_drawing is None:
+                self_canvas.original_paintEvent(event)
+                return
+                
+            # Get the active strand and update rect
+            active_strand = self_canvas.active_strand_for_drawing
+            update_rect = getattr(self_canvas, 'active_strand_update_rect', event.rect())
+            
+            # Check if the update rect intersects with the event rect
+            # Only proceed with our custom drawing if it does
+            if not update_rect.intersects(event.rect()):
+                self_canvas.original_paintEvent(event)
+                return
+                
+            # Start the painter
+            painter = QtGui.QPainter(self_canvas)
+            
+            try:
+                # Store original strands list before any manipulation
+                original_strands = list(self_canvas.strands)
+                
+                # Force full redraw on first attachment operation
+                if self.is_attaching and not getattr(self_canvas, 'attachment_first_draw', False):
+                    self_canvas.background_cache_valid = False
+                    self_canvas.attachment_first_draw = True
+                
+                # Use background cache if available
+                if (hasattr(self_canvas, 'background_cache') and 
+                    getattr(self_canvas, 'use_background_cache', True)):  # Default to True if not set
+                    # Update cache if needed - only once per application cycle
+                    if not getattr(self_canvas, 'background_cache_valid', False):
+                        try:
+                            # Draw everything except the active strand to the cache
+                            cache_painter = QtGui.QPainter(self_canvas.background_cache)
+                            cache_painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                            
+                            # Clear the cache
+                            cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
+                            cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
+                            cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceOver)
+                            
+                            # Temporarily remove the active strand from the strands list for cache drawing
+                            temp_index = -1
+                            if active_strand in self_canvas.strands:
+                                temp_index = self_canvas.strands.index(active_strand)
+                                self_canvas.strands.remove(active_strand)
+                                
+                            # Draw background and all strands except active one
+                            try:
+                                # Keep background transparent
+                                
+                                # Draw the grid first if it's enabled
+                                if getattr(self_canvas, 'show_grid', False):
+                                    if hasattr(self_canvas, 'draw_grid'):
+                                        self_canvas.draw_grid(cache_painter)
+                                
+                                # Then manually draw each strand except the active one
+                                for strand in self_canvas.strands:
+                                    if hasattr(strand, 'draw'):
+                                        strand.draw(cache_painter)
+                            except Exception as render_error:
+                                logging.error(f"Error rendering to cache: {render_error}")
+                                # Try a simpler approach if render fails
+                                # Use transparent background instead of palette color
+                                cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
+                            
+                            # Restore the strand if needed
+                            if temp_index >= 0:
+                                self_canvas.strands.insert(temp_index, active_strand)
+                                
+                            cache_painter.end()
+                            self_canvas.background_cache_valid = True
+                        except Exception as e:
+                            logging.error(f"Error updating cache: {e}")
+                            # Make sure cache is reset if there's an error
+                            self_canvas.background_cache_valid = False
+                            # Restore original strands list in case of error
+                            self_canvas.strands = original_strands
+                    
+                    # Draw the cached background to the update region
+                    try:
+                        update_rect_adjusted = update_rect.intersected(self_canvas.rect())
+                        painter.drawPixmap(update_rect_adjusted, self_canvas.background_cache, update_rect_adjusted)
+                    except Exception as draw_error:
+                        logging.error(f"Error drawing cached background: {draw_error}")
+                        # If we can't draw the cache, maintain transparency
+                        painter.fillRect(update_rect, Qt.transparent)
+                        
+                        # Draw the grid first if it's enabled
+                        if getattr(self_canvas, 'show_grid', False):
+                            if hasattr(self_canvas, 'draw_grid'):
+                                self_canvas.draw_grid(painter)
+                                
+                        # Then draw all strands except active one
+                        for strand in self.canvas.strands:
+                            if strand != active_strand and hasattr(strand, 'draw'):
+                                strand.draw(painter)
+                else:
+                    # Fallback: Use transparent background
+                    painter.fillRect(update_rect, Qt.transparent)
+                    
+                    # Draw the grid first if it's enabled
+                    if getattr(self_canvas, 'show_grid', False):
+                        if hasattr(self_canvas, 'draw_grid'):
+                            self_canvas.draw_grid(painter)
+                            
+                    # Then draw all strands except active one
+                    for strand in self.canvas.strands:
+                        if strand != active_strand and hasattr(strand, 'draw'):
+                            strand.draw(painter)
+                
+                # Save state for safety
+                painter.save()
+                
+                # Now only draw the active strand in the update region
+                painter.setClipRect(update_rect)
+                active_strand.draw(painter)
+                
+                # Draw any interaction elements
+                if hasattr(self_canvas, 'draw_interaction_elements'):
+                    self_canvas.draw_interaction_elements(painter)
+                
+                # Make sure control points are drawn properly
+                if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points and hasattr(self_canvas, 'draw_control_points'):
+                    self_canvas.draw_control_points(painter)
+                
+                # Always restore what we saved
+                painter.restore()
+                
+                # Ensure strands list is restored to its original state
+                self_canvas.strands = original_strands
+                
+            except Exception as e:
+                logging.error(f"Error in optimized paint event: {e}")
+                # Restore original strands list in case of error
+                self_canvas.strands = original_strands
+            finally:
+                # End the painter properly
+                if painter.isActive():
+                    painter.end()
+        
+        # Replace with our optimized paint event
+        self.canvas.paintEvent = optimized_paint_event.__get__(self.canvas, type(self.canvas))
 
     def mouseReleaseEvent(self, event):
         """Handle mouse release events."""
@@ -42,6 +302,34 @@ class AttachMode(QObject):
             final_snapped_pos = self.canvas.snap_to_grid(event.pos())
             self.canvas.current_strand.end = final_snapped_pos
             self.canvas.current_strand.update_shape()
+            
+            # Restore original paint event
+            if hasattr(self.canvas, 'original_paintEvent'):
+                self.canvas.paintEvent = self.canvas.original_paintEvent
+                delattr(self.canvas, 'original_paintEvent')
+            
+            # Clean up all temp attributes
+            if hasattr(self.canvas, 'active_strand_for_drawing'):
+                self.canvas.active_strand_for_drawing = None
+            if hasattr(self.canvas, 'active_strand_update_rect'):
+                self.canvas.active_strand_update_rect = None
+            if hasattr(self.canvas, 'last_strand_rect'):
+                delattr(self.canvas, 'last_strand_rect')
+            if hasattr(self.canvas, 'background_cache'):
+                delattr(self.canvas, 'background_cache')
+            if hasattr(self.canvas, 'background_cache_valid'):
+                delattr(self.canvas, 'background_cache_valid')
+            if hasattr(self.canvas, 'attachment_first_draw'):
+                delattr(self.canvas, 'attachment_first_draw')
+            
+            # Restore original control points visibility
+            if hasattr(self.canvas, 'show_control_points'):
+                self.canvas.show_control_points = self.original_control_points_visible
+            
+            # Reset time limiter
+            self.last_update_time = 0
+                
+            # Use full update on release to ensure everything is drawn correctly
             self.canvas.update()
 
         if self.canvas.is_first_strand:
@@ -63,6 +351,7 @@ class AttachMode(QObject):
         self.current_end = None
         self.target_pos = None
         self.last_snapped_pos = None
+        self.last_update_rect = None  # Clear the last update rect
         self.accumulated_delta = QPointF(0, 0)
 
     def mousePressEvent(self, event):
@@ -96,6 +385,7 @@ class AttachMode(QObject):
             self.canvas.current_strand = new_strand
             self.current_end = self.start_pos
             self.last_snapped_pos = self.start_pos
+            self.last_update_rect = None  # Clear the update rect on new strand creation
             self.move_timer.start(16)
         elif not self.is_attaching:
             # Remove the requirement for a selected strand
@@ -112,7 +402,8 @@ class AttachMode(QObject):
             if not self.move_timer.isActive():
                 self.move_timer.start(16)
 
-            self.canvas.update()
+            # Use partial update instead of full canvas update
+            self.partial_update()
 
     def gradual_move(self):
         """Perform gradual movement of the strand end point."""
@@ -150,7 +441,8 @@ class AttachMode(QObject):
             self.update_first_strand(new_pos)
         elif self.is_attaching:
             self.canvas.current_strand.update(new_pos)
-        self.canvas.update()
+        # Use partial update instead of full canvas update
+        self.partial_update()
 
     def update_first_strand(self, end_pos):
         """Update the position of the first strand, snapping to 45-degree angles."""
@@ -268,6 +560,17 @@ class AttachMode(QObject):
         self.is_attaching = True
         self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)
         self.target_pos = self.last_snapped_pos
+        # Reset the update rect for the new attachment
+        self.last_update_rect = None
+        
+        # Reset the attachment drawing flags to ensure full redraw
+        if hasattr(self.canvas, 'background_cache_valid'):
+            self.canvas.background_cache_valid = False
+        if hasattr(self.canvas, 'attachment_first_draw'):
+            self.canvas.attachment_first_draw = False
+        
+        # Force a full update to ensure all strands are visible
+        self.canvas.update()
 
         # Update layer name
         if self.canvas.layer_panel:
@@ -321,5 +624,7 @@ class AttachMode(QObject):
             self.canvas.selected_strand = None
             self.canvas.selected_strand_index = None
         
-        # Update the canvas
+        # For deletion, we need a full canvas update since multiple strands may be affected
+        # Reset the last_update_rect since we're doing a full update
+        self.last_update_rect = None
         self.canvas.update()

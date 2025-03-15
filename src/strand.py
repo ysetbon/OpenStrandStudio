@@ -849,7 +849,7 @@ class AttachedStrand(Strand):
         )
         self.parent = parent
         self.angle = 0
-        self.length = 140
+        self.length = 0  # Changed from 140 to 0 to prevent initial length
         self.min_length = 40
         self.has_circles = [True, False]
         # Inherit shadow color from parent
@@ -1118,6 +1118,22 @@ class AttachedStrand(Strand):
         """
         if end_point is not None:
             self.end = end_point
+            
+            # Only enforce minimum length when user is actively dragging
+            # Calculate current length and angle
+            delta_x = self.end.x() - self.start.x()
+            delta_y = self.end.y() - self.start.y()
+            current_length = math.hypot(delta_x, delta_y)
+            
+            # If current length < min_length and user is dragging, enforce minimum length
+            if current_length > 0 and current_length < self.min_length:
+                # Get current angle
+                angle = math.atan2(delta_y, delta_x)
+                # Set length to minimum while preserving angle
+                self.end = QPointF(
+                    self.start.x() + self.min_length * math.cos(angle),
+                    self.start.y() + self.min_length * math.sin(angle)
+                )
 
         if reset_control_points:
             self.control_point1 = QPointF(

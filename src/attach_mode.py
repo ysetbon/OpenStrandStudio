@@ -97,7 +97,8 @@ class AttachMode(QObject):
             self.current_end = self.start_pos
             self.last_snapped_pos = self.start_pos
             self.move_timer.start(16)
-        elif self.canvas.selected_strand and not self.is_attaching:
+        elif not self.is_attaching:
+            # Remove the requirement for a selected strand
             self.handle_strand_attachment(event.pos())
 
     def mouseMoveEvent(self, event):

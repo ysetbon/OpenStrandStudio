@@ -455,6 +455,8 @@ class LayerPanel(QWidget):
                     background-color: #FF0000; /* Darker red on click */
                 }
             """)
+            # Apply theme to refresh button
+            self.refresh_button.set_theme(theme_name)
             # Similarly update other buttons if necessary
 
         elif theme_name == "light":
@@ -480,6 +482,8 @@ class LayerPanel(QWidget):
                     background-color: #FF0000; /* Darker red on click */
                 }
             """)
+            # Apply theme to refresh button
+            self.refresh_button.set_theme(theme_name)
             # Similarly update other buttons if necessary
 
         elif theme_name == "default":
@@ -503,6 +507,8 @@ class LayerPanel(QWidget):
                     background-color: #FF0000; /* Darker red on click */
                 }
             """)
+            # Apply theme to refresh button
+            self.refresh_button.set_theme(theme_name)
             # Similarly reset other buttons if necessary
 
         else:
@@ -526,6 +532,8 @@ class LayerPanel(QWidget):
                     background-color: #FF0000; /* Darker red on click */
                 }
             """)
+            # Apply theme to refresh button
+            self.refresh_button.set_theme("default")
             # Similarly reset other buttons if necessary
 
     # NEW: helper method to provide a context menu style sheet based on the current theme
@@ -1690,28 +1698,89 @@ class StrokeTextButton(QPushButton):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setFixedSize(40, 40)
+        self.current_theme = "default"  # Default theme
+        self.setup_theme_colors()
         self.updateStyleSheet()
         # Ensure the button accepts paint events
         self.setAttribute(Qt.WA_StyledBackground, True)
+        # Enable mouse tracking for better hover detection
+        self.setMouseTracking(True)
+    
+    def setup_theme_colors(self):
+        """Set up color schemes for different themes"""
+        # Theme-specific colors dictionary
+        self.theme_colors = {
+            "default": {
+                "bg_normal": "#4d9958",           # Normal background 
+                "bg_hover": "#286335",            # Significantly darker hover
+                "bg_pressed": "#102513",          # Almost black when pressed (was #153a1c)
+                "border_normal": "#3c7745",       # Normal border
+                "border_hover": "#1d4121",        # Darker border on hover
+                "border_pressed": "#ffffff",      # White border when pressed for maximum contrast (was #0a1f0e)
+                "stroke_normal": "#e6fae9",       # Normal stroke
+                "stroke_hover": "#ffffff",        # Hover stroke (bright white)
+                "stroke_pressed": "#b8ffc2",      # Brighter stroke when pressed for contrast (was #a7d6ac)
+                "fill": "#000000"                 # Icon fill color
+            },
+            "dark": {
+                "bg_normal": "#3d7846",           # Darker background for dark theme
+                "bg_hover": "#4e9854",            # Hover background for dark theme
+                "bg_pressed": "#081f0d",          # Almost black when pressed (was #1f3d24)
+                "border_normal": "#2c5833",       # Normal border for dark theme
+                "border_hover": "#c8edcc",        # Hover border for dark theme
+                "border_pressed": "#7dff8e",      # Bright green border when pressed for max contrast (was #0f4117)
+                "stroke_normal": "#c8edcc",       # Normal stroke for dark theme
+                "stroke_hover": "#ffffff",        # Hover stroke for dark theme
+                "stroke_pressed": "#daffe0",      # Much brighter stroke for dark theme when pressed (was #a0c8a4)
+                "fill": "#000000"                 # Icon fill color 
+            },
+            "light": {
+                "bg_normal": "#4d9958",           # Normal background for light theme
+                "bg_hover": "#286335",            # Significantly darker hover
+                "bg_pressed": "#102513",          # Almost black when pressed (was #153a1c)
+                "border_normal": "#3c7745",       # Normal border for light theme
+                "border_hover": "#1d4121",        # Darker border on hover
+                "border_pressed": "#ffffff",      # White border when pressed for maximum contrast (was #0a1f0e)
+                "stroke_normal": "#e6fae9",       # Normal stroke for light theme
+                "stroke_hover": "#ffffff",        # Hover stroke for light theme
+                "stroke_pressed": "#b8ffc2",      # Brighter stroke when pressed for contrast (was #a7d6ac)
+                "fill": "#000000"                 # Icon fill color
+            }
+        }
+    
+    def set_theme(self, theme_name):
+        """Update button appearance based on theme"""
+        if theme_name in self.theme_colors:
+            self.current_theme = theme_name
+        else:
+            self.current_theme = "default"  # Fallback to default for unknown themes
+        
+        self.updateStyleSheet()
+        self.update()  # Force repaint
 
     def updateStyleSheet(self):
-         self.setStyleSheet("""
-            QPushButton {
+        # Get colors for current theme
+        colors = self.theme_colors.get(self.current_theme, self.theme_colors["default"])
+        
+        self.setStyleSheet(f"""
+            QPushButton {{
                 font-weight: bold;
                 font-size: 30px;
                 color: transparent;  /* Make default text transparent */
-                background-color: #4d9958;
-                border: none;
+                background-color: {colors["bg_normal"]};
+                border: 1px solid {colors["border_normal"]};  /* Subtle border in normal state */
                 padding: 0px;
                 border-radius: 20px;
                 text-align: center;
-            }
-            QPushButton:hover {
-                background-color: #67c975;
-            }
-            QPushButton:pressed {
-                background-color: #2a522f;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {colors["bg_hover"]};  /* Brighter green on hover */
+                border: 2px solid {colors["border_hover"]};  /* Light border on hover */
+            }}
+            QPushButton:pressed {{
+                background-color: {colors["bg_pressed"]};  /* Darker green when pressed */
+                border: 2px solid {colors["border_pressed"]};  /* Darker border when pressed */
+            }}
         """)
 
     def paintEvent(self, event):
@@ -1741,12 +1810,31 @@ class StrokeTextButton(QPushButton):
         path = QPainterPath()
         path.addText(x, y-2, font, text)
 
-        # Draw white stroke
-        pen = QPen(QColor('#e6fae9'), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        # Get colors for current theme
+        colors = self.theme_colors.get(self.current_theme, self.theme_colors["default"])
+
+        # Determine stroke color and width based on button state and theme
+        if self.isDown():
+            stroke_color = QColor(colors["stroke_pressed"])
+            # Use much thicker stroke for pressed state in all themes
+            stroke_width = 5.0  # Was 4.5
+        elif self.underMouse():
+            stroke_color = QColor(colors["stroke_hover"])
+            # Use thicker stroke for hover in default/light themes
+            if self.current_theme == "dark":
+                stroke_width = 3.5  # Keep original for dark theme
+            else:
+                stroke_width = 4.0  # Thicker for default/light themes
+        else:
+            stroke_color = QColor(colors["stroke_normal"])
+            stroke_width = 3.0
+
+        # Draw stroke with appropriate color and width
+        pen = QPen(stroke_color, stroke_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         painter.strokePath(path, pen)
         
-        # Fill with black
-        painter.fillPath(path, QColor('black'))
+        # Fill with color from theme
+        painter.fillPath(path, QColor(colors["fill"]))
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

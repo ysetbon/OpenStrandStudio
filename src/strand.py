@@ -312,13 +312,53 @@ class Strand:
         # Update side lines
         self.update_side_line()
 
-    def get_path(self):
-        """Get the path representing the strand as a cubic Bézier curve."""
+    def get_shadow_path(self):
+        """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
-        path.moveTo(self.start)
-        path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
+        # Calculate vectors for direction at start and end
+        # For start point, use the tangent direction from the start towards control_point1
+        start_vector = self.control_point1 - self.start
+        if start_vector.manhattanLength() > 0:
+            # Normalize and extend by exactly 10 pixels using Euclidean length
+            start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
+            normalized_start_vector = start_vector / start_vector_length
+            extended_start = self.start - (normalized_start_vector * 10)
+        else:
+            # Fallback if control point is at same position as start
+            # Use direction from start to end instead
+            fallback_vector = self.end - self.start
+            if fallback_vector.manhattanLength() > 0:
+                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                normalized_fallback = fallback_vector / fallback_length
+                extended_start = self.start - (normalized_fallback * 10)
+            else:
+                # If start and end are the same, use a default horizontal direction
+                extended_start = QPointF(self.start.x() - 10, self.start.y())
+            
+        # For end point, use the tangent direction from control_point2 towards the end
+        end_vector = self.end - self.control_point2
+        if end_vector.manhattanLength() > 0:
+            # Normalize and extend by exactly 10 pixels using Euclidean length
+            end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
+            normalized_end_vector = end_vector / end_vector_length
+            extended_end = self.end + (normalized_end_vector * 10)
+        else:
+            # Fallback if control point is at same position as end
+            # Use direction from end to start instead
+            fallback_vector = self.end - self.start
+            if fallback_vector.manhattanLength() > 0:
+                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                normalized_fallback = fallback_vector / fallback_length
+                extended_end = self.end + (normalized_fallback * 10)
+            else:
+                # If start and end are the same, use a default horizontal direction
+                extended_end = QPointF(self.end.x() + 10, self.end.y())
+            
+        # Create the path with the extended points
+        path.moveTo(extended_start)
+        path.cubicTo(self.control_point1, self.control_point2, extended_end)
         return path
-        # Additional updates if necessary
 
     def get_path(self):
         """Get the path representing the strand as a cubic Bézier curve."""
@@ -1362,6 +1402,36 @@ class AttachedStrand(Strand):
         path = QPainterPath()
         path.moveTo(self.start)
         path.cubicTo(self.control_point1, self.control_point2, self.end)
+        return path
+    
+    def get_shadow_path(self):
+        """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
+        path = QPainterPath()
+        
+        # Calculate vectors for direction at start and end
+
+        # For end point, use the tangent direction from control_point2 towards the end
+        end_vector = self.end - self.control_point2
+        if end_vector.manhattanLength() > 0:
+            # Normalize and extend by exactly 10 pixels using Euclidean length
+            end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
+            normalized_end_vector = end_vector / end_vector_length
+            extended_end = self.end + (normalized_end_vector * 10)
+        else:
+            # Fallback if control point is at same position as end
+            # Use direction from end to start instead
+            fallback_vector = self.end - self.start
+            if fallback_vector.manhattanLength() > 0:
+                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                normalized_fallback = fallback_vector / fallback_length
+                extended_end = self.end + (normalized_fallback * 10)
+            else:
+                # If start and end are the same, use a default horizontal direction
+                extended_end = QPointF(self.end.x() + 10, self.end.y())
+            
+        # Create the path with the extended points
+        path.moveTo(self.start)
+        path.cubicTo(self.control_point1, self.control_point2, extended_end)
         return path
     def update_angle_length_from_geometry(self):
         """Update the angle and length of the strand based on current start and end points."""

@@ -343,7 +343,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     shadow_paths = []
     if hasattr(strand, 'has_circles'):
         # Get circle radius with added shadow width
-        circle_radius = strand.width + strand.stroke_width * 2 + 10
+        circle_radius = strand.width + strand.stroke_width * 2 + 11.7
         
         # Check which points have circles and add their paths
         for idx, has_circle in enumerate(strand.has_circles):
@@ -354,6 +354,32 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                     if circle_color and circle_color.alpha() == 0:
                         logging.info(f"Skipping shadow for transparent circle at {'start' if idx == 0 else 'end'} point")
                         continue
+                
+                # Check if this is a main strand and if the current side has no attachment
+                is_main_strand = hasattr(strand, 'is_main_strand') and strand.is_main_strand
+                has_attachment = False
+                
+                # Check if there's an attachment on this side
+                if is_main_strand and hasattr(strand, 'canvas') and strand.canvas:
+                    side_point = strand.start if idx == 0 else strand.end
+                    for other_strand in strand.canvas.strands:
+                        # Skip self
+                        if other_strand is strand:
+                            continue
+                        
+                        # Check if other strand is attached to this strand at this point
+                        if hasattr(other_strand, 'attached_to') and other_strand.attached_to is strand:
+                            if hasattr(other_strand, 'attachment_point'):
+                                # Check if attachment point matches this side's point
+                                if (idx == 0 and other_strand.attachment_point == 'start') or \
+                                   (idx == 1 and other_strand.attachment_point == 'end'):
+                                    has_attachment = True
+                                    break
+                
+                # Skip circle shadow for main strands without attachments on this side
+                if is_main_strand and not has_attachment:
+                    logging.info(f"Skipping circle shadow for main strand {strand.layer_name} at {'start' if idx == 0 else 'end'} point (no attachment)")
+                    continue
                         
                 point = strand.start if idx == 0 else strand.end
                 circle_path = QPainterPath()
@@ -536,8 +562,8 @@ def get_proper_masked_strand_path(strand):
             logging.error(f"Error getting mask path: {e}, falling back to standard path")
     
     # For normal strands or fallback, use the regular path
-    if hasattr(strand, 'get_path'):
-        path = strand.get_path()
+    if hasattr(strand, 'get_shadow_path'):
+        path = strand.get_shadow_path()
     else:
         path = QPainterPath()  # Empty path as last resort
         

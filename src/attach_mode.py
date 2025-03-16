@@ -383,15 +383,15 @@ class AttachMode(QObject):
             current_set = 1
             if hasattr(self.canvas, 'layer_panel'):
                 existing_sets = {int(s.layer_name.split('_')[0]) for s in self.canvas.strands 
-                               if not isinstance(s, MaskedStrand) and '_' in s.layer_name}
+                            if not isinstance(s, MaskedStrand) and '_' in s.layer_name}
                 while current_set in existing_sets:
                     current_set += 1
                 self.canvas.layer_panel.current_set = current_set
             
             self.start_pos = self.canvas.snap_to_grid(event.pos())
             new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width,
-                              self.canvas.strand_color, self.canvas.stroke_color,
-                              self.canvas.stroke_width)
+                            self.canvas.strand_color, self.canvas.stroke_color,
+                            self.canvas.stroke_width)
             new_strand.is_first_strand = True
             new_strand.set_number = current_set
             

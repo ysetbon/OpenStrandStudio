@@ -6,7 +6,7 @@ import math
 import time
 import logging
 from PyQt5.QtGui import (
-     QPainterPath
+    QPainterPath
 )
 from strand import Strand, AttachedStrand, MaskedStrand
 
@@ -325,7 +325,7 @@ class MoveMode:
             
             # Create a background cache first time or if it's invalidated
             background_cache_needed = (not hasattr(self_canvas, 'background_cache') or 
-                                     not getattr(self_canvas, 'background_cache_valid', False))
+                                    not getattr(self_canvas, 'background_cache_valid', False))
             
             # Get truly moving strands from the canvas attribute if available, otherwise create it
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
@@ -1722,15 +1722,15 @@ class MoveMode:
             # Find the connected strand
             connected_strand = next(
                 (s for s in self.canvas.strands 
-                 if s.layer_name == connected_layer_name 
-                 and not isinstance(s, MaskedStrand)), 
+                if s.layer_name == connected_layer_name 
+                and not isinstance(s, MaskedStrand)), 
                 None
             )
 
             if connected_strand and connected_strand != strand:
                 # Check if the connection point matches the side we're moving
                 if (side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
-                   (side == 1 and self.points_are_close(connected_strand.start, moving_point)):
+                (side == 1 and self.points_are_close(connected_strand.start, moving_point)):
                     return connected_strand
 
         return None

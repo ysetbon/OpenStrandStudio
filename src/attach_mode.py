@@ -375,6 +375,11 @@ class AttachMode(QObject):
 
     def mousePressEvent(self, event):
         """Handle mouse press events."""
+        # Store canvas's original control points visibility setting
+        if hasattr(self.canvas, 'show_control_points'):
+            self.original_control_points_visible = self.canvas.show_control_points
+            # Do NOT force control points to be visible - respect user setting
+        
         if self.canvas.current_mode == "move":
             return
 

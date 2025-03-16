@@ -634,9 +634,12 @@ class MoveMode:
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False):
                 if self.try_move_control_points(strand, pos):
-                    # If we're moving a control point, clear all selections
+                    # If we're moving a control point, preserve a selected MaskedStrand if one exists
+                    if (isinstance(self.canvas.selected_strand, MaskedStrand)):
+                        self.originally_selected_strand = self.canvas.selected_strand
+                    else:
+                        self.originally_selected_strand = None
                     self.canvas.selected_strand = None
-                    self.originally_selected_strand = None
                     self.canvas.selected_attached_strand = None
                     self.highlighted_strand = None  # Also clear highlighted strand
                     # Update the canvas and return early
@@ -826,35 +829,37 @@ class MoveMode:
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
-        # If user has explicitly deselected all strands, keep everything deselected
         if self.user_deselected_all:
-            # Keep everything deselected
+            # If user explicitly deselected all strands, clear selection
             self.canvas.selected_strand = None
             self.canvas.selected_attached_strand = None
-        # Check if we've intentionally deselected all strands in the layer panel
+        elif was_moving_control_point:
+            # For control point movement, restore the originally selected strand if it exists
+            if self.originally_selected_strand:
+                self.originally_selected_strand.is_selected = True
+                if isinstance(self.originally_selected_strand, MaskedStrand):
+                    self.canvas.selected_strand = self.originally_selected_strand
+                else:
+                    self.canvas.selected_attached_strand = self.originally_selected_strand
+            elif self.affected_strand:
+                self.affected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.affected_strand
         elif self.canvas.selected_strand is None and self.canvas.selected_attached_strand is None:
-            # Do not restore any selection
+            # If no selection exists (and not in control point movement), clear saved selections
             self.originally_selected_strand = None
             self.highlighted_strand = None
-        # Always restore the highlighted strand if we saved one and we weren't moving a control point
-        elif self.highlighted_strand and not was_moving_control_point:
+        elif self.highlighted_strand:
+            # Restore highlighted strand if available
             self.highlighted_strand.is_selected = True
             self.canvas.selected_attached_strand = self.highlighted_strand
         else:
-            # Handle selection restoration based on what was being moved
-            if was_moving_control_point:
-                # If we were moving a control point, select only the affected strand
-                if self.affected_strand:
-                    self.affected_strand.is_selected = True
-                    self.canvas.selected_attached_strand = self.affected_strand
-            else:
-                # For non-control point movements, restore the original selection
-                if self.originally_selected_strand:
-                    self.originally_selected_strand.is_selected = True
-                    self.canvas.selected_attached_strand = self.originally_selected_strand
-                    # If the affected strand is different from the original and was selected, keep it selected
-                    if self.affected_strand and self.affected_strand != self.originally_selected_strand:
-                        self.affected_strand.is_selected = True
+            # Default restoration for non-control point movement
+            if self.originally_selected_strand:
+                self.originally_selected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.originally_selected_strand
+            elif self.affected_strand:
+                self.affected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.affected_strand
 
         # Reset all properties
         self.is_moving = False

@@ -314,3 +314,22 @@ Ces mises à jour se concentrent sur l'amélioration de l'expérience utilisateu
    - Mise à jour de la visualisation des points d'attache lors de la suppression
 
 ------
+
+## Version 1.090 (Sortie : 16/03/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1. **Amélioration de l'Interface Utilisateur :**
+   - Interface améliorée pour les modes de déplacement et d'attachement
+   - Calcul plus rapide lors de la manipulation de nombreux brins
+
+2. **Corrections de Bugs :**
+   - Correction de divers bugs dans la fenêtre principale
+   - Correction de la connexion des brins qui avaient perdu des informations
+
+3. **Nouvelle Fonctionnalité :**
+   - Ajout d'une option d'ombrage pour une meilleure apparence visuelle
+
+Ces mises à jour se concentrent sur les améliorations de performance et les améliorations visuelles pour offrir une expérience de conception plus fluide et efficace.
+
+------

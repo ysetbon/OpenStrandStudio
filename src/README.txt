@@ -313,3 +313,22 @@ These updates focus on improving the user experience by making the interface mor
    - Updated attachment point visualization when deleting strands
 
 ------
+
+## Version 1.090 (Released: 16/03/2025)
+
+### Improvements and New Features:
+
+1. **UI Enhancement:**
+   - Improved UI for move and attached modes
+   - Faster calculation when handling many strands
+
+2. **Bug Fixes:**
+   - Fixed various bugs in main window
+   - Fixed connection of strands that lost information
+
+3. **New Feature:**
+   - Added shading option for improved visual appearance
+
+These updates focus on performance improvements and visual enhancements to provide a smoother and more efficient design experience.
+
+------

@@ -94,6 +94,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
         strand: The strand to draw shadow for
         shadow_color: Custom shadow color or None to use strand's shadow_color
     """
+    # Early return for masked strands to avoid double shading
+    # If this is a masked strand (has get_mask_path method), its shadow 
+    # will already be drawn by draw_mask_strand_shadow
+    if hasattr(strand, "get_mask_path"):
+        logging.info(f"Skipping extra shadow for masked strand {getattr(strand, 'layer_name', 'unknown')} to avoid double shading")
+        return
         
     if not hasattr(strand, 'canvas') or not strand.canvas:
         return

@@ -328,9 +328,28 @@ class MoveMode:
             # Store original order of all strands for proper z-ordering
             original_strands_order = list(self_canvas.strands)
             
+            # Special handling for the very first paint during movement to ensure consistent rendering
+            first_movement = hasattr(self_canvas, 'movement_first_draw') and self_canvas.movement_first_draw == False
+            
             # Create a background cache first time or if it's invalidated
             background_cache_needed = (not hasattr(self_canvas, 'background_cache') or 
-                                    not getattr(self_canvas, 'background_cache_valid', False))
+                                    not getattr(self_canvas, 'background_cache_valid', False) or
+                                    first_movement)
+            
+            if first_movement:
+                # Mark that we've completed the first draw
+                self_canvas.movement_first_draw = True
+                # Always regenerate background on first movement
+                background_cache_needed = True
+                
+                # To ensure consistent rendering, force recreate the background cache
+                if hasattr(self_canvas, 'background_cache'):
+                    # Force recreation with proper dimensions
+                    viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
+                    width = max(1, viewport_rect.width())
+                    height = max(1, viewport_rect.height())
+                    self_canvas.background_cache = QtGui.QPixmap(width, height)
+                    self_canvas.background_cache.fill(Qt.transparent)
             
             # Get truly moving strands from the canvas attribute if available, otherwise create it
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
@@ -571,6 +590,19 @@ class MoveMode:
             # Show control points during movement for better user feedback
             self.canvas.show_control_points = True
         
+        # Initialize background cache immediately before any movement
+        # This ensures it's ready before the first movement
+        if not hasattr(self.canvas, 'background_cache'):
+            self._setup_background_cache()
+            # Force invalidation to ensure a clean first render
+            if hasattr(self.canvas, 'background_cache_valid'):
+                self.canvas.background_cache_valid = False
+        
+        # Ensure we properly track the first movement
+        # This flag will be checked in optimized_paint_event
+        if not hasattr(self.canvas, 'movement_first_draw'):
+            self.canvas.movement_first_draw = False
+        
         if not self.in_move_mode:
             # IMPORTANT: Do NOT reset the user_deselected_all flag here
             # Only when a user explicitly selects a strand should this be reset
@@ -618,11 +650,7 @@ class MoveMode:
             if isinstance(strand, AttachedStrand):
                 for attached in strand.attached_strands:
                     attached.is_selected = False
-
-        # Setup background cache early
-        if not hasattr(self.canvas, 'background_cache'):
-            self._setup_background_cache()
-                    
+        
         # Handle strand selection and movement
         self.handle_strand_movement(pos)
         
@@ -649,13 +677,18 @@ class MoveMode:
             if not hasattr(self.canvas, 'original_paintEvent'):
                 self._setup_optimized_paint_handler()
                 
-            # Reset movement flags to ensure proper rendering
-            if hasattr(self.canvas, 'movement_first_draw'):
-                delattr(self.canvas, 'movement_first_draw')
+            # IMPORTANT: DO NOT reset movement_first_draw flag here!
+            # We need it for the first paint operation
+            # if hasattr(self.canvas, 'movement_first_draw'):
+            #     delattr(self.canvas, 'movement_first_draw')
                 
             # Invalidate the background cache to force a clean redraw
             if hasattr(self.canvas, 'invalidate_background_cache'):
                 self.canvas.invalidate_background_cache()
+            else:
+                # Ensure background cache is properly invalidated on first movement
+                if hasattr(self.canvas, 'background_cache_valid'):
+                    self.canvas.background_cache_valid = False
 
         else:
             # If no strand was clicked, revert to the original selection

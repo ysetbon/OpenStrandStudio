@@ -344,6 +344,14 @@ class MoveMode:
                 if move_mode.affected_strand not in truly_moving_strands:
                     truly_moving_strands = [move_mode.affected_strand]
                     self_canvas.truly_moving_strands = truly_moving_strands
+                    
+                # Clear the selection when moving control points to prevent unwanted highlighting
+                for strand in self_canvas.strands:
+                    strand.is_selected = False
+                # Also clear the selected_attached_strand
+                self_canvas.selected_attached_strand = None
+                # Clear the highlighted strand
+                move_mode.highlighted_strand = None
             
             if background_cache_needed:
                 try:
@@ -425,9 +433,11 @@ class MoveMode:
                         if hasattr(strand, 'draw'):
                             strand.draw(painter)
                 
-                # Draw the C-shape specifically for the active strand
-                if hasattr(move_mode, 'draw_selected_attached_strand'):
-                    move_mode.draw_selected_attached_strand(painter)
+                # Skip drawing C-shape when moving control points
+                if not is_moving_control_point and not (hasattr(move_mode, 'moving_side') and move_mode.moving_side in ('control_point1', 'control_point2')):
+                    # Draw the C-shape specifically for the active strand
+                    if hasattr(move_mode, 'draw_selected_attached_strand'):
+                        move_mode.draw_selected_attached_strand(painter)
                 
                 # Draw the yellow selection rectangle on top of everything else
                 if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
@@ -578,6 +588,7 @@ class MoveMode:
                     self.canvas.selected_strand = None
                     self.originally_selected_strand = None
                     self.canvas.selected_attached_strand = None
+                    self.highlighted_strand = None  # Also clear highlighted strand
                     # Update the canvas and return early
                     self.canvas.update()
                     return
@@ -760,8 +771,8 @@ class MoveMode:
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
-        # Always restore the highlighted strand if we saved one
-        if self.highlighted_strand:
+        # Always restore the highlighted strand if we saved one and we weren't moving a control point
+        if self.highlighted_strand and not was_moving_control_point:
             self.highlighted_strand.is_selected = True
             self.canvas.selected_attached_strand = self.highlighted_strand
         else:
@@ -923,6 +934,8 @@ class MoveMode:
                 self.canvas.truly_moving_strands = [strand]
             else:
                 self.canvas.truly_moving_strands = [strand]
+            # Clear any existing highlighting
+            self.highlighted_strand = None
             return True
         elif control_point2_rect.contains(pos):
             self.start_movement(strand, 'control_point2', control_point2_rect)
@@ -933,6 +946,8 @@ class MoveMode:
                 self.canvas.truly_moving_strands = [strand]
             else:
                 self.canvas.truly_moving_strands = [strand]
+            # Clear any existing highlighting
+            self.highlighted_strand = None
             return True
         return False
 
@@ -1100,9 +1115,15 @@ class MoveMode:
             # When moving control points, ensure no strands are selected to maintain proper z-ordering
             for s in self.canvas.strands:
                 s.is_selected = False
+                # Also clear selections in attached strands
+                if hasattr(s, 'attached_strands'):
+                    for attached in s.attached_strands:
+                        attached.is_selected = False
             # Clear selected attached strand
             self.canvas.selected_attached_strand = None
             self.temp_selected_strand = None
+            # Clear highlighted strand to ensure no highlighting during control point movement
+            self.highlighted_strand = None
         else:
             # Only set strands as selected when not moving control points
             if isinstance(strand, AttachedStrand):
@@ -1545,12 +1566,12 @@ class MoveMode:
         Args:
             painter (QPainter): The painter object to draw with.
         """
-        # Skip drawing all C-shapes if a main strand's starting point is being moved
-        if self.is_moving and self.affected_strand and not isinstance(self.affected_strand, AttachedStrand) and self.moving_side == 0:
+        # Double-check we're not in control point movement mode
+        if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
             return
             
-        # Skip drawing when moving control points
-        if self.is_moving and self.is_moving_control_point:
+        # Skip drawing all C-shapes if a main strand's starting point is being moved
+        if self.is_moving and self.affected_strand and not isinstance(self.affected_strand, AttachedStrand) and self.moving_side == 0:
             return
             
         # Get list of affected strands if available - these are the only ones we need to highlight
@@ -1606,6 +1627,10 @@ class MoveMode:
             painter (QPainter): The painter object to draw with.
             strand: The strand to draw the C-shape for.
         """
+        # Extra check to prevent drawing when moving control points
+        if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
+            return
+            
         painter.save()
         
         # Draw the circles at connection points

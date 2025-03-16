@@ -1128,6 +1128,13 @@ class MoveMode:
             # Add padding
             old_path_rect = old_path_rect.adjusted(-100, -100, 100, 100)
 
+        # Store original positions to preserve non-moving endpoints
+        original_start = None
+        original_end = None
+        if self.moving_side == 0 or self.moving_side == 1:
+            original_start = QPointF(self.affected_strand.start)
+            original_end = QPointF(self.affected_strand.end)
+
         if self.moving_side == 'control_point1':
             # Move the first control point
             self.affected_strand.control_point1 = new_pos
@@ -1240,7 +1247,8 @@ class MoveMode:
         Returns:
             Strand or None: The parent strand if one exists, otherwise None.
         """
-        old_start, old_end = strand.start, strand.end
+        # Store original positions to preserve the non-moving endpoint
+        old_start, old_end = QPointF(strand.start), QPointF(strand.end)
         
         # Keep track of all affected strands for optimized drawing
         affected_strands = set([strand])
@@ -1253,6 +1261,7 @@ class MoveMode:
                 strand.control_point1 = new_pos
             if hasattr(strand, 'control_point2') and strand.control_point2 == strand.start:
                 strand.control_point2 = new_pos
+            # Only update the start point
             strand.start = new_pos
 
         elif moving_side == 1:
@@ -1261,8 +1270,19 @@ class MoveMode:
                 strand.control_point1 = new_pos
             if hasattr(strand, 'control_point2') and strand.control_point2 == strand.end:
                 strand.control_point2 = new_pos
+            # Only update the end point
             strand.end = new_pos
 
+        strand.update_shape()
+        strand.update_side_line()
+
+        # Make sure the non-moving endpoint stays in place
+        if moving_side == 0:
+            strand.end = old_end
+        elif moving_side == 1:
+            strand.start = old_start
+        
+        # Update shape again after preserving the non-moving endpoint
         strand.update_shape()
         strand.update_side_line()
 
@@ -1288,9 +1308,31 @@ class MoveMode:
         # If it's a MaskedStrand, update both selected strands
         if isinstance(strand, MaskedStrand):
             if strand.first_selected_strand and hasattr(strand.first_selected_strand, 'update'):
+                # Store the non-moving endpoint of first selected strand
+                if moving_side == 0 and hasattr(strand.first_selected_strand, 'end'):
+                    first_old_end = QPointF(strand.first_selected_strand.end)
+                elif moving_side == 1 and hasattr(strand.first_selected_strand, 'start'):
+                    first_old_start = QPointF(strand.first_selected_strand.start)
+                
                 strand.first_selected_strand.update(new_pos)
+                
+                # Restore the non-moving endpoint
+                if moving_side == 0 and hasattr(strand.first_selected_strand, 'end'):
+                    strand.first_selected_strand.end = first_old_end
+                    strand.first_selected_strand.update_shape()
+                elif moving_side == 1 and hasattr(strand.first_selected_strand, 'start'):
+                    strand.first_selected_strand.start = first_old_start
+                    strand.first_selected_strand.update_shape()
+                
                 affected_strands.add(strand.first_selected_strand)
+                
             if strand.second_selected_strand and hasattr(strand.second_selected_strand, 'update'):
+                # Store the non-moving endpoint of second selected strand
+                if moving_side == 0 and hasattr(strand.second_selected_strand, 'end'):
+                    second_old_end = QPointF(strand.second_selected_strand.end)
+                elif moving_side == 1 and hasattr(strand.second_selected_strand, 'start'):
+                    second_old_start = QPointF(strand.second_selected_strand.start)
+                
                 # For non-AttachedStrand, manually update position
                 if not hasattr(strand.second_selected_strand, 'update'):
                     if moving_side == 0:
@@ -1301,13 +1343,45 @@ class MoveMode:
                     strand.second_selected_strand.update_side_line()
                 else:
                     strand.second_selected_strand.update(new_pos)
+                
+                # Restore the non-moving endpoint
+                if moving_side == 0 and hasattr(strand.second_selected_strand, 'end'):
+                    strand.second_selected_strand.end = second_old_end
+                    strand.second_selected_strand.update_shape()
+                elif moving_side == 1 and hasattr(strand.second_selected_strand, 'start'):
+                    strand.second_selected_strand.start = second_old_start
+                    strand.second_selected_strand.update_shape()
+                
                 affected_strands.add(strand.second_selected_strand)
                 
         # Find any connected strands
         moving_point = strand.start if moving_side == 0 else strand.end
         connected_strand = self.find_connected_strand(strand, moving_side, moving_point)
         if connected_strand:
+            # Store the non-moving endpoint of connected strand
+            if moving_side == 0 and hasattr(connected_strand, 'start'):
+                connected_old_start = QPointF(connected_strand.start)
+            elif moving_side == 1 and hasattr(connected_strand, 'end'):
+                connected_old_end = QPointF(connected_strand.end)
+                
             affected_strands.add(connected_strand)
+            
+            # Update connected strand's position
+            if moving_side == 0:
+                connected_strand.end = new_pos
+            else:
+                connected_strand.start = new_pos
+                
+            connected_strand.update_shape()
+            connected_strand.update_side_line()
+            
+            # Restore the non-moving endpoint of connected strand
+            if moving_side == 0 and hasattr(connected_strand, 'start'):
+                connected_strand.start = connected_old_start
+                connected_strand.update_shape()
+            elif moving_side == 1 and hasattr(connected_strand, 'end'):
+                connected_strand.end = connected_old_end
+                connected_strand.update_shape()
             
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
@@ -1356,13 +1430,21 @@ class MoveMode:
         updated_strands = set()
         
         for attached in strand.attached_strands:
+            # Store the non-moving endpoint
+            attached_old_end = QPointF(attached.end)
+            
             if attached.start == old_start:
                 attached.start = strand.start
             elif attached.start == old_end:
                 attached.start = strand.end
             # Update attached strand without resetting control points
             attached.update(attached.end, reset_control_points=False)
+            
+            # Ensure the end point stays in place
+            attached.end = attached_old_end
+            attached.update_shape()
             attached.update_side_line()
+            
             updated_strands.add(attached)
             # Recursively update attached strands
             child_updated = self.update_all_attached_strands(attached, attached.start, attached.end)
@@ -1505,102 +1587,73 @@ class MoveMode:
         """
         painter.save()
         
-        # Skip drawing C-shape highlights if this is the main strand that's moving
-        is_main_strand = not isinstance(strand, AttachedStrand)
-        is_moving_strand = self.is_moving and self.affected_strand == strand
-        
-        if is_main_strand and is_moving_strand:
-            painter.restore()
-            return
-        
         # Draw the circles at connection points
         for i, has_circle in enumerate(strand.has_circles):
-            # Only draw the start circle (i == 0) for all highlighted strands
-            # For end circles (i == 1), don't draw them at all
-            if i == 1:
-                continue
-                
             # Check if this is a main strand (not an attached strand)
             is_main_strand = not isinstance(strand, AttachedStrand)
             
-            # Skip drawing C-shapes for main strands at attachment points
-            if is_main_strand:
-                # If this is a start point (i == 0) and it has an attachment, skip drawing
-                if i == 0 and strand.has_circles[0]:
-                    continue
-                # If this is an end point (i == 1) and it has an attachment, skip drawing
-                elif i == 1 and strand.has_circles[1]:
-                    continue
-            
-            # Check if the strand has attached strands on both sides
-            has_attached_on_both_sides = False
-            if hasattr(strand, 'has_circles'):
-                has_attached_on_both_sides = all(strand.has_circles)
-            
-            # Skip drawing the C-shape for the starting point of a main strand 
-            # that doesn't have attached strands on both sides
-            if i == 0 and is_main_strand and not has_attached_on_both_sides and not has_circle:
+            # Skip drawing C-shapes for points with no attached strands
+            # This applies to both main strands and attached strands
+            if not has_circle:
                 continue
                 
-            # Draw the C-shape for the starting point if it has a circle or for attached strands
-            if i == 0 or has_circle:
-                # Save painter state
-                painter.save()
-                
-                center = strand.start if i == 0 else strand.end
-                
-                # Calculate the proper radius for the highlight
-                outer_radius = strand.width / 2 + strand.stroke_width + 4
-                inner_radius = strand.width / 2 + 6
-                
-                # Create a full circle path for the outer circle
-                outer_circle = QPainterPath()
-                outer_circle.addEllipse(center, outer_radius, outer_radius)
-                
-                # Create a path for the inner circle
-                inner_circle = QPainterPath()
-                inner_circle.addEllipse(center, inner_radius, inner_radius)
-                
-                # Create a ring path by subtracting the inner circle from the outer circle
-                ring_path = outer_circle.subtracted(inner_circle)
-                
-                # Get the tangent angle at the connection point
-                tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-                angle = math.atan2(tangent.y(), tangent.x())
-                
-                # Create a masking rectangle to create a C-shape
-                mask_rect = QPainterPath()
-                rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
-                rect_height = (outer_radius + 5) * 2
-                rect_x = center.x() - rect_width / 2
-                rect_y = center.y()
-                mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
-                
-                # Apply rotation transform to the masking rectangle
-                transform = QTransform()
-                transform.translate(center.x(), center.y())
-                # Adjust angle based on whether it's start or end point
-                if i == 0:
-                    transform.rotate(math.degrees(angle - math.pi / 2))
-                else:
-                    transform.rotate(math.degrees(angle - math.pi / 2) + 180)
-                transform.translate(-center.x(), -center.y())
-                mask_rect = transform.map(mask_rect)
-                
-                # Create the C-shaped highlight by subtracting the mask from the ring
-                c_shape_path = ring_path.subtracted(mask_rect)
-                
-                # Draw the C-shaped highlight
-                # First draw the stroke (border) with the strand's stroke color
-                stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
-                stroke_pen.setJoinStyle(Qt.MiterJoin)
-                stroke_pen.setCapStyle(Qt.FlatCap)
-                painter.setPen(stroke_pen)
-                painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
-                painter.drawPath(c_shape_path)
-                
-                # Restore painter state
-                painter.restore()
+            # Save painter state
+            painter.save()
+            
+            center = strand.start if i == 0 else strand.end
+            
+            # Calculate the proper radius for the highlight
+            outer_radius = strand.width / 2 + strand.stroke_width + 4
+            inner_radius = strand.width / 2 + 6
+            
+            # Create a full circle path for the outer circle
+            outer_circle = QPainterPath()
+            outer_circle.addEllipse(center, outer_radius, outer_radius)
+            
+            # Create a path for the inner circle
+            inner_circle = QPainterPath()
+            inner_circle.addEllipse(center, inner_radius, inner_radius)
+            
+            # Create a ring path by subtracting the inner circle from the outer circle
+            ring_path = outer_circle.subtracted(inner_circle)
+            
+            # Get the tangent angle at the connection point
+            tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            
+            # Create a masking rectangle to create a C-shape
+            mask_rect = QPainterPath()
+            rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+            rect_height = (outer_radius + 5) * 2
+            rect_x = center.x() - rect_width / 2
+            rect_y = center.y()
+            mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+            
+            # Apply rotation transform to the masking rectangle
+            transform = QTransform()
+            transform.translate(center.x(), center.y())
+            # Adjust angle based on whether it's start or end point
+            if i == 0:
+                transform.rotate(math.degrees(angle - math.pi / 2))
+            else:
+                transform.rotate(math.degrees(angle - math.pi / 2) + 180)
+            transform.translate(-center.x(), -center.y())
+            mask_rect = transform.map(mask_rect)
+            
+            # Create the C-shaped highlight by subtracting the mask from the ring
+            c_shape_path = ring_path.subtracted(mask_rect)
+            
+            # Draw the C-shaped highlight
+            # First draw the stroke (border) with the strand's stroke color
+            stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
+            stroke_pen.setJoinStyle(Qt.MiterJoin)
+            stroke_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(stroke_pen)
+            painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
+            painter.drawPath(c_shape_path)
+            
+            # Restore painter state
+            painter.restore()
         
         painter.restore()
 

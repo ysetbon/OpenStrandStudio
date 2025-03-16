@@ -3,8 +3,8 @@
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
 #define MyAppDate "16_Mar_2025"
-#define SourcePath "E:\githubFiles\OpenStrandStudio-main\OpenStrandStudio-main"
-#define ExePath "E:\githubFiles\OpenStrandStudio-main\OpenStrandStudio-main\src\dist"
+#define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio"
+#define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
 
 [Setup]
 AppName={#MyAppName}
@@ -13,7 +13,7 @@ AppPublisher={#MyAppPublisher}
 AppContact=ysetbon@gmail.com
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-OutputDir=E:\githubFiles\OpenStrandStudio-main\OpenStrandStudio-main\installer_output
+OutputDir=C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist
 OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}_1_090
 Compression=lzma2/ultra64
 InternalCompressLevel=max

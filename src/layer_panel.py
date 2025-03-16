@@ -776,6 +776,10 @@ class LayerPanel(QWidget):
         for strand in self.canvas.strands:
             strand.is_selected = False
 
+        # Reset the user_deselected_all flag in the move mode when a strand is explicitly selected
+        if hasattr(self.canvas, 'current_mode') and hasattr(self.canvas.current_mode, 'user_deselected_all'):
+            self.canvas.current_mode.user_deselected_all = False
+
         if self.masked_mode:
             self.handle_masked_layer_selection(index)
         elif self.lock_mode:
@@ -1417,7 +1421,11 @@ class LayerPanel(QWidget):
         # Update the canvas to reflect changes
         self.canvas.selected_strand = None
         self.canvas.selected_strand_index = None
+        self.canvas.selected_attached_strand = None  # Also clear selected_attached_strand
         self.canvas.update()
+        
+        # Emit the signal for other components to react to deselection
+        self.deselect_all_requested.emit()
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""

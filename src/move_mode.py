@@ -38,6 +38,11 @@ class MoveMode:
         self.is_moving_strand_point = False
         # Track the highlighted strand that should be preserved during operations
         self.highlighted_strand = None
+        # Track if user has explicitly deselected all strands
+        self.user_deselected_all = False
+        # Connect to the canvas's deselect_all signal if available
+        if hasattr(self.canvas, 'deselect_all_signal'):
+            self.canvas.deselect_all_signal.connect(self.reset_selection)
 
     def initialize_properties(self):
         """Initialize all properties used in the MoveMode."""
@@ -493,7 +498,7 @@ class MoveMode:
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
         
         # Draw the appropriate yellow rectangle based on moving_side
-        yellow_square_size = 85  # Size for the yellow selection square
+        yellow_square_size = 90  # Size for the yellow selection square
         half_yellow_size = yellow_square_size / 2
         square_control_size = 35  # Size for control points
         half_control_size = square_control_size / 2
@@ -567,8 +572,17 @@ class MoveMode:
             self.canvas.show_control_points = True
         
         if not self.in_move_mode:
+            # IMPORTANT: Do NOT reset the user_deselected_all flag here
+            # Only when a user explicitly selects a strand should this be reset
+            # self.user_deselected_all = False  # <-- This line was the issue
+            
             # Set the originally_selected_strand to the currently selected strand in the layer panel
-            self.originally_selected_strand = self.canvas.selected_strand
+            # Only set if there is actually a selected strand
+            if self.canvas.selected_strand:
+                self.originally_selected_strand = self.canvas.selected_strand
+            else:
+                # If there's no selection, make sure we clear our stored selection
+                self.originally_selected_strand = None
             self.in_move_mode = True
             # Reset time limiter at the start of move mode
             self.last_update_time = 0
@@ -577,8 +591,12 @@ class MoveMode:
         previously_selected = self.canvas.selected_strand
         
         # Save the current highlighted strand before any operations
+        # Only save if there's actually a selected attached strand
         if self.canvas.selected_attached_strand:
             self.highlighted_strand = self.canvas.selected_attached_strand
+        else:
+            # Make sure highlighted strand is cleared if nothing is selected
+            self.highlighted_strand = None
 
         # First try to handle control point movement
         for strand in self.canvas.strands:
@@ -614,14 +632,18 @@ class MoveMode:
             self.last_snapped_pos = self.canvas.snap_to_grid(pos)
             self.target_pos = self.last_snapped_pos
             
-            # Set the temporary selected strand
+            # Set the temporary selected strand only if not in deselect all mode
             self.temp_selected_strand = self.affected_strand
-            if self.temp_selected_strand and not self.is_moving_control_point:
+            if self.temp_selected_strand and not self.is_moving_control_point and not self.user_deselected_all:
                 self.temp_selected_strand.is_selected = True
                 # Only set originally_selected_strand's selection if it exists
                 if self.originally_selected_strand:
                     self.originally_selected_strand.is_selected = True
                 self.canvas.selected_attached_strand = self.temp_selected_strand
+            elif self.user_deselected_all and self.temp_selected_strand:
+                # Ensure strand stays deselected in deselect all mode
+                self.temp_selected_strand.is_selected = False
+                self.canvas.selected_attached_strand = None
                 
             # Setup efficient paint handler
             if not hasattr(self.canvas, 'original_paintEvent'):
@@ -771,8 +793,18 @@ class MoveMode:
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
+        # If user has explicitly deselected all strands, keep everything deselected
+        if self.user_deselected_all:
+            # Keep everything deselected
+            self.canvas.selected_strand = None
+            self.canvas.selected_attached_strand = None
+        # Check if we've intentionally deselected all strands in the layer panel
+        elif self.canvas.selected_strand is None and self.canvas.selected_attached_strand is None:
+            # Do not restore any selection
+            self.originally_selected_strand = None
+            self.highlighted_strand = None
         # Always restore the highlighted strand if we saved one and we weren't moving a control point
-        if self.highlighted_strand and not was_moving_control_point:
+        elif self.highlighted_strand and not was_moving_control_point:
             self.highlighted_strand.is_selected = True
             self.canvas.selected_attached_strand = self.highlighted_strand
         else:
@@ -805,9 +837,9 @@ class MoveMode:
         self.in_move_mode = False
         self.temp_selected_strand = None  # Reset temporary selection
         self.last_update_rect = None  # Clear the last update rect
-        # Keep highlighted_strand intact so it persists across operations
-
-        self.canvas.update()
+        
+        # Delay canvas update to ensure clean redraw after all reset operations
+        QTimer.singleShot(10, self.canvas.update)
 
     def gradual_move(self):
         """
@@ -1124,16 +1156,20 @@ class MoveMode:
             self.temp_selected_strand = None
             # Clear highlighted strand to ensure no highlighting during control point movement
             self.highlighted_strand = None
+            # Ensure the affected strand itself is not selected
+            if self.affected_strand:
+                self.affected_strand.is_selected = False
         else:
-            # Only set strands as selected when not moving control points
-            if isinstance(strand, AttachedStrand):
-                self.canvas.selected_attached_strand = strand
-                strand.is_selected = True
-            
-            if connected_strand:
-                connected_strand.is_selected = True
-                if isinstance(connected_strand, AttachedStrand):
-                    self.temp_selected_strand = connected_strand
+            # Only set strands as selected when not moving control points and not in deselected state
+            if not self.user_deselected_all:
+                if isinstance(strand, AttachedStrand):
+                    self.canvas.selected_attached_strand = strand
+                    strand.is_selected = True
+                
+                if connected_strand:
+                    connected_strand.is_selected = True
+                    if isinstance(connected_strand, AttachedStrand):
+                        self.temp_selected_strand = connected_strand
 
         # Update the canvas
         self.canvas.update()
@@ -1184,8 +1220,10 @@ class MoveMode:
             self.affected_strand.update_side_line()
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 1)
-            # Keep the strand deselected to prevent drawing other indicators
+            # Keep the strand deselected to prevent highlighting during control point movement
             self.affected_strand.is_selected = False
+            self.canvas.selected_attached_strand = None
+            self.highlighted_strand = None
         elif self.moving_side == 'control_point2':
             # Move the second control point
             self.affected_strand.control_point2 = new_pos
@@ -1193,8 +1231,10 @@ class MoveMode:
             self.affected_strand.update_side_line()
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 2)
-            # Keep the strand deselected to prevent drawing other indicators
+            # Keep the strand deselected to prevent highlighting during control point movement
             self.affected_strand.is_selected = False
+            self.canvas.selected_attached_strand = None
+            self.highlighted_strand = None
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point - already tracks affected strands
             parent_strand = self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
@@ -1206,26 +1246,31 @@ class MoveMode:
             # Update the selection area
             if self.moving_side == 0:
                 self.selected_rectangle = QRectF(
-                    self.affected_strand.start.x() - 85/2,
-                    self.affected_strand.start.y() - 85/2,
-                    85,
-                    85
+                    self.affected_strand.start.x() - 90/2,
+                    self.affected_strand.start.y() - 90/2,
+                    90,
+                    90
                 )
             else:
                 self.selected_rectangle = QRectF(
-                    self.affected_strand.end.x() - 85/2,
-                    self.affected_strand.end.y() - 85/2,
-                    85,
-                    85
+                    self.affected_strand.end.x() - 90/2,
+                    self.affected_strand.end.y() - 90/2,
+                    90,
+                    90
                 )
             
             # Get the list of affected strands from move_strand_and_update_attached
             if hasattr(self.canvas, 'affected_strands_for_drawing'):
                 affected_strands = set(self.canvas.affected_strands_for_drawing)
                 
-            # Ensure the affected strand remains selected when moving start/end points
-            self.affected_strand.is_selected = True
-            self.canvas.selected_attached_strand = self.affected_strand
+            # Only set the affected strand as selected if user hasn't explicitly deselected all strands
+            if not self.user_deselected_all:
+                self.affected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.affected_strand
+            else:
+                # Ensure strand stays deselected when user_deselected_all is true
+                self.affected_strand.is_selected = False
+                self.canvas.selected_attached_strand = None
         else:
             # Invalid moving_side
             pass  # Or handle unexpected cases
@@ -1566,6 +1611,10 @@ class MoveMode:
         Args:
             painter (QPainter): The painter object to draw with.
         """
+        # Skip drawing all C-shapes if user has explicitly deselected all strands
+        if self.user_deselected_all:
+            return
+            
         # Double-check we're not in control point movement mode
         if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
             return
@@ -1579,6 +1628,14 @@ class MoveMode:
         
         # Only draw C-shapes for actively moving strands to improve performance
         if self.is_moving and affected_strands:
+            # In control point move mode, don't draw any highlights
+            if self.is_moving_control_point:
+                return
+                
+            # Skip highlighting if deselect all was used
+            if self.user_deselected_all:
+                return
+                
             # Performance optimization for red semi-rectangles: Only draw selected strands
             selected_affected_strands = [strand for strand in affected_strands if strand.is_selected and hasattr(strand, 'has_circles')]
             
@@ -1744,6 +1801,14 @@ class MoveMode:
         """
         # Draw the selected attached strand with C-shaped highlights
         self.draw_selected_attached_strand(painter)
+
+    # Add a new method to reset selection state
+    def reset_selection(self):
+        """Reset the selection state when deselect all is requested."""
+        self.originally_selected_strand = None
+        self.highlighted_strand = None
+        self.temp_selected_strand = None
+        self.user_deselected_all = True
 
 
 

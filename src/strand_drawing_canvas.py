@@ -38,6 +38,7 @@ class StrandDrawingCanvas(QWidget):
     masked_layer_created = pyqtSignal(object)
     mask_edit_requested = pyqtSignal(int)  # Signal when mask editing is requested
     mask_edit_exited = pyqtSignal()
+    deselect_all_signal = pyqtSignal()  # Signal for deselect all strands
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
@@ -1918,6 +1919,11 @@ class StrandDrawingCanvas(QWidget):
                 for attached_strand in strand.attached_strands:
                     attached_strand.is_selected = False
 
+        # When explicitly selecting a strand, reset the user_deselected_all flag in MoveMode
+        if index is not None and 0 <= index < len(self.strands) and isinstance(self.current_mode, MoveMode):
+            if hasattr(self.current_mode, 'user_deselected_all'):
+                self.current_mode.user_deselected_all = False
+
         if index is not None and 0 <= index < len(self.strands):
             print(f"selected_strand = {self.strands[index]}")
             self.selected_strand = self.strands[index]
@@ -1983,6 +1989,14 @@ class StrandDrawingCanvas(QWidget):
 
         for strand in self.strands:
             deselect_strand_recursively(strand)
+            
+        # Clear selected strand references
+        self.selected_strand = None
+        self.selected_strand_index = None
+        self.selected_attached_strand = None
+        
+        # Emit the deselect_all signal for connected objects
+        self.deselect_all_signal.emit()
 
         self.update()  # Redraw the canvas to reflect changes
 
@@ -2975,6 +2989,10 @@ class StrandDrawingCanvas(QWidget):
         if strands_at_point:
             selected_strand = strands_at_point[-1]  # Select the topmost strand
             index = self.strands.index(selected_strand)
+
+            # When directly clicking on a strand, reset the user_deselected_all flag in MoveMode
+            if isinstance(self.current_mode, MoveMode) and hasattr(self.current_mode, 'user_deselected_all'):
+                self.current_mode.user_deselected_all = False
 
             if self.current_mode == self.mask_mode:
                 self.mask_mode.handle_strand_selection(selected_strand)

@@ -587,8 +587,8 @@ class MoveMode:
         # Store canvas's original control points visibility setting
         if hasattr(self.canvas, 'show_control_points'):
             self.original_control_points_visible = self.canvas.show_control_points
-            # Show control points during movement for better user feedback
-            self.canvas.show_control_points = True
+            # Do NOT force control points to be visible - respect user setting
+            # self.canvas.show_control_points = True  # This line is removed/commented
         
         # Initialize background cache immediately before any movement
         # This ensures it's ready before the first movement

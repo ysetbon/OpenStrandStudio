@@ -36,6 +36,8 @@ class MoveMode:
         self.is_moving_control_point = False
         # Flag to indicate if we're moving a strand endpoint
         self.is_moving_strand_point = False
+        # Track the highlighted strand that should be preserved during operations
+        self.highlighted_strand = None
 
     def initialize_properties(self):
         """Initialize all properties used in the MoveMode."""
@@ -450,7 +452,7 @@ class MoveMode:
             return
             
         # Set up semi-transparent yellow color
-        square_color = QColor(255, 230, 160, 140)  # Yellow with transparency
+        square_color = QColor(255, 230, 160, 255)  # Yellow with transparency
         painter.setBrush(QBrush(square_color))
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
         
@@ -537,6 +539,10 @@ class MoveMode:
 
         # Store the current selection state
         previously_selected = self.canvas.selected_strand
+        
+        # Save the current highlighted strand before any operations
+        if self.canvas.selected_attached_strand:
+            self.highlighted_strand = self.canvas.selected_attached_strand
 
         # First try to handle control point movement
         for strand in self.canvas.strands:
@@ -728,20 +734,25 @@ class MoveMode:
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
-        # Handle selection restoration based on what was being moved
-        if was_moving_control_point:
-            # If we were moving a control point, select only the affected strand
-            if self.affected_strand:
-                self.affected_strand.is_selected = True
-                self.canvas.selected_attached_strand = self.affected_strand
+        # Always restore the highlighted strand if we saved one
+        if self.highlighted_strand:
+            self.highlighted_strand.is_selected = True
+            self.canvas.selected_attached_strand = self.highlighted_strand
         else:
-            # For non-control point movements, restore the original selection
-            if self.originally_selected_strand:
-                self.originally_selected_strand.is_selected = True
-                self.canvas.selected_attached_strand = self.originally_selected_strand
-                # If the affected strand is different from the original and was selected, keep it selected
-                if self.affected_strand and self.affected_strand != self.originally_selected_strand:
+            # Handle selection restoration based on what was being moved
+            if was_moving_control_point:
+                # If we were moving a control point, select only the affected strand
+                if self.affected_strand:
                     self.affected_strand.is_selected = True
+                    self.canvas.selected_attached_strand = self.affected_strand
+            else:
+                # For non-control point movements, restore the original selection
+                if self.originally_selected_strand:
+                    self.originally_selected_strand.is_selected = True
+                    self.canvas.selected_attached_strand = self.originally_selected_strand
+                    # If the affected strand is different from the original and was selected, keep it selected
+                    if self.affected_strand and self.affected_strand != self.originally_selected_strand:
+                        self.affected_strand.is_selected = True
 
         # Reset all properties
         self.is_moving = False
@@ -757,6 +768,7 @@ class MoveMode:
         self.in_move_mode = False
         self.temp_selected_strand = None  # Reset temporary selection
         self.last_update_rect = None  # Clear the last update rect
+        # Keep highlighted_strand intact so it persists across operations
 
         self.canvas.update()
 
@@ -1457,7 +1469,12 @@ class MoveMode:
         # Fallback to original logic if we're not in moving mode or don't have affected strands
         # Determine which strand to highlight
         strand_to_highlight = None
-        if self.is_moving and self.temp_selected_strand:
+        
+        # First try using the saved highlighted strand
+        if self.highlighted_strand:
+            strand_to_highlight = self.highlighted_strand
+        # Otherwise fallback to existing logic
+        elif self.is_moving and self.temp_selected_strand:
             strand_to_highlight = self.temp_selected_strand
         elif not self.is_moving and self.canvas.selected_attached_strand:
             strand_to_highlight = self.canvas.selected_attached_strand

@@ -335,6 +335,15 @@ class MoveMode:
                 if isinstance(move_mode.affected_strand, AttachedStrand) and hasattr(move_mode.affected_strand, 'attached_strands'):
                     # Include the attached strands of the moving strand
                     truly_moving_strands.extend(move_mode.affected_strand.attached_strands)
+                
+                # Store the truly moving strands for use in drawing
+                self_canvas.truly_moving_strands = truly_moving_strands
+                
+            # When moving control points, ensure the strand gets included in truly_moving_strands
+            if getattr(move_mode, 'is_moving_control_point', False) and move_mode.affected_strand:
+                if move_mode.affected_strand not in truly_moving_strands:
+                    truly_moving_strands = [move_mode.affected_strand]
+                    self_canvas.truly_moving_strands = truly_moving_strands
             
             if background_cache_needed:
                 try:
@@ -384,7 +393,7 @@ class MoveMode:
                     self_canvas.original_paintEvent(event)
                     return
             
-            # Draw the cached background that has everything except the moving strands
+            # Draw the cached background first (has everything except truly moving strands)
             painter = QtGui.QPainter(self_canvas)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
             
@@ -395,9 +404,26 @@ class MoveMode:
                 
                 # Now draw only the truly moving strands on top - maintain their original relative order
                 sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
-                for strand in sorted_moving_strands:
-                    if hasattr(strand, 'draw'):
-                        strand.draw(painter)
+                
+                # When moving control points, make sure we preserve the original z-ordering of all strands
+                is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
+                if is_moving_control_point:
+                    # For control points, we only draw the affected strand on top of everything else
+                    affected_strand = move_mode.affected_strand if hasattr(move_mode, 'affected_strand') else None
+                    
+                    # Draw all strands in their original order except the affected strand
+                    for strand in original_strands_order:
+                        if strand != affected_strand and hasattr(strand, 'draw'):
+                            strand.draw(painter)
+                    
+                    # Finally draw the affected strand on top
+                    if affected_strand and hasattr(affected_strand, 'draw'):
+                        affected_strand.draw(painter)
+                else:
+                    # Normal case - draw moving strands on top in their original order
+                    for strand in sorted_moving_strands:
+                        if hasattr(strand, 'draw'):
+                            strand.draw(painter)
                 
                 # Draw the C-shape specifically for the active strand
                 if hasattr(move_mode, 'draw_selected_attached_strand'):
@@ -890,25 +916,23 @@ class MoveMode:
 
         if control_point1_rect.contains(pos):
             self.start_movement(strand, 'control_point1', control_point1_rect)
-            # Ensure we only display this control point's selection indicator
-            self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
-            # Deselect all strands when moving control points
-            for s in self.canvas.strands:
-                s.is_selected = False
-                if isinstance(s, AttachedStrand):
-                    for attached in s.attached_strands:
-                        attached.is_selected = False
+            # Mark that we're moving a control point
+            self.is_moving_control_point = True
+            # Store the strand explicitly in truly_moving_strands for proper z-ordering
+            if hasattr(self.canvas, 'truly_moving_strands'):
+                self.canvas.truly_moving_strands = [strand]
+            else:
+                self.canvas.truly_moving_strands = [strand]
             return True
         elif control_point2_rect.contains(pos):
             self.start_movement(strand, 'control_point2', control_point2_rect)
-            # Ensure we only display this control point's selection indicator
-            self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
-            # Deselect all strands when moving control points
-            for s in self.canvas.strands:
-                s.is_selected = False
-                if isinstance(s, AttachedStrand):
-                    for attached in s.attached_strands:
-                        attached.is_selected = False
+            # Mark that we're moving a control point
+            self.is_moving_control_point = True
+            # Store the strand explicitly in truly_moving_strands for proper z-ordering
+            if hasattr(self.canvas, 'truly_moving_strands'):
+                self.canvas.truly_moving_strands = [strand]
+            else:
+                self.canvas.truly_moving_strands = [strand]
             return True
         return False
 
@@ -1071,9 +1095,16 @@ class MoveMode:
         moving_point = strand.start if side == 0 else strand.end
         connected_strand = self.find_connected_strand(strand, side, moving_point)
 
-        # Only set strands as selected when not moving control points
-        if not self.is_moving_control_point:
-            # Set both strands as selected for start/end points only
+        # Control point movement specific handling
+        if self.is_moving_control_point:
+            # When moving control points, ensure no strands are selected to maintain proper z-ordering
+            for s in self.canvas.strands:
+                s.is_selected = False
+            # Clear selected attached strand
+            self.canvas.selected_attached_strand = None
+            self.temp_selected_strand = None
+        else:
+            # Only set strands as selected when not moving control points
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
                 strand.is_selected = True
@@ -1082,16 +1113,6 @@ class MoveMode:
                 connected_strand.is_selected = True
                 if isinstance(connected_strand, AttachedStrand):
                     self.temp_selected_strand = connected_strand
-        else:
-            # When moving control points, ensure no strands are selected
-            for s in self.canvas.strands:
-                s.is_selected = False
-                if isinstance(s, AttachedStrand):
-                    for attached in s.attached_strands:
-                        attached.is_selected = False
-            # Clear selected attached strand
-            self.canvas.selected_attached_strand = None
-            self.temp_selected_strand = None
 
         # Update the canvas
         self.canvas.update()

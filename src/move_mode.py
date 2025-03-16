@@ -534,24 +534,23 @@ class MoveMode:
             self.in_move_mode = True
             # Reset time limiter at the start of move mode
             self.last_update_time = 0
-            
-            print(f"Entering move mode. self.canvas.selected_strand: {self.canvas.selected_strand}")
 
         # Store the current selection state
         previously_selected = self.canvas.selected_strand
 
-        print(f"Previously selected strand: {previously_selected}")
-
-        # Log currently selected strands before deselection
-        print("Currently selected strands before deselection:")
+        # First try to handle control point movement
         for strand in self.canvas.strands:
-            if strand.is_selected:
-                print(f"- {strand}")
-            if isinstance(strand, AttachedStrand):
-                for attached in strand.attached_strands:
-                    if attached.is_selected:
-                        print(f"  - Attached: {attached}")
+            if not getattr(strand, 'deleted', False):
+                if self.try_move_control_points(strand, pos):
+                    # If we're moving a control point, clear all selections
+                    self.canvas.selected_strand = None
+                    self.originally_selected_strand = None
+                    self.canvas.selected_attached_strand = None
+                    # Update the canvas and return early
+                    self.canvas.update()
+                    return
 
+        # If we're not moving a control point, proceed with normal strand movement
         # Deselect all strands
         for strand in self.canvas.strands:
             strand.is_selected = False
@@ -574,7 +573,7 @@ class MoveMode:
             
             # Set the temporary selected strand
             self.temp_selected_strand = self.affected_strand
-            if self.temp_selected_strand:
+            if self.temp_selected_strand and not self.is_moving_control_point:
                 self.temp_selected_strand.is_selected = True
                 # Only set originally_selected_strand's selection if it exists
                 if self.originally_selected_strand:
@@ -602,7 +601,7 @@ class MoveMode:
                 previously_selected.is_selected = True
                 self.canvas.selected_attached_strand = previously_selected
 
-        # Update the canvas (full update on initial press)
+        # Update the canvas
         self.canvas.update()
 
     def mouseMoveEvent(self, event):
@@ -722,21 +721,27 @@ class MoveMode:
             # Reset time limiter
             self.last_update_time = 0
 
-        # Deselect all strands
+        # Deselect all strands first
         for strand in self.canvas.strands:
             strand.is_selected = False
             if isinstance(strand, AttachedStrand):
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
-        # Restore the selection of the originally selected strand
-        if self.originally_selected_strand:
-            self.originally_selected_strand.is_selected = True
-            self.canvas.selected_attached_strand = self.originally_selected_strand
-        # If we were moving a control point, restore selection for the affected strand
-        elif was_moving_control_point and self.affected_strand:
-            self.affected_strand.is_selected = True
-            self.canvas.selected_attached_strand = self.affected_strand
+        # Handle selection restoration based on what was being moved
+        if was_moving_control_point:
+            # If we were moving a control point, select only the affected strand
+            if self.affected_strand:
+                self.affected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.affected_strand
+        else:
+            # For non-control point movements, restore the original selection
+            if self.originally_selected_strand:
+                self.originally_selected_strand.is_selected = True
+                self.canvas.selected_attached_strand = self.originally_selected_strand
+                # If the affected strand is different from the original and was selected, keep it selected
+                if self.affected_strand and self.affected_strand != self.originally_selected_strand:
+                    self.affected_strand.is_selected = True
 
         # Reset all properties
         self.is_moving = False
@@ -875,11 +880,23 @@ class MoveMode:
             self.start_movement(strand, 'control_point1', control_point1_rect)
             # Ensure we only display this control point's selection indicator
             self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
+            # Deselect all strands when moving control points
+            for s in self.canvas.strands:
+                s.is_selected = False
+                if isinstance(s, AttachedStrand):
+                    for attached in s.attached_strands:
+                        attached.is_selected = False
             return True
         elif control_point2_rect.contains(pos):
             self.start_movement(strand, 'control_point2', control_point2_rect)
             # Ensure we only display this control point's selection indicator
             self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
+            # Deselect all strands when moving control points
+            for s in self.canvas.strands:
+                s.is_selected = False
+                if isinstance(s, AttachedStrand):
+                    for attached in s.attached_strands:
+                        attached.is_selected = False
             return True
         return False
 
@@ -898,22 +915,6 @@ class MoveMode:
         # Get selection areas
         start_area = self.get_start_area(strand)
         end_area = self.get_end_area(strand)
-
-        # Only check control points for non-MaskedStrands
-        if not isinstance(strand, MaskedStrand):
-            control_point1_rect = self.get_control_point_rectangle(strand, 1)
-            control_point2_rect = self.get_control_point_rectangle(strand, 2)
-
-            if control_point1_rect.contains(pos):
-                self.start_movement(strand, 'control_point1', control_point1_rect)
-                # Ensure we only display this control point's selection indicator
-                self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
-                return True
-            elif control_point2_rect.contains(pos):
-                self.start_movement(strand, 'control_point2', control_point2_rect)
-                # Ensure we only display this control point's selection indicator
-                self.affected_strand.is_selected = False  # Temporarily deselect to prevent drawing other indicators
-                return True
 
         if start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_area)
@@ -1059,9 +1060,7 @@ class MoveMode:
         connected_strand = self.find_connected_strand(strand, side, moving_point)
 
         # Only set strands as selected when not moving control points
-        is_moving_control_point = side == 'control_point1' or side == 'control_point2'
-        
-        if not is_moving_control_point:
+        if not self.is_moving_control_point:
             # Set both strands as selected for start/end points only
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
@@ -1071,6 +1070,16 @@ class MoveMode:
                 connected_strand.is_selected = True
                 if isinstance(connected_strand, AttachedStrand):
                     self.temp_selected_strand = connected_strand
+        else:
+            # When moving control points, ensure no strands are selected
+            for s in self.canvas.strands:
+                s.is_selected = False
+                if isinstance(s, AttachedStrand):
+                    for attached in s.attached_strands:
+                        attached.is_selected = False
+            # Clear selected attached strand
+            self.canvas.selected_attached_strand = None
+            self.temp_selected_strand = None
 
         # Update the canvas
         self.canvas.update()
@@ -1425,8 +1434,8 @@ class MoveMode:
         if self.is_moving and self.affected_strand and not isinstance(self.affected_strand, AttachedStrand) and self.moving_side == 0:
             return
             
-        # Also skip drawing when moving control points
-        if self.is_moving and self.affected_strand and self.is_moving_control_point:
+        # Skip drawing when moving control points
+        if self.is_moving and self.is_moving_control_point:
             return
             
         # Get list of affected strands if available - these are the only ones we need to highlight

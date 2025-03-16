@@ -1108,11 +1108,12 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 if not isinstance(strand, MaskedStrand):
                     if hasattr(strand, 'start') and hasattr(strand, 'end'):
-                        # Check if a control point is being moved
+                        # Check if a control point or strand point is being moved
                         is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                        is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
                         
-                        # If a control point is being moved, only draw for the affected strand
-                        if is_moving_control_point and strand != self.current_mode.affected_strand:
+                        # If a control point or strand point is being moved, only draw for the affected strand
+                        if (is_moving_control_point or is_moving_strand_point) and strand != self.current_mode.affected_strand:
                             continue
                             
                         # Increased square size for better visibility
@@ -2817,6 +2818,7 @@ class StrandDrawingCanvas(QWidget):
         # Check if we're in move mode and if a control point is being moved
         in_move_mode = hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode'
         moving_control_point = in_move_mode and getattr(self.current_mode, 'is_moving_control_point', False)
+        moving_strand_point = in_move_mode and getattr(self.current_mode, 'is_moving_strand_point', False)
         moving_strand = getattr(self.current_mode, 'affected_strand', None) if in_move_mode else None
         moving_side = getattr(self.current_mode, 'moving_side', None) if in_move_mode else None
 
@@ -2828,12 +2830,12 @@ class StrandDrawingCanvas(QWidget):
             if strand.control_point1 is None or strand.control_point2 is None:
                 continue
 
+            # If we're moving a control point or a strand point, only draw for the affected strand
+            if (moving_control_point or moving_strand_point) and strand != moving_strand:
+                continue
+
             # If we're moving a control point, only draw the control point being moved
             if moving_control_point:
-                # If this isn't the strand whose control point is being moved, skip drawing its control points
-                if strand != moving_strand:
-                    continue
-                
                 # Only draw the lines and control points for the moving strand
                 # Draw lines connecting control points
                 control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)

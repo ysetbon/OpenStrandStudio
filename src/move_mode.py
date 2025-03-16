@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt
 from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush
 from PyQt5.QtWidgets import QApplication
+import PyQt5.QtGui as QtGui
 import math
 import time
 import logging
@@ -33,6 +34,8 @@ class MoveMode:
         self.last_strand_position = None
         # Flag to indicate if we're currently moving a control point
         self.is_moving_control_point = False
+        # Flag to indicate if we're moving a strand endpoint
+        self.is_moving_strand_point = False
 
     def initialize_properties(self):
         """Initialize all properties used in the MoveMode."""
@@ -50,6 +53,8 @@ class MoveMode:
         self.lock_mode_active = False  # Flag to indicate if lock mode is active
         self.last_update_rect = None  # Track the last update region
         self.last_strand_position = None  # Track the last position for strand movement
+        self.is_moving_control_point = False  # Flag to indicate if we're moving a control point
+        self.is_moving_strand_point = False  # Flag to indicate if we're moving a strand endpoint
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -104,20 +109,22 @@ class MoveMode:
             self.canvas.set_active_strand_update(self.affected_strand, None)
             return  # Exit early to avoid duplicate work
         
-        # Determine if we need a full update
-        # Do full updates less frequently, but always include more context
+        # Determine if we need a full update - only do this occasionally to maintain performance
         full_update = False
         if not hasattr(self, '_update_counter'):
             self._update_counter = 0
-        self._update_counter = (self._update_counter + 1) % 15  # Reduced frequency for full updates
+        self._update_counter = (self._update_counter + 1) % 60  # Reduced frequency for full updates (was 30)
         if self._update_counter == 0:
             full_update = True
             
-        # Optimization: Only calculate strand bounds if we don't already have them
-        # or if the strand has moved significantly
-        current_rect = None
+        # Check if we're moving a C-shape (semi-circle) element
+        is_moving_c_shape = False
+        if self.is_moving and self.affected_strand and hasattr(self.affected_strand, 'has_circles'):
+            # C-shape movement happens when a strand with circles is being moved
+            is_moving_c_shape = any(self.affected_strand.has_circles)
+            
+        # Significant movement check - only for tracking bounds, not for invalidation
         significant_movement = False
-        
         if (hasattr(self, 'last_strand_position') and self.last_strand_position is not None and 
             hasattr(self, 'moving_point') and self.moving_point is not None):
             # Check if the strand has moved more than 5 pixels in any direction
@@ -127,8 +134,9 @@ class MoveMode:
             significant_movement = dx > 5 or dy > 5
             
         # Calculate a wider viewing rectangle to ensure no cropping during movement
+        # Only recalculate if something significant changed
         if full_update or not hasattr(self.canvas, 'last_strand_rect') or significant_movement:
-            # Calculate a rectangle that encompasses the entire affected strand, not just the square
+            # Calculate a rectangle that encompasses the entire affected strand
             current_rect = self._get_strand_bounds(affected_strands)
             
             # Store the current position for future comparison
@@ -138,115 +146,85 @@ class MoveMode:
             # Reuse the existing rect to avoid expensive recalculations
             current_rect = getattr(self.canvas, 'last_strand_rect', None)
             
-        # If doing a full update, use a large area of the canvas, not the entire canvas
-        # This gives us a compromise between a targeted update and a full canvas refresh
-        if full_update:
-            # Use a large portion of the viewport for full updates
-            # but keep it centered on the affected strands to maintain context
-            if hasattr(self.canvas, 'viewport'):
-                viewport_rect = self.canvas.viewport().rect()
-                
-                # If we have a current rect, center the update on that
-                if current_rect and not current_rect.isNull():
-                    center_x = current_rect.center().x()
-                    center_y = current_rect.center().y()
-                    
-                    # Make the update rect 80% of the viewport size
-                    width = viewport_rect.width() * 0.8
-                    height = viewport_rect.height() * 0.8
-                    
-                    # Center it on the current strands
-                    current_rect = QRectF(
-                        center_x - width/2,
-                        center_y - height/2,
-                        width,
-                        height
-                    )
-                else:
-                    # If no current rect, use the viewport
-                    current_rect = viewport_rect
-            else:
-                # If there's no viewport, use the entire canvas
-                current_rect = self.canvas.rect()
-        
-        # Store previous rectangle for erasing
-        prev_rect = getattr(self.canvas, 'last_strand_rect', None)
-        update_rect = current_rect
-        
-        if prev_rect and not full_update and current_rect:
-            # Convert both rectangles to QRectF to ensure type compatibility
-            if not isinstance(prev_rect, QRectF):
-                prev_rect = QRectF(prev_rect)
-            if not isinstance(current_rect, QRectF):
-                current_rect = QRectF(current_rect)
-                
-            # For safety, ensure both rects are valid
-            if not prev_rect.isValid():
-                prev_rect = QRectF(0, 0, 1, 1)
-            if not current_rect.isValid():
-                current_rect = QRectF(0, 0, 1, 1)
-                
-            # Always union the rectangles to ensure all relevant areas are covered
-            # This avoids leaving artifacts during fast movement
-            update_rect = current_rect.united(prev_rect)
-            
-        # Add padding to ensure entire strand is visible, even with large movements
-        # Significantly increased padding for better visibility
-        if not full_update:
-            # Use much larger padding to ensure movement is never cropped
-            # Calculate based on grid size and viewport size
-            if hasattr(self.canvas, 'viewport'):
-                viewport_rect = self.canvas.viewport().rect()
-                min_dimension = min(viewport_rect.width(), viewport_rect.height()) 
-                # Use 25% of the smallest viewport dimension as padding
-                viewport_padding = min_dimension * 0.25
-                base_padding = max(200, self.canvas.grid_size * 4, viewport_padding)
-            else:
-                base_padding = max(200, self.canvas.grid_size * 4)
-            
-            # Increase padding proportionally to movement speed if we're tracking position
-            if hasattr(self, 'last_strand_position') and self.last_strand_position is not None and significant_movement:
-                movement_scale = 2.0  # Double padding for fast movements
-            else:
-                movement_scale = 1.5  # Use 1.5x padding even for normal movement
-                
-            padding = int(base_padding * movement_scale)
-            update_rect = update_rect.adjusted(-padding, -padding, padding, padding)
-            
-        # If update_rect is null, use the entire canvas to avoid errors
-        if update_rect is None or update_rect.isNull():
-            if hasattr(self.canvas, 'viewport'):
-                update_rect = self.canvas.viewport().rect()
-            else:
-                update_rect = self.canvas.rect()
-        
         # Store for next update only if it's changed
         if current_rect and (not hasattr(self.canvas, 'last_strand_rect') or 
-                            getattr(self.canvas, 'last_strand_rect', None) is None or
-                            (isinstance(current_rect, QRectF) and 
-                             not current_rect.isNull() and 
-                             current_rect != getattr(self.canvas, 'last_strand_rect', None))):
+                          getattr(self.canvas, 'last_strand_rect', None) is None or
+                          (isinstance(current_rect, QRectF) and 
+                           not current_rect.isNull() and 
+                           current_rect != getattr(self.canvas, 'last_strand_rect', None))):
             self.canvas.last_strand_rect = current_rect
             self.last_update_rect = current_rect  # Also store in the MoveMode instance
             
-        # Set active strand and update rect
+        # Set active strand for drawing
         self.canvas.active_strand_for_drawing = self.affected_strand
-        self.canvas.active_strand_update_rect = update_rect
         
         # Setup efficient paint handler if needed
         if not hasattr(self.canvas, 'original_paintEvent'):
             self._setup_optimized_paint_handler()
         
-        # We also need to ensure the background is invalidated when strands move
-        # Always invalidate during movement for cleaner rendering
-        if hasattr(self.canvas, 'background_cache_valid'):
-            # Be more aggressive with invalidation to prevent rendering artifacts
-            if full_update or significant_movement or self.is_moving:
+        # Track first movement of C-shape
+        if is_moving_c_shape and not hasattr(self, '_c_shape_first_move'):
+            self._c_shape_first_move = True
+            # For first C-shape movement, ensure cache is invalidated
+            if hasattr(self.canvas, 'background_cache_valid'):
                 self.canvas.background_cache_valid = False
+            # Use partial update
+            self.canvas.update()
+            return
+            
+        # Only invalidate the background cache on significant events:
+        # 1. Full updates (periodically)
+        # 2. When strands move significantly, but NOT for C-shapes (that's the key optimization)
+        # 3. First time in moving mode
+        # 4. Viewport size change
+        should_invalidate = (
+            full_update or 
+            (significant_movement and not is_moving_c_shape) or 
+            not hasattr(self.canvas, 'background_cache_valid') or
+            not getattr(self.canvas, 'background_cache_valid', False)
+        )
+        
+        if should_invalidate and hasattr(self.canvas, 'background_cache_valid'):
+            self.canvas.background_cache_valid = False
         
         # Force an immediate update of the canvas
-        # Note: Cannot use update(rect) as the canvas doesn't support it
         self.canvas.update()
+
+    def _setup_background_cache(self):
+        """Setup background caching for efficient updates."""
+        import PyQt5.QtGui as QtGui
+        from PyQt5.QtCore import Qt
+        
+        try:
+            # Create a background cache pixmap the size of the visible area
+            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
+            
+            # Ensure valid dimensions
+            width = max(1, viewport_rect.width())
+            height = max(1, viewport_rect.height())
+            
+            # Create the pixmap and fill it
+            self.canvas.background_cache = QtGui.QPixmap(width, height)
+            # Fill with transparent color, not white
+            self.canvas.background_cache.fill(Qt.transparent)
+            
+            # Create a flag to indicate when the cache needs refreshing
+            self.canvas.background_cache_valid = False
+            
+            # Add method to canvas to invalidate cache when needed
+            def invalidate_cache():
+                """Simple method to invalidate the background cache."""
+                if hasattr(self.canvas, 'background_cache_valid'):
+                    self.canvas.background_cache_valid = False
+            
+            # Bind the method directly
+            self.canvas.invalidate_background_cache = invalidate_cache
+            
+            logging.info(f"Background cache initialized: {width}x{height} pixels (transparent)")
+        except Exception as e:
+            logging.error(f"Error setting up background cache: {e}")
+            # If we can't set up the cache, set a flag to disable it
+            self.canvas.use_background_cache = False
 
     def _get_strand_bounds(self, affected_strands=None):
         """Get the bounding rectangle of all affected strands or entire canvas if no strands provided."""
@@ -313,44 +291,6 @@ class MoveMode:
         # Use at least 3x the grid size or 150 pixels
         padding = max(150, self.canvas.grid_size * 3)
         return bounds.adjusted(-padding, -padding, padding, padding)
-    
-
-
-    def _setup_background_cache(self):
-        """Setup background caching for efficient updates."""
-        import PyQt5.QtGui as QtGui
-        from PyQt5.QtCore import Qt
-        
-        try:
-            # Create a background cache pixmap the size of the visible area
-            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
-            
-            # Ensure valid dimensions
-            width = max(1, viewport_rect.width())
-            height = max(1, viewport_rect.height())
-            
-            # Create the pixmap and fill it
-            self.canvas.background_cache = QtGui.QPixmap(width, height)
-            # Fill with transparent color, not white
-            self.canvas.background_cache.fill(Qt.transparent)
-            
-            # Create a flag to indicate when the cache needs refreshing
-            self.canvas.background_cache_valid = False
-            
-            # Add method to canvas to invalidate cache when needed
-            def invalidate_cache():
-                """Simple method to invalidate the background cache."""
-                if hasattr(self.canvas, 'background_cache_valid'):
-                    self.canvas.background_cache_valid = False
-            
-            # Bind the method directly
-            self.canvas.invalidate_background_cache = invalidate_cache
-            
-            logging.info(f"Background cache initialized: {width}x{height} pixels (transparent)")
-        except Exception as e:
-            logging.error(f"Error setting up background cache: {e}")
-            # If we can't set up the cache, set a flag to disable it
-            self.canvas.use_background_cache = False
 
     def _setup_optimized_paint_handler(self):
         """Setup a highly optimized paint handler for strand editing."""
@@ -378,60 +318,128 @@ class MoveMode:
             active_strand = self_canvas.active_strand_for_drawing
             affected_strands = getattr(self_canvas, 'affected_strands_for_drawing', [active_strand])
             
-            # Create a temporary copy of the strands list
-            original_strands = list(self_canvas.strands)
+            # Store original order of all strands for proper z-ordering
+            original_strands_order = list(self_canvas.strands)
             
-            try:
-                # Remove the affected strands from the list to prevent drawing them twice
-                temp_strands = [s for s in original_strands if s not in affected_strands]
-                
-                # Replace with temporary list that excludes moving strands
-                self_canvas.strands = temp_strands
-                
-                # Call original paint event to draw background, grid, and all non-moving strands
-                self_canvas.original_paintEvent(event)
-                
-                # Restore the original strands list
-                self_canvas.strands = original_strands
-                
-                # Now draw only our moving strands on top
-                painter = QtGui.QPainter(self_canvas)
-                painter.setRenderHint(QtGui.QPainter.Antialiasing)
-                
+            # Create a background cache first time or if it's invalidated
+            background_cache_needed = (not hasattr(self_canvas, 'background_cache') or 
+                                     not getattr(self_canvas, 'background_cache_valid', False))
+            
+            # Get truly moving strands from the canvas attribute if available, otherwise create it
+            truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
+            if not truly_moving_strands and hasattr(move_mode, 'affected_strand') and move_mode.affected_strand:
+                truly_moving_strands = [move_mode.affected_strand]
+                # For attached strands, we want to also move immediate children but keep parents in original order
+                if isinstance(move_mode.affected_strand, AttachedStrand) and hasattr(move_mode.affected_strand, 'attached_strands'):
+                    # Include the attached strands of the moving strand
+                    truly_moving_strands.extend(move_mode.affected_strand.attached_strands)
+            
+            if background_cache_needed:
                 try:
-                    # Draw all affected strands on top
-                    for strand in affected_strands:
-                        if hasattr(strand, 'draw'):
-                            strand.draw(painter)
+                    # Create or get the background cache
+                    if not hasattr(self_canvas, 'background_cache'):
+                        viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
+                        width = max(1, viewport_rect.width())
+                        height = max(1, viewport_rect.height())
+                        self_canvas.background_cache = QtGui.QPixmap(width, height)
+                        self_canvas.background_cache.fill(Qt.transparent)
                     
-                    # Draw the yellow selection rectangle on top of everything else
-                    if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
-                        move_mode.draw_selection_square(painter)
+                    # Save the original strands list
+                    original_strands = list(self_canvas.strands)
                     
-                    # Draw any interaction elements
-                    if hasattr(self_canvas, 'draw_interaction_elements'):
-                        self_canvas.draw_interaction_elements(painter)
+                    # Create a temporary list without the truly moving strands
+                    # This way, affected but not moving strands (like parent strands) 
+                    # will be drawn in their original order
+                    static_strands = [s for s in original_strands if s not in truly_moving_strands]
                     
-                    # Make sure control points are drawn properly but only if we're not moving a control point
-                    # or only draw the control point being moved
-                    if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points and hasattr(self_canvas, 'draw_control_points'):
-                        self_canvas.draw_control_points(painter)
+                    # Temporarily replace the strands list with only static strands
+                    self_canvas.strands = static_strands
                     
-                    # Draw the C-shape specifically for the active strand
-                    if hasattr(move_mode, 'draw_selected_attached_strand'):
-                        move_mode.draw_selected_attached_strand(painter)
+                    # Draw the entire canvas (background, grid, static strands) to the cache
+                    painter = QtGui.QPainter(self_canvas.background_cache)
+                    painter.setRenderHint(QtGui.QPainter.Antialiasing)
                     
-                except Exception as e:
-                    logging.error(f"Error in optimized paint event strand drawing: {e}")
-                finally:
-                    # End the painter properly
+                    # First clear the cache
+                    painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
+                    painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
+                    painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceOver)
+                    
+                    # Draw the entire canvas without truly moving strands
+                    self_canvas.original_paintEvent(event)
+                    
+                    # Mark the cache as valid
+                    self_canvas.background_cache_valid = True
+                    
+                    # Restore original strands
+                    self_canvas.strands = original_strands
+                    
                     if painter.isActive():
                         painter.end()
                         
+                except Exception as e:
+                    logging.error(f"Error creating background cache: {e}")
+                    # Fallback to original paint event if caching fails
+                    self_canvas.original_paintEvent(event)
+                    return
+            
+            # Draw the cached background that has everything except the moving strands
+            painter = QtGui.QPainter(self_canvas)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            
+            try:
+                # Draw the cached background first (has everything except truly moving strands)
+                if hasattr(self_canvas, 'background_cache'):
+                    painter.drawPixmap(0, 0, self_canvas.background_cache)
+                
+                # Now draw only the truly moving strands on top - maintain their original relative order
+                sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
+                for strand in sorted_moving_strands:
+                    if hasattr(strand, 'draw'):
+                        strand.draw(painter)
+                
+                # Draw the C-shape specifically for the active strand
+                if hasattr(move_mode, 'draw_selected_attached_strand'):
+                    move_mode.draw_selected_attached_strand(painter)
+                
+                # Draw the yellow selection rectangle on top of everything else
+                if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
+                    move_mode.draw_selection_square(painter)
+                
+                # Draw any interaction elements
+                if hasattr(self_canvas, 'draw_interaction_elements'):
+                    self_canvas.draw_interaction_elements(painter)
+                
+                # Draw control points only for the moving strands
+                if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points:
+                    if hasattr(self_canvas, 'draw_control_points'):
+                        # Save original strands
+                        original_strands = list(self_canvas.strands)
+                        
+                        # Check if we're moving a control point or a strand endpoint
+                        is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
+                        is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                        
+                        # If we're moving a control point or a strand endpoint, only draw for the affected strand
+                        if is_moving_control_point or is_moving_strand_point:
+                            # Only draw control points for truly moving strands
+                            self_canvas.strands = sorted_moving_strands
+                            self_canvas.draw_control_points(painter)
+                        else:
+                            # Normal behavior when not moving anything
+                            self_canvas.draw_control_points(painter)
+                        
+                        # Restore original strands
+                        self_canvas.strands = original_strands
+                
             except Exception as e:
                 logging.error(f"Error in optimized paint event: {e}")
-                # Restore strands if an error occurs
-                self_canvas.strands = original_strands
+                # If an error occurs, fall back to the original paint event
+                if painter.isActive():
+                    painter.end()
+                self_canvas.original_paintEvent(event)
+            else:
+                if painter.isActive():
+                    painter.end()
         
         # Replace with our optimized paint event
         self.canvas.paintEvent = optimized_paint_event.__get__(self.canvas, type(self.canvas))
@@ -487,6 +495,23 @@ class MoveMode:
                 square_control_size
             )
             painter.drawRect(yellow_rect)
+
+    def invalidate_background_cache(self):
+        """Invalidate the background cache to force a redraw of non-moving elements."""
+        if hasattr(self.canvas, 'background_cache_valid'):
+            self.canvas.background_cache_valid = False
+        if hasattr(self.canvas, 'background_cache'):
+            # Force recreation of the background pixmap on viewport resize
+            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
+            current_width = self.canvas.background_cache.width()
+            current_height = self.canvas.background_cache.height()
+            
+            # If viewport size has changed, recreate the pixmap
+            if current_width != viewport_rect.width() or current_height != viewport_rect.height():
+                width = max(1, viewport_rect.width())
+                height = max(1, viewport_rect.height())
+                self.canvas.background_cache = QtGui.QPixmap(width, height)
+                self.canvas.background_cache_valid = False
 
     def mousePressEvent(self, event):
         """
@@ -599,7 +624,7 @@ class MoveMode:
             # Get the new position
             new_pos = event.pos()
             
-            # 1) Move freely (no grid snap) in real time
+            # Move freely (no grid snap) in real time
             self.update_strand_position(new_pos)
 
             # Ensure the affected strands are stored for drawing
@@ -645,10 +670,8 @@ class MoveMode:
             if hasattr(self.canvas, 'invalidate_background_cache'):
                 self.canvas.invalidate_background_cache()
                 
-            # Force an immediate update for smoother dragging
-            self.canvas.update()
-
             # Use partial update mechanism for optimal performance
+            # This will handle the canvas update() call internally
             self.partial_update()
 
     def mouseReleaseEvent(self, event):
@@ -660,7 +683,7 @@ class MoveMode:
             self.moving_side == 'control_point1' or self.moving_side == 'control_point2')
         
         if self.is_moving and self.moving_point:
-            # 3) Snap the final position once on release
+            # Snap the final position once on release
             final_snapped_pos = self.canvas.snap_to_grid(event.pos())
             self.update_strand_position(final_snapped_pos)
 
@@ -684,9 +707,13 @@ class MoveMode:
                 delattr(self.canvas, 'movement_first_draw')
             if hasattr(self.canvas, 'affected_strands_for_drawing'):
                 delattr(self.canvas, 'affected_strands_for_drawing')
+            if hasattr(self.canvas, 'truly_moving_strands'):
+                delattr(self.canvas, 'truly_moving_strands')
             
             # Reset control point movement flag
             self.is_moving_control_point = False
+            # Reset strand point movement flag
+            self.is_moving_strand_point = False
             
             # Restore original control points visibility
             if hasattr(self.canvas, 'show_control_points'):
@@ -1019,6 +1046,8 @@ class MoveMode:
         self.is_moving = True
         # Set the flag if we're moving a control point
         self.is_moving_control_point = side == 'control_point1' or side == 'control_point2'
+        # Set the flag if we're moving a strand endpoint
+        self.is_moving_strand_point = side == 0 or side == 1
         
         snapped_pos = self.canvas.snap_to_grid(self.moving_point)
         self.update_cursor_position(snapped_pos)
@@ -1064,6 +1093,13 @@ class MoveMode:
         # Keep track of what strands are affected for optimization
         affected_strands = set([self.affected_strand])
         
+        # Identify truly moving strands (ones being dragged by user, not just connected)
+        truly_moving_strands = [self.affected_strand]
+        
+        # For attached strands, we want to also move immediate children but keep parent in original order
+        if isinstance(self.affected_strand, AttachedStrand) and hasattr(self.affected_strand, 'attached_strands'):
+            truly_moving_strands.extend(self.affected_strand.attached_strands)
+        
         # Store the old path of the affected strand for proper redrawing
         old_path_rect = None
         if hasattr(self.affected_strand, 'path') and self.affected_strand.path:
@@ -1091,7 +1127,12 @@ class MoveMode:
             self.affected_strand.is_selected = False
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point - already tracks affected strands
-            self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
+            parent_strand = self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
+            
+            # If we found a parent strand, add it to affected strands but not to truly_moving_strands
+            if parent_strand and parent_strand not in truly_moving_strands:
+                affected_strands.add(parent_strand)
+                
             # Update the selection area
             if self.moving_side == 0:
                 self.selected_rectangle = QRectF(
@@ -1160,6 +1201,9 @@ class MoveMode:
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
         
+        # Also store truly moving strands (the ones that should be on top)
+        self.canvas.truly_moving_strands = truly_moving_strands
+        
         # For immediate visual feedback during dragging, invalidate the cache here too
         if hasattr(self.canvas, 'background_cache_valid'):
             self.canvas.background_cache_valid = False
@@ -1171,11 +1215,16 @@ class MoveMode:
             strand (Strand): The strand to move.
             new_pos (QPointF): The new position.
             moving_side (int or str): Which side of the strand is being moved.
+            
+        Returns:
+            Strand or None: The parent strand if one exists, otherwise None.
         """
         old_start, old_end = strand.start, strand.end
         
         # Keep track of all affected strands for optimized drawing
         affected_strands = set([strand])
+        # Track the parent strand if one exists
+        parent_strand = None
 
         if moving_side == 0:
             # Update control points if they coincide with the start point
@@ -1199,6 +1248,12 @@ class MoveMode:
         # Update parent strands recursively
         parent_strands = self.update_parent_strands(strand)
         affected_strands.update(parent_strands)
+        
+        # Find the immediate parent strand
+        if isinstance(strand, AttachedStrand):
+            parent_strand = self.find_parent_strand(strand)
+            if parent_strand:
+                affected_strands.add(parent_strand)
 
         # Update all attached strands without resetting their control points
         attached_strands = self.update_all_attached_strands(strand, old_start, old_end)
@@ -1235,6 +1290,8 @@ class MoveMode:
             
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
+
+        return parent_strand
 
     def update_parent_strands(self, strand):
         """
@@ -1377,9 +1434,15 @@ class MoveMode:
         
         # Only draw C-shapes for actively moving strands to improve performance
         if self.is_moving and affected_strands:
-            for strand in affected_strands:
-                if strand.is_selected and hasattr(strand, 'has_circles'):
-                    self.draw_c_shape_for_strand(painter, strand)
+            # Performance optimization for red semi-rectangles: Only draw selected strands
+            selected_affected_strands = [strand for strand in affected_strands if strand.is_selected and hasattr(strand, 'has_circles')]
+            
+            # Use a maximum of 2 strands to draw C-shapes for better performance
+            if len(selected_affected_strands) > 2:
+                selected_affected_strands = selected_affected_strands[:2]
+                
+            for strand in selected_affected_strands:
+                self.draw_c_shape_for_strand(painter, strand)
             return
             
         # Fallback to original logic if we're not in moving mode or don't have affected strands
@@ -1396,9 +1459,11 @@ class MoveMode:
             
             # If the affected strand has attached strands, only draw C-shapes for selected ones
             if hasattr(self.affected_strand, 'attached_strands') and self.affected_strand.attached_strands:
-                for attached_strand in self.affected_strand.attached_strands:
-                    if attached_strand.is_selected:
-                        self.draw_c_shape_for_strand(painter, attached_strand)
+                # Limit to at most 2 attached strands for performance
+                selected_attached = [attached for attached in self.affected_strand.attached_strands 
+                                    if attached.is_selected][:2]
+                for attached_strand in selected_attached:
+                    self.draw_c_shape_for_strand(painter, attached_strand)
 
         # Only proceed if we have a strand to highlight and it's selected
         if strand_to_highlight and strand_to_highlight.is_selected:

@@ -252,7 +252,7 @@ class AttachMode(QObject):
                                 self_canvas.draw_grid(painter)
                                 
                         # Then draw all strands except active one
-                        for strand in self.canvas.strands:
+                        for strand in self_canvas.strands:
                             if strand != active_strand and hasattr(strand, 'draw'):
                                 strand.draw(painter)
                 else:
@@ -265,20 +265,32 @@ class AttachMode(QObject):
                             self_canvas.draw_grid(painter)
                             
                     # Then draw all strands except active one
-                    for strand in self.canvas.strands:
+                    for strand in self_canvas.strands:
                         if strand != active_strand and hasattr(strand, 'draw'):
                             strand.draw(painter)
                 
                 # Save state for safety
                 painter.save()
                 
-                # Now only draw the active strand in the update region
+                # Set clip rect for efficient drawing
                 painter.setClipRect(update_rect)
-                active_strand.draw(painter)
+                
+                # Draw the highlight for the affected strand first
+                affected_strand = getattr(self_canvas.current_mode, 'affected_strand', None) if hasattr(self_canvas, 'current_mode') else None
+                if affected_strand and hasattr(self_canvas, 'draw_highlighted_strand'):
+                    # Temporarily set is_selected to ensure highlighting
+                    was_selected = getattr(affected_strand, 'is_selected', False)
+                    affected_strand.is_selected = True
+                    self_canvas.draw_highlighted_strand(painter, affected_strand)
+                    # Restore original selection state
+                    affected_strand.is_selected = was_selected
                 
                 # Draw any interaction elements
                 if hasattr(self_canvas, 'draw_interaction_elements'):
                     self_canvas.draw_interaction_elements(painter)
+                
+                # Now draw the active strand last (on top of everything)
+                active_strand.draw(painter)
                 
                 # Make sure control points are drawn properly
                 if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points and hasattr(self_canvas, 'draw_control_points'):

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, Qt
+from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
@@ -161,9 +161,16 @@ class AttachMode(QObject):
             
             # Check if the update rect intersects with the event rect
             # Only proceed with our custom drawing if it does
-            if not update_rect.intersects(event.rect()):
-                self_canvas.original_paintEvent(event)
-                return
+            if isinstance(update_rect, QRectF):
+                # If update_rect is QRectF, convert event.rect() to QRectF too
+                if not update_rect.intersects(QRectF(event.rect())):
+                    self_canvas.original_paintEvent(event)
+                    return
+            else:
+                # If update_rect is QRect, use event.rect() directly
+                if not update_rect.intersects(event.rect()):
+                    self_canvas.original_paintEvent(event)
+                    return
                 
             # Start the painter
             painter = QtGui.QPainter(self_canvas)

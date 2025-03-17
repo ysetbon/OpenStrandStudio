@@ -937,6 +937,15 @@ class StrandDrawingCanvas(QWidget):
 
         # Move mode setup
         self.move_mode = MoveMode(self)
+        
+        # Apply draw_only_affected_strand setting from user settings if available
+        try:
+            draw_only_setting = self.load_draw_only_affected_strand_setting()
+            if draw_only_setting is not None:
+                self.move_mode.draw_only_affected_strand = draw_only_setting
+                logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
+        except Exception as e:
+            logging.error(f"Error applying draw_only_affected_strand setting: {e}")
 
         # Mask mode setup
         self.mask_mode = MaskMode(self)
@@ -956,6 +965,42 @@ class StrandDrawingCanvas(QWidget):
         # Initialize mode-specific properties
         self.is_angle_adjusting = False
         self.mask_mode_active = False
+
+    def load_draw_only_affected_strand_setting(self):
+        """Load draw_only_affected_strand setting from user_settings.txt if available."""
+        try:
+            import os
+            import sys
+            from PyQt5.QtCore import QStandardPaths
+            
+            # Use the appropriate directory for each OS
+            app_name = "OpenStrand Studio"
+            if sys.platform == 'darwin':  # macOS
+                program_data_dir = os.path.expanduser('~/Library/Application Support')
+                settings_dir = os.path.join(program_data_dir, app_name)
+            else:
+                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+            file_path = os.path.join(settings_dir, 'user_settings.txt')
+            logging.info(f"StrandDrawingCanvas looking for draw_only_affected_strand setting at: {file_path}")
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('DrawOnlyAffectedStrand:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            draw_only_setting = (value == 'true')
+                            logging.info(f"StrandDrawingCanvas found DrawOnlyAffectedStrand in settings: {draw_only_setting}")
+                            return draw_only_setting
+            else:
+                logging.info(f"StrandDrawingCanvas: Settings file not found at {file_path}, will use default draw_only_affected_strand setting")
+                
+            return None
+        except Exception as e:
+            logging.error(f"StrandDrawingCanvas error loading draw_only_affected_strand from settings: {e}")
+            return None
 
     def show_control_points(self, visible):
         """Show or hide control points on the canvas."""
@@ -1633,7 +1678,6 @@ class StrandDrawingCanvas(QWidget):
 
     def draw_highlighted_strand(self, painter, strand):
         """Draw a highlighted version of a strand."""
-
         if isinstance(strand, MaskedStrand):
             self.draw_highlighted_masked_strand(painter, strand)
         else:
@@ -1653,14 +1697,19 @@ class StrandDrawingCanvas(QWidget):
             # Draw the regular strand
             strand.draw(painter)
             
+            # Check if we're moving a control point
+            is_moving_control_point = False
+            if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
+                move_mode = self.current_mode
+                is_moving_control_point = move_mode.is_moving_control_point
+            
             # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
-                if has_circle:
+                # Skip drawing C-shapes when moving control points
+                if has_circle and not is_moving_control_point:
                     # Save painter state
                     painter.save()
                     
-                
-
                     center = strand.start if i == 0 else strand.end
                     
                     # Calculate the proper radius for the highlight

@@ -29,6 +29,12 @@ cp -f "/Applications/OpenStrand Studio.app/Contents/Resources/box_stitch.icns" "
 LAUNCH_AGENT_DIR="$USER_HOME/Library/LaunchAgents"
 mkdir -p "$LAUNCH_AGENT_DIR"
 
+# Ensure all dependencies are properly accessible
+# This can help with dependency issues like missing PyQt5
+if [ -d "/Applications/OpenStrand Studio.app/Contents/Resources/lib/python3.9/site-packages" ]; then
+    chmod -R 755 "/Applications/OpenStrand Studio.app/Contents/Resources/lib/python3.9/site-packages"
+fi
+
 # Ask if user wants to launch the app now
 osascript <<EOD
     tell application "System Events"
@@ -102,7 +108,7 @@ EOF
 
 # Create component package
 pkgbuild \
-    --root "/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrand Studio.app" \
+    --root "/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
     --install-location "/Applications/OpenStrand Studio.app" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "$IDENTIFIER" \

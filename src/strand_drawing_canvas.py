@@ -1769,26 +1769,56 @@ class StrandDrawingCanvas(QWidget):
 
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing)
+        import logging
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
 
-            # First check if there's an actual intersection between the strands
-            path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
-            path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)
-            intersection_path = path1.intersected(path2)
+        # First check if there's an actual intersection between the strands
+        path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
+        path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)
+        intersection_path = path1.intersected(path2)
+        
+        # Initialize shadow path data to prevent 'all_shadow_paths' errors
+        if hasattr(masked_strand, 'initialize_shadow_path'):
+            masked_strand.initialize_shadow_path()
+        
+        # Log the selection state for debugging
+        logging.info(f"Drawing highlighted masked strand: {masked_strand.layer_name}, is_selected={masked_strand.is_selected}")
+        
+        # Only proceed with drawing if there's an actual intersection
+        if not intersection_path.isEmpty():
+            # Always draw the masked strand normally first
+            masked_strand.draw(painter)
             
-            # Only proceed with drawing if there's an actual intersection
-            if not intersection_path.isEmpty():
-                # Draw the masked strand normally (filling it in, etc.)
-                masked_strand.draw(painter)
+            # Determine if we should draw highlight
+            should_draw_highlight = masked_strand.is_selected
+            
+            # Check if we're in active movement (any type)
+            if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
+                move_mode = self.current_mode
                 
-                # Now call the "masked_strand.draw_highlight" method
+                # Only skip highlight during active movement, not after movement is complete
+                if move_mode.is_moving and move_mode.affected_strand == masked_strand:
+                    logging.info(f"Active movement in progress for {masked_strand.layer_name}")
+                    # Even during movement, highlight if this strand is selected
+                    # This ensures proper visual feedback during movement
+                    if masked_strand.is_selected:
+                        logging.info(f"Strand is selected during movement, will draw highlight")
+                        should_draw_highlight = True
+                    else:
+                        logging.info(f"Strand is not selected during movement, skipping highlight")
+                        should_draw_highlight = False
+            
+            # Draw highlight if appropriate
+            if should_draw_highlight:
+                logging.info(f"Drawing highlight for masked strand: {masked_strand.layer_name}")
                 masked_strand.draw_highlight(painter)
             else:
-                
-                logging.info(f"Skipping masked strand highlights: no intersection between strands for {masked_strand.layer_name}")
+                logging.info(f"Skipping highlight for masked strand: {masked_strand.layer_name} (not selected or active movement)")
+        else:
+            logging.info(f"Skipping masked strand highlights: no intersection between strands for {masked_strand.layer_name}")
 
-            painter.restore()
+        painter.restore()
 
     def set_layer_panel(self, layer_panel):
         """Set the layer panel and connect signals."""

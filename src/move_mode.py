@@ -1004,6 +1004,39 @@ class MoveMode:
         """
         Handle mouse release events.
         """
+        import logging
+        from PyQt5.QtCore import QPointF, QTimer
+        
+        # Simple flag to track if we need to reselect a masked strand
+        need_to_reselect_masked_strand = False
+        strand_to_reselect = None
+        
+        # Store the current affected strand for later use
+        current_affected_strand = self.affected_strand
+        current_originally_selected = self.originally_selected_strand
+        
+        # Check for ANY movement of a masked strand (control points or regular movement)
+        if self.is_moving and self.moving_point:
+            # For control point movement
+            if self.moving_side == 'control_point1' or self.moving_side == 'control_point2':
+                if current_affected_strand and isinstance(current_affected_strand, MaskedStrand):
+                    need_to_reselect_masked_strand = True
+                    strand_to_reselect = current_affected_strand
+                    logging.info(f"Will reselect affected masked strand (control point): {current_affected_strand.layer_name}")
+                elif current_originally_selected and isinstance(current_originally_selected, MaskedStrand):
+                    need_to_reselect_masked_strand = True
+                    strand_to_reselect = current_originally_selected
+                    logging.info(f"Will reselect originally selected masked strand (control point): {current_originally_selected.layer_name}")
+            # For regular strand movement (start, end, or body)
+            elif current_affected_strand and isinstance(current_affected_strand, MaskedStrand):
+                need_to_reselect_masked_strand = True
+                strand_to_reselect = current_affected_strand
+                logging.info(f"Will reselect affected masked strand (regular movement): {current_affected_strand.layer_name}")
+            elif current_originally_selected and isinstance(current_originally_selected, MaskedStrand):
+                need_to_reselect_masked_strand = True
+                strand_to_reselect = current_originally_selected
+                logging.info(f"Will reselect originally selected masked strand (regular movement): {current_originally_selected.layer_name}")
+        
         # Stop the hold timer if it exists
         if hasattr(self, 'hold_timer'):
             self.hold_timer.stop()
@@ -1011,13 +1044,6 @@ class MoveMode:
         # Stop the continuous redraw timer if it exists
         if hasattr(self, 'redraw_timer'):
             self.redraw_timer.stop()
-            
-        # Store if we were moving control points
-        was_moving_control_point = self.is_moving and self.moving_point and (
-            self.moving_side == 'control_point1' or self.moving_side == 'control_point2')
-        
-        # Store if we were moving a MaskedStrand
-        was_moving_masked_strand = self.is_moving and self.moving_point and isinstance(self.affected_strand, MaskedStrand)
         
         if self.is_moving and self.moving_point:
             # Snap the final position once on release
@@ -1066,51 +1092,48 @@ class MoveMode:
                 for attached in strand.attached_strands:
                     attached.is_selected = False
 
-        if self.user_deselected_all:
-            # If user explicitly deselected all strands, clear selection
-            self.canvas.selected_strand = None
-            self.canvas.selected_attached_strand = None
-        elif was_moving_masked_strand:
-            # For MaskedStrand, restore selection to that strand
-            if self.affected_strand:
-                self.affected_strand.is_selected = True
-                self.canvas.selected_strand = self.affected_strand
-        elif was_moving_control_point:
-            # For control point movement, restore selection to the originally selected strand
-            if self.originally_selected_strand:
-                self.originally_selected_strand.is_selected = True
-                if isinstance(self.originally_selected_strand, MaskedStrand):
-                    self.canvas.selected_strand = self.originally_selected_strand
-                else:
-                    self.canvas.selected_attached_strand = self.originally_selected_strand
-            elif self.affected_strand:
-                self.affected_strand.is_selected = True
-                if isinstance(self.affected_strand, MaskedStrand):
-                    self.canvas.selected_strand = self.affected_strand
-                else:
-                    self.canvas.selected_attached_strand = self.affected_strand
-        elif self.canvas.selected_strand is None and self.canvas.selected_attached_strand is None:
-            # If no selection exists (and not in control point movement), clear saved selections
-            self.originally_selected_strand = None
-            self.highlighted_strand = None
+        # Clear both selection properties to prevent conflicts
+        self.canvas.selected_attached_strand = None
+        self.canvas.selected_strand = None
+
+        # SIMPLE APPROACH: If we need to reselect a masked strand, do it now
+        if need_to_reselect_masked_strand and strand_to_reselect:
+            logging.info(f"Reselecting masked strand: {strand_to_reselect.layer_name}")
+            strand_to_reselect.is_selected = True
+            self.canvas.selected_strand = strand_to_reselect
+        # Otherwise handle other cases
+        elif self.user_deselected_all:
+            # If user explicitly deselected all strands, keep selection cleared
+            logging.info("MoveMode: User deselected all strands")
+        elif self.originally_selected_strand:
+            logging.info(f"MoveMode: Selecting originally_selected_strand: {self.originally_selected_strand.__class__.__name__}")
+            self.originally_selected_strand.is_selected = True
+            if isinstance(self.originally_selected_strand, MaskedStrand):
+                self.canvas.selected_strand = self.originally_selected_strand
+            else:
+                self.canvas.selected_attached_strand = self.originally_selected_strand
+        elif current_affected_strand:
+            logging.info(f"MoveMode: Selecting current_affected_strand: {current_affected_strand.__class__.__name__}")
+            current_affected_strand.is_selected = True
+            if isinstance(current_affected_strand, MaskedStrand):
+                self.canvas.selected_strand = current_affected_strand
+            else:
+                self.canvas.selected_attached_strand = current_affected_strand
         elif self.highlighted_strand:
-            # Restore highlighted strand if available
+            logging.info(f"MoveMode: Selecting highlighted_strand: {self.highlighted_strand.__class__.__name__}")
             self.highlighted_strand.is_selected = True
-            self.canvas.selected_attached_strand = self.highlighted_strand
+            if isinstance(self.highlighted_strand, MaskedStrand):
+                self.canvas.selected_strand = self.highlighted_strand
+            else:
+                self.canvas.selected_attached_strand = self.highlighted_strand
+
+        # Log the final selection state
+        if self.canvas.selected_strand:
+            logging.info(f"MoveMode: Final selection - selected_strand: {self.canvas.selected_strand.layer_name}")
+        elif self.canvas.selected_attached_strand:
+            logging.info(f"MoveMode: Final selection - selected_attached_strand: {self.canvas.selected_attached_strand.layer_name}")
         else:
-            # Default restoration for non-control point movement
-            if self.originally_selected_strand:
-                self.originally_selected_strand.is_selected = True
-                if isinstance(self.originally_selected_strand, MaskedStrand):
-                    self.canvas.selected_strand = self.originally_selected_strand
-                else:
-                    self.canvas.selected_attached_strand = self.originally_selected_strand
-            elif self.affected_strand:
-                self.affected_strand.is_selected = True
-                if isinstance(self.affected_strand, MaskedStrand):
-                    self.canvas.selected_strand = self.affected_strand
-                else:
-                    self.canvas.selected_attached_strand = self.affected_strand
+            logging.info("MoveMode: Final selection - No strand selected")
 
         # Reset all properties
         self.is_moving = False
@@ -1130,7 +1153,7 @@ class MoveMode:
         # We keep originally_selected_strand to maintain selection between events
         # Don't reset it here as it's needed for proper selection persistence
         
-        # Delay canvas update to ensure clean redraw after all reset operations
+        # Force redraw after a short delay to ensure selection is visible
         QTimer.singleShot(10, self.canvas.update)
 
     def gradual_move(self):
@@ -1397,9 +1420,15 @@ class MoveMode:
         return True
 
     def start_movement(self, strand, side, area):
-        """
-        Start the movement of a strand's point without changing its selection state.
-        """
+        """Start movement tracking for a strand."""
+        # Save the currently selected strand before starting a new movement operation
+        if self.canvas.selected_strand is not None:
+            self.originally_selected_strand = self.canvas.selected_strand
+        elif self.canvas.selected_attached_strand is not None:
+            self.originally_selected_strand = self.canvas.selected_attached_strand
+
+        # Rest of the existing function
+        self.moving = True
         self.moving_side = side
         
         # For QPainterPath, get the bounding rectangle and center

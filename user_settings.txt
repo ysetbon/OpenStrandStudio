@@ -1,4 +1,4 @@
 Theme: dark
 Language: en
 ShadowColor: 0,0,0,150
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false

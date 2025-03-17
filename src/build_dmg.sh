@@ -2,8 +2,8 @@
 
 # Set variables to match ISS configuration
 APP_NAME="OpenStrand Studio"
-VERSION="1.071"
-APP_DATE="27_Oct_2024"
+VERSION="1.090"
+APP_DATE="16_Mar_2025"
 PUBLISHER="Yonatan Setbon"
 DMG_NAME="OpenStrandStudioSetup_${APP_DATE}_${VERSION}"
 
@@ -36,10 +36,11 @@ By $PUBLISHER
 Contact: ysetbon@gmail.com
 
 New in this version:
-- Enhanced mask creation with visual feedback: first strand selection is now highlighted in red for better clarity
-- New mask editing features: right-click on masked layers to edit or reset the mask intersection
-- Improved attached strand visualization with properly masked half-circles
-- Optimized for macOS with native look and feel
+- Improved UI for move and attached modes
+- Faster calculation when handling many strands
+- Fixed various bugs in main window
+- Fixed connection of strands that lost information
+- Added shading option for improved visual appearance
 
 Installation:
 1. Drag '$APP_NAME' to the Applications folder

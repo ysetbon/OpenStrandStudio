@@ -2,8 +2,8 @@
 
 # Set variables
 APP_NAME="OpenStrand Studio"
-VERSION="1_073"
-APP_DATE="7_Nov_2024"
+VERSION="1_090"
+APP_DATE="16_Mar_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatansetbon.openstrandstudio"
 
@@ -78,8 +78,11 @@ cat > "$RESOURCES_DIR/welcome.html" << EOF
     <p>This will install $APP_NAME on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Fixed JSON loading and saving functionality</li>
-        <li>Fixed layer deletion in the layer panel</li>
+        <li>Improved UI for move and attached modes</li>
+        <li>Faster calculation when handling many strands</li>
+        <li>Fixed various bugs in main window</li>
+        <li>Fixed connection of strands that lost information</li>
+        <li>Added shading option for improved visual appearance</li>
     </ul>
 </body>
 </html>
@@ -91,7 +94,7 @@ cat > "$RESOURCES_DIR/license.html" << EOF
 <html>
 <body>
     <h2>License Agreement</h2>
-    <p>Copyright (c) 2024 $PUBLISHER</p>
+    <p>Copyright (c) 2025 $PUBLISHER</p>
     <p>By installing this software, you agree to the terms and conditions.</p>
 </body>
 </html>

@@ -2101,55 +2101,73 @@ class MaskedStrand(Strand):
         """Update deletion rectangles position while maintaining strand positions."""
         if not hasattr(self, 'base_center_point') or not self.base_center_point:
             logging.warning("No base center point set, cannot update")
-            return
+            # Try to calculate center points if they don't exist
+            self.calculate_center_point()
+            # If still no base_center_point, we can't proceed
+            if not hasattr(self, 'base_center_point') or not self.base_center_point:
+                return
 
-        if new_position:
-            # Calculate the movement delta
-            delta_x = new_position.x() - self.base_center_point.x()
-            delta_y = new_position.y() - self.base_center_point.y()
+        # If no new position is provided, use the current edited_center_point if available
+        if not new_position:
+            if hasattr(self, 'edited_center_point') and self.edited_center_point:
+                new_position = self.edited_center_point
+                logging.info(f"Using current edited_center_point as new position")
+            else:
+                logging.warning("No new position provided and no edited_center_point available")
+                return
 
-            # Only proceed if there's actual movement
-            if abs(delta_x) > 0.01 or abs(delta_y) > 0.01:
-                logging.info(f"➡️ Movement delta: dx={delta_x:.2f}, dy={delta_y:.2f}")
+        # Calculate the movement delta
+        delta_x = new_position.x() - self.base_center_point.x()
+        delta_y = new_position.y() - self.base_center_point.y()
 
-                # Shift each deletion rectangle's corners by (delta_x, delta_y)
-                for rect in self.deletion_rectangles:
-                    top_left = QPointF(*rect['top_left'])
-                    top_right = QPointF(*rect['top_right'])
-                    bottom_left = QPointF(*rect['bottom_left'])
-                    bottom_right = QPointF(*rect['bottom_right'])
+        # Only proceed if there's actual movement
+        if abs(delta_x) > 0.01 or abs(delta_y) > 0.01:
+            logging.info(f"➡️ Movement delta: dx={delta_x:.2f}, dy={delta_y:.2f}")
 
-                    # Update corner positions
-                    rect['top_left'] = (top_left.x() + delta_x, top_left.y() + delta_y)
-                    rect['top_right'] = (top_right.x() + delta_x, top_right.y() + delta_y)
-                    rect['bottom_left'] = (bottom_left.x() + delta_x, bottom_left.y() + delta_y)
-                    rect['bottom_right'] = (bottom_right.x() + delta_x, bottom_right.y() + delta_y)
+            # Shift each deletion rectangle's corners by (delta_x, delta_y)
+            for rect in self.deletion_rectangles:
+                top_left = QPointF(*rect['top_left'])
+                top_right = QPointF(*rect['top_right'])
+                bottom_left = QPointF(*rect['bottom_left'])
+                bottom_right = QPointF(*rect['bottom_right'])
 
-                # Update the base_center_point
-                self.base_center_point = QPointF(new_position)
+                # Update corner positions
+                rect['top_left'] = (top_left.x() + delta_x, top_left.y() + delta_y)
+                rect['top_right'] = (top_right.x() + delta_x, top_right.y() + delta_y)
+                rect['bottom_left'] = (bottom_left.x() + delta_x, bottom_left.y() + delta_y)
+                rect['bottom_right'] = (bottom_right.x() + delta_x, bottom_right.y() + delta_y)
 
-                # Force a complete shadow and mask update
-                self.force_shadow_update()
+            # Update the base_center_point
+            self.base_center_point = QPointF(new_position)
+            
+            # Also update edited_center_point to match
+            if hasattr(self, 'edited_center_point'):
+                self.edited_center_point = QPointF(new_position)
 
-                # Update the shape of both selected strands
+            # Force a complete shadow and mask update
+            self.force_shadow_update()
+
+            # Update the shape of both selected strands
+            if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
                 if hasattr(self.first_selected_strand, 'update_shape'):
                     self.first_selected_strand.update_shape()
                     if hasattr(self.first_selected_strand, 'update_side_line'):
                         self.first_selected_strand.update_side_line()
-                
+            
+            if hasattr(self, 'second_selected_strand') and self.second_selected_strand:
                 if hasattr(self.second_selected_strand, 'update_shape'):
                     self.second_selected_strand.update_shape()
                     if hasattr(self.second_selected_strand, 'update_side_line'):
                         self.second_selected_strand.update_side_line()
 
-                # Update canvas if available
-                if hasattr(self, 'canvas') and self.canvas:
-                    self.canvas.update()
+            # Update canvas if available
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.update()
 
-            else:
-                logging.info("ℹ️ No movement detected, skipping updates")
+        else:
+            logging.info("ℹ️ No movement detected, skipping updates")
 
-            logging.info(f"=== Completed MaskedStrand update for {self.layer_name} ===\n")
+        logging.info(f"=== Completed MaskedStrand update for {self.layer_name} ===\n")
         self.force_shadow_update()
     
     # Add this as a separate method
@@ -2299,8 +2317,25 @@ class MaskedStrand(Strand):
                 delattr(self, attr)
                 logging.info(f"Cleared cache for {attr} after mask update")
 
-        # Update center points if needed
+        # Always update center points after mask path changes
+        old_base_center = self.base_center_point if hasattr(self, 'base_center_point') else None
+        old_edited_center = self.edited_center_point if hasattr(self, 'edited_center_point') else None
+        
+        # Calculate new center points
         self.calculate_center_point()
+        
+        # Log center point changes for debugging
+        if hasattr(self, 'base_center_point') and old_base_center:
+            dx = self.base_center_point.x() - old_base_center.x() if self.base_center_point else 0
+            dy = self.base_center_point.y() - old_base_center.y() if self.base_center_point else 0
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                logging.info(f"Base center point moved: dx={dx:.2f}, dy={dy:.2f}")
+                
+        if hasattr(self, 'edited_center_point') and old_edited_center:
+            dx = self.edited_center_point.x() - old_edited_center.x() if self.edited_center_point else 0
+            dy = self.edited_center_point.y() - old_edited_center.y() if self.edited_center_point else 0
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                logging.info(f"Edited center point moved: dx={dx:.2f}, dy={dy:.2f}")
 
         logging.info(f"Updated mask path for {self.layer_name}")
 
@@ -2404,14 +2439,47 @@ class MaskedStrand(Strand):
         # If edited_center_point is None, try to fall back to base_center_point
         if self.edited_center_point is None and self.base_center_point is not None:
             logging.warning(f"Using base center point as fallback for {self.layer_name}")
-            self.edited_center_point = self.base_center_point
+            self.edited_center_point = QPointF(self.base_center_point)
         
         # If still None, use the midpoint between the strands as fallback
-        if self.edited_center_point is None and self.first_selected_strand and self.second_selected_strand:
-            mid_x = (self.first_selected_strand.start.x() + self.second_selected_strand.start.x()) / 2
-            mid_y = (self.first_selected_strand.start.y() + self.second_selected_strand.start.y()) / 2
-            self.edited_center_point = QPointF(mid_x, mid_y)
-            logging.warning(f"Using fallback midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
+        if self.edited_center_point is None:
+            # Try to use the midpoint of the strands' endpoints
+            if hasattr(self, 'first_selected_strand') and hasattr(self, 'second_selected_strand'):
+                if self.first_selected_strand and self.second_selected_strand:
+                    # Calculate midpoint of all four endpoints for better stability
+                    points = [
+                        self.first_selected_strand.start,
+                        self.first_selected_strand.end,
+                        self.second_selected_strand.start,
+                        self.second_selected_strand.end
+                    ]
+                    
+                    # Filter out None values
+                    valid_points = [p for p in points if p is not None]
+                    
+                    if valid_points:
+                        # Calculate average position
+                        sum_x = sum(p.x() for p in valid_points)
+                        sum_y = sum(p.y() for p in valid_points)
+                        mid_x = sum_x / len(valid_points)
+                        mid_y = sum_y / len(valid_points)
+                        
+                        self.edited_center_point = QPointF(mid_x, mid_y)
+                        logging.warning(f"Using fallback midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
+            
+            # If still None, use our own endpoints as last resort
+            if self.edited_center_point is None and hasattr(self, 'start') and hasattr(self, 'end'):
+                if self.start and self.end:
+                    mid_x = (self.start.x() + self.end.x()) / 2
+                    mid_y = (self.start.y() + self.end.y()) / 2
+                    self.edited_center_point = QPointF(mid_x, mid_y)
+                    logging.warning(f"Using own endpoints midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
+        
+        # Last resort - create a default point if everything else failed
+        if self.edited_center_point is None:
+            logging.error(f"Failed to calculate any center point for {self.layer_name}, using default")
+            self.edited_center_point = QPointF(0, 0)
+            self.base_center_point = QPointF(0, 0)
             
         return self.edited_center_point  # Return edited center point for display
         
@@ -2488,3 +2556,39 @@ class MaskedStrand(Strand):
                 painter.drawPath(mask_path)
 
         painter.restore()
+
+    def force_complete_update(self):
+        """Force a complete update of the MaskedStrand and all its components."""
+        # Update mask path
+        self.update_mask_path()
+        
+        # Recalculate center points
+        self.calculate_center_point()
+        
+        # Update shapes of constituent strands
+        if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
+            self.first_selected_strand.update_shape()
+            if hasattr(self.first_selected_strand, 'update_side_line'):
+                self.first_selected_strand.update_side_line()
+        
+        if hasattr(self, 'second_selected_strand') and self.second_selected_strand:
+            self.second_selected_strand.update_shape()
+            if hasattr(self.second_selected_strand, 'update_side_line'):
+                self.second_selected_strand.update_side_line()
+        
+        # Force shadow update
+        self.force_shadow_update()
+        
+        # Update with center point if available
+        if hasattr(self, 'edited_center_point') and self.edited_center_point:
+            self.update(self.edited_center_point)
+        elif hasattr(self, 'base_center_point') and self.base_center_point:
+            self.update(self.base_center_point)
+            
+        # Update canvas if available
+        if hasattr(self, 'canvas') and self.canvas:
+            if hasattr(self.canvas, 'background_cache_valid'):
+                self.canvas.background_cache_valid = False
+            self.canvas.update()
+            
+        logging.info(f"Completed force_complete_update for {self.layer_name}")

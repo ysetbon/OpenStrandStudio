@@ -978,17 +978,71 @@ class StrandDrawingCanvas(QWidget):
 
         logging.info(f"Painting {len(self.strands)} strands")
 
+        # Check if we're in move mode and should only draw the affected strand
+        draw_all_strands = True
+        if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
+            draw_all_strands = False
+            # In this case, the background will be handled by the cached background
+            logging.info("Using optimized drawing mode - only drawing affected strands")
+
         # Draw ALL existing strands first (background)
-        for strand in self.strands:
-            logging.info(f"Drawing strand '{strand.layer_name}'")
-            if not hasattr(strand, 'canvas'):
-                strand.canvas = self  # Ensure all strands have canvas reference
-            # Only highlight selected strand if we're not in mask mode
-            if strand == self.selected_strand and not isinstance(self.current_mode, MaskMode):
-                logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
-                self.draw_highlighted_strand(painter, strand)
-            else:
-                strand.draw(painter)
+        if draw_all_strands:
+            for strand in self.strands:
+                logging.info(f"Drawing strand '{strand.layer_name}'")
+                if not hasattr(strand, 'canvas'):
+                    strand.canvas = self  # Ensure all strands have canvas reference
+                # Only highlight selected strand if we're not in mask mode
+                if strand == self.selected_strand and not isinstance(self.current_mode, MaskMode):
+                    logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
+                    self.draw_highlighted_strand(painter, strand)
+                else:
+                    strand.draw(painter)
+        else:
+            # When optimizing, we only draw the moving strand and connected strands
+            # Get the affected strand from MoveMode (the one being moved)
+            affected_strand = None
+            connected_strands = []
+            
+            if isinstance(self.current_mode, MoveMode):
+                affected_strand = self.current_mode.affected_strand
+                
+                # If we're moving an attached strand, handle it differently
+                if hasattr(self.current_mode, 'temp_selected_strand') and self.current_mode.temp_selected_strand:
+                    affected_strand = self.current_mode.temp_selected_strand
+                
+                # If we're explicitly moving a strand that's not the selected one
+                if affected_strand is None and self.current_mode.is_moving:
+                    # Try to get the strand from originally_selected_strand
+                    affected_strand = self.current_mode.originally_selected_strand
+                
+                # Final fallback to the selected strand if no other strand is being moved
+                if affected_strand is None:
+                    affected_strand = self.selected_strand
+                
+                # Get any connected/attached strands that are also being affected
+                # Try to get attached strands from the current move operation
+                if affected_strand and self.current_mode.moving_side is not None:
+                    # Find connected strands at the moving point
+                    moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
+                    for strand in self.strands:
+                        if strand != affected_strand:
+                            # Check if this strand is connected to the affected strand at the moving side
+                            if (self.current_mode.moving_side == 0 and 
+                                self.current_mode.points_are_close(strand.end, moving_point)) or \
+                               (self.current_mode.moving_side == 1 and 
+                                self.current_mode.points_are_close(strand.start, moving_point)):
+                                connected_strands.append(strand)
+            
+            # Draw the affected strand if available
+            if affected_strand:
+                logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
+                # Draw the affected strand as highlighted
+                self.draw_highlighted_strand(painter, affected_strand)
+                
+                # Draw any connected strands
+                for strand in connected_strands:
+                    logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
+                    strand.draw(painter)
 
         # Draw the temporary strand (whether it's a new strand or an attached strand)
         if self.current_strand:
@@ -1105,129 +1159,134 @@ class StrandDrawingCanvas(QWidget):
             # Track positions where rectangles have been drawn to avoid duplicates
             drawn_rectangle_positions = []
 
+            # Skip drawing all rectangles if in optimized drawing mode
+            if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
+                # When draw_only_affected_strand is enabled, don't draw any control point rectangles
+                pass
             # Draw squares around each strand's start/end
-            for strand in self.strands:
-                if not isinstance(strand, MaskedStrand):
-                    if hasattr(strand, 'start') and hasattr(strand, 'end'):
-                        # Check if a control point or strand point is being moved
-                        is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
-                        is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
-                        
-                        # If a control point or strand point is being moved, only draw for the affected strand
-                        if (is_moving_control_point or is_moving_strand_point) and strand != self.current_mode.affected_strand:
-                            continue
-                            
-                        # Increased square size for better visibility
-                        square_size = 85
-                        half_size = square_size / 2
-                        square_control_size = 35
-                        half_control_size = square_control_size / 2
-                        yellow_square_size = 85  # Size for the yellow selection square
-                        half_yellow_size = yellow_square_size / 2
-                        
-                        # Skip drawing only the exact selected point, not any overlapping rectangles
-                        skip_start = (strand == selected_strand and selected_side == 0)
-                        skip_end = (strand == selected_strand and selected_side == 1)
-                        
-                        # Create rectangles for checking overlap
-                        start_rect = QRectF(
-                            strand.start.x() - half_size,
-                            strand.start.y() - half_size,
-                            square_size,
-                            square_size
-                        )
-                        
-                        end_rect = QRectF(
-                            strand.end.x() - half_size,
-                            strand.end.y() - half_size,
-                            square_size,
-                            square_size
-                        )
-                        
-                        # Check if rectangles overlap with yellow rectangle
-                        start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
-                        end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
-                        
-                        # Check if rectangles already drawn at these positions (to avoid duplicates at connections)
-                        start_already_drawn = False
-                        end_already_drawn = False
-                        
-                        for pos in drawn_rectangle_positions:
-                            if self.points_are_close(strand.start, pos):
-                                start_already_drawn = True
-                            if self.points_are_close(strand.end, pos):
-                                end_already_drawn = True
-                        
-                        # Draw with red color for non-selected rectangles
-                        square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
-                        painter.setBrush(QBrush(square_color))
-                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
-                        
-                        # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
-                        if not skip_start and not start_overlaps_yellow and not start_already_drawn:
-                            painter.drawRect(start_rect)
-                            drawn_rectangle_positions.append(QPointF(strand.start))
-
-                        # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
-                        if not skip_end and not end_overlaps_yellow and not end_already_drawn:
-                            painter.drawRect(end_rect)
-                            drawn_rectangle_positions.append(QPointF(strand.end))
-
-                        # Draw squares around control points if present (and not MaskedStrand)
-                        if not isinstance(strand, MaskedStrand):
-                            # Skip drawing only the exact selected control point
-                            skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
-                            skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
-                            
-                            # Check if a control point is being moved
+            else:
+                for strand in self.strands:
+                    if not isinstance(strand, MaskedStrand):
+                        if hasattr(strand, 'start') and hasattr(strand, 'end'):
+                            # Check if a control point or strand point is being moved
                             is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                            is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
                             
-                            # If moving a control point, only draw it for the current strand
-                            if is_moving_control_point and strand != self.current_mode.affected_strand:
+                            # If a control point or strand point is being moved, only draw for the affected strand
+                            if (is_moving_control_point or is_moving_strand_point) and strand != self.current_mode.affected_strand:
                                 continue
                                 
-                            # Create control point rectangles for overlap checking
-                            cp1_rect = None
-                            cp2_rect = None
+                            # Increased square size for better visibility
+                            square_size = 85
+                            half_size = square_size / 2
+                            square_control_size = 35
+                            half_control_size = square_control_size / 2
+                            yellow_square_size = 85  # Size for the yellow selection square
+                            half_yellow_size = yellow_square_size / 2
                             
-                            if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
-                                cp1_rect = QRectF(
-                                    strand.control_point1.x() - half_control_size,
-                                    strand.control_point1.y() - half_control_size,
-                                    square_control_size,
-                                    square_control_size
-                                )
+                            # Skip drawing only the exact selected point, not any overlapping rectangles
+                            skip_start = (strand == selected_strand and selected_side == 0)
+                            skip_end = (strand == selected_strand and selected_side == 1)
                             
-                            if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
-                                cp2_rect = QRectF(
-                                    strand.control_point2.x() - half_control_size,
-                                    strand.control_point2.y() - half_control_size,
-                                    square_control_size,
-                                    square_control_size
-                                )
+                            # Create rectangles for checking overlap
+                            start_rect = QRectF(
+                                strand.start.x() - half_size,
+                                strand.start.y() - half_size,
+                                square_size,
+                                square_size
+                            )
                             
-                            # Check if control points overlap with yellow rectangle
-                            cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
-                            cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
+                            end_rect = QRectF(
+                                strand.end.x() - half_size,
+                                strand.end.y() - half_size,
+                                square_size,
+                                square_size
+                            )
                             
-                            # Draw with green color for non-selected control points
-                            square_color = QColor(0, 100, 0, 100)  # Green with 50% transparency
+                            # Check if rectangles overlap with yellow rectangle
+                            start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
+                            end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
+                            
+                            # Check if rectangles already drawn at these positions (to avoid duplicates at connections)
+                            start_already_drawn = False
+                            end_already_drawn = False
+                            
+                            for pos in drawn_rectangle_positions:
+                                if self.points_are_close(strand.start, pos):
+                                    start_already_drawn = True
+                                if self.points_are_close(strand.end, pos):
+                                    end_already_drawn = True
+                            
+                            # Draw with red color for non-selected rectangles
+                            square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
                             painter.setBrush(QBrush(square_color))
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                             
-                            # If moving a control point, only draw the specific control point being moved
-                            if is_moving_control_point:
-                                if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
-                                    painter.drawRect(cp1_rect)
-                                elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
-                                    painter.drawRect(cp2_rect)
-                            else:
-                                # Normal drawing when not moving a control point
-                                if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
-                                    painter.drawRect(cp1_rect)
+                            # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
+                            if not skip_start and not start_overlaps_yellow and not start_already_drawn:
+                                painter.drawRect(start_rect)
+                                drawn_rectangle_positions.append(QPointF(strand.start))
+
+                            # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
+                            if not skip_end and not end_overlaps_yellow and not end_already_drawn:
+                                painter.drawRect(end_rect)
+                                drawn_rectangle_positions.append(QPointF(strand.end))
+
+                            # Draw squares around control points if present (and not MaskedStrand)
+                            if not isinstance(strand, MaskedStrand):
+                                # Skip drawing only the exact selected control point
+                                skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
+                                skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
                                 
-                                if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
-                                    painter.drawRect(cp2_rect)
+                                # Check if a control point is being moved
+                                is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                                
+                                # If moving a control point, only draw it for the current strand
+                                if is_moving_control_point and strand != self.current_mode.affected_strand:
+                                    continue
+                                    
+                                # Create control point rectangles for overlap checking
+                                cp1_rect = None
+                                cp2_rect = None
+                                
+                                if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
+                                    cp1_rect = QRectF(
+                                        strand.control_point1.x() - half_control_size,
+                                        strand.control_point1.y() - half_control_size,
+                                        square_control_size,
+                                        square_control_size
+                                    )
+                                
+                                if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
+                                    cp2_rect = QRectF(
+                                        strand.control_point2.x() - half_control_size,
+                                        strand.control_point2.y() - half_control_size,
+                                        square_control_size,
+                                        square_control_size
+                                    )
+                                
+                                # Check if control points overlap with yellow rectangle
+                                cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
+                                cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
+                                
+                                # Draw with green color for non-selected control points
+                                square_color = QColor(0, 100, 0, 100)  # Green with 50% transparency
+                                painter.setBrush(QBrush(square_color))
+                                painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                                
+                                # If moving a control point, only draw the specific control point being moved
+                                if is_moving_control_point:
+                                    if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                        painter.drawRect(cp1_rect)
+                                    elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
+                                        painter.drawRect(cp2_rect)
+                                else:
+                                    # Normal drawing when not moving a control point
+                                    if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                        painter.drawRect(cp1_rect)
+                                    
+                                    if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
+                                        painter.drawRect(cp2_rect)
             
             # Draw the selected rectangle with yellow color
             if self.current_mode.selected_rectangle:
@@ -2556,6 +2615,10 @@ class StrandDrawingCanvas(QWidget):
         # Then proceed with clearing selection
         self.selected_strand = None
         self.selected_strand_index = None
+        
+        # Emit the deselect_all signal for connected objects
+        self.deselect_all_signal.emit()
+        
         self.update()
 
     def refresh_canvas(self):

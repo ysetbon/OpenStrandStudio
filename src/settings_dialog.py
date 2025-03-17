@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
-    QColorDialog
+    QColorDialog, QCheckBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap
@@ -33,6 +33,7 @@ class SettingsDialog(QDialog):
         self.current_theme = getattr(parent, 'current_theme', 'default')
         self.current_language = self.parent_window.language_code
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
+        self.draw_only_affected_strand = False  # Default to drawing all strands
         
         # Try to load settings from file first
         self.load_settings_from_file()
@@ -96,8 +97,12 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Successfully parsed shadow color: {r},{g},{b},{a}")
                             except Exception as e:
                                 logging.error(f"SettingsDialog: Error parsing shadow color values: {e}. Using default shadow color.")
+                        elif line.startswith('DrawOnlyAffectedStrand:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.draw_only_affected_strand = (value == 'true')
+                            logging.info(f"SettingsDialog: Found DrawOnlyAffectedStrand: {self.draw_only_affected_strand}")
                 
-                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
+                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -205,6 +210,15 @@ class SettingsDialog(QDialog):
         shadow_layout.addWidget(self.shadow_color_button)
         shadow_layout.addStretch()
 
+        # Performance Settings - Option to draw only affected strand during dragging
+        performance_layout = QHBoxLayout()
+        self.affected_strand_label = QLabel(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
+        self.affected_strand_checkbox = QCheckBox()
+        self.affected_strand_checkbox.setChecked(self.draw_only_affected_strand)
+        performance_layout.addWidget(self.affected_strand_label)
+        performance_layout.addWidget(self.affected_strand_checkbox)
+        performance_layout.addStretch()
+
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
         self.apply_button.clicked.connect(self.apply_all_settings)
@@ -215,6 +229,7 @@ class SettingsDialog(QDialog):
         # Add controls to general settings layout
         general_layout.addLayout(theme_layout)
         general_layout.addLayout(shadow_layout)
+        general_layout.addLayout(performance_layout)
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
 
@@ -616,6 +631,12 @@ class SettingsDialog(QDialog):
             if hasattr(self.parent_window, 'canvas'):
                 self.parent_window.canvas.default_shadow_color = self.shadow_color
 
+        # Apply Performance Settings
+        self.draw_only_affected_strand = self.affected_strand_checkbox.isChecked()
+        if self.canvas and hasattr(self.canvas, 'move_mode'):
+            self.canvas.move_mode.draw_only_affected_strand = self.draw_only_affected_strand
+            logging.info(f"SettingsDialog: Set draw_only_affected_strand to {self.draw_only_affected_strand}")
+
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
         # Update the language in the main window
@@ -653,6 +674,7 @@ class SettingsDialog(QDialog):
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
+        self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
@@ -721,8 +743,10 @@ class SettingsDialog(QDialog):
                 file.write(f"Language: {self.current_language}\n")
                 # Save shadow color in RGBA format
                 file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
-            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
-            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}")
+                # Save draw only affected strand setting
+                file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
+            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
+            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -731,6 +755,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"Theme: {self.current_theme}\n")
                     local_file.write(f"Language: {self.current_language}\n")
                     local_file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
+                    local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")

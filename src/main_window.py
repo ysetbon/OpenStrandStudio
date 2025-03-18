@@ -362,9 +362,24 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(self.layer_panel)
 
         # Configure splitter and main layout
-        self.splitter.setHandleWidth(0)
+        self.splitter.setHandleWidth(1)  # Small but visible width instead of 0
+        
+        # Apply cross-platform splitter handle styling
+        self.splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: transparent;  /* Light gray color */
+                border: none;
+            }
+            QSplitter::handle:horizontal {
+                width: 1px;
+            }
+            QSplitter::handle:vertical {
+                height: 1px;
+            }
+        """)
+        
         main_layout.addWidget(self.splitter)
-
+        
         # Set minimum widths and enforce them using size policies
         self.left_widget.setMinimumWidth(300)
         self.left_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)

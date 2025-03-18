@@ -392,9 +392,62 @@ def load_strands(filename, canvas):
     # Apply loaded strands to canvas
     canvas.strands = strands
     
+    # Set the canvas property for each strand to ensure shadows work correctly
+    for strand in strands:
+        strand.canvas = canvas
+        # Ensure shadow color is set
+        if hasattr(canvas, 'default_shadow_color') and canvas.default_shadow_color:
+            strand.shadow_color = QColor(canvas.default_shadow_color)
+        # Explicitly enable shadow drawing for this strand
+        strand.should_draw_shadow = True
+        
+        # Special handling for MaskedStrand shadows
+        if isinstance(strand, MaskedStrand):
+            # Ensure the mask path is updated
+            if hasattr(strand, 'update_mask_path'):
+                strand.update_mask_path()
+            # Force complete update for masked strands
+            if hasattr(strand, 'force_complete_update'):
+                try:
+                    strand.force_complete_update()
+                    logging.info(f"Forced complete update for MaskedStrand {strand.layer_name}")
+                except Exception as e:
+                    logging.error(f"Error during complete update for MaskedStrand {strand.layer_name}: {e}")
+            
+        # For AttachedStrand, ensure parent-child shadow relationships
+        elif isinstance(strand, AttachedStrand):
+            # Make sure parent shadow properties are inherited
+            if hasattr(strand, 'parent') and strand.parent:
+                if hasattr(strand.parent, 'shadow_color'):
+                    strand.shadow_color = QColor(strand.parent.shadow_color)
+                logging.info(f"Inherited shadow properties from parent for AttachedStrand {strand.layer_name}")
+            
+        logging.info(f"Set canvas reference and shadow properties for strand {strand.layer_name}")
+    
     # Update UI
     if hasattr(canvas, 'layer_panel'):
         canvas.layer_panel.refresh()
+    
+    # Ensure shadows are enabled
+    if hasattr(canvas, 'shadow_enabled'):
+        canvas.shadow_enabled = True
+        logging.info("Shadows explicitly enabled on canvas")
+    
+    # Make sure layer ordering is properly set for shadow calculations
+    if hasattr(canvas, 'layer_state_manager'):
+        # Get all layer names
+        layer_names = [strand.layer_name for strand in strands if hasattr(strand, 'layer_name')]
+        # Update layer state order directly
+        if hasattr(canvas.layer_state_manager, 'layer_state'):
+            canvas.layer_state_manager.layer_state['order'] = layer_names
+            logging.info(f"Updated layer state manager order with {len(layer_names)} layers")
+    
+    # Force a complete redraw of the canvas to ensure shadows are rendered
+    canvas.update()
+    # Also force a repaint which guarantees immediate visual update
+    if hasattr(canvas, 'repaint'):
+        canvas.repaint()
+    logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
 
     return strands, data.get("groups", {})
 
@@ -411,6 +464,38 @@ def apply_loaded_strands(canvas, strands, groups):
     # Apply strands to the canvas
     canvas.strands = strands
     logging.info(f"Applied {len(strands)} strands to the canvas.")
+    
+    # Set the canvas property for each strand to ensure shadows work correctly
+    for strand in strands:
+        strand.canvas = canvas
+        # Ensure shadow color is set
+        if hasattr(canvas, 'default_shadow_color') and canvas.default_shadow_color:
+            strand.shadow_color = QColor(canvas.default_shadow_color)
+        # Explicitly enable shadow drawing for this strand
+        strand.should_draw_shadow = True
+        
+        # Special handling for MaskedStrand shadows
+        if isinstance(strand, MaskedStrand):
+            # Ensure the mask path is updated
+            if hasattr(strand, 'update_mask_path'):
+                strand.update_mask_path()
+            # Force complete update for masked strands
+            if hasattr(strand, 'force_complete_update'):
+                try:
+                    strand.force_complete_update()
+                    logging.info(f"Forced complete update for MaskedStrand {strand.layer_name}")
+                except Exception as e:
+                    logging.error(f"Error during complete update for MaskedStrand {strand.layer_name}: {e}")
+            
+        # For AttachedStrand, ensure parent-child shadow relationships
+        elif isinstance(strand, AttachedStrand):
+            # Make sure parent shadow properties are inherited
+            if hasattr(strand, 'parent') and strand.parent:
+                if hasattr(strand.parent, 'shadow_color'):
+                    strand.shadow_color = QColor(strand.parent.shadow_color)
+                logging.info(f"Inherited shadow properties from parent for AttachedStrand {strand.layer_name}")
+            
+        logging.info(f"Set canvas reference and shadow properties for strand {strand.layer_name}")
 
     # Update the LayerPanel with the loaded strands
     if hasattr(canvas, 'layer_panel'):
@@ -470,9 +555,25 @@ def apply_loaded_strands(canvas, strands, groups):
             logging.warning(f"Group '{group_name}' has no valid strands")
 
     # Update the canvas to reflect changes
+    if hasattr(canvas, 'shadow_enabled'):
+        canvas.shadow_enabled = True
+        logging.info("Shadows explicitly enabled on canvas")
+    
+    # Make sure layer ordering is properly set for shadow calculations
+    if hasattr(canvas, 'layer_state_manager'):
+        # Get all layer names
+        layer_names = [strand.layer_name for strand in strands if hasattr(strand, 'layer_name')]
+        # Update layer state order directly
+        if hasattr(canvas.layer_state_manager, 'layer_state'):
+            canvas.layer_state_manager.layer_state['order'] = layer_names
+            logging.info(f"Updated layer state manager order with {len(layer_names)} layers")
+        
     if hasattr(canvas, 'update'):
         canvas.update()
-        logging.info("Canvas updated.")
+        # Also force a repaint which guarantees immediate visual update
+        if hasattr(canvas, 'repaint'):
+            canvas.repaint()
+        logging.info("Canvas updated and repainted after applying groups - this should trigger shadow rendering")
 
     logging.info("Finished applying group data.")
 def serialize_groups(groups):

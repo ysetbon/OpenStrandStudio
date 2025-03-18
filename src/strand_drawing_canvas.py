@@ -1081,13 +1081,13 @@ class StrandDrawingCanvas(QWidget):
             # Draw the affected strand if available
             if affected_strand:
                 logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
-                # Draw the affected strand as highlighted
-                self.draw_highlighted_strand(painter, affected_strand)
+                # Draw the affected strand without C-shape highlights
+                self.draw_moving_strand(painter, affected_strand)
                 
                 # Draw any connected strands
                 for strand in connected_strands:
                     logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
-                    strand.draw(painter)
+                    self.draw_moving_strand(painter, strand)
 
         # Draw the temporary strand (whether it's a new strand or an attached strand)
         if self.current_strand:
@@ -1767,6 +1767,33 @@ class StrandDrawingCanvas(QWidget):
             
             painter.restore()
 
+    def draw_moving_strand(self, painter, strand):
+        """Draw a moving strand without any highlights."""
+        if isinstance(strand, MaskedStrand):
+            # For masked strands, just draw normally without highlight
+            masked_strand = strand
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Just draw the regular masked strand without any highlight
+            masked_strand.draw(painter)
+            
+            painter.restore()
+        else:
+            # For regular strands, just draw normally without any highlight
+            painter.save()
+            
+            # Temporarily set is_selected to False to prevent red highlight
+            original_is_selected = strand.is_selected
+            strand.is_selected = False
+            
+            # Draw the strand
+            strand.draw(painter)
+            
+            # Restore the original is_selected value
+            strand.is_selected = original_is_selected
+            
+            painter.restore()
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
         import logging

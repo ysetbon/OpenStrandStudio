@@ -1274,6 +1274,7 @@ class MoveMode:
 
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
+        control_point_center_rect = self.get_control_point_rectangle(strand, 3)
 
         if control_point1_rect.contains(pos):
             self.start_movement(strand, 'control_point1', control_point1_rect)
@@ -1289,6 +1290,18 @@ class MoveMode:
             return True
         elif control_point2_rect.contains(pos):
             self.start_movement(strand, 'control_point2', control_point2_rect)
+            # Mark that we're moving a control point
+            self.is_moving_control_point = True
+            # Store the strand explicitly in truly_moving_strands for proper z-ordering
+            if hasattr(self.canvas, 'truly_moving_strands'):
+                self.canvas.truly_moving_strands = [strand]
+            else:
+                self.canvas.truly_moving_strands = [strand]
+            # Clear any existing highlighting
+            self.highlighted_strand = None
+            return True
+        elif control_point_center_rect.contains(pos):
+            self.start_movement(strand, 'control_point_center', control_point_center_rect)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
             # Store the strand explicitly in truly_moving_strands for proper z-ordering
@@ -1336,6 +1349,8 @@ class MoveMode:
             center = strand.control_point1
         elif control_point_number == 2:
             center = strand.control_point2
+        elif control_point_number == 3:
+            center = strand.control_point_center
         else:
             return QRectF()
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
@@ -1454,7 +1469,7 @@ class MoveMode:
         self.selected_rectangle = area
         self.is_moving = True
         # Set the flag if we're moving a control point
-        self.is_moving_control_point = side == 'control_point1' or side == 'control_point2'
+        self.is_moving_control_point = side == 'control_point1' or side == 'control_point2' or side == 'control_point_center'
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side == 0 or side == 1
         
@@ -1618,6 +1633,20 @@ class MoveMode:
             self.affected_strand.update_side_line()  # Call again to ensure it's updated
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 2)
+            # Keep the strand deselected to prevent highlighting during control point movement
+            self.affected_strand.is_selected = False
+            self.canvas.selected_attached_strand = None
+            self.highlighted_strand = None
+        elif self.moving_side == 'control_point_center':
+            # Move the center control point
+            self.affected_strand.control_point_center = new_pos
+            # Set the flag to indicate the center control point has been manually positioned
+            self.affected_strand.control_point_center_locked = True
+            # Update the strand shape
+            self.affected_strand.update_shape()
+            self.affected_strand.update_side_line()
+            # Update the selection rectangle to the new position
+            self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 3)
             # Keep the strand deselected to prevent highlighting during control point movement
             self.affected_strand.is_selected = False
             self.canvas.selected_attached_strand = None

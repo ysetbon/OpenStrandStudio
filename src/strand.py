@@ -46,8 +46,8 @@ class Strand:
         
         # Add the center control point (midpoint between control_point1 and control_point2)
         self.control_point_center = QPointF(
-            (self.control_point1.x() + self.control_point2.x()) / 2,
-            (self.control_point1.y() + self.control_point2.y()) / 2
+            self.start.x(),
+            self.start.y()
         )
         # Flag to track if the center control point has been manually positioned
         self.control_point_center_locked = False
@@ -314,13 +314,27 @@ class Strand:
             self.update_side_line()
             return
 
+        # Calculate the default center position (midpoint between control points 1 and 2)
+        default_center = QPointF(
+            (self.control_point1.x() + self.control_point2.x()) / 2,
+            (self.control_point1.y() + self.control_point2.y()) / 2
+        )
+        
+        # Check if the center point is at its default position
+        if hasattr(self, 'control_point_center_locked') and self.control_point_center_locked:
+            # Calculate distance between current center and default center
+            dx = self.control_point_center.x() - default_center.x()
+            dy = self.control_point_center.y() - default_center.y()
+            distance = math.sqrt(dx*dx + dy*dy)
+            
+            # If the center point is very close to its default position, unlock it
+            if distance < 0.5:  # Within half a pixel
+                self.control_point_center_locked = False
+
         # Only recalculate control_point_center if it's not locked (not manually positioned)
         if not hasattr(self, 'control_point_center_locked') or not self.control_point_center_locked:
             # Recalculate the center control point
-            self.control_point_center = QPointF(
-                (self.control_point1.x() + self.control_point2.x()) / 2,
-                (self.control_point1.y() + self.control_point2.y()) / 2
-            )
+            self.control_point_center = default_center
 
         # Store the current path
         self._path = self.get_path()
@@ -372,13 +386,73 @@ class Strand:
                 extended_end = QPointF(self.end.x() + 10, self.end.y())
             
         # Create the path with the extended points
-        path.moveTo(self.start)
-        
-        # Check if we have a third control point (control_point3)
-        if hasattr(self, 'control_point3'):
-            # Use all three control points for the cubic curve
-            path.cubicTo(self.control_point1, self.control_point3, self.control_point2)
-            # Add line to extended end
+        path.moveTo(extended_start)
+        path.lineTo(self.start)
+        # Check if we have a third control point and it's being used
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Use all three control points for the cubic curve, matching get_path logic
+            # Extract the key points we're working with
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate the tangent at start point (pointing toward control_point1)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            
+            # Calculate the tangent at center (average of incoming and outgoing)
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Normalize tangents for better control
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:  # Avoid division by zero
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent = normalize_vector(start_tangent)
+            in_tangent = normalize_vector(in_tangent)
+            out_tangent = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as normalized average
+            center_tangent = QPointF(in_tangent.x() + out_tangent.x(), in_tangent.y() + out_tangent.y())
+            center_tangent = normalize_vector(center_tangent)
+            
+            # Calculate end tangent
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent = normalize_vector(end_tangent)
+            
+            # Calculate intermediate control points with increased influence
+            influence_factor = 0.618
+            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            
+            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
+                         p0.y() + start_tangent.y() * dist1)
+            
+            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
+                         p2.y() - center_tangent.y() * dist1)
+            
+            # First segment: start to center
+            path.cubicTo(cp1, cp2, p2)
+            
+            # Calculate intermediate control points for second segment
+            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            
+            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
+                         p2.y() + center_tangent.y() * dist2)
+            
+            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
+                         p4.y() - end_tangent.y() * dist2)
+            
+            # Second segment: center to end
+            path.cubicTo(cp3, cp4, self.end)
             path.lineTo(extended_end)
         else:
             # Use standard two control points
@@ -390,7 +464,86 @@ class Strand:
         """Get the path representing the strand as a cubic Bézier curve."""
         path = QPainterPath()
         path.moveTo(self.start)
-        path.cubicTo(self.control_point1, self.control_point2, self.end)
+        # Calculate the center point between two points
+
+        
+        # Only use the third control point if:
+        # 1. The feature is enabled AND
+        # 2. The control_point_center has been manually positioned
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Create a smooth spline incorporating all control points
+            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
+            
+            # Create control points that ensure C1 continuity (continuous first derivative)
+            
+            # Extract the key points we're working with
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate the tangent at start point (pointing toward control_point1)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            
+            # Calculate the tangent at center (average of incoming and outgoing)
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Normalize tangents for better control
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:  # Avoid division by zero
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent = normalize_vector(start_tangent)
+            in_tangent = normalize_vector(in_tangent)
+            out_tangent = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as normalized average
+            center_tangent = QPointF(in_tangent.x() + out_tangent.x(), in_tangent.y() + out_tangent.y())
+            center_tangent = normalize_vector(center_tangent)
+            
+            # Calculate end tangent
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent = normalize_vector(end_tangent)
+            
+            # Calculate intermediate control points for first segment with increased influence
+            # Distance factors control the "tension" of the curve
+            influence_factor = 0.618
+            # Previously: dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) / 3
+            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            
+            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
+                         p0.y() + start_tangent.y() * dist1)
+            
+            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
+                         p2.y() - center_tangent.y() * dist1)
+            
+            # First segment: start to center
+            path.cubicTo(cp1, cp2, p2)
+            
+            # Calculate intermediate control points for second segment with increased influence
+            # Previously: dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) / 3
+            influence_factor = 0.618
+            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            
+            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
+                         p2.y() + center_tangent.y() * dist2)
+            
+            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
+                         p4.y() - end_tangent.y() * dist2)
+            
+            # Second segment: center to end
+            path.cubicTo(cp3, cp4, p4)
+        else:
+            path.cubicTo(self.control_point1, self.control_point2, self.end)
         return path
 
     def get_selection_path(self):
@@ -445,29 +598,37 @@ class Strand:
 
     def point_at(self, t):
         """Compute a point on the Bézier curve at parameter t."""
-        # If third control point is enabled, use a 5-point (quartic) Bézier curve
+        # If third control point is enabled, use a composite curve with two segments
         if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            # Define the 5 points
-            p0 = self.start
-            p1 = self.control_point1
-            p2 = self.control_point_center  # Use center as the middle control point
-            p3 = self.control_point2
-            p4 = self.end
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
             
-            # Quartic Bézier formula (degree 4)
+            # Standard cubic Bézier formula
             x = (
-                (1 - t) ** 4 * p0.x() +
-                4 * (1 - t) ** 3 * t * p1.x() +
-                6 * (1 - t) ** 2 * t ** 2 * p2.x() +
-                4 * (1 - t) * t ** 3 * p3.x() +
-                t ** 4 * p4.x()
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
             )
             y = (
-                (1 - t) ** 4 * p0.y() +
-                4 * (1 - t) ** 3 * t * p1.y() +
-                6 * (1 - t) ** 2 * t ** 2 * p2.y() +
-                4 * (1 - t) * t ** 3 * p3.y() +
-                t ** 4 * p4.y()
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
             )
             return QPointF(x, y)
         else:
@@ -490,36 +651,46 @@ class Strand:
             
     def calculate_cubic_tangent(self, t):
         """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # If third control point is enabled, use a 5-point (quartic) Bézier curve derivative
+        # If third control point is enabled, use a composite curve with two segments
         if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            # Define the 5 points
-            p0 = self.start
-            p1 = self.control_point1
-            p2 = self.control_point_center  # Use center as the middle control point
-            p3 = self.control_point2
-            p4 = self.end
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
             
-            # Derivative of quartic Bézier formula (degree 4)
+            # Derivative of cubic Bézier formula
             dx = (
-                -4 * (1 - t) ** 3 * p0.x() +
-                4 * (1 - t) ** 3 * p1.x() - 12 * (1 - t) ** 2 * t * p1.x() +
-                12 * (1 - t) ** 2 * t * p2.x() - 12 * (1 - t) * t ** 2 * p2.x() +
-                12 * (1 - t) * t ** 2 * p3.x() - 4 * t ** 3 * p3.x() +
-                4 * t ** 3 * p4.x()
+                3 * (1 - scaled_t) ** 2 * (p1.x() - p0.x()) +
+                6 * (1 - scaled_t) * scaled_t * (p2.x() - p1.x()) +
+                3 * scaled_t ** 2 * (p3.x() - p2.x())
             )
             dy = (
-                -4 * (1 - t) ** 3 * p0.y() +
-                4 * (1 - t) ** 3 * p1.y() - 12 * (1 - t) ** 2 * t * p1.y() +
-                12 * (1 - t) ** 2 * t * p2.y() - 12 * (1 - t) * t ** 2 * p2.y() +
-                12 * (1 - t) * t ** 2 * p3.y() - 4 * t ** 3 * p3.y() +
-                4 * t ** 3 * p4.y()
+                3 * (1 - scaled_t) ** 2 * (p1.y() - p0.y()) +
+                6 * (1 - scaled_t) * scaled_t * (p2.y() - p1.y()) +
+                3 * scaled_t ** 2 * (p3.y() - p2.y())
             )
+            
+            # Scale the derivative by 2 to account for the parameter rescaling
+            dx *= 2
+            dy *= 2
             
             tangent = QPointF(dx, dy)
             
             # Handle zero-length tangent vector
             if tangent.manhattanLength() == 0:
-                tangent = p4 - p0
+                tangent = p3 - p0
                 
             return tangent
         else:
@@ -958,8 +1129,8 @@ class AttachedStrand(Strand):
         
         # Add the center control point (midpoint between control_point1 and control_point2)
         self.control_point_center = QPointF(
-            (self.control_point1.x() + self.control_point2.x()) / 2,
-            (self.control_point1.y() + self.control_point2.y()) / 2
+            self.start.x(),
+            self.start.y()
         )
         
         # Initialize attachment statuses
@@ -1508,34 +1679,134 @@ class AttachedStrand(Strand):
         """Get the path representing the strand as a cubic Bézier curve."""
         path = QPainterPath()
         path.moveTo(self.start)
-        path.cubicTo(self.control_point1, self.control_point2, self.end)
+        # Calculate the center point between two points
+        def calculate_center_point(self, point1, point2):
+            """
+            Calculate the center point between two QPointF objects.
+            
+            Args:
+                point1 (QPointF): The first point
+                point2 (QPointF): The second point
+                
+            Returns:
+                QPointF: The center point between the two input points
+            """
+            center_x = (point1.x() + point2.x()) / 2
+            center_y = (point1.y() + point2.y()) / 2
+            return QPointF(center_x, center_y)
+        
+        # Only use the third control point if:
+        # 1. The feature is enabled AND
+        # 2. The control_point_center has been manually positioned
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Create a smooth spline incorporating all control points
+            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
+            
+            # Create control points that ensure C1 continuity (continuous first derivative)
+            
+            # Extract the key points we're working with
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate the tangent at start point (pointing toward control_point1)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            
+            # Calculate the tangent at center (average of incoming and outgoing)
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Normalize tangents for better control
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:  # Avoid division by zero
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent = normalize_vector(start_tangent)
+            in_tangent = normalize_vector(in_tangent)
+            out_tangent = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as normalized average
+            center_tangent = QPointF(in_tangent.x() + out_tangent.x(), in_tangent.y() + out_tangent.y())
+            center_tangent = normalize_vector(center_tangent)
+            
+            # Calculate end tangent
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent = normalize_vector(end_tangent)
+            
+            # Calculate intermediate control points for first segment with increased influence
+            # Distance factors control the "tension" of the curve
+            influence_factor = 0.618
+            # Previously: dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) / 3
+            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            
+            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
+                         p0.y() + start_tangent.y() * dist1)
+            
+            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
+                         p2.y() - center_tangent.y() * dist1)
+            
+            # First segment: start to center
+            path.cubicTo(cp1, cp2, p2)
+            
+            # Calculate intermediate control points for second segment with increased influence
+            # Previously: dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) / 3
+            influence_factor = 0.618
+            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            
+            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
+                         p2.y() + center_tangent.y() * dist2)
+            
+            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
+                         p4.y() - end_tangent.y() * dist2)
+            
+            # Second segment: center to end
+            path.cubicTo(cp3, cp4, p4)
+        else:
+            path.cubicTo(self.control_point1, self.control_point2, self.end)
         return path
         
     def point_at(self, t):
         """Compute a point on the Bézier curve at parameter t."""
-        # If third control point is enabled, use a 5-point (quartic) Bézier curve
+        # If third control point is enabled, use a composite curve with two segments
         if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            # Define the 5 points
-            p0 = self.start
-            p1 = self.control_point1
-            p2 = self.control_point_center  # Use center as the middle control point
-            p3 = self.control_point2
-            p4 = self.end
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
             
-            # Quartic Bézier formula (degree 4)
+            # Standard cubic Bézier formula
             x = (
-                (1 - t) ** 4 * p0.x() +
-                4 * (1 - t) ** 3 * t * p1.x() +
-                6 * (1 - t) ** 2 * t ** 2 * p2.x() +
-                4 * (1 - t) * t ** 3 * p3.x() +
-                t ** 4 * p4.x()
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
             )
             y = (
-                (1 - t) ** 4 * p0.y() +
-                4 * (1 - t) ** 3 * t * p1.y() +
-                6 * (1 - t) ** 2 * t ** 2 * p2.y() +
-                4 * (1 - t) * t ** 3 * p3.y() +
-                t ** 4 * p4.y()
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
             )
             return QPointF(x, y)
         else:
@@ -1555,39 +1826,49 @@ class AttachedStrand(Strand):
                 t ** 3 * p3.y()
             )
             return QPointF(x, y)
-            
+                
     def calculate_cubic_tangent(self, t):
         """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # If third control point is enabled, use a 5-point (quartic) Bézier curve derivative
+        # If third control point is enabled, use a composite curve with two segments
         if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            # Define the 5 points
-            p0 = self.start
-            p1 = self.control_point1
-            p2 = self.control_point_center  # Use center as the middle control point
-            p3 = self.control_point2
-            p4 = self.end
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
             
-            # Derivative of quartic Bézier formula (degree 4)
+            # Derivative of cubic Bézier formula
             dx = (
-                -4 * (1 - t) ** 3 * p0.x() +
-                4 * (1 - t) ** 3 * p1.x() - 12 * (1 - t) ** 2 * t * p1.x() +
-                12 * (1 - t) ** 2 * t * p2.x() - 12 * (1 - t) * t ** 2 * p2.x() +
-                12 * (1 - t) * t ** 2 * p3.x() - 4 * t ** 3 * p3.x() +
-                4 * t ** 3 * p4.x()
+                3 * (1 - scaled_t) ** 2 * (p1.x() - p0.x()) +
+                6 * (1 - scaled_t) * scaled_t * (p2.x() - p1.x()) +
+                3 * scaled_t ** 2 * (p3.x() - p2.x())
             )
             dy = (
-                -4 * (1 - t) ** 3 * p0.y() +
-                4 * (1 - t) ** 3 * p1.y() - 12 * (1 - t) ** 2 * t * p1.y() +
-                12 * (1 - t) ** 2 * t * p2.y() - 12 * (1 - t) * t ** 2 * p2.y() +
-                12 * (1 - t) * t ** 2 * p3.y() - 4 * t ** 3 * p3.y() +
-                4 * t ** 3 * p4.y()
+                3 * (1 - scaled_t) ** 2 * (p1.y() - p0.y()) +
+                6 * (1 - scaled_t) * scaled_t * (p2.y() - p1.y()) +
+                3 * scaled_t ** 2 * (p3.y() - p2.y())
             )
+            
+            # Scale the derivative by 2 to account for the parameter rescaling
+            dx *= 2
+            dy *= 2
             
             tangent = QPointF(dx, dy)
             
             # Handle zero-length tangent vector
             if tangent.manhattanLength() == 0:
-                tangent = p4 - p0
+                tangent = p3 - p0
                 
             return tangent
         else:
@@ -1873,7 +2154,25 @@ class AttachedStrand(Strand):
         path = QPainterPath()
         
         # Calculate vectors for direction at start and end
-
+        # For start point, use the tangent direction from the start towards control_point1
+        start_vector = self.control_point1 - self.start
+        if start_vector.manhattanLength() > 0:
+            # Normalize and extend by exactly 10 pixels using Euclidean length
+            start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
+            normalized_start_vector = start_vector / start_vector_length
+            extended_start = self.start - (normalized_start_vector * 10)
+        else:
+            # Fallback if control point is at same position as start
+            # Use direction from start to end instead
+            fallback_vector = self.end - self.start
+            if fallback_vector.manhattanLength() > 0:
+                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                normalized_fallback = fallback_vector / fallback_length
+                extended_start = self.start - (normalized_fallback * 10)
+            else:
+                # If start and end are the same, use a default horizontal direction
+                extended_start = QPointF(self.start.x() - 10, self.start.y())
+            
         # For end point, use the tangent direction from control_point2 towards the end
         end_vector = self.end - self.control_point2
         if end_vector.manhattanLength() > 0:
@@ -1894,13 +2193,73 @@ class AttachedStrand(Strand):
                 extended_end = QPointF(self.end.x() + 10, self.end.y())
             
         # Create the path with the extended points
-        path.moveTo(self.start)
-        
-        # Check if we have a third control point (control_point3)
-        if hasattr(self, 'control_point3'):
-            # Use all three control points for the cubic curve
-            path.cubicTo(self.control_point1, self.control_point3, self.control_point2)
-            # Add line to extended end
+        path.moveTo(extended_start)
+        path.lineTo(self.start)
+        # Check if we have a third control point and it's being used
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Use all three control points for the cubic curve, matching get_path logic
+            # Extract the key points we're working with
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate the tangent at start point (pointing toward control_point1)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            
+            # Calculate the tangent at center (average of incoming and outgoing)
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Normalize tangents for better control
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:  # Avoid division by zero
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent = normalize_vector(start_tangent)
+            in_tangent = normalize_vector(in_tangent)
+            out_tangent = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as normalized average
+            center_tangent = QPointF(in_tangent.x() + out_tangent.x(), in_tangent.y() + out_tangent.y())
+            center_tangent = normalize_vector(center_tangent)
+            
+            # Calculate end tangent
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent = normalize_vector(end_tangent)
+            
+            # Calculate intermediate control points with increased influence
+            influence_factor = 0.618
+            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            
+            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
+                         p0.y() + start_tangent.y() * dist1)
+            
+            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
+                         p2.y() - center_tangent.y() * dist1)
+            
+            # First segment: start to center
+            path.cubicTo(cp1, cp2, p2)
+            
+            # Calculate intermediate control points for second segment
+            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            
+            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
+                         p2.y() + center_tangent.y() * dist2)
+            
+            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
+                         p4.y() - end_tangent.y() * dist2)
+            
+            # Second segment: center to end
+            path.cubicTo(cp3, cp4, self.end)
             path.lineTo(extended_end)
         else:
             # Use standard two control points

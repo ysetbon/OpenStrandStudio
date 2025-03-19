@@ -720,6 +720,7 @@ class MoveMode:
             )
             painter.drawRect(yellow_rect)
 
+
     def invalidate_background_cache(self):
         """Invalidate the background cache to force a redraw of non-moving elements."""
         if hasattr(self.canvas, 'background_cache_valid'):
@@ -1015,6 +1016,8 @@ class MoveMode:
         current_affected_strand = self.affected_strand
         current_originally_selected = self.originally_selected_strand
         
+
+        
         # Check for ANY movement of a masked strand (control points or regular movement)
         if self.is_moving and self.moving_point:
             # For control point movement
@@ -1149,7 +1152,7 @@ class MoveMode:
         self.in_move_mode = False
         self.temp_selected_strand = None  # Reset temporary selection
         self.last_update_rect = None  # Clear the last update rect
-        
+
         # We keep originally_selected_strand to maintain selection between events
         # Don't reset it here as it's needed for proper selection persistence
         
@@ -1296,6 +1299,7 @@ class MoveMode:
             # Clear any existing highlighting
             self.highlighted_strand = None
             return True
+
         return False
 
     def try_move_strand(self, strand, pos, strand_index):
@@ -1595,6 +1599,7 @@ class MoveMode:
         if self.moving_side == 'control_point1':
             # Move the first control point
             self.affected_strand.control_point1 = new_pos
+            # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()
             # Update the selection rectangle to the new position
@@ -1606,14 +1611,18 @@ class MoveMode:
         elif self.moving_side == 'control_point2':
             # Move the second control point
             self.affected_strand.control_point2 = new_pos
+
+            
+            # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
-            self.affected_strand.update_side_line()
+            self.affected_strand.update_side_line()  # Call again to ensure it's updated
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 2)
             # Keep the strand deselected to prevent highlighting during control point movement
             self.affected_strand.is_selected = False
             self.canvas.selected_attached_strand = None
             self.highlighted_strand = None
+
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point
             if is_masked_strand:
@@ -1771,33 +1780,67 @@ class MoveMode:
             if self.calculate_distance(new_pos, other_point) < self.MIN_STRAND_POINTS_DISTANCE:
                 new_pos = self.adjust_position_to_maintain_distance(new_pos, other_point)
         
-        # Update the MaskedStrand's own position
+        # Store original positions to preserve non-moving endpoints
+        old_start = None
+        old_end = None
+        if moving_side == 0:
+            old_end = QPointF(self.affected_strand.end)
+        else:
+            old_start = QPointF(self.affected_strand.start)
+        
+        # Update the MaskedStrand's own position using setter
         if moving_side == 0:
             self.affected_strand.start = new_pos
         else:
             self.affected_strand.end = new_pos
-            
+        
+        # Restore non-moving endpoint
+        if moving_side == 0 and old_end:
+            self.affected_strand.end = old_end
+        elif moving_side == 1 and old_start:
+            self.affected_strand.start = old_start
+        
         # Update shape
         self.affected_strand.update_shape()
         
         # Update the constituent strands if they exist
         if moving_side == 0:
             if hasattr(self.affected_strand, 'first_selected_strand') and self.affected_strand.first_selected_strand:
+                # Store the non-moving endpoint
+                first_old_end = QPointF(self.affected_strand.first_selected_strand.end)
+                # Use setter to update position
                 self.affected_strand.first_selected_strand.start = new_pos
+                # Restore non-moving endpoint
+                self.affected_strand.first_selected_strand.end = first_old_end
                 self.affected_strand.first_selected_strand.update_shape()
                 
             if hasattr(self.affected_strand, 'second_selected_strand') and self.affected_strand.second_selected_strand:
+                # Store the non-moving endpoint
+                second_old_end = QPointF(self.affected_strand.second_selected_strand.end)
+                # Use setter to update position  
                 self.affected_strand.second_selected_strand.start = new_pos
+                # Restore non-moving endpoint
+                self.affected_strand.second_selected_strand.end = second_old_end
                 self.affected_strand.second_selected_strand.update_shape()
         else:
             if hasattr(self.affected_strand, 'first_selected_strand') and self.affected_strand.first_selected_strand:
+                # Store the non-moving endpoint
+                first_old_start = QPointF(self.affected_strand.first_selected_strand.start)
+                # Use setter to update position
                 self.affected_strand.first_selected_strand.end = new_pos
+                # Restore non-moving endpoint
+                self.affected_strand.first_selected_strand.start = first_old_start
                 self.affected_strand.first_selected_strand.update_shape()
                 
             if hasattr(self.affected_strand, 'second_selected_strand') and self.affected_strand.second_selected_strand:
+                # Store the non-moving endpoint
+                second_old_start = QPointF(self.affected_strand.second_selected_strand.start)
+                # Use setter to update position
                 self.affected_strand.second_selected_strand.end = new_pos
+                # Restore non-moving endpoint
+                self.affected_strand.second_selected_strand.start = second_old_start
                 self.affected_strand.second_selected_strand.update_shape()
-        
+    
         # Use the new comprehensive update method if available
         if hasattr(self.affected_strand, 'force_complete_update'):
             self.affected_strand.force_complete_update()
@@ -1861,21 +1904,10 @@ class MoveMode:
         parent_strand = None
 
         if moving_side == 0:
-            # Update control points if they coincide with the start point
-            if hasattr(strand, 'control_point1') and strand.control_point1 == strand.start:
-                strand.control_point1 = new_pos
-            if hasattr(strand, 'control_point2') and strand.control_point2 == strand.start:
-                strand.control_point2 = new_pos
-            # Only update the start point
+            # Use the strand's setter directly to ensure control points are properly updated
             strand.start = new_pos
-
         elif moving_side == 1:
-            # Update control points if they coincide with the end point
-            if hasattr(strand, 'control_point1') and strand.control_point1 == strand.end:
-                strand.control_point1 = new_pos
-            if hasattr(strand, 'control_point2') and strand.control_point2 == strand.end:
-                strand.control_point2 = new_pos
-            # Only update the end point
+            # Use the strand's setter directly to ensure control points are properly updated
             strand.end = new_pos
 
         strand.update_shape()
@@ -2433,11 +2465,3 @@ class MoveMode:
             
         # Return the original position if distance is already sufficient
         return new_pos
-
-
-
-
-
-
-
-

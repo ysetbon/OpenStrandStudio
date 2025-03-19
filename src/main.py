@@ -31,6 +31,8 @@ def load_user_settings():
     theme_name = 'default'
     language_code = 'en'
     shadow_color = QColor(0, 0, 0, 150)  # Default shadow color (black with 59% opacity)
+    draw_only_affected_strand = False  # Default to drawing all strands
+    enable_third_control_point = False  # Default to two control points
     
     # Try to load from settings file
     shadow_color_loaded = False
@@ -67,9 +69,17 @@ def load_user_settings():
                             logging.info(f"Successfully parsed shadow color: {r},{g},{b},{a}")
                         except Exception as e:
                             logging.error(f"Error parsing shadow color values: {e}. Using default shadow color.")
+                    elif line.startswith('DrawOnlyAffectedStrand:'):
+                        value = line.strip().split(':', 1)[1].strip().lower()
+                        draw_only_affected_strand = (value == 'true')
+                        logging.info(f"Found DrawOnlyAffectedStrand: {draw_only_affected_strand}")
+                    elif line.startswith('EnableThirdControlPoint:'):
+                        value = line.strip().split(':', 1)[1].strip().lower()
+                        enable_third_control_point = (value == 'true')
+                        logging.info(f"Found EnableThirdControlPoint: {enable_third_control_point}")
             
             if shadow_color_loaded:
-                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
+                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}")
             else:
                 logging.warning(f"Shadow color not found in settings file. Using default: 0,0,0,150")
         except Exception as e:
@@ -77,7 +87,7 @@ def load_user_settings():
     else:
         logging.info(f"Settings file not found at {file_path}. Using default settings.")
 
-    return theme_name, language_code, shadow_color
+    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point
 
 if __name__ == '__main__':
     logging.info("Starting the application...")
@@ -85,8 +95,8 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Load user settings
-    theme, language_code, shadow_color = load_user_settings()
-    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
+    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point = load_user_settings()
+    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}")
 
     # Initialize the main window with settings
     window = MainWindow()
@@ -109,6 +119,15 @@ if __name__ == '__main__':
             rgb_color = QColor(shadow_color.red(), shadow_color.green(), shadow_color.blue(), shadow_color.alpha())
             window.canvas.set_shadow_color(rgb_color)
             logging.info(f"Applied shadow color to canvas directly after initialization: {rgb_color.red()},{rgb_color.green()},{rgb_color.blue()},{rgb_color.alpha()}")
+        
+        # Set draw only affected strand setting
+        if hasattr(window.canvas, 'move_mode'):
+            window.canvas.move_mode.draw_only_affected_strand = draw_only_affected_strand
+            logging.info(f"Set draw_only_affected_strand to {draw_only_affected_strand}")
+        
+        # Set enable third control point setting
+        window.canvas.enable_third_control_point = enable_third_control_point
+        logging.info(f"Set enable_third_control_point to {enable_third_control_point}")
     else:
         logging.error("Canvas not available on window object")
     

@@ -915,7 +915,8 @@ class StrandDrawingCanvas(QWidget):
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
         logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
         
-        self.shadow_enabled = True  # Flag to enable/disable shadows
+        # Initialize the flag for the third control point
+        self.enable_third_control_point = False
 
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number
@@ -3027,6 +3028,10 @@ class StrandDrawingCanvas(QWidget):
                     painter.drawLine(strand.start, strand.control_point1)
                 elif moving_side == 'control_point2':
                     painter.drawLine(strand.end, strand.control_point2)
+                elif moving_side == 'control_point_center' and self.enable_third_control_point:
+                    # Draw dashed line from center control point to both start and end
+                    painter.drawLine(strand.control_point_center, strand.start)
+                    painter.drawLine(strand.control_point_center, strand.end)
                 
                 # Draw only the control point being moved
                 stroke_pen = QPen(stroke_color, 5)
@@ -3087,6 +3092,31 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QBrush(QColor('green')))
                     painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
                 
+                elif moving_side == 'control_point_center' and self.enable_third_control_point:
+                    # Draw control_point_center as a square
+                    painter.setPen(stroke_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    square_size = control_point_radius * 2
+                    square_rect = QRectF(
+                        strand.control_point_center.x() - control_point_radius,
+                        strand.control_point_center.y() - control_point_radius,
+                        square_size,
+                        square_size
+                    )
+                    painter.drawRect(square_rect)
+                    
+                    # Draw fill with slightly smaller square
+                    painter.setPen(control_point_pen)
+                    painter.setBrush(QBrush(QColor('green')))
+                    inner_size = square_size - 2
+                    inner_rect = QRectF(
+                        strand.control_point_center.x() - (control_point_radius - 1),
+                        strand.control_point_center.y() - (control_point_radius - 1),
+                        inner_size,
+                        inner_size
+                    )
+                    painter.drawRect(inner_rect)
+                
                 continue
             
             # Normal drawing code when not moving a control point
@@ -3094,6 +3124,11 @@ class StrandDrawingCanvas(QWidget):
             painter.setPen(control_line_pen)
             painter.drawLine(strand.start, strand.control_point1)
             painter.drawLine(strand.end, strand.control_point2)
+            
+            # Draw center control point lines if enabled
+            if self.enable_third_control_point:
+                painter.drawLine(strand.control_point_center, strand.start)
+                painter.drawLine(strand.control_point_center, strand.end)
 
             # Draw control points with stroke
             stroke_pen = QPen(stroke_color, 5)
@@ -3151,6 +3186,32 @@ class StrandDrawingCanvas(QWidget):
             painter.setPen(control_point_pen)
             painter.setBrush(QBrush(QColor('green')))
             painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+            
+            # Draw control_point_center (square) if enabled
+            if self.enable_third_control_point:
+                # Draw stroke square
+                painter.setPen(stroke_pen)
+                painter.setBrush(Qt.NoBrush)
+                square_size = control_point_radius * 2
+                square_rect = QRectF(
+                    strand.control_point_center.x() - control_point_radius,
+                    strand.control_point_center.y() - control_point_radius,
+                    square_size,
+                    square_size
+                )
+                painter.drawRect(square_rect)
+                
+                # Draw fill with slightly smaller square
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+                inner_size = square_size - 2
+                inner_rect = QRectF(
+                    strand.control_point_center.x() - (control_point_radius - 1),
+                    strand.control_point_center.y() - (control_point_radius - 1),
+                    inner_size,
+                    inner_size
+                )
+                painter.drawRect(inner_rect)
 
         painter.restore()
     def handle_strand_selection(self, pos):
@@ -3559,20 +3620,51 @@ class StrandDrawingCanvas(QWidget):
             return False
     def find_control_point_at_position(self, pos):
         """
-        Find the strand whose control point is at the given position.
-
+        Find a control point at the given position.
+        
         Args:
-            pos (QPointF): The position to check.
-
+            pos (QPointF): The position to check for a control point.
+            
         Returns:
-            Strand or None: The strand whose control point is at the position, or None if not found.
+            (strand, point_type): The strand and the type of point ('control_point1' or 'control_point2')
+                                  or None if no control point is found.
         """
-        for strand in reversed(self.strands):  # Reverse to check topmost strands first
-            if hasattr(strand, 'control_point'):
-                control_point_rect = self.get_control_point_rectangle(strand)
-                if control_point_rect.contains(pos):
-                    return strand
-        return None
+        tolerance = 15  # Slightly larger than the visual size of control points
+        
+        if not self.show_control_points:
+            return None, None
+            
+        for strand in self.strands:
+            if isinstance(strand, MaskedStrand):
+                continue
+                
+            if strand.control_point1 and strand.control_point2:
+                # Check distance from pos to control_point1
+                distance_to_cp1 = math.hypot(
+                    pos.x() - strand.control_point1.x(), 
+                    pos.y() - strand.control_point1.y()
+                )
+                if distance_to_cp1 <= tolerance:
+                    return strand, 'control_point1'
+                    
+                # Check distance from pos to control_point2
+                distance_to_cp2 = math.hypot(
+                    pos.x() - strand.control_point2.x(), 
+                    pos.y() - strand.control_point2.y()
+                )
+                if distance_to_cp2 <= tolerance:
+                    return strand, 'control_point2'
+                
+                # Check for center control point if enabled
+                if self.enable_third_control_point:
+                    distance_to_center = math.hypot(
+                        pos.x() - strand.control_point_center.x(),
+                        pos.y() - strand.control_point_center.y()
+                    )
+                    if distance_to_center <= tolerance:
+                        return strand, 'control_point_center'
+                
+        return None, None
 
     def get_control_point_rectangle(self, strand):
         """
@@ -3598,11 +3690,11 @@ class StrandDrawingCanvas(QWidget):
         Returns:
             bool: True if a control point was selected, False otherwise.
         """
-        strand = self.find_control_point_at_position(pos)
-        if strand:
-            # Perform any selection logic here
+        strand, control_point_type = self.find_control_point_at_position(pos)
+        if strand and control_point_type:
+            # Select the strand and store the control point type
             self.selected_strand = strand
-            self.selected_point = 'control_point'
+            self.selected_point = control_point_type
             self.update()
             return True
         return False

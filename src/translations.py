@@ -32,6 +32,7 @@ translations = {
         'toggle_shadow': 'Shadow',
         'shadow_color': 'Shadow Color',
         'draw_only_affected_strand': 'Draw only affected strand when dragging',
+        'enable_third_control_point': 'Enable third control point at center',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -188,6 +189,7 @@ translations = {
         'toggle_shadow': 'Ombres',
         'shadow_color': 'Couleur d\'ombre',
         'draw_only_affected_strand': 'Afficher uniquement le brin affecté lors du déplacement',
+        'enable_third_control_point': 'Activer le troisième point de contrôle au centre',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>

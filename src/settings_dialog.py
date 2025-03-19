@@ -34,6 +34,7 @@ class SettingsDialog(QDialog):
         self.current_language = self.parent_window.language_code
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
+        self.enable_third_control_point = False  # Default to two control points
         
         # Try to load settings from file first
         self.load_settings_from_file()
@@ -101,8 +102,12 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.draw_only_affected_strand = (value == 'true')
                             logging.info(f"SettingsDialog: Found DrawOnlyAffectedStrand: {self.draw_only_affected_strand}")
+                        elif line.startswith('EnableThirdControlPoint:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.enable_third_control_point = (value == 'true')
+                            logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
                 
-                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
+                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -219,6 +224,15 @@ class SettingsDialog(QDialog):
         performance_layout.addWidget(self.affected_strand_checkbox)
         performance_layout.addStretch()
 
+        # Third Control Point Option
+        third_control_layout = QHBoxLayout()
+        self.third_control_label = QLabel(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        self.third_control_checkbox = QCheckBox()
+        self.third_control_checkbox.setChecked(self.enable_third_control_point)
+        third_control_layout.addWidget(self.third_control_label)
+        third_control_layout.addWidget(self.third_control_checkbox)
+        third_control_layout.addStretch()
+
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
         self.apply_button.clicked.connect(self.apply_all_settings)
@@ -230,6 +244,7 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(theme_layout)
         general_layout.addLayout(shadow_layout)
         general_layout.addLayout(performance_layout)
+        general_layout.addLayout(third_control_layout)
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
 
@@ -637,6 +652,13 @@ class SettingsDialog(QDialog):
             self.canvas.move_mode.draw_only_affected_strand = self.draw_only_affected_strand
             logging.info(f"SettingsDialog: Set draw_only_affected_strand to {self.draw_only_affected_strand}")
 
+        # Apply Third Control Point Setting
+        self.enable_third_control_point = self.third_control_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.enable_third_control_point = self.enable_third_control_point
+            logging.info(f"SettingsDialog: Set enable_third_control_point to {self.enable_third_control_point}")
+            self.canvas.update()  # Force redraw to show/hide third control point
+
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
         # Update the language in the main window
@@ -675,6 +697,7 @@ class SettingsDialog(QDialog):
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
+        self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
@@ -745,8 +768,10 @@ class SettingsDialog(QDialog):
                 file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                 # Save draw only affected strand setting
                 file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
-            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
-            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}")
+                # Save enable third control point setting
+                file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
+            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
+            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -756,6 +781,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"Language: {self.current_language}\n")
                     local_file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                     local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
+                    local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")

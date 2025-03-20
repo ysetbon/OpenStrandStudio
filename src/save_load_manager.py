@@ -87,6 +87,10 @@ def serialize_strand(strand, canvas, index=None):
             serialize_point(strand.control_point1),
             serialize_point(strand.control_point2)
         ]
+        # Add control_point_center if it exists
+        if hasattr(strand, 'control_point_center'):
+            data["control_point_center"] = serialize_point(strand.control_point_center)
+            data["control_point_center_locked"] = getattr(strand, 'control_point_center_locked', False)
 
     if isinstance(strand, MaskedStrand):
         data["deletion_rectangles"] = getattr(strand, 'deletion_rectangles', [])
@@ -232,6 +236,14 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             if control_points[1]:
                 strand.control_point2 = deserialize_point(control_points[1])
             strand.update_control_points(reset_control_points=False)
+        
+        # Handle control_point_center if present
+        if "control_point_center" in data:
+            strand.control_point_center = deserialize_point(data["control_point_center"])
+            # Also set the locked state if available
+            if "control_point_center_locked" in data:
+                strand.control_point_center_locked = data["control_point_center_locked"]
+            logging.info(f"Loaded control_point_center for {strand.layer_name}")
 
         # NEW: Circle stroke color logic similar to control_points
         if "circle_stroke_color" in data and data["circle_stroke_color"] is not None:
@@ -348,6 +360,14 @@ def load_strands(filename, canvas):
                     # Now call the new method on the Strand class that preserves control points
                     strand.update_control_points(reset_control_points=False)
                 
+                # Handle control_point_center if present
+                if "control_point_center" in strand_data:
+                    strand.control_point_center = deserialize_point(strand_data["control_point_center"])
+                    # Also set the locked state if available
+                    if "control_point_center_locked" in strand_data:
+                        strand.control_point_center_locked = strand_data["control_point_center_locked"]
+                    logging.info(f"Loaded control_point_center for AttachedStrand {strand.layer_name}")
+
                 # Update the canvas's layer state manager
                 if hasattr(canvas, 'layer_state_manager'):
                     canvas.layer_state_manager.connect_layers(parent_layer_name, strand.layer_name)
@@ -619,7 +639,9 @@ def serialize_groups(groups):
             "control_points": {
                 layer_name: {
                     "control_point1": serialize_point(points.get("control_point1")),
-                    "control_point2": serialize_point(points.get("control_point2"))
+                    "control_point2": serialize_point(points.get("control_point2")),
+                    "control_point_center": serialize_point(points.get("control_point_center")),
+                    "control_point_center_locked": points.get("control_point_center_locked", False)
                 } for layer_name, points in group_data.get("control_points", {}).items()
                 if points.get("control_point1") is not None or points.get("control_point2") is not None
             }
@@ -671,7 +693,9 @@ def deserialize_groups(groups_data, strand_dict):
             "control_points": {
                 layer_name: {
                     "control_point1": deserialize_point(points["control_point1"]),
-                    "control_point2": deserialize_point(points["control_point2"])
+                    "control_point2": deserialize_point(points["control_point2"]),
+                    "control_point_center": deserialize_point(points.get("control_point_center")),
+                    "control_point_center_locked": points.get("control_point_center_locked", False)
                 } for layer_name, points in group_data.get("control_points", {}).items()
             }
         }

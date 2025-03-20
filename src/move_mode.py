@@ -1274,7 +1274,11 @@ class MoveMode:
 
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
-        control_point_center_rect = self.get_control_point_rectangle(strand, 3)
+        
+        # Only get the center control point rectangle if it's enabled
+        control_point_center_rect = None
+        if hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            control_point_center_rect = self.get_control_point_rectangle(strand, 3)
 
         if control_point1_rect.contains(pos):
             self.start_movement(strand, 'control_point1', control_point1_rect)
@@ -1292,7 +1296,6 @@ class MoveMode:
             self.start_movement(strand, 'control_point2', control_point2_rect)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
-            # Store the strand explicitly in truly_moving_strands for proper z-ordering
             if hasattr(self.canvas, 'truly_moving_strands'):
                 self.canvas.truly_moving_strands = [strand]
             else:
@@ -1300,11 +1303,11 @@ class MoveMode:
             # Clear any existing highlighting
             self.highlighted_strand = None
             return True
-        elif control_point_center_rect.contains(pos):
+        # Only check center control point if it's enabled
+        elif control_point_center_rect is not None and control_point_center_rect.contains(pos):
             self.start_movement(strand, 'control_point_center', control_point_center_rect)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
-            # Store the strand explicitly in truly_moving_strands for proper z-ordering
             if hasattr(self.canvas, 'truly_moving_strands'):
                 self.canvas.truly_moving_strands = [strand]
             else:
@@ -1312,7 +1315,6 @@ class MoveMode:
             # Clear any existing highlighting
             self.highlighted_strand = None
             return True
-
         return False
 
     def try_move_strand(self, strand, pos, strand_index):
@@ -1344,13 +1346,18 @@ class MoveMode:
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 35  # Size of the area for control point selection
+        size = 30  # Size of the area for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
             center = strand.control_point2
         elif control_point_number == 3:
-            center = strand.control_point_center
+            # Only return a valid rectangle for center control point if feature is enabled
+            if hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+                center = strand.control_point_center
+            else:
+                # Return an empty rectangle that won't match any position
+                return QRectF()
         else:
             return QRectF()
         return QRectF(center.x() - size / 2, center.y() - size / 2, size, size)
@@ -2382,7 +2389,7 @@ class MoveMode:
         # This is to prevent the red C-shaped highlights from appearing
         if self.is_moving and self.draw_only_affected_strand:
             return
-        
+            
         # In normal drawing mode, draw the selected attached strand with C-shaped highlights
         self.draw_selected_attached_strand(painter)
 

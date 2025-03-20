@@ -543,29 +543,29 @@ class Strand:
             dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
             
             cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
-                         p0.y() + start_tangent.y() * dist1)
+                        p0.y() + start_tangent.y() * dist1)
             
             cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
-                         p2.y() - center_tangent.y() * dist1)
+                        p2.y() - center_tangent.y() * dist1)
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
             
-            # Calculate intermediate control points for second segment with increased influence
-            # Previously: dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) / 3
-            influence_factor = 0.33333
+            # Calculate intermediate control points for second segment
             dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
             
             cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
-                         p2.y() + center_tangent.y() * dist2)
+                        p2.y() + center_tangent.y() * dist2)
             
             cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
-                         p4.y() - end_tangent.y() * dist2)
+                        p4.y() - end_tangent.y() * dist2)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
         else:
+            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
             path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
         return path
 
     def get_selection_path(self):
@@ -1789,9 +1789,7 @@ class AttachedStrand(Strand):
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
             
-            # Calculate intermediate control points for second segment with increased influence
-            # Previously: dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) / 3
-            influence_factor = 0.33333
+            # Calculate intermediate control points for second segment
             dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
             
             cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
@@ -1803,7 +1801,9 @@ class AttachedStrand(Strand):
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
         else:
+            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
             path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
         return path
         
     def point_at(self, t):
@@ -2264,15 +2264,19 @@ class AttachedStrand(Strand):
         self.angle = math.degrees(math.atan2(delta_y, delta_x))
 
     def update_control_points_from_geometry(self):
-        """Update control points based on current start and end points."""
+        """Update control points based on current start and end positions."""
+        # Calculate control points at 1/3 and 2/3 along the line
+        dx = self.end.x() - self.start.x()
+        dy = self.end.y() - self.start.y()
+        
         self.control_point1 = QPointF(
-            self.start.x(),
-            self.start.y()
+            self.start.x() + dx / 3,
+            self.start.y() + dy / 3
         )
         self.control_point2 = QPointF(
-            self.end.x(),
-            self.end.y()
-        )
+            self.start.x() + 2 * dx / 3,
+            self.start.y() + 2 * dy / 3
+        )   
         
         # Update the center control point as the midpoint between control_point1 and control_point2
         # Reset the lock status since we're recalculating from geometry
@@ -2282,7 +2286,6 @@ class AttachedStrand(Strand):
         )
         # Reset the lock when recalculating from geometry
         self.control_point_center_locked = False
-
     def update_control_points(self, reset_control_points=True):
         """
         Same idea, but for AttachedStrand.

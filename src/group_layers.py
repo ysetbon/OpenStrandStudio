@@ -681,6 +681,9 @@ class GroupPanel(QWidget):
                     if not isinstance(strand, MaskedStrand):
                         state['control_point1'] = QPointF(strand.control_point1)
                         state['control_point2'] = QPointF(strand.control_point2)
+                        # Store control_point_center if it exists
+                        if hasattr(strand, 'control_point_center'):
+                            state['control_point_center'] = QPointF(strand.control_point_center)
                         logging.info(f"Stored pre-rotation state for strand {strand.layer_name}")
                     else:
                         logging.info(f"Skipped storing control points for masked strand {strand.layer_name}")
@@ -858,15 +861,22 @@ class GroupPanel(QWidget):
             if not isinstance(strand, MaskedStrand):
                 cp1 = pre_rotation_pos.get('control_point1')
                 cp2 = pre_rotation_pos.get('control_point2')
+                cp_center = pre_rotation_pos.get('control_point_center')
 
                 # Detect if they were the same as the start/end
                 pinned_cp1_to_start = (cp1 is not None and cp1 == pre_rotation_pos['start'])
                 pinned_cp1_to_end   = (cp1 is not None and cp1 == pre_rotation_pos['end'])
                 pinned_cp2_to_start = (cp2 is not None and cp2 == pre_rotation_pos['start'])
                 pinned_cp2_to_end   = (cp2 is not None and cp2 == pre_rotation_pos['end'])
+                pinned_cp_center_to_start = (cp_center is not None and cp_center == pre_rotation_pos['start'])
+                pinned_cp_center_to_end = (cp_center is not None and cp_center == pre_rotation_pos['end'])
 
                 strand.control_point1 = QPointF(cp1) if cp1 else None
                 strand.control_point2 = QPointF(cp2) if cp2 else None
+                
+                # Restore control_point_center if it exists
+                if cp_center is not None and hasattr(strand, 'control_point_center'):
+                    strand.control_point_center = QPointF(cp_center)
 
             # Rotate strand start/end
             strand.start = rotate_point(strand.start, center, angle)
@@ -878,6 +888,10 @@ class GroupPanel(QWidget):
                     strand.control_point1 = rotate_point(strand.control_point1, center, angle)
                 if strand.control_point2 is not None:
                     strand.control_point2 = rotate_point(strand.control_point2, center, angle)
+                
+                # Rotate control_point_center if it exists
+                if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                    strand.control_point_center = rotate_point(strand.control_point_center, center, angle)
 
                 # If originally pinned to start/end, re-pin them after rotation
                 # This ensures they remain exactly at the rotated strand.start/strand.end
@@ -890,14 +904,27 @@ class GroupPanel(QWidget):
                     strand.control_point2 = strand.start
                 elif pinned_cp2_to_end:
                     strand.control_point2 = strand.end
+                
+                # Pin control_point_center if it was originally pinned
+                if pinned_cp_center_to_start:
+                    strand.control_point_center = strand.start
+                elif pinned_cp_center_to_end:
+                    strand.control_point_center = strand.end
 
                 # Update the group's stored control points (if we track them)
                 if 'control_points' not in self.canvas.groups[group_name]:
                     self.canvas.groups[group_name]['control_points'] = {}
-                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                
+                control_points_dict = {
                     'control_point1': strand.control_point1,
                     'control_point2': strand.control_point2
                 }
+                
+                # Add control_point_center to control_points_dict if it exists
+                if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                    control_points_dict['control_point_center'] = strand.control_point_center
+                
+                self.canvas.groups[group_name]['control_points'][strand.layer_name] = control_points_dict
 
             else:
                 # For MaskedStrand, rotate each deletion rectangle corner
@@ -3308,6 +3335,9 @@ class StrandAngleEditDialog(QDialog):
                 'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end),
                 'last_angle': self.calculate_angle(strand)  # Store current angle
             }
+            # Store control_point_center if it exists
+            if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                strand.pre_rotation_points['control_point_center'] = QPointF(strand.control_point_center)
 
         # Calculate the angle difference
         current_angle = self.calculate_angle(strand)
@@ -3335,12 +3365,16 @@ class StrandAngleEditDialog(QDialog):
         strand.end = rotate_point(strand.end, angle_rad)
         strand.control_point1 = rotate_point(strand.control_point1, angle_rad) if strand.control_point1 is not None else None
         strand.control_point2 = rotate_point(strand.control_point2, angle_rad) if strand.control_point2 is not None else None
+        
+        # Rotate control_point_center if it exists
+        if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+            strand.control_point_center = rotate_point(strand.control_point_center, angle_rad)
 
         # Update the strand's shape
         strand.update_shape()
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
-
+            
         # Store the new angle as the last angle
         if hasattr(strand, 'pre_rotation_points'):
             strand.pre_rotation_points['last_angle'] = new_angle

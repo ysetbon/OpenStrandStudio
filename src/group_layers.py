@@ -499,7 +499,7 @@ class GroupPanel(QWidget):
             logging.warning(f"Attempted to move non-existent group: {group_name}")
 
     def update_group_move(self, group_name, total_dx, total_dy):
-        logging.info(f"GroupPanel: Updating group move for '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
+        """Update the position of all strands in the group."""
         if self.canvas:
             # Create a QPointF for the movement delta
             delta = QPointF(total_dx, total_dy)
@@ -513,13 +513,23 @@ class GroupPanel(QWidget):
                 if not hasattr(strand, 'original_control_point1'):
                     strand.original_control_point1 = QPointF(strand.control_point1)
                     strand.original_control_point2 = QPointF(strand.control_point2)
+                    if hasattr(strand, 'control_point_center'):
+                        strand.original_control_point_center = QPointF(strand.control_point_center)
                 
                 # Move all points including control points
                 strand.start = strand.original_start + delta
                 strand.end = strand.original_end + delta
                 strand.control_point1 = strand.original_control_point1 + delta
                 strand.control_point2 = strand.original_control_point2 + delta
+                if hasattr(strand, 'control_point_center'):
+                    if hasattr(strand, 'original_control_point_center'):
+                        strand.control_point_center = strand.original_control_point_center + delta
+                    else:
+                        # Fallback if original wasn't set for some reason
+                        strand.original_control_point_center = QPointF(strand.control_point_center)
+                        strand.control_point_center = strand.original_control_point_center + delta
                 
+               
                 # Update the strand's shape
                 strand.update_shape()
                 if hasattr(strand, 'update_side_line'):
@@ -529,10 +539,16 @@ class GroupPanel(QWidget):
                 if 'control_points' not in self.canvas.groups[group_name]:
                     self.canvas.groups[group_name]['control_points'] = {}
                 
-                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                control_points_dict = {
                     'control_point1': strand.control_point1,
                     'control_point2': strand.control_point2
                 }
+                
+                # Also store center control point if it exists
+                if hasattr(strand, 'control_point_center'):
+                    control_points_dict['control_point_center'] = strand.control_point_center
+                
+                self.canvas.groups[group_name]['control_points'][strand.layer_name] = control_points_dict
             
             # Update the canvas
             self.canvas.update()

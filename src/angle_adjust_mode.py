@@ -45,6 +45,10 @@ class AngleAdjustMode:
         self.initial_cp1_vector = strand.control_point1 - strand.start
         self.initial_cp2_vector = strand.control_point2 - strand.start
         
+        # Store initial control_point_center if it exists
+        if hasattr(strand, 'control_point_center'):
+            self.initial_cp_center_vector = strand.control_point_center - strand.start
+        
         self.initial_angle = self.current_angle
         self.max_length = max(10, int(self.original_length * 2))
         
@@ -242,8 +246,6 @@ class AngleAdjustMode:
             except Exception as e:
                 print(f"Error in angle calculation: {e}")  # Debug print
 
-
-
     def adjust_angle(self, delta):
         if not self.active_strand:
             return
@@ -307,6 +309,16 @@ class AngleAdjustMode:
         self.active_strand.control_point2 = self.rotate_point_around_pivot(
             start + self.initial_cp2_vector, start, angle_difference
         )
+        
+        # Also rotate control_point_center if it exists
+        if hasattr(self.active_strand, 'control_point_center'):
+            # Store the initial vector on first rotation if not already stored
+            if not hasattr(self, 'initial_cp_center_vector'):
+                self.initial_cp_center_vector = self.active_strand.control_point_center - start
+            
+            self.active_strand.control_point_center = self.rotate_point_around_pivot(
+                start + self.initial_cp_center_vector, start, angle_difference
+            )
 
     def rotate_control_points(self, strand, angle_diff, pivot):
         """Rotate the control points of a strand around a pivot by angle_diff degrees."""
@@ -314,6 +326,11 @@ class AngleAdjustMode:
         cp2 = self.rotate_point_around_pivot(strand.control_point2, pivot, angle_diff)
         strand.control_point1 = cp1
         strand.control_point2 = cp2
+        
+        # Also rotate control_point_center if it exists
+        if hasattr(strand, 'control_point_center'):
+            cp_center = self.rotate_point_around_pivot(strand.control_point_center, pivot, angle_diff)
+            strand.control_point_center = cp_center
 
     def rotate_point_around_pivot(self, point, pivot, angle_degree):
         """Rotate a point around a pivot by a certain angle in degrees."""
@@ -440,6 +457,10 @@ class AngleAdjustMode:
             scale_factor = new_length / self.initial_length
             self.active_strand.control_point1 = start + (self.initial_cp1_vector * scale_factor)
             self.active_strand.control_point2 = start + (self.initial_cp2_vector * scale_factor)
+            
+            # Also adjust control_point_center if it exists
+            if hasattr(self.active_strand, 'control_point_center') and hasattr(self, 'initial_cp_center_vector'):
+                self.active_strand.control_point_center = start + (self.initial_cp_center_vector * scale_factor)
 
         # Update the strand's shape
         self.active_strand.update_shape()
@@ -468,6 +489,15 @@ class AngleAdjustMode:
         # Update control points relative to start point
         self.active_strand.control_point1 = start + cp1_new_vector
         self.active_strand.control_point2 = start + cp2_new_vector
+        
+        # Also scale control_point_center if it exists
+        if hasattr(self.active_strand, 'control_point_center'):
+            # Store the initial vector on first scaling if not already stored
+            if not hasattr(self, 'initial_cp_center_vector'):
+                self.initial_cp_center_vector = self.active_strand.control_point_center - start
+                
+            cp_center_new_vector = self.initial_cp_center_vector * length_ratio
+            self.active_strand.control_point_center = start + cp_center_new_vector
 
     def update_attached_strands_length(self, old_pos, new_pos):
         """Update the position of attached strands when the length changes."""

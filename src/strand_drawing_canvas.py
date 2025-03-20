@@ -1198,6 +1198,15 @@ class StrandDrawingCanvas(QWidget):
                         square_control_size,
                         square_control_size
                     )
+                elif selected_side == 'control_point_center' and hasattr(selected_strand, 'control_point_center'):
+                    # Use control point size for control points
+                    yellow_rectangle = QRectF(
+                        selected_strand.control_point_center.x() - half_control_size,
+                        selected_strand.control_point_center.y() - half_control_size, 
+                        square_control_size,
+                        square_control_size
+                    )
+                    
             elif isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
                 # Fall back to using MoveMode's selected rectangle if needed
                 yellow_rectangle = self.current_mode.selected_rectangle
@@ -1283,7 +1292,7 @@ class StrandDrawingCanvas(QWidget):
                                 # Skip drawing only the exact selected control point
                                 skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
                                 skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
-                                
+                                skip_cp3 = (strand == selected_strand and selected_side == 'control_point_center')
                                 # Check if a control point is being moved
                                 is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
                                 
@@ -1310,11 +1319,19 @@ class StrandDrawingCanvas(QWidget):
                                         square_control_size,
                                         square_control_size
                                     )
-                                
+                                if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                                    cp3_rect = QRectF(
+                                        strand.control_point_center.x() - half_control_size,
+                                        strand.control_point_center.y() - half_control_size,
+                                        square_control_size,
+                                        square_control_size
+                                    )
+                                else:
+                                    cp3_rect = None
                                 # Check if control points overlap with yellow rectangle
                                 cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
                                 cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
-                                
+                                cp3_overlaps_yellow = yellow_rectangle and cp3_rect and self.rectangles_overlap(cp3_rect, yellow_rectangle)
                                 # Draw with green color for non-selected control points
                                 square_color = QColor(0, 100, 0, 100)  # Green with 50% transparency
                                 painter.setBrush(QBrush(square_color))
@@ -1326,6 +1343,8 @@ class StrandDrawingCanvas(QWidget):
                                         painter.drawRect(cp1_rect)
                                     elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         painter.drawRect(cp2_rect)
+                                    elif selected_side == 'control_point_center' and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow:
+                                        painter.drawRect(cp3_rect)
                                 else:
                                     # Normal drawing when not moving a control point
                                     if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
@@ -1333,7 +1352,8 @@ class StrandDrawingCanvas(QWidget):
                                     
                                     if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         painter.drawRect(cp2_rect)
-            
+                                    if cp3_rect and not skip_cp3 and not cp3_overlaps_yellow:
+                                        painter.drawRect(cp3_rect)
             # Draw the selected rectangle with yellow color
             if self.current_mode.selected_rectangle:
                 # Set up semi-transparent yellow color
@@ -1381,6 +1401,16 @@ class StrandDrawingCanvas(QWidget):
                             square_control_size
                         )
                         painter.drawRect(yellow_rect)
+                    elif moving_side == 'control_point_center' and hasattr(affected_strand, 'control_point_center'):
+                        # Use control point size for control points
+                        yellow_rect = QRectF(
+                            affected_strand.control_point_center.x() - half_control_size,
+                            affected_strand.control_point_center.y() - half_control_size,
+                            square_control_size,
+                            square_control_size
+                        )
+                        painter.drawRect(yellow_rect)
+                        
                 # Fall back to using the selected_rectangle from MoveMode if direct creation not possible
                 elif isinstance(self.current_mode.selected_rectangle, QPainterPath):
                     painter.drawPath(self.current_mode.selected_rectangle)
@@ -3030,8 +3060,8 @@ class StrandDrawingCanvas(QWidget):
                     painter.drawLine(strand.end, strand.control_point2)
                 elif moving_side == 'control_point_center' and self.enable_third_control_point:
                     # Draw dashed line from center control point to both start and end
-                    painter.drawLine(strand.control_point_center, strand.start)
-                    painter.drawLine(strand.control_point_center, strand.end)
+                    painter.drawLine(strand.control_point_center, strand.control_point1)
+                    painter.drawLine(strand.control_point_center, strand.control_point2)
                 
                 # Draw only the control point being moved
                 stroke_pen = QPen(stroke_color, 5)
@@ -3127,8 +3157,8 @@ class StrandDrawingCanvas(QWidget):
             
             # Draw center control point lines if enabled
             if self.enable_third_control_point:
-                painter.drawLine(strand.control_point_center, strand.start)
-                painter.drawLine(strand.control_point_center, strand.end)
+                painter.drawLine(strand.control_point_center, strand.control_point1)
+                painter.drawLine(strand.control_point_center, strand.control_point2)
 
             # Draw control points with stroke
             stroke_pen = QPen(stroke_color, 5)

@@ -288,6 +288,10 @@ class RotateMode:
         # Update control points based on the rotation
         self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
         self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
+        
+        # Also rotate the control_point_center if it exists
+        if hasattr(self.affected_strand, 'control_point_center'):
+            self.rotate_control_point(self.affected_strand.control_point_center, rotation_angle)
 
         self.affected_strand.update_shape()
         self.affected_strand.update_side_line()

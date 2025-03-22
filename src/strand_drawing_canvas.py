@@ -2267,7 +2267,7 @@ class StrandDrawingCanvas(QWidget):
             self.update()
         elif self.current_mode == "rotate":
             self.rotate_mode.mouseMoveEvent(event)
-        elif self.current_mode:
+        elif self.current_mode and not isinstance(self.current_mode, str):
             self.current_mode.mouseMoveEvent(event)
         super().mouseMoveEvent(event)
 
@@ -2327,7 +2327,7 @@ class StrandDrawingCanvas(QWidget):
         elif self.is_drawing_new_strand and self.new_strand_start_point:
             self.new_strand_end_point = event.pos()
             self.finalize_new_strand()
-        elif self.current_mode:
+        elif self.current_mode and not isinstance(self.current_mode, str):
             self.current_mode.mouseReleaseEvent(event)
         self.update()
 

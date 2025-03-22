@@ -388,14 +388,19 @@ class Strand:
         # Create the path with the extended points
         path.moveTo(extended_start)
         path.lineTo(self.start)
-        # Check if we have a third control point and it's being used
+
+        # Only use the third control point if:
+        # 1. The feature is enabled AND
+        # 2. The control_point_center has been manually positioned
         if (hasattr(self, 'canvas') and self.canvas and 
             hasattr(self.canvas, 'enable_third_control_point') and 
             self.canvas.enable_third_control_point and
             hasattr(self, 'control_point_center_locked') and 
             self.control_point_center_locked):
             
-            # Use all three control points for the cubic curve, matching get_path logic
+            # Create a smooth spline incorporating all control points
+            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
+            
             # Extract the key points we're working with
             p0 = self.start
             p1 = self.control_point1
@@ -415,52 +420,68 @@ class Strand:
                 length = math.sqrt(v.x() * v.x() + v.y() * v.y())
                 if length < 0.001:  # Avoid division by zero
                     return QPointF(0, 0)
+                # Preserve vector magnitude better for small movements
                 return QPointF(v.x() / length, v.y() / length)
             
-            start_tangent = normalize_vector(start_tangent)
-            in_tangent = normalize_vector(in_tangent)
-            out_tangent = normalize_vector(out_tangent)
+            def distance_vector(v):
+                return (math.sqrt(v.x() * v.x() + v.y() * v.y()))/(46*6)
+            
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
             
             # Calculate center tangent as weighted average instead of simple average
             # This makes the curve more responsive to small movements
             center_tangent = QPointF(
-                0.5 * in_tangent.x() + 0.5 * out_tangent.x(), 
-                0.5 * in_tangent.y() + 0.5 * out_tangent.y()
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
             )
-            center_tangent = normalize_vector(center_tangent)
+            center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
-            end_tangent = normalize_vector(end_tangent)
+            end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points with increased influence
-            influence_factor = 0.33333
-            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            # Calculate intermediate control points for first segment with increased influence
+            # Distance factors control the "tension" of the curve
+            influence_factor_start = distance_vector(start_tangent)
+            influence_factor_center = 0.333
+            #influence factor for center with start 
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            # Use a more stable distance calculation for better sensitivity to small movements
+            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
+            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
             
-            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
-                         p0.y() + start_tangent.y() * dist1)
+            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
+                        p0.y() + start_tangent_normalized.y() * dist1_start)
             
-            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
-                         p2.y() - center_tangent.y() * dist1)
+            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
+                        p2.y() - center_tangent_normalized.y() * dist1_center)
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
             
             # Calculate intermediate control points for second segment
-            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            influence_factor_end = distance_vector(end_tangent)
+            #influence factor for center with end 
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
+            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
-            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
-                         p2.y() + center_tangent.y() * dist2)
+            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
+                        p2.y() + center_tangent_normalized.y() * dist2_center)
             
-            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
-                         p4.y() - end_tangent.y() * dist2)
+            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
+                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
-            path.cubicTo(cp3, cp4, self.end)
-            path.lineTo(extended_end)
+            path.cubicTo(cp3, cp4, p4)
         else:
-            # Use standard two control points
-            path.cubicTo(self.control_point1, self.control_point2, extended_end)
+            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
+            path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
+        # Add a line to the extended end point
+        path.lineTo(extended_end)
             
         return path
 
@@ -469,20 +490,7 @@ class Strand:
         path = QPainterPath()
         path.moveTo(self.start)
         # Calculate the center point between two points
-        def calculate_center_point(self, point1, point2):
-            """
-            Calculate the center point between two QPointF objects.
-            
-            Args:
-                point1 (QPointF): The first point
-                point2 (QPointF): The second point
-                
-            Returns:
-                QPointF: The center point between the two input points
-            """
-            center_x = (point1.x() + point2.x()) / 2
-            center_y = (point1.y() + point2.y()) / 2
-            return QPointF(center_x, center_y)
+
         
         # Only use the third control point if:
         # 1. The feature is enabled AND
@@ -519,46 +527,55 @@ class Strand:
                     return QPointF(0, 0)
                 # Preserve vector magnitude better for small movements
                 return QPointF(v.x() / length, v.y() / length)
-            
-            start_tangent = normalize_vector(start_tangent)
-            in_tangent = normalize_vector(in_tangent)
-            out_tangent = normalize_vector(out_tangent)
+            def distance_vector(v):
+                return (math.sqrt(v.x() * v.x() + v.y() * v.y()))/(46*6)
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
             
             # Calculate center tangent as weighted average instead of simple average
             # This makes the curve more responsive to small movements
             center_tangent = QPointF(
-                0.5 * in_tangent.x() + 0.5 * out_tangent.x(), 
-                0.5 * in_tangent.y() + 0.5 * out_tangent.y()
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
             )
-            center_tangent = normalize_vector(center_tangent)
+            center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
-            end_tangent = normalize_vector(end_tangent)
+            end_tangent_normalized = normalize_vector(end_tangent)
             
             # Calculate intermediate control points for first segment with increased influence
             # Distance factors control the "tension" of the curve
-            influence_factor = 0.33333
+            influence_factor_start = distance_vector(start_tangent)
+            print("influence_factor_start: ", influence_factor_start)
+            #influence factor for center with start 
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+
             # Use a more stable distance calculation for better sensitivity to small movements
-            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
+            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
             
-            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
-                        p0.y() + start_tangent.y() * dist1)
+            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
+                        p0.y() + start_tangent_normalized.y() * dist1_start)
             
-            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
-                        p2.y() - center_tangent.y() * dist1)
+            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
+                        p2.y() - center_tangent_normalized.y() * dist1_center)
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
             
             # Calculate intermediate control points for second segment
-            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            influence_factor_end = distance_vector(end_tangent)
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
+            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
-            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
-                        p2.y() + center_tangent.y() * dist2)
+            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
+                        p2.y() + center_tangent_normalized.y() * dist2_center)
             
-            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
-                        p4.y() - end_tangent.y() * dist2)
+            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
+                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
@@ -1703,108 +1720,7 @@ class AttachedStrand(Strand):
             painter.restore()
         """
 
-    def get_path(self):
-        """Get the path representing the strand as a cubic Bézier curve."""
-        path = QPainterPath()
-        path.moveTo(self.start)
-        # Calculate the center point between two points
-        def calculate_center_point(self, point1, point2):
-            """
-            Calculate the center point between two QPointF objects.
-            
-            Args:
-                point1 (QPointF): The first point
-                point2 (QPointF): The second point
-                
-            Returns:
-                QPointF: The center point between the two input points
-            """
-            center_x = (point1.x() + point2.x()) / 2
-            center_y = (point1.y() + point2.y()) / 2
-            return QPointF(center_x, center_y)
-        
-        # Only use the third control point if:
-        # 1. The feature is enabled AND
-        # 2. The control_point_center has been manually positioned
-        if (hasattr(self, 'canvas') and self.canvas and 
-            hasattr(self.canvas, 'enable_third_control_point') and 
-            self.canvas.enable_third_control_point and
-            hasattr(self, 'control_point_center_locked') and 
-            self.control_point_center_locked):
-            
-            # Create a smooth spline incorporating all control points
-            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
-            
-            # Create control points that ensure C1 continuity (continuous first derivative)
-            
-            # Extract the key points we're working with
-            p0 = self.start
-            p1 = self.control_point1
-            p2 = self.control_point_center
-            p3 = self.control_point2
-            p4 = self.end
-            
-            # Calculate the tangent at start point (pointing toward control_point1)
-            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
-            
-            # Calculate the tangent at center (average of incoming and outgoing)
-            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
-            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
-            
-            # Normalize tangents for better control
-            def normalize_vector(v):
-                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
-                if length < 0.001:  # Avoid division by zero
-                    return QPointF(0, 0)
-                return QPointF(v.x() / length, v.y() / length)
-            
-            start_tangent = normalize_vector(start_tangent)
-            in_tangent = normalize_vector(in_tangent)
-            out_tangent = normalize_vector(out_tangent)
-            
-            # Calculate center tangent as weighted average instead of simple average
-            # This makes the curve more responsive to small movements
-            center_tangent = QPointF(
-                0.5 * in_tangent.x() + 0.5 * out_tangent.x(), 
-                0.5 * in_tangent.y() + 0.5 * out_tangent.y()
-            )
-            center_tangent = normalize_vector(center_tangent)
-            
-            # Calculate end tangent
-            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
-            end_tangent = normalize_vector(end_tangent)
-            
-            # Calculate intermediate control points for first segment with increased influence
-            # Distance factors control the "tension" of the curve
-            influence_factor = 0.33333
-            # Previously: dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) / 3
-            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
-            
-            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
-                         p0.y() + start_tangent.y() * dist1)
-            
-            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
-                         p2.y() - center_tangent.y() * dist1)
-            
-            # First segment: start to center
-            path.cubicTo(cp1, cp2, p2)
-            
-            # Calculate intermediate control points for second segment
-            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
-            
-            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
-                         p2.y() + center_tangent.y() * dist2)
-            
-            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
-                         p4.y() - end_tangent.y() * dist2)
-            
-            # Second segment: center to end
-            path.cubicTo(cp3, cp4, p4)
-        else:
-            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
-            path.cubicTo(self.control_point1, self.control_point2, self.end)
-        
-        return path
+
         
     def point_at(self, t):
         """Compute a point on the Bézier curve at parameter t."""
@@ -2185,14 +2101,19 @@ class AttachedStrand(Strand):
         # Create the path with the extended points
         path.moveTo(extended_start)
         path.lineTo(self.start)
-        # Check if we have a third control point and it's being used
+
+        # Only use the third control point if:
+        # 1. The feature is enabled AND
+        # 2. The control_point_center has been manually positioned
         if (hasattr(self, 'canvas') and self.canvas and 
             hasattr(self.canvas, 'enable_third_control_point') and 
             self.canvas.enable_third_control_point and
             hasattr(self, 'control_point_center_locked') and 
             self.control_point_center_locked):
             
-            # Use all three control points for the cubic curve, matching get_path logic
+            # Create a smooth spline incorporating all control points
+            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
+            
             # Extract the key points we're working with
             p0 = self.start
             p1 = self.control_point1
@@ -2212,49 +2133,169 @@ class AttachedStrand(Strand):
                 length = math.sqrt(v.x() * v.x() + v.y() * v.y())
                 if length < 0.001:  # Avoid division by zero
                     return QPointF(0, 0)
+                # Preserve vector magnitude better for small movements
                 return QPointF(v.x() / length, v.y() / length)
             
-            start_tangent = normalize_vector(start_tangent)
-            in_tangent = normalize_vector(in_tangent)
-            out_tangent = normalize_vector(out_tangent)
+            def distance_vector(v):
+                return (math.sqrt(v.x() * v.x() + v.y() * v.y()))/(46*6)
             
-            # Calculate center tangent as normalized average
-            center_tangent = QPointF(in_tangent.x() + out_tangent.x(), in_tangent.y() + out_tangent.y())
-            center_tangent = normalize_vector(center_tangent)
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as weighted average instead of simple average
+            # This makes the curve more responsive to small movements
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+            )
+            center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
-            end_tangent = normalize_vector(end_tangent)
+            end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points with increased influence
-            influence_factor = 0.33333
-            dist1 = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor
+            # Calculate intermediate control points for first segment with increased influence
+            # Distance factors control the "tension" of the curve
+            influence_factor_start = distance_vector(start_tangent)
+            influence_factor_center = 0.333
+            #influence factor for center with start 
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            # Use a more stable distance calculation for better sensitivity to small movements
+            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
+            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
             
-            cp1 = QPointF(p0.x() + start_tangent.x() * dist1, 
-                         p0.y() + start_tangent.y() * dist1)
+            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
+                        p0.y() + start_tangent_normalized.y() * dist1_start)
             
-            cp2 = QPointF(p2.x() - center_tangent.x() * dist1,
-                         p2.y() - center_tangent.y() * dist1)
+            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
+                        p2.y() - center_tangent_normalized.y() * dist1_center)
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
             
             # Calculate intermediate control points for second segment
-            dist2 = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor
+            influence_factor_end = distance_vector(end_tangent)
+            #influence factor for center with end 
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
+            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
-            cp3 = QPointF(p2.x() + center_tangent.x() * dist2,
-                         p2.y() + center_tangent.y() * dist2)
+            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
+                        p2.y() + center_tangent_normalized.y() * dist2_center)
             
-            cp4 = QPointF(p4.x() - end_tangent.x() * dist2,
-                         p4.y() - end_tangent.y() * dist2)
+            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
+                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
-            path.cubicTo(cp3, cp4, self.end)
-            path.lineTo(extended_end)
+            path.cubicTo(cp3, cp4, p4)
         else:
-            # Use standard two control points
-            path.cubicTo(self.control_point1, self.control_point2, extended_end)
+            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
+            path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
+        # Add a line to the extended end point
+        path.lineTo(extended_end)
             
+        return path
+
+    def get_path(self):
+        """Get the path representing the strand as a cubic Bézier curve."""
+        path = QPainterPath()
+        path.moveTo(self.start)
+        # Calculate the center point between two points
+
+        
+        # Only use the third control point if:
+        # 1. The feature is enabled AND
+        # 2. The control_point_center has been manually positioned
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Create a smooth spline incorporating all control points
+            # We'll use a sequence of cubic Bézier segments with proper tangent continuity
+            
+            # Create control points that ensure C1 continuity (continuous first derivative)
+            
+            # Extract the key points we're working with
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate the tangent at start point (pointing toward control_point1)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            
+            # Calculate the tangent at center (average of incoming and outgoing)
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Normalize tangents for better control
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:  # Avoid division by zero
+                    return QPointF(0, 0)
+                # Preserve vector magnitude better for small movements
+                return QPointF(v.x() / length, v.y() / length)
+            def distance_vector(v):
+                return (math.sqrt(v.x() * v.x() + v.y() * v.y()))/(46*6)
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
+            
+            # Calculate center tangent as weighted average instead of simple average
+            # This makes the curve more responsive to small movements
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+            )
+            center_tangent_normalized = normalize_vector(center_tangent)
+            
+            # Calculate end tangent
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent_normalized = normalize_vector(end_tangent)
+            
+            # Calculate intermediate control points for first segment with increased influence
+            # Distance factors control the "tension" of the curve
+            influence_factor_start = distance_vector(start_tangent)
+            print("influence_factor_start: ", influence_factor_start)
+            #influence factor for center with start 
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+
+            # Use a more stable distance calculation for better sensitivity to small movements
+            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
+            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
+            
+            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
+                        p0.y() + start_tangent_normalized.y() * dist1_start)
+            
+            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
+                        p2.y() - center_tangent_normalized.y() * dist1_center)
+            
+            # First segment: start to center
+            path.cubicTo(cp1, cp2, p2)
+            
+            # Calculate intermediate control points for second segment
+            influence_factor_end = distance_vector(end_tangent)
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
+            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
+            
+            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
+                        p2.y() + center_tangent_normalized.y() * dist2_center)
+            
+            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
+                        p4.y() - end_tangent_normalized.y() * dist2_end)
+            
+            # Second segment: center to end
+            path.cubicTo(cp3, cp4, p4)
+        else:
+            # Standard cubic Bezier curve when third control point is disabled or not manually positioned
+            path.cubicTo(self.control_point1, self.control_point2, self.end)
+        
         return path
     def update_angle_length_from_geometry(self):
         """Update the angle and length of the strand based on current start and end points."""

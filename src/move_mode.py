@@ -48,10 +48,7 @@ class MoveMode:
         self.temp_selected_strand = None
         self.last_update_time = 0  # Time of last update for frame limiting
         self.frame_limit_ms = 16  # Min time between updates (~ 60 fps)
-        # Store the canvas's control points visibility setting
-        self.original_control_points_visible = False
-        if hasattr(self.canvas, 'show_control_points'):
-            self.original_control_points_visible = self.canvas.show_control_points
+
         # Initialize position tracking
         self.last_strand_position = None
         # Flag to indicate if we're currently moving a control point
@@ -1081,9 +1078,6 @@ class MoveMode:
             # Reset strand point movement flag
             self.is_moving_strand_point = False
             
-            # Restore original control points visibility
-            if hasattr(self.canvas, 'show_control_points'):
-                self.canvas.show_control_points = self.original_control_points_visible
             
             # Reset time limiter
             self.last_update_time = 0
@@ -1268,6 +1262,8 @@ class MoveMode:
         Returns:
             bool: True if a control point was moved, False otherwise.
         """
+
+            
         # Skip control point checks for MaskedStrands
         if isinstance(strand, MaskedStrand):
             return False

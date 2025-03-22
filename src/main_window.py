@@ -2086,7 +2086,6 @@ class MainWindow(QMainWindow):
         if checked:
             # If button is checked => hide control points
             self.canvas.show_control_points = False
-        
         else:
             # If button is unchecked => show control points
             self.canvas.show_control_points = True

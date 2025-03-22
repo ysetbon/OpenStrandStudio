@@ -1135,7 +1135,7 @@ class StrandDrawingCanvas(QWidget):
             painter.drawEllipse(circle_rect)
 
         # Only draw control points if they're enabled
-        if self.show_control_points:  # Simplified check
+        if self.show_control_points:
             self.draw_control_points(painter)
 
         # Draw strand labels if enabled
@@ -3023,6 +3023,10 @@ class StrandDrawingCanvas(QWidget):
         Args:
             painter (QPainter): The painter used for drawing.
         """
+        # If control points are not enabled, don't draw anything
+        if not self.show_control_points:
+            return
+            
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         control_point_radius = 11  # Adjust as needed
@@ -3068,6 +3072,7 @@ class StrandDrawingCanvas(QWidget):
                 stroke_pen = QPen(stroke_color, 5)
                 control_point_pen = QPen(QColor('green'), 1)
                 painter.setBrush(QBrush(QColor('green')))
+                
                 if moving_side == 'control_point2':
                     # Draw control_point2 as a circle
                     painter.setPen(stroke_pen)
@@ -3158,7 +3163,12 @@ class StrandDrawingCanvas(QWidget):
             control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
             painter.setPen(control_line_pen)
             painter.drawLine(strand.start, strand.control_point1)
-            painter.drawLine(strand.end, strand.control_point2)
+            if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                print("control_point2 is close to start")
+                painter.drawLine(strand.start, strand.control_point2)
+            else:
+                print("control_point2 is not close to start")
+                painter.drawLine(strand.end, strand.control_point2)
             
             # Draw center control point lines if enabled
             if self.enable_third_control_point:

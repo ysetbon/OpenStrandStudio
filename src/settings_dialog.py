@@ -669,21 +669,21 @@ class SettingsDialog(QDialog):
                 
                 # Reset all masked strands if the canvas has strands
                 if hasattr(self.canvas, 'strands'):
-                    for strand in self.canvas.strands:
+                    for i, strand in enumerate(self.canvas.strands):
                         # Check if this is a masked strand
                         if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
-                            # Reset the mask to clear deletion rectangles
-                            if hasattr(strand, 'reset_mask'):
-                                strand.reset_mask()
-                                logging.info(f"Reset mask for strand: {strand.layer_name}")
-                            
-                            # Force a complete update of the strand
-                            if hasattr(strand, 'force_complete_update'):
-                                strand.force_complete_update()
-                                logging.info(f"Forced complete update for strand: {strand.layer_name}")
-            
-            # Force redraw to show/hide third control point and reset masks
-            self.canvas.update()
+                            # Call the canvas's reset_mask method - this is the same one called
+                            # when right-clicking on a layer in the layer panel
+                            self.canvas.reset_mask(i)
+                            logging.info(f"Reset mask for masked strand at index {i}: {strand.layer_name}")
+                
+                # Force redraw to show/hide third control point and reset masks
+                self.canvas.update()
+                
+                # Force a full refresh of the canvas 
+                if hasattr(self.canvas, 'force_redraw'):
+                    self.canvas.force_redraw()
+                    logging.info("Called force_redraw to ensure proper highlighting of masked strands")
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()

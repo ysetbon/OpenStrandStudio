@@ -268,9 +268,21 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             logging.info(f"No circle_stroke_color found for {strand.layer_name}, leaving as-is.")
 
         if strand_type == "MaskedStrand" and "deletion_rectangles" in data:
+            # Set a flag to prevent automatic repositioning
+            strand.skip_center_recalculation = True
+            # Set a permanent flag that this strand uses absolute coordinates for deletion rectangles
+            strand.using_absolute_coords = True
+            
+            # Directly assign the deletion rectangles from JSON
             strand.deletion_rectangles = data["deletion_rectangles"]
-            strand.update_mask_path()
-            logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
+            
+            # Set the control_point_center from JSON as the base_center_point to prevent transformations
+            if "control_point_center" in data:
+                strand.base_center_point = deserialize_point(data["control_point_center"])
+                strand.edited_center_point = deserialize_point(data["control_point_center"])
+            
+            # DON'T call update_mask_path here, which would recalculate center points
+            logging.info(f"Loaded deletion rectangles verbatim with absolute coordinates: {strand.deletion_rectangles}")
 
         if hasattr(strand, 'update'):
             strand.update(None, False)
@@ -398,9 +410,21 @@ def load_strands(filename, canvas):
                 strand.is_start_side = masked_data["is_start_side"]
                 
                 if "deletion_rectangles" in masked_data:
+                    # Set a flag to prevent automatic repositioning
+                    strand.skip_center_recalculation = True
+                    # Set a permanent flag that this strand uses absolute coordinates for deletion rectangles
+                    strand.using_absolute_coords = True
+                    
+                    # Directly assign the deletion rectangles from JSON
                     strand.deletion_rectangles = masked_data["deletion_rectangles"]
-                    strand.update_mask_path()
-                    logging.info(f"Loaded deletion rectangles: {strand.deletion_rectangles}")
+                    
+                    # Set the control_point_center from JSON as the base_center_point to prevent transformations
+                    if "control_point_center" in masked_data:
+                        strand.base_center_point = deserialize_point(masked_data["control_point_center"])
+                        strand.edited_center_point = deserialize_point(masked_data["control_point_center"])
+                    
+                    # DON'T call update_mask_path here, which would recalculate center points
+                    logging.info(f"Loaded deletion rectangles verbatim with absolute coordinates: {strand.deletion_rectangles}")
 
                 index = masked_data["index"]
                 strands[index] = strand

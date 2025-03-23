@@ -653,11 +653,37 @@ class SettingsDialog(QDialog):
             logging.info(f"SettingsDialog: Set draw_only_affected_strand to {self.draw_only_affected_strand}")
 
         # Apply Third Control Point Setting
+        # Store previous setting to check if it changed
+        previous_third_control_point = self.enable_third_control_point
+        # Get new setting from checkbox
         self.enable_third_control_point = self.third_control_checkbox.isChecked()
+        
         if self.canvas:
+            # Set the new value in canvas
             self.canvas.enable_third_control_point = self.enable_third_control_point
             logging.info(f"SettingsDialog: Set enable_third_control_point to {self.enable_third_control_point}")
-            self.canvas.update()  # Force redraw to show/hide third control point
+            
+            # Check if the setting changed
+            if previous_third_control_point != self.enable_third_control_point:
+                logging.info("SettingsDialog: Third control point setting changed, resetting all masked strands")
+                
+                # Reset all masked strands if the canvas has strands
+                if hasattr(self.canvas, 'strands'):
+                    for strand in self.canvas.strands:
+                        # Check if this is a masked strand
+                        if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
+                            # Reset the mask to clear deletion rectangles
+                            if hasattr(strand, 'reset_mask'):
+                                strand.reset_mask()
+                                logging.info(f"Reset mask for strand: {strand.layer_name}")
+                            
+                            # Force a complete update of the strand
+                            if hasattr(strand, 'force_complete_update'):
+                                strand.force_complete_update()
+                                logging.info(f"Forced complete update for strand: {strand.layer_name}")
+            
+            # Force redraw to show/hide third control point and reset masks
+            self.canvas.update()
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()

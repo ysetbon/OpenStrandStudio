@@ -2829,6 +2829,11 @@ class MaskedStrand(Strand):
 
     def update(self, new_position):
         """Update deletion rectangles position while maintaining strand positions."""
+        # Check if we're using absolute coordinates (from JSON)
+        if hasattr(self, 'using_absolute_coords') and self.using_absolute_coords:
+            logging.info(f"Using absolute coordinates for {self.layer_name}, skipping transformation")
+            return
+
         if not hasattr(self, 'base_center_point') or not self.base_center_point:
             logging.warning("No base center point set, cannot update")
             # Try to calculate center points if they don't exist
@@ -2996,6 +3001,17 @@ class MaskedStrand(Strand):
 
     def update_mask_path(self):
         """Update the custom mask path based on current strand and rectangle positions."""
+        # Check if we should skip center recalculation (used during loading)
+        skip_recalculation = hasattr(self, 'skip_center_recalculation') and self.skip_center_recalculation
+        
+        # Check if this strand uses absolute coordinates for deletion rectangles
+        using_absolute_coords = hasattr(self, 'using_absolute_coords') and self.using_absolute_coords
+        
+        if using_absolute_coords:
+            logging.info(f"Using absolute coordinates for deletion rectangles in {self.layer_name}, preserving exact JSON positions")
+        elif skip_recalculation:
+            logging.info(f"Skipping center recalculation for {self.layer_name} to preserve deletion rectangle positions")
+        
         # Get fresh paths from both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
@@ -3047,26 +3063,38 @@ class MaskedStrand(Strand):
                 delattr(self, attr)
                 logging.info(f"Cleared cache for {attr} after mask update")
 
-        # Always update center points after mask path changes
-        old_base_center = self.base_center_point if hasattr(self, 'base_center_point') else None
-        old_edited_center = self.edited_center_point if hasattr(self, 'edited_center_point') else None
+        # Skip center point recalculation for absolute coordinates
+        if using_absolute_coords:
+            # Do nothing with center point, keep deletion rectangles exactly as loaded
+            logging.info(f"Preserved absolute coordinates for {self.layer_name}")
+        # Skip center point recalculation if requested (during loading)
+        elif not skip_recalculation:
+            # Always update center points after mask path changes
+            old_base_center = self.base_center_point if hasattr(self, 'base_center_point') else None
+            old_edited_center = self.edited_center_point if hasattr(self, 'edited_center_point') else None
+            
+            # Calculate new center points
+            self.calculate_center_point()
+            
+            # Log center point changes for debugging
+            if hasattr(self, 'base_center_point') and old_base_center:
+                dx = self.base_center_point.x() - old_base_center.x() if self.base_center_point else 0
+                dy = self.base_center_point.y() - old_base_center.y() if self.base_center_point else 0
+                if abs(dx) > 0.01 or abs(dy) > 0.01:
+                    logging.info(f"Base center point moved: dx={dx:.2f}, dy={dy:.2f}")
+                    
+            if hasattr(self, 'edited_center_point') and old_edited_center:
+                dx = self.edited_center_point.x() - old_edited_center.x() if self.edited_center_point else 0
+                dy = self.edited_center_point.y() - old_edited_center.y() if self.edited_center_point else 0
+                if abs(dx) > 0.01 or abs(dy) > 0.01:
+                    logging.info(f"Edited center point moved: dx={dx:.2f}, dy={dy:.2f}")
+        else:
+            # Use control_point_center from JSON if available
+            if hasattr(self, 'control_point_center'):
+                self.base_center_point = QPointF(self.control_point_center)
+                self.edited_center_point = QPointF(self.control_point_center)
+                logging.info(f"Using center point from JSON: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
         
-        # Calculate new center points
-        self.calculate_center_point()
-        
-        # Log center point changes for debugging
-        if hasattr(self, 'base_center_point') and old_base_center:
-            dx = self.base_center_point.x() - old_base_center.x() if self.base_center_point else 0
-            dy = self.base_center_point.y() - old_base_center.y() if self.base_center_point else 0
-            if abs(dx) > 0.01 or abs(dy) > 0.01:
-                logging.info(f"Base center point moved: dx={dx:.2f}, dy={dy:.2f}")
-                
-        if hasattr(self, 'edited_center_point') and old_edited_center:
-            dx = self.edited_center_point.x() - old_edited_center.x() if self.edited_center_point else 0
-            dy = self.edited_center_point.y() - old_edited_center.y() if self.edited_center_point else 0
-            if abs(dx) > 0.01 or abs(dy) > 0.01:
-                logging.info(f"Edited center point moved: dx={dx:.2f}, dy={dy:.2f}")
-
         logging.info(f"Updated mask path for {self.layer_name}")
 
     def set_color(self, color):
@@ -3280,6 +3308,58 @@ class MaskedStrand(Strand):
 
     def force_complete_update(self):
         """Force a complete update of the MaskedStrand and all its components."""
+        # Check if we should skip repositioning of deletion rectangles (during loading)
+        skip_recalculation = hasattr(self, 'skip_center_recalculation') and self.skip_center_recalculation
+        
+        # Check if this strand uses absolute coordinates for deletion rectangles
+        using_absolute_coords = hasattr(self, 'using_absolute_coords') and self.using_absolute_coords
+        
+        if using_absolute_coords:
+            logging.info(f"Using absolute coordinates for deletion rectangles in {self.layer_name}, preserving exact JSON positions")
+            
+            # Just update the mask path without moving deletion rectangles
+            path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+            path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+            self.custom_mask_path = path1.intersected(path2)
+            
+            # Update the component strands but not the deletion rectangles
+            if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
+                self.first_selected_strand.update_shape()
+                if hasattr(self.first_selected_strand, 'update_side_line'):
+                    self.first_selected_strand.update_side_line()
+            
+            if hasattr(self, 'second_selected_strand') and self.second_selected_strand:
+                self.second_selected_strand.update_shape()
+                if hasattr(self.second_selected_strand, 'update_side_line'):
+                    self.second_selected_strand.update_side_line()
+                
+            # Update canvas if available
+            if hasattr(self, 'canvas') and self.canvas:
+                if hasattr(self.canvas, 'background_cache_valid'):
+                    self.canvas.background_cache_valid = False
+                self.canvas.update()
+                
+            # Don't clear the flag for absolute coordinate strands
+            return
+        elif skip_recalculation:
+            logging.info(f"Skipping full recalculation for {self.layer_name} to preserve original deletion rectangle positions")
+            
+            # Ensure we have base_center_point and edited_center_point from JSON's control_point_center
+            if hasattr(self, 'control_point_center'):
+                self.base_center_point = QPointF(self.control_point_center)
+                self.edited_center_point = QPointF(self.control_point_center)
+                logging.info(f"Using center point from JSON for both base and edited centers: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
+            
+            # Only update the mask path without recalculating center points
+            path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+            path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+            self.custom_mask_path = path1.intersected(path2)
+            
+            # Clear the flag after loading is complete
+            self.skip_center_recalculation = False
+            return
+        
+        # Normal update path for non-loading scenarios
         # Update mask path
         self.update_mask_path()
         

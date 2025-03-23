@@ -40,11 +40,11 @@ class MaskMode(QObject):
     def find_strands_at_point(self, pos):
         results = []
         for strand in self.canvas.strands:
-            #contains_start = strand.get_start_selection_path().contains(pos)
+            contains_start = strand.get_start_selection_path().contains(pos)
             contains_end = strand.get_end_selection_path().contains(pos)
-            #if contains_start:
-                #results.append((strand, 'start'))
-            if contains_end:
+            if contains_start:
+                results.append((strand, 'start'))
+            elif contains_end:
                 results.append((strand, 'end'))
             elif strand.get_selection_path().contains(pos):
                 results.append((strand, 'strand'))

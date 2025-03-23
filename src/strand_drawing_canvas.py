@@ -3276,11 +3276,31 @@ class StrandDrawingCanvas(QWidget):
         old_value = getattr(self, '_enable_third_control_point', False)
         self._enable_third_control_point = value
         
+        # Initialize all strands with a center control point if we're enabling third control point
+        if value and not old_value:
+            for strand in self.strands:
+                # Skip masked strands or strands without control points
+                if isinstance(strand, MaskedStrand):
+                    continue
+                
+                if (hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') and
+                    strand.control_point1 is not None and strand.control_point2 is not None):
+                    # Initialize the center control point if it doesn't exist
+                    if not hasattr(strand, 'control_point_center') or strand.control_point_center is None:
+                        strand.control_point_center = QPointF(
+                            (strand.control_point1.x() + strand.control_point2.x()) / 2,
+                            (strand.control_point1.y() + strand.control_point2.y()) / 2
+                        )
+                        strand.control_point_center_locked = False
+                        strand.update_shape()
+        
         # If the value is changing from True to False, reset the control_point_center 
         # for all strands to the default midpoint and unlock it
-        if old_value and not value:
+        elif old_value and not value:
             for strand in self.strands:
-                if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') and hasattr(strand, 'control_point_center'):
+                if (hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2') and 
+                    hasattr(strand, 'control_point_center') and 
+                    strand.control_point1 is not None and strand.control_point2 is not None):
                     # Reset to midpoint between control_point1 and control_point2
                     strand.control_point_center = QPointF(
                         (strand.control_point1.x() + strand.control_point2.x()) / 2,
@@ -3290,8 +3310,8 @@ class StrandDrawingCanvas(QWidget):
                     strand.control_point_center_locked = False
                     # Update strand shape
                     strand.update_shape()
-            # Force a redraw
-            self.update()
+        # Force a redraw
+        self.update()
 
     def handle_strand_selection(self, pos):
         strands_at_point = self.find_strands_at_point(pos)

@@ -126,97 +126,27 @@ class Strand:
 
 
     def get_start_selection_path(self):
-        """Get the selection path for the starting point, excluding the inner area for control point selection."""
-        path = QPainterPath()
-
-        # Define the outer rectangle (80x80 square)
-        outer_size = 120  # Size of the outer selection square for the start edge
-        half_outer_size = outer_size / 2
-        outer_rect = QRectF(
-            self.start.x() - half_outer_size,
-            self.start.y() - half_outer_size,
-            outer_size,
-            outer_size
-        )
-
-
-
-
-        # Create the selection path by subtracting the inner rectangle from the outer rectangle
-        path.addRect(outer_rect)
-
-        return path
+        """Get a selection path for the exact start point of the strand."""
+        # Create a small circle at the start point that matches the strand's start
+        start_path = QPainterPath()
+        # Use the width of the strand for the selection circle
+        radius = self.width / 2
+        start_path.addEllipse(self.start, radius, radius)
+        return start_path
     def draw_path(self, painter):
         """Draw the path of the strand without filling."""
         path = self.get_path()
         painter.drawPath(path)
     def get_end_selection_path(self):
-        """Construct the selection path using the start and end points, control points, and strand width."""
-        # Number of samples along the curve
-        num_samples = 50  # Increase for smoother approximation
-
-        left_offsets = []
-        right_offsets = []
-
-        for i in range(num_samples + 1):
-            t = i / num_samples
-            # Compute point on the curve
-            point = self.point_at(t)
-            # Compute tangent at the point
-            tangent = self.calculate_cubic_tangent(t)
-            # Normalize tangent
-            length = math.hypot(tangent.x(), tangent.y())
-            if length == 0:
-                # Avoid division by zero
-                continue  # Skip this point if tangent length is zero
-            else:
-                unit_tangent = QPointF(tangent.x() / length, tangent.y() / length)
-                # Compute normal (perpendicular to tangent)
-                normal = QPointF(-unit_tangent.y(), unit_tangent.x())
-
-                # Scale normal by half width
-                half_width = (self.width + self.stroke_width * 2) / 2
-                offset = QPointF(normal.x() * half_width, normal.y() * half_width)
-
-                # Offset points on both sides
-                left_point = QPointF(point.x() + offset.x(), point.y() + offset.y())
-                right_point = QPointF(point.x() - offset.x(), point.y() - offset.y())
-
-                left_offsets.append(left_point)
-                right_offsets.append(right_point)
-
-        # Create the selection path
-        selection_path = QPainterPath()
-
-        # Ensure there are offset points
-        if left_offsets:
-            # Move to the first left offset point
-            selection_path.moveTo(left_offsets[0])
-
-            # Add lines along the left offset points
-            for pt in left_offsets[1:]:
-                selection_path.lineTo(pt)
-
-            # Add lines along the right offset points in reverse
-            for pt in reversed(right_offsets):
-                selection_path.lineTo(pt)
-
-            # Close the path to form a complete shape
-            selection_path.closeSubpath()
-
-        else:
-            # Fallback to a rectangle around the end point if no offsets were computed
-            outer_size = 120
-            half_outer_size = outer_size / 2
-            outer_rect = QRectF(
-                self.end.x() - half_outer_size,
-                self.end.y() - half_outer_size,
-                outer_size,
-                outer_size
-            )
-            selection_path.addRect(outer_rect)
-
-        return selection_path
+        """Get a selection path for the exact end point of the strand."""
+        # Get the path of the strand
+        path = self.get_path()
+        # Create a small circle at the end point that matches the strand's end
+        end_path = QPainterPath()
+        # Use the width of the strand for the selection circle
+        radius = self.width / 2
+        end_path.addEllipse(self.end, radius, radius)
+        return end_path
  
 
     def is_straight_line(self):
@@ -445,9 +375,8 @@ class Strand:
             # Calculate intermediate control points for first segment with increased influence
             # Distance factors control the "tension" of the curve
             influence_factor_start = distance_vector(start_tangent)
-            influence_factor_center = 0.333
             #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
             # Use a more stable distance calculation for better sensitivity to small movements
             dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
             dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
@@ -464,7 +393,7 @@ class Strand:
             # Calculate intermediate control points for second segment
             influence_factor_end = distance_vector(end_tangent)
             #influence factor for center with end 
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
             dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
             dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
@@ -550,7 +479,7 @@ class Strand:
             influence_factor_start = distance_vector(start_tangent)
             print("influence_factor_start: ", influence_factor_start)
             #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
 
             # Use a more stable distance calculation for better sensitivity to small movements
             dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
@@ -567,7 +496,7 @@ class Strand:
             
             # Calculate intermediate control points for second segment
             influence_factor_end = distance_vector(end_tangent)
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
             dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
             dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
@@ -587,9 +516,8 @@ class Strand:
 
     def get_selection_path(self):
         """Combine the start and end selection paths."""
-        path = QPainterPath()
-        path.addPath(self.get_end_selection_path())
-        return path
+        # Use the exact visual path for selection
+        return self.get_stroked_path(self.width)
 
     def get_stroked_path(self, width: float) -> QPainterPath:
         """
@@ -1253,72 +1181,15 @@ class AttachedStrand(Strand):
         return path
 
     def get_end_selection_path(self):
-        """Construct the selection path using the start and end points, control points, and strand width."""
-        # Number of samples along the curve
-        num_samples = 50  # Increase for smoother approximation
-
-        left_offsets = []
-        right_offsets = []
-
-        for i in range(num_samples + 1):
-            t = i / num_samples
-            # Compute point on the curve
-            point = self.point_at(t)
-            # Compute tangent at the point
-            tangent = self.calculate_cubic_tangent(t)
-            # Normalize tangent
-            length = math.hypot(tangent.x(), tangent.y())
-            if length == 0:
-                # Avoid division by zero
-                continue  # Skip this point if tangent length is zero
-            else:
-                unit_tangent = QPointF(tangent.x() / length, tangent.y() / length)
-                # Compute normal (perpendicular to tangent)
-                normal = QPointF(-unit_tangent.y(), unit_tangent.x())
-
-                # Scale normal by half width
-                half_width = (self.width + self.stroke_width * 2) / 2
-                offset = QPointF(normal.x() * half_width, normal.y() * half_width)
-
-                # Offset points on both sides
-                left_point = QPointF(point.x() + offset.x(), point.y() + offset.y())
-                right_point = QPointF(point.x() - offset.x(), point.y() - offset.y())
-
-                left_offsets.append(left_point)
-                right_offsets.append(right_point)
-
-        # Create the selection path
-        selection_path = QPainterPath()
-
-        # Ensure there are offset points
-        if left_offsets:
-            # Move to the first left offset point
-            selection_path.moveTo(left_offsets[0])
-
-            # Add lines along the left offset points
-            for pt in left_offsets[1:]:
-                selection_path.lineTo(pt)
-
-            # Add lines along the right offset points in reverse
-            for pt in reversed(right_offsets):
-                selection_path.lineTo(pt)
-
-            # Close the path to form a complete shape
-            selection_path.closeSubpath()
-
-        else:
-            # Fallback to a rectangle around the end point if no offsets were computed
-            outer_size = 120
-            half_outer_size = outer_size / 2
-            outer_rect = QRectF(
-                self.end.x() - half_outer_size,
-                self.end.y() - half_outer_size,
-                outer_size,
-                outer_size
-            )
-            selection_path.addRect(outer_rect)
-
-        return selection_path
+        """Get a selection path for the exact end point of the strand."""
+        # Get the path of the strand
+        path = self.get_path()
+        # Create a small circle at the end point that matches the strand's end
+        end_path = QPainterPath()
+        # Use the width of the strand for the selection circle
+        radius = self.width / 2
+        end_path.addEllipse(self.end, radius, radius)
+        return end_path
  
 
 
@@ -1382,7 +1253,7 @@ class AttachedStrand(Strand):
         if hasattr(self, 'control_point2') and (self.control_point2 == self.start or 
                                          self.control_point2 == QPointF(self.start.x(), self.start.y())):
             # Only reset control_point2 if it's at the default position
-            self.control_point2 = QPointF(self.end.x(), self.end.y())
+            self.control_point2 = QPointF(self.start.x(), self.start.y())
             
         # Update the center control point only if not locked
         if not hasattr(self, 'control_point_center_locked') or not self.control_point_center_locked:
@@ -2158,9 +2029,8 @@ class AttachedStrand(Strand):
             # Calculate intermediate control points for first segment with increased influence
             # Distance factors control the "tension" of the curve
             influence_factor_start = distance_vector(start_tangent)
-            influence_factor_center = 0.333
             #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
             # Use a more stable distance calculation for better sensitivity to small movements
             dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
             dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
@@ -2177,7 +2047,7 @@ class AttachedStrand(Strand):
             # Calculate intermediate control points for second segment
             influence_factor_end = distance_vector(end_tangent)
             #influence factor for center with end 
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
             dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
             dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
@@ -2263,7 +2133,7 @@ class AttachedStrand(Strand):
             influence_factor_start = distance_vector(start_tangent)
             print("influence_factor_start: ", influence_factor_start)
             #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.333
+            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
 
             # Use a more stable distance calculation for better sensitivity to small movements
             dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
@@ -2280,7 +2150,7 @@ class AttachedStrand(Strand):
             
             # Calculate intermediate control points for second segment
             influence_factor_end = distance_vector(end_tangent)
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.333
+            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
             dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
             dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
             
@@ -3243,20 +3113,11 @@ class MaskedStrand(Strand):
 
     def get_end_selection_path(self):
         """Override to create a simpler selection path for masked strands."""
-        path = QPainterPath()
-        
-        # Create a rectangular selection area around the end point
-        outer_size = 120
-        half_outer_size = outer_size / 2
-        outer_rect = QRectF(
-            self.end.x() - half_outer_size,
-            self.end.y() - half_outer_size,
-            outer_size,
-            outer_size
-        )
-        path.addRect(outer_rect)
-        
-        return path
+        end_path = QPainterPath()
+        # Use the width of the strand for the selection circle
+        radius = self.width / 2
+        end_path.addEllipse(self.end, radius, radius)
+        return end_path
 
     def point_at(self, t):
         """Override to return point along straight line instead of bezier curve."""

@@ -154,7 +154,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                 
                 # Create a circle path for exclusion - use larger diameter for complete exclusion
                 # Add extra pixels to the radius to ensure complete removal of the circle shadow
-                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
+                circle_radius = strand.width + strand.stroke_width * 2 + 10  # Increased from 10 to 15
                 exclude_circle = QPainterPath()
                 exclude_circle.addEllipse(point, circle_radius/2, circle_radius/2)
                 
@@ -176,7 +176,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
             # Check if end circle should be transparent too (use same transparency as start)
             if has_transparent_start_circle:
                 # Exclude end circle from shadow with increased radius
-                circle_radius = strand.width + strand.stroke_width * 2 + 15  # Increased from 10 to 15
+                circle_radius = strand.width + strand.stroke_width * 2 + 10  # Increased from 10 to 15
                 exclude_end_circle = QPainterPath()
                 exclude_end_circle.addEllipse(strand.end, circle_radius/2, circle_radius/2)
                 #shadow_path = shadow_path.subtracted(exclude_end_circle)
@@ -349,7 +349,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     shadow_paths = []
     if hasattr(strand, 'has_circles'):
         # Get circle radius with added shadow width
-        circle_radius = strand.width + strand.stroke_width * 2 + 11.7
+        circle_radius = strand.width + strand.stroke_width * 2 + 10
         
         # Check which points have circles and add their paths
         for idx, has_circle in enumerate(strand.has_circles):
@@ -389,7 +389,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         
                 point = strand.start if idx == 0 else strand.end
                 circle_path = QPainterPath()
-                circle_path.addEllipse(point, circle_radius/2, circle_radius/2)
+                circle_path.addEllipse(point, (circle_radius/2)+1, (circle_radius/2)+1)
                 # Store the circle path and its center point for later processing
                 shadow_paths.append((circle_path, point))
                 logging.info(f"Added circle shadow at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")

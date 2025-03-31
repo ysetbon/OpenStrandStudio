@@ -2,4 +2,4 @@ Theme: default
 Language: en
 ShadowColor: 0,0,0,153
 DrawOnlyAffectedStrand: true
-EnableThirdControlPoint: false
+EnableThirdControlPoint: true

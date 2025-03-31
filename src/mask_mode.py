@@ -94,7 +94,7 @@ class MaskMode(QObject):
                 
                 logging.info(f"Storing original properties for strands")
                 
-                # Store original strand order
+                # Store original strand order - this is critical for preserving the layer ordering
                 original_strands = self.canvas.strands.copy()
                 
                 # Create the masked layer
@@ -129,69 +129,21 @@ class MaskMode(QObject):
                     current_strand_names = [s.layer_name for s in self.canvas.strands]
                     logging.info(f"Current strand order after mask creation: {current_strand_names}")
                     
-                    # Save the original order exactly as it was before mask creation
-                    # Excluding the newly created masked strand
-                    original_order_without_mask = [s for s in original_strands if s in self.canvas.strands]
+                    # FIXED: Create a new order that preserves the original positions of all strands
+                    # and just adds the masked strand at the end
+                    new_order = []
                     
-                    # Create the new order by taking the original order and adding the masked strand at the end
-                    new_order = original_order_without_mask.copy()
-                    new_order.append(masked_strand)
+                    # First, add all original strands in their original order
+                    for strand in original_strands:
+                        if strand in self.canvas.strands:
+                            new_order.append(strand)
                     
-                    # Fix attached strand ordering - ensure parent strands are beneath their attached strands
-                    # This is critical for proper rendering and shading
-                    ordered_strands = []
-                    processed_strands = set()
+                    # Then add the masked strand at the end (if not already in the list)
+                    if masked_strand not in new_order:
+                        new_order.append(masked_strand)
                     
-                    # Helper function to process a strand and its attachments in correct order
-                    def process_strand_hierarchy(strand):
-                        if strand in processed_strands:
-                            return
-                        
-                        # First add the base strand to maintain proper z-order
-                        if strand not in ordered_strands:
-                            ordered_strands.append(strand)
-                            processed_strands.add(strand)
-                        
-                        # Then add any attached strands that should be on top of this one
-                        for s in new_order:
-                            if isinstance(s, AttachedStrand) and hasattr(s, 'parent') and s.parent == strand:
-                                if s not in ordered_strands:
-                                    ordered_strands.append(s)
-                                    processed_strands.add(s)
-                                    # Recursively process any strands attached to this attached strand
-                                    process_strand_hierarchy(s)
-                    
-                    # Process all strands in the new order
-                    for strand in new_order:
-                        process_strand_hierarchy(strand)
-                    
-                    # If we missed any strands, add them at the end
-                    for strand in new_order:
-                        if strand not in ordered_strands:
-                            ordered_strands.append(strand)
-                    
-                    # Make sure the masked strand is still at the end
-                    if masked_strand in ordered_strands:
-                        ordered_strands.remove(masked_strand)
-                    
-                    # Find any strands attached to the masked strand
-                    masked_strand_attachments = []
-                    for s in new_order:
-                        if isinstance(s, AttachedStrand) and hasattr(s, 'parent') and s.parent == masked_strand:
-                            if s in ordered_strands:
-                                ordered_strands.remove(s)
-                            masked_strand_attachments.append(s)
-                    
-                    # Add the masked strand
-                    ordered_strands.append(masked_strand)
-                    
-                    # Then add any attached strands on top of it
-                    ordered_strands.extend(masked_strand_attachments)
-                    
-                    # Update canvas with the properly ordered strands
-                    self.canvas.strands = ordered_strands
-                    final_order = [s.layer_name for s in self.canvas.strands]
-                    logging.info(f"Final strand order after hierarchy-based reordering: {final_order}")
+                    # Apply the new order
+                    self.canvas.strands = new_order
                     
                     # Restore all original properties to strands
                     for prop, val in strand1_props.items():
@@ -205,7 +157,6 @@ class MaskMode(QObject):
                     logging.info(f"Restored all original properties to strands")
                     
                     # Explicitly fix any attachment relationships that might have been affected
-                    # This is critical for strands like 1_1 and 1_2 to maintain their proper relationship
                     if hasattr(self.canvas, "refresh_geometry_based_attachments"):
                         logging.info("Refreshing geometry-based attachments to fix any connection issues")
                         self.canvas.refresh_geometry_based_attachments()
@@ -245,7 +196,7 @@ class MaskMode(QObject):
                     if self.canvas.layer_panel:
                         self.canvas.layer_panel.refresh_layers()
                         # Select the masked strand in the layer panel
-                        masked_strand_index = len(self.canvas.strands) - 1  # Now it's always the last one
+                        masked_strand_index = self.canvas.strands.index(masked_strand)
                         self.canvas.layer_panel.select_layer(masked_strand_index)
                     
                     # Update the canvas

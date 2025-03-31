@@ -101,6 +101,9 @@ class Strand:
         if value is not None and isinstance(value, (Qt.GlobalColor, int)):
             value = QColor(value)
 
+        # Set a flag to indicate we're just updating transparency, not geometry
+        self._setting_circle_transparency = True
+        
         if value is None:
             logging.info(f"Setting default circle_stroke_color for {self.layer_name}")
             # If setter is called with None, revert to default black
@@ -111,6 +114,9 @@ class Strand:
                 f"rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})"
             )
             self._circle_stroke_color = value
+        
+        # Reset the transparency flag after setting the color
+        self._setting_circle_transparency = False
 
     def draw_selection_path(self, painter):
         """Draws the selection area of the strand."""
@@ -244,6 +250,12 @@ class Strand:
             self.update_side_line()
             return
 
+        # Store original control points if they exist
+        original_cp1 = getattr(self, 'control_point1', None)
+        original_cp2 = getattr(self, 'control_point2', None)
+        original_cp_center = getattr(self, 'control_point_center', None)
+        original_cp_center_locked = getattr(self, 'control_point_center_locked', False)
+
         # Calculate the default center position (midpoint between control points 1 and 2)
         default_center = QPointF(
             (self.control_point1.x() + self.control_point2.x()) / 2,
@@ -265,6 +277,19 @@ class Strand:
         if not hasattr(self, 'control_point_center_locked') or not self.control_point_center_locked:
             # Recalculate the center control point
             self.control_point_center = default_center
+        
+        # Restore original control points if they were manually positioned and modified
+        if original_cp1 and original_cp2 and original_cp_center:
+            # Detect if we're setting transparent circle which would maintain locked state
+            maintain_control_points = (hasattr(self, '_setting_circle_transparency') and 
+                                      getattr(self, '_setting_circle_transparency', False))
+            
+            # If we're explicitly setting transparency, restore the original control points
+            if maintain_control_points:
+                self.control_point1 = original_cp1
+                self.control_point2 = original_cp2
+                self.control_point_center = original_cp_center
+                self.control_point_center_locked = original_cp_center_locked
 
         # Store the current path
         self._path = self.get_path()
@@ -275,27 +300,52 @@ class Strand:
     def get_shadow_path(self):
         """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
-        
-        # Calculate vectors for direction at start and end
-        # For start point, use the tangent direction from the start towards control_point1
-        start_vector = self.control_point1 - self.start
-        if start_vector.manhattanLength() > 0:
-            # Normalize and extend by exactly 10 pixels using Euclidean length
-            start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
-            normalized_start_vector = start_vector / start_vector_length
-            extended_start = self.start - (normalized_start_vector * 10)
+
+        # Check if this is an AttachedStrand with a transparent start circle
+        is_attached_transparent_start = False
+        # Use class name check for robustness as AttachedStrand is defined later
+        if self.__class__.__name__ == 'AttachedStrand':
+            # AttachedStrand always has a start circle (has_circles[0] is True)
+            # Check transparency using the circle_stroke_color property
+            # Add a check for None before accessing alpha()
+            circle_color = self.circle_stroke_color
+            if circle_color and circle_color.alpha() == 0:
+                is_attached_transparent_start = True
+                logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+
+        if is_attached_transparent_start:
+            # If transparent start circle on AttachedStrand, don't extend
+            extended_start = self.start
         else:
-            # Fallback if control point is at same position as start
-            # Use direction from start to end instead
-            fallback_vector = self.end - self.start
-            if fallback_vector.manhattanLength() > 0:
-                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
-                normalized_fallback = fallback_vector / fallback_length
-                extended_start = self.start - (normalized_fallback * 10)
+            # Original extension logic for other strands or non-transparent attached strands
+            # Calculate vectors for direction at start and end
+            # For start point, use the tangent direction from the start towards control_point1
+            start_vector = self.control_point1 - self.start
+            if start_vector.manhattanLength() > 0:
+                # Normalize and extend by exactly 10 pixels using Euclidean length
+                start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
+                # Avoid division by zero if length is extremely small
+                if start_vector_length > 1e-6:
+                    normalized_start_vector = start_vector / start_vector_length
+                    extended_start = self.start - (normalized_start_vector * 10)
+                else:
+                    extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
             else:
-                # If start and end are the same, use a default horizontal direction
-                extended_start = QPointF(self.start.x() - 10, self.start.y())
-            
+                # Fallback if control point is at same position as start
+                # Use direction from start to end instead
+                fallback_vector = self.end - self.start
+                if fallback_vector.manhattanLength() > 0:
+                    fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                    # Avoid division by zero if length is extremely small
+                    if fallback_length > 1e-6:
+                        normalized_fallback = fallback_vector / fallback_length
+                        extended_start = self.start - (normalized_fallback * 10)
+                    else:
+                         extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
+                else:
+                    # If start and end are the same, use a default horizontal direction
+                    extended_start = QPointF(self.start.x() - 10, self.start.y())
+
         # For end point, use the tangent direction from control_point2 towards the end
         end_vector = self.end - self.control_point2
         if end_vector.manhattanLength() > 0:
@@ -872,7 +922,7 @@ class Strand:
             # Draw the outer circle stroke with self.circle_stroke_color or self.stroke_color (your preference)
             temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.circle_stroke_color)
+            temp_painter.setBrush(self.stroke_color) # Changed from self.circle_stroke_color
             temp_painter.drawPath(outer_mask_end)
 
             # Then draw the fill for the inner circle
@@ -1273,6 +1323,12 @@ class AttachedStrand(Strand):
             end_point (QPointF): The new end point. If None, use the current end point.
             reset_control_points (bool): Whether to reset the control points.
         """
+        # Store original control points to preserve them if needed
+        original_control_point1 = QPointF(self.control_point1) if hasattr(self, 'control_point1') else None
+        original_control_point2 = QPointF(self.control_point2) if hasattr(self, 'control_point2') else None
+        original_control_point_center = QPointF(self.control_point_center) if hasattr(self, 'control_point_center') else None
+        original_control_point_center_locked = getattr(self, 'control_point_center_locked', False)
+
         if end_point is not None:
             self.end = end_point
             
@@ -1311,17 +1367,15 @@ class AttachedStrand(Strand):
             if hasattr(self, 'control_point_center_locked'):
                 self.control_point_center_locked = False
         else:
-            # When not resetting control points, ensure they're still appropriate
-            # If control_point2 is still at default (start), update it to end
-            if self.control_point2 == QPointF(self.start.x(), self.start.y()):
-                self.control_point2 = QPointF(self.end.x(), self.end.y())
-                
-            # Update the center control point only if not locked
-            if not hasattr(self, 'control_point_center_locked') or not self.control_point_center_locked:
-                self.control_point_center = QPointF(
-                    (self.control_point1.x() + self.control_point2.x()) / 2,
-                    (self.control_point1.y() + self.control_point2.y()) / 2
-                )
+            # When not resetting control points, restore the originals to preserve them
+            if original_control_point1 is not None:
+                self.control_point1 = original_control_point1
+            if original_control_point2 is not None:
+                self.control_point2 = original_control_point2
+            if original_control_point_center is not None:
+                self.control_point_center = original_control_point_center
+                if hasattr(self, 'control_point_center_locked'):
+                    self.control_point_center_locked = original_control_point_center_locked
 
         self.update_shape()
         self.update_side_line()
@@ -1929,27 +1983,52 @@ class AttachedStrand(Strand):
     def get_shadow_path(self):
         """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
-        
-        # Calculate vectors for direction at start and end
-        # For start point, use the tangent direction from the start towards control_point1
-        start_vector = self.control_point1 - self.start
-        if start_vector.manhattanLength() > 0:
-            # Normalize and extend by exactly 10 pixels using Euclidean length
-            start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
-            normalized_start_vector = start_vector / start_vector_length
-            extended_start = self.start - (normalized_start_vector * 10)
+
+        # Check if this is an AttachedStrand with a transparent start circle
+        is_attached_transparent_start = False
+        # Use class name check for robustness as AttachedStrand is defined later
+        if self.__class__.__name__ == 'AttachedStrand':
+            # AttachedStrand always has a start circle (has_circles[0] is True)
+            # Check transparency using the circle_stroke_color property
+            # Add a check for None before accessing alpha()
+            circle_color = self.circle_stroke_color
+            if circle_color and circle_color.alpha() == 0:
+                is_attached_transparent_start = True
+                logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+
+        if is_attached_transparent_start:
+            # If transparent start circle on AttachedStrand, don't extend
+            extended_start = self.start
         else:
-            # Fallback if control point is at same position as start
-            # Use direction from start to end instead
-            fallback_vector = self.end - self.start
-            if fallback_vector.manhattanLength() > 0:
-                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
-                normalized_fallback = fallback_vector / fallback_length
-                extended_start = self.start - (normalized_fallback * 10)
+            # Original extension logic for other strands or non-transparent attached strands
+            # Calculate vectors for direction at start and end
+            # For start point, use the tangent direction from the start towards control_point1
+            start_vector = self.control_point1 - self.start
+            if start_vector.manhattanLength() > 0:
+                # Normalize and extend by exactly 10 pixels using Euclidean length
+                start_vector_length = math.sqrt(start_vector.x()**2 + start_vector.y()**2)
+                # Avoid division by zero if length is extremely small
+                if start_vector_length > 1e-6:
+                    normalized_start_vector = start_vector / start_vector_length
+                    extended_start = self.start - (normalized_start_vector * 10)
+                else:
+                    extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
             else:
-                # If start and end are the same, use a default horizontal direction
-                extended_start = QPointF(self.start.x() - 10, self.start.y())
-            
+                # Fallback if control point is at same position as start
+                # Use direction from start to end instead
+                fallback_vector = self.end - self.start
+                if fallback_vector.manhattanLength() > 0:
+                    fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                    # Avoid division by zero if length is extremely small
+                    if fallback_length > 1e-6:
+                        normalized_fallback = fallback_vector / fallback_length
+                        extended_start = self.start - (normalized_fallback * 10)
+                    else:
+                         extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
+                else:
+                    # If start and end are the same, use a default horizontal direction
+                    extended_start = QPointF(self.start.x() - 10, self.start.y())
+
         # For end point, use the tangent direction from control_point2 towards the end
         end_vector = self.end - self.control_point2
         if end_vector.manhattanLength() > 0:
@@ -2029,8 +2108,10 @@ class AttachedStrand(Strand):
             # Calculate intermediate control points for first segment with increased influence
             # Distance factors control the "tension" of the curve
             influence_factor_start = distance_vector(start_tangent)
+            print("influence_factor_start: ", influence_factor_start)
             #influence factor for center with start 
             influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
+
             # Use a more stable distance calculation for better sensitivity to small movements
             dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
             dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
@@ -2046,7 +2127,6 @@ class AttachedStrand(Strand):
             
             # Calculate intermediate control points for second segment
             influence_factor_end = distance_vector(end_tangent)
-            #influence factor for center with end 
             influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
             dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
             dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end

@@ -3,10 +3,15 @@ import json
 import logging
 import datetime
 import shutil
-from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption
-from PyQt5.QtCore import QObject, pyqtSignal, Qt
+from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
+# Import QTimer here to avoid UnboundLocalError
+from PyQt5.QtCore import QTimer
+from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
+# Note: We don't import GroupPanel here, as it can cause issues with Qt objects
+# We'll work with instances that are already created
 
 # StrokeTextButton class incorporated directly into this file
 class StrokeTextButton(QPushButton):
@@ -219,84 +224,94 @@ class UndoRedoManager(QObject):
         return os.path.join(self.temp_dir, f"{self.session_id}_{step}.json")
 
     def save_state(self):
-        """Save the current state of the canvas, handling history correctly."""
-        # Check if there's a previous state to compare with
-        if self.current_step > 0:
-            # Get previous state filename
-            prev_filename = self._get_state_filename(self.current_step)
+        """Save current state for undo/redo."""
+        # Check if we need to increment the step
+        if self.current_step == self.max_step:
+            self.current_step += 1
+            self.max_step = self.current_step
+            logging.info(f"Saving state to {self._get_state_filename(self.current_step)} (current_step={self.current_step}, max_step={self.max_step})")
             
-            # Create a temporary file to save current state for comparison
-            temp_filename = os.path.join(self.temp_dir, f"{self.session_id}_temp.json")
+            # Make sure groups are properly saved
+            self._ensure_groups_are_saved()
             
-            try:
-                # Save current state to temp file
-                save_strands(self.canvas.strands, 
-                            self.canvas.groups if hasattr(self.canvas, 'groups') else {},
-                            temp_filename,
-                            self.canvas)
+            # Save new state file
+            saved = self._save_state_file(self.current_step)
+            
+            if saved:
+                logging.info(f"State saved successfully at step {self.current_step}")
+            else:
+                logging.warning(f"Failed to save state at step {self.current_step}")
+                # Roll back the increment
+                self.current_step -= 1
+                self.max_step = self.current_step
+        else:
+            # We're in the middle of history, need to discard future states
+            old_max = self.max_step
+            self.current_step += 1
+            self.max_step = self.current_step
+            logging.info(f"Discarding future states (old_max={old_max}, new_max={self.max_step})")
+            
+            # Make sure groups are properly saved
+            self._ensure_groups_are_saved()
+            
+            # Save new state file
+            saved = self._save_state_file(self.current_step)
+            
+            if saved:
+                logging.info(f"State saved successfully at step {self.current_step} (discarded futures)")
+            else:
+                logging.warning(f"Failed to save state at step {self.current_step}")
+                # Roll back the increment
+                self.current_step -= 1
+                self.max_step = old_max
                 
-                # Check if files are identical
-                if os.path.exists(prev_filename):
-                    with open(prev_filename, 'r') as prev_file, open(temp_filename, 'r') as temp_file:
-                        prev_content = prev_file.read()
-                        temp_content = temp_file.read()
-                        
-                        if prev_content == temp_content:
-                            # States are identical, clean up temp file and exit
-                            logging.info(f"New state is identical to previous state, skipping save")
-                            try:
-                                os.remove(temp_filename)
-                            except:
-                                pass
-                            return
-                
-                # Clean up temp file
-                try:
-                    os.remove(temp_filename)
-                except:
-                    pass
-            except Exception as e:
-                logging.error(f"Error during state comparison: {e}")
-                # Continue with normal save process if comparison fails
-                try:
-                    if os.path.exists(temp_filename):
-                        os.remove(temp_filename)
-                except:
-                    pass
+        # Update the enabled state of the buttons
+        self._update_button_states()
         
-        # Increment step before saving
-        next_step = self.current_step + 1
+    def _ensure_groups_are_saved(self):
+        """Ensure that all groups are properly captured in the next save."""
+        if not hasattr(self.canvas, 'group_layer_manager') or not self.canvas.group_layer_manager:
+            return
+            
+        group_manager = self.canvas.group_layer_manager
         
-        # If we're not at the end of the history, clear future states
-        if next_step <= self.max_step:
-            logging.info(f"Overwriting future history from step {next_step} onwards.")
-            for step in range(next_step, self.max_step + 1):
-                filename = self._get_state_filename(step)
-                try:
-                    if os.path.exists(filename):
-                        os.remove(filename)
-                        logging.debug(f"Removed future state file: {filename}")
-                except OSError as e:
-                    logging.error(f"Error removing future state file {filename}: {e}")
-            # Update max_step since future states are now invalid
-            self.max_step = self.current_step 
+        # If canvas.groups doesn't exist, create it
+        if not hasattr(self.canvas, 'groups'):
+            self.canvas.groups = {}
+            
+        # Make sure all groups in the panel are in canvas.groups
+        if hasattr(group_manager, 'group_panel') and hasattr(group_manager.group_panel, 'groups'):
+            panel_groups = group_manager.group_panel.groups
+            
+            # Loop through panel groups and ensure they're in canvas.groups
+            for group_name, strand_ids in panel_groups.items():
+                if group_name not in self.canvas.groups:
+                    logging.info(f"Adding missing group {group_name} to canvas.groups for saving")
+                    self.canvas.groups[group_name] = strand_ids
+                    
+            # Log the groups that will be saved
+            if self.canvas.groups:
+                logging.info(f"Canvas has {len(self.canvas.groups)} groups to save: {list(self.canvas.groups.keys())}")
+            else:
+                logging.info("No groups to save")
 
-        # Update step counters
-        self.current_step += 1
-        self.max_step = self.current_step
+    def _save_state_file(self, step):
+        """Save the current state of the canvas to a file."""
+        filename = self._get_state_filename(step)
         
-        filename = self._get_state_filename(self.current_step)
-        logging.info(f"Saving state to {filename} (current_step={self.current_step}, max_step={self.max_step})")
+        logging.info(f"Saving state to {filename} (current_step={step}, max_step={self.max_step})")
         
         try:
             save_strands(self.canvas.strands, 
                          self.canvas.groups if hasattr(self.canvas, 'groups') else {},
                          filename,
                          self.canvas)
-            self.state_saved.emit(self.current_step)
-            logging.info(f"State saved successfully at step {self.current_step}")
+            self.state_saved.emit(step)
+            logging.info(f"State saved successfully to {filename}")
+            return True
         except Exception as e:
-            logging.error(f"Error saving state: {e}")
+            logging.exception(f"Error saving state to {filename}: {str(e)}")
+            return False
 
     def undo(self):
         """Load the previous state if available."""
@@ -312,73 +327,727 @@ class UndoRedoManager(QObject):
             # Ensure the canvas is fully refreshed after undo
             self.canvas.update()
             
-            # Call refresh_layers to simulate clicking the green refresh button
-            if hasattr(self.layer_panel, 'refresh_layers'):
-                self.layer_panel.refresh_layers()
-            elif hasattr(self.layer_panel, 'refresh'):
-                self.layer_panel.refresh()
+            # Additional logging to track what's being refreshed
+            logging.info("Refreshing UI after undo operation")
+            
+            # Call refresh on the layer panel
+            try:
+                if hasattr(self.layer_panel, 'refresh'):
+                    logging.info("Calling layer_panel.refresh()")
+                    self.layer_panel.refresh() # This should refresh both layers and group_layer_manager
+                elif hasattr(self.layer_panel, 'refresh_layers'):
+                    logging.info("Calling layer_panel.refresh_layers()")
+                    self.layer_panel.refresh_layers()
+            except Exception as e:
+                logging.error(f"Error refreshing layer panel: {e}")
+                
+            # Explicitly refresh group panels if possible for redundancy
+            try:
+                if hasattr(self.canvas, 'group_layer_manager'):
+                    # Extra verification step for undo to ensure groups are cleared if needed
+                    has_groups = hasattr(self.canvas, 'groups') and bool(self.canvas.groups)
+                    logging.info(f"Extra verification for undo: has_groups={has_groups}")
+                    
+                    if not has_groups:
+                        # Force group removal when undoing to a state with no groups
+                        self._refresh_group_panel(has_loaded_groups=False)
+                    else:
+                        # Normal refresh for states with groups
+                        if hasattr(self.canvas.group_layer_manager, 'refresh'):
+                            logging.info("Calling group_layer_manager.refresh()")
+                            self.canvas.group_layer_manager.refresh()
+                            
+                        # Ensure groups exist in panel
+                        if hasattr(self.canvas.group_layer_manager, 'group_panel'):
+                            self._ensure_all_groups_exist_in_panel(self.canvas.group_layer_manager)
+            except Exception as e:
+                logging.error(f"Error refreshing group layer manager: {e}")
+                
+            # Final update of the canvas
+            self.canvas.update()
         else:
             logging.info("Cannot undo: already at oldest state")
 
     def redo(self):
         """Load the next state if available."""
         if self.current_step < self.max_step:
+            # First check if the next state contains groups (Optional: For logging/debugging)
+            next_step = self.current_step + 1
+            next_filename = self._get_state_filename(next_step)
+            next_has_groups = False
+            try:
+                if os.path.exists(next_filename):
+                    with open(next_filename, 'r') as f:
+                        content = json.load(f)
+                        next_has_groups = 'groups' in content and len(content.get('groups', {})) > 0
+                    if next_has_groups:
+                        logging.info(f"REDO CHECK: Next state (step {next_step}) contains groups.")
+            except Exception as e:
+                logging.warning(f"Error pre-checking next state for groups: {str(e)}")
+
+            # Now perform the redo operation by loading the state
             self.current_step += 1
-            self._load_state(self.current_step)
-            self.redo_performed.emit()
-            logging.info(f"Redo performed, now at step {self.current_step}")
-            
+            result = self._load_state(self.current_step) # _load_state handles UI refresh
+
+            if result:
+                self.redo_performed.emit()
+                logging.info(f"Redo performed, now at step {self.current_step}")
+            else:
+                # Rollback if loading failed
+                self.current_step -= 1
+                logging.error(f"Redo failed: Could not load state for step {self.current_step + 1}")
+                return False # Indicate failure
+
             # Make sure buttons are properly updated
             self._update_button_states()
 
             # Ensure the canvas is fully refreshed after redo
-            self.canvas.update()
-            
-            # Call refresh_layers to simulate clicking the green refresh button
-            if hasattr(self.layer_panel, 'refresh_layers'):
-                self.layer_panel.refresh_layers()
-            elif hasattr(self.layer_panel, 'refresh'):
-                self.layer_panel.refresh()
+            # self.canvas.update() # _load_state should handle canvas updates
+
+            # Additional logging to track what's being refreshed
+            logging.info("UI should have been refreshed by _load_state after redo operation")
+
+            # REMOVED: Redundant refresh calls. _load_state now handles this.
+            # # Call refresh on the layer panel
+            # try:
+            #     if hasattr(self.layer_panel, 'refresh'):
+            #         logging.info("Calling layer_panel.refresh()")
+            #         self.layer_panel.refresh()
+            # except Exception as e:
+            #     logging.error(f"Error refreshing layer panel: {str(e)}")
+                
+            # # Special handling for group_layer_manager - REMOVED
+            # try:
+            #     if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+            #         # If next state has groups, perform special handling - REMOVED
+            #         # if next_has_groups:
+            #         #    self._force_recreate_groups_for_redo() # REMOVED
+            #
+            #         # REMOVED redundant refresh
+            #         # if hasattr(self.canvas.group_layer_manager, 'refresh'):
+            #         #    logging.info("Calling group_layer_manager.refresh()")
+            #         #    self.canvas.group_layer_manager.refresh()
+            #
+            # except Exception as e:
+            #     logging.error(f"Error during post-redo group handling: {str(e)}")
+
+            # Final canvas update (optional, _load_state might cover it)
+            # try:
+            #     self.canvas.update()
+            # except Exception as e:
+            #     logging.error(f"Error updating canvas post-redo: {str(e)}")
+
+            return result
         else:
             logging.info("Cannot redo: already at newest state")
+            return False # Indicate failure or no action
+
+    def _clear_group_panel_ui(self, group_panel):
+        """Helper method to reliably clear all widgets from the group panel's scroll layout."""
+        if not group_panel or not hasattr(group_panel, 'scroll_layout'):
+            logging.warning("_clear_group_panel_ui: Group panel or scroll layout not found.")
+            return
+
+        layout = group_panel.scroll_layout
+        # Remove all widgets from the layout
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                widget = child.widget()
+                logging.debug(f"Removing widget from group panel: {widget.objectName() if hasattr(widget, 'objectName') else type(widget)}")
+                widget.setParent(None) # Necessary for Qt to schedule deletion
+                widget.deleteLater()
+            # Clean up the layout item itself if it wasn't holding a widget
+            elif child.layout():
+                 # Handle nested layouts if necessary, though not expected here
+                 pass # Or implement recursive clearing if needed
+
+        # Clear internal tracking in the panel if it exists
+        if hasattr(group_panel, 'groups'):
+             group_panel.groups.clear()
+             logging.debug("Cleared group_panel.groups dictionary.")
+
+        logging.info("Cleared all widgets from group panel UI.")
+
+
+    def _recreate_group_widgets_from_canvas(self, group_panel):
+        """Helper method to recreate group widgets based on self.canvas.groups."""
+        if not group_panel or not hasattr(group_panel, 'scroll_layout'):
+            logging.error("_recreate_group_widgets_from_canvas: Group panel or scroll layout not found.")
+            return
+            
+        # Debug: Print the canvas.groups content to diagnose issues
+        if not hasattr(self.canvas, 'groups') or not self.canvas.groups:
+            logging.error("canvas.groups is empty or missing - nothing to recreate")
+            return
+            
+        logging.info(f"Canvas has {len(self.canvas.groups)} groups to recreate: {list(self.canvas.groups.keys())}")
+        
+        # First clear any existing widgets
+        self._clear_group_panel_ui(group_panel)
+        logging.info("Cleared existing group panel UI successfully")
+        
+        # Get the scroll_layout to add widgets to
+        scroll_layout = group_panel.scroll_layout
+        
+        # Setup counters for debugging
+        processed = 0
+        created = 0
+        
+        # Iterate through a copy of canvas.groups in case we modify it
+        for group_name, group_data in dict(self.canvas.groups).items():
+            processed += 1
+            logging.info(f"Processing group '{group_name}' from canvas.groups")
+            
+            # Debug: Print structure of this group's data
+            if isinstance(group_data, dict):
+                logging.info(f"Group data keys: {list(group_data.keys())}")
+                if 'strands' in group_data:
+                    strand_count = len(group_data['strands'])
+                    logging.info(f"Group has {strand_count} strands")
+                    
+                    # Check if strands are strings or objects
+                    strand_types = []
+                    for s in group_data['strands'][:3]:  # Check first few for logging
+                        strand_types.append(type(s).__name__)
+                    logging.info(f"Strand types: {strand_types}")
+            elif isinstance(group_data, list):
+                logging.info(f"Group data is a list with {len(group_data)} items")
+            else:
+                logging.info(f"Group data is type: {type(group_data).__name__}")
+            
+            try:
+                # Create a new widget for this group
+                logging.info(f"Creating CollapsibleGroupWidget for group '{group_name}'")
+                group_widget = CollapsibleGroupWidget(group_name=group_name, group_panel=group_panel)
+                
+                # We'll count successful strand additions for this widget
+                strand_count = 0
+                
+                # Convert any string IDs to actual strand objects in the groups data
+                # This is crucial for functions like move/rotate that require actual strand objects
+                if isinstance(group_data, dict) and 'strands' in group_data:
+                    # Create a new list to store the updated strands
+                    updated_strands = []
+                    for strand in group_data['strands']:
+                        if isinstance(strand, str):
+                            # It's a layer ID string, find the actual strand object
+                            strand_obj = None
+                            if hasattr(self.canvas, 'find_strand_by_name'):
+                                strand_obj = self.canvas.find_strand_by_name(strand)
+                            else:
+                                # Fallback: search through strands list
+                                for s in self.canvas.strands:
+                                    if hasattr(s, 'layer_name') and s.layer_name == strand:
+                                        strand_obj = s
+                                        break
+                            
+                            if strand_obj:
+                                updated_strands.append(strand_obj)
+                                logging.info(f"Converted strand ID '{strand}' to actual strand object")
+                            else:
+                                # Keep the string if we can't find the object
+                                updated_strands.append(strand)
+                                logging.warning(f"Could not find strand object for ID '{strand}'")
+                        else:
+                            # It's already a strand object (or something else), keep it as is
+                            updated_strands.append(strand)
+                    
+                    # Replace the old strands list with the updated one
+                    group_data['strands'] = updated_strands
+                    # Update the canvas.groups entry
+                    self.canvas.groups[group_name] = group_data
+                    logging.info(f"Updated strands in group data for '{group_name}' with actual strand objects")
+                
+                # Determine what strands to process
+                if 'strands' in group_data:
+                    strands_to_process = group_data['strands']
+                elif isinstance(group_data, list):
+                    strands_to_process = group_data
+                else:
+                    logging.warning(f"Cannot determine strands for group '{group_name}'")
+                    strands_to_process = []
+                
+                logging.info(f"Found {len(strands_to_process)} strands to process for group '{group_name}'")
+                
+                for strand in strands_to_process:
+                    # Handle both strand objects and layer names
+                    if hasattr(strand, 'layer_name'):
+                        layer_id = strand.layer_name
+                        color = strand.color if hasattr(strand, 'color') else None
+                        is_masked = hasattr(strand, 'is_masked') and strand.is_masked
+                    else:
+                        # We have a layer ID, try to find the actual strand
+                        layer_id = strand
+                        # Try to find the strand object in canvas
+                        strand_obj = None
+                        if hasattr(self.canvas, 'find_strand_by_name'):
+                            strand_obj = self.canvas.find_strand_by_name(layer_id)
+                        else:
+                            logging.warning(f"Canvas lacks find_strand_by_name method - using fallback")
+                            # Fallback: search through strands list
+                            for s in self.canvas.strands:
+                                if hasattr(s, 'layer_name') and s.layer_name == layer_id:
+                                    strand_obj = s
+                                    break
+                                    
+                        if strand_obj:
+                            color = strand_obj.color if hasattr(strand_obj, 'color') else None
+                            is_masked = hasattr(strand_obj, 'is_masked') and strand_obj.is_masked
+                        else:
+                            # Use defaults if we can't find the strand
+                            color = None
+                            is_masked = False
+                    
+                    # Add the layer/strand to the widget
+                    # Try multiple approaches to ensure it gets added
+                    added = False
+                    
+                    # Approach 1: Add strand object directly if it has a layer_name
+                    try:
+                        if hasattr(strand, 'layer_name'):
+                            group_widget.add_layer(strand.layer_name, strand.color, is_masked)
+                            strand_count += 1
+                            added = True
+                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using strand object")
+                    except Exception as e1:
+                        logging.warning(f"Error adding strand object directly: {e1}")
+                        
+                    # Approach 2: Add using specific attributes    
+                    if not added:
+                        try:
+                            group_widget.add_layer(layer_id, color, is_masked)
+                            strand_count += 1
+                            added = True
+                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using layer ID")
+                        except Exception as e2:
+                            logging.warning(f"Error adding layer with specific attributes: {e2}")
+                    
+                    # Approach 3: Add just the ID as a fallback
+                    if not added:
+                        try:
+                            group_widget.add_layer(layer_id)
+                            strand_count += 1
+                            added = True
+                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using ID only")
+                        except Exception as e3:
+                            logging.error(f"All attempts to add layer '{layer_id}' failed: {e3}")
+                
+                # Check if any strands were added before proceeding
+                if strand_count == 0:
+                    logging.warning(f"No strands were added to group '{group_name}' - skipping widget")
+                    continue
+                
+                # Add the widget to the scroll layout
+                logging.info(f"Adding group widget to scroll layout with {strand_count} layers")
+                scroll_layout.addWidget(group_widget)
+                
+                # Store the group data in the panel's groups dictionary
+                try:
+                    # IMPORTANT: Ensure we use the updated group_data with actual strand objects
+                    # and properly reference the same strands as in canvas.groups
+                    group_panel.groups[group_name] = {
+                        'strands': self.canvas.groups[group_name].get('strands', []),
+                        'layers': [s.layer_name if hasattr(s, 'layer_name') else s 
+                                   for s in self.canvas.groups[group_name].get('strands', [])],
+                        'widget': group_widget
+                    }
+                    
+                    # Preserve main_strands if available, converting to objects if needed
+                    if 'main_strands' in group_data:
+                        main_strands_list = []
+                        for ms in group_data['main_strands']:
+                            if hasattr(ms, 'layer_name'):
+                                # Already a strand object
+                                main_strands_list.append(ms)
+                            else:
+                                # Try to find the strand object
+                                found = False
+                                for s in self.canvas.strands:
+                                    if hasattr(s, 'layer_name') and s.layer_name == ms:
+                                        main_strands_list.append(s)
+                                        found = True
+                                        break
+                                if not found:
+                                    # Add the string ID as fallback
+                                    main_strands_list.append(ms)
+                        
+                        group_panel.groups[group_name]['main_strands'] = main_strands_list
+                    
+                    # Preserve control_points if available
+                    if 'control_points' in group_data:
+                        group_panel.groups[group_name]['control_points'] = group_data['control_points']
+                        
+                    logging.info(f"Group '{group_name}' added to panel.groups with {len(group_panel.groups[group_name]['strands'])} strands")
+                except Exception as e:
+                    logging.error(f"Error adding group to panel.groups: {e}")
+                
+                # If this widget should have collapsed state, set it
+                if hasattr(group_widget, 'toggle_collapse') and 'collapsed' in group_data and group_data['collapsed']:
+                    try:
+                        group_widget.toggle_collapse()
+                        logging.info(f"Set collapsed state for group '{group_name}'")
+                    except Exception as e:
+                        logging.warning(f"Error setting collapsed state: {e}")
+
+                # Fix/Reconnect the move and rotate signals with correct parameter capture
+                try:
+                    # We need to ensure the group_name is correctly captured in the lambda
+                    # by creating a proper closure with default parameter values
+                    
+                    # For the move function
+                    if hasattr(group_widget, 'move_button') and hasattr(group_widget.move_button, 'clicked'):
+                        try:
+                            # Disconnect any existing connections
+                            group_widget.move_button.clicked.disconnect()
+                        except (TypeError, RuntimeError):
+                            # Expected if no connections exist yet
+                            pass
+                            
+                        # Create a proper function with correct parameter capture
+                        def create_move_handler(name):
+                            return lambda checked=False: group_panel.start_group_move(name)
+                            
+                        # Connect the handler with the specific group name
+                        move_handler = create_move_handler(group_name)
+                        group_widget.move_button.clicked.connect(move_handler)
+                        logging.info(f"Reconnected move signal for group '{group_name}'")
+                    
+                    # For the rotate function
+                    if hasattr(group_widget, 'rotate_button') and hasattr(group_widget.rotate_button, 'clicked'):
+                        try:
+                            # Disconnect any existing connections
+                            group_widget.rotate_button.clicked.disconnect()
+                        except (TypeError, RuntimeError):
+                            # Expected if no connections exist yet
+                            pass
+                            
+                        # Create a proper function with correct parameter capture
+                        def create_rotate_handler(name):
+                            return lambda checked=False: group_panel.start_group_rotation(name)
+                            
+                        # Connect the handler with the specific group name
+                        rotate_handler = create_rotate_handler(group_name)
+                        group_widget.rotate_button.clicked.connect(rotate_handler)
+                        logging.info(f"Reconnected rotate signal for group '{group_name}'")
+                except Exception as e:
+                    logging.error(f"Error connecting signals: {e}")
+                
+                created += 1
+
+            except Exception as e:
+                logging.error(f"Error creating widget for group '{group_name}': {str(e)}", exc_info=True)
+        
+        # Force update
+        try:
+            # Update scrollbar and layout
+            if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
+                group_panel.scroll_area.verticalScrollBar().setValue(0)
+                
+            # Make sure the panel gets properly refreshed
+            scroll_layout.activate()
+            group_panel.updateGeometry()
+            group_panel.update()
+            
+            logging.info(f"Forced UI update on group panel")
+        except Exception as e:
+            logging.error(f"Error during final UI update: {e}")
+            
+        logging.info(f"Finished recreating group panel UI. Processed: {processed}, Created: {created}, Layout has {scroll_layout.count()} widgets.")
+        
+        # Output the final result of the groups stored in the panel
+        if hasattr(group_panel, 'groups'):
+            logging.info(f"FINAL RESULT: Group panel now has {len(group_panel.groups)} groups: {list(group_panel.groups.keys())}")
+            
+        # Return success/failure status
+        return created > 0
+
+    def _refresh_group_panel(self, has_loaded_groups):
+        """
+        Refreshes the group panel UI based on the loaded state.
+        Always clears the UI first, then rebuilds from self.canvas.groups if necessary.
+        """
+        logging.info(f"Refreshing group panel. State has groups: {has_loaded_groups}")
+
+        group_manager = getattr(self.canvas, 'group_layer_manager', None)
+        if not group_manager:
+            logging.warning("Cannot refresh group panel: No group_layer_manager found on canvas.")
+            return
+
+        group_panel = getattr(group_manager, 'group_panel', None)
+        if not group_panel:
+            logging.warning("Cannot refresh group panel: No group_panel found on group_layer_manager.")
+            return
+
+        # --- Step 1: Always Clear the UI ---
+        logging.info("Clearing existing group panel UI before refresh...")
+        self._clear_group_panel_ui(group_panel)
+
+        # --- Step 2: Recreate UI if state has groups ---
+        if has_loaded_groups:
+            logging.info("State has groups. Recreating group panel UI from canvas.groups...")
+            if hasattr(self.canvas, 'groups') and self.canvas.groups:
+                 self._recreate_group_widgets_from_canvas(group_panel)
+            else:
+                 logging.warning("State reported having groups, but self.canvas.groups is empty or missing.")
+        else:
+            logging.info("State has no groups. Group panel UI remains clear.")
+
+        # --- Step 3: Final UI Update ---
+        # Force an update on the panel to ensure layout changes are visible
+        try:
+            group_panel.update()
+            if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
+                 group_panel.scroll_area.update()
+            logging.info("Updated group panel and scroll area after refresh.")
+        except Exception as e:
+            logging.error(f"Error updating group panel UI components: {str(e)}")
+
+        logging.info(f"Group panel refresh complete. Final widget count in layout: {group_panel.scroll_layout.count()}")
 
     def _load_state(self, step):
         """Load the state for the specified step and apply it."""
         filename = self._get_state_filename(step)
-        
         logging.info(f"Attempting to load state from step {step}: {filename}")
-        
-        if os.path.exists(filename):
-            logging.info(f"File exists: {filename}")
-            try:
-                # First load the strands from the file
-                logging.info(f"Loading strands from file: {filename}")
-                strands, groups = load_strands(filename, self.canvas)
-                logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups")
+
+        if not os.path.exists(filename):
+            logging.warning(f"State file does not exist: {filename}")
+            return False
+
+        try:
+            # --- Step 1: Load data from file and inspect its structure --- 
+            logging.info(f"Loading strands and groups data from file: {filename}")
+            
+            # First inspect the raw JSON to understand the structure
+            with open(filename, 'r') as f:
+                raw_data = json.load(f)
                 
-                # Then set the loaded strands on the canvas
-                self.canvas.strands = strands
-                if hasattr(self.canvas, 'groups'):
-                    self.canvas.groups = groups
-                logging.info("Applied strands and groups to canvas")
+            # Log information about the raw data structure
+            has_groups_in_file = 'groups' in raw_data and bool(raw_data.get('groups', {}))
+            logging.info(f"File contains group data: {has_groups_in_file}")
+            if has_groups_in_file:
+                group_count = len(raw_data.get('groups', {}))
+                group_names = list(raw_data.get('groups', {}).keys())
+                logging.info(f"Found {group_count} groups in file: {group_names}")
+            
+            # Load the data using the normal method
+            loaded_strands, loaded_groups_data = load_strands(filename, self.canvas)
+            state_has_groups = bool(loaded_groups_data)
+            logging.info(f"Loaded {len(loaded_strands)} strands and {len(loaded_groups_data)} groups")
+            logging.info(f"State has groups according to loaded_groups_data: {state_has_groups}")
+            
+            # Check if we lost groups during loading
+            if has_groups_in_file and not state_has_groups:
+                logging.warning("Groups found in file but not returned by load_strands - attempting recovery")
                 
-                # Refresh the UI
-                if hasattr(self.layer_panel, 'refresh'):
-                    logging.info("Refreshing layer panel")
-                    self.layer_panel.refresh()
-                else:
-                    logging.warning("Layer panel has no refresh method")
+                # Try to manually extract group data from the file
+                if 'groups' in raw_data:
+                    loaded_groups_data = raw_data['groups']
+                    state_has_groups = bool(loaded_groups_data)
+                    logging.info(f"Manually recovered {len(loaded_groups_data)} groups from file")
+
+            # --- Step 2: Replace canvas data --- 
+            # Completely replace the existing strands and groups with the loaded data
+            self.canvas.strands = loaded_strands
+            
+            # Ensure self.canvas.groups exists
+            if not hasattr(self.canvas, 'groups'):
+                self.canvas.groups = {}
                 
-                # Update the canvas
-                logging.info("Updating canvas")
-                self.canvas.update()
+            # Set the groups data on the canvas
+            if state_has_groups:
+                self.canvas.groups = loaded_groups_data
+                logging.info(f"Set canvas.groups with {len(loaded_groups_data)} groups: {list(loaded_groups_data.keys())}")
+            else:
+                # Clear any existing groups if the state has none
+                self.canvas.groups = {}
+                logging.info("Cleared canvas.groups (state has no groups)")
                 
-                logging.info(f"State loaded and applied successfully from step {step}")
-            except Exception as e:
-                # Log the full traceback for detailed debugging
-                logging.exception(f"Error loading and applying state from {filename}: {e}")
+            logging.info("Replaced canvas strands and groups with loaded data")
+            
+            # Update strand properties (like canvas reference) after loading
+            for strand in self.canvas.strands:
+                 if hasattr(strand, 'set_canvas'):
+                      strand.set_canvas(self.canvas)
+                 # Add any other necessary post-load initialization for strands here
+                 
+            # --- Step 3: Refresh UI Panels --- 
+            # Refresh layer panel based on the new self.canvas.strands
+            logging.info("Refreshing Layer Panel UI...")
+            self._refresh_layer_panel() 
+
+            # Refresh group panel based on the new self.canvas.groups
+            logging.info("Refreshing Group Panel UI...")
+            success = self._refresh_group_panel(state_has_groups) # Pass the flag indicating if groups exist
+            
+            if state_has_groups and not success:
+                logging.warning("Group panel refresh unsuccessful - performing additional recovery steps")
+                
+                # Additional recovery steps for groups
+                if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+                    try:
+                        group_manager = self.canvas.group_layer_manager
+                        if hasattr(group_manager, 'refresh'):
+                            logging.info("Calling group_layer_manager.refresh() as additional recovery")
+                            group_manager.refresh()
+                    except Exception as e:
+                        logging.error(f"Error during group recovery: {e}")
+
+            # --- Step 4: Final Canvas Update --- 
+            logging.info("Updating canvas display...")
+            self.canvas.update()
+            
+            # Optional: Update selection state if needed (e.g., clear selection)
+            if hasattr(self.canvas, 'deselect_strand'):
+                 self.canvas.deselect_strand()
+                 logging.debug("Deselected strand after loading state.")
+
+            logging.info(f"State loaded and applied successfully from step {step}")
+            return True # Indicate success
+            
+        except Exception as e:
+            logging.exception(f"CRITICAL Error loading state from step {step} ({filename}): {str(e)}")
+            # Consider rolling back or handling the error state more gracefully here if needed
+            return False # Indicate failure
+    
+    def _refresh_layer_panel(self):
+        """Refresh the layer panel UI to match loaded state."""
+        if hasattr(self.layer_panel, 'refresh'):
+            logging.info("Refreshing layer panel via _refresh_layer_panel")
+            self.layer_panel.refresh()
         else:
-            logging.error(f"State file not found: {filename}")
+            logging.warning("Layer panel has no refresh method")
+        
+        # Also refresh/update the layer state manager if available
+        if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            if hasattr(self.canvas.layer_state_manager, 'update_layer_order'):
+                layer_names = [strand.layer_name for strand in self.canvas.strands if hasattr(strand, 'layer_name')]
+                self.canvas.layer_state_manager.update_layer_order(layer_names)
+                logging.info(f"Updated layer state manager order with {len(layer_names)} layers")
+
+    def _force_clear_all_groups(self):
+        """Force a complete removal of all groups from both canvas and UI."""
+        logging.info("Beginning force clear of all groups")
+        
+        # First try to clear the group manager through canvas
+        try:
+            if hasattr(self.canvas, 'group_layer_manager'):
+                group_manager = self.canvas.group_layer_manager
+                
+                # Try using clear method if it exists
+                if hasattr(group_manager, 'clear'):
+                    group_manager.clear()
+                # Or clear method on tree if it exists
+                elif hasattr(group_manager, 'tree') and hasattr(group_manager.tree, 'clear'):
+                    group_manager.tree.clear()
+        except Exception as e:
+            logging.error(f"Error clearing group_manager: {str(e)}")
+            
+        # Then clear the groups from the panel itself
+        if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
+            group_panel = self.canvas.group_layer_manager.group_panel
+            
+            # Get all groups from the panel and delete them one by one
+            groups_to_delete = []
+            if hasattr(group_panel, 'groups'):
+                groups_to_delete = list(group_panel.groups.keys())
+                
+            logging.info(f"Found {len(groups_to_delete)} groups to clear from panel: {groups_to_delete}")
+                
+            for group_name in groups_to_delete:
+                try:
+                    # Check if group exists in canvas
+                    if not hasattr(self.canvas, 'groups') or group_name not in self.canvas.groups:
+                        logging.warning(f"Group '{group_name}' not found in canvas.")
+                    
+                    # Try to use the delete_group method
+                    if hasattr(group_panel, 'delete_group'):
+                        logging.info(f"Group operation: delete on group {group_name} with layers {group_panel.groups.get(group_name, [])}")
+                        group_panel.delete_group(group_name)
+                        logging.info(f"Group '{group_name}' deleted.")
+                except Exception as e:
+                    logging.error(f"Error deleting group '{group_name}': {str(e)}")
+                    
+            # Force reset the groups dictionary to be empty
+            if hasattr(group_panel, 'groups'):
+                group_panel.groups = {}
+                logging.info("Forcibly reset panel.groups to empty dict")
+                
+            # Remove any remaining widgets from the scroll layout
+            if hasattr(group_panel, 'scroll_layout'):
+                # Find all widgets in the scroll layout
+                widget_count = group_panel.scroll_layout.count()
+                logging.info(f"Found {widget_count} widgets in scroll_layout")
+                
+                # Remove all widgets
+                for i in range(widget_count - 1, -1, -1):  # Remove in reverse order
+                    try:
+                        widget = group_panel.scroll_layout.itemAt(i).widget()
+                        if widget:
+                            widget.setParent(None)
+                            widget.deleteLater()
+                    except Exception as e:
+                        logging.error(f"Error removing widget at index {i}: {str(e)}")
+                        
+                logging.info(f"Removed all {widget_count} widgets from scroll_layout")
+                
+        # Ensure canvas.groups is empty
+        if hasattr(self.canvas, 'groups'):
+            self.canvas.groups = {}
+            
+        logging.info("Completed force clear of all groups")
+    
+    def _ensure_all_groups_exist_in_panel(self, group_manager):
+        """Ensure all groups in canvas.groups exist in the panel."""
+        logging.info("Ensuring all groups exist in panel")
+        if not hasattr(group_manager, 'group_panel') or not group_manager.group_panel:
+            return
+            
+        group_panel = group_manager.group_panel
+        
+        # Get all groups in the panel
+        panel_groups = set(group_panel.groups.keys()) if hasattr(group_panel, 'groups') else set()
+        
+        # Get all groups in the canvas
+        canvas_groups = set(self.canvas.groups.keys()) if hasattr(self.canvas, 'groups') else set()
+        
+        # Find missing groups
+        missing_groups = canvas_groups - panel_groups
+        
+        if missing_groups:
+            logging.info(f"Found {len(missing_groups)} groups missing from panel: {missing_groups}")
+            
+            # Create each missing group
+            for group_name in missing_groups:
+                if group_name in self.canvas.groups and 'strands' in self.canvas.groups[group_name]:
+                    strands = self.canvas.groups[group_name]['strands']
+                    if strands and hasattr(group_panel, 'create_group'):
+                        try:
+                            logging.info(f"Creating missing group '{group_name}' with {len(strands)} strands")
+                            group_panel.create_group(group_name, strands)
+                        except Exception as e:
+                            logging.error(f"Error creating missing group '{group_name}': {e}")
+        else:
+            logging.info("All groups already exist in panel")
+    
+    def _create_all_groups_in_panel(self, group_panel):
+        """Create all groups from canvas.groups in the panel."""
+        logging.info(f"Creating all groups from canvas.groups in panel")
+        
+        # Loop through the available groups in canvas.groups
+        for group_name, group_data in self.canvas.groups.items():
+            if 'strands' in group_data and group_data['strands']:
+                # If panel has create_group method, use it
+                if hasattr(group_panel, 'create_group'):
+                    logging.info(f"Creating group '{group_name}' with {len(group_data['strands'])} strands")
+                    try:
+                        # Create group with strands
+                        group_panel.create_group(group_name, group_data['strands'])
+                        logging.info(f"Successfully created group '{group_name}' in panel")
+                    except Exception as e:
+                        logging.error(f"Error creating group '{group_name}': {e}")
+        
+        logging.info("Finished creating all groups in panel")
 
     def load_specific_state(self, filepath):
         """Loads a specific state file, applies it, and preserves the entire history of the loaded session."""
@@ -530,7 +1199,7 @@ class UndoRedoManager(QObject):
                 "stroke_normal": "#c8deec",       # Normal stroke for dark theme
                 "stroke_hover": "#ffffff",        # Hover stroke for dark theme
                 "stroke_pressed": "#dae9ff",      # Brighter stroke for dark theme
-                "fill": "#000000",                # Icon fill color 
+                "fill": "#000000",                # Icon fill color
                 "bg_disabled": "#4a4a4a",         # Disabled background (dark gray)
                 "border_disabled": "#3d3d3d",     # Disabled border (darker gray)
                 "stroke_disabled": "#888888"      # Disabled stroke (medium gray)
@@ -540,7 +1209,7 @@ class UndoRedoManager(QObject):
                 "bg_hover": "#2c5c8a",            # Significantly darker hover
                 "bg_pressed": "#10253a",          # Almost black when pressed
                 "border_normal": "#3c77a5",       # Normal border for light theme
-                "border_hover": "#1d4168",        # Darker border on hover
+                "border_hover": "#1d4121",        # Darker border on hover
                 "border_pressed": "#ffffff",      # White border when pressed
                 "stroke_normal": "#e0ecfa",       # Normal stroke for light theme
                 "stroke_hover": "#ffffff",        # Hover stroke for light theme
@@ -652,6 +1321,105 @@ class UndoRedoManager(QObject):
         """Returns the current session ID."""
         return self.session_id
 
+    def _create_group_in_panel(self, group_name, group_data):
+        """Directly create a group in the panel from loaded data."""
+        logging.info(f"Directly creating group in panel: {group_name}")
+        
+        if not hasattr(self.canvas, 'group_layer_manager') or not self.canvas.group_layer_manager:
+            logging.warning("Cannot create group in panel: group_layer_manager not found")
+            return False
+            
+        if not hasattr(self.canvas.group_layer_manager, 'group_panel'):
+            logging.warning("Cannot create group in panel: group_panel not found")
+            return False
+            
+        group_panel = self.canvas.group_layer_manager.group_panel
+        
+        # Skip if group already exists in panel
+        if hasattr(group_panel, 'groups') and group_name in group_panel.groups:
+            logging.info(f"Group {group_name} already exists in panel")
+            return True
+        
+        # Extract strand IDs from the group data, which can be in different formats
+        strand_ids = []
+        
+        if isinstance(group_data, list):
+            # If group_data is a list, it's a list of strand IDs
+            strand_ids = group_data
+        elif isinstance(group_data, dict):
+            # If group_data is a dict, check several possible keys for strand data
+            if 'strands' in group_data:
+                strand_list = group_data['strands']
+                for strand in strand_list:
+                    if isinstance(strand, str):
+                        # It's already a string ID
+                        strand_ids.append(strand)
+                    elif hasattr(strand, 'layer_name'):
+                        # It's a strand object
+                        strand_ids.append(strand.layer_name)
+            elif 'layers' in group_data:
+                # Layers are typically string IDs
+                strand_ids = group_data['layers']
+        
+        logging.info(f"Extracted {len(strand_ids)} strand IDs for group {group_name}")
+        
+        # Now convert those IDs to actual strand objects
+        existing_strands = []
+        for strand_id in strand_ids:
+            # Find the matching strand object in the canvas
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
+                    existing_strands.append(strand)
+                    logging.info(f"Found strand object for ID '{strand_id}'")
+                    break
+        
+        if not existing_strands:
+            logging.warning(f"No existing strands found for group {group_name}")
+            return False
+            
+        logging.info(f"Creating group {group_name} with {len(existing_strands)} strands")
+        
+        # Try several approaches to create the group
+        try:
+            # First approach: Use the standard create_group method
+            group_panel.create_group(group_name, existing_strands)
+            logging.info(f"Created group {group_name} using standard method")
+            return True
+        except Exception as e:
+            logging.warning(f"Error using standard create_group method: {str(e)}")
+            
+            # Second approach: Try to use the CollapsibleGroupWidget directly
+            try:
+                # Create a new widget
+                widget = CollapsibleGroupWidget(group_name=group_name, group_panel=group_panel)
+                
+                # Add strands to it
+                for strand in existing_strands:
+                    widget.add_layer(
+                        layer_name=strand.layer_name,
+                        color=strand.color if hasattr(strand, 'color') else None,
+                        is_masked=hasattr(strand, 'is_masked') and strand.is_masked
+                    )
+                
+                # Add to the scroll layout
+                if hasattr(group_panel, 'scroll_layout'):
+                    group_panel.scroll_layout.addWidget(widget)
+                    
+                    # Store in groups dictionary
+                    group_panel.groups[group_name] = {
+                        'strands': existing_strands,
+                        'layers': [s.layer_name for s in existing_strands],
+                        'widget': widget
+                    }
+                    logging.info(f"Created group {group_name} using direct widget creation")
+                    return True
+            except Exception as e:
+                logging.warning(f"Error creating group widget directly: {str(e)}")
+        
+        # If all approaches failed, log an error
+        logging.error(f"All approaches to create group {group_name} failed")
+        return False
+
 def connect_to_move_mode(canvas, undo_redo_manager):
     """
     Connect the move mode's mouse release event to save state, but only if a move occurred.
@@ -693,38 +1461,52 @@ def connect_to_move_mode(canvas, undo_redo_manager):
 def connect_to_attach_mode(canvas, undo_redo_manager):
     """
     Connect the attach mode's mouse release event to save state when a strand is attached.
+    Prevents duplicate saves for a single attach action.
     
     Args:
         canvas: The canvas object with the attach_mode
         undo_redo_manager: The UndoRedoManager instance
     """
     if hasattr(canvas, 'attach_mode') and canvas.attach_mode:
-        # We won't save state on every strand_attached signal
-        # Instead, we'll let the mouseReleaseEvent handle this
-        
-        # Store the original mouseReleaseEvent function
         original_mouse_release = canvas.attach_mode.mouseReleaseEvent
         
-        # Create a new function that calls the original and then saves state
         def enhanced_mouse_release(event):
-            # Store initial states to check if something happened
-            initial_is_attaching = canvas.attach_mode.is_attaching
-            initial_is_first_strand = getattr(canvas, 'is_first_strand', False)
-            initial_strand = canvas.current_strand
+            # Store initial state for comparison
+            initial_strand_count = len(canvas.strands)
+            initial_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
             
-            # Call the original function first
+            # Call the original function first to perform the attach/creation
             original_mouse_release(event)
             
-            # Check if a strand was actually created or modified during this action
-            if ((initial_is_attaching and initial_strand) or                  # Attached a new strand
-                (initial_is_first_strand and initial_strand and               # First strand created
-                 initial_strand.start != initial_strand.end)):                # And it's not a zero-length strand
-                logging.info("Strand created or attached, saving state for undo/redo.")
-                undo_redo_manager.save_state()
-                
+            # Get current state after the action
+            current_strand_count = len(canvas.strands)
+            current_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
+
+            # Check if a new strand was *actually* added during this specific event
+            strand_added = (current_strand_count > initial_strand_count) or \
+                           bool(current_strand_names - initial_strand_names) # Check if new names appeared
+
+            if strand_added:
+                logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}). Checking if save needed.")
+                # Use a flag to prevent immediate double saves within the same manager instance
+                if not getattr(undo_redo_manager, '_saving_state_now', False):
+                    logging.info("--> Saving state.")
+                    undo_redo_manager._saving_state_now = True
+                    try:
+                        # Perform the actual save
+                        undo_redo_manager.save_state()
+                    finally:
+                        # Reset flag after a short delay to allow subsequent saves for different actions
+                        # Using lambda to capture the current manager instance
+                        QTimer.singleShot(50, lambda mgr=undo_redo_manager: setattr(mgr, '_saving_state_now', False))
+                else:
+                    logging.info("--> Already saving state recently, skipping duplicate save.")
+            else:
+                 logging.info(f"Attach mode release: No new strand detected (count {initial_strand_count} -> {current_strand_count}). Not saving state.")
+
         # Replace the original function with our enhanced version
         canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release
-        logging.info("Connected UndoRedoManager to attach_mode mouse release events")
+        logging.info("Connected UndoRedoManager to attach_mode mouse release events (with duplicate save prevention)")
     else:
         logging.warning("Could not connect to attach_mode: attach_mode not found on canvas")
 
@@ -750,6 +1532,61 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
         logging.warning("Could not connect to mask_mode: mask_mode not found on canvas")
 
 
+def connect_to_group_operations(canvas, undo_redo_manager):
+    """Connect to group operations to trigger state saves"""
+    if not hasattr(canvas, 'group_layer_manager'):
+        logging.warning("Could not connect to group operations: group_layer_manager not found on canvas")
+        return
+        
+    group_manager = canvas.group_layer_manager
+    
+    # First try to connect to group_operation signal if available
+    if hasattr(group_manager, 'group_operation'):
+        try:
+            # Define a handler for group operations
+            def on_group_operation(operation, group_name, layers):
+                logging.info(f"Group operation detected: {operation} on {group_name}")
+                # For operations that have completion functions, we'll save state at completion
+                # For other operations, save state immediately
+                if operation not in ["move", "rotate", "edit_angles"]:
+                    undo_redo_manager.save_state()
+                
+            # Connect the signal
+            group_manager.group_operation.connect(on_group_operation)
+            logging.info("Connected to group_operation signal")
+        except Exception as e:
+            logging.warning(f"Error connecting to group_operation signal: {str(e)}")
+    
+    # Also connect directly to canvas operations if they exist
+    if hasattr(canvas, 'finish_group_move'):
+        original_canvas_finish_move = canvas.finish_group_move
+        def enhanced_canvas_finish_move(*args, **kwargs):
+            result = original_canvas_finish_move(*args, **kwargs)
+            logging.info("Canvas group move finished, saving state")
+            undo_redo_manager.save_state()
+            return result
+        canvas.finish_group_move = enhanced_canvas_finish_move
+        
+    if hasattr(canvas, 'finish_group_rotation'):
+        original_canvas_finish_rotation = canvas.finish_group_rotation
+        def enhanced_canvas_finish_rotation(*args, **kwargs):
+            result = original_canvas_finish_rotation(*args, **kwargs)
+            logging.info("Canvas group rotation finished, saving state")
+            undo_redo_manager.save_state()
+            return result
+        canvas.finish_group_rotation = enhanced_canvas_finish_rotation
+    
+    # Also connect directly to group_panel if available
+    if hasattr(group_manager, 'group_panel') and group_manager.group_panel:
+        connect_group_panel_directly(group_manager.group_panel, undo_redo_manager)
+        
+    # Mark the connection as established
+    canvas._group_ops_connected = True
+    
+    logging.info("Successfully connected to group operations")
+    return True
+
+
 def setup_undo_redo(canvas, layer_panel):
     """
     Set up undo/redo functionality for the application.
@@ -761,6 +1598,8 @@ def setup_undo_redo(canvas, layer_panel):
     Returns:
         UndoRedoManager: The created manager instance
     """
+
+    
     # Create the manager
     manager = UndoRedoManager(canvas, layer_panel)
     
@@ -784,4 +1623,90 @@ def setup_undo_redo(canvas, layer_panel):
     # Connect to mask mode
     connect_to_mask_mode(canvas, manager)
     
-    return manager 
+    # Connect to group operations if group_layer_manager exists
+    if hasattr(canvas, 'group_layer_manager') and canvas.group_layer_manager:
+        connect_to_group_operations(canvas, manager)
+    else:
+        # Setup a function to connect when group_layer_manager becomes available
+        def check_and_connect_group_operations():
+            if hasattr(canvas, 'group_layer_manager') and canvas.group_layer_manager:
+                logging.info("Delayed connection: Group layer manager now available, connecting to group operations")
+                connect_to_group_operations(canvas, manager)
+                return True
+            return False
+        
+        # Try connecting after 500ms
+        QTimer.singleShot(500, check_and_connect_group_operations)
+        
+        # Schedule multiple retries
+        for delay in [1000, 2000, 5000]:
+            QTimer.singleShot(delay, lambda: check_and_connect_group_operations() if not hasattr(canvas, '_group_ops_connected') else None)
+    
+    return manager
+
+# Add a new method to directly connect a group_panel to save state on group operations
+def connect_group_panel_directly(group_panel, undo_redo_manager):
+    """Connect a specific group panel's signals to save state."""
+    if not group_panel:
+        return False
+        
+    logging.info("Directly connecting group panel to undo/redo manager")
+    
+    # Connect to group creation more directly
+    original_create_group = group_panel.create_group
+    def enhanced_create_group(*args, **kwargs):
+        result = original_create_group(*args, **kwargs)
+        logging.info("Group created, saving state")
+        undo_redo_manager.save_state()
+        return result
+    group_panel.create_group = enhanced_create_group
+    
+    # Connect to group deletion
+    original_delete_group = group_panel.delete_group
+    def enhanced_delete_group(*args, **kwargs):
+        result = original_delete_group(*args, **kwargs)
+        logging.info("Group deleted, saving state")
+        undo_redo_manager.save_state()
+        return result
+    group_panel.delete_group = enhanced_delete_group
+    
+    # Connect to move operation completion
+    original_finish_group_move = group_panel.finish_group_move
+    def enhanced_finish_group_move(*args, **kwargs):
+        result = original_finish_group_move(*args, **kwargs)
+        logging.info("Group move finished, saving state")
+        undo_redo_manager.save_state()
+        return result
+    group_panel.finish_group_move = enhanced_finish_group_move
+    
+    # Connect to rotation operation completion
+    original_finish_group_rotation = group_panel.finish_group_rotation
+    def enhanced_finish_group_rotation(*args, **kwargs):
+        result = original_finish_group_rotation(*args, **kwargs)
+        logging.info("Group rotation finished, saving state")
+        undo_redo_manager.save_state()
+        return result
+    group_panel.finish_group_rotation = enhanced_finish_group_rotation
+    
+    # Connect to angle edit completion
+    original_update_group_after_angle_edit = getattr(group_panel, 'update_group_after_angle_edit', None)
+    if original_update_group_after_angle_edit:
+        def enhanced_update_group_after_angle_edit(*args, **kwargs):
+            result = original_update_group_after_angle_edit(*args, **kwargs)
+            logging.info("Group angle edit finished, saving state")
+            undo_redo_manager.save_state()
+            return result
+        group_panel.update_group_after_angle_edit = enhanced_update_group_after_angle_edit
+    
+    # Connect to group operation signal
+    def on_group_operation(operation, group_name, layers):
+        logging.info(f"Group operation signal: {operation} on {group_name}")
+        # We'll save state at operation completion for move/rotate/angle operations
+        # For other operations that don't have explicit completion handlers, save immediately
+        if operation not in ["move", "rotate", "edit_angles"]:
+            undo_redo_manager.save_state()
+    
+    group_panel.group_operation.connect(on_group_operation)
+    
+    logging.info("Successfully connected group panel signals to undo/redo manager")
+    return True 

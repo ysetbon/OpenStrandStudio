@@ -195,7 +195,7 @@ class UndoRedoManager(QObject):
         super().__init__()
         self.canvas = canvas
         self.layer_panel = layer_panel
-        self.current_step = 0  # Start at step 0 (no steps saved yet)
+        self.current_step = 0  # Start at step 0 (empty state, no steps saved yet)
         self.max_step = 0      # Start with no steps saved
         self.temp_dir = self._create_temp_dir()
         self.session_id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -206,9 +206,6 @@ class UndoRedoManager(QObject):
         self.undo_performed.connect(self._update_button_states)
         self.redo_performed.connect(self._update_button_states)
         self.state_saved.connect(self._update_button_states)
-        
-        # Do not save initial state here - this will be done when connecting to move_mode
-        # This way, we won't have a "blank" initial state
         
         # Update button states initially (both should be disabled)
         self._update_button_states()
@@ -225,6 +222,32 @@ class UndoRedoManager(QObject):
 
     def save_state(self):
         """Save current state for undo/redo."""
+        # Check if the state is empty (no strands and empty groups)
+        is_empty_state = len(self.canvas.strands) == 0 and (not hasattr(self.canvas, 'groups') or not self.canvas.groups)
+        
+        if is_empty_state:
+            logging.info("State is empty (no strands, no groups). Not saving to history.")
+            return  # Don't save empty state
+            
+        # Special case: If we're at step 0 (empty state) and now saving a non-empty state
+        if self.current_step == 0:
+            logging.info("First content created - saving first state at step 1")
+            self.current_step = 1
+            self.max_step = 1
+            # Save new state file
+            saved = self._save_state_file(self.current_step)
+            
+            if saved:
+                logging.info(f"First state saved successfully at step {self.current_step}")
+                # Update button states - undo should now be enabled
+                self._update_button_states()
+            else:
+                logging.warning(f"Failed to save first state at step {self.current_step}")
+                # Roll back if save failed
+                self.current_step = 0
+                self.max_step = 0
+            return
+            
         # Check if we need to increment the step
         if self.current_step == self.max_step:
             self.current_step += 1
@@ -315,53 +338,35 @@ class UndoRedoManager(QObject):
 
     def undo(self):
         """Load the previous state if available."""
-        if self.current_step > 1:
+        if self.current_step > 0:
             self.current_step -= 1
-            self._load_state(self.current_step)
+            
+            # Special case: If undoing to step 0 (empty state)
+            if self.current_step == 0:
+                logging.info("Undoing to initial empty state")
+                # Clear the canvas by removing all strands and groups
+                self.canvas.strands = []
+                if hasattr(self.canvas, 'groups'):
+                    self.canvas.groups = {}
+                
+                # Refresh the UI
+                if hasattr(self.layer_panel, 'refresh'):
+                    self.layer_panel.refresh()
+                if hasattr(self.canvas, 'group_layer_manager'):
+                    self._refresh_group_panel(False)  # No groups in empty state
+                self.canvas.update()
+            else:
+                # Normal undo to a saved state
+                self._load_state(self.current_step)
+                
             self.undo_performed.emit()
             logging.info(f"Undo performed, now at step {self.current_step}")
             
             # Make sure buttons are properly updated
             self._update_button_states()
 
-            # Ensure the canvas is fully refreshed after undo
-            self.canvas.update()
-            
             # Additional logging to track what's being refreshed
             logging.info("Refreshing UI after undo operation")
-            
-            # Call refresh on the layer panel
-            try:
-                if hasattr(self.layer_panel, 'refresh'):
-                    logging.info("Calling layer_panel.refresh()")
-                    self.layer_panel.refresh() # This should refresh both layers and group_layer_manager
-                elif hasattr(self.layer_panel, 'refresh_layers'):
-                    logging.info("Calling layer_panel.refresh_layers()")
-                    self.layer_panel.refresh_layers()
-            except Exception as e:
-                logging.error(f"Error refreshing layer panel: {e}")
-                
-            # Explicitly refresh group panels if possible for redundancy
-            try:
-                if hasattr(self.canvas, 'group_layer_manager'):
-                    # Extra verification step for undo to ensure groups are cleared if needed
-                    has_groups = hasattr(self.canvas, 'groups') and bool(self.canvas.groups)
-                    logging.info(f"Extra verification for undo: has_groups={has_groups}")
-                    
-                    if not has_groups:
-                        # Force group removal when undoing to a state with no groups
-                        self._refresh_group_panel(has_loaded_groups=False)
-                    else:
-                        # Normal refresh for states with groups
-                        if hasattr(self.canvas.group_layer_manager, 'refresh'):
-                            logging.info("Calling group_layer_manager.refresh()")
-                            self.canvas.group_layer_manager.refresh()
-                            
-                        # Ensure groups exist in panel
-                        if hasattr(self.canvas.group_layer_manager, 'group_panel'):
-                            self._ensure_all_groups_exist_in_panel(self.canvas.group_layer_manager)
-            except Exception as e:
-                logging.error(f"Error refreshing group layer manager: {e}")
                 
             # Final update of the canvas
             self.canvas.update()
@@ -371,23 +376,15 @@ class UndoRedoManager(QObject):
     def redo(self):
         """Load the next state if available."""
         if self.current_step < self.max_step:
-            # First check if the next state contains groups (Optional: For logging/debugging)
-            next_step = self.current_step + 1
-            next_filename = self._get_state_filename(next_step)
-            next_has_groups = False
-            try:
-                if os.path.exists(next_filename):
-                    with open(next_filename, 'r') as f:
-                        content = json.load(f)
-                        next_has_groups = 'groups' in content and len(content.get('groups', {})) > 0
-                    if next_has_groups:
-                        logging.info(f"REDO CHECK: Next state (step {next_step}) contains groups.")
-            except Exception as e:
-                logging.warning(f"Error pre-checking next state for groups: {str(e)}")
-
-            # Now perform the redo operation by loading the state
+            # Special case: If redoing from step 0 (empty state)
+            if self.current_step == 0:
+                logging.info("Redoing from initial empty state to step 1")
+            
+            # Increment the step counter
             self.current_step += 1
-            result = self._load_state(self.current_step) # _load_state handles UI refresh
+            
+            # Load the state
+            result = self._load_state(self.current_step)
 
             if result:
                 self.redo_performed.emit()
@@ -402,41 +399,9 @@ class UndoRedoManager(QObject):
             self._update_button_states()
 
             # Ensure the canvas is fully refreshed after redo
-            # self.canvas.update() # _load_state should handle canvas updates
-
-            # Additional logging to track what's being refreshed
-            logging.info("UI should have been refreshed by _load_state after redo operation")
-
-            # REMOVED: Redundant refresh calls. _load_state now handles this.
-            # # Call refresh on the layer panel
-            # try:
-            #     if hasattr(self.layer_panel, 'refresh'):
-            #         logging.info("Calling layer_panel.refresh()")
-            #         self.layer_panel.refresh()
-            # except Exception as e:
-            #     logging.error(f"Error refreshing layer panel: {str(e)}")
-                
-            # # Special handling for group_layer_manager - REMOVED
-            # try:
-            #     if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
-            #         # If next state has groups, perform special handling - REMOVED
-            #         # if next_has_groups:
-            #         #    self._force_recreate_groups_for_redo() # REMOVED
-            #
-            #         # REMOVED redundant refresh
-            #         # if hasattr(self.canvas.group_layer_manager, 'refresh'):
-            #         #    logging.info("Calling group_layer_manager.refresh()")
-            #         #    self.canvas.group_layer_manager.refresh()
-            #
-            # except Exception as e:
-            #     logging.error(f"Error during post-redo group handling: {str(e)}")
-
-            # Final canvas update (optional, _load_state might cover it)
-            # try:
-            #     self.canvas.update()
-            # except Exception as e:
-            #     logging.error(f"Error updating canvas post-redo: {str(e)}")
-
+            self.canvas.update()
+            
+            logging.info("UI updated after redo operation")
             return result
         else:
             logging.info("Cannot redo: already at newest state")
@@ -1152,7 +1117,9 @@ class UndoRedoManager(QObject):
     def _update_button_states(self):
         """Update the enabled state of undo/redo buttons."""
         if self.undo_button:
-            can_undo = self.current_step > 1
+            # Enable undo if we have a current step greater than 0
+            # This allows undoing from step 1 to the empty state
+            can_undo = self.current_step > 0
             self.undo_button.setEnabled(can_undo)
             logging.debug(f"Undo button {'enabled' if can_undo else 'disabled'} (current_step={self.current_step})")
         else:
@@ -1451,9 +1418,9 @@ def connect_to_move_mode(canvas, undo_redo_manager):
         canvas.move_mode.mouseReleaseEvent = enhanced_mouse_release
         logging.info("Connected UndoRedoManager to move_mode mouse release events")
         
-        # Save initial state to ensure we have something to undo to
-        undo_redo_manager.save_state()
-        logging.info("Saved initial canvas state for undo/redo")
+        # Do NOT save initial state automatically - only save when user actions create content
+        # undo_redo_manager.save_state() - REMOVED
+        logging.info("Initial empty state will not be saved for undo/redo until user creates content")
     else:
         logging.warning("Could not connect to move_mode: move_mode not found on canvas")
 
@@ -1486,7 +1453,10 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
             strand_added = (current_strand_count > initial_strand_count) or \
                            bool(current_strand_names - initial_strand_names) # Check if new names appeared
 
-            if strand_added:
+            # Check if the current state is now non-empty (has content worth saving)
+            has_content = current_strand_count > 0 or (hasattr(canvas, 'groups') and bool(canvas.groups))
+
+            if strand_added and has_content:
                 logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}). Checking if save needed.")
                 # Use a flag to prevent immediate double saves within the same manager instance
                 if not getattr(undo_redo_manager, '_saving_state_now', False):
@@ -1502,7 +1472,7 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                 else:
                     logging.info("--> Already saving state recently, skipping duplicate save.")
             else:
-                 logging.info(f"Attach mode release: No new strand detected (count {initial_strand_count} -> {current_strand_count}). Not saving state.")
+                logging.info(f"Attach mode release: No new strand detected or empty state (count {initial_strand_count} -> {current_strand_count}). Not saving state.")
 
         # Replace the original function with our enhanced version
         canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release
@@ -1608,7 +1578,12 @@ def setup_undo_redo(canvas, layer_panel):
         top_layout = layer_panel.top_panel.layout()
         if top_layout:
             manager.setup_buttons(top_layout)
-            logging.info("Added undo/redo buttons to layer panel")
+            # Explicitly ensure buttons are disabled at startup
+            if manager.undo_button:
+                manager.undo_button.setEnabled(False)
+            if manager.redo_button:
+                manager.redo_button.setEnabled(False)
+            logging.info("Added undo/redo buttons to layer panel (initially disabled)")
         else:
             logging.warning("Could not find top_layout in layer_panel")
     else:

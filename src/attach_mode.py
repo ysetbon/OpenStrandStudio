@@ -252,7 +252,7 @@ class AttachMode(QObject):
                                 self_canvas.draw_grid(painter)
                                 
                         # Then draw all strands except active one
-                        for strand in self_canvas.strands:
+                        for strand in self.canvas.strands:
                             if strand != active_strand and hasattr(strand, 'draw'):
                                 strand.draw(painter)
                 else:
@@ -265,7 +265,7 @@ class AttachMode(QObject):
                             self_canvas.draw_grid(painter)
                             
                     # Then draw all strands except active one
-                    for strand in self_canvas.strands:
+                    for strand in self.canvas.strands:
                         if strand != active_strand and hasattr(strand, 'draw'):
                             strand.draw(painter)
                 
@@ -356,10 +356,15 @@ class AttachMode(QObject):
             if self.canvas.current_strand and self.canvas.current_strand.start != self.canvas.current_strand.end:
                 self.strand_created.emit(self.canvas.current_strand)
                 self.canvas.is_first_strand = False
+                
+                # State saving will be handled by the enhanced mouseReleaseEvent in undo_redo_manager.py
         else:
             # If we're attaching a strand, create it
             if self.is_attaching and self.canvas.current_strand:
                 self.strand_created.emit(self.canvas.current_strand)
+                
+                # State saving will be handled by the enhanced mouseReleaseEvent in undo_redo_manager.py
+                    
             self.is_attaching = False
         
         # Reset all properties including affected_strand
@@ -599,7 +604,20 @@ class AttachMode(QObject):
         # Update layer name
         if self.canvas.layer_panel:
             set_number = parent_strand.set_number
-            count = len([s for s in self.canvas.strands if s.set_number == set_number]) + 1
+            # Instead of just counting strands, find the next available number
+            existing_numbers = set()
+            for s in self.canvas.strands:
+                if s.set_number == set_number and hasattr(s, 'layer_name'):
+                    parts = s.layer_name.split('_')
+                    if len(parts) >= 2 and parts[1].isdigit():
+                        existing_numbers.add(int(parts[1]))
+            
+            # Find the first available number
+            count = 1
+            while count in existing_numbers:
+                count += 1
+                
+            logging.info(f"Finding next available number for set {set_number}. Existing numbers: {sorted(existing_numbers)}, using: {count}")
             new_strand.layer_name = f"{set_number}_{count}"
             logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
 

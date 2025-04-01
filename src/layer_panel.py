@@ -31,6 +31,10 @@ from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor
 from PyQt5.QtWidgets import QPushButton, QStyle
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QStyleOption
+
+# Import StrokeTextButton from undo_redo_manager instead of dedicated file
+from undo_redo_manager import StrokeTextButton, setup_undo_redo
+
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
@@ -112,8 +116,8 @@ class LayerPanel(QWidget):
 
         # **Add the refresh button below the splitter handle**
         # Create top panel for the refresh button
-        top_panel = QWidget()
-        top_layout = QHBoxLayout(top_panel)
+        self.top_panel = QWidget()
+        top_layout = QHBoxLayout(self.top_panel)
         top_layout.setContentsMargins(5, 5, 5, 5)
         top_layout.setAlignment(Qt.AlignLeft)
 
@@ -123,9 +127,12 @@ class LayerPanel(QWidget):
 
         # Add the refresh button to the top layout
         top_layout.addWidget(self.refresh_button)
-
+        
         # Add top_panel to left_layout below the splitter handle
-        self.left_layout.addWidget(top_panel)
+        self.left_layout.addWidget(self.top_panel)
+        
+        # Setup undo/redo manager and buttons AFTER top_panel is added to the layout
+        self.undo_redo_manager = setup_undo_redo(self.canvas, self)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
@@ -320,74 +327,60 @@ class LayerPanel(QWidget):
         logging.info("LayerPanel initialized")
 
     def refresh_layers(self):
-        """Refresh the drawing of the layers."""
+        """Refresh the drawing of the layers with zero visual flicker."""
         logging.info("Starting refresh of layer panel")
         
-        # Log initial state and selection
-        logging.info(f"Initial layer button count: {len(self.layer_buttons)}")
-        logging.info(f"Initial layout item count: {self.scroll_layout.count()}")
-        logging.info(f"Currently selected strand: {self.canvas.selected_strand.layer_name if self.canvas.selected_strand else 'None'}")
+        # Get the main window (either the direct parent or parent's parent)
+        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # Log initial Y positions
-        initial_positions = {}
-        for i, button in enumerate(self.layer_buttons):
-            pos = button.mapToGlobal(button.pos()).y()
-            initial_positions[button.text()] = pos
-            logging.info(f"Initial Y position for {button.text()}: {pos}px")
+        # 1. Create a screenshot of the current scroll area viewport
+        viewport = self.scroll_area.viewport()
+        pixmap = viewport.grab()
         
-        # Clear all layer buttons from the layout without deleting them
+        # 2. Create a temporary overlay label with the screenshot
+        overlay = QLabel(self.scroll_area)
+        overlay.setPixmap(pixmap)
+        overlay.setGeometry(viewport.rect())
+        overlay.setStyleSheet("background-color: transparent;")
+        overlay.raise_()
+        overlay.show()
+        
+        # 3. Disable updates on the ENTIRE application window
+        if main_window:
+            main_window.setUpdatesEnabled(False)
+        
+        # 4. Also disable updates on scroll area for redundancy
+        self.scroll_area.setUpdatesEnabled(False)
+        
+        # 5. --- Remove widgets from layout ---
         removed_count = 0
         while self.scroll_layout.count():
             item = self.scroll_layout.takeAt(0)
             widget = item.widget()
             if widget:
-                widget.hide()
                 removed_count += 1
-                logging.debug(f"Removed widget from layout: {widget.objectName() if widget.objectName() else 'unnamed'}")
-            else:
-                logging.debug("Found layout item without widget")
+            del item
         
-        logging.info(f"Removed {removed_count} widgets from layout")
-        
-        # Re-add the layer buttons in reverse order (newest first)
+        # 6. --- Re-add buttons in reverse order ---
         added_count = 0
-        for button in reversed(self.layer_buttons):
-            logging.info(f"Adding button for strand: {button.text()}")
-            button_container = QWidget()
-            button_container.setObjectName(f"container_for_{button.text()}")
-            button_layout = QHBoxLayout(button_container)
-            button_layout.setAlignment(Qt.AlignHCenter)
-            button_layout.addWidget(button)
-            button_layout.setContentsMargins(0, 0, 0, 0)
-            self.scroll_layout.addWidget(button_container)
+        valid_buttons = [btn for btn in self.layer_buttons if btn]
+        for button in reversed(valid_buttons):
+            self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
             button.show()
-            button_container.show()
             added_count += 1
-            logging.debug(f"Re-added button to layout: {button.text()}")
         
-        logging.info(f"Re-added {added_count} buttons to layout")
-        
-        # Force layout update
+        # 7. Force layout update before re-enabling window updates
         self.scroll_layout.update()
-        QApplication.processEvents()
         
-        # Log final Y positions and selection
-        final_positions = {}
-        for i, button in enumerate(self.layer_buttons):
-            pos = button.mapToGlobal(button.pos()).y()
-            final_positions[button.text()] = pos
-            logging.info(f"Final Y position for {button.text()}: {pos}px")
+        # 8. Re-enable updates in reverse order
+        self.scroll_area.setUpdatesEnabled(True)
+        if main_window:
+            main_window.setUpdatesEnabled(True)
             
-            # Log position changes
-            if button.text() in initial_positions:
-                diff = final_positions[button.text()] - initial_positions[button.text()]
-                logging.info(f"Position change for {button.text()}: {diff}px")
+        # 9. Remove the overlay after everything is ready
+        overlay.deleteLater()
         
-        # Log final state and selection
-        logging.info(f"Final layer button count: {len(self.layer_buttons)}")
-        logging.info(f"Final layout item count: {self.scroll_layout.count()}")
-        logging.info(f"Final selected strand: {self.canvas.selected_strand.layer_name if self.canvas.selected_strand else 'None'}")
-        logging.info("Finished refreshing layer panel")
+        logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -1055,6 +1048,7 @@ class LayerPanel(QWidget):
             logging.info(f"Reset mask for strand {strand_index}")
 
     def request_new_strand(self):
+        """Request a new strand to be created in the selected set."""
         logging.info("Add New Strand button clicked.")
         # Start a new set or use an existing one
         self.start_new_set()
@@ -1081,6 +1075,11 @@ class LayerPanel(QWidget):
                         # Update the layer panel without affecting other masked layers
                         self.refresh()
                         self.refresh_layers()  # Add this line to refresh after masked strand deletion
+                        
+                        # Save state for undo/redo after masked layer deletion
+                        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                            self.undo_redo_manager.save_state()
+                            logging.info("Saved state after masked layer deletion")
 
                     logging.info(f"Masked layer {strand_name} deleted successfully")
                 else:
@@ -1090,6 +1089,11 @@ class LayerPanel(QWidget):
                     self.refresh()
                     self.refresh_layers()
                     self.update_layer_button_states()
+                    
+                    # Save state for undo/redo after regular strand deletion
+                    if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                        self.undo_redo_manager.save_state()
+                        logging.info("Saved state after strand deletion")
             else:
                 logging.warning(f"Strand {strand_name} not found in canvas strands")
         else:
@@ -1553,7 +1557,30 @@ class LayerPanel(QWidget):
         logging.info("Finished update_layer_names")
 
     def refresh(self):
-        logging.info("Starting refresh of layer panel")
+        """Comprehensive refresh of layer panel with zero visual flicker."""
+        logging.info("Starting comprehensive refresh of layer panel")
+        
+        # Get the main window (either the direct parent or parent's parent)
+        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
+        
+        # 1. Create a screenshot of the current scroll area viewport
+        viewport = self.scroll_area.viewport()
+        pixmap = viewport.grab()
+        
+        # 2. Create a temporary overlay label with the screenshot
+        overlay = QLabel(self.scroll_area)
+        overlay.setPixmap(pixmap)
+        overlay.setGeometry(viewport.rect())
+        overlay.setStyleSheet("background-color: transparent;")
+        overlay.raise_()
+        overlay.show()
+        
+        # 3. Disable updates on the ENTIRE application window
+        if main_window:
+            main_window.setUpdatesEnabled(False)
+        
+        # 4. Also disable updates on scroll area for redundancy
+        self.scroll_area.setUpdatesEnabled(False)
         
         # Remove all existing buttons
         for button in self.layer_buttons:
@@ -1592,8 +1619,6 @@ class LayerPanel(QWidget):
             
             self.scroll_layout.insertWidget(0, button)
             self.layer_buttons.append(button)
-            
-            logging.info(f"Added button for strand: {strand.layer_name} with color {strand_color.name()}")
         
         # Update button states
         self.update_layer_button_states()
@@ -1610,7 +1635,18 @@ class LayerPanel(QWidget):
         # Refresh the GroupLayerManager
         self.group_layer_manager.refresh()
         
-        logging.info(f"Finished refreshing layer panel. Total buttons: {len(self.layer_buttons)}")
+        # Force layout update before re-enabling window updates
+        self.scroll_layout.update()
+        
+        # Re-enable updates
+        self.scroll_area.setUpdatesEnabled(True)
+        if main_window:
+            main_window.setUpdatesEnabled(True)
+        
+        # Remove the overlay after everything is ready
+        overlay.deleteLater()
+        
+        logging.info(f"Finished comprehensive refresh of layer panel. Total buttons: {len(self.layer_buttons)}")
 
     def update_masked_strand_color(self, layer_name, color):
         for button in self.layer_buttons:
@@ -1698,166 +1734,6 @@ class LayerPanel(QWidget):
            # Similarly update other tooltips or accessible descriptions
         # Update any other UI elements as needed
 # End of LayerPanel class
-from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtCore import Qt
 
-class StrokeTextButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setFixedSize(40, 40)
-        self.current_theme = "default"  # Default theme
-        self.setup_theme_colors()
-        self.updateStyleSheet()
-        # Ensure the button accepts paint events
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        # Enable mouse tracking for better hover detection
-        self.setMouseTracking(True)
-    
-    def setup_theme_colors(self):
-        """Set up color schemes for different themes"""
-        # Theme-specific colors dictionary
-        self.theme_colors = {
-            "default": {
-                "bg_normal": "#4d9958",           # Normal background 
-                "bg_hover": "#286335",            # Significantly darker hover
-                "bg_pressed": "#102513",          # Almost black when pressed (was #153a1c)
-                "border_normal": "#3c7745",       # Normal border
-                "border_hover": "#1d4121",        # Darker border on hover
-                "border_pressed": "#ffffff",      # White border when pressed for maximum contrast (was #0a1f0e)
-                "stroke_normal": "#e6fae9",       # Normal stroke
-                "stroke_hover": "#ffffff",        # Hover stroke (bright white)
-                "stroke_pressed": "#b8ffc2",      # Brighter stroke when pressed for contrast (was #a7d6ac)
-                "fill": "#000000"                 # Icon fill color
-            },
-            "dark": {
-                "bg_normal": "#3d7846",           # Darker background for dark theme
-                "bg_hover": "#4e9854",            # Hover background for dark theme
-                "bg_pressed": "#081f0d",          # Almost black when pressed (was #1f3d24)
-                "border_normal": "#2c5833",       # Normal border for dark theme
-                "border_hover": "#c8edcc",        # Hover border for dark theme
-                "border_pressed": "#7dff8e",      # Bright green border when pressed for max contrast (was #0f4117)
-                "stroke_normal": "#c8edcc",       # Normal stroke for dark theme
-                "stroke_hover": "#ffffff",        # Hover stroke for dark theme
-                "stroke_pressed": "#daffe0",      # Much brighter stroke for dark theme when pressed (was #a0c8a4)
-                "fill": "#000000"                 # Icon fill color 
-            },
-            "light": {
-                "bg_normal": "#4d9958",           # Normal background for light theme
-                "bg_hover": "#286335",            # Significantly darker hover
-                "bg_pressed": "#102513",          # Almost black when pressed (was #153a1c)
-                "border_normal": "#3c7745",       # Normal border for light theme
-                "border_hover": "#1d4121",        # Darker border on hover
-                "border_pressed": "#ffffff",      # White border when pressed for maximum contrast (was #0a1f0e)
-                "stroke_normal": "#e6fae9",       # Normal stroke for light theme
-                "stroke_hover": "#ffffff",        # Hover stroke for light theme
-                "stroke_pressed": "#b8ffc2",      # Brighter stroke when pressed for contrast (was #a7d6ac)
-                "fill": "#000000"                 # Icon fill color
-            }
-        }
-    
-    def set_theme(self, theme_name):
-        """Update button appearance based on theme"""
-        if theme_name in self.theme_colors:
-            self.current_theme = theme_name
-        else:
-            self.current_theme = "default"  # Fallback to default for unknown themes
-        
-        self.updateStyleSheet()
-        self.update()  # Force repaint
-
-    def updateStyleSheet(self):
-        # Get colors for current theme
-        colors = self.theme_colors.get(self.current_theme, self.theme_colors["default"])
-        
-        self.setStyleSheet(f"""
-            QPushButton {{
-                font-weight: bold;
-                font-size: 30px;
-                color: transparent;  /* Make default text transparent */
-                background-color: {colors["bg_normal"]};
-                border: 1px solid {colors["border_normal"]};  /* Subtle border in normal state */
-                padding: 0px;
-                border-radius: 20px;
-                text-align: center;
-            }}
-            QPushButton:hover {{
-                background-color: {colors["bg_hover"]};  /* Brighter green on hover */
-                border: 2px solid {colors["border_hover"]};  /* Light border on hover */
-            }}
-            QPushButton:pressed {{
-                background-color: {colors["bg_pressed"]};  /* Darker green when pressed */
-                border: 2px solid {colors["border_pressed"]};  /* Darker border when pressed */
-            }}
-        """)
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Draw the background (if not handled by stylesheet)
-        option = QStyleOption()
-        option.initFrom(self)
-        self.style().drawPrimitive(QStyle.PE_Widget, option, painter, self)
-
-        # Draw the text with stroke
-        font = self.font()
-        font.setBold(True)
-        font.setPixelSize(30)  # Explicit font size
-        painter.setFont(font)
-
-        text = self.text()
-        text_rect = self.rect()
-        fm = QFontMetrics(font)
-        text_width = fm.horizontalAdvance(text)
-        text_height = fm.height()
-        x = (text_rect.width() - text_width) / 2
-        y = (text_rect.height() + text_height) / 2 - fm.descent()
-
-        # Create and draw the text path
-        path = QPainterPath()
-        path.addText(x, y-2, font, text)
-
-        # Get colors for current theme
-        colors = self.theme_colors.get(self.current_theme, self.theme_colors["default"])
-
-        # Determine stroke color and width based on button state and theme
-        if self.isDown():
-            stroke_color = QColor(colors["stroke_pressed"])
-            # Use much thicker stroke for pressed state in all themes
-            stroke_width = 5.0  # Was 4.5
-        elif self.underMouse():
-            stroke_color = QColor(colors["stroke_hover"])
-            # Use thicker stroke for hover in default/light themes
-            if self.current_theme == "dark":
-                stroke_width = 3.5  # Keep original for dark theme
-            else:
-                stroke_width = 4.0  # Thicker for default/light themes
-        else:
-            stroke_color = QColor(colors["stroke_normal"])
-            stroke_width = 3.0
-
-        # Draw stroke with appropriate color and width
-        pen = QPen(stroke_color, stroke_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-        painter.strokePath(path, pen)
-        
-        # Fill with color from theme
-        painter.fillPath(path, QColor(colors["fill"]))
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.updateStyleSheet()
-
-    def on_canvas_strand_selected(self, index):
-        """Update layer selection based on canvas strand selection."""
-        # Deselect all layer buttons
-        for button in self.layer_buttons:
-            button.setChecked(False)
-
-        # Select the corresponding layer button
-        if 0 <= index < len(self.layer_buttons):
-            self.layer_buttons[index].setChecked(True)
-        # Update the last selected index
-        self.last_selected_index = index
-        # Update the layer button states
-        self.update_layer_button_states()
+# Note: The StrokeTextButton class has been moved to stroke_text_button.py
+# to avoid circular imports

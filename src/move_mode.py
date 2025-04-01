@@ -1,13 +1,10 @@
-from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt
-from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush
-from PyQt5.QtWidgets import QApplication
-import PyQt5.QtGui as QtGui
+import logging
 import math
 import time
-import logging
-from PyQt5.QtGui import (
-    QPainterPath
-)
+from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt, QTime, QEventLoop
+from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush, QPolygonF, QPainterPath, QPixmap, QImage
+from PyQt5.QtWidgets import QApplication, QWidget
+import PyQt5.QtGui as QtGui
 from strand import Strand, AttachedStrand, MaskedStrand
 
 class MoveMode:
@@ -18,7 +15,6 @@ class MoveMode:
         Args:
             canvas (Canvas): The canvas this mode is attached to.
         """
-        import logging
         logging.info("MoveMode: Initializing")
         
         self.canvas = canvas

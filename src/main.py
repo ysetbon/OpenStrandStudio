@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from main_window import MainWindow
+from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode
 
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -124,6 +125,16 @@ if __name__ == '__main__':
         if hasattr(window.canvas, 'move_mode'):
             window.canvas.move_mode.draw_only_affected_strand = draw_only_affected_strand
             logging.info(f"Set draw_only_affected_strand to {draw_only_affected_strand}")
+            
+            # Connect the move_mode's mouseReleaseEvent to the undo/redo manager if layer_panel exists
+            if hasattr(window, 'layer_panel') and window.layer_panel and hasattr(window.layer_panel, 'undo_redo_manager'):
+                connect_to_move_mode(window.canvas, window.layer_panel.undo_redo_manager)
+                logging.info("Connected move_mode to undo/redo manager")
+                
+                # Also connect the attach_mode if it exists
+                if hasattr(window.canvas, 'attach_mode') and window.canvas.attach_mode:
+                    connect_to_attach_mode(window.canvas, window.layer_panel.undo_redo_manager)
+                    logging.info("Connected attach_mode to undo/redo manager")
         
         # Set enable third control point setting
         window.canvas.enable_third_control_point = enable_third_control_point

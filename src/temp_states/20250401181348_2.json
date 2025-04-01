@@ -4,12 +4,12 @@
       "type": "Strand",
       "index": 0,
       "start": {
-        "x": 532.0,
+        "x": 784.0,
         "y": 224.0
       },
       "end": {
-        "x": 924.0,
-        "y": 476.0
+        "x": 1064.0,
+        "y": 308.0
       },
       "width": 46,
       "color": {
@@ -41,16 +41,16 @@
       },
       "control_points": [
         {
-          "x": 532.0,
+          "x": 784.0,
           "y": 224.0
         },
         {
-          "x": 532.0,
+          "x": 784.0,
           "y": 224.0
         }
       ],
       "control_point_center": {
-        "x": 532.0,
+        "x": 784.0,
         "y": 224.0
       },
       "control_point_center_locked": false

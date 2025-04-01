@@ -1533,9 +1533,13 @@ class LayerPanel(QWidget):
         
         # Update color for the set if needed
         if set_number not in self.set_colors:
-            self.set_colors[set_number] = QColor(200, 170, 230, 255) 
-  # Default color
-        self.update_colors_for_set(set_number, self.set_colors[set_number])  # Changed from update_color_for_set
+            self.set_colors[set_number] = QColor(200, 170, 230, 255)  # Default color
+        self.update_colors_for_set(set_number, self.set_colors[set_number])
+        
+        # Save state for undo/redo after strand creation
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.save_state()
+            logging.info("Saved state after new strand creation")
         
         logging.info("Finished on_strand_created")
 

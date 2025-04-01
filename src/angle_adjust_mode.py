@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel
 from PyQt5.QtGui import QPainter, QPen, QColor
 import math
+import logging
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel
@@ -526,6 +527,11 @@ class AngleAdjustMode:
             # Apply the adjustments to the strand
             self.active_strand.update_shape()
             self.active_strand.update_side_line()
+
+            # Save state for undo/redo after angle adjustment
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager.save_state()
+                logging.info("Saved state after angle adjustment")
 
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False

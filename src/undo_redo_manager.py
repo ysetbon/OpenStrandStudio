@@ -380,6 +380,106 @@ class UndoRedoManager(QObject):
         else:
             logging.error(f"State file not found: {filename}")
 
+    def load_specific_state(self, filepath):
+        """Loads a specific state file, applies it, and preserves the entire history of the loaded session."""
+        logging.info(f"Attempting to load specific state from file: {filepath}")
+        if os.path.exists(filepath):
+            try:
+                # Extract the session ID and step from the filepath
+                # Filepath format is: /path/to/temp_dir/YYYYMMDDHHMMSS_step.json
+                filename = os.path.basename(filepath)
+                logging.info(f"Processing filename: {filename}")
+                
+                # Store the original session ID for cleanup
+                original_session_id = self.session_id
+                logging.info(f"Original session ID before loading: {original_session_id}")
+                
+                # Parse the session ID and step from the filename
+                parts = filename.split('_')
+                if len(parts) >= 2:
+                    # Extract the session ID (timestamp part before the underscore)
+                    loaded_session_id = parts[0]
+                    
+                    # Extract the step number from the filename (part after underscore, before .json)
+                    loaded_step = int(parts[1].split('.')[0])
+                    
+                    logging.info(f"Extracted session ID: {loaded_session_id}, step: {loaded_step}")
+                    
+                    # Update the current session ID to continue with the loaded session
+                    self.session_id = loaded_session_id
+                    logging.info(f"Set current session ID to: {self.session_id}")
+                else:
+                    logging.warning(f"Could not parse session ID from filename: {filename}, keeping original session ID")
+                    return False
+                
+                # Find all available states for this session
+                available_steps = []
+                max_step = 0
+                
+                try:
+                    for file in os.listdir(self.temp_dir):
+                        if file.startswith(f"{loaded_session_id}_") and file.endswith(".json"):
+                            try:
+                                step = int(file.split('_')[1].split('.')[0])
+                                available_steps.append(step)
+                                max_step = max(max_step, step)
+                            except (ValueError, IndexError):
+                                continue
+                    
+                    available_steps.sort()
+                    logging.info(f"Found {len(available_steps)} steps for session {loaded_session_id}: {available_steps}")
+                    logging.info(f"Maximum step found: {max_step}")
+                except Exception as e:
+                    logging.error(f"Error scanning for available steps: {e}")
+                    return False
+                
+                # Clean up any files from the current session before switching
+                try:
+                    for file in os.listdir(self.temp_dir):
+                        if file.startswith(f"{original_session_id}_") and file.endswith(".json"):
+                            try:
+                                os.remove(os.path.join(self.temp_dir, file))
+                                logging.debug(f"Removed file from original session: {file}")
+                            except:
+                                logging.warning(f"Failed to remove file: {file}")
+                except Exception as e:
+                    logging.error(f"Error cleaning up original session files: {e}")
+                
+                # Load strands and groups from the specified file
+                strands, groups = load_strands(filepath, self.canvas)
+                logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
+
+                # Apply the loaded state to the canvas
+                self.canvas.strands = strands
+                if hasattr(self.canvas, 'groups'):
+                    self.canvas.groups = groups
+                logging.info("Applied loaded state to canvas")
+
+                # Set the step pointers to match the loaded state
+                self.current_step = loaded_step
+                self.max_step = max_step
+                logging.info(f"Set current_step to {self.current_step} and max_step to {self.max_step}")
+
+                # Refresh UI
+                if hasattr(self.layer_panel, 'refresh'):
+                    self.layer_panel.refresh()
+                self.canvas.update()
+                self.state_saved.emit(self.current_step) # Emit signal to update buttons
+
+                # Verify the session ID is still set correctly after all operations
+                logging.info(f"Final session ID after all operations: {self.session_id}")
+                test_filename = self._get_state_filename(self.current_step + 1)  # Get what the next state filename would be
+                logging.info(f"Next state would be saved as: {test_filename}")
+
+                logging.info(f"Successfully loaded state from {filepath} with full history preservation.")
+                return True
+            except Exception as e:
+                logging.exception(f"Error loading specific state from {filepath}: {e}")
+                return False
+        else:
+            logging.error(f"Specific state file not found: {filepath}")
+            return False
+
     def _update_button_states(self):
         """Update the enabled state of undo/redo buttons."""
         if self.undo_button:
@@ -486,20 +586,55 @@ class UndoRedoManager(QObject):
         
         return self.undo_button, self.redo_button
 
-    def clear_history(self):
-        """Clear all saved states and reset the history."""
+    def clear_history(self, save_current=True):
+        """Clear all saved states for the current session and reset the history."""
+        logging.info(f"Clearing history for session {self.session_id}. Save current state: {save_current}")
         for step in range(1, self.max_step + 1):
+            filename = self._get_state_filename(step)
             try:
-                os.remove(self._get_state_filename(step))
-            except:
-                pass
-        
+                if os.path.exists(filename):
+                    os.remove(filename)
+                    logging.debug(f"Removed state file: {filename}")
+            except OSError as e:
+                logging.warning(f"Could not remove state file {filename}: {e}")
+
         self.current_step = 0
         self.max_step = 0
-        
-        # Save current state as the initial state
-        self.save_state()
-        logging.info("History cleared and current state saved as initial state")
+
+        if save_current:
+            # Save current state as the initial state (step 1)
+            self.save_state() # This increments current_step to 1 and saves
+            logging.info("History cleared and current state saved as initial state.")
+        else:
+            # If not saving current, just reset steps and update buttons
+            self._update_button_states()
+            logging.info("History cleared without saving current state.")
+            
+    def clear_all_past_history(self):
+        """Deletes all *.json state files from the temp_states directory, 
+           excluding the files belonging to the current session."""
+        logging.info(f"Clearing all past history. Current session ID: {self.session_id}")
+        cleared_count = 0
+        error_count = 0
+        current_session_prefix = f"{self.session_id}_"
+
+        try:
+            for filename in os.listdir(self.temp_dir):
+                # Check if it's a state file and NOT from the current session
+                if filename.endswith(".json") and not filename.startswith(current_session_prefix):
+                    filepath = os.path.join(self.temp_dir, filename)
+                    try:
+                        os.remove(filepath)
+                        logging.info(f"Deleted past history file: {filepath}")
+                        cleared_count += 1
+                    except OSError as e:
+                        logging.error(f"Could not delete past history file {filepath}: {e}")
+                        error_count += 1
+            logging.info(f"Finished clearing past history. Deleted: {cleared_count}, Errors: {error_count}")
+        except Exception as e:
+            logging.error(f"Error listing directory {self.temp_dir} for history clearing: {e}")
+            
+        # Note: This function only deletes files, it doesn't affect the current session's history management
 
     def cleanup(self):
         """Clean up temporary files when the application closes."""
@@ -509,6 +644,13 @@ class UndoRedoManager(QObject):
         except Exception as e:
             logging.error(f"Error cleaning up temporary files: {e}")
 
+    def get_temp_dir(self):
+        """Returns the path to the temporary directory."""
+        return self.temp_dir
+
+    def get_session_id(self):
+        """Returns the current session ID."""
+        return self.session_id
 
 def connect_to_move_mode(canvas, undo_redo_manager):
     """
@@ -587,6 +729,27 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
         logging.warning("Could not connect to attach_mode: attach_mode not found on canvas")
 
 
+def connect_to_mask_mode(canvas, undo_redo_manager):
+    """
+    Connect the mask mode's mask_created signal to save state when a mask is created.
+    
+    Args:
+        canvas: The canvas object with the mask_mode
+        undo_redo_manager: The UndoRedoManager instance
+    """
+    if hasattr(canvas, 'mask_mode') and canvas.mask_mode:
+        # Connect the mask_created signal to save state
+        def on_mask_created(strand1, strand2):
+            logging.info("Mask created, saving state for undo/redo.")
+            undo_redo_manager.save_state()
+            
+        # Connect the signal to our handler
+        canvas.mask_mode.mask_created.connect(on_mask_created)
+        logging.info("Connected UndoRedoManager to mask_mode mask_created signal")
+    else:
+        logging.warning("Could not connect to mask_mode: mask_mode not found on canvas")
+
+
 def setup_undo_redo(canvas, layer_panel):
     """
     Set up undo/redo functionality for the application.
@@ -617,5 +780,8 @@ def setup_undo_redo(canvas, layer_panel):
     
     # Connect to attach mode as well
     connect_to_attach_mode(canvas, manager)
+    
+    # Connect to mask mode
+    connect_to_mask_mode(canvas, manager)
     
     return manager 

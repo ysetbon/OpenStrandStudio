@@ -154,7 +154,19 @@ translations = {
         'restore_default_stroke': 'Restore Default Stroke',
         # Group-related translations
         'group_exists': 'Group Exists',
-        'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?'
+        'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?',
+        # History translations
+        'history': 'History',
+        'load_selected_history': 'Load Selected',
+        'clear_all_history': 'Clear All History',
+        'confirm_clear_history_title': 'Confirm Clear History',
+        'confirm_clear_history_text': 'Are you sure you want to delete ALL past history sessions? This cannot be undone.',
+        'history_load_error_title': 'History Load Error',
+        'history_load_error_text': 'Could not load the selected history state.',
+        'history_cleared_title': 'History Cleared',
+        'history_cleared_text': 'All past history sessions have been cleared.',
+        'no_history_found': 'No past history sessions found.',
+        'history_explanation': 'Select a past session and click "Load Selected" to restore its final state. Warning: Loading history will clear your current undo/redo steps.'
     },
     'fr': {
         # MainWindow translations
@@ -308,7 +320,19 @@ translations = {
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
         # Group-related translations
         'group_exists': 'Groupe Existant',
-        'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?'
+        'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?',
+        # History translations (French)
+        'history': 'Historique',
+        'load_selected_history': 'Charger Sélection',
+        'clear_all_history': 'Effacer Tout l\'Historique',
+        'confirm_clear_history_title': 'Confirmer la Suppression',
+        'confirm_clear_history_text': 'Êtes-vous sûr de vouloir supprimer TOUTES les sessions d\'historique passées ? Cette action est irréversible.',
+        'history_load_error_title': 'Erreur Chargement Historique',
+        'history_load_error_text': 'Impossible de charger l\'état d\'historique sélectionné.',
+        'history_cleared_title': 'Historique Effacé',
+        'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
+        'no_history_found': 'Aucune session d\'historique passée trouvée.',
+        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final. Attention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.'
     }
 }
 

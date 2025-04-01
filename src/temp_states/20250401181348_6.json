@@ -4,12 +4,12 @@
       "type": "Strand",
       "index": 0,
       "start": {
-        "x": 448.0,
-        "y": 196.0
+        "x": 784.0,
+        "y": 224.0
       },
       "end": {
-        "x": 868.0,
-        "y": 392.0
+        "x": 1064.0,
+        "y": 308.0
       },
       "width": 46,
       "color": {
@@ -41,17 +41,17 @@
       },
       "control_points": [
         {
-          "x": 448.0,
-          "y": 196.0
+          "x": 784.0,
+          "y": 224.0
         },
         {
-          "x": 448.0,
-          "y": 196.0
+          "x": 784.0,
+          "y": 224.0
         }
       ],
       "control_point_center": {
-        "x": 448.0,
-        "y": 196.0
+        "x": 784.0,
+        "y": 224.0
       },
       "control_point_center_locked": false
     },
@@ -59,11 +59,11 @@
       "type": "AttachedStrand",
       "index": 1,
       "start": {
-        "x": 868.0,
-        "y": 392.0
+        "x": 1064.0,
+        "y": 308.0
       },
       "end": {
-        "x": 476.0,
+        "x": 644.0,
         "y": 616.0
       },
       "width": 46,
@@ -97,17 +97,17 @@
       "attached_to": "1_1",
       "control_points": [
         {
-          "x": 868.0,
-          "y": 392.0
+          "x": 1064.0,
+          "y": 308.0
         },
         {
-          "x": 868.0,
-          "y": 392.0
+          "x": 1064.0,
+          "y": 308.0
         }
       ],
       "control_point_center": {
-        "x": 868.0,
-        "y": 392.0
+        "x": 1064.0,
+        "y": 308.0
       },
       "control_point_center_locked": false
     },
@@ -115,12 +115,12 @@
       "type": "AttachedStrand",
       "index": 2,
       "start": {
-        "x": 476.0,
+        "x": 644.0,
         "y": 616.0
       },
       "end": {
-        "x": 1008.0,
-        "y": 644.0
+        "x": 560.0,
+        "y": 392.0
       },
       "width": 46,
       "color": {
@@ -153,16 +153,16 @@
       "attached_to": "1_2",
       "control_points": [
         {
-          "x": 476.0,
+          "x": 644.0,
           "y": 616.0
         },
         {
-          "x": 476.0,
+          "x": 644.0,
           "y": 616.0
         }
       ],
       "control_point_center": {
-        "x": 476.0,
+        "x": 644.0,
         "y": 616.0
       },
       "control_point_center_locked": false
@@ -171,12 +171,12 @@
       "type": "AttachedStrand",
       "index": 3,
       "start": {
-        "x": 1008.0,
-        "y": 644.0
+        "x": 560.0,
+        "y": 392.0
       },
       "end": {
-        "x": 1232.0,
-        "y": 168.0
+        "x": 924.0,
+        "y": 588.0
       },
       "width": 46,
       "color": {
@@ -209,17 +209,17 @@
       "attached_to": "1_3",
       "control_points": [
         {
-          "x": 1008.0,
-          "y": 644.0
+          "x": 560.0,
+          "y": 392.0
         },
         {
-          "x": 1008.0,
-          "y": 644.0
+          "x": 560.0,
+          "y": 392.0
         }
       ],
       "control_point_center": {
-        "x": 1008.0,
-        "y": 644.0
+        "x": 560.0,
+        "y": 392.0
       },
       "control_point_center_locked": false
     },
@@ -227,68 +227,12 @@
       "type": "AttachedStrand",
       "index": 4,
       "start": {
-        "x": 1232.0,
-        "y": 168.0
+        "x": 924.0,
+        "y": 588.0
       },
       "end": {
-        "x": 896.0,
-        "y": 140.0
-      },
-      "width": 46,
-      "color": {
-        "r": 200,
-        "g": 170,
-        "b": 230,
-        "a": 255
-      },
-      "stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "stroke_width": 4,
-      "has_circles": [
-        true,
-        true
-      ],
-      "layer_name": "1_5",
-      "set_number": 1,
-      "is_first_strand": false,
-      "is_start_side": false,
-      "circle_stroke_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 255
-      },
-      "attached_to": "1_4",
-      "control_points": [
-        {
-          "x": 1232.0,
-          "y": 168.0
-        },
-        {
-          "x": 1232.0,
-          "y": 168.0
-        }
-      ],
-      "control_point_center": {
-        "x": 1232.0,
-        "y": 168.0
-      },
-      "control_point_center_locked": false
-    },
-    {
-      "type": "AttachedStrand",
-      "index": 5,
-      "start": {
-        "x": 896.0,
-        "y": 140.0
-      },
-      "end": {
-        "x": 1232.0,
-        "y": 560.0
+        "x": 1344.0,
+        "y": 420.0
       },
       "width": 46,
       "color": {
@@ -308,7 +252,7 @@
         true,
         false
       ],
-      "layer_name": "1_6",
+      "layer_name": "1_5",
       "set_number": 1,
       "is_first_strand": false,
       "is_start_side": false,
@@ -318,20 +262,20 @@
         "b": 0,
         "a": 255
       },
-      "attached_to": "1_5",
+      "attached_to": "1_4",
       "control_points": [
         {
-          "x": 896.0,
-          "y": 140.0
+          "x": 924.0,
+          "y": 588.0
         },
         {
-          "x": 896.0,
-          "y": 140.0
+          "x": 924.0,
+          "y": 588.0
         }
       ],
       "control_point_center": {
-        "x": 896.0,
-        "y": 140.0
+        "x": 924.0,
+        "y": 588.0
       },
       "control_point_center_locked": false
     }

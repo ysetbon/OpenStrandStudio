@@ -14,12 +14,19 @@ import os
 import sys
 import subprocess
 import sys
-from PyQt5.QtCore import QStandardPaths
+from PyQt5.QtCore import QStandardPaths, QDateTime
+
+# Assuming UndoRedoManager might be needed for history actions
+# Import it - adjust path if necessary
+try:
+    from undo_redo_manager import UndoRedoManager
+except ImportError:
+    UndoRedoManager = None # Handle cases where it might not be available
 
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None, canvas=None):
+    def __init__(self, parent=None, canvas=None, undo_redo_manager=None):
         super(SettingsDialog, self).__init__(parent)
         
         # Set window flags directly in the constructor - explicitly remove help button
@@ -35,6 +42,9 @@ class SettingsDialog(QDialog):
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
+        
+        # Store the undo/redo manager
+        self.undo_redo_manager = undo_redo_manager
         
         # Try to load settings from file first
         self.load_settings_from_file()
@@ -135,7 +145,8 @@ class SettingsDialog(QDialog):
             _['general_settings'],
             _['change_language'],
             _['tutorial'],
-            _['about']
+            _['history'],
+            _['about']  # Make sure About is the last item
         ]
         for category in categories:
             item = QListWidgetItem(category)
@@ -145,7 +156,7 @@ class SettingsDialog(QDialog):
         # Right side: stacked widget for different settings pages
         self.stacked_widget = QStackedWidget()
 
-        # General Settings Page
+        # General Settings Page (index 0)
         self.general_settings_widget = QWidget()
         general_layout = QVBoxLayout(self.general_settings_widget)
 
@@ -250,7 +261,7 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.general_settings_widget)
 
-        # Change Language Page
+        # Change Language Page (index 1)
         self.change_language_widget = QWidget()
         language_layout = QVBoxLayout(self.change_language_widget)
 
@@ -317,7 +328,7 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.change_language_widget)
 
-        # Tutorial Page
+        # Tutorial Page (index 2)
         self.tutorial_widget = QWidget()
         tutorial_layout = QVBoxLayout(self.tutorial_widget)
 
@@ -340,7 +351,42 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.tutorial_widget)
 
-        # About Page
+        # History Page (index 3)
+        self.history_widget = QWidget()
+        history_layout = QVBoxLayout(self.history_widget)
+
+        self.history_explanation_label = QLabel(_['history_explanation'])
+        self.history_explanation_label.setWordWrap(True)
+        history_layout.addWidget(self.history_explanation_label)
+
+        self.history_list = QListWidget()
+        self.history_list.setToolTip("Select a session to load its final state")
+        history_layout.addWidget(self.history_list)
+        
+        # Move the populate_history_list call to after button creation
+        # self.populate_history_list() - Removing this call from here
+
+        history_button_layout = QHBoxLayout()
+        self.load_history_button = QPushButton(_['load_selected_history'])
+        self.load_history_button.clicked.connect(self.load_selected_history)
+        self.load_history_button.setEnabled(False) # Disable initially
+        self.history_list.currentItemChanged.connect(lambda item: self.load_history_button.setEnabled(item is not None))
+
+        self.clear_history_button = QPushButton(_['clear_all_history'])
+        self.clear_history_button.clicked.connect(self.clear_all_history_action)
+
+        history_button_layout.addWidget(self.load_history_button)
+        history_button_layout.addWidget(self.clear_history_button)
+        history_button_layout.addStretch()
+        
+        history_layout.addLayout(history_button_layout)
+        
+        # Call populate_history_list after creating all the UI elements it needs
+        self.populate_history_list()
+        
+        self.stacked_widget.addWidget(self.history_widget)
+
+        # About Page (index 4) - LAST
         self.about_widget = QWidget()
         about_layout = QVBoxLayout(self.about_widget)
 
@@ -356,6 +402,7 @@ class SettingsDialog(QDialog):
         self.general_settings_widget.setMinimumWidth(550)  # Set minimum width for content
         self.change_language_widget.setMinimumWidth(550)
         self.tutorial_widget.setMinimumWidth(550)
+        self.history_widget.setMinimumWidth(550)
         self.about_widget.setMinimumWidth(550)
 
         # Add widgets to main layout with proper spacing
@@ -379,6 +426,8 @@ class SettingsDialog(QDialog):
             self.apply_button,
             self.language_ok_button,
             *self.video_buttons,  # Unpack video buttons list
+            self.load_history_button, # Style history buttons
+            self.clear_history_button
         ]
         
         for button in buttons:
@@ -718,7 +767,8 @@ class SettingsDialog(QDialog):
         self.categories_list.item(0).setText(_['general_settings'])
         self.categories_list.item(1).setText(_['change_language'])
         self.categories_list.item(2).setText(_['tutorial'])
-        self.categories_list.item(3).setText(_['about'])
+        self.categories_list.item(3).setText(_['history']) # Update history category name
+        self.categories_list.item(4).setText(_['about']) # Adjust index for About
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -732,6 +782,10 @@ class SettingsDialog(QDialog):
         self.tutorial_label.setText(_['tutorial_info'])
         # Update about text browser instead of label
         self.about_text_browser.setHtml(_['about_info'])
+        # Update history page elements
+        self.history_explanation_label.setText(_['history_explanation'])
+        self.load_history_button.setText(_['load_selected_history'])
+        self.clear_history_button.setText(_['clear_all_history'])
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])
@@ -979,6 +1033,175 @@ class SettingsDialog(QDialog):
             
             # Save settings to file to persist the change
             self.save_settings_to_file()
+
+    def populate_history_list(self):
+        """Scans the temp_states directory and populates the history list."""
+        self.history_list.clear()
+        self.load_history_button.setEnabled(False) # Disable load button initially
+
+        # Get translations based on current language
+        _ = translations[self.current_language]
+
+        if not self.undo_redo_manager:
+            logging.warning("UndoRedoManager not available, cannot populate history.")
+            self.history_list.addItem(_['no_history_found']) # Show message if manager missing
+            self.clear_history_button.setEnabled(False) # Also disable clear button
+            return
+
+        temp_dir = self.undo_redo_manager.get_temp_dir()
+        current_session_id = self.undo_redo_manager.get_session_id()
+        sessions = {}
+        found_history = False
+
+        try:
+            for filename in os.listdir(temp_dir):
+                if filename.endswith(".json"):
+                    parts = filename.split('_')
+                    if len(parts) == 2:
+                        session_id = parts[0]
+                        
+                        # Skip files from the current session
+                        if session_id == current_session_id:
+                            continue
+                            
+                        try:
+                            step = int(parts[1].split('.')[0])
+                            filepath = os.path.join(temp_dir, filename)
+                            
+                            # Store the file with the highest step number for each session
+                            if session_id not in sessions or step > sessions[session_id]['step']:
+                                sessions[session_id] = {'step': step, 'filepath': filepath}
+                            found_history = True
+                        except (ValueError, IndexError):
+                            logging.warning(f"Could not parse step from filename: {filename}")
+        except FileNotFoundError:
+            logging.warning(f"History directory not found: {temp_dir}")
+        except Exception as e:
+            logging.error(f"Error reading history directory {temp_dir}: {e}")
+
+        if not found_history:
+            self.history_list.addItem(_['no_history_found'])
+            self.clear_history_button.setEnabled(False) # Disable clear if no history
+        else:
+            # Sort sessions by session ID (datetime string) descending
+            sorted_sessions = sorted(sessions.items(), key=lambda item: item[0], reverse=True)
+            
+            for session_id, data in sorted_sessions:
+                try:
+                    # Format the session_id (YYYYMMDDHHMMSS) into a readable string
+                    dt = QDateTime.fromString(session_id, "yyyyMMddHHmmss")
+                    display_text = dt.toString("yyyy-MM-dd hh:mm:ss") + f" (State {data['step']})"
+                    item = QListWidgetItem(display_text)
+                    item.setData(Qt.UserRole, data['filepath']) # Store filepath
+                    self.history_list.addItem(item)
+                except Exception as parse_e:
+                    logging.warning(f"Could not parse session ID {session_id}: {parse_e}")
+                    item = QListWidgetItem(f"{session_id} (State {data['step']}) - Invalid Date Format")
+                    item.setData(Qt.UserRole, data['filepath'])
+                    self.history_list.addItem(item)
+            self.clear_history_button.setEnabled(True) # Enable clear if history exists
+            
+    def load_selected_history(self):
+        """Loads the final state of the selected history session."""
+        _ = translations[self.current_language]
+        selected_item = self.history_list.currentItem()
+        
+        if not selected_item or not self.undo_redo_manager:
+            return
+            
+        filepath = selected_item.data(Qt.UserRole)
+        if not filepath:
+            logging.warning("Selected history item has no associated filepath.")
+            return
+            
+        # Confirmation might be good here, but prompt asks for OK anyway
+        # Load the state using the undo/redo manager
+        success = self.undo_redo_manager.load_specific_state(filepath)
+        
+        if success:
+            logging.info(f"Successfully loaded history state from {filepath}")
+            # Close the settings dialog after loading
+            self.accept() # Use accept to signal successful operation if needed
+        else:
+            logging.error(f"Failed to load history state from {filepath}")
+            QMessageBox.warning(
+                self,
+                _['history_load_error_title'],
+                _['history_load_error_text']
+            )
+            
+    def clear_all_history_action(self):
+        """Clears all past history files without asking for confirmation."""
+        _ = translations[self.current_language]
+        
+        if not self.undo_redo_manager:
+            return
+            
+        # Get temp directory and current session ID
+        temp_dir = self.undo_redo_manager.get_temp_dir()
+        current_session_id = self.undo_redo_manager.get_session_id()
+        
+        # Delete all history files EXCEPT the current session
+        deleted_count = 0
+        
+        try:
+            # Get list of all files
+            all_files = os.listdir(temp_dir)
+            logging.info(f"Found {len(all_files)} files in {temp_dir}: {', '.join(all_files)}")
+            
+            # First delete all temp_states in other directories (sometimes files are created elsewhere)
+            root_dir = os.path.dirname(os.path.dirname(temp_dir))
+            for root, dirs, files in os.walk(root_dir):
+                if "temp_states" in root and root != temp_dir:
+                    for file in files:
+                        if file.endswith(".json"):
+                            try:
+                                file_path = os.path.join(root, file)
+                                os.remove(file_path)
+                                deleted_count += 1
+                                logging.info(f"Deleted history file from other directory: {file_path}")
+                            except Exception as e:
+                                logging.error(f"Failed to delete {file_path}: {e}")
+            
+            # Now delete files in the main temp directory that don't belong to current session
+            for filename in all_files:
+                if filename.endswith(".json"):
+                    # Keep only current session files
+                    if not filename.startswith(current_session_id):
+                        file_path = os.path.join(temp_dir, filename)
+                        try:
+                            os.remove(file_path)
+                            deleted_count += 1
+                            logging.info(f"Deleted history file: {file_path}")
+                        except Exception as e:
+                            logging.error(f"Failed to delete {file_path}: {e}")
+        except Exception as e:
+            logging.error(f"Error while cleaning history directory: {e}")
+        
+        # Also call the undo_redo_manager's method for any internal cleanup
+        self.undo_redo_manager.clear_all_past_history()
+        
+        # Refresh the list to show it's empty
+        self.populate_history_list()
+        
+        # Show brief notification
+        if deleted_count > 0:
+            QMessageBox.information(
+                self,
+                _['history_cleared_title'],
+                f"{deleted_count} history files removed."
+            )
+
+    def showEvent(self, event):
+        """Override showEvent to refresh the history list every time the dialog is shown."""
+        super().showEvent(event)
+        
+        # Refresh the history list
+        if hasattr(self, 'history_list') and hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            logging.info("Refreshing history list as dialog is shown")
+            self.populate_history_list()
+        else:
+            logging.warning("Cannot refresh history list - required components not initialized")
 
 
 class VideoPlayerDialog(QDialog):

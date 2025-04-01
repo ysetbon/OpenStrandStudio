@@ -60,7 +60,9 @@ class MainWindow(QMainWindow):
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
         # Create settings dialog
-        self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas)
+        # Pass the undo_redo_manager from the layer_panel
+        undo_manager = self.layer_panel.undo_redo_manager if hasattr(self.layer_panel, 'undo_redo_manager') else None
+        self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager)
 
         # Proceed with the rest of your setup
         self.setup_ui()

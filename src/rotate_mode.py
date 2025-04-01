@@ -2,6 +2,7 @@ from PyQt5.QtCore import QPointF, QRectF, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
+import logging
 
 from strand import Strand, AttachedStrand, MaskedStrand
 
@@ -81,6 +82,12 @@ class RotateMode:
         Args:
             event (QMouseEvent): The mouse event.
         """
+        if self.is_rotating:  # Only save state if we were actually rotating
+            # Save state for undo/redo after rotation
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager.save_state()
+                logging.info("Saved state after strand rotation")
+
         # Reset all properties
         self.is_rotating = False
         self.rotating_point = None

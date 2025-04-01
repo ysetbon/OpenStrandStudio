@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from main_window import MainWindow
-from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode
+from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode, connect_to_mask_mode
 
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -135,6 +135,11 @@ if __name__ == '__main__':
                 if hasattr(window.canvas, 'attach_mode') and window.canvas.attach_mode:
                     connect_to_attach_mode(window.canvas, window.layer_panel.undo_redo_manager)
                     logging.info("Connected attach_mode to undo/redo manager")
+                
+                # Also connect the mask_mode if it exists
+                if hasattr(window.canvas, 'mask_mode') and window.canvas.mask_mode:
+                    connect_to_mask_mode(window.canvas, window.layer_panel.undo_redo_manager)
+                    logging.info("Connected mask_mode to undo/redo manager")
         
         # Set enable third control point setting
         window.canvas.enable_third_control_point = enable_third_control_point

@@ -63,15 +63,15 @@ class StrokeTextButton(QPushButton):
                 "stroke_disabled": "#888888"      # Disabled stroke (medium gray)
             },
             "light": {
-                "bg_normal": "#4d9958",           # Normal background for light theme
-                "bg_hover": "#286335",            # Significantly darker hover
-                "bg_pressed": "#102513",          # Almost black when pressed
-                "border_normal": "#3c7745",       # Normal border for light theme
-                "border_hover": "#1d4121",        # Darker border on hover
+                "bg_normal": "#4387c2",           # Normal background for light theme (blue)
+                "bg_hover": "#2c5c8a",            # Significantly darker hover
+                "bg_pressed": "#10253a",          # Almost black when pressed
+                "border_normal": "#3c77a5",       # Normal border for light theme
+                "border_hover": "#1d4168",        # Darker border on hover
                 "border_pressed": "#ffffff",      # White border when pressed
-                "stroke_normal": "#e6fae9",       # Normal stroke for light theme
+                "stroke_normal": "#e0ecfa",       # Normal stroke for light theme
                 "stroke_hover": "#ffffff",        # Hover stroke for light theme
-                "stroke_pressed": "#b8ffc2",      # Brighter stroke for light theme
+                "stroke_pressed": "#b8d6ff",      # Brighter stroke for light theme
                 "fill": "#000000",                # Icon fill color
                 "bg_disabled": "#acacac",         # Disabled background (light gray)
                 "border_disabled": "#9c9c9c",     # Disabled border (medium gray)
@@ -130,7 +130,11 @@ class StrokeTextButton(QPushButton):
         # Draw the text with stroke
         font = self.font()
         font.setBold(True)
-        font.setPixelSize(30)  # Explicit font size
+        # Adjust font size based on button size
+        if self.width() == 32:  # For refresh button
+            font.setPixelSize(24)  # Smaller font for refresh button
+        else:  # For undo/redo buttons
+            font.setPixelSize(30)  # Original size for undo/redo
         painter.setFont(font)
 
         text = self.text()
@@ -1561,6 +1565,15 @@ class UndoRedoManager(QObject):
         self.undo_button = StrokeTextButton("↶")  # Unicode left arrow for undo
         self.redo_button = StrokeTextButton("↷")  # Unicode right arrow for redo
         
+        # Get current theme from parent window if available
+        current_theme = "default"
+        if hasattr(self.layer_panel, 'parent_window') and hasattr(self.layer_panel.parent_window, 'theme_name'):
+            current_theme = self.layer_panel.parent_window.theme_name
+            logging.info(f"Using theme from parent window for undo/redo buttons: {current_theme}")
+        elif hasattr(self.layer_panel, 'current_theme'):
+            current_theme = self.layer_panel.current_theme
+            logging.info(f"Using theme from layer_panel for undo/redo buttons: {current_theme}")
+        
         # Apply theme to match the refresh button
         # Colors will be shades of blue instead of green to differentiate them
         self.undo_button.theme_colors = {
@@ -1581,7 +1594,7 @@ class UndoRedoManager(QObject):
             },
             "dark": {
                 "bg_normal": "#3d5d78",           # Darker background for dark theme
-                "bg_hover": "#4e7898",            # Hover background for dark theme
+                "bg_hover": "#5179a0",            # Lighter hover background (consistent with refresh button in dark theme)
                 "bg_pressed": "#081a2f",          # Almost black when pressed
                 "border_normal": "#2c4e69",       # Normal border for dark theme
                 "border_hover": "#c8deec",        # Hover border for dark theme
@@ -1595,15 +1608,15 @@ class UndoRedoManager(QObject):
                 "stroke_disabled": "#888888"      # Disabled stroke (medium gray)
             },
             "light": {
-                "bg_normal": "#4387c2",           # Normal background for light theme
-                "bg_hover": "#2c5c8a",            # Significantly darker hover
-                "bg_pressed": "#10253a",          # Almost black when pressed
-                "border_normal": "#3c77a5",       # Normal border for light theme
+                "bg_normal": "#4d9958",           # Normal background for light theme
+                "bg_hover": "#286335",            # Significantly darker hover
+                "bg_pressed": "#102513",          # Almost black when pressed
+                "border_normal": "#3c7745",       # Normal border for light theme
                 "border_hover": "#1d4121",        # Darker border on hover
                 "border_pressed": "#ffffff",      # White border when pressed
-                "stroke_normal": "#e0ecfa",       # Normal stroke for light theme
+                "stroke_normal": "#e6fae9",       # Normal stroke for light theme
                 "stroke_hover": "#ffffff",        # Hover stroke for light theme
-                "stroke_pressed": "#b8d6ff",      # Brighter stroke for light theme
+                "stroke_pressed": "#b8ffc2",      # Brighter stroke for light theme
                 "fill": "#000000",                # Icon fill color
                 "bg_disabled": "#acacac",         # Disabled background (light gray)
                 "border_disabled": "#9c9c9c",     # Disabled border (medium gray)
@@ -1614,9 +1627,9 @@ class UndoRedoManager(QObject):
         # Apply same colors to redo button
         self.redo_button.theme_colors = self.undo_button.theme_colors.copy()
         
-        # Update the styles
-        self.undo_button.updateStyleSheet()
-        self.redo_button.updateStyleSheet()
+        # Apply the current theme
+        self.undo_button.set_theme(current_theme)
+        self.redo_button.set_theme(current_theme)
         
         # Set fixed size to match the refresh button
         self.undo_button.setFixedSize(40, 40)
@@ -1809,6 +1822,20 @@ class UndoRedoManager(QObject):
         # If all approaches failed, log an error
         logging.error(f"All approaches to create group {group_name} failed")
         return False
+
+    def set_theme(self, theme_name):
+        """Apply the specified theme to undo/redo buttons"""
+        if not hasattr(self, 'undo_button') or not hasattr(self, 'redo_button'):
+            logging.warning("Cannot set theme: undo/redo buttons not initialized")
+            return
+            
+        if self.undo_button and hasattr(self.undo_button, 'set_theme'):
+            self.undo_button.set_theme(theme_name)
+            logging.debug(f"Applied {theme_name} theme to undo button")
+            
+        if self.redo_button and hasattr(self.redo_button, 'set_theme'):
+            self.redo_button.set_theme(theme_name)
+            logging.debug(f"Applied {theme_name} theme to redo button")
 
 def connect_to_move_mode(canvas, undo_redo_manager):
     """

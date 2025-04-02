@@ -122,7 +122,7 @@ class LayerPanel(QWidget):
         top_layout.setAlignment(Qt.AlignLeft)
 
         # Create the refresh button
-        self.refresh_button = StrokeTextButton("⟳")
+        self.refresh_button = StrokeTextButton("↻")
         self.refresh_button.clicked.connect(self.refresh_layers)
 
         # Add the refresh button to the top layout
@@ -450,6 +450,9 @@ class LayerPanel(QWidget):
             """)
             # Apply theme to refresh button
             self.refresh_button.set_theme(theme_name)
+            # Apply theme to undo/redo buttons
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.set_theme(theme_name)
             # Similarly update other buttons if necessary
 
         elif theme_name == "light":
@@ -477,6 +480,9 @@ class LayerPanel(QWidget):
             """)
             # Apply theme to refresh button
             self.refresh_button.set_theme(theme_name)
+            # Apply theme to undo/redo buttons
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.set_theme(theme_name)
             # Similarly update other buttons if necessary
 
         elif theme_name == "default":
@@ -502,6 +508,9 @@ class LayerPanel(QWidget):
             """)
             # Apply theme to refresh button
             self.refresh_button.set_theme(theme_name)
+            # Apply theme to undo/redo buttons
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.set_theme(theme_name)
             # Similarly reset other buttons if necessary
 
         else:
@@ -527,6 +536,9 @@ class LayerPanel(QWidget):
             """)
             # Apply theme to refresh button
             self.refresh_button.set_theme("default")
+            # Apply theme to undo/redo buttons
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.set_theme("default")
             # Similarly reset other buttons if necessary
 
     # NEW: helper method to provide a context menu style sheet based on the current theme

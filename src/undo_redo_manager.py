@@ -1,11 +1,13 @@
 import os
 import json
+import glob
+import time  # Add time module for timestamp comparison
 import logging
-import datetime
 import shutil
+from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor
+from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
@@ -198,7 +200,7 @@ class UndoRedoManager(QObject):
         self.current_step = 0  # Start at step 0 (empty state, no steps saved yet)
         self.max_step = 0      # Start with no steps saved
         self.temp_dir = self._create_temp_dir()
-        self.session_id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
         self.undo_button = None
         self.redo_button = None
         
@@ -221,76 +223,113 @@ class UndoRedoManager(QObject):
         return os.path.join(self.temp_dir, f"{self.session_id}_{step}.json")
 
     def save_state(self):
-        """Save current state for undo/redo."""
-        # Check if the state is empty (no strands and empty groups)
-        is_empty_state = len(self.canvas.strands) == 0 and (not hasattr(self.canvas, 'groups') or not self.canvas.groups)
-        
-        if is_empty_state:
-            logging.info("State is empty (no strands, no groups). Not saving to history.")
-            return  # Don't save empty state
-            
-        # Special case: If we're at step 0 (empty state) and now saving a non-empty state
-        if self.current_step == 0:
-            logging.info("First content created - saving first state at step 1")
-            self.current_step = 1
-            self.max_step = 1
-            # Save new state file
-            saved = self._save_state_file(self.current_step)
-            
-            if saved:
-                logging.info(f"First state saved successfully at step {self.current_step}")
-                # Update button states - undo should now be enabled
-                self._update_button_states()
-            else:
-                logging.warning(f"Failed to save first state at step {self.current_step}")
-                # Roll back if save failed
-                self.current_step = 0
-                self.max_step = 0
+        """Save the current state of strands and groups for undo/redo."""
+        # Skip save if flagged to avoid saving states
+        if getattr(self, '_skip_save', False):
+            logging.info("Skipping state save due to _skip_save flag")
             return
             
-        # Check if we need to increment the step
-        if self.current_step == self.max_step:
-            self.current_step += 1
-            self.max_step = self.current_step
-            logging.info(f"Saving state to {self._get_state_filename(self.current_step)} (current_step={self.current_step}, max_step={self.max_step})")
+        # Ensure the canvas exists
+        if not self.canvas:
+            logging.warning("Cannot save state: Canvas is not available")
+            return
             
-            # Make sure groups are properly saved
-            self._ensure_groups_are_saved()
+        # Check if there is content to save
+        if not self.canvas.strands and not hasattr(self.canvas, 'groups'):
+            logging.info("No content (strands or groups) to save, skipping state save")
+            return
             
-            # Save new state file
-            saved = self._save_state_file(self.current_step)
+        # Only save if content actually exists
+        if not self.canvas.strands and not (hasattr(self.canvas, 'groups') and self.canvas.groups):
+            logging.info("Empty canvas (no strands or groups), skipping state save")
+            return
             
-            if saved:
-                logging.info(f"State saved successfully at step {self.current_step}")
-            else:
-                logging.warning(f"Failed to save state at step {self.current_step}")
-                # Roll back the increment
-                self.current_step -= 1
-                self.max_step = self.current_step
-        else:
-            # We're in the middle of history, need to discard future states
-            old_max = self.max_step
-            self.current_step += 1
-            self.max_step = self.current_step
-            logging.info(f"Discarding future states (old_max={old_max}, new_max={self.max_step})")
-            
-            # Make sure groups are properly saved
-            self._ensure_groups_are_saved()
-            
-            # Save new state file
-            saved = self._save_state_file(self.current_step)
-            
-            if saved:
-                logging.info(f"State saved successfully at step {self.current_step} (discarded futures)")
-            else:
-                logging.warning(f"Failed to save state at step {self.current_step}")
-                # Roll back the increment
-                self.current_step -= 1
-                self.max_step = old_max
-                
-        # Update the enabled state of the buttons
-        self._update_button_states()
+        # Record the timestamp of this save
+        current_time = time.time()
+        last_save_time = getattr(self, '_last_save_time', 0)
         
+        # If we've saved very recently (<300ms), check if we should skip this save
+        if (current_time - last_save_time < 0.3) and self.current_step > 0:
+            # Check if the current state would be identical to the previous state
+            if self._would_be_identical_save():
+                logging.info("Skipping identical state save that would occur too soon after previous save")
+                return
+        
+        self._last_save_time = current_time
+            
+        # Ensure groups are properly saved when needed
+        self._ensure_groups_are_saved()
+        
+        # Process incremental saving
+        if self.current_step < self.max_step:
+            # Clear away any existing future states
+            self._clear_future_states()
+            
+        # Increment step counter
+        self.current_step += 1
+        self.max_step = self.current_step
+        
+        # Save the state file
+        filename = self._save_state_file(self.current_step)
+        
+        if filename:
+            # Signal that a state was saved
+            logging.info(f"State saved successfully at step {self.current_step}")
+            self.state_saved.emit(self.current_step)
+            
+            # Update button states
+            self._update_button_states()
+        else:
+            # If save failed, revert step counter
+            self.current_step -= 1
+            if self.max_step > self.current_step:
+                self.max_step = self.current_step
+            logging.error(f"Failed to save state at step {self.current_step + 1}")
+
+    def _would_be_identical_save(self):
+        """Check if the current state would be identical to the previous saved state."""
+        if self.current_step <= 0:
+            return False
+            
+        try:
+            # Get previous state file path
+            prev_filename = self._get_state_filename(self.current_step)
+            
+            # Basic check: compare strand count and layer names
+            if os.path.exists(prev_filename):
+                with open(prev_filename, 'r') as f:
+                    prev_data = json.load(f)
+                    
+                # Compare strand count
+                current_strand_count = len(self.canvas.strands)
+                prev_strand_count = len(prev_data.get('strands', []))
+                
+                if current_strand_count != prev_strand_count:
+                    return False
+                    
+                # Compare layer names
+                current_layer_names = {s.layer_name for s in self.canvas.strands if hasattr(s, 'layer_name')}
+                prev_layer_names = {s.get('layer_name') for s in prev_data.get('strands', []) if 'layer_name' in s}
+                
+                if current_layer_names != prev_layer_names:
+                    return False
+                    
+                # Compare group count
+                current_group_count = len(getattr(self.canvas, 'groups', {}))
+                prev_group_count = len(prev_data.get('groups', {}))
+                
+                if current_group_count != prev_group_count:
+                    return False
+                    
+                # If we made it here, basic structure is the same
+                return True
+                
+        except Exception as e:
+            logging.error(f"Error in _would_be_identical_save: {e}")
+            
+        # Default to allowing the save if anything goes wrong
+        return False
+
     def _ensure_groups_are_saved(self):
         """Ensure that all groups are properly captured in the next save."""
         if not hasattr(self.canvas, 'group_layer_manager') or not self.canvas.group_layer_manager:
@@ -1458,17 +1497,32 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
 
             if strand_added and has_content:
                 logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}). Checking if save needed.")
+                
+                # Check if the state was recently saved by another operation (like group creation)
+                if hasattr(undo_redo_manager, 'current_step') and undo_redo_manager.current_step > 0:
+                    # Get the timestamp of the last save
+                    last_save_time = getattr(undo_redo_manager, '_last_save_time', 0)
+                    current_time = time.time()
+                    
+                    # If the last save was less than 1 second ago, and the step has already been incremented,
+                    # don't save again to prevent duplicate states
+                    if (current_time - last_save_time < 1.0) and getattr(undo_redo_manager, '_saving_state_now', False):
+                        logging.info("--> Recently saved by another operation (likely group update). Skipping duplicate save.")
+                        return
+                
                 # Use a flag to prevent immediate double saves within the same manager instance
                 if not getattr(undo_redo_manager, '_saving_state_now', False):
                     logging.info("--> Saving state.")
                     undo_redo_manager._saving_state_now = True
                     try:
+                        # Record the save time
+                        undo_redo_manager._last_save_time = time.time()
                         # Perform the actual save
                         undo_redo_manager.save_state()
                     finally:
                         # Reset flag after a short delay to allow subsequent saves for different actions
                         # Using lambda to capture the current manager instance
-                        QTimer.singleShot(50, lambda mgr=undo_redo_manager: setattr(mgr, '_saving_state_now', False))
+                        QTimer.singleShot(300, lambda mgr=undo_redo_manager: setattr(mgr, '_saving_state_now', False))
                 else:
                     logging.info("--> Already saving state recently, skipping duplicate save.")
             else:
@@ -1632,7 +1686,26 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     def enhanced_create_group(*args, **kwargs):
         result = original_create_group(*args, **kwargs)
         logging.info("Group created, saving state")
-        undo_redo_manager.save_state()
+        
+        # Record the timestamp before saving state
+        current_time = time.time()
+        last_save_time = getattr(undo_redo_manager, '_last_save_time', 0)
+        
+        # Check if a state was saved very recently (within 1 second)
+        if current_time - last_save_time < 1.0:
+            logging.info("Group creation: Recently saved state detected. Setting flag to enable next save.")
+            # Set flag to allow the next save (typically from attach mode) by resetting the prevention flag
+            undo_redo_manager._saving_state_now = False
+        else:
+            # Normal save if no recent save
+            undo_redo_manager.save_state()
+            # Record the timestamp
+            undo_redo_manager._last_save_time = time.time()
+            # Mark that we're in a saving state
+            undo_redo_manager._saving_state_now = True
+            # Reset after a delay
+            QTimer.singleShot(300, lambda mgr=undo_redo_manager: setattr(mgr, '_saving_state_now', False))
+            
         return result
     group_panel.create_group = enhanced_create_group
     

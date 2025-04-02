@@ -433,6 +433,32 @@ def load_strands(filename, canvas):
     # Remove any None values (shouldn't be any if indexes are correct)
     strands = [s for s in strands if s is not None]
     
+    # Fourth pass: Validate has_circles based on actual attached strands
+    for strand in strands:
+        if hasattr(strand, 'has_circles') and isinstance(strand.has_circles, list) and len(strand.has_circles) == 2:
+            # Reset has_circles array
+            start_has_attachment = False
+            end_has_attachment = False
+            
+            # For each strand, check if there are actual attached strands at each end
+            if hasattr(strand, 'attached_strands'):
+                for attached in strand.attached_strands:
+                    # Determine if attached to start or end
+                    if attached.start == strand.start:
+                        start_has_attachment = True
+                    elif attached.start == strand.end:
+                        end_has_attachment = True
+            
+            # Update has_circles to reflect actual attached strands
+            strand.has_circles[0] = start_has_attachment
+            strand.has_circles[1] = end_has_attachment
+            
+            # Call update_attachable to refresh the attachable property
+            if hasattr(strand, 'update_attachable'):
+                strand.update_attachable()
+                
+            logging.info(f"Validated has_circles for {strand.layer_name}: [{strand.has_circles[0]}, {strand.has_circles[1]}]")
+    
     # Apply loaded strands to canvas
     canvas.strands = strands
     

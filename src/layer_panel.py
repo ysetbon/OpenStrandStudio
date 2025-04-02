@@ -1519,6 +1519,15 @@ class LayerPanel(QWidget):
         super().resizeEvent(event)
         self.handle.updateSize()
 
+    def simulate_refresh_button_click(self):
+        """Simulate clicking the refresh button without visual feedback"""
+        if hasattr(self, 'refresh_button'):
+            logging.info("Simulating refresh button click")
+            # Call the refresh_layers method directly instead of triggering the button click
+            self.refresh_layers()
+        else:
+            logging.warning("Cannot simulate refresh button click - refresh_button not found")
+            
     def on_strand_created(self, strand):
         """Handle strand creation event."""
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name if hasattr(strand, 'layer_name') else ''}")
@@ -1535,6 +1544,9 @@ class LayerPanel(QWidget):
         if set_number not in self.set_colors:
             self.set_colors[set_number] = QColor(200, 170, 230, 255)  # Default color
         self.update_colors_for_set(set_number, self.set_colors[set_number])
+        
+        # Simulate clicking the refresh button for consistency in layer display
+        self.simulate_refresh_button_click()
         
         # Save state for undo/redo after strand creation
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:

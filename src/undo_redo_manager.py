@@ -314,14 +314,81 @@ class UndoRedoManager(QObject):
                 if current_layer_names != prev_layer_names:
                     return False
                     
+                # Compare groups - this is a critical check
+                current_groups = getattr(self.canvas, 'groups', {})
+                prev_groups = prev_data.get('groups', {})
+                
                 # Compare group count
-                current_group_count = len(getattr(self.canvas, 'groups', {}))
-                prev_group_count = len(prev_data.get('groups', {}))
+                current_group_count = len(current_groups)
+                prev_group_count = len(prev_groups)
                 
                 if current_group_count != prev_group_count:
                     return False
+                
+                # Compare group names to ensure they're the same
+                current_group_names = set(current_groups.keys())
+                prev_group_names = set(prev_groups.keys())
+                
+                if current_group_names != prev_group_names:
+                    return False
+                
+                # Compare group contents - even if the same groups exist, their contents might differ
+                for group_name in current_group_names:
+                    if group_name not in prev_groups:
+                        return False
+                        
+                    # Compare strands in the group
+                    current_group_strands = set()
+                    prev_group_strands = set()
                     
-                # If we made it here, basic structure is the same
+                    # Extract strand names from current group
+                    if 'strands' in current_groups[group_name]:
+                        for strand in current_groups[group_name]['strands']:
+                            if isinstance(strand, str):
+                                current_group_strands.add(strand)
+                            elif hasattr(strand, 'layer_name'):
+                                current_group_strands.add(strand.layer_name)
+                    
+                    # Extract strand names from previous group
+                    if 'strands' in prev_groups[group_name]:
+                        for strand in prev_groups[group_name]['strands']:
+                            if isinstance(strand, str):
+                                prev_group_strands.add(strand)
+                            elif hasattr(strand, 'layer_name'):
+                                prev_group_strands.add(strand.layer_name)
+                    
+                    # If the strands in the group are different, consider it a different state
+                    if current_group_strands != prev_group_strands:
+                        return False
+                
+                # If strand count and layer names match, also compare strand positions
+                # to detect angle changes and movements
+                for i, current_strand in enumerate(self.canvas.strands):
+                    if i >= prev_strand_count:
+                        return False
+                        
+                    # Find the corresponding strand in previous data
+                    prev_strand = None
+                    for s in prev_data.get('strands', []):
+                        if s.get('layer_name') == current_strand.layer_name:
+                            prev_strand = s
+                            break
+                            
+                    if not prev_strand:
+                        return False
+                        
+                    # Compare positions with some tolerance for floating point differences
+                    if (hasattr(current_strand, 'start') and 'start' in prev_strand and
+                        hasattr(current_strand, 'end') and 'end' in prev_strand):
+                        
+                        # If positions differ by more than 0.1 pixels, not identical
+                        if (abs(current_strand.start.x() - prev_strand['start']['x']) > 0.1 or
+                            abs(current_strand.start.y() - prev_strand['start']['y']) > 0.1 or
+                            abs(current_strand.end.x() - prev_strand['end']['x']) > 0.1 or
+                            abs(current_strand.end.y() - prev_strand['end']['y']) > 0.1):
+                            return False
+                    
+                # If we made it here, states are identical
                 return True
                 
         except Exception as e:
@@ -329,6 +396,22 @@ class UndoRedoManager(QObject):
             
         # Default to allowing the save if anything goes wrong
         return False
+
+    def _clear_future_states(self):
+        """Remove any state files from current_step + 1 to max_step."""
+        logging.info(f"Clearing future states from step {self.current_step + 1} to {self.max_step}")
+        for step in range(self.current_step + 1, self.max_step + 1):
+            filename = self._get_state_filename(step)
+            try:
+                if os.path.exists(filename):
+                    os.remove(filename)
+                    logging.debug(f"Removed future state file: {filename}")
+            except OSError as e:
+                logging.warning(f"Could not remove future state file {filename}: {e}")
+        
+        # Reset max_step to current_step
+        self.max_step = self.current_step
+        logging.info(f"Reset max_step to current_step: {self.current_step}")
 
     def _ensure_groups_are_saved(self):
         """Ensure that all groups are properly captured in the next save."""
@@ -378,6 +461,29 @@ class UndoRedoManager(QObject):
     def undo(self):
         """Load the previous state if available."""
         if self.current_step > 0:
+            # Store the current strands for comparison
+            original_strands = self.canvas.strands.copy() if hasattr(self.canvas, 'strands') else []
+            original_strands_count = len(original_strands)
+            original_layer_names = {s.layer_name for s in original_strands if hasattr(s, 'layer_name')}
+            
+            # Store original groups for comparison
+            original_groups = {}
+            if hasattr(self.canvas, 'groups'):
+                original_groups = self.canvas.groups.copy()
+            
+            # Store original group names and contents for detailed comparison
+            original_group_names = set(original_groups.keys())
+            original_group_contents = {}
+            for group_name, group_data in original_groups.items():
+                if 'strands' in group_data:
+                    strand_names = set()
+                    for strand in group_data['strands']:
+                        if isinstance(strand, str):
+                            strand_names.add(strand)
+                        elif hasattr(strand, 'layer_name'):
+                            strand_names.add(strand.layer_name)
+                    original_group_contents[group_name] = strand_names
+            
             self.current_step -= 1
             
             # Special case: If undoing to step 0 (empty state)
@@ -391,12 +497,97 @@ class UndoRedoManager(QObject):
                 # Refresh the UI
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
+                if hasattr(self.layer_panel, 'refresh_layers'):
+                    self.layer_panel.refresh_layers()
                 if hasattr(self.canvas, 'group_layer_manager'):
                     self._refresh_group_panel(False)  # No groups in empty state
                 self.canvas.update()
             else:
                 # Normal undo to a saved state
                 self._load_state(self.current_step)
+                
+                # Check if the state we just loaded is visually identical to the previous state
+                # If yes, continue undoing to the next state
+                new_strands = self.canvas.strands
+                new_strands_count = len(new_strands)
+                new_layer_names = {s.layer_name for s in new_strands if hasattr(s, 'layer_name')}
+                
+                # Get new groups for comparison
+                new_groups = {}
+                if hasattr(self.canvas, 'groups'):
+                    new_groups = self.canvas.groups.copy()
+                
+                # Get new group names and contents for detailed comparison
+                new_group_names = set(new_groups.keys())
+                new_group_contents = {}
+                for group_name, group_data in new_groups.items():
+                    if 'strands' in group_data:
+                        strand_names = set()
+                        for strand in group_data['strands']:
+                            if isinstance(strand, str):
+                                strand_names.add(strand)
+                            elif hasattr(strand, 'layer_name'):
+                                strand_names.add(strand.layer_name)
+                        new_group_contents[group_name] = strand_names
+                
+                # Check if groups have changed (either names or contents)
+                groups_changed = (original_group_names != new_group_names)
+                
+                # If group names are the same, check if contents have changed
+                if not groups_changed:
+                    for group_name in original_group_names:
+                        if group_name in original_group_contents and group_name in new_group_contents:
+                            if original_group_contents[group_name] != new_group_contents[group_name]:
+                                groups_changed = True
+                                break
+                
+                # If strand count is the same and layer names are the same,
+                # check if key properties (like positions) are identical
+                if (new_strands_count == original_strands_count and 
+                    new_layer_names == original_layer_names and
+                    not groups_changed and
+                    self.current_step > 1):
+                    
+                    logging.info("Detected potentially identical state after undo, checking for visual differences...")
+                    
+                    # Check for meaningful visual differences between states
+                    has_visual_difference = False
+                    
+                    # Check positions and other visual properties
+                    for i, new_strand in enumerate(new_strands):
+                        if i >= len(original_strands):
+                            has_visual_difference = True
+                            break
+                            
+                        original_strand = original_strands[i]
+                        
+                        # Check start and end positions
+                        if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
+                            hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
+                            
+                            # If positions differ by more than 0.1 pixels, consider it visually different
+                            if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
+                                abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
+                                abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
+                                abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
+                        # Check colors (if one is visibly different)
+                        if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
+                            # Only consider color difference significant if it's visible
+                            if (abs(new_strand.color.red() - original_strand.color.red()) > 5 or
+                                abs(new_strand.color.green() - original_strand.color.green()) > 5 or
+                                abs(new_strand.color.blue() - original_strand.color.blue()) > 5 or
+                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 5):
+                                has_visual_difference = True
+                                break
+                    
+                    # If no visual difference found, skip this state and continue undoing
+                    if not has_visual_difference:
+                        logging.info("States are visually identical, skipping to previous state...")
+                        # Recursively call undo to get to the next state
+                        return self.undo()
                 
             self.undo_performed.emit()
             logging.info(f"Undo performed, now at step {self.current_step}")
@@ -406,6 +597,15 @@ class UndoRedoManager(QObject):
 
             # Additional logging to track what's being refreshed
             logging.info("Refreshing UI after undo operation")
+            
+            # Try to simulate a refresh button click (preferred method)
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                logging.info("Simulating refresh button click after undo")
+                self.layer_panel.simulate_refresh_button_click()
+            # Fallback to direct method call if simulate method not available
+            elif hasattr(self.layer_panel, 'refresh_layers'):
+                logging.info("Explicitly refreshing layer panel")
+                self.layer_panel.refresh_layers()
                 
             # Final update of the canvas
             self.canvas.update()
@@ -415,6 +615,29 @@ class UndoRedoManager(QObject):
     def redo(self):
         """Load the next state if available."""
         if self.current_step < self.max_step:
+            # Store the current strands for comparison
+            original_strands = self.canvas.strands.copy() if hasattr(self.canvas, 'strands') else []
+            original_strands_count = len(original_strands)
+            original_layer_names = {s.layer_name for s in original_strands if hasattr(s, 'layer_name')}
+            
+            # Store original groups for comparison
+            original_groups = {}
+            if hasattr(self.canvas, 'groups'):
+                original_groups = self.canvas.groups.copy()
+            
+            # Store original group names and contents for detailed comparison
+            original_group_names = set(original_groups.keys())
+            original_group_contents = {}
+            for group_name, group_data in original_groups.items():
+                if 'strands' in group_data:
+                    strand_names = set()
+                    for strand in group_data['strands']:
+                        if isinstance(strand, str):
+                            strand_names.add(strand)
+                        elif hasattr(strand, 'layer_name'):
+                            strand_names.add(strand.layer_name)
+                    original_group_contents[group_name] = strand_names
+            
             # Special case: If redoing from step 0 (empty state)
             if self.current_step == 0:
                 logging.info("Redoing from initial empty state to step 1")
@@ -426,6 +649,89 @@ class UndoRedoManager(QObject):
             result = self._load_state(self.current_step)
 
             if result:
+                # Check if the state we just loaded is visually identical to the previous state
+                # If yes, continue redoing to the next state
+                new_strands = self.canvas.strands
+                new_strands_count = len(new_strands)
+                new_layer_names = {s.layer_name for s in new_strands if hasattr(s, 'layer_name')}
+                
+                # Get new groups for comparison
+                new_groups = {}
+                if hasattr(self.canvas, 'groups'):
+                    new_groups = self.canvas.groups.copy()
+                
+                # Get new group names and contents for detailed comparison
+                new_group_names = set(new_groups.keys())
+                new_group_contents = {}
+                for group_name, group_data in new_groups.items():
+                    if 'strands' in group_data:
+                        strand_names = set()
+                        for strand in group_data['strands']:
+                            if isinstance(strand, str):
+                                strand_names.add(strand)
+                            elif hasattr(strand, 'layer_name'):
+                                strand_names.add(strand.layer_name)
+                        new_group_contents[group_name] = strand_names
+                
+                # Check if groups have changed (either names or contents)
+                groups_changed = (original_group_names != new_group_names)
+                
+                # If group names are the same, check if contents have changed
+                if not groups_changed:
+                    for group_name in original_group_names:
+                        if group_name in original_group_contents and group_name in new_group_contents:
+                            if original_group_contents[group_name] != new_group_contents[group_name]:
+                                groups_changed = True
+                                break
+                
+                # If strand count is the same and layer names are the same,
+                # check if key properties (like positions) are identical
+                if (new_strands_count == original_strands_count and 
+                    new_layer_names == original_layer_names and
+                    not groups_changed and
+                    self.current_step < self.max_step):
+                    
+                    logging.info("Detected potentially identical state after redo, checking for visual differences...")
+                    
+                    # Check for meaningful visual differences between states
+                    has_visual_difference = False
+                    
+                    # Check positions and other visual properties
+                    for i, new_strand in enumerate(new_strands):
+                        if i >= len(original_strands):
+                            has_visual_difference = True
+                            break
+                            
+                        original_strand = original_strands[i]
+                        
+                        # Check start and end positions
+                        if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
+                            hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
+                            
+                            # If positions differ by more than 0.1 pixels, consider it visually different
+                            if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
+                                abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
+                                abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
+                                abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
+                        # Check colors (if one is visibly different)
+                        if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
+                            # Only consider color difference significant if it's visible
+                            if (abs(new_strand.color.red() - original_strand.color.red()) > 5 or
+                                abs(new_strand.color.green() - original_strand.color.green()) > 5 or
+                                abs(new_strand.color.blue() - original_strand.color.blue()) > 5 or
+                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 5):
+                                has_visual_difference = True
+                                break
+                    
+                    # If no visual difference found, skip this state and continue redoing
+                    if not has_visual_difference:
+                        logging.info("States are visually identical, skipping to next state...")
+                        # Recursively call redo to get to the next state
+                        return self.redo()
+                
                 self.redo_performed.emit()
                 logging.info(f"Redo performed, now at step {self.current_step}")
             else:
@@ -436,6 +742,15 @@ class UndoRedoManager(QObject):
 
             # Make sure buttons are properly updated
             self._update_button_states()
+
+            # Try to simulate a refresh button click (preferred method)
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                logging.info("Simulating refresh button click after redo")
+                self.layer_panel.simulate_refresh_button_click()
+            # Fallback to direct method call if simulate method not available
+            elif hasattr(self.layer_panel, 'refresh_layers'):
+                logging.info("Explicitly refreshing layer panel")
+                self.layer_panel.refresh_layers()
 
             # Ensure the canvas is fully refreshed after redo
             self.canvas.update()
@@ -879,6 +1194,15 @@ class UndoRedoManager(QObject):
             # Refresh layer panel based on the new self.canvas.strands
             logging.info("Refreshing Layer Panel UI...")
             self._refresh_layer_panel() 
+
+            # Try to simulate a refresh button click (preferred method)
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                logging.info("Simulating refresh button click after loading state")
+                self.layer_panel.simulate_refresh_button_click()
+            # Fallback to direct method call if simulate method not available
+            elif hasattr(self.layer_panel, 'refresh_layers'):
+                logging.info("Explicitly refreshing layer panel UI...")
+                self.layer_panel.refresh_layers()
 
             # Refresh group panel based on the new self.canvas.groups
             logging.info("Refreshing Group Panel UI...")
@@ -1481,22 +1805,35 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
             initial_strand_count = len(canvas.strands)
             initial_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
             
+            # Store initial groups for comparison
+            initial_groups = {}
+            if hasattr(canvas, 'groups'):
+                initial_groups = canvas.groups.copy()
+            
             # Call the original function first to perform the attach/creation
             original_mouse_release(event)
             
             # Get current state after the action
             current_strand_count = len(canvas.strands)
             current_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
+            
+            # Get current groups after the action
+            current_groups = {}
+            if hasattr(canvas, 'groups'):
+                current_groups = canvas.groups.copy()
 
             # Check if a new strand was *actually* added during this specific event
             strand_added = (current_strand_count > initial_strand_count) or \
                            bool(current_strand_names - initial_strand_names) # Check if new names appeared
+            
+            # Check if groups changed
+            groups_changed = initial_groups != current_groups
 
             # Check if the current state is now non-empty (has content worth saving)
             has_content = current_strand_count > 0 or (hasattr(canvas, 'groups') and bool(canvas.groups))
 
-            if strand_added and has_content:
-                logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}). Checking if save needed.")
+            if (strand_added or groups_changed) and has_content:
+                logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}) or groups changed. Checking if save needed.")
                 
                 # Check if the state was recently saved by another operation (like group creation)
                 if hasattr(undo_redo_manager, 'current_step') and undo_redo_manager.current_step > 0:
@@ -1696,6 +2033,11 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
             logging.info("Group creation: Recently saved state detected. Setting flag to enable next save.")
             # Set flag to allow the next save (typically from attach mode) by resetting the prevention flag
             undo_redo_manager._saving_state_now = False
+            
+            # Force a save anyway to ensure group creation is recorded as a separate step
+            # This ensures that strand creation and group creation are treated as separate operations
+            logging.info("Group creation: Forcing a save to ensure it's recorded as a separate step")
+            undo_redo_manager.save_state()
         else:
             # Normal save if no recent save
             undo_redo_manager.save_state()
@@ -1748,9 +2090,9 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     
     # Connect to group operation signal
     def on_group_operation(operation, group_name, layers):
-        logging.info(f"Group operation signal: {operation} on {group_name}")
-        # We'll save state at operation completion for move/rotate/angle operations
-        # For other operations that don't have explicit completion handlers, save immediately
+        logging.info(f"Group operation detected: {operation} on {group_name}")
+        # For operations that have completion functions, we'll save state at completion
+        # For other operations, save state immediately
         if operation not in ["move", "rotate", "edit_angles"]:
             undo_redo_manager.save_state()
     

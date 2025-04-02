@@ -1009,6 +1009,8 @@ class MoveMode:
         current_affected_strand = self.affected_strand
         current_originally_selected = self.originally_selected_strand
         
+        # Check if we were moving a control point - this is important for undo/redo state tracking
+        was_moving_control_point = self.is_moving_control_point
 
         
         # Check for ANY movement of a masked strand (control points or regular movement)
@@ -1074,6 +1076,22 @@ class MoveMode:
             # Reset strand point movement flag
             self.is_moving_strand_point = False
             
+            # If we were moving a control point, ensure a state is saved for undo/redo
+            if was_moving_control_point and hasattr(self.canvas, 'undo_redo_manager'):
+                logging.info("MoveMode: Control point movement completed, saving state for undo/redo")
+                # Reset last save time to ensure this gets saved as a new state
+                if hasattr(self.canvas.undo_redo_manager, '_last_save_time'):
+                    self.canvas.undo_redo_manager._last_save_time = 0
+                # Save the state
+                self.canvas.undo_redo_manager.save_state()
+            # Also try with our internal reference
+            elif was_moving_control_point and hasattr(self, 'undo_redo_manager'):
+                logging.info("MoveMode: Control point movement completed, using internal undo_redo_manager")
+                # Reset last save time to ensure this gets saved as a new state
+                if hasattr(self.undo_redo_manager, '_last_save_time'):
+                    self.undo_redo_manager._last_save_time = 0
+                # Save the state
+                self.undo_redo_manager.save_state()
             
             # Reset time limiter
             self.last_update_time = 0
@@ -1444,6 +1462,10 @@ class MoveMode:
             self.originally_selected_strand = self.canvas.selected_strand
         elif self.canvas.selected_attached_strand is not None:
             self.originally_selected_strand = self.canvas.selected_attached_strand
+
+        # Store a reference to the undo_redo_manager if it exists
+        if hasattr(self.canvas, 'undo_redo_manager') and not hasattr(self, 'undo_redo_manager'):
+            self.undo_redo_manager = self.canvas.undo_redo_manager
 
         # Rest of the existing function
         self.moving = True

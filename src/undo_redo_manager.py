@@ -382,16 +382,26 @@ class UndoRedoManager(QObject):
                         return False
                         
                     # Compare positions with some tolerance for floating point differences
-                    if (hasattr(current_strand, 'start') and 'start' in prev_strand and
-                        hasattr(current_strand, 'end') and 'end' in prev_strand):
-                        
-                        # If positions differ by more than 0.1 pixels, not identical
-                        if (abs(current_strand.start.x() - prev_strand['start']['x']) > 0.1 or
-                            abs(current_strand.start.y() - prev_strand['start']['y']) > 0.1 or
-                            abs(current_strand.end.x() - prev_strand['end']['x']) > 0.1 or
-                            abs(current_strand.end.y() - prev_strand['end']['y']) > 0.1):
-                            return False
+                    if (abs(current_strand.start.x() - prev_strand['start']['x']) > 0.1 or
+                        abs(current_strand.start.y() - prev_strand['start']['y']) > 0.1 or
+                        abs(current_strand.end.x() - prev_strand['end']['x']) > 0.1 or
+                        abs(current_strand.end.y() - prev_strand['end']['y']) > 0.1):
+                        return False
                     
+                    # Added comparison for control points to capture their movements separately for undo/redo
+                    if (hasattr(current_strand, 'control_point1') and ('control_point1' in prev_strand)):
+                        if (abs(current_strand.control_point1.x() - prev_strand['control_point1']['x']) > 0.1 or
+                            abs(current_strand.control_point1.y() - prev_strand['control_point1']['y']) > 0.1):
+                            return False
+                    if (hasattr(current_strand, 'control_point2') and ('control_point2' in prev_strand)):
+                        if (abs(current_strand.control_point2.x() - prev_strand['control_point2']['x']) > 0.1 or
+                            abs(current_strand.control_point2.y() - prev_strand['control_point2']['y']) > 0.1):
+                            return False
+                    if (hasattr(current_strand, 'control_point_center') and ('control_point_center' in prev_strand)):
+                        if (abs(current_strand.control_point_center.x() - prev_strand['control_point_center']['x']) > 0.1 or
+                            abs(current_strand.control_point_center.y() - prev_strand['control_point_center']['y']) > 0.1):
+                            return False
+                
                 # If we made it here, states are identical
                 return True
                 
@@ -577,13 +587,32 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                         
+                        # Check control points for differences - important for proper undo/redo of control point changes
+                        if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
+                            if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
+                                abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
+                        if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
+                            if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
+                                abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                                
+                        if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
+                            if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
+                                abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
                         # Check colors (if one is visibly different)
                         if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
                             # Only consider color difference significant if it's visible
-                            if (abs(new_strand.color.red() - original_strand.color.red()) > 5 or
-                                abs(new_strand.color.green() - original_strand.color.green()) > 5 or
-                                abs(new_strand.color.blue() - original_strand.color.blue()) > 5 or
-                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 5):
+                            if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
+                                abs(new_strand.color.green() - original_strand.color.green()) > 0 or
+                                abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
+                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                 has_visual_difference = True
                                 break
                     
@@ -720,13 +749,32 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                         
+                        # Check control points for differences - important for proper undo/redo of control point changes
+                        if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
+                            if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
+                                abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
+                        if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
+                            if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
+                                abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                                
+                        if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
+                            if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
+                                abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
+                                has_visual_difference = True
+                                break
+                        
                         # Check colors (if one is visibly different)
                         if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
                             # Only consider color difference significant if it's visible
-                            if (abs(new_strand.color.red() - original_strand.color.red()) > 5 or
-                                abs(new_strand.color.green() - original_strand.color.green()) > 5 or
-                                abs(new_strand.color.blue() - original_strand.color.blue()) > 5 or
-                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 5):
+                            if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
+                                abs(new_strand.color.green() - original_strand.color.green()) > 0 or
+                                abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
+                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                 has_visual_difference = True
                                 break
                     
@@ -1846,6 +1894,12 @@ def connect_to_move_mode(canvas, undo_redo_manager):
         undo_redo_manager: The UndoRedoManager instance
     """
     if hasattr(canvas, 'move_mode') and canvas.move_mode:
+        # Store a reference to the undo_redo_manager in the canvas
+        canvas.undo_redo_manager = undo_redo_manager
+        
+        # Also store a reference in the move_mode directly to ensure it's available
+        canvas.move_mode.undo_redo_manager = undo_redo_manager
+        
         # Store the original mouseReleaseEvent function
         original_mouse_release = canvas.move_mode.mouseReleaseEvent
         
@@ -1859,6 +1913,9 @@ def connect_to_move_mode(canvas, undo_redo_manager):
             
             # Now, save state only if a move actually happened during the drag
             if was_moving:
+                # If a control point was being moved, reset the last save time to force a new state
+                if getattr(canvas.move_mode, 'is_moving_control_point', False):
+                    undo_redo_manager._last_save_time = 0
                 logging.info("Move detected, saving state for undo/redo.")
                 undo_redo_manager.save_state()
             else:

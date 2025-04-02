@@ -1445,12 +1445,29 @@ class UndoRedoManager(QObject):
                 # Load strands and groups from the specified file
                 strands, groups = load_strands(filepath, self.canvas)
                 logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
+                
+                # First inspect the raw JSON directly to ensure we didn't miss anything
+                with open(filepath, 'r') as f:
+                    raw_data = json.load(f)
+                    has_groups_in_file = 'groups' in raw_data and bool(raw_data.get('groups', {}))
+                    if has_groups_in_file:
+                        group_count = len(raw_data.get('groups', {}))
+                        group_names = list(raw_data.get('groups', {}).keys())
+                        logging.info(f"Raw file contains {group_count} groups: {group_names}")
+                        
+                        # Ensure the groups data is properly loaded
+                        if not groups and has_groups_in_file:
+                            groups = raw_data.get('groups', {})
+                            logging.info(f"Recovered groups directly from raw file data: {list(groups.keys())}")
 
                 # Apply the loaded state to the canvas
                 self.canvas.strands = strands
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = groups
-                logging.info("Applied loaded state to canvas")
+                    logging.info(f"Applied loaded state to canvas with {len(groups)} groups: {list(groups.keys())}")
+                else:
+                    self.canvas.groups = {}
+                    logging.warning("Canvas had no groups attribute, created empty one")
 
                 # Set the step pointers to match the loaded state
                 self.current_step = loaded_step
@@ -1460,6 +1477,49 @@ class UndoRedoManager(QObject):
                 # Refresh UI
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
+                    logging.info("Layer panel refreshed via its refresh method")
+                
+                # Now handle the group panel update
+                state_has_groups = bool(self.canvas.groups)
+                logging.info(f"State has groups: {state_has_groups}")
+                
+                # --- Perform comprehensive group panel refresh ---
+                if state_has_groups and hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+                    group_manager = self.canvas.group_layer_manager
+                    group_panel = getattr(group_manager, 'group_panel', None)
+                    
+                    if group_panel:
+                        # First clear the current group panel UI
+                        logging.info("Clearing group panel UI before rebuilding it")
+                        self._clear_group_panel_ui(group_panel)
+                        
+                        # Rebuild the group panel UI from scratch
+                        success = self._recreate_group_widgets_from_canvas(group_panel)
+                        logging.info(f"Recreated group widgets from canvas.groups: success={success}")
+                        
+                        # If that didn't work, try group_layer_manager's refresh method
+                        if not success and hasattr(group_manager, 'refresh'):
+                            logging.info("Calling group_layer_manager.refresh() as a fallback")
+                            group_manager.refresh()
+                            
+                        # Final approach: recreate each group manually
+                        if hasattr(group_panel, 'create_group') and not success:
+                            logging.info("Final approach: Manually creating each group")
+                            for group_name, group_data in self.canvas.groups.items():
+                                if 'strands' in group_data and group_data['strands']:
+                                    try:
+                                        logging.info(f"Manually creating group '{group_name}' with {len(group_data['strands'])} strands")
+                                        group_panel.create_group(group_name, group_data['strands'])
+                                    except Exception as e:
+                                        logging.error(f"Error creating group '{group_name}': {e}")
+                            
+                        # Force UI update
+                        group_panel.update()
+                        if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
+                            group_panel.scroll_area.update()
+                        
+                        logging.info(f"Final group count in panel: {len(group_panel.groups) if hasattr(group_panel, 'groups') else 'Unknown'}")
+                
                 self.canvas.update()
                 self.state_saved.emit(self.current_step) # Emit signal to update buttons
 

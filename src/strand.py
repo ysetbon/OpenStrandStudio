@@ -1758,7 +1758,7 @@ class AttachedStrand(Strand):
         try:
             # Import is inside try block to handle potential import errors
             from shader_utils import draw_strand_shadow, draw_circle_shadow
-
+            
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 # Use canvas's shadow color if available
@@ -1767,10 +1767,10 @@ class AttachedStrand(Strand):
                     shadow_color = self.canvas.default_shadow_color
                     # Ensure the strand's shadow color is also updated for future reference
                     self.shadow_color = QColor(shadow_color)
-
+                
                 # Draw strand body shadow with explicit shadow color
                 draw_strand_shadow(painter, self, shadow_color)
-
+                
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):
                     draw_circle_shadow(painter, self, shadow_color)

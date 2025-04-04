@@ -1143,20 +1143,9 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
-        # Draw current mode's custom visualizations (e.g., MoveMode highlights)
-        # --- MODIFICATION START ---
-        # Only call current_mode.draw() if it's NOT MoveMode OR if MoveMode is NOT currently moving.
-        # The optimized_paint_event in MoveMode handles drawing during movement.
-        should_call_mode_draw = True
-        if isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving', False):
-            should_call_mode_draw = False
-
-        if should_call_mode_draw and hasattr(self.current_mode, 'draw'):
-            logging.info(f"Canvas paintEvent calling current_mode.draw() for mode: {type(self.current_mode).__name__}")
+        # Draw current mode's custom visualizations (including selected attached strand)
+        if hasattr(self.current_mode, 'draw'):
             self.current_mode.draw(painter)
-        elif not should_call_mode_draw:
-            logging.info(f"Canvas paintEvent skipping current_mode.draw() because MoveMode is active and moving.")
-        # --- MODIFICATION END ---
 
         # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
         if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check

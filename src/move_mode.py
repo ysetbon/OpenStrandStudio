@@ -546,40 +546,28 @@ class MoveMode:
                 logging.info(f"MoveMode (Optimized Paint): Drawing truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
                 # --- END LOGGING ---
 
-                # --- Determine which strands need C-shape highlights ---
-                strands_needing_c_shape = set()
-                # Check movement state using the move_mode reference
+                # --- DRAW C-SHAPE EARLY --- 
                 is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
                 affected_strand = getattr(move_mode, 'affected_strand', None)
-                # Highlight the moving endpoint strand if it's selected
                 if is_moving_strand_point and affected_strand and affected_strand.is_selected:
-                    strands_needing_c_shape.add(affected_strand)
-                # (Static highlighting is handled by the non-optimized path via self.draw)
-                # --- End Determine C-shape strands ---
+                    logging.info(f"MoveMode: Drawing C-shape EARLY for affected: {affected_strand.layer_name}")
+                    move_mode.draw_c_shape_for_strand(painter, affected_strand)
+                # --- END DRAW C-SHAPE EARLY ---
 
                 # Now draw only the truly moving strands on top - maintain their original relative order
                 sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
 
-                # --- DRAW ALL MOVING STRAND BODIES & INTEGRATED C-SHAPES ---
-                logging.info("MoveMode: Drawing moving C-shapes and strand bodies")
+                # --- DRAW ALL MOVING STRAND BODIES (AFTER C-SHAPE) --- 
+                logging.info("MoveMode: Drawing moving strand bodies")
                 for strand in sorted_moving_strands:
                     if hasattr(strand, 'draw'):
-                        # --- DRAW C-SHAPE BEFORE BODY --- 
-                        # Check if this strand is one needing the C-shape highlight
-                        if strand in strands_needing_c_shape:
-                             logging.info(f"MoveMode: Drawing C-shape integrated for: {strand.layer_name}")
-                             # Use the move_mode reference to call the method
-                             move_mode.draw_c_shape_for_strand(painter, strand)
-                        # --- END DRAW C-SHAPE BEFORE BODY ---
-
-                        # --- DRAW STRAND BODY --- 
+                        # Temporarily deselect to avoid default highlights
                         original_selected_state = strand.is_selected
-                        strand.is_selected = False # Temporarily deselect for body drawing
+                        strand.is_selected = False 
                         strand.draw(painter)
                         strand.is_selected = original_selected_state # Restore selection state
-                        # --- END DRAW STRAND BODY --- 
-                # --- END DRAWING LOOP ---
-
+                # --- END DRAWING MOVING BODIES ---
+                
                 # Special handling for MaskedStrand (might be redundant if included in truly_moving_strands)
                 if isinstance(active_strand, MaskedStrand):
                     logging.info("MoveMode: Special drawing for MaskedStrand")
@@ -593,6 +581,20 @@ class MoveMode:
                             constituent_strands.append(strand)
                     sorted_moving_strands = constituent_strands
                 
+                # Control point drawing logic is implicitly handled by the body drawing loop above
+                is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
+
+                # --- REMOVE POST-BODY C-SHAPE DRAW --- 
+                # is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                # affected_strand = getattr(move_mode, 'affected_strand', None)
+                # if is_moving_strand_point and affected_strand and affected_strand.is_selected:
+                #     logging.info(f"MoveMode: Drawing C-shape POST bodies for affected: {affected_strand.layer_name}")
+                #     move_mode.draw_c_shape_for_strand(painter, affected_strand)
+                # --- END REMOVAL ---
+
+                # --- REMOVE REDUNDANT CALL TO draw_selected_attached_strand --- 
+                # (This was already removed in the previous edit, keeping it removed)
+                
                 # Draw the yellow selection rectangle on top of everything else
                 if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
                     logging.info("MoveMode: Drawing selection square")
@@ -604,7 +606,6 @@ class MoveMode:
                 
                 # Draw control points only for the moving strands
                 if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points:
-                    is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False) # Check here
                     if hasattr(self_canvas, 'draw_control_points'):
                         logging.info("MoveMode: Drawing control points")
                         # Save original strands
@@ -612,7 +613,7 @@ class MoveMode:
                         
                         # Check if we're moving a control point or a strand endpoint
                         is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
-                        is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False) # Use the variable checked earlier
+                        is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
                         
                         # If we're moving a control point or a strand endpoint, only draw for the affected strand
                         if is_moving_control_point or is_moving_strand_point:
@@ -1796,9 +1797,6 @@ class MoveMode:
             
         # Force an immediate update for continuous visual feedback
         self.canvas.update()
-
-        # *** ADD THIS LINE: Ensure active strand is set for optimized paint event ***
-        self.canvas.active_strand_for_drawing = self.affected_strand
 
     def move_masked_strand(self, new_pos, moving_side):
         """Move a masked strand's points.

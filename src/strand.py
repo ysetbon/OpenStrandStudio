@@ -422,36 +422,25 @@ class Strand:
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
             end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points for first segment with increased influence
-            # Distance factors control the "tension" of the curve
-            influence_factor_start = distance_vector(start_tangent)
-            #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
-            # Use a more stable distance calculation for better sensitivity to small movements
-            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
-            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
-            
-            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
-                        p0.y() + start_tangent_normalized.y() * dist1_start)
-            
-            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
-                        p2.y() - center_tangent_normalized.y() * dist1_center)
+            # Simple distance calculation based on direct distances between points
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
+
+            # Fixed fraction for influence
+            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+
+            # Calculate intermediate control points, incorporating p1 and p3 influence
+            # Ensure tangents are non-zero before using them
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
-            
-            # Calculate intermediate control points for second segment
-            influence_factor_end = distance_vector(end_tangent)
-            #influence factor for center with end 
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
-            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
-            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
-            
-            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
-                        p2.y() + center_tangent_normalized.y() * dist2_center)
-            
-            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
-                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
@@ -524,37 +513,25 @@ class Strand:
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
             end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points for first segment with increased influence
-            # Distance factors control the "tension" of the curve
-            influence_factor_start = distance_vector(start_tangent)
-            print("influence_factor_start: ", influence_factor_start)
-            #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
+            # Simple distance calculation based on direct distances between points
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Use a more stable distance calculation for better sensitivity to small movements
-            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
-            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
-            
-            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
-                        p0.y() + start_tangent_normalized.y() * dist1_start)
-            
-            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
-                        p2.y() - center_tangent_normalized.y() * dist1_center)
+            # Fixed fraction for influence
+            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+
+            # Calculate intermediate control points, incorporating p1 and p3 influence
+            # Ensure tangents are non-zero before using them
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
-            
-            # Calculate intermediate control points for second segment
-            influence_factor_end = distance_vector(end_tangent)
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
-            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
-            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
-            
-            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
-                        p2.y() + center_tangent_normalized.y() * dist2_center)
-            
-            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
-                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
@@ -1781,7 +1758,7 @@ class AttachedStrand(Strand):
         try:
             # Import is inside try block to handle potential import errors
             from shader_utils import draw_strand_shadow, draw_circle_shadow
-            
+
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 # Use canvas's shadow color if available
@@ -1790,10 +1767,10 @@ class AttachedStrand(Strand):
                     shadow_color = self.canvas.default_shadow_color
                     # Ensure the strand's shadow color is also updated for future reference
                     self.shadow_color = QColor(shadow_color)
-                
+
                 # Draw strand body shadow with explicit shadow color
                 draw_strand_shadow(painter, self, shadow_color)
-                
+
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):
                     draw_circle_shadow(painter, self, shadow_color)
@@ -2105,37 +2082,25 @@ class AttachedStrand(Strand):
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
             end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points for first segment with increased influence
-            # Distance factors control the "tension" of the curve
-            influence_factor_start = distance_vector(start_tangent)
-            print("influence_factor_start: ", influence_factor_start)
-            #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
+            # Simple distance calculation based on direct distances between points
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Use a more stable distance calculation for better sensitivity to small movements
-            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
-            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
-            
-            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
-                        p0.y() + start_tangent_normalized.y() * dist1_start)
-            
-            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
-                        p2.y() - center_tangent_normalized.y() * dist1_center)
+            # Fixed fraction for influence
+            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+
+            # Calculate intermediate control points, incorporating p1 and p3 influence
+            # Ensure tangents are non-zero before using them
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
-            
-            # Calculate intermediate control points for second segment
-            influence_factor_end = distance_vector(end_tangent)
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
-            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
-            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
-            
-            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
-                        p2.y() + center_tangent_normalized.y() * dist2_center)
-            
-            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
-                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)
@@ -2208,37 +2173,25 @@ class AttachedStrand(Strand):
             end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
             end_tangent_normalized = normalize_vector(end_tangent)
             
-            # Calculate intermediate control points for first segment with increased influence
-            # Distance factors control the "tension" of the curve
-            influence_factor_start = distance_vector(start_tangent)
-            print("influence_factor_start: ", influence_factor_start)
-            #influence factor for center with start 
-            influence_factor_center_with_start = distance_vector(QPointF(p2.x() - p1.x(), p2.y() - p1.y()))*0.5
+            # Simple distance calculation based on direct distances between points
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Use a more stable distance calculation for better sensitivity to small movements
-            dist1_start = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_start
-            dist1_center = math.sqrt((p2.x() - p0.x())**2 + (p2.y() - p0.y())**2) * influence_factor_center_with_start
-            
-            cp1 = QPointF(p0.x() + start_tangent_normalized.x() * dist1_start, 
-                        p0.y() + start_tangent_normalized.y() * dist1_start)
-            
-            cp2 = QPointF(p2.x() - center_tangent_normalized.x() * dist1_center,
-                        p2.y() - center_tangent_normalized.y() * dist1_center)
+            # Fixed fraction for influence
+            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+
+            # Calculate intermediate control points, incorporating p1 and p3 influence
+            # Ensure tangents are non-zero before using them
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
-            
-            # Calculate intermediate control points for second segment
-            influence_factor_end = distance_vector(end_tangent)
-            influence_factor_center_with_end = distance_vector(QPointF(p3.x() - p2.x(), p3.y() - p2.y()))*0.5
-            dist2_end = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_end
-            dist2_center = math.sqrt((p4.x() - p2.x())**2 + (p4.y() - p2.y())**2) * influence_factor_center_with_end
-            
-            cp3 = QPointF(p2.x() + center_tangent_normalized.x() * dist2_center,
-                        p2.y() + center_tangent_normalized.y() * dist2_center)
-            
-            cp4 = QPointF(p4.x() - end_tangent_normalized.x() * dist2_end,
-                        p4.y() - end_tangent_normalized.y() * dist2_end)
             
             # Second segment: center to end
             path.cubicTo(cp3, cp4, p4)

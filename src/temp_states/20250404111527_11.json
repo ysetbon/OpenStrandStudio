@@ -1,0 +1,115 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 896.0,
+        "y": 616.0
+      },
+      "end": {
+        "x": 1064.0,
+        "y": 280.0
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 170,
+        "b": 230,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "control_points": [
+        {
+          "x": 448.0,
+          "y": 616.0
+        },
+        {
+          "x": 812.0,
+          "y": 252.0
+        }
+      ],
+      "control_point_center": {
+        "x": 560.0,
+        "y": 280.0
+      },
+      "control_point_center_locked": true
+    },
+    {
+      "type": "Strand",
+      "index": 1,
+      "start": {
+        "x": 1031,
+        "y": 774
+      },
+      "end": {
+        "x": 1191,
+        "y": 236
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 170,
+        "b": 230,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "control_points": [
+        {
+          "x": 1344.0,
+          "y": 476.0
+        },
+        {
+          "x": 1036.0,
+          "y": 476.0
+        }
+      ],
+      "control_point_center": {
+        "x": 1190.0,
+        "y": 476.0
+      },
+      "control_point_center_locked": false
+    }
+  ],
+  "groups": {}
+}

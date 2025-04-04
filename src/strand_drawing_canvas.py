@@ -1143,9 +1143,20 @@ class StrandDrawingCanvas(QWidget):
             for strand in self.strands:
                 self.draw_strand_label(painter, strand)
 
-        # Draw current mode's custom visualizations (including selected attached strand)
-        if hasattr(self.current_mode, 'draw'):
+        # Draw current mode's custom visualizations (e.g., MoveMode highlights)
+        # --- MODIFICATION START ---
+        # Only call current_mode.draw() if it's NOT MoveMode OR if MoveMode is NOT currently moving.
+        # The optimized_paint_event in MoveMode handles drawing during movement.
+        should_call_mode_draw = True
+        if isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving', False):
+            should_call_mode_draw = False
+
+        if should_call_mode_draw and hasattr(self.current_mode, 'draw'):
+            logging.info(f"Canvas paintEvent calling current_mode.draw() for mode: {type(self.current_mode).__name__}")
             self.current_mode.draw(painter)
+        elif not should_call_mode_draw:
+            logging.info(f"Canvas paintEvent skipping current_mode.draw() because MoveMode is active and moving.")
+        # --- MODIFICATION END ---
 
         # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
         if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
@@ -3026,117 +3037,146 @@ class StrandDrawingCanvas(QWidget):
         # If control points are not enabled, don't draw anything
         if not self.show_control_points:
             return
-            
+
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         control_point_radius = 11  # Adjust as needed
-          
+
         stroke_color = QColor('black')
 
-        # Check if we're in move mode and if a control point is being moved
-        in_move_mode = hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode'
+        # Check MoveMode state and settings
+        in_move_mode = hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)
         moving_control_point = in_move_mode and getattr(self.current_mode, 'is_moving_control_point', False)
-        moving_strand_point = in_move_mode and getattr(self.current_mode, 'is_moving_strand_point', False)
-        moving_strand = getattr(self.current_mode, 'affected_strand', None) if in_move_mode else None
-        moving_side = getattr(self.current_mode, 'moving_side', None) if in_move_mode else None
+        moving_strand_point = in_move_mode and getattr(self.current_mode, 'is_moving_strand_point', False) # Keep this check
+        affected_strand = getattr(self.current_mode, 'affected_strand', None) if in_move_mode else None
+        moving_side = getattr(self.current_mode, 'moving_side', None) if in_move_mode else None # Added to access moving_side
 
+        draw_only_setting_on = False
+        if in_move_mode and hasattr(self.current_mode, 'draw_only_affected_strand'):
+            draw_only_setting_on = self.current_mode.draw_only_affected_strand
+
+        # --- Find connected strands if moving an endpoint with Draw Only ON ---
+        connected_strands_at_moving_point = set()
+        if draw_only_setting_on and moving_strand_point and affected_strand:
+            moving_point_coord = None
+            if moving_side == 0:
+                moving_point_coord = affected_strand.start
+            elif moving_side == 1:
+                moving_point_coord = affected_strand.end
+
+            if moving_point_coord:
+                for other_strand in self.strands:
+                    if other_strand == affected_strand or isinstance(other_strand, MaskedStrand):
+                        continue
+                    # Check both start and end points of the other strand
+                    if self.points_are_close(other_strand.start, moving_point_coord) or \
+                       self.points_are_close(other_strand.end, moving_point_coord):
+                        connected_strands_at_moving_point.add(other_strand)
+        # --- End finding connected strands ---
+
+        # Iterate through all strands
         for strand in self.strands:
             # Skip masked strands and strands without control points
             if isinstance(strand, MaskedStrand) or not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
                 continue
-                
             if strand.control_point1 is None or strand.control_point2 is None:
                 continue
 
-            # If we're moving a control point, only process the affected strand
-            if moving_control_point:
-                if strand != moving_strand:
-                    continue
-                
-                # Draw only the line and control point being moved
+            # --- Determine if we should skip drawing CPs for this strand ---
+            should_skip = False
+            if draw_only_setting_on:
+                if moving_control_point and strand != affected_strand:
+                    # Skip if moving a CP and this isn't the affected strand
+                    should_skip = True
+                elif moving_strand_point and strand != affected_strand and strand not in connected_strands_at_moving_point:
+                    # Skip if moving an endpoint, and this strand is not the affected one NOR connected at the moving point
+                    should_skip = True
+
+            if should_skip:
+                continue
+            # --- End skip logic ---
+
+            # Draw All Points for Affected Strand (when moving CP with Draw Only ON)
+            if draw_only_setting_on and moving_control_point and strand == affected_strand:
+                # --- Start Replacement: Draw ALL control points/lines for the affected strand ---
                 control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
                 painter.setPen(control_line_pen)
-                
-                # Draw only the line for the control point being moved
-                if moving_side == 'control_point1':
-                    painter.drawLine(strand.start, strand.control_point1)
-                elif moving_side == 'control_point2':
-                    painter.drawLine(strand.end, strand.control_point2)
-                # Only draw center control point lines if third control point is enabled
-                elif moving_side == 'control_point_center' and self.enable_third_control_point:
-                    # Draw dashed line from center control point to both start and end
+                painter.drawLine(strand.start, strand.control_point1)
+                # Use points_are_close for robustness
+                if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                     painter.drawLine(strand.start, strand.control_point2)
+                else:
+                     painter.drawLine(strand.end, strand.control_point2)
+
+                # Draw center control point lines if enabled
+                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                     painter.drawLine(strand.control_point_center, strand.control_point1)
                     painter.drawLine(strand.control_point_center, strand.control_point2)
-                
-                # Draw only the control point being moved
+
+                # Draw control points with stroke
                 stroke_pen = QPen(stroke_color, 5)
                 control_point_pen = QPen(QColor('green'), 1)
                 painter.setBrush(QBrush(QColor('green')))
-                
-                if moving_side == 'control_point2':
-                    # Draw control_point2 as a circle
+
+                # Draw control_point2 (circle)
+                painter.setPen(stroke_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+                painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+
+                # Draw control_point1 (triangle)
+                triangle = QPolygonF()
+                center_x = strand.control_point1.x()
+                # Adjust y slightly for better visual centering of triangle
+                center_y = strand.control_point1.y() + 1.06
+
+                # Create triangle vertices
+                angle1 = math.radians(270)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06 * math.cos(angle1),
+                    center_y + control_point_radius*1.06  * math.sin(angle1)
+                ))
+                angle2 = math.radians(30)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06  * math.cos(angle2),
+                    center_y + control_point_radius*1.06  * math.sin(angle2)
+                ))
+                angle3 = math.radians(150)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06  * math.cos(angle3),
+                    center_y + control_point_radius*1.06  * math.sin(angle3)
+                ))
+
+                # Draw stroke
+                painter.setPen(stroke_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(triangle)
+
+                # Draw fill
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+
+                # Create smaller triangle for fill
+                filled_triangle = QPolygonF()
+                scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
+                for point in triangle:
+                    vec_x = point.x() - center_x
+                    vec_y = point.y() - center_y
+                    filled_triangle.append(QPointF(
+                        center_x + vec_x * scale_factor,
+                        center_y + vec_y * scale_factor
+                    ))
+                painter.drawPolygon(filled_triangle)
+
+
+                # Draw control_point_center (square) if enabled
+                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                    # Draw stroke square
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
-                    painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
-                    
-                    painter.setPen(control_point_pen)
-                    painter.setBrush(QBrush(QColor('green')))
-                    painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)                
-
-                elif moving_side == 'control_point1':
-                    # Draw control_point1 as a triangle
-                    triangle = QPolygonF()
-                    center_x = strand.control_point1.x()
-                    center_y = strand.control_point1.y()
-                    
-                    # Create triangle vertices
-                    angle1 = math.radians(270)
-                    triangle.append(QPointF(
-                        center_x + control_point_radius * math.cos(angle1),
-                        center_y + control_point_radius * math.sin(angle1)
-                    ))
-                    angle2 = math.radians(30)
-                    triangle.append(QPointF(
-                        center_x + control_point_radius * math.cos(angle2),
-                        center_y + control_point_radius * math.sin(angle2)
-                    ))
-                    angle3 = math.radians(150)
-                    triangle.append(QPointF(
-                        center_x + control_point_radius * math.cos(angle3),
-                        center_y + control_point_radius * math.sin(angle3)
-                    ))
-                    
-                    # Draw stroke
-                    painter.setPen(stroke_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPolygon(triangle)
-                    
-                    # Draw fill
-                    painter.setPen(control_point_pen)
-                    painter.setBrush(QBrush(QColor('green')))
-                    
-                    # Create smaller triangle for fill
-                    filled_triangle = QPolygonF()
-                    scale_factor = (control_point_radius - 1) / control_point_radius
-                    for point in triangle:
-                        vec_x = point.x() - center_x
-                        vec_y = point.y() - center_y
-                        filled_triangle.append(QPointF(
-                            center_x + vec_x * scale_factor,
-                            center_y + vec_y * scale_factor
-                        ))
-                    painter.drawPolygon(filled_triangle)
-
-
-                    
-
-                
-                # Only draw center control point if third control point is enabled
-                elif moving_side == 'control_point_center' and self.enable_third_control_point:
-                    # Draw control_point_center as a square
-                    painter.setPen(stroke_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    square_size = control_point_radius * 2 * 0.618  # Made 0.618 times smaller
+                    square_size = control_point_radius * 2 * 0.618
                     square_rect = QRectF(
                         strand.control_point_center.x() - (control_point_radius * 0.618),
                         strand.control_point_center.y() - (control_point_radius * 0.618),
@@ -3144,8 +3184,7 @@ class StrandDrawingCanvas(QWidget):
                         square_size
                     )
                     painter.drawRect(square_rect)
-                    
-                    # Draw fill with slightly smaller square
+                    # Draw fill
                     painter.setPen(control_point_pen)
                     painter.setBrush(QBrush(QColor('green')))
                     inner_size = square_size - 2
@@ -3156,22 +3195,28 @@ class StrandDrawingCanvas(QWidget):
                         inner_size
                     )
                     painter.drawRect(inner_rect)
-                
-                continue
-            
-            # Normal drawing code when not moving a control point
+                # --- End Replacement ---
+
+                continue # Move to the next strand after drawing the points for the affected strand
+
+            # --- Normal Drawing Logic ---
+            # Executed when:
+            # 1. "Draw only" is OFF, regardless of movement.
+            # 2. "Draw only" is ON, but we are NOT moving.
+            # 3. "Draw only" is ON, we ARE moving a strand point, and this IS the affected strand OR a connected strand.
+            # Draw control point lines
             control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
             painter.setPen(control_line_pen)
             painter.drawLine(strand.start, strand.control_point1)
             if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                print("control_point2 is close to start")
+                print("control_point2 is close to start") # Keep debug print?
                 painter.drawLine(strand.start, strand.control_point2)
             else:
-                print("control_point2 is not close to start")
+                print("control_point2 is not close to start") # Keep debug print?
                 painter.drawLine(strand.end, strand.control_point2)
-            
+
             # Draw center control point lines if enabled
-            if self.enable_third_control_point:
+            if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                 painter.drawLine(strand.control_point_center, strand.control_point1)
                 painter.drawLine(strand.control_point_center, strand.control_point2)
 
@@ -3179,28 +3224,21 @@ class StrandDrawingCanvas(QWidget):
             stroke_pen = QPen(stroke_color, 5)
             control_point_pen = QPen(QColor('green'), 1)
             painter.setBrush(QBrush(QColor('green')))
-            
 
-            
             # Draw control_point2 (circle)
             painter.setPen(stroke_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
-            
+
             painter.setPen(control_point_pen)
             painter.setBrush(QBrush(QColor('green')))
             painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
-
-            # Draw control points with stroke
-            stroke_pen = QPen(stroke_color, 5)
-            control_point_pen = QPen(QColor('green'), 1)
-            painter.setBrush(QBrush(QColor('green')))
 
             # Draw control_point1 (triangle)
             triangle = QPolygonF()
             center_x = strand.control_point1.x()
             center_y = strand.control_point1.y()+1.06
-            
+
             # Create triangle vertices
             angle1 = math.radians(270)
             triangle.append(QPointF(
@@ -3217,16 +3255,16 @@ class StrandDrawingCanvas(QWidget):
                 center_x + control_point_radius*1.06  * math.cos(angle3),
                 center_y + control_point_radius*1.06  * math.sin(angle3)
             ))
-            
+
             # Draw stroke
             painter.setPen(stroke_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawPolygon(triangle)
-            
+
             # Draw fill
             painter.setPen(control_point_pen)
             painter.setBrush(QBrush(QColor('green')))
-            
+
             # Create smaller triangle for fill
             filled_triangle = QPolygonF()
             scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
@@ -3237,9 +3275,10 @@ class StrandDrawingCanvas(QWidget):
                     center_x + vec_x * scale_factor,
                     center_y + vec_y * scale_factor
                 ))
-            painter.drawPolygon(filled_triangle)            
+            painter.drawPolygon(filled_triangle)
+
             # Draw control_point_center (square) if enabled
-            if self.enable_third_control_point:
+            if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                 # Draw stroke square
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)
@@ -3251,7 +3290,7 @@ class StrandDrawingCanvas(QWidget):
                     square_size
                 )
                 painter.drawRect(square_rect)
-                
+
                 # Draw fill with slightly smaller square
                 painter.setPen(control_point_pen)
                 painter.setBrush(QBrush(QColor('green')))
@@ -3265,7 +3304,7 @@ class StrandDrawingCanvas(QWidget):
                 painter.drawRect(inner_rect)
 
         painter.restore()
-        
+
     # Add a setter for enable_third_control_point to handle resetting control points
     @property
     def enable_third_control_point(self):

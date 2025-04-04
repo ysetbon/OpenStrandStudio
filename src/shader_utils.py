@@ -362,10 +362,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         continue
                 
                 # Check if this is a main strand and if the current side has no attachment
-                is_main_strand = hasattr(strand, 'is_main_strand') and strand.is_main_strand
+                is_main_strand = strand.__class__.__name__ != 'AttachedStrand'
                 has_attachment = False
                 
-                # Check if there's an attachment on this side
+                # If it's a main strand, check for attachments at this specific end
                 if is_main_strand and hasattr(strand, 'canvas') and strand.canvas:
                     side_point = strand.start if idx == 0 else strand.end
                     for other_strand in strand.canvas.strands:
@@ -374,13 +374,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                             continue
                         
                         # Check if other strand is attached to this strand at this point
-                        if hasattr(other_strand, 'attached_to') and other_strand.attached_to is strand:
-                            if hasattr(other_strand, 'attachment_point'):
-                                # Check if attachment point matches this side's point
-                                if (idx == 0 and other_strand.attachment_point == 'start') or \
-                                   (idx == 1 and other_strand.attachment_point == 'end'):
-                                    has_attachment = True
-                                    break
+                        if other_strand.__class__.__name__ == 'AttachedStrand':
+                             # Check if the AttachedStrand starts exactly at the main strand's end point
+                            if (other_strand.start - side_point).manhattanLength() < 1:
+                                has_attachment = True
+                                break # Found an attachment, no need to check further
                 
                 # Skip circle shadow for main strands without attachments on this side
                 if is_main_strand and not has_attachment:

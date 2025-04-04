@@ -531,87 +531,67 @@ class MoveMode:
             # Draw the cached background first (has everything except truly moving strands)
             painter = QtGui.QPainter(self_canvas)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
-            
+
             try:
-                # Draw the cached background first (has everything except truly moving strands)
                 if hasattr(self_canvas, 'background_cache'):
                     logging.info("MoveMode: Drawing background cache")
                     painter.drawPixmap(0, 0, self_canvas.background_cache)
                 else:
                     logging.warning("MoveMode: No background cache to draw!")
-                
+
+                # Get the truly moving strands list prepared by update_strand_position
+                truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
+
+                # --- ADD LOGGING HERE ---
+                logging.info(f"MoveMode (Optimized Paint): Drawing truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
+                # --- END LOGGING ---
+
+                # --- Determine which strands need C-shape highlights ---
+                strands_needing_c_shape = set()
+                # Check movement state using the move_mode reference
+                is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                affected_strand = getattr(move_mode, 'affected_strand', None)
+                # Highlight the moving endpoint strand if it's selected
+                if is_moving_strand_point and affected_strand and affected_strand.is_selected:
+                    strands_needing_c_shape.add(affected_strand)
+                # (Static highlighting is handled by the non-optimized path via self.draw)
+                # --- End Determine C-shape strands ---
+
                 # Now draw only the truly moving strands on top - maintain their original relative order
                 sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
-                
-                # Special handling for MaskedStrand to ensure both constituent strands are drawn
+
+                # --- DRAW ALL MOVING STRAND BODIES & INTEGRATED C-SHAPES ---
+                logging.info("MoveMode: Drawing moving C-shapes and strand bodies")
+                for strand in sorted_moving_strands:
+                    if hasattr(strand, 'draw'):
+                        # --- DRAW C-SHAPE BEFORE BODY --- 
+                        # Check if this strand is one needing the C-shape highlight
+                        if strand in strands_needing_c_shape:
+                             logging.info(f"MoveMode: Drawing C-shape integrated for: {strand.layer_name}")
+                             # Use the move_mode reference to call the method
+                             move_mode.draw_c_shape_for_strand(painter, strand)
+                        # --- END DRAW C-SHAPE BEFORE BODY ---
+
+                        # --- DRAW STRAND BODY --- 
+                        original_selected_state = strand.is_selected
+                        strand.is_selected = False # Temporarily deselect for body drawing
+                        strand.draw(painter)
+                        strand.is_selected = original_selected_state # Restore selection state
+                        # --- END DRAW STRAND BODY --- 
+                # --- END DRAWING LOOP ---
+
+                # Special handling for MaskedStrand (might be redundant if included in truly_moving_strands)
                 if isinstance(active_strand, MaskedStrand):
                     logging.info("MoveMode: Special drawing for MaskedStrand")
-                    # For MaskedStrand, include both selected strands in the draw list
                     constituent_strands = []
                     if hasattr(active_strand, 'first_selected_strand') and active_strand.first_selected_strand:
                         constituent_strands.append(active_strand.first_selected_strand)
                     if hasattr(active_strand, 'second_selected_strand') and active_strand.second_selected_strand:
                         constituent_strands.append(active_strand.second_selected_strand)
-                    
-                    # Combine with other moving strands
                     for strand in sorted_moving_strands:
                         if strand not in constituent_strands:
                             constituent_strands.append(strand)
-                    
-                    # Use these strands for drawing
                     sorted_moving_strands = constituent_strands
-                
-                # When moving control points, make sure we preserve the original z-ordering of all strands
-                is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
-                if is_moving_control_point:
-                    logging.info("MoveMode: Drawing for control point movement")
-                    # For control points, we only draw the affected strand on top of everything else
-                    affected_strand = move_mode.affected_strand if hasattr(move_mode, 'affected_strand') else None
-                    
-                    # Draw all strands in their original order except the affected strand
-                    for strand in original_strands_order:
-                        if strand != affected_strand and hasattr(strand, 'draw'):
-                            strand.draw(painter)
-                    
-                    # Finally draw the affected strand on top
-                    if affected_strand and hasattr(affected_strand, 'draw'):
-                        affected_strand.draw(painter)
-                else:
-                    # Normal case - draw moving strands on top in their original order
-                    # For edited masks, ensure we explicitly draw both constituent strands
-                    if isinstance(active_strand, MaskedStrand):
-                        logging.info("MoveMode: Drawing MaskedStrand components")
-                        # Draw first the masked strand itself
-                        if hasattr(active_strand, 'draw'):
-                            active_strand.draw(painter)
-                            
-                        # Then draw the constituent strands
-                        if hasattr(active_strand, 'first_selected_strand') and active_strand.first_selected_strand and hasattr(active_strand.first_selected_strand, 'draw'):
-                            active_strand.first_selected_strand.draw(painter)
-                            
-                        if hasattr(active_strand, 'second_selected_strand') and active_strand.second_selected_strand and hasattr(active_strand.second_selected_strand, 'draw'):
-                            active_strand.second_selected_strand.draw(painter)
-                            
-                        # Draw any other moving strands that aren't part of the masked strand
-                        for strand in sorted_moving_strands:
-                            if (strand != active_strand and 
-                                strand != getattr(active_strand, 'first_selected_strand', None) and 
-                                strand != getattr(active_strand, 'second_selected_strand', None) and
-                                hasattr(strand, 'draw')):
-                                strand.draw(painter)
-                    else:
-                        # Standard drawing for non-masked strands
-                        logging.info("MoveMode: Drawing %d standard moving strands", len(sorted_moving_strands))
-                        for strand in sorted_moving_strands:
-                            if hasattr(strand, 'draw'):
-                                strand.draw(painter)
-                
-                # Skip drawing C-shape when moving control points
-                if not is_moving_control_point and not (hasattr(move_mode, 'moving_side') and move_mode.moving_side in ('control_point1', 'control_point2')):
-                    # Draw the C-shape specifically for the active strand
-                    if hasattr(move_mode, 'draw_selected_attached_strand'):
-                        logging.info("MoveMode: Drawing C-shape highlights")
-                        move_mode.draw_selected_attached_strand(painter)
                 
                 # Draw the yellow selection rectangle on top of everything else
                 if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
@@ -624,6 +604,7 @@ class MoveMode:
                 
                 # Draw control points only for the moving strands
                 if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points:
+                    is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False) # Check here
                     if hasattr(self_canvas, 'draw_control_points'):
                         logging.info("MoveMode: Drawing control points")
                         # Save original strands
@@ -631,7 +612,7 @@ class MoveMode:
                         
                         # Check if we're moving a control point or a strand endpoint
                         is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
-                        is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                        is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False) # Use the variable checked earlier
                         
                         # If we're moving a control point or a strand endpoint, only draw for the affected strand
                         if is_moving_control_point or is_moving_strand_point:
@@ -1000,153 +981,28 @@ class MoveMode:
         """
         import logging
         from PyQt5.QtCore import QPointF, QTimer
-        
-        # Simple flag to track if we need to reselect a masked strand
-        need_to_reselect_masked_strand = False
-        strand_to_reselect = None
-        
-        # Store the current affected strand for later use
-        current_affected_strand = self.affected_strand
-        current_originally_selected = self.originally_selected_strand
-        
-        # Check if we were moving a control point - this is important for undo/redo state tracking
-        was_moving_control_point = self.is_moving_control_point
 
-        
-        # Check for ANY movement of a masked strand (control points or regular movement)
-        if self.is_moving and self.moving_point:
-            # For control point movement
-            if self.moving_side == 'control_point1' or self.moving_side == 'control_point2':
-                if current_affected_strand and isinstance(current_affected_strand, MaskedStrand):
-                    need_to_reselect_masked_strand = True
-                    strand_to_reselect = current_affected_strand
-                    logging.info(f"Will reselect affected masked strand (control point): {current_affected_strand.layer_name}")
-                elif current_originally_selected and isinstance(current_originally_selected, MaskedStrand):
-                    need_to_reselect_masked_strand = True
-                    strand_to_reselect = current_originally_selected
-                    logging.info(f"Will reselect originally selected masked strand (control point): {current_originally_selected.layer_name}")
-            # For regular strand movement (start, end, or body)
-            elif current_affected_strand and isinstance(current_affected_strand, MaskedStrand):
-                need_to_reselect_masked_strand = True
-                strand_to_reselect = current_affected_strand
-                logging.info(f"Will reselect affected masked strand (regular movement): {current_affected_strand.layer_name}")
-            elif current_originally_selected and isinstance(current_originally_selected, MaskedStrand):
-                need_to_reselect_masked_strand = True
-                strand_to_reselect = current_originally_selected
-                logging.info(f"Will reselect originally selected masked strand (regular movement): {current_originally_selected.layer_name}")
-        
-        # Stop the hold timer if it exists
+        # Store relevant state before resetting
+        was_moving = self.is_moving
+        final_pos = event.pos()
+        original_selection_ref = self.originally_selected_strand # Keep a reference
+        was_moving_control_point = self.is_moving_control_point
+        affected_strand_ref = self.affected_strand # Keep ref for potential masked strand check
+
+        # --- 1. Stop Timers ---
         if hasattr(self, 'hold_timer'):
             self.hold_timer.stop()
-            
-        # Stop the continuous redraw timer if it exists
         if hasattr(self, 'redraw_timer'):
             self.redraw_timer.stop()
-        
-        if self.is_moving and self.moving_point:
+
+        # --- 2. Final Position Update (if moving) ---
+        if was_moving:
             # Snap the final position once on release
-            final_snapped_pos = self.canvas.snap_to_grid(event.pos())
-            self.update_strand_position(final_snapped_pos)
+            final_snapped_pos = self.canvas.snap_to_grid(final_pos)
+            # Update geometry *without* triggering optimized drawing paths now
+            self.update_strand_geometry_only(final_snapped_pos)
 
-            # Restore original paint event
-            if hasattr(self.canvas, 'original_paintEvent'):
-                self.canvas.paintEvent = self.canvas.original_paintEvent
-                delattr(self.canvas, 'original_paintEvent')
-            
-            # Clean up all temp attributes
-            if hasattr(self.canvas, 'active_strand_for_drawing'):
-                self.canvas.active_strand_for_drawing = None
-            if hasattr(self.canvas, 'active_strand_update_rect'):
-                self.canvas.active_strand_update_rect = None
-            if hasattr(self.canvas, 'last_strand_rect'):
-                delattr(self.canvas, 'last_strand_rect')
-            if hasattr(self.canvas, 'background_cache'):
-                delattr(self.canvas, 'background_cache')
-            if hasattr(self.canvas, 'background_cache_valid'):
-                delattr(self.canvas, 'background_cache_valid')
-            if hasattr(self.canvas, 'movement_first_draw'):
-                delattr(self.canvas, 'movement_first_draw')
-            if hasattr(self.canvas, 'affected_strands_for_drawing'):
-                delattr(self.canvas, 'affected_strands_for_drawing')
-            if hasattr(self.canvas, 'truly_moving_strands'):
-                delattr(self.canvas, 'truly_moving_strands')
-            
-            # Reset control point movement flag
-            self.is_moving_control_point = False
-            # Reset strand point movement flag
-            self.is_moving_strand_point = False
-            
-            # If we were moving a control point, ensure a state is saved for undo/redo
-            if was_moving_control_point and hasattr(self.canvas, 'undo_redo_manager'):
-                logging.info("MoveMode: Control point movement completed, saving state for undo/redo")
-                # Reset last save time to ensure this gets saved as a new state
-                if hasattr(self.canvas.undo_redo_manager, '_last_save_time'):
-                    self.canvas.undo_redo_manager._last_save_time = 0
-                # Save the state
-                self.canvas.undo_redo_manager.save_state()
-            # Also try with our internal reference
-            elif was_moving_control_point and hasattr(self, 'undo_redo_manager'):
-                logging.info("MoveMode: Control point movement completed, using internal undo_redo_manager")
-                # Reset last save time to ensure this gets saved as a new state
-                if hasattr(self.undo_redo_manager, '_last_save_time'):
-                    self.undo_redo_manager._last_save_time = 0
-                # Save the state
-                self.undo_redo_manager.save_state()
-            
-            # Reset time limiter
-            self.last_update_time = 0
-
-        # Deselect all strands first
-        for strand in self.canvas.strands:
-            strand.is_selected = False
-            if isinstance(strand, AttachedStrand):
-                for attached in strand.attached_strands:
-                    attached.is_selected = False
-
-        # Clear both selection properties to prevent conflicts
-        self.canvas.selected_attached_strand = None
-        self.canvas.selected_strand = None
-
-        # SIMPLE APPROACH: If we need to reselect a masked strand, do it now
-        if need_to_reselect_masked_strand and strand_to_reselect:
-            logging.info(f"Reselecting masked strand: {strand_to_reselect.layer_name}")
-            strand_to_reselect.is_selected = True
-            self.canvas.selected_strand = strand_to_reselect
-        # Otherwise handle other cases
-        elif self.user_deselected_all:
-            # If user explicitly deselected all strands, keep selection cleared
-            logging.info("MoveMode: User deselected all strands")
-        elif self.originally_selected_strand:
-            logging.info(f"MoveMode: Selecting originally_selected_strand: {self.originally_selected_strand.__class__.__name__}")
-            self.originally_selected_strand.is_selected = True
-            if isinstance(self.originally_selected_strand, MaskedStrand):
-                self.canvas.selected_strand = self.originally_selected_strand
-            else:
-                self.canvas.selected_attached_strand = self.originally_selected_strand
-        elif current_affected_strand:
-            logging.info(f"MoveMode: Selecting current_affected_strand: {current_affected_strand.__class__.__name__}")
-            current_affected_strand.is_selected = True
-            if isinstance(current_affected_strand, MaskedStrand):
-                self.canvas.selected_strand = current_affected_strand
-            else:
-                self.canvas.selected_attached_strand = current_affected_strand
-        elif self.highlighted_strand:
-            logging.info(f"MoveMode: Selecting highlighted_strand: {self.highlighted_strand.__class__.__name__}")
-            self.highlighted_strand.is_selected = True
-            if isinstance(self.highlighted_strand, MaskedStrand):
-                self.canvas.selected_strand = self.highlighted_strand
-            else:
-                self.canvas.selected_attached_strand = self.highlighted_strand
-
-        # Log the final selection state
-        if self.canvas.selected_strand:
-            logging.info(f"MoveMode: Final selection - selected_strand: {self.canvas.selected_strand.layer_name}")
-        elif self.canvas.selected_attached_strand:
-            logging.info(f"MoveMode: Final selection - selected_attached_strand: {self.canvas.selected_attached_strand.layer_name}")
-        else:
-            logging.info("MoveMode: Final selection - No strand selected")
-
-        # Reset all properties
+        # --- 3. Reset MoveMode State COMPLETELY ---
         self.is_moving = False
         self.moving_point = None
         self.affected_strand = None
@@ -1156,16 +1012,137 @@ class MoveMode:
         self.accumulated_delta = QPointF(0, 0)
         self.last_snapped_pos = None
         self.target_pos = None
-        self.move_timer.stop()
+        if hasattr(self, 'move_timer'): # Check if timer exists before stopping
+            self.move_timer.stop()
         self.in_move_mode = False
-        self.temp_selected_strand = None  # Reset temporary selection
-        self.last_update_rect = None  # Clear the last update rect
+        self.temp_selected_strand = None
+        self.last_update_rect = None
+        self.is_moving_control_point = False
+        self.is_moving_strand_point = False
+        # Keep originally_selected_strand for now, clear user_deselected_all
+        self.user_deselected_all = False # Reset this flag on release
+        self.last_update_time = 0 # Reset time limiter
 
-        # We keep originally_selected_strand to maintain selection between events
-        # Don't reset it here as it's needed for proper selection persistence
+        # --- 4. Clean up Canvas Temp Attributes & Restore Paint Event ---
+        if hasattr(self.canvas, 'original_paintEvent'):
+            self.canvas.paintEvent = self.canvas.original_paintEvent
+            delattr(self.canvas, 'original_paintEvent')
+        # Cleanup optimization attributes
+        attrs_to_clean = ['active_strand_for_drawing', 'active_strand_update_rect',
+                          'last_strand_rect', 'background_cache', 'background_cache_valid',
+                          'movement_first_draw', 'affected_strands_for_drawing',
+                          'truly_moving_strands', '_frames_since_click']
+        for attr in attrs_to_clean:
+            if hasattr(self.canvas, attr):
+                delattr(self.canvas, attr)
+
+        # --- 5. Restore Selection State --- 
+        # Deselect everything first
+        for strand in self.canvas.strands:
+            strand.is_selected = False
+            if hasattr(strand, 'attached_strands'):
+                for attached in strand.attached_strands:
+                    attached.is_selected = False
+        self.canvas.selected_strand = None
+        self.canvas.selected_attached_strand = None
+
+        # Now, re-select based on the original selection saved at the start of the move
+        final_selected_strand = None
+        if original_selection_ref:
+            # Ensure the originally selected strand still exists
+            if original_selection_ref in self.canvas.strands:
+                 final_selected_strand = original_selection_ref
+                 final_selected_strand.is_selected = True
+                 logging.info(f"MoveMode: Restoring original selection: {final_selected_strand.layer_name}")
+            else:
+                 logging.warning("MoveMode: Originally selected strand no longer exists.")
+        # Special case: If we moved a MaskedStrand that wasn't the original selection
+        elif affected_strand_ref and isinstance(affected_strand_ref, MaskedStrand) and affected_strand_ref in self.canvas.strands:
+            final_selected_strand = affected_strand_ref
+            final_selected_strand.is_selected = True
+            logging.info(f"MoveMode: Selecting moved MaskedStrand: {final_selected_strand.layer_name}")
         
-        # Force redraw after a short delay to ensure selection is visible
-        QTimer.singleShot(10, self.canvas.update)
+        # Assign to correct canvas attribute
+        if final_selected_strand:
+             if isinstance(final_selected_strand, MaskedStrand):
+                 self.canvas.selected_strand = final_selected_strand
+                 self.canvas.selected_attached_strand = None
+             else:
+                 # Assume it's an attached strand if not MaskedStrand
+                 self.canvas.selected_attached_strand = final_selected_strand
+                 self.canvas.selected_strand = None # Ensure main selection is clear
+
+        # Log final selection state for debugging
+        if self.canvas.selected_strand:
+            logging.info(f"MoveMode: Final selection - selected_strand: {self.canvas.selected_strand.layer_name}")
+        elif self.canvas.selected_attached_strand:
+            logging.info(f"MoveMode: Final selection - selected_attached_strand: {self.canvas.selected_attached_strand.layer_name}")
+        else:
+            logging.info("MoveMode: Final selection - No strand selected")
+
+        # Clear the reference now that selection is restored
+        self.originally_selected_strand = None 
+
+        # --- 6. Save State if Control Point Moved ---
+        if was_moving_control_point and hasattr(self, 'undo_redo_manager'):
+             logging.info("MoveMode: Control point movement finished, saving state.")
+             if hasattr(self.undo_redo_manager, '_last_save_time'): self.undo_redo_manager._last_save_time = 0
+             self.undo_redo_manager.save_state()
+
+        # --- 7. Force Updates ---
+        self.canvas.update() # Force immediate redraw with restored state
+        QTimer.singleShot(0, self.canvas.update) # Schedule another for next cycle
+
+    def update_strand_geometry_only(self, new_pos):
+        """ Update strand geometry without triggering drawing optimizations or selection changes."""
+        if not self.affected_strand: return
+        # Apply minimum distance constraint
+        if self.moving_side == 0:
+            other_point = self.affected_strand.end
+            if self.calculate_distance(new_pos, other_point) < self.MIN_STRAND_POINTS_DISTANCE:
+                new_pos = self.adjust_position_to_maintain_distance(new_pos, other_point)
+        elif self.moving_side == 1:
+            other_point = self.affected_strand.start
+            if self.calculate_distance(new_pos, other_point) < self.MIN_STRAND_POINTS_DISTANCE:
+                new_pos = self.adjust_position_to_maintain_distance(new_pos, other_point)
+
+        # Update based on moving side
+        if self.moving_side == 'control_point1':
+            self.affected_strand.control_point1 = new_pos
+        elif self.moving_side == 'control_point2':
+            self.affected_strand.control_point2 = new_pos
+        elif self.moving_side == 'control_point_center':
+             self.affected_strand.control_point_center = new_pos
+             self.affected_strand.control_point_center_locked = True
+        elif self.moving_side == 0:
+            self.affected_strand.start = new_pos
+        elif self.moving_side == 1:
+            self.affected_strand.end = new_pos
+        
+        # Update shape and potentially connected strands (geometry only)
+        self.affected_strand.update_shape()
+        if hasattr(self.affected_strand, 'update_side_line'): self.affected_strand.update_side_line()
+
+        # Update connected strands geometry if moving an endpoint
+        if self.moving_side == 0 or self.moving_side == 1:
+            moving_point_coord = self.affected_strand.start if self.moving_side == 0 else self.affected_strand.end
+            for other_strand in self.canvas.strands:
+                 if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand): continue
+                 
+                 connected_moving_side = -1
+                 if self.points_are_close(other_strand.start, moving_point_coord):
+                     connected_moving_side = 0
+                 elif self.points_are_close(other_strand.end, moving_point_coord):
+                     connected_moving_side = 1
+                 
+                 if connected_moving_side == 0:
+                     other_strand.start = new_pos
+                     other_strand.update_shape()
+                     if hasattr(other_strand, 'update_side_line'): other_strand.update_side_line()
+                 elif connected_moving_side == 1:
+                     other_strand.end = new_pos
+                     other_strand.update_shape()
+                     if hasattr(other_strand, 'update_side_line'): other_strand.update_side_line()
 
     def gradual_move(self):
         """
@@ -1586,6 +1563,29 @@ class MoveMode:
         # Identify truly moving strands (ones being dragged by user, not just connected)
         truly_moving_strands = [self.affected_strand]
         
+        # --- Find and include connected strands for drawing --- NEW BLOCK
+        connected_strands_at_moving_point = set()
+        moving_point_coord = None
+        is_moving_endpoint = self.moving_side == 0 or self.moving_side == 1
+
+        if is_moving_endpoint:
+            if self.moving_side == 0:
+                moving_point_coord = self.affected_strand.start
+            else: # moving_side == 1
+                moving_point_coord = self.affected_strand.end
+
+            if moving_point_coord:
+                for other_strand in self.canvas.strands:
+                    if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
+                        continue
+                    if self.points_are_close(other_strand.start, moving_point_coord) or \
+                       self.points_are_close(other_strand.end, moving_point_coord):
+                        connected_strands_at_moving_point.add(other_strand)
+                        if other_strand not in truly_moving_strands: # Add to truly moving
+                            truly_moving_strands.append(other_strand)
+                        affected_strands.add(other_strand) # Ensure it's also in affected
+        # --- End finding and including connected strands ---
+
         # Special handling for MaskedStrand - add both selected strands to truly_moving_strands
         is_masked_strand = isinstance(self.affected_strand, MaskedStrand)
         if is_masked_strand:
@@ -1600,8 +1600,11 @@ class MoveMode:
         
         # For attached strands, we want to also move immediate children but keep parent in original order
         if isinstance(self.affected_strand, AttachedStrand) and hasattr(self.affected_strand, 'attached_strands'):
-            truly_moving_strands.extend(self.affected_strand.attached_strands)
-        
+            for attached in self.affected_strand.attached_strands:
+                 if attached not in truly_moving_strands:
+                     truly_moving_strands.append(attached)
+                 affected_strands.add(attached) # Ensure children are in affected set too
+
         # Store the old path of the affected strand for proper redrawing
         old_path_rect = None
         if hasattr(self.affected_strand, 'path') and self.affected_strand.path:
@@ -1697,47 +1700,34 @@ class MoveMode:
                 # Standard handling for normal strands
                 parent_strand = self.move_strand_and_update_attached(self.affected_strand, new_pos, self.moving_side)
                 
-                # If we found a parent strand, add it to affected strands but not to truly_moving_strands
-                if parent_strand and parent_strand not in truly_moving_strands:
+                # If we found a parent strand, add it to affected strands but NOT truly_moving_strands
+                if parent_strand:
                     affected_strands.add(parent_strand)
-                    
-                # Update the selection area
-                if self.moving_side == 0:
-                    self.selected_rectangle = QRectF(
-                        self.affected_strand.start.x() - 90/2,
-                        self.affected_strand.start.y() - 90/2,
-                        90,
-                        90
-                    )
-                else:
-                    self.selected_rectangle = QRectF(
-                        self.affected_strand.end.x() - 90/2,
-                        self.affected_strand.end.y() - 90/2,
-                        90,
-                        90
-                    )
-            
-            # Get the list of affected strands from move_strand_and_update_attached
-            if hasattr(self.canvas, 'affected_strands_for_drawing'):
-                affected_strands = set(self.canvas.affected_strands_for_drawing)
-                
-            # Handle selection based on strand type
-            if is_masked_strand:
-                # For MaskedStrand, select it and store in canvas.selected_strand
-                self.affected_strand.is_selected = True
-                self.canvas.selected_strand = self.affected_strand
-                self.canvas.selected_attached_strand = None
-            elif not self.user_deselected_all:
-                # For regular strands, if not in deselect mode, set selection
-                self.affected_strand.is_selected = True
-                self.canvas.selected_attached_strand = self.affected_strand
-            else:
-                # If in deselect mode, keep strand deselected
-                self.affected_strand.is_selected = False
-                self.canvas.selected_attached_strand = None
-        else:
-            # Invalid moving_side
-            pass  # Or handle unexpected cases
+
+                # --- Update connected strands positions (moved from within move_strand_and_update_attached) ---
+                # The connected strands were already found and added to truly_moving_strands/affected_strands above
+                if moving_point_coord:
+                    for connected_strand in connected_strands_at_moving_point:
+                        # Determine which end of the connected strand needs to move
+                        connected_moving_side = -1
+                        if self.points_are_close(connected_strand.start, moving_point_coord):
+                            connected_moving_side = 0
+                        elif self.points_are_close(connected_strand.end, moving_point_coord):
+                            connected_moving_side = 1
+
+                        if connected_moving_side == 0:
+                            connected_strand.start = new_pos
+                            connected_strand.update_shape()
+                            connected_strand.update_side_line()
+                        elif connected_moving_side == 1:
+                            connected_strand.end = new_pos
+                            connected_strand.update_shape()
+                            connected_strand.update_side_line()
+                # --- End update connected strands positions ---
+
+            # ... (update selection rectangle and selection state)
+
+        # ... (calculate update_rect)
 
         # Create a more accurate update rectangle that includes both the old and new path positions
         update_rect = None
@@ -1794,8 +1784,9 @@ class MoveMode:
         self.last_update_rect = update_rect
         
         # Store affected strands for optimized rendering
+        # Ensure affected_strands includes everything needed (main, connected, parents, children)
         self.canvas.affected_strands_for_drawing = list(affected_strands)
-        
+
         # Also store truly moving strands (the ones that should be on top)
         self.canvas.truly_moving_strands = truly_moving_strands
         
@@ -1805,6 +1796,9 @@ class MoveMode:
             
         # Force an immediate update for continuous visual feedback
         self.canvas.update()
+
+        # *** ADD THIS LINE: Ensure active strand is set for optimized paint event ***
+        self.canvas.active_strand_for_drawing = self.affected_strand
 
     def move_masked_strand(self, new_pos, moving_side):
         """Move a masked strand's points.
@@ -2292,15 +2286,22 @@ class MoveMode:
         
         # Draw the circles at connection points
         for i, has_circle in enumerate(strand.has_circles):
-            # Check if this is a main strand (not an attached strand)
-            is_main_strand = not isinstance(strand, AttachedStrand)
-            
-            # Skip drawing C-shapes for points with no attached strands
-            # This applies to both main strands and attached strands
-            if not has_circle:
-                continue
-                
-            # Save painter state
+            # --- ADD THIS LOGIC ---
+            draw_this_end = False
+            if self.is_moving and self.is_moving_strand_point:
+                # If moving an endpoint, only draw if this is the affected strand AND the correct side
+                if strand == self.affected_strand and self.moving_side == i:
+                    draw_this_end = True
+            elif strand.is_selected:
+                # If not moving, draw if the strand is selected (static highlight)
+                draw_this_end = True
+
+            # Only proceed if has_circle is true AND draw_this_end is true
+            if not has_circle or not draw_this_end:
+                 continue # Skip drawing this end's C-shape
+            # --- END ADDED LOGIC ---
+
+            # Save painter state (Original line)
             painter.save()
             
             center = strand.start if i == 0 else strand.end
@@ -2352,7 +2353,10 @@ class MoveMode:
             stroke_pen.setJoinStyle(Qt.MiterJoin)
             stroke_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(stroke_pen)
-            painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
+            # --- CHANGE: Use NoBrush instead of solid red fill ---
+            # painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
+            painter.setBrush(Qt.NoBrush)
+            # --- END CHANGE ---
             painter.drawPath(c_shape_path)
             
             # Restore painter state

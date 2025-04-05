@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QPointF
+import logging
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -10,7 +11,10 @@ class SelectMode(QObject):
     def mousePressEvent(self, event):
         # Map the event position to the canvas coordinate system
         pos = event.pos()
+        logging.info(f"SelectMode: Mouse press at {pos.x()},{pos.y()}")
+
         strands_at_point = self.find_strands_at_point(pos)
+        logging.info(f"SelectMode: Found {len(strands_at_point)} strands at point: {[s[0].layer_name for s in strands_at_point]}")
 
         # Deselect all strands before selecting a new one
         for strand in self.canvas.strands:
@@ -21,12 +25,16 @@ class SelectMode(QObject):
         if len(strands_at_point) == 1:
             selected_strand, selection_type = strands_at_point[0]
             selected_strand.is_selected = True  # Set the is_selected flag
+            logging.info(f"SelectMode: Selected strand '{selected_strand.layer_name}' via {selection_type}")
 
             index = self.canvas.strands.index(selected_strand)
             self.strand_selected.emit(index)
+            logging.info(f"SelectMode: Emitted strand_selected signal with index {index}")
         else:
             # Deselect if clicking on an empty area or multiple strands
+            logging.info("SelectMode: Deselecting (0 or >1 strands found)")
             self.strand_selected.emit(-1)
+            logging.info("SelectMode: Emitted strand_selected signal with index -1")
 
         # Redraw the canvas to update the visual state
         self.canvas.update()

@@ -2214,6 +2214,7 @@ class StrandDrawingCanvas(QWidget):
 
         if self.current_mode == "select":
             # Get the position from the event
+            logging.info(f"Selecting strand at position: {event.pos()}")
             pos = event.pos()
             self.handle_strand_selection(pos)
             
@@ -3370,7 +3371,8 @@ class StrandDrawingCanvas(QWidget):
         for strand in self.strands:
             contains_start = strand.get_start_selection_path().contains(pos)
             contains_end = strand.get_end_selection_path().contains(pos)
-            if contains_start or contains_end:
+            contains_path = strand.get_selection_path().contains(pos)  # Check the main path
+            if contains_start or contains_end or contains_path:  # Include path check
                 results.append(strand)
         return results
         

@@ -568,6 +568,14 @@ class MoveMode:
                         strand.is_selected = original_selected_state # Restore selection state
                 # --- END DRAWING MOVING BODIES ---
                 
+                # --- ADD POST-BODY C-SHAPE DRAW ---
+                is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                affected_strand = getattr(move_mode, 'affected_strand', None)
+                if is_moving_strand_point and affected_strand and affected_strand.is_selected:
+                    logging.info(f"MoveMode: Drawing C-shape POST bodies for affected: {affected_strand.layer_name}")
+                    move_mode.draw_c_shape_for_strand(painter, affected_strand)
+                # --- END POST-BODY C-SHAPE DRAW ---
+                
                 # Special handling for MaskedStrand (might be redundant if included in truly_moving_strands)
                 if isinstance(active_strand, MaskedStrand):
                     logging.info("MoveMode: Special drawing for MaskedStrand")
@@ -766,8 +774,11 @@ class MoveMode:
         """
         import logging
         pos = event.pos()
-        
-        # Start the timer for continuous redraw
+
+        # --- Capture selection at the absolute start ---
+        selection_at_press_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
+
+        # Start timers and force redraws
         self.hold_timer.stop()  # Ensure any existing timer is stopped first
         self.hold_timer.setInterval(16)  # ~60fps for smooth updates
         self.hold_timer.start()
@@ -784,33 +795,37 @@ class MoveMode:
         if self.draw_only_affected_strand:
             self.prepare_optimized_drawing()
         
-                
         if not self.in_move_mode:
             # Set the originally_selected_strand to the currently selected strand in the layer panel
             # Only set if there is actually a selected strand
             if self.canvas.selected_strand:
                 self.originally_selected_strand = self.canvas.selected_strand
                 logging.info("MoveMode: Set originally_selected_strand from selected_strand")
-            else:
-                # If there's no selection, make sure we clear our stored selection
-                self.originally_selected_strand = None
-                logging.info("MoveMode: No selected strand, clearing originally_selected_strand")
+            # --- REMOVE ELSE BLOCK --- It is handled by current_selection logic and mouseReleaseEvent
+            # else:
+            #     # If there's no selection, make sure we clear our stored selection
+            #     self.originally_selected_strand = None
+            #     logging.info("MoveMode: No selected strand, clearing originally_selected_strand")
+            # --- END REMOVE ---
+
             self.in_move_mode = True
             # Reset time limiter at the start of move mode
             self.last_update_time = 0
 
-        # Store the current selection state
-        previously_selected = self.canvas.selected_strand
-        
-        # Save the current highlighted strand before any operations
-        # Only save if there's actually a selected attached strand
-        if self.canvas.selected_attached_strand:
-            self.highlighted_strand = self.canvas.selected_attached_strand
-            logging.info("MoveMode: Set highlighted_strand from selected_attached_strand")
-        else:
-            # Make sure highlighted strand is cleared if nothing is selected
-            self.highlighted_strand = None
-            logging.info("MoveMode: No selected attached strand, clearing highlighted_strand")
+        # Store the current selection state (useful for comparison, maybe remove later if unused)
+        previously_selected = self.canvas.selected_strand or self.canvas.selected_attached_strand
+
+        # --- REMOVE Highlighted Strand Logic --- C-shape should rely purely on is_selected
+        # # Save the current highlighted strand before any operations
+        # # Only save if there's actually a selected attached strand
+        # if self.canvas.selected_attached_strand:
+        #     self.highlighted_strand = self.canvas.selected_attached_strand
+        #     logging.info("MoveMode: Set highlighted_strand from selected_attached_strand")
+        # else:
+        #     # Make sure highlighted strand is cleared if nothing is selected
+        #     self.highlighted_strand = None
+        #     logging.info("MoveMode: No selected attached strand, clearing highlighted_strand")
+        # --- END REMOVE ---
 
         # First try to handle control point movement
         control_point_moved = False
@@ -820,18 +835,6 @@ class MoveMode:
                     control_point_moved = True
                     logging.info("MoveMode: Moving control point")
                     
-                    # Always preserve the originally selected strand for any type of movement
-                    if self.canvas.selected_strand:
-                        # If originally_selected_strand is not already set, save it
-                        if not self.originally_selected_strand:
-                            self.originally_selected_strand = self.canvas.selected_strand
-                            logging.info(f"MoveMode: Preserving originally_selected_strand: {self.originally_selected_strand.layer_name if self.originally_selected_strand else None}")
-                    elif self.canvas.selected_attached_strand:
-                        # Also preserve selected attached strand
-                        if not self.originally_selected_strand:
-                            self.originally_selected_strand = self.canvas.selected_attached_strand
-                            logging.info(f"MoveMode: Preserving originally_selected_strand from selected_attached_strand: {self.originally_selected_strand.layer_name if self.originally_selected_strand else None}")
-                    
                     # For control point movement, we'll temporarily clear visible selections
                     # but maintain selection state internally for restoration later
                     if control_point_moved:
@@ -839,8 +842,8 @@ class MoveMode:
                         # The originally_selected_strand is already saved above
                         self.canvas.selected_strand = None
                         self.canvas.selected_attached_strand = None
-                        self.highlighted_strand = None  # Also clear highlighted strand
-                        
+                        # self.highlighted_strand = None  # Also clear highlighted strand (removed highlight logic)
+
                         # Update the canvas and return early
                         self.canvas.update()
                         return
@@ -863,6 +866,116 @@ class MoveMode:
                     self.affected_strand.__class__.__name__ if self.affected_strand else "None")
         
         if self.is_moving:
+            # --- Move originally_selected_strand capture inside if self.is_moving check ---
+            # self.originally_selected_strand = None # Initialize
+
+            # --- REMOVE early deselection --- Handled later based on action
+            # # Deselect all strands
+            # for strand in self.canvas.strands:
+            #     strand.is_selected = False
+            #     if isinstance(strand, AttachedStrand):
+            #         for attached in strand.attached_strands:
+            #             attached.is_selected = False
+
+            # Try to initiate movement (control points first)
+            # # control_point_moved = False
+            # for strand in self.canvas.strands:
+            #     if not getattr(strand, 'deleted', False):
+            #         if self.try_move_control_points(strand, pos):
+            #             control_point_moved = True
+            #             logging.info("MoveMode: Moving control point")
+            #             
+            #             # For control point movement, we'll temporarily clear visible selections
+            #             # but maintain selection state internally for restoration later
+            #             if control_point_moved:
+            #                 # Clear canvas selections during control point movement 
+            #                 # The originally_selected_strand is already saved above
+            #                 self.canvas.selected_strand = None
+            #                 self.canvas.selected_attached_strand = None
+            #                 # self.highlighted_strand = None  # Also clear highlighted strand (removed highlight logic)
+            #
+            #                 # Update the canvas and return early
+            #                 self.canvas.update()
+            #                 return
+            #             
+            # --- Selection Logic based on whether a move was initiated --- 
+            # if self.is_moving: # A control point or endpoint was clicked
+            #     # Capture the selection state *before* this move started
+            #     if not self.originally_selected_strand: # Capture only once per move sequence
+            #         self.originally_selected_strand = selection_at_press_start 
+            #         logging.info(f"MoveMode: Captured originally_selected_strand on move start: {self.originally_selected_strand.layer_name if self.originally_selected_strand else 'None'}")
+            #
+            #         # Deselect the original strand visually (if it exists and is different from the new one)
+            #         if self.originally_selected_strand and self.originally_selected_strand != self.affected_strand:
+            #             self.originally_selected_strand.is_selected = False
+            #             # Clear canvas selection refs if they point to the old strand
+            #             if self.canvas.selected_strand == self.originally_selected_strand: self.canvas.selected_strand = None
+            #             if self.canvas.selected_attached_strand == self.originally_selected_strand: self.canvas.selected_attached_strand = None
+            #         
+            #         # Ensure the new affected strand is selected
+            #         if self.affected_strand:
+            #             self.affected_strand.is_selected = True
+            #             if isinstance(self.affected_strand, MaskedStrand):
+            #                 self.canvas.selected_strand = self.affected_strand
+            #                 self.canvas.selected_attached_strand = None
+            #             else:
+            #                 self.canvas.selected_attached_strand = self.affected_strand
+            #                 self.canvas.selected_strand = None # Ensure main selection is clear
+            #
+            #         # --- Moving state setup ---
+            #         self.last_update_pos = pos
+            #         self.accumulated_delta = QPointF(0, 0)
+            #         self.last_snapped_pos = self.canvas.snap_to_grid(pos)
+            #         self.target_pos = self.last_snapped_pos
+            #
+            #         # Special handling for MaskedStrand
+            #         if isinstance(self.affected_strand, MaskedStrand):
+            #             logging.info("MoveMode: Special handling for MaskedStrand")
+            #             # Make sure the MaskedStrand is properly selected
+            #             self.affected_strand.is_selected = True
+            #             self.canvas.selected_strand = self.affected_strand
+            #             self.originally_selected_strand = self.affected_strand
+            #             # Ensure we're not setting it as an attached strand
+            #             self.canvas.selected_attached_strand = None
+            #             # Force cache invalidation
+            #             if hasattr(self.canvas, 'background_cache_valid'):
+            #                 self.canvas.background_cache_valid = False
+            #             
+            #             # Store strands that need to be drawn on each update - crucial for static display
+            #             truly_moving_strands = [self.affected_strand]
+            #             affected_strands = [self.affected_strand]
+            #             
+            #             # Always include constituent strands for proper rendering
+            #             if hasattr(self.affected_strand, 'first_selected_strand') and self.affected_strand.first_selected_strand:
+            #                 truly_moving_strands.append(self.affected_strand.first_selected_strand)
+            #                 affected_strands.append(self.affected_strand.first_selected_strand)
+            #                 
+            #             if hasattr(self.affected_strand, 'second_selected_strand') and self.affected_strand.second_selected_strand:
+            #                 truly_moving_strands.append(self.affected_strand.second_selected_strand)
+            #                 affected_strands.append(self.affected_strand.second_selected_strand)
+            #             
+            #             # Store these for the optimized paint handler
+            #             self.canvas.truly_moving_strands = truly_moving_strands
+            #             self.canvas.affected_strands_for_drawing = affected_strands
+            #         # Removed the inner 'else' block for setting temp_selected_strand etc., handled above
+            #
+            #         # Setup efficient paint handler
+            #         if not hasattr(self.canvas, 'original_paintEvent'):
+            #             logging.info("MoveMode: Setting up optimized paint handler")
+            #             self._setup_optimized_paint_handler()
+            #             
+            #         # Ensure background cache is properly invalidated on first movement
+            #         if hasattr(self.canvas, 'background_cache_valid'):
+            #             self.canvas.background_cache_valid = False
+            #
+            # --- End of Move originally_selected_strand capture inside if self.is_moving check ---
+
+            # --- Capture originally_selected_strand ONLY when movement starts ---
+            if not self.originally_selected_strand:
+                 self.originally_selected_strand = selection_at_press_start
+                 logging.info(f"MoveMode: Captured originally_selected_strand on move start: {self.originally_selected_strand.layer_name if self.originally_selected_strand else 'None'}")
+            # --- End capture ---
+
             self.last_update_pos = pos
             self.accumulated_delta = QPointF(0, 0)
             self.last_snapped_pos = self.canvas.snap_to_grid(pos)
@@ -920,25 +1033,22 @@ class MoveMode:
             if hasattr(self.canvas, 'background_cache_valid'):
                 self.canvas.background_cache_valid = False
 
-        else:
-            # If no strand was clicked, revert to the original selection
-            logging.info("MoveMode: No strand movement, reverting to original selection")
-            if self.originally_selected_strand:
-                self.originally_selected_strand.is_selected = True
-                if isinstance(self.originally_selected_strand, MaskedStrand):
-                    self.canvas.selected_strand = self.originally_selected_strand
-                    self.canvas.selected_attached_strand = None
+        else: # No move initiated (blank space click)
+            # Keep the selection from the start of the press
+            logging.info("MoveMode: Blank space click, preserving selection")
+            # Deselect all first to be safe
+            for strand in self.canvas.strands: strand.is_selected = False
+            self.canvas.selected_strand = None
+            self.canvas.selected_attached_strand = None
+            # Restore the selection from the start of the press
+            if selection_at_press_start:
+                selection_at_press_start.is_selected = True
+                if isinstance(selection_at_press_start, MaskedStrand):
+                    self.canvas.selected_strand = selection_at_press_start
                 else:
-                    self.canvas.selected_attached_strand = self.originally_selected_strand
-            elif previously_selected:
-                previously_selected.is_selected = True
-                if isinstance(previously_selected, MaskedStrand):
-                    self.canvas.selected_strand = previously_selected
-                    self.canvas.selected_attached_strand = None
-                else:
-                    self.canvas.selected_attached_strand = previously_selected
+                    self.canvas.selected_attached_strand = selection_at_press_start
 
-        # Update the canvas
+        # Final update
         self.canvas.update()
         
     def force_redraw_while_holding(self):
@@ -986,7 +1096,9 @@ class MoveMode:
         # Store relevant state before resetting
         was_moving = self.is_moving
         final_pos = event.pos()
-        original_selection_ref = self.originally_selected_strand # Keep a reference
+        # Capture selection state *before* reset
+        selection_at_release_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
+        original_selection_ref = self.originally_selected_strand # Keep reference used during move
         was_moving_control_point = self.is_moving_control_point
         affected_strand_ref = self.affected_strand # Keep ref for potential masked strand check
 
@@ -1035,7 +1147,10 @@ class MoveMode:
                           'truly_moving_strands', '_frames_since_click']
         for attr in attrs_to_clean:
             if hasattr(self.canvas, attr):
-                delattr(self.canvas, attr)
+                try: # Wrap in try-except in case attribute doesn't exist
+                    delattr(self.canvas, attr)
+                except AttributeError:
+                    pass
 
         # --- 5. Restore Selection State --- 
         # Deselect everything first
@@ -1047,42 +1162,34 @@ class MoveMode:
         self.canvas.selected_strand = None
         self.canvas.selected_attached_strand = None
 
-        # Now, re-select based on the original selection saved at the start of the move
+        # Determine the final selection based on whether it was a click or a move
         final_selected_strand = None
-        if original_selection_ref:
-            # Ensure the originally selected strand still exists
-            if original_selection_ref in self.canvas.strands:
-                 final_selected_strand = original_selection_ref
-                 final_selected_strand.is_selected = True
-                 logging.info(f"MoveMode: Restoring original selection: {final_selected_strand.layer_name}")
-            else:
-                 logging.warning("MoveMode: Originally selected strand no longer exists.")
-        # Special case: If we moved a MaskedStrand that wasn't the original selection
-        elif affected_strand_ref and isinstance(affected_strand_ref, MaskedStrand) and affected_strand_ref in self.canvas.strands:
-            final_selected_strand = affected_strand_ref
-            final_selected_strand.is_selected = True
-            logging.info(f"MoveMode: Selecting moved MaskedStrand: {final_selected_strand.layer_name}")
-        
-        # Assign to correct canvas attribute
+        if was_moving:
+            # Restore the selection from *before* the move started
+            final_selected_strand = original_selection_ref
+            logging.info(f"MoveMode: Restoring selection after move: {final_selected_strand.layer_name if final_selected_strand else 'None'}")
+        else: # It was a click (either on blank space or an element without dragging)
+            # Restore the selection that was active *just before* this release event started
+            final_selected_strand = selection_at_release_start
+            logging.info(f"MoveMode: Restoring selection after click: {final_selected_strand.layer_name if final_selected_strand else 'None'}")
+
+        # Assign to correct canvas attribute and set is_selected
         if final_selected_strand:
-             if isinstance(final_selected_strand, MaskedStrand):
-                 self.canvas.selected_strand = final_selected_strand
-                 self.canvas.selected_attached_strand = None
+             # Ensure the strand still exists before selecting
+             if final_selected_strand in self.canvas.strands:
+                 final_selected_strand.is_selected = True # Ensure the final strand is marked selected
+                 if isinstance(final_selected_strand, MaskedStrand):
+                     self.canvas.selected_strand = final_selected_strand
+                     self.canvas.selected_attached_strand = None
+                 else:
+                     # Assume it's an attached strand if not MaskedStrand
+                     self.canvas.selected_attached_strand = final_selected_strand
+                     self.canvas.selected_strand = None # Ensure main selection is clear
              else:
-                 # Assume it's an attached strand if not MaskedStrand
-                 self.canvas.selected_attached_strand = final_selected_strand
-                 self.canvas.selected_strand = None # Ensure main selection is clear
+                 logging.info("MoveMode: Final selection - No strand selected")
 
-        # Log final selection state for debugging
-        if self.canvas.selected_strand:
-            logging.info(f"MoveMode: Final selection - selected_strand: {self.canvas.selected_strand.layer_name}")
-        elif self.canvas.selected_attached_strand:
-            logging.info(f"MoveMode: Final selection - selected_attached_strand: {self.canvas.selected_attached_strand.layer_name}")
-        else:
-            logging.info("MoveMode: Final selection - No strand selected")
-
-        # Clear the reference now that selection is restored
-        self.originally_selected_strand = None 
+        # Clear the originally_selected_strand reference ONLY AFTER the release event is fully processed
+        self.originally_selected_strand = None
 
         # --- 6. Save State if Control Point Moved ---
         if was_moving_control_point and hasattr(self, 'undo_redo_manager'):
@@ -2284,21 +2391,12 @@ class MoveMode:
         
         # Draw the circles at connection points
         for i, has_circle in enumerate(strand.has_circles):
-            # --- ADD THIS LOGIC ---
-            draw_this_end = False
-            if self.is_moving and self.is_moving_strand_point:
-                # If moving an endpoint, only draw if this is the affected strand AND the correct side
-                if strand == self.affected_strand and self.moving_side == i:
-                    draw_this_end = True
-            elif strand.is_selected:
-                # If not moving, draw if the strand is selected (static highlight)
-                draw_this_end = True
-
-            # Only proceed if has_circle is true AND draw_this_end is true
-            if not has_circle or not draw_this_end:
-                 continue # Skip drawing this end's C-shape
-            # --- END ADDED LOGIC ---
-
+            # --- REPLACE WITH THIS SIMPLE CHECK ---
+            # Only draw if this end should have a circle and the strand is currently selected
+            if not has_circle or not strand.is_selected:
+                continue
+            # --- END REPLACE ---
+            
             # Save painter state (Original line)
             painter.save()
             
@@ -2401,13 +2499,14 @@ class MoveMode:
         Args:
             painter (QPainter): The painter object to draw with.
         """
-        # When optimized drawing is enabled and we're moving, skip all drawing
-        # This is to prevent the red C-shaped highlights from appearing
+        # When optimized drawing is enabled and we're moving, drawing is handled
+        # by the optimized paint handler, so we skip drawing here.
         if self.is_moving and self.draw_only_affected_strand:
             return
             
-        # In normal drawing mode, draw the selected attached strand with C-shaped highlights
-        self.draw_selected_attached_strand(painter)
+        # In normal drawing mode (or when not moving), draw C-shaped highlights for all selected strands.
+        if not self.draw_only_affected_strand or not self.is_moving:
+             self.draw_all_c_shapes_for_selection(painter)
 
     # Add a new method to reset selection state
     def reset_selection(self):
@@ -2417,16 +2516,29 @@ class MoveMode:
         # Log current state for debugging
         logging.info(f"Reset selection called. is_moving_control_point: {self.is_moving_control_point}, is_moving_strand_point: {self.is_moving_strand_point}")
         
-        # Only clear originally_selected_strand if we're not in control point or strand endpoint movement
-        if not (self.is_moving_control_point or self.is_moving_strand_point):
-            logging.info(f"Clearing originally_selected_strand (was: {self.originally_selected_strand})")
-            self.originally_selected_strand = None
-        else:
-            logging.info(f"Preserving originally_selected_strand: {self.originally_selected_strand}")
-        
-        self.highlighted_strand = None
+        # --- Persist Selection Start ---
+        # DO NOT clear originally_selected_strand here. It should persist until mouseReleaseEvent.
+        # # Only clear originally_selected_strand if we're not in control point or strand endpoint movement
+        # if not (self.is_moving_control_point or self.is_moving_strand_point):
+        #     logging.info(f"Clearing originally_selected_strand (was: {self.originally_selected_strand})")
+        #     self.originally_selected_strand = None
+        # else:
+        #     logging.info(f"Preserving originally_selected_strand: {self.originally_selected_strand}")
+        # --- Persist Selection End ---
+
+        self.highlighted_strand = None # Clear legacy highlight reference
         self.temp_selected_strand = None
-        self.user_deselected_all = True
+        self.user_deselected_all = True # Still useful to know if a deselect *signal* occurred
+
+    # Add the new method for drawing all selected C-shapes
+    def draw_all_c_shapes_for_selection(self, painter):
+        """
+        Draw C-shapes for all currently selected strands.
+        This is used when draw_only_affected_strand is False or when not actively moving.
+        """
+        for strand in self.canvas.strands:
+            if strand.is_selected:
+                 self.draw_c_shape_for_strand(painter, strand)
 
     def force_continuous_redraw(self):
         """Force continuous redraw to keep grid and strands visible even when not moving the mouse."""

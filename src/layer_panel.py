@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu  # Add QMenu here
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths
 from PyQt5.QtGui import QColor, QPalette
 from functools import partial
 import logging
@@ -34,6 +34,8 @@ from PyQt5.QtWidgets import QStyleOption
 
 # Import StrokeTextButton from undo_redo_manager instead of dedicated file
 from undo_redo_manager import StrokeTextButton, setup_undo_redo
+import os # Import os for path manipulation
+import sys # Import sys for platform check
 
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
@@ -104,6 +106,17 @@ class LayerPanel(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None
+        
+        # Determine the base path for settings and temp files
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':  # macOS
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            self.base_path = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            self.base_path = program_data_dir # AppDataLocation already includes the app name
+        logging.info(f"LayerPanel: Base path for data determined as: {self.base_path}")
+
         self.group_layer_manager = GroupLayerManager(parent=parent, layer_panel=self, canvas=self.canvas)
 
         # Create left panel (existing layer panel)
@@ -132,7 +145,8 @@ class LayerPanel(QWidget):
         self.left_layout.addWidget(self.top_panel)
         
         # Setup undo/redo manager and buttons AFTER top_panel is added to the layout
-        self.undo_redo_manager = setup_undo_redo(self.canvas, self)
+        # Pass the determined base_path to setup_undo_redo
+        self.undo_redo_manager = setup_undo_redo(self.canvas, self, self.base_path)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()

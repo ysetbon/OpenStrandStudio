@@ -197,13 +197,15 @@ class UndoRedoManager(QObject):
     redo_performed = pyqtSignal()
     state_saved = pyqtSignal(int)  # Emits current step number when a new state is saved
 
-    def __init__(self, canvas, layer_panel):
+    def __init__(self, canvas, layer_panel, base_path):
         super().__init__()
         self.canvas = canvas
         self.layer_panel = layer_panel
         self.current_step = 0  # Start at step 0 (empty state, no steps saved yet)
         self.max_step = 0      # Start with no steps saved
-        self.temp_dir = self._create_temp_dir()
+        # Use the provided base_path to determine the temp_dir
+        self.base_path = base_path
+        self.temp_dir = self._create_temp_dir(base_path)
         self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
         self.undo_button = None
         self.redo_button = None
@@ -216,10 +218,12 @@ class UndoRedoManager(QObject):
         # Update button states initially (both should be disabled)
         self._update_button_states()
 
-    def _create_temp_dir(self):
-        """Create a temporary directory for state files if it doesn't exist."""
-        temp_dir = os.path.join(os.path.dirname(__file__), "temp_states")
+    def _create_temp_dir(self, base_path):
+        """Create a temporary directory for state files if it doesn't exist, relative to the base_path."""
+        # Use the provided base_path instead of __file__
+        temp_dir = os.path.join(base_path, "temp_states")
         os.makedirs(temp_dir, exist_ok=True)
+        logging.info(f"UndoRedoManager: Using temp_states directory at {temp_dir}")
         return temp_dir
 
     def _get_state_filename(self, step):
@@ -2092,21 +2096,22 @@ def connect_to_group_operations(canvas, undo_redo_manager):
     return True
 
 
-def setup_undo_redo(canvas, layer_panel):
+def setup_undo_redo(canvas, layer_panel, base_path):
     """
     Set up undo/redo functionality for the application.
     
     Args:
         canvas: The canvas object
         layer_panel: The layer panel to add buttons to
+        base_path: The base directory path for storing temp states
     
     Returns:
         UndoRedoManager: The created manager instance
     """
 
     
-    # Create the manager
-    manager = UndoRedoManager(canvas, layer_panel)
+    # Create the manager, passing the base_path
+    manager = UndoRedoManager(canvas, layer_panel, base_path)
     
     # Add buttons to the top layout (next to refresh button)
     if hasattr(layer_panel, 'top_panel') and layer_panel.top_panel:

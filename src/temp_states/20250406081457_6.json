@@ -1,0 +1,226 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 590.531531762309,
+        "y": 57.44186412095658
+      },
+      "end": {
+        "x": 1073.556083029205,
+        "y": 487.0454987347872
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 170,
+        "b": 230,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "control_points": [
+        {
+          "x": 590.531531762309,
+          "y": 57.44186412095658
+        },
+        {
+          "x": 590.531531762309,
+          "y": 57.44186412095658
+        }
+      ],
+      "control_point_center": {
+        "x": 590.531531762309,
+        "y": 57.44186412095658
+      },
+      "control_point_center_locked": false
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 1073.5551516272942,
+        "y": 487.0465459535993
+      },
+      "end": {
+        "x": 743.6373611534267,
+        "y": 677.2944146114146
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 170,
+        "b": 230,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "attached_to": "1_1",
+      "control_points": [
+        {
+          "x": 1073.5551516272942,
+          "y": 487.0465459535993
+        },
+        {
+          "x": 1073.5551516272942,
+          "y": 487.0465459535993
+        }
+      ],
+      "control_point_center": {
+        "x": 1073.5551516272942,
+        "y": 487.0465459535993
+      },
+      "control_point_center_locked": false
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 743.6460830480052,
+        "y": 677.3095388585411
+      },
+      "end": {
+        "x": 1219.6460830480053,
+        "y": 677.3095388585411
+      },
+      "width": 46,
+      "color": {
+        "r": 200,
+        "g": 170,
+        "b": 230,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "stroke_width": 4,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "attached_to": "1_2",
+      "control_points": [
+        {
+          "x": 743.6460830480052,
+          "y": 677.3095388585411
+        },
+        {
+          "x": 743.6460830480052,
+          "y": 677.3095388585411
+        }
+      ],
+      "control_point_center": {
+        "x": 743.6460830480052,
+        "y": 677.3095388585411
+      },
+      "control_point_center_locked": false
+    }
+  ],
+  "groups": {
+    "\u05e9\u05d3\u05d2": {
+      "layers": [
+        "1_1",
+        "1_2",
+        "1_3"
+      ],
+      "main_strands": [
+        "1_1"
+      ],
+      "strands": [
+        "1_1",
+        "1_2",
+        "1_3"
+      ],
+      "control_points": {
+        "1_1": {
+          "control_point1": {
+            "x": 590.531531762309,
+            "y": 57.44186412095658
+          },
+          "control_point2": {
+            "x": 590.531531762309,
+            "y": 57.44186412095658
+          },
+          "control_point_center": null,
+          "control_point_center_locked": false
+        },
+        "1_2": {
+          "control_point1": {
+            "x": 1073.5551516272942,
+            "y": 487.0465459535993
+          },
+          "control_point2": {
+            "x": 1073.5551516272942,
+            "y": 487.0465459535993
+          },
+          "control_point_center": null,
+          "control_point_center_locked": false
+        },
+        "1_3": {
+          "control_point1": {
+            "x": 743.6460830480052,
+            "y": 677.3095388585411
+          },
+          "control_point2": {
+            "x": 743.6460830480052,
+            "y": 677.3095388585411
+          },
+          "control_point_center": null,
+          "control_point_center_locked": false
+        }
+      }
+    }
+  }
+}

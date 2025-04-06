@@ -233,10 +233,10 @@ class LayerPanel(QWidget):
                 border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: #FFA5A5; /* even lighter on hover */
+                background-color: #FF4C4C; /* Lighter red on hover */
             }
             QPushButton:pressed {
-                background-color: #E05C5C; /* darker on press */
+                background-color: #FF0000; /* Darker red on click */
             }
         """)
         self.delete_strand_button.setEnabled(False)

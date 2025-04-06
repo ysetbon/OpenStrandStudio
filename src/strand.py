@@ -880,8 +880,19 @@ class Strand:
             ring_path = outer_circle.subtracted(inner_circle)
             
             # Get the tangent angle at the connection point
-            tangent = self.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-            angle = math.atan2(tangent.y(), tangent.x())
+            # --- MODIFICATION START ---
+            if i == 0 and self.control_point1 == self.start and self.control_point2 == self.start:
+                # If control points are at default start position, use start-to-end direction
+                direction_vector = self.end - self.start
+                if direction_vector.manhattanLength() == 0: # Handle case where start == end
+                    angle = 0.0 # Default angle if no direction
+                else:
+                    angle = math.atan2(direction_vector.y(), direction_vector.x())
+            else:
+                # Otherwise, use the cubic tangent
+                tangent = self.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+                angle = math.atan2(tangent.y(), tangent.x())
+            # --- MODIFICATION END ---
             
             # Create a masking rectangle to create a C-shape
             mask_rect = QPainterPath()
@@ -3671,7 +3682,74 @@ class AttachedStrand(Strand):
             painter.drawImage(0, 0, temp_image)
             temp_painter.end()
         # ----------------------------------------------------------------
-
+        # Draw the circles at connection points
+        for i, has_circle in enumerate(self.has_circles):
+            # --- REPLACE WITH THIS SIMPLE CHECK ---
+            # Only draw if this end should have a circle and the strand is currently selected
+            if not has_circle or not self.is_selected:
+                continue
+            # --- END REPLACE ---
+            
+            # Save painter state (Original line)
+            painter.save()
+            
+            center = self.start if i == 0 else self.end
+            
+            # Calculate the proper radius for the highlight
+            outer_radius = self.width / 2 + self.stroke_width + 4
+            inner_radius = self.width / 2 + 6
+            
+            # Create a full circle path for the outer circle
+            outer_circle = QPainterPath()
+            outer_circle.addEllipse(center, outer_radius, outer_radius)
+            
+            # Create a path for the inner circle
+            inner_circle = QPainterPath()
+            inner_circle.addEllipse(center, inner_radius, inner_radius)
+            
+            # Create a ring path by subtracting the inner circle from the outer circle
+            ring_path = outer_circle.subtracted(inner_circle)
+            
+            # Get the tangent angle at the connection point
+            tangent = self.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            
+            # Create a masking rectangle to create a C-shape
+            mask_rect = QPainterPath()
+            rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+            rect_height = (outer_radius + 5) * 2
+            rect_x = center.x() - rect_width / 2
+            rect_y = center.y()
+            mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+            
+            # Apply rotation transform to the masking rectangle
+            transform = QTransform()
+            transform.translate(center.x(), center.y())
+            # Adjust angle based on whether it's start or end point
+            if i == 0:
+                transform.rotate(math.degrees(angle - math.pi / 2))
+            else:
+                transform.rotate(math.degrees(angle - math.pi / 2) + 180)
+            transform.translate(-center.x(), -center.y())
+            mask_rect = transform.map(mask_rect)
+            
+            # Create the C-shaped highlight by subtracting the mask from the ring
+            c_shape_path = ring_path.subtracted(mask_rect)
+            
+            # Draw the C-shaped highlight
+            # First draw the stroke (border) with the strand's stroke color
+            stroke_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width)
+            stroke_pen.setJoinStyle(Qt.MiterJoin)
+            stroke_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(stroke_pen)
+            # --- CHANGE: Use NoBrush instead of solid red fill ---
+            # painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
+            painter.setBrush(Qt.NoBrush)
+            # --- END CHANGE ---
+            painter.drawPath(c_shape_path)
+            
+            # Restore painter state
+            painter.restore()
         temp_painter.end()
         painter.restore()
 

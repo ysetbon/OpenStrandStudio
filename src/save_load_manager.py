@@ -284,6 +284,10 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             # DON'T call update_mask_path here, which would recalculate center points
             logging.info(f"Loaded deletion rectangles verbatim with absolute coordinates: {strand.deletion_rectangles}")
 
+            # Now that deletion rectangles and center points are set, update the visual mask path
+            if hasattr(strand, 'update_mask_path'):
+                strand.update_mask_path()
+
         if hasattr(strand, 'update'):
             strand.update(None, False)
 
@@ -425,6 +429,10 @@ def load_strands(filename, canvas):
                     
                     # DON'T call update_mask_path here, which would recalculate center points
                     logging.info(f"Loaded deletion rectangles verbatim with absolute coordinates: {strand.deletion_rectangles}")
+
+                    # Now that deletion rectangles and center points are set, update the visual mask path
+                    if hasattr(strand, 'update_mask_path'):
+                        strand.update_mask_path()
 
                 index = masked_data["index"]
                 strands[index] = strand

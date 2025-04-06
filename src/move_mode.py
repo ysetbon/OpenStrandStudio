@@ -2303,77 +2303,9 @@ class MoveMode:
         # Update the canvas
         self.canvas.update()
 
-    def draw_selected_attached_strand(self, painter):
-        """
-        Draw a circle around the selected attached strand or the temporary selected strand.
 
-        Args:
-            painter (QPainter): The painter object to draw with.
-        """
-        # Skip drawing all C-shapes if user has explicitly deselected all strands
-        if self.user_deselected_all:
-            return
-            
-        # Double-check we're not in control point movement mode
-        if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
-            return
-            
-        # Skip drawing all C-shapes if a main strand's starting point is being moved
-        if self.is_moving and self.affected_strand and not isinstance(self.affected_strand, AttachedStrand) and self.moving_side == 0:
-            return
-            
-        # Get list of affected strands if available - these are the only ones we need to highlight
-        affected_strands = getattr(self.canvas, 'affected_strands_for_drawing', [])
-        
-        # Only draw C-shapes for actively moving strands to improve performance
-        if self.is_moving and affected_strands:
-            # In control point move mode, don't draw any highlights
-            if self.is_moving_control_point:
-                return
-                
-            # Skip highlighting if deselect all was used
-            if self.user_deselected_all:
-                return
-                
-            # Performance optimization for red semi-rectangles: Only draw selected strands
-            selected_affected_strands = [strand for strand in affected_strands if strand.is_selected and hasattr(strand, 'has_circles')]
-            
-            # Use a maximum of 2 strands to draw C-shapes for better performance
-            if len(selected_affected_strands) > 2:
-                selected_affected_strands = selected_affected_strands[:2]
-                
-            for strand in selected_affected_strands:
-                self.draw_c_shape_for_strand(painter, strand)
-            return
-            
-        # Fallback to original logic if we're not in moving mode or don't have affected strands
-        # Determine which strand to highlight
-        strand_to_highlight = None
-        
-        # First try using the saved highlighted strand
-        if self.highlighted_strand:
-            strand_to_highlight = self.highlighted_strand
-        # Otherwise fallback to existing logic
-        elif self.is_moving and self.temp_selected_strand:
-            strand_to_highlight = self.temp_selected_strand
-        elif not self.is_moving and self.canvas.selected_attached_strand:
-            strand_to_highlight = self.canvas.selected_attached_strand
-            
-        # Only highlight the affected strand if it's set, selected, and we're in moving mode
-        if self.is_moving and self.affected_strand and self.affected_strand.is_selected:
-            self.draw_c_shape_for_strand(painter, self.affected_strand)
-            
-            # If the affected strand has attached strands, only draw C-shapes for selected ones
-            if hasattr(self.affected_strand, 'attached_strands') and self.affected_strand.attached_strands:
-                # Limit to at most 2 attached strands for performance
-                selected_attached = [attached for attached in self.affected_strand.attached_strands 
-                                    if attached.is_selected][:2]
-                for attached_strand in selected_attached:
-                    self.draw_c_shape_for_strand(painter, attached_strand)
 
-        # Only proceed if we have a strand to highlight and it's selected
-        if strand_to_highlight and strand_to_highlight.is_selected:
-            self.draw_c_shape_for_strand(painter, strand_to_highlight)
+    
 
     def draw_c_shape_for_strand(self, painter, strand):
         """
@@ -2505,8 +2437,7 @@ class MoveMode:
             return
             
         # In normal drawing mode (or when not moving), draw C-shaped highlights for all selected strands.
-        if not self.draw_only_affected_strand or not self.is_moving:
-             self.draw_all_c_shapes_for_selection(painter)
+   
 
     # Add a new method to reset selection state
     def reset_selection(self):
@@ -2530,15 +2461,7 @@ class MoveMode:
         self.temp_selected_strand = None
         self.user_deselected_all = True # Still useful to know if a deselect *signal* occurred
 
-    # Add the new method for drawing all selected C-shapes
-    def draw_all_c_shapes_for_selection(self, painter):
-        """
-        Draw C-shapes for all currently selected strands.
-        This is used when draw_only_affected_strand is False or when not actively moving.
-        """
-        for strand in self.canvas.strands:
-            if strand.is_selected:
-                 self.draw_c_shape_for_strand(painter, strand)
+
 
     def force_continuous_redraw(self):
         """Force continuous redraw to keep grid and strands visible even when not moving the mouse."""

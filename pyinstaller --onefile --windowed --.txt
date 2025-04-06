@@ -1,1 +1,0 @@
-pyinstaller --onefile --windowed --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." main.py   

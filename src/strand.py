@@ -1996,74 +1996,1682 @@ class AttachedStrand(Strand):
             painter.drawImage(0, 0, temp_image)
             temp_painter.end()
         # ----------------------------------------------------------------
-        # Draw the circles at connection points
-        for i, has_circle in enumerate(self.has_circles):
-            # --- REPLACE WITH THIS SIMPLE CHECK ---
-            # Only draw if this end should have a circle and the strand is currently selected
-            if not has_circle or not self.is_selected:
-                continue
-            # --- END REPLACE ---
-            
-            # Save painter state (Original line)
+
+        temp_painter.end()
+        painter.restore()
+
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
+        # Draw control points if needed
+        if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
             painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
             
-            center = self.start if i == 0 else self.end
+            # Draw control point lines
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
             
-            # Calculate the proper radius for the highlight
-            outer_radius = self.width / 2 + self.stroke_width + 4
-            inner_radius = self.width / 2 + 6
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
             
-            # Create a full circle path for the outer circle
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(center, outer_radius, outer_radius)
-            
-            # Create a path for the inner circle
-            inner_circle = QPainterPath()
-            inner_circle.addEllipse(center, inner_radius, inner_radius)
-            
-            # Create a ring path by subtracting the inner circle from the outer circle
-            ring_path = outer_circle.subtracted(inner_circle)
-            
-            # Get the tangent angle at the connection point
-            tangent = self.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-            angle = math.atan2(tangent.y(), tangent.x())
-            
-            # Create a masking rectangle to create a C-shape
-            mask_rect = QPainterPath()
-            rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
-            rect_height = (outer_radius + 5) * 2
-            rect_x = center.x() - rect_width / 2
-            rect_y = center.y()
-            mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
-            
-            # Apply rotation transform to the masking rectangle
-            transform = QTransform()
-            transform.translate(center.x(), center.y())
-            # Adjust angle based on whether it's start or end point
-            if i == 0:
-                transform.rotate(math.degrees(angle - math.pi / 2))
-            else:
-                transform.rotate(math.degrees(angle - math.pi / 2) + 180)
-            transform.translate(-center.x(), -center.y())
-            mask_rect = transform.map(mask_rect)
-            
-            # Create the C-shaped highlight by subtracting the mask from the ring
-            c_shape_path = ring_path.subtracted(mask_rect)
-            
-            # Draw the C-shaped highlight
-            # First draw the stroke (border) with the strand's stroke color
-            stroke_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width)
-            stroke_pen.setJoinStyle(Qt.MiterJoin)
-            stroke_pen.setCapStyle(Qt.FlatCap)
-            painter.setPen(stroke_pen)
-            # --- CHANGE: Use NoBrush instead of solid red fill ---
-            # painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
-            painter.setBrush(Qt.NoBrush)
-            # --- END CHANGE ---
-            painter.drawPath(c_shape_path)
-            
-            # Restore painter state
             painter.restore()
+        """
+
+
+        
+    def point_at(self, t):
+        """Compute a point on the Bézier curve at parameter t."""
+        # If third control point is enabled, use a composite curve with two segments
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
+            
+            # Standard cubic Bézier formula
+            x = (
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
+            )
+            y = (
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+            x = (
+                (1 - t) ** 3 * p0.x() +
+                3 * (1 - t) ** 2 * t * p1.x() +
+                3 * (1 - t) * t ** 2 * p2.x() +
+                t ** 3 * p3.x()
+            )
+            y = (
+                (1 - t) ** 3 * p0.y() +
+                3 * (1 - t) ** 2 * t * p1.y() +
+                3 * (1 - t) * t ** 2 * p2.y() +
+                t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+                
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the Bézier curve."""
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
+
+    def update_side_line(self):
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
+        if tangent_start.manhattanLength() == 0:
+            tangent_start = self.end - self.start
+        if tangent_end.manhattanLength() == 0:
+            tangent_end = self.start - self.end
+
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
+    def draw(self, painter):
+        """Draw the strand with squared ends and highlight if selected."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a cubic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
+                
+                # Draw circle shadows if this strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(painter, self, shadow_color)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+
+        # Create a temporary image for masking
+        temp_image = QImage(
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
+        )
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Draw the main strand
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.stroke_color)
+        temp_painter.drawPath(stroke_path)
+
+        # Draw the fill
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)
+        fill_path = fill_stroker.createStroke(path)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(fill_path)
+
+        # Draw the end line
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
+        temp_painter.setPen(side_pen)
+        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Create a mask for the circle
+        circle_mask = QPainterPath()
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Add the outer circle to the mask
+        circle_mask.addEllipse(self.start, circle_radius, circle_radius)
+
+        # Create the masking rectangle for half circle
+        mask_rect = QPainterPath()
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
+        rect_x = self.start.x() - rect_width/2
+        rect_y = self.start.y()
+        mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+        transform = QTransform()
+        transform.translate(self.start.x(), self.start.y())
+        transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
+        transform.translate(-self.start.x(), -self.start.y())
+        mask_rect = transform.map(mask_rect)
+
+        outer_circle = QPainterPath()
+        outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+        outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.circle_stroke_color)
+        temp_painter.drawPath(outer_mask)
+
+        # Then draw the fill for the inner circle:
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
+        inner_mask = inner_circle.subtracted(mask_rect)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(inner_mask)
+
+        # Draw the final image
+        # Then draw the inner circle (fill)
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        temp_painter.drawPath(inner_circle)
+        painter.drawImage(0, 0, temp_image)
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
+        temp_painter.end()
+        painter.restore()
+
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
+        # Draw control points if needed
+        if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Draw control point lines
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
+            
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
+            
+            painter.restore()
+        """
+
+
+        
+    def point_at(self, t):
+        """Compute a point on the Bézier curve at parameter t."""
+        # If third control point is enabled, use a composite curve with two segments
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
+            
+            # Standard cubic Bézier formula
+            x = (
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
+            )
+            y = (
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+            x = (
+                (1 - t) ** 3 * p0.x() +
+                3 * (1 - t) ** 2 * t * p1.x() +
+                3 * (1 - t) * t ** 2 * p2.x() +
+                t ** 3 * p3.x()
+            )
+            y = (
+                (1 - t) ** 3 * p0.y() +
+                3 * (1 - t) ** 2 * t * p1.y() +
+                3 * (1 - t) * t ** 2 * p2.y() +
+                t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+                
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the Bézier curve."""
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
+
+    def update_side_line(self):
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
+        if tangent_start.manhattanLength() == 0:
+            tangent_start = self.end - self.start
+        if tangent_end.manhattanLength() == 0:
+            tangent_end = self.start - self.end
+
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
+    def draw(self, painter):
+        """Draw the strand with squared ends and highlight if selected."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a cubic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
+                
+                # Draw circle shadows if this strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(painter, self, shadow_color)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+
+        # Create a temporary image for masking
+        temp_image = QImage(
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
+        )
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Draw the main strand
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.stroke_color)
+        temp_painter.drawPath(stroke_path)
+
+        # Draw the fill
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)
+        fill_path = fill_stroker.createStroke(path)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(fill_path)
+
+        # Draw the end line
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
+        temp_painter.setPen(side_pen)
+        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Create a mask for the circle
+        circle_mask = QPainterPath()
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Add the outer circle to the mask
+        circle_mask.addEllipse(self.start, circle_radius, circle_radius)
+
+        # Create the masking rectangle for half circle
+        mask_rect = QPainterPath()
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
+        rect_x = self.start.x() - rect_width/2
+        rect_y = self.start.y()
+        mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+        transform = QTransform()
+        transform.translate(self.start.x(), self.start.y())
+        transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
+        transform.translate(-self.start.x(), -self.start.y())
+        mask_rect = transform.map(mask_rect)
+
+        outer_circle = QPainterPath()
+        outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+        outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.circle_stroke_color)
+        temp_painter.drawPath(outer_mask)
+
+        # Then draw the fill for the inner circle:
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
+        inner_mask = inner_circle.subtracted(mask_rect)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(inner_mask)
+
+        # Draw the final image
+        # Then draw the inner circle (fill)
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        temp_painter.drawPath(inner_circle)
+        painter.drawImage(0, 0, temp_image)
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
+        temp_painter.end()
+        painter.restore()
+
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
+        # Draw control points if needed
+        if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Draw control point lines
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
+            
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
+            
+            painter.restore()
+        """
+
+
+        
+    def point_at(self, t):
+        """Compute a point on the Bézier curve at parameter t."""
+        # If third control point is enabled, use a composite curve with two segments
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
+            
+            # Standard cubic Bézier formula
+            x = (
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
+            )
+            y = (
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+            x = (
+                (1 - t) ** 3 * p0.x() +
+                3 * (1 - t) ** 2 * t * p1.x() +
+                3 * (1 - t) * t ** 2 * p2.x() +
+                t ** 3 * p3.x()
+            )
+            y = (
+                (1 - t) ** 3 * p0.y() +
+                3 * (1 - t) ** 2 * t * p1.y() +
+                3 * (1 - t) * t ** 2 * p2.y() +
+                t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+                
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the Bézier curve."""
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
+
+    def update_side_line(self):
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
+        if tangent_start.manhattanLength() == 0:
+            tangent_start = self.end - self.start
+        if tangent_end.manhattanLength() == 0:
+            tangent_end = self.start - self.end
+
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
+    def draw(self, painter):
+        """Draw the strand with squared ends and highlight if selected."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a cubic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
+                
+                # Draw circle shadows if this strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(painter, self, shadow_color)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+
+        # Create a temporary image for masking
+        temp_image = QImage(
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
+        )
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Draw the main strand
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.stroke_color)
+        temp_painter.drawPath(stroke_path)
+
+        # Draw the fill
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)
+        fill_path = fill_stroker.createStroke(path)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(fill_path)
+
+        # Draw the end line
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
+        temp_painter.setPen(side_pen)
+        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Create a mask for the circle
+        circle_mask = QPainterPath()
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Add the outer circle to the mask
+        circle_mask.addEllipse(self.start, circle_radius, circle_radius)
+
+        # Create the masking rectangle for half circle
+        mask_rect = QPainterPath()
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
+        rect_x = self.start.x() - rect_width/2
+        rect_y = self.start.y()
+        mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+        transform = QTransform()
+        transform.translate(self.start.x(), self.start.y())
+        transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
+        transform.translate(-self.start.x(), -self.start.y())
+        mask_rect = transform.map(mask_rect)
+
+        outer_circle = QPainterPath()
+        outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+        outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.circle_stroke_color)
+        temp_painter.drawPath(outer_mask)
+
+        # Then draw the fill for the inner circle:
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
+        inner_mask = inner_circle.subtracted(mask_rect)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(inner_mask)
+
+        # Draw the final image
+        # Then draw the inner circle (fill)
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        temp_painter.drawPath(inner_circle)
+        painter.drawImage(0, 0, temp_image)
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
+        temp_painter.end()
+        painter.restore()
+
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
+        # Draw control points if needed
+        if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Draw control point lines
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
+            
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
+            
+            painter.restore()
+        """
+
+
+        
+    def point_at(self, t):
+        """Compute a point on the Bézier curve at parameter t."""
+        # If third control point is enabled, use a composite curve with two segments
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
+            
+            # Standard cubic Bézier formula
+            x = (
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
+            )
+            y = (
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+            x = (
+                (1 - t) ** 3 * p0.x() +
+                3 * (1 - t) ** 2 * t * p1.x() +
+                3 * (1 - t) * t ** 2 * p2.x() +
+                t ** 3 * p3.x()
+            )
+            y = (
+                (1 - t) ** 3 * p0.y() +
+                3 * (1 - t) ** 2 * t * p1.y() +
+                3 * (1 - t) * t ** 2 * p2.y() +
+                t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+                
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the Bézier curve."""
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
+
+    def update_side_line(self):
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
+        if tangent_start.manhattanLength() == 0:
+            tangent_start = self.end - self.start
+        if tangent_end.manhattanLength() == 0:
+            tangent_end = self.start - self.end
+
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
+    def draw(self, painter):
+        """Draw the strand with squared ends and highlight if selected."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a cubic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
+                
+                # Draw circle shadows if this strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(painter, self, shadow_color)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+
+        # Create a temporary image for masking
+        temp_image = QImage(
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
+        )
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Draw the main strand
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.stroke_color)
+        temp_painter.drawPath(stroke_path)
+
+        # Draw the fill
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)
+        fill_path = fill_stroker.createStroke(path)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(fill_path)
+
+        # Draw the end line
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
+        temp_painter.setPen(side_pen)
+        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Create a mask for the circle
+        circle_mask = QPainterPath()
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Add the outer circle to the mask
+        circle_mask.addEllipse(self.start, circle_radius, circle_radius)
+
+        # Create the masking rectangle for half circle
+        mask_rect = QPainterPath()
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
+        rect_x = self.start.x() - rect_width/2
+        rect_y = self.start.y()
+        mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+        transform = QTransform()
+        transform.translate(self.start.x(), self.start.y())
+        transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
+        transform.translate(-self.start.x(), -self.start.y())
+        mask_rect = transform.map(mask_rect)
+
+        outer_circle = QPainterPath()
+        outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+        outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.circle_stroke_color)
+        temp_painter.drawPath(outer_mask)
+
+        # Then draw the fill for the inner circle:
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
+        inner_mask = inner_circle.subtracted(mask_rect)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(inner_mask)
+
+        # Draw the final image
+        # Then draw the inner circle (fill)
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        temp_painter.drawPath(inner_circle)
+        painter.drawImage(0, 0, temp_image)
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
+        temp_painter.end()
+        painter.restore()
+
+        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
+        # This code is removed to avoid duplicate drawing
+        """
+        # Draw control points if needed
+        if hasattr(self, 'canvas') and self.canvas and self.canvas.show_control_points:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Draw control point lines
+            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            painter.setPen(control_line_pen)
+            painter.drawLine(self.start, self.control_point1)
+            painter.drawLine(self.end, self.control_point2)
+            
+            # Draw control points
+            control_pen = QPen(QColor('green'), 2)
+            painter.setPen(control_pen)
+            painter.setBrush(QBrush(QColor('green')))
+            painter.drawEllipse(self.control_point1, 4, 4)
+            painter.drawEllipse(self.control_point2, 4, 4)
+            
+            painter.restore()
+        """
+
+
+        
+    def point_at(self, t):
+        """Compute a point on the Bézier curve at parameter t."""
+        # If third control point is enabled, use a composite curve with two segments
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
+            if t <= 0.5:
+                # Scale t to [0,1] for the first segment
+                scaled_t = t * 2
+                # First cubic segment: start to control_point_center
+                p0 = self.start
+                p1 = self.control_point1
+                p2 = self.control_point1
+                p3 = self.control_point_center
+            else:
+                # Scale t to [0,1] for the second segment
+                scaled_t = (t - 0.5) * 2
+                # Second cubic segment: control_point_center to end
+                p0 = self.control_point_center
+                p1 = self.control_point2
+                p2 = self.control_point2
+                p3 = self.end
+            
+            # Standard cubic Bézier formula
+            x = (
+                (1 - scaled_t) ** 3 * p0.x() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
+                scaled_t ** 3 * p3.x()
+            )
+            y = (
+                (1 - scaled_t) ** 3 * p0.y() +
+                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
+                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
+                scaled_t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+            x = (
+                (1 - t) ** 3 * p0.x() +
+                3 * (1 - t) ** 2 * t * p1.x() +
+                3 * (1 - t) * t ** 2 * p2.x() +
+                t ** 3 * p3.x()
+            )
+            y = (
+                (1 - t) ** 3 * p0.y() +
+                3 * (1 - t) ** 2 * t * p1.y() +
+                3 * (1 - t) * t ** 2 * p2.y() +
+                t ** 3 * p3.y()
+            )
+            return QPointF(x, y)
+                
+    def calculate_cubic_tangent(self, t):
+        """Calculate the tangent vector at a given t value of the Bézier curve."""
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
+
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
+
+        return tangent
+
+    def update_side_line(self):
+        """Update side lines considering the curve's shape near the ends."""
+        # Small values near 0 and 1 to get tangents that include control points
+        t_start = 0.01
+        t_end = 0.99
+
+        # Compute tangents near the start and end
+        tangent_start = self.calculate_cubic_tangent(t_start)
+        tangent_end = self.calculate_cubic_tangent(t_end)
+
+        # Handle zero-length tangent vectors
+        if tangent_start.manhattanLength() == 0:
+            tangent_start = self.end - self.start
+        if tangent_end.manhattanLength() == 0:
+            tangent_end = self.start - self.end
+
+        # Calculate angles of tangents
+        angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+        angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+        # Perpendicular angles at start and end
+        perp_angle_start = angle_start + math.pi / 2
+        perp_angle_end = angle_end + math.pi / 2
+
+        # Calculate the offset for the side lines
+        half_total_width = (self.width + self.stroke_width * 2) / 2
+        dx_start = half_total_width * math.cos(perp_angle_start)
+        dy_start = half_total_width * math.sin(perp_angle_start)
+        dx_end = half_total_width * math.cos(perp_angle_end)
+        dy_end = half_total_width * math.sin(perp_angle_end)
+
+        # Start side line positions
+        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
+        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+
+        # End side line positions
+        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
+        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+
+    def set_attachable(self, attachable):
+        self.attachable = attachable
+        self.update_shape()  # Assuming you have this method to update the strand's appearance
+
+    def draw(self, painter):
+        """Draw the strand with squared ends and highlight if selected."""
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Get the path representing the strand as a cubic Bézier curve
+        path = self.get_path()
+
+        # Create a stroker for the stroke path with squared ends
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        # Draw shadow for overlapping strands - using the utility function
+        try:
+            # Import is inside try block to handle potential import errors
+            from shader_utils import draw_strand_shadow, draw_circle_shadow
+            
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                # Use canvas's shadow color if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    # Ensure the strand's shadow color is also updated for future reference
+                    self.shadow_color = QColor(shadow_color)
+                
+                # Draw strand body shadow with explicit shadow color
+                draw_strand_shadow(painter, self, shadow_color)
+                
+                # Draw circle shadows if this strand has circles
+                if hasattr(self, 'has_circles') and any(self.has_circles):
+                    draw_circle_shadow(painter, self, shadow_color)
+        except Exception as e:
+            # Log the error but continue with the rendering
+            logging.error(f"Error applying strand shadow: {e}")
+
+        # Only draw highlight if this is not a MaskedStrand
+        if self.is_selected and not isinstance(self, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+
+        # Create a temporary image for masking
+        temp_image = QImage(
+            painter.device().size(),
+            QImage.Format_ARGB32_Premultiplied
+        )
+        temp_image.fill(Qt.transparent)
+        temp_painter = QPainter(temp_image)
+        temp_painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Draw the main strand
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.stroke_color)
+        temp_painter.drawPath(stroke_path)
+
+        # Draw the fill
+        fill_stroker = QPainterPathStroker()
+        fill_stroker.setWidth(self.width)
+        fill_stroker.setJoinStyle(Qt.MiterJoin)
+        fill_stroker.setCapStyle(Qt.FlatCap)
+        fill_path = fill_stroker.createStroke(path)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(fill_path)
+
+        # Draw the end line
+        side_pen = QPen(self.stroke_color, self.stroke_width)
+        side_pen.setCapStyle(Qt.FlatCap)
+
+        # Create a new color with the same alpha as the strand's color
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+
+        side_pen.setColor(side_color)
+        painter.setPen(side_pen)
+
+        temp_painter.setPen(side_pen)
+        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # Create a mask for the circle
+        circle_mask = QPainterPath()
+        total_diameter = self.width + self.stroke_width * 2
+        circle_radius = total_diameter / 2
+
+        # Add the outer circle to the mask
+        circle_mask.addEllipse(self.start, circle_radius, circle_radius)
+
+        # Create the masking rectangle for half circle
+        mask_rect = QPainterPath()
+        rect_width = total_diameter * 2
+        rect_height = total_diameter * 2
+        rect_x = self.start.x() - rect_width/2
+        rect_y = self.start.y()
+        mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+        transform = QTransform()
+        transform.translate(self.start.x(), self.start.y())
+        transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
+        transform.translate(-self.start.x(), -self.start.y())
+        mask_rect = transform.map(mask_rect)
+
+        outer_circle = QPainterPath()
+        outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+        outer_mask = outer_circle.subtracted(mask_rect)
+
+        # -- ADD THIS COMPOSITION MODE SETUP --
+        temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        r = self.circle_stroke_color.red()
+        g = self.circle_stroke_color.green()
+        b = self.circle_stroke_color.blue()
+        a = self.circle_stroke_color.alpha()
+        logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+        temp_painter.setPen(Qt.NoPen)
+        temp_painter.setBrush(self.circle_stroke_color)
+        temp_painter.drawPath(outer_mask)
+
+        # Then draw the fill for the inner circle:
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
+        inner_mask = inner_circle.subtracted(mask_rect)
+        temp_painter.setBrush(self.color)
+        temp_painter.drawPath(inner_mask)
+
+        # Draw the final image
+        # Then draw the inner circle (fill)
+        inner_circle = QPainterPath()
+        inner_circle.addEllipse(self.start, self.width/2, self.width/2)
+        temp_painter.drawPath(inner_circle)
+        painter.drawImage(0, 0, temp_image)
+
+        # ----------------------------------------------------------------
+        # NEW CODE: Also draw an ending circle if has_circles == [True, True]
+        if self.has_circles == [True, True]:
+            # We'll compute the angle for the end based on the tangent at t=1.0:
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            # If you still need to flip by 180°, uncomment or adjust:
+            # angle_end += math.pi
+
+            # Create another temporary painter so we can blend the circle on the end.
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+            # Make a fresh path for the end circle's half-mask
+            mask_rect_end = QPainterPath()
+            rect_width_end = total_diameter * 2
+            rect_height_end = total_diameter * 2
+            rect_x_end = self.end.x() - rect_width_end / 2
+            rect_y_end = self.end.y()
+            mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+            transform_end = QTransform()
+            transform_end.translate(self.end.x(), self.end.y())
+            transform_end.rotate(math.degrees(angle_end - math.pi / 2)+180)
+            transform_end.translate(-self.end.x(), -self.end.y())
+            mask_rect_end = transform_end.map(mask_rect_end)
+
+            outer_circle_end = QPainterPath()
+            outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+            outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+            # Draw the outer circle stroke
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(outer_mask_end)
+
+            # Then draw the fill for the inner circle at the end
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(inner_mask_end)
+
+            # Draw a small inner circle fill so it doesn't look clipped
+            just_inner_end = QPainterPath()
+            just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+            temp_painter.drawPath(just_inner_end)
+
+            # Overwrite the final image portion
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+        # ----------------------------------------------------------------
+
         temp_painter.end()
         painter.restore()
 
@@ -2527,6 +4135,7 @@ class MaskedStrand(Strand):
         """
         Get the path representing the masked area.
         This includes base intersection and also subtracts any deletion rectangles.
+        ALWAYS recalculates based on current component strands and deletion rectangles.
         """
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
@@ -2534,33 +4143,31 @@ class MaskedStrand(Strand):
         # Get the base paths for both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-        
-        # Create the final mask by intersecting the path1 shadow with path2
+
+        # Create the mask by intersecting the paths - Always start fresh
         result_path = path1.intersected(path2)
 
-        # If we have a custom mask path, use that instead
-        if self.custom_mask_path is not None:
-            result_path = self.custom_mask_path
-
-        # Apply any saved deletion rectangles
+        # Apply any saved deletion rectangles based on their current corner data
         if hasattr(self, 'deletion_rectangles'):
             for rect in self.deletion_rectangles:
-                # NEW code using corner-based data:
+                # Use corner-based data for precise deletion
                 top_left = QPointF(*rect['top_left'])
                 top_right = QPointF(*rect['top_right'])
                 bottom_left = QPointF(*rect['bottom_left'])
                 bottom_right = QPointF(*rect['bottom_right'])
+
                 # Create a polygonal path from the four corners
                 deletion_path = QPainterPath()
-
                 deletion_path.moveTo(top_left)
                 deletion_path.lineTo(top_right)
                 deletion_path.lineTo(bottom_right)
                 deletion_path.lineTo(bottom_left)
                 deletion_path.closeSubpath()
 
+                # Subtract this specific rectangle's current shape
                 result_path = result_path.subtracted(deletion_path)
 
+        # Ignore self.custom_mask_path to ensure fresh calculation
         return result_path
 
     def get_stroked_path_for_strand(self, strand):

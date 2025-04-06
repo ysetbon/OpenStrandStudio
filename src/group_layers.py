@@ -511,50 +511,56 @@ class GroupPanel(QWidget):
 
             # Create a QPointF for the movement delta
             delta = QPointF(total_dx, total_dy)
-            
-            # Move all strands in the group (using the strands list from canvas.groups)
+            logging.debug(f"Updating group '{group_name}' move by delta: {delta}")
+
             strands_to_move = group_data.get('strands', [])
             if not strands_to_move:
                 logging.warning(f"No strands found in canvas.groups for group '{group_name}' during update_group_move.")
                 return
 
             for strand in strands_to_move:
-                # Store original control points if not already set correctly
-                if not hasattr(strand, 'original_control_point1') or not isinstance(strand.original_control_point1, QPointF):
-                    strand.original_control_point1 = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
-                if not hasattr(strand, 'original_control_point2') or not isinstance(strand.original_control_point2, QPointF):
-                    strand.original_control_point2 = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                if hasattr(strand, 'control_point_center') and (not hasattr(strand, 'original_control_point_center') or not isinstance(strand.original_control_point_center, QPointF)):
-                    strand.original_control_point_center = QPointF(strand.control_point_center)
+                 # Set flag to prevent redundant updates during group move
+                 strand.updating_position = True
 
-                # Move all points including control points based on their originals
-                strand.start = strand.original_start + delta
-                strand.end = strand.original_end + delta
-                strand.control_point1 = strand.original_control_point1 + delta
-                strand.control_point2 = strand.original_control_point2 + delta
-                if hasattr(strand, 'control_point_center') and hasattr(strand, 'original_control_point_center'):
-                     strand.control_point_center = strand.original_control_point_center + delta
-               
-                # Update the strand's shape
-                strand.update_shape()
-                if hasattr(strand, 'update_side_line'):
-                    strand.update_side_line()
-                
-                # Store the updated control points in canvas.groups
-                if 'control_points' not in group_data:
-                    group_data['control_points'] = {}
-                
-                control_points_dict = {
-                    'control_point1': strand.control_point1,
-                    'control_point2': strand.control_point2
-                }
-                
-                # Also store center control point if it exists
-                if hasattr(strand, 'control_point_center'):
-                    control_points_dict['control_point_center'] = strand.control_point_center
-                
-                group_data['control_points'][strand.layer_name] = control_points_dict
-            
+                 if isinstance(strand, MaskedStrand):
+                      # For MaskedStrand, call its update method with the new center
+                      if hasattr(strand, 'original_base_center_point') and strand.original_base_center_point:
+                           new_center = strand.original_base_center_point + delta
+                           logging.debug(f"Calling MaskedStrand.update for {strand.layer_name} with new center {new_center}")
+                           strand.update(new_center)
+                      else:
+                           logging.warning(f"Missing original_base_center_point for MaskedStrand {strand.layer_name}, cannot update.")
+                 else:
+                      # For regular/attached strands, update points directly from originals
+                      if not hasattr(strand, 'original_start') or \
+                         not hasattr(strand, 'original_end') or \
+                         not hasattr(strand, 'original_control_point1') or \
+                         not hasattr(strand, 'original_control_point2'):
+                          logging.error(f"Missing original position data for strand {strand.layer_name} during group move.")
+                          # Attempt to set originals if missing (fallback)
+                          strand.original_start = QPointF(strand.start)
+                          strand.original_end = QPointF(strand.end)
+                          strand.original_control_point1 = QPointF(strand.control_point1) if hasattr(strand, 'control_point1') else QPointF(strand.start)
+                          strand.original_control_point2 = QPointF(strand.control_point2) if hasattr(strand, 'control_point2') else QPointF(strand.end)
+                          if hasattr(strand, 'control_point_center'):
+                              strand.original_control_point_center = QPointF(strand.control_point_center)
+
+                      strand.start = strand.original_start + delta
+                      strand.end = strand.original_end + delta
+                      strand.control_point1 = strand.original_control_point1 + delta
+                      strand.control_point2 = strand.original_control_point2 + delta
+                      if hasattr(strand, 'original_control_point_center') and hasattr(strand, 'control_point_center'):
+                           strand.control_point_center = strand.original_control_point_center + delta
+
+                      # Update shape and side lines
+                      if hasattr(strand, 'update_shape'):
+                          strand.update_shape()
+                      if hasattr(strand, 'update_side_line'):
+                           strand.update_side_line()
+
+                 # Reset flag
+                 strand.updating_position = False
+
             # Update the canvas
             self.canvas.update()
         else:
@@ -941,13 +947,14 @@ class GroupPanel(QWidget):
             else:
                 # For MaskedStrand, rotate each deletion rectangle corner
                 original_corners = pre_rotation_pos.get('deletion_rectangles', [])
+                # Ensure deletion_rectangles list exists and has enough space
+                if not hasattr(strand, 'deletion_rectangles'):
+                    strand.deletion_rectangles = []
                 while len(strand.deletion_rectangles) < len(original_corners):
                     # Create placeholders if needed
                     strand.deletion_rectangles.append({
-                        'top_left': (0, 0),
-                        'top_right': (0, 0),
-                        'bottom_left': (0, 0),
-                        'bottom_right': (0, 0),
+                        'top_left': (0, 0), 'top_right': (0, 0),
+                        'bottom_left': (0, 0), 'bottom_right': (0, 0),
                     })
 
                 for rect, orig_corners in zip(strand.deletion_rectangles, original_corners):
@@ -961,10 +968,19 @@ class GroupPanel(QWidget):
                     rect['bottom_left']  = (bl.x(), bl.y())
                     rect['bottom_right'] = (br.x(), br.y())
 
+                # Recalculate mask path and center points after rotating deletion rects
+                if hasattr(strand, 'update_mask_path'):
+                    strand.update_mask_path()
+                if hasattr(strand, 'calculate_center_point'):
+                    strand.calculate_center_point()
+
             # Update shapes, side lines, etc.
             strand.update_shape()
             if hasattr(strand, 'update_side_line'):
                 strand.update_side_line()
+            # Force shadow update for masked strands after rotation
+            if isinstance(strand, MaskedStrand) and hasattr(strand, 'force_shadow_update'):
+                 strand.force_shadow_update()
 
         # -- 3) Repaint with updated geometry. --
         self.canvas.update()
@@ -1277,22 +1293,48 @@ class GroupMoveDialog(QDialog):
             # Store original positions
             strand.original_start = QPointF(strand.start)
             strand.original_end = QPointF(strand.end)
-            
-            # Safely store original control points
-            strand.original_control_point1 = (
-                QPointF(strand.control_point1) if isinstance(strand.control_point1, QPointF) 
-                else QPointF(strand.start)
-            )
-            strand.original_control_point2 = (
-                QPointF(strand.control_point2) if isinstance(strand.control_point2, QPointF) 
-                else QPointF(strand.end)
-            )
 
-            logging.debug(f"Stored original positions for strand {strand.layer_name}: "
-                        f"Start: {strand.original_start}, "
-                        f"End: {strand.original_end}, "
-                        f"CP1: {strand.original_control_point1}, "
-                        f"CP2: {strand.original_control_point2}")
+            if isinstance(strand, MaskedStrand):
+                 # Store original center points for MaskedStrand
+                strand.calculate_center_point() # Ensure points are calculated
+                strand.original_base_center_point = QPointF(strand.base_center_point) if strand.base_center_point else None
+                strand.original_edited_center_point = QPointF(strand.edited_center_point) if strand.edited_center_point else None
+                # Also store original corners of deletion rectangles
+                if hasattr(strand, 'deletion_rectangles'):
+                    strand.original_deletion_rectangles = []
+                    for rect in strand.deletion_rectangles:
+                        strand.original_deletion_rectangles.append({
+                            'top_left': QPointF(*rect['top_left']),
+                            'top_right': QPointF(*rect['top_right']),
+                            'bottom_left': QPointF(*rect['bottom_left']),
+                            'bottom_right': QPointF(*rect['bottom_right']),
+                            # Keep original offset data if needed, though recalculation might be safer
+                            'offset_x': rect.get('offset_x'),
+                            'offset_y': rect.get('offset_y'),
+                            'x': rect.get('x'),
+                            'y': rect.get('y'),
+                            'width': rect.get('width'),
+                            'height': rect.get('height')
+                        })
+                logging.debug(f"Stored original centers/rects for masked strand {strand.layer_name}")
+            else:
+                # Safely store original control points for regular/attached strands
+                strand.original_control_point1 = (
+                    QPointF(strand.control_point1) if hasattr(strand, 'control_point1') and isinstance(strand.control_point1, QPointF)
+                    else QPointF(strand.start)
+                )
+                strand.original_control_point2 = (
+                    QPointF(strand.control_point2) if hasattr(strand, 'control_point2') and isinstance(strand.control_point2, QPointF)
+                    else QPointF(strand.end)
+                )
+                if hasattr(strand, 'control_point_center') and isinstance(strand.control_point_center, QPointF):
+                     strand.original_control_point_center = QPointF(strand.control_point_center)
+
+                logging.debug(f"Stored original positions for strand {strand.layer_name}: "
+                            f"Start: {strand.original_start}, "
+                            f"End: {strand.original_end}, "
+                            f"CP1: {strand.original_control_point1}, "
+                            f"CP2: {strand.original_control_point2}")
 
     def setup_ui(self):
         _ = translations[self.language_code]
@@ -1358,33 +1400,42 @@ class GroupMoveDialog(QDialog):
         """Update positions based on original positions and current deltas"""
         if self.canvas and self.group_name in self.canvas.groups:
             group_data = self.canvas.groups[self.group_name]
-            
+
             # Create exact delta point
             delta = QPointF(self.total_dx, self.total_dy)
-            logging.info(f"Moving by delta: ({self.total_dx}, {self.total_dy})")
+            logging.info(f"Moving group '{self.group_name}' by delta: ({self.total_dx}, {self.total_dy})")
 
             for strand in group_data['strands']:
-                # Temporarily disable shape updates
-                strand.updating_position = True  # Add this flag to Strand class if not exists
-                
-                # Move all points by exactly the same delta
-                strand.start = strand.original_start + delta
-                strand.end = strand.original_end + delta
-                strand.control_point1 = strand.original_control_point1 + delta
-                strand.control_point2 = strand.original_control_point2 + delta
-                
-                logging.info(f"Updated positions for strand {strand.layer_name}:")
-                logging.info(f"  Start: {strand.start}")
-                logging.info(f"  End: {strand.end}")
-                logging.info(f"  Control1: {strand.control_point1}")
-                logging.info(f"  Control2: {strand.control_point2}")
-                
-                # Update the strand's shape without updating control points
-                if hasattr(strand, 'update_side_line'):
-                    strand.update_side_line()
-                
-                # Re-enable shape updates
-                strand.updating_position = False
+                strand.updating_position = True  # Flag to potentially optimize updates
+
+                if isinstance(strand, MaskedStrand):
+                    # Use MaskedStrand's update method
+                    if hasattr(strand, 'original_base_center_point') and strand.original_base_center_point:
+                        new_center = strand.original_base_center_point + delta
+                        logging.debug(f"Updating MaskedStrand {strand.layer_name} to new center: {new_center}")
+                        strand.update(new_center) # Pass the new calculated center
+                    else:
+                         logging.warning(f"Missing original_base_center_point for MaskedStrand {strand.layer_name}")
+                else:
+                    # Move regular/attached strands directly
+                    strand.start = strand.original_start + delta
+                    strand.end = strand.original_end + delta
+                    if hasattr(strand, 'original_control_point1'):
+                        strand.control_point1 = strand.original_control_point1 + delta
+                    if hasattr(strand, 'original_control_point2'):
+                        strand.control_point2 = strand.original_control_point2 + delta
+                    if hasattr(strand, 'original_control_point_center'):
+                         strand.control_point_center = strand.original_control_point_center + delta
+
+                    logging.debug(f"Updated positions for strand {strand.layer_name}: Start={strand.start}, End={strand.end}")
+
+                    # Update shape and side lines for non-masked strands
+                    if hasattr(strand, 'update_shape'):
+                         strand.update_shape()
+                    if hasattr(strand, 'update_side_line'):
+                        strand.update_side_line()
+
+                strand.updating_position = False # Reset flag
 
             # Emit the movement signal with exact values
             self.move_updated.emit(self.group_name, float(self.total_dx), float(self.total_dy))
@@ -1433,8 +1484,45 @@ class GroupMoveDialog(QDialog):
                 # Store final positions as new originals
                 strand.original_start = QPointF(strand.start)
                 strand.original_end = QPointF(strand.end)
-                strand.original_control_point1 = QPointF(strand.control_point1)
-                strand.original_control_point2 = QPointF(strand.control_point2)
+                # Only update control points for non-masked strands
+                if not isinstance(strand, MaskedStrand):
+                    # Ensure control points exist before copying
+                    if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
+                        strand.original_control_point1 = QPointF(strand.control_point1)
+                    else:
+                         # Fallback if control point is None or missing
+                         strand.original_control_point1 = QPointF(strand.start)
+
+                    if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
+                        strand.original_control_point2 = QPointF(strand.control_point2)
+                    else:
+                         # Fallback if control point is None or missing
+                         strand.original_control_point2 = QPointF(strand.end)
+
+                    if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                         strand.original_control_point_center = QPointF(strand.control_point_center)
+                elif isinstance(strand, MaskedStrand):
+                     # Update original center points and deletion rectangles for MaskedStrand
+                     strand.calculate_center_point() # Recalculate just in case
+                     strand.original_base_center_point = QPointF(strand.base_center_point) if strand.base_center_point else None
+                     strand.original_edited_center_point = QPointF(strand.edited_center_point) if strand.edited_center_point else None
+                     if hasattr(strand, 'deletion_rectangles'):
+                         strand.original_deletion_rectangles = []
+                         for rect in strand.deletion_rectangles:
+                             strand.original_deletion_rectangles.append({
+                                 'top_left': QPointF(*rect['top_left']),
+                                 'top_right': QPointF(*rect['top_right']),
+                                 'bottom_left': QPointF(*rect['bottom_left']),
+                                 'bottom_right': QPointF(*rect['bottom_right']),
+                                 'offset_x': rect.get('offset_x'),
+                                 'offset_y': rect.get('offset_y'),
+                                 'x': rect.get('x'),
+                                 'y': rect.get('y'),
+                                 'width': rect.get('width'),
+                                 'height': rect.get('height')
+                             })
+
+
         self.move_finished.emit(self.group_name)
         self.accept()
 
@@ -4090,3 +4178,55 @@ class StrandAngleEditDialog(QDialog):
                 self.on_checkbox_changed(row, 6, Qt.Checked)
             elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
                 self.on_checkbox_changed(row, 7, Qt.Checked)
+
+        # Identify which strands were actually modified by comparing current angle to initial
+        modified_strand_names = set()
+        for row, strand in enumerate(self.group_data['strands']):
+            # Skip non-editable strands
+            if isinstance(strand, MaskedStrand) or (hasattr(strand, 'layer_name') and strand.layer_name.endswith("_1")) or not strand.is_attachable():
+                 continue
+
+            # Check if angle actually changed (might need initial angles stored)
+            # For simplicity, assume any interaction means potential change
+            if hasattr(strand, 'layer_name'):
+                 modified_strand_names.add(strand.layer_name)
+
+
+        # Find MaskedStrands in the same group whose underlying strands were modified
+        if self.canvas and self.group_name in self.canvas.groups:
+            group_strands = self.canvas.groups[self.group_name].get('strands', [])
+            for potential_masked_strand in group_strands:
+                if isinstance(potential_masked_strand, MaskedStrand):
+                    needs_update = False
+                    # Check first_selected_strand
+                    if hasattr(potential_masked_strand, 'first_selected_strand') and \
+                       potential_masked_strand.first_selected_strand and \
+                       hasattr(potential_masked_strand.first_selected_strand, 'layer_name') and \
+                       potential_masked_strand.first_selected_strand.layer_name in modified_strand_names:
+                           needs_update = True
+                    # Check second_selected_strand
+                    if hasattr(potential_masked_strand, 'second_selected_strand') and \
+                       potential_masked_strand.second_selected_strand and \
+                       hasattr(potential_masked_strand.second_selected_strand, 'layer_name') and \
+                       potential_masked_strand.second_selected_strand.layer_name in modified_strand_names:
+                           needs_update = True
+
+                    if needs_update:
+                        logging.info(f"Underlying strand angles changed for MaskedStrand {potential_masked_strand.layer_name}. Forcing update.")
+                        if hasattr(potential_masked_strand, 'force_complete_update'):
+                            potential_masked_strand.force_complete_update()
+                        else:
+                             # Fallback if method doesn't exist
+                             logging.warning(f"MaskedStrand {potential_masked_strand.layer_name} missing force_complete_update, using fallback.")
+                             if hasattr(potential_masked_strand, 'update_mask_path'): potential_masked_strand.update_mask_path()
+                             if hasattr(potential_masked_strand, 'calculate_center_point'): potential_masked_strand.calculate_center_point()
+                             if hasattr(potential_masked_strand, 'force_shadow_update'): potential_masked_strand.force_shadow_update()
+
+
+        # Update the layer state manager's connections to reflect the new strand positions
+        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            # Save the current state to update connections in the layer state manager
+            self.canvas.layer_state_manager.save_current_state()
+            logging.info("Updated layer state manager connections after angle adjustments")
+
+        super().accept()

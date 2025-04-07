@@ -59,6 +59,8 @@ translations = {
         'general_settings': 'General Settings',
         'change_language': 'Change Language',
         'tutorial': 'Tutorial',
+        'history': 'History',
+        'whats_new': "What's New?",
         'about': 'About OpenStrand Studio',
         'select_theme': 'Select Theme:',
         'select_language': 'Select Language:',
@@ -81,11 +83,36 @@ translations = {
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Version 1.090
+            © 2025 OpenStrand Studio - Version 1.091
         </p>
         ''',
-
-
+        # Whats New Section
+        'whats_new_info_part1': '''
+        <h2 style="margin-top: 5px; margin-bottom: 5px;">What's New in Version 1.091?</h2>
+        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
+            This version introduces some exciting new features and improvements:
+        </p>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Undo/Redo Functionality:</b> You can now easily undo and redo your actions using the dedicated buttons. This helps in correcting mistakes or exploring different design variations without losing your progress. Look for these icons:</li>
+            <br>
+            <li style="font-size:15px;"><b>History:</b> In the settings dialog, there is a new "History" tab that allows you to view the history of your actions. This is useful for reviewing past actions and restoring them if needed.</li>
+        </ul>
+        ''',
+        'whats_new_info_part2': '''
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Bug Fixes:</b> Several bugs reported from the previous version (1.090) have been addressed to provide a smoother and more reliable experience.
+            <br>
+            <br>
+                Specifically, in move mode strands and control points are better visually drawn when moving, if "affected strand" is enabled or disabled. 
+            <br>
+            <br>
+                Additionally, if connecting an attached strand to a starting point of a main strand, the drawing of the main strand (in all modes) is corrected (there were issues in that specific case in past versions). </li>               
+        </ul>
+        <br>
+        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Hope you enjoy these updates!</p>
+        ''',
+        'undo_icon_label': 'Undo Icon:',
+        'redo_icon_label': 'Redo Icon:',
 
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',
@@ -156,7 +183,6 @@ translations = {
         'group_exists': 'Group Exists',
         'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?',
         # History translations
-        'history': 'History',
         'load_selected_history': 'Load Selected',
         'clear_all_history': 'Clear All History',
         'confirm_clear_history_title': 'Confirm Clear History',
@@ -228,6 +254,8 @@ translations = {
         'general_settings': 'Paramètres généraux',
         'change_language': 'Changer la langue',
         'tutorial': 'Tutoriel',
+        'history': 'Historique',
+        'whats_new': "Quoi de neuf ?",
         'about': 'À propos d\'OpenStrand Studio',
         'select_theme': 'Sélectionner le thème :',
         'select_language': 'Sélectionner la langue :',
@@ -250,9 +278,37 @@ translations = {
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Version 1.090
+            © 2025 OpenStrand Studio - Version 1.091
         </p>
         ''',
+        # Whats New Section (French)
+        'whats_new_info_part1': '''
+        <h2 style="margin-top: 5px; margin-bottom: 5px;">Quoi de neuf dans la version 1.091 ?</h2>
+        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
+            Cette version introduit de nouvelles fonctionnalités et améliorations intéressantes :
+        </p>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Fonctionnalité Annuler/Rétablir :</b> Vous pouvez désormais annuler et rétablir facilement vos actions à l'aide des boutons dédiés. Cela aide à corriger les erreurs ou à explorer différentes variations de conception sans perdre votre progression. Recherchez ces icônes :</li>
+            <br>
+            <li style="font-size:15px;"><b>Historique :</b> Dans la boîte de dialogue des paramètres, un nouvel onglet "Historique" vous permet de visualiser l'historique de vos actions. Ceci est utile pour examiner les actions passées et les restaurer si nécessaire.</li>
+        </ul>
+        ''',
+        'whats_new_info_part2': '''
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Corrections de bugs :</b> Plusieurs bugs signalés dans la version précédente (1.090) ont été corrigés pour offrir une expérience plus fluide et plus fiable.
+            <br>
+            <br>
+                Par exemple, en mode déplacement, les brins et les points de contrôle sont mieux dessinés visuellement lors du déplacement, que l'option "brin affecté" soit activée ou désactivée.
+            <br>
+            <br>
+                De plus, si l'on connecte un brin attaché à un point de départ d'un brin principal, le dessin du brin principal (dans tous les modes) est corrigé (il y avait des problèmes dans ce cas spécifique dans les versions précédentes). </li>
+        </ul>
+        <br>
+        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Nous espérons que vous apprécierez ces mises à jour !</p>
+        ''',
+        'undo_icon_label': 'Icône Annuler :',
+        'redo_icon_label': 'Icône Rétablir :',
+
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
         'draw_names': 'Dessiner Noms',
@@ -322,7 +378,6 @@ translations = {
         'group_exists': 'Groupe Existant',
         'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?',
         # History translations (French)
-        'history': 'Historique',
         'load_selected_history': 'Charger Sélection',
         'clear_all_history': 'Effacer Tout l\'Historique',
         'confirm_clear_history_title': 'Confirmer la Suppression',
@@ -337,6 +392,7 @@ translations = {
 }
 
 # Remove the update() calls since we've added the translations directly to the dictionaries
+
 
 
 

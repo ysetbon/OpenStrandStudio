@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QColorDialog, QCheckBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl
-from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap
+from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
@@ -13,8 +13,14 @@ import logging
 import os
 import sys
 import subprocess
-import sys
 from PyQt5.QtCore import QStandardPaths, QDateTime
+
+# Import StrokeTextButton for displaying icons
+try:
+    from undo_redo_manager import StrokeTextButton
+except ImportError:
+    # Fallback if StrokeTextButton cannot be imported (e.g., during development)
+    StrokeTextButton = QPushButton
 
 # Assuming UndoRedoManager might be needed for history actions
 # Import it - adjust path if necessary
@@ -146,6 +152,7 @@ class SettingsDialog(QDialog):
             _['change_language'],
             _['tutorial'],
             _['history'],
+            _['whats_new'],  # Add What's New category here
             _['about']  # Make sure About is the last item
         ]
         for category in categories:
@@ -386,7 +393,53 @@ class SettingsDialog(QDialog):
         
         self.stacked_widget.addWidget(self.history_widget)
 
-        # About Page (index 4) - LAST
+        # What's New Page (index 4)
+        self.whats_new_widget = QWidget()
+        whats_new_layout = QVBoxLayout(self.whats_new_widget)
+
+        # Use QTextBrowser for What's New info - Part 1
+        self.whats_new_text_browser_part1 = QTextBrowser()
+        self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
+        self.whats_new_text_browser_part1.setOpenExternalLinks(True)
+        self.whats_new_text_browser_part1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        whats_new_layout.addWidget(self.whats_new_text_browser_part1)
+
+        # Add Undo/Redo icons and labels
+        self.icon_layout = QHBoxLayout()
+        self.icon_layout.addStretch()
+
+        # Undo Icon
+        self.undo_icon_label = QLabel(_['undo_icon_label'])
+        self.undo_icon_widget = QLabel()
+        self.undo_icon_widget.setFixedSize(40, 40) # Match StrokeTextButton size
+        self.update_icon_widget(self.undo_icon_widget, '↶')
+
+        self.icon_layout.addWidget(self.undo_icon_label)
+        self.icon_layout.addWidget(self.undo_icon_widget)
+        self.icon_layout.addSpacing(20) # Add spacing between icons
+
+        # Redo Icon
+        self.redo_icon_label = QLabel(_['redo_icon_label'])
+        self.redo_icon_widget = QLabel()
+        self.redo_icon_widget.setFixedSize(40, 40) # Match StrokeTextButton size
+        self.update_icon_widget(self.redo_icon_widget, '↷')
+
+        self.icon_layout.addWidget(self.redo_icon_label)
+        self.icon_layout.addWidget(self.redo_icon_widget)
+
+        self.icon_layout.addStretch()
+        whats_new_layout.addLayout(self.icon_layout)
+
+        # Use QTextBrowser for What's New info - Part 2
+        self.whats_new_text_browser_part2 = QTextBrowser()
+        self.whats_new_text_browser_part2.setHtml(_['whats_new_info_part2'])
+        self.whats_new_text_browser_part2.setOpenExternalLinks(True)
+        self.whats_new_text_browser_part2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        whats_new_layout.addWidget(self.whats_new_text_browser_part2)
+
+        self.stacked_widget.addWidget(self.whats_new_widget)
+
+        # About Page (index 5) - LAST
         self.about_widget = QWidget()
         about_layout = QVBoxLayout(self.about_widget)
 
@@ -403,6 +456,7 @@ class SettingsDialog(QDialog):
         self.change_language_widget.setMinimumWidth(550)
         self.tutorial_widget.setMinimumWidth(550)
         self.history_widget.setMinimumWidth(550)
+        self.whats_new_widget.setMinimumWidth(550) # Set min width for new page
         self.about_widget.setMinimumWidth(550)
 
         # Add widgets to main layout with proper spacing
@@ -768,7 +822,8 @@ class SettingsDialog(QDialog):
         self.categories_list.item(1).setText(_['change_language'])
         self.categories_list.item(2).setText(_['tutorial'])
         self.categories_list.item(3).setText(_['history']) # Update history category name
-        self.categories_list.item(4).setText(_['about']) # Adjust index for About
+        self.categories_list.item(4).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(5).setText(_['about']) # Adjust index for About
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -786,6 +841,28 @@ class SettingsDialog(QDialog):
         self.history_explanation_label.setText(_['history_explanation'])
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
+        # Update What's New page elements
+        self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
+        self.whats_new_text_browser_part2.setHtml(_['whats_new_info_part2'])
+        # Find labels within the icon layout to update text
+        if hasattr(self, 'icon_layout'):
+            for i in range(self.icon_layout.count()):
+                item = self.icon_layout.itemAt(i)
+                if isinstance(item.widget(), QLabel):
+                    widget = item.widget()
+                    # Use more robust identification if possible
+                    if widget == self.undo_icon_label:
+                        widget.setText(_['undo_icon_label'])
+                    elif widget == self.redo_icon_label:
+                        widget.setText(_['redo_icon_label'])
+                    # Check if it is one of the icon widgets we need to redraw
+                    elif widget == self.undo_icon_widget:
+                        self.update_icon_widget(widget, '↶')
+                    elif widget == self.redo_icon_widget:
+                        self.update_icon_widget(widget, '↷')
+        else:
+            logging.warning("self.icon_layout not found during translation update.")
+
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])
@@ -1193,7 +1270,7 @@ class SettingsDialog(QDialog):
             )
 
     def showEvent(self, event):
-        """Override showEvent to refresh the history list every time the dialog is shown."""
+        """Override showEvent to refresh the history list and icon widgets every time the dialog is shown."""
         super().showEvent(event)
         
         # Refresh the history list
@@ -1202,6 +1279,64 @@ class SettingsDialog(QDialog):
             self.populate_history_list()
         else:
             logging.warning("Cannot refresh history list - required components not initialized")
+
+        # Refresh icon widgets on show
+        if hasattr(self, 'undo_icon_widget'):
+            self.update_icon_widget(self.undo_icon_widget, '↶')
+        if hasattr(self, 'redo_icon_widget'):
+            self.update_icon_widget(self.redo_icon_widget, '↷')
+
+    def update_icon_widget(self, label_widget, character):
+        """Helper function to draw the styled icon onto a QLabel's pixmap."""
+        pixmap_size = 40 # Match button size
+        pixmap = QPixmap(pixmap_size, pixmap_size)
+        pixmap.fill(Qt.transparent) # Ensure transparent background
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw the blue circle background
+        circle_color = QColor("#76acdc")
+        painter.setBrush(QBrush(circle_color))
+        painter.setPen(Qt.NoPen) # No border for the circle itself
+        # Draw ellipse slightly inset to avoid clipping
+        radius = (pixmap_size / 2) - 1 # Slightly smaller radius
+        center_offset = (pixmap_size / 2)
+        painter.drawEllipse(int(center_offset - radius), int(center_offset - radius), int(radius * 2), int(radius * 2))
+
+        # Draw the text character
+        # Use a suitable font, similar to StrokeTextButton
+        font = QFont()
+        font.setPixelSize(30) # Match pixel size from StrokeTextButton
+        font.setBold(True)
+        painter.setFont(font)
+
+        # --- Mimic StrokeTextButton text drawing (stroke + fill) --- 
+        path = QPainterPath()
+        fm = QFontMetrics(font)
+        text_width = fm.horizontalAdvance(character)
+        text_height = fm.height()
+        # Adjust position slightly for better centering if needed
+        x = (pixmap_size - text_width) / 2
+        y = (pixmap_size + text_height) / 2 - fm.descent() + 1 # Small adjustment often needed
+        path.addText(x, y, font, character)
+
+        # Define stroke and fill based on StrokeTextButton's normal blue theme
+        # Using the 'default' blue theme values from UndoRedoManager
+        stroke_color = QColor("#e0ecfa") # Normal stroke for blue theme
+        stroke_width = 3.0
+        fill_color = QColor("#000000") # Black fill
+
+        # Draw stroke
+        pen = QPen(stroke_color, stroke_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        painter.strokePath(path, pen)
+
+        # Draw fill
+        painter.fillPath(path, fill_color)
+        # --- End mimic --- 
+
+        painter.end()
+        label_widget.setPixmap(pixmap)
 
 
 class VideoPlayerDialog(QDialog):

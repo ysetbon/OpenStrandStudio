@@ -647,68 +647,22 @@ class Strand:
             
     def calculate_cubic_tangent(self, t):
         """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # If third control point is enabled AND active, use a composite curve with two segments
-        if (hasattr(self, 'canvas') and self.canvas and 
-            hasattr(self.canvas, 'enable_third_control_point') and 
-            self.canvas.enable_third_control_point):
-            if t <= 0.5:
-                # Scale t to [0,1] for the first segment
-                scaled_t = t * 2
-                # First cubic segment: start to control_point_center
-                p0 = self.start
-                p1 = self.control_point1
-                # Use a proper control point based on path calculation for smoother results
-                p2 = self.control_point1
-                p3 = self.control_point_center
-            else:
-                # Scale t to [0,1] for the second segment
-                scaled_t = (t - 0.5) * 2
-                # Second cubic segment: control_point_center to end
-                p0 = self.control_point_center
-                p1 = self.control_point2
-                # Use a proper control point based on path calculation for smoother results
-                p2 = self.control_point2
-                p3 = self.end
-            
-            # Derivative of cubic Bézier formula
-            dx = (
-                3 * (1 - scaled_t) ** 2 * (p1.x() - p0.x()) +
-                6 * (1 - scaled_t) * scaled_t * (p2.x() - p1.x()) +
-                3 * scaled_t ** 2 * (p3.x() - p2.x())
-            )
-            dy = (
-                3 * (1 - scaled_t) ** 2 * (p1.y() - p0.y()) +
-                6 * (1 - scaled_t) * scaled_t * (p2.y() - p1.y()) +
-                3 * scaled_t ** 2 * (p3.y() - p2.y())
-            )
-            
-            # Scale the derivative by 2 to account for the parameter rescaling
-            dx *= 2
-            dy *= 2
-            
-            tangent = QPointF(dx, dy)
-            
-            # Handle zero-length tangent vector
-            if tangent.manhattanLength() == 0:
-                tangent = p3 - p0
-                
-            return tangent
-        else:
-            # Standard cubic Bézier with 2 control points
-            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+        # Always use the standard cubic Bézier with 2 control points for tangent calculation
+        # This ensures consistent C-shape calculations regardless of third control point status
+        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-            # Compute the derivative at parameter t
-            tangent = (
-                3 * (1 - t) ** 2 * (p1 - p0) +
-                6 * (1 - t) * t * (p2 - p1) +
-                3 * t ** 2 * (p3 - p2)
-            )
+        # Compute the derivative at parameter t
+        tangent = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t ** 2 * (p3 - p2)
+        )
 
-            # Handle zero-length tangent vector
-            if tangent.manhattanLength() == 0:
-                tangent = p3 - p0
+        # Handle zero-length tangent vector
+        if tangent.manhattanLength() == 0:
+            tangent = p3 - p0
 
-            return tangent
+        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -888,6 +842,7 @@ class Strand:
                     angle = 0.0 # Default angle if no direction
                 else:
                     angle = math.atan2(direction_vector.y(), direction_vector.x())
+
             else:
                 # Otherwise, use the cubic tangent
                 tangent = self.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
@@ -2090,24 +2045,7 @@ class AttachedStrand(Strand):
             )
             return QPointF(x, y)
                 
-    def calculate_cubic_tangent(self, t):
-        """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
-
-        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -2425,24 +2363,7 @@ class AttachedStrand(Strand):
             )
             return QPointF(x, y)
                 
-    def calculate_cubic_tangent(self, t):
-        """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
-
-        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -2760,24 +2681,7 @@ class AttachedStrand(Strand):
             )
             return QPointF(x, y)
                 
-    def calculate_cubic_tangent(self, t):
-        """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
-
-        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -3095,24 +2999,7 @@ class AttachedStrand(Strand):
             )
             return QPointF(x, y)
                 
-    def calculate_cubic_tangent(self, t):
-        """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
-
-        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -3430,24 +3317,7 @@ class AttachedStrand(Strand):
             )
             return QPointF(x, y)
                 
-    def calculate_cubic_tangent(self, t):
-        """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
-
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
-
-        return tangent
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
@@ -5006,12 +4876,6 @@ class MaskedStrand(Strand):
             self.start.y() + t * (self.end.y() - self.start.y())
         )
 
-    def calculate_cubic_tangent(self, t):
-        """Override to return tangent of straight line."""
-        return QPointF(
-            self.end.x() - self.start.x(),
-            self.end.y() - self.start.y()
-        )
 
     def update_masked_color(self, set_number, color):
         """Update the color of the masked strand if it involves the given set."""

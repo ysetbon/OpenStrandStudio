@@ -523,6 +523,9 @@ class GroupPanel(QWidget):
                  strand.updating_position = True
 
                  if isinstance(strand, MaskedStrand):
+                      # Nullify control points for MaskedStrand as they are not used
+                      strand.control_point1 = None
+                      strand.control_point2 = None                      
                       # For MaskedStrand, call its update method with the new center
                       if hasattr(strand, 'original_base_center_point') and strand.original_base_center_point:
                            new_center = strand.original_base_center_point + delta
@@ -944,8 +947,16 @@ class GroupPanel(QWidget):
                 
                 self.canvas.groups[group_name]['control_points'][strand.layer_name] = control_points_dict
 
+                # Update shapes, side lines, etc. for non-masked strands
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
             else:
-                # For MaskedStrand, rotate each deletion rectangle corner
+                 # Nullify control points for MaskedStrand as they are not used
+                strand.control_point1 = None
+                strand.control_point2 = None
+                
+                 # For MaskedStrand, rotate each deletion rectangle corner
                 original_corners = pre_rotation_pos.get('deletion_rectangles', [])
                 # Ensure deletion_rectangles list exists and has enough space
                 if not hasattr(strand, 'deletion_rectangles'):
@@ -974,10 +985,6 @@ class GroupPanel(QWidget):
                 if hasattr(strand, 'calculate_center_point'):
                     strand.calculate_center_point()
 
-            # Update shapes, side lines, etc.
-            strand.update_shape()
-            if hasattr(strand, 'update_side_line'):
-                strand.update_side_line()
             # Force shadow update for masked strands after rotation
             if isinstance(strand, MaskedStrand) and hasattr(strand, 'force_shadow_update'):
                  strand.force_shadow_update()
@@ -1409,17 +1416,40 @@ class GroupMoveDialog(QDialog):
                 strand.updating_position = True  # Flag to potentially optimize updates
 
                 if isinstance(strand, MaskedStrand):
-                    # Use MaskedStrand's update method
-                    if hasattr(strand, 'original_base_center_point') and strand.original_base_center_point:
-                        new_center = strand.original_base_center_point + delta
-                        logging.debug(f"Updating MaskedStrand {strand.layer_name} to new center: {new_center}")
-                        strand.update(new_center) # Pass the new calculated center
+                    # Translate deletion rectangles from their original positions
+                    if hasattr(strand, 'original_deletion_rectangles') and strand.original_deletion_rectangles:
+                        # Ensure the current list exists and matches the original length
+                        if not hasattr(strand, 'deletion_rectangles') or len(strand.deletion_rectangles) != len(strand.original_deletion_rectangles):
+                            strand.deletion_rectangles = [
+                                {'top_left': (0,0), 'top_right': (0,0), 'bottom_left': (0,0), 'bottom_right': (0,0)} 
+                                for _ in strand.original_deletion_rectangles
+                            ]
+                            logging.warning(f"Reinitialized deletion_rectangles for {strand.layer_name} due to mismatch or non-existence.")
+
+                        for i, orig_rect_data in enumerate(strand.original_deletion_rectangles):
+                            # Add delta to original QPointF corners
+                            new_tl = orig_rect_data['top_left'] + delta
+                            new_tr = orig_rect_data['top_right'] + delta
+                            new_bl = orig_rect_data['bottom_left'] + delta
+                            new_br = orig_rect_data['bottom_right'] + delta
+
+                            # Update the current rectangle with new (x, y) tuples
+                            strand.deletion_rectangles[i]['top_left'] = (new_tl.x(), new_tl.y())
+                            strand.deletion_rectangles[i]['top_right'] = (new_tr.x(), new_tr.y())
+                            strand.deletion_rectangles[i]['bottom_left'] = (new_bl.x(), new_bl.y())
+                            strand.deletion_rectangles[i]['bottom_right'] = (new_br.x(), new_br.y())
+                        
+                        # Update mask path and center point based on the moved rectangles
+                        if hasattr(strand, 'update_mask_path'):
+                            strand.update_mask_path()
+                        if hasattr(strand, 'calculate_center_point'):
+                            strand.calculate_center_point()
+                        logging.debug(f"Moved deletion rectangles for MaskedStrand {strand.layer_name}")
                     else:
-                         logging.warning(f"Missing original_base_center_point for MaskedStrand {strand.layer_name}")
-                else:
-                    # Move regular/attached strands directly
-                    strand.start = strand.original_start + delta
-                    strand.end = strand.original_end + delta
+                         logging.warning(f"Missing or empty original_deletion_rectangles for MaskedStrand {strand.layer_name}, rectangles not moved.")
+                
+                else: # Handle regular/attached strands
+                    # Move control points (start/end moved above)
                     if hasattr(strand, 'original_control_point1'):
                         strand.control_point1 = strand.original_control_point1 + delta
                     if hasattr(strand, 'original_control_point2'):

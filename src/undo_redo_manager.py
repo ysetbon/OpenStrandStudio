@@ -437,14 +437,56 @@ class UndoRedoManager(QObject):
 
                     # --- ADD: Compare mask path for MaskedStrands --- 
                     if isinstance(current_strand, MaskedStrand):
-                        # Get the component strand names, which are saved and define the mask
+                        # Compare component strand names
                         current_components = sorted(getattr(current_strand, 'component_strand_names', []))
                         prev_components = sorted(prev_strand.get('component_strand_names', []))
-                        
-                        # Compare the component lists
                         if current_components != prev_components:
                             logging.info(f"Masked strand components changed for {current_strand.layer_name}, state is not identical.")
                             return False
+
+                        # Compare deletion rectangles
+                        current_rects = getattr(current_strand, 'deletion_rectangles', [])
+                        prev_rects = prev_strand.get('deletion_rectangles', [])
+                        
+                        if len(current_rects) != len(prev_rects):
+                            logging.info(f"Masked strand {current_strand.layer_name} deletion rectangle count differs. State not identical.")
+                            return False
+                        
+                        # Deep compare rectangles if counts are the same
+                        if len(current_rects) > 0:
+                            # Sort both lists based on a stable representation (e.g., top-left corner)
+                            # Need a helper function to convert rectangle data to a sortable key
+                            def get_rect_key(rect_data):
+                                # Use corner coordinates as tuple for sorting
+                                tl = tuple(rect_data.get('top_left', (0,0)))
+                                return tl
+                            
+                            try:
+                                sorted_current_rects = sorted(current_rects, key=get_rect_key)
+                                sorted_prev_rects = sorted(prev_rects, key=get_rect_key)
+                            except Exception as e:
+                                logging.error(f"Error sorting deletion rectangles: {e}")
+                                return False # Treat sorting error as difference
+
+                            # Compare each rectangle
+                            for idx, current_rect in enumerate(sorted_current_rects):
+                                prev_rect = sorted_prev_rects[idx]
+                                # Compare all corner points with tolerance
+                                current_tl = current_rect.get('top_left', (0,0))
+                                prev_tl = prev_rect.get('top_left', (0,0))
+                                current_tr = current_rect.get('top_right', (0,0))
+                                prev_tr = prev_rect.get('top_right', (0,0))
+                                current_bl = current_rect.get('bottom_left', (0,0))
+                                prev_bl = prev_rect.get('bottom_left', (0,0))
+                                current_br = current_rect.get('bottom_right', (0,0))
+                                prev_br = prev_rect.get('bottom_right', (0,0))
+                                
+                                if (abs(current_tl[0] - prev_tl[0]) > 0.1 or abs(current_tl[1] - prev_tl[1]) > 0.1 or
+                                    abs(current_tr[0] - prev_tr[0]) > 0.1 or abs(current_tr[1] - prev_tr[1]) > 0.1 or
+                                    abs(current_bl[0] - prev_bl[0]) > 0.1 or abs(current_bl[1] - prev_bl[1]) > 0.1 or
+                                    abs(current_br[0] - prev_br[0]) > 0.1 or abs(current_br[1] - prev_br[1]) > 0.1):
+                                    logging.info(f"Masked strand {current_strand.layer_name} deletion rectangle at index {idx} differs. State not identical.")
+                                    return False
                     # --- END ADD --- 
                 
                 # If we made it here, states are identical based on checked properties
@@ -687,7 +729,31 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                     has_visual_difference = True
                                     break
-                    
+                            
+                            # --- ADD: Compare deletion rectangles for MaskedStrands ---
+                            if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):
+                                new_rects = getattr(new_strand, 'deletion_rectangles', [])
+                                original_rects = getattr(original_strand, 'deletion_rectangles', [])
+                                
+                                if len(new_rects) != len(original_rects):
+                                    logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
+                                    has_visual_difference = True
+                                    break
+                                
+                                # Deep compare if counts are the same and non-zero
+                                if len(new_rects) > 0:
+                                    # Simple content comparison (assuming order is consistent or not critical for this check)
+                                    # For a more robust check, sorting could be added here like in _would_be_identical_save
+                                    if new_rects != original_rects:
+                                        logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
+                                        has_visual_difference = True
+                                        break
+                            elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):
+                                # If one is MaskedStrand and the other isn't, they are different
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to previous state...")

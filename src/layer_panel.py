@@ -1047,6 +1047,12 @@ class LayerPanel(QWidget):
         self.show_notification(_['mask_edit_mode_exited'])
         self.update()
 
+        # --- ADD: Save state after exiting mask edit mode ---
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            logging.info("Saving state after exiting mask edit mode.")
+            self.undo_redo_manager.save_state()
+        # --- END ADD ---
+
     def disable_controls(self):
         """Disable controls that shouldn't be used during mask editing."""
         self.add_new_strand_button.setEnabled(False)

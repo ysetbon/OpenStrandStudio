@@ -333,3 +333,19 @@ Ces mises à jour se concentrent sur l'amélioration de l'expérience utilisateu
 Ces mises à jour se concentrent sur les améliorations de performance et les améliorations visuelles pour offrir une expérience de conception plus fluide et efficace.
 
 ------
+
+## Version 1.091 (Sortie : 8/04/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1.  **Fonctionnalité Annuler/Rétablir :**
+    *   Annulez et rétablissez facilement vos actions à l'aide des boutons dédiés.
+
+2.  **Onglet Historique :**
+    *   Ajout d'un onglet "Historique" dans la boîte de dialogue Paramètres pour visualiser et charger les sessions d'actions passées.
+
+3.  **Corrections de Bugs :**
+    *   Amélioration du dessin visuel des brins et des points de contrôle en mode déplacement.
+    *   Correction des problèmes de dessin lors de la connexion d'un brin attaché au point de départ d'un brin principal.
+
+------

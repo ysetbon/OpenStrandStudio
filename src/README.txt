@@ -332,3 +332,19 @@ These updates focus on improving the user experience by making the interface mor
 These updates focus on performance improvements and visual enhancements to provide a smoother and more efficient design experience.
 
 ------
+
+## Version 1.091 (Released: 8/04/2025)
+
+### Improvements and New Features:
+
+1.  **Undo/Redo Functionality:**
+    *   Easily undo and redo your actions using dedicated buttons.
+
+2.  **History Tab:**
+    *   Added a "History" tab in the Settings dialog to view and load past action sessions.
+
+3.  **Bug Fixes:**
+    *   Improved visual drawing of strands and control points in move mode.
+    *   Corrected drawing issues when connecting an attached strand to the starting point of a main strand.
+
+------

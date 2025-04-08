@@ -7,9 +7,10 @@ import logging
 class MaskMode(QObject):
     mask_created = pyqtSignal(object, object)  # Signal emitted when a mask is created
 
-    def __init__(self, canvas):
+    def __init__(self, canvas, undo_redo_manager):
         super().__init__()
         self.canvas = canvas
+        self.undo_redo_manager = undo_redo_manager # Store the manager
         self.selected_strands = []
 
     def activate(self):
@@ -57,7 +58,7 @@ class MaskMode(QObject):
             logging.info(f"Selected strands: {[s.layer_name for s in self.selected_strands]}")
             if len(self.selected_strands) == 2:
                 self.create_masked_layer()
-        self.canvas.update()
+            self.canvas.update()
 
     def create_masked_layer(self):
         """Create a masked layer from the two selected strands."""
@@ -202,9 +203,14 @@ class MaskMode(QObject):
                     # Update the canvas
                     self.canvas.update()
                     logging.info(f"Completed masked layer creation with restored properties")
-            else:
-                logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
-                self.clear_selection()
+
+                    # --- SAVE STATE AFTER MASK CREATION ---
+                    logging.info("Mask creation complete, saving state AFTER mask processing.")
+                    if self.undo_redo_manager:
+                        self.undo_redo_manager.save_state()
+                    else:
+                        logging.warning("UndoRedoManager not available in MaskMode, cannot save state after mask creation.")
+                    # --- END SAVE STATE ---
 
     def find_masked_strand(self, strand1, strand2):
         for strand in self.canvas.strands:

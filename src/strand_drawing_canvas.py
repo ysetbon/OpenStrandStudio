@@ -949,7 +949,8 @@ class StrandDrawingCanvas(QWidget):
             logging.error(f"Error applying draw_only_affected_strand setting: {e}")
 
         # Mask mode setup
-        self.mask_mode = MaskMode(self)
+        # Pass the undo_redo_manager instance here
+        self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
         self.mask_mode.mask_created.connect(self.create_masked_layer)
 
         # Angle adjust mode setup (if used)

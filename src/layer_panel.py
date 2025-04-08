@@ -744,6 +744,11 @@ class LayerPanel(QWidget):
         self.masked_mode_exited.emit()
         self.notification_label.clear()
 
+        # Save state after mask editing is complete
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            logging.info("Saving state after mask edit completed")
+            self.undo_redo_manager.save_state()
+
     def toggle_lock_mode(self):
         """Toggle lock mode on/off and update UI accordingly."""
         self.lock_mode = self.lock_layers_button.isChecked()
@@ -1488,6 +1493,19 @@ class LayerPanel(QWidget):
         # Force canvas update
         self.canvas.update()
 
+        # Explicitly save state after color change
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # --- ADD: Check suppression flag --- 
+            if not getattr(self.undo_redo_manager, '_suppress_intermediate_saves', False):
+                logging.info(f"Saving state after color change for set {set_number}")
+                # Reset last save time to force save, as color change alone might not be detected otherwise
+                self.undo_redo_manager._last_save_time = 0 
+                self.undo_redo_manager.save_state()
+            else:
+                logging.info(f"Skipping save after color change for set {set_number} due to suppression flag.")
+            # --- END ADD --- 
+        # --- END ADD --- 
+
     def update_colors_for_set(self, set_number, color):
         """
         Update colors for all strands in a specific set.
@@ -1573,11 +1591,6 @@ class LayerPanel(QWidget):
         
         # Simulate clicking the refresh button for consistency in layer display
         self.simulate_refresh_button_click()
-        
-        # Save state for undo/redo after strand creation
-        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            self.undo_redo_manager.save_state()
-            logging.info("Saved state after new strand creation")
         
         logging.info("Finished on_strand_created")
 

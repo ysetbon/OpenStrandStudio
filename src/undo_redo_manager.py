@@ -14,6 +14,7 @@ from PyQt5.QtCore import QTimer
 from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
 # Note: We don't import GroupPanel here, as it can cause issues with Qt objects
 # We'll work with instances that are already created
+from strand import MaskedStrand # Import MaskedStrand
 
 # StrokeTextButton class incorporated directly into this file
 class StrokeTextButton(QPushButton):
@@ -313,9 +314,21 @@ class UndoRedoManager(QObject):
                 prev_strand_count = len(prev_data.get('strands', []))
                 
                 if current_strand_count != prev_strand_count:
+                    return False # Returns False immediately if layer counts differ
+
+                # --- ADD: Compare Masked Strand Count --- 
+                current_masked_count = sum(1 for s in self.canvas.strands if isinstance(s, MaskedStrand))
+                # Check previous data for masked strands by looking for the 'type' field set to 'MaskedStrand' in the saved data.
+                # This assumes save_strands correctly serializes MaskedStrand instances with this 'type' field.
+                prev_masked_count = sum(1 for s_data in prev_data.get('strands', []) if s_data.get('type') == 'MaskedStrand')
+                logging.info(f"current_masked_count: {current_masked_count}")
+                logging.info(f"prev_masked_count: {prev_masked_count}")
+                if current_masked_count != prev_masked_count:
+                    logging.info(f"Masked strand count differs (Current: {current_masked_count}, Prev: {prev_masked_count}). State is not identical.")
                     return False
-                    
-                # Compare layer names
+                # --- END ADD --- 
+
+                # Compare layer names (only if counts are the same)
                 current_layer_names = {s.layer_name for s in self.canvas.strands if hasattr(s, 'layer_name')}
                 prev_layer_names = {s.get('layer_name') for s in prev_data.get('strands', []) if 'layer_name' in s}
                 
@@ -405,8 +418,36 @@ class UndoRedoManager(QObject):
                         if (abs(current_strand.control_point_center.x() - prev_strand['control_point_center']['x']) > 0.1 or
                             abs(current_strand.control_point_center.y() - prev_strand['control_point_center']['y']) > 0.1):
                             return False
+
+                    # Compare colors
+                    if hasattr(current_strand, 'color') and 'color' in prev_strand:
+                        # Assuming save_strands saves color like {'r': R, 'g': G, 'b': B, 'a': A}
+                        prev_color_dict = prev_strand.get('color', {})
+                        current_color = current_strand.color
+                        # Use integer comparison for colors (0-255)
+                        if (current_color.red() != prev_color_dict.get('r', 0) or
+                            current_color.green() != prev_color_dict.get('g', 0) or
+                            current_color.blue() != prev_color_dict.get('b', 0) or
+                            current_color.alpha() != prev_color_dict.get('a', 0)):
+                            # Colors differ, so state is not identical
+                            return False
+                    elif hasattr(current_strand, 'color') != ('color' in prev_strand):
+                        # Color attribute presence differs, state is not identical
+                        return False
+
+                    # --- ADD: Compare mask path for MaskedStrands --- 
+                    if isinstance(current_strand, MaskedStrand):
+                        # Get the component strand names, which are saved and define the mask
+                        current_components = sorted(getattr(current_strand, 'component_strand_names', []))
+                        prev_components = sorted(prev_strand.get('component_strand_names', []))
+                        
+                        # Compare the component lists
+                        if current_components != prev_components:
+                            logging.info(f"Masked strand components changed for {current_strand.layer_name}, state is not identical.")
+                            return False
+                    # --- END ADD --- 
                 
-                # If we made it here, states are identical
+                # If we made it here, states are identical based on checked properties
                 return True
                 
         except Exception as e:
@@ -559,7 +600,7 @@ class UndoRedoManager(QObject):
                                 groups_changed = True
                                 break
                 
-                # If strand count is the same and layer names are the same,
+                # If strand count is the same and layer names are the same, 
                 # check if key properties (like positions) are identical
                 if (new_strands_count == original_strands_count and 
                     new_layer_names == original_layer_names and
@@ -568,57 +609,84 @@ class UndoRedoManager(QObject):
                     
                     logging.info("Detected potentially identical state after undo, checking for visual differences...")
                     
-                    # Check for meaningful visual differences between states
-                    has_visual_difference = False
-                    
-                    # Check positions and other visual properties
-                    for i, new_strand in enumerate(new_strands):
-                        if i >= len(original_strands):
-                            has_visual_difference = True
-                            break
-                            
-                        original_strand = original_strands[i]
+                    # --- ADD: Explicit check for layer name set difference --- 
+                    if new_layer_names != original_layer_names:
+                        logging.info("Layer name sets differ, considering visually different.")
+                        has_visual_difference = True
+                    else:
+                        # --- Original checks (now nested) --- 
+                        # Check for meaningful visual differences between states
+                        has_visual_difference = False
                         
-                        # Check start and end positions
-                        if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
-                            hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
-                            
-                            # If positions differ by more than 0.1 pixels, consider it visually different
-                            if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
-                                abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
-                                abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
-                                abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        # Check control points for differences - important for proper undo/redo of control point changes
-                        if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
-                            if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
-                                abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
-                            if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
-                                abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                        # Check positions and other visual properties
+                        for i, new_strand in enumerate(new_strands):
+                            if i >= len(original_strands):
                                 has_visual_difference = True
                                 break
                                 
-                        if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
-                            if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
-                                abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        # Check colors (if one is visibly different)
-                        if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
-                            # Only consider color difference significant if it's visible
-                            if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
-                                abs(new_strand.color.green() - original_strand.color.green()) > 0 or
-                                abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
-                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
-                                has_visual_difference = True
-                                break
+                            original_strand = original_strands[i]
+                            
+                            # Check start and end positions
+                            if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
+                                hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
+                                
+                                # If positions differ by more than 0.1 pixels, consider it visually different
+                                if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
+                                    abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
+                                    abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
+                                    abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
+                                    has_visual_difference = True
+                                    break
+                            
+                            # Check control points for differences - important for proper undo/redo of control point changes
+                            if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point1 is not None and original_strand.control_point1 is not None:
+                                    if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
+                                        abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't (counts as a difference)
+                                elif (new_strand.control_point1 is None) != (original_strand.control_point1 is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                            
+                            if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point2 is not None and original_strand.control_point2 is not None:
+                                    if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
+                                        abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't
+                                elif (new_strand.control_point2 is None) != (original_strand.control_point2 is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                                    
+                            if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point_center is not None and original_strand.control_point_center is not None:
+                                    if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
+                                        abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't
+                                elif (new_strand.control_point_center is None) != (original_strand.control_point_center is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                            
+                            # Check colors (if one is visibly different)
+                            if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
+                                # Only consider color difference significant if it's visible
+                                if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
+                                    abs(new_strand.color.green() - original_strand.color.green()) > 0 or
+                                    abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
+                                    abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
+                                    has_visual_difference = True
+                                    break
                     
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
@@ -730,57 +798,84 @@ class UndoRedoManager(QObject):
                     
                     logging.info("Detected potentially identical state after redo, checking for visual differences...")
                     
-                    # Check for meaningful visual differences between states
-                    has_visual_difference = False
-                    
-                    # Check positions and other visual properties
-                    for i, new_strand in enumerate(new_strands):
-                        if i >= len(original_strands):
-                            has_visual_difference = True
-                            break
-                            
-                        original_strand = original_strands[i]
+                    # --- ADD: Explicit check for layer name set difference --- 
+                    if new_layer_names != original_layer_names:
+                        logging.info("Layer name sets differ, considering visually different.")
+                        has_visual_difference = True
+                    else:
+                        # --- Original checks (now nested) --- 
+                        # Check for meaningful visual differences between states
+                        has_visual_difference = False
                         
-                        # Check start and end positions
-                        if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
-                            hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
-                            
-                            # If positions differ by more than 0.1 pixels, consider it visually different
-                            if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
-                                abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
-                                abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
-                                abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        # Check control points for differences - important for proper undo/redo of control point changes
-                        if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
-                            if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
-                                abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
-                            if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
-                                abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                        # Check positions and other visual properties
+                        for i, new_strand in enumerate(new_strands):
+                            if i >= len(original_strands):
                                 has_visual_difference = True
                                 break
                                 
-                        if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
-                            if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
-                                abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
-                                has_visual_difference = True
-                                break
-                        
-                        # Check colors (if one is visibly different)
-                        if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
-                            # Only consider color difference significant if it's visible
-                            if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
-                                abs(new_strand.color.green() - original_strand.color.green()) > 0 or
-                                abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
-                                abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
-                                has_visual_difference = True
-                                break
+                            original_strand = original_strands[i]
+                            
+                            # Check start and end positions
+                            if (hasattr(new_strand, 'start') and hasattr(original_strand, 'start') and
+                                hasattr(new_strand, 'end') and hasattr(original_strand, 'end')):
+                                
+                                # If positions differ by more than 0.1 pixels, consider it visually different
+                                if (abs(new_strand.start.x() - original_strand.start.x()) > 0.1 or
+                                    abs(new_strand.start.y() - original_strand.start.y()) > 0.1 or
+                                    abs(new_strand.end.x() - original_strand.end.x()) > 0.1 or
+                                    abs(new_strand.end.y() - original_strand.end.y()) > 0.1):
+                                    has_visual_difference = True
+                                    break
+                            
+                            # Check control points for differences - important for proper undo/redo of control point changes
+                            if (hasattr(new_strand, 'control_point1') and hasattr(original_strand, 'control_point1')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point1 is not None and original_strand.control_point1 is not None:
+                                    if (abs(new_strand.control_point1.x() - original_strand.control_point1.x()) > 0.1 or
+                                        abs(new_strand.control_point1.y() - original_strand.control_point1.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't (counts as a difference)
+                                elif (new_strand.control_point1 is None) != (original_strand.control_point1 is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                            
+                            if (hasattr(new_strand, 'control_point2') and hasattr(original_strand, 'control_point2')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point2 is not None and original_strand.control_point2 is not None:
+                                    if (abs(new_strand.control_point2.x() - original_strand.control_point2.x()) > 0.1 or
+                                        abs(new_strand.control_point2.y() - original_strand.control_point2.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't
+                                elif (new_strand.control_point2 is None) != (original_strand.control_point2 is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                                    
+                            if (hasattr(new_strand, 'control_point_center') and hasattr(original_strand, 'control_point_center')):
+                                # --- ADD None checks --- 
+                                if new_strand.control_point_center is not None and original_strand.control_point_center is not None:
+                                    if (abs(new_strand.control_point_center.x() - original_strand.control_point_center.x()) > 0.1 or
+                                        abs(new_strand.control_point_center.y() - original_strand.control_point_center.y()) > 0.1):
+                                        has_visual_difference = True
+                                        break
+                                # Handle cases where one is None and the other isn't
+                                elif (new_strand.control_point_center is None) != (original_strand.control_point_center is None):
+                                    has_visual_difference = True
+                                    break
+                                # --- END ADD --- 
+                            
+                            # Check colors (if one is visibly different)
+                            if (hasattr(new_strand, 'color') and hasattr(original_strand, 'color')):
+                                # Only consider color difference significant if it's visible
+                                if (abs(new_strand.color.red() - original_strand.color.red()) > 0 or
+                                    abs(new_strand.color.green() - original_strand.color.green()) > 0 or
+                                    abs(new_strand.color.blue() - original_strand.color.blue()) > 0 or
+                                    abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
+                                    has_visual_difference = True
+                                    break
                     
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:
@@ -1938,86 +2033,37 @@ def connect_to_move_mode(canvas, undo_redo_manager):
 
 def connect_to_attach_mode(canvas, undo_redo_manager):
     """
-    Connect the attach mode's mouse release event to save state when a strand is attached.
-    Prevents duplicate saves for a single attach action.
-    
+    Connect the attach mode's mouse release event to manage state save suppression.
+    The actual save is triggered by the strand_created signal.
+
     Args:
         canvas: The canvas object with the attach_mode
         undo_redo_manager: The UndoRedoManager instance
     """
     if hasattr(canvas, 'attach_mode') and canvas.attach_mode:
         original_mouse_release = canvas.attach_mode.mouseReleaseEvent
-        
-        def enhanced_mouse_release(event):
-            # Store initial state for comparison
-            initial_strand_count = len(canvas.strands)
-            initial_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
-            
-            # Store initial groups for comparison
-            initial_groups = {}
-            if hasattr(canvas, 'groups'):
-                initial_groups = canvas.groups.copy()
-            
-            # Call the original function first to perform the attach/creation
-            original_mouse_release(event)
-            
-            # Get current state after the action
-            current_strand_count = len(canvas.strands)
-            current_strand_names = {s.layer_name for s in canvas.strands if hasattr(s, 'layer_name')}
-            
-            # Get current groups after the action
-            current_groups = {}
-            if hasattr(canvas, 'groups'):
-                current_groups = canvas.groups.copy()
 
-            # Check if a new strand was *actually* added during this specific event
-            strand_added = (current_strand_count > initial_strand_count) or \
-                           bool(current_strand_names - initial_strand_names) # Check if new names appeared
-            
-            # Check if groups changed
-            groups_changed = initial_groups != current_groups
+        def enhanced_mouse_release_suppression(event):
+            # --- ADD: Set suppression flag ---
+            setattr(undo_redo_manager, '_suppress_intermediate_saves', True)
+            logging.info("Attach Mode Start: Set _suppress_intermediate_saves = True")
 
-            # Check if the current state is now non-empty (has content worth saving)
-            has_content = current_strand_count > 0 or (hasattr(canvas, 'groups') and bool(canvas.groups))
+            try:
+                # Call the original function first to perform the attach/creation
+                original_mouse_release(event)
+            finally:
+                # --- ADD: Clear suppression flag ---
+                # Use QTimer.singleShot to ensure flag is cleared *after* current event processing finishes
+                QTimer.singleShot(0, lambda: (
+                    setattr(undo_redo_manager, '_suppress_intermediate_saves', False),
+                    logging.info("Attach Mode End (Delayed): Set _suppress_intermediate_saves = False")
+                ))
 
-            if (strand_added or groups_changed) and has_content:
-                logging.info(f"Attach mode release: Strand added (count {initial_strand_count} -> {current_strand_count}) or groups changed. Checking if save needed.")
-                
-                # Check if the state was recently saved by another operation (like group creation)
-                if hasattr(undo_redo_manager, 'current_step') and undo_redo_manager.current_step > 0:
-                    # Get the timestamp of the last save
-                    last_save_time = getattr(undo_redo_manager, '_last_save_time', 0)
-                    current_time = time.time()
-                    
-                    # If the last save was less than 1 second ago, and the step has already been incremented,
-                    # don't save again to prevent duplicate states
-                    if (current_time - last_save_time < 1.0) and getattr(undo_redo_manager, '_saving_state_now', False):
-                        logging.info("--> Recently saved by another operation (likely group update). Skipping duplicate save.")
-                        return
-                
-                # Use a flag to prevent immediate double saves within the same manager instance
-                if not getattr(undo_redo_manager, '_saving_state_now', False):
-                    logging.info("--> Saving state.")
-                    undo_redo_manager._saving_state_now = True
-                    try:
-                        # Record the save time
-                        undo_redo_manager._last_save_time = time.time()
-                        # Perform the actual save
-                        undo_redo_manager.save_state()
-                    finally:
-                        # Reset flag after a short delay to allow subsequent saves for different actions
-                        # Using lambda to capture the current manager instance
-                        QTimer.singleShot(300, lambda mgr=undo_redo_manager: setattr(mgr, '_saving_state_now', False))
-                else:
-                    logging.info("--> Already saving state recently, skipping duplicate save.")
-            else:
-                logging.info(f"Attach mode release: No new strand detected or empty state (count {initial_strand_count} -> {current_strand_count}). Not saving state.")
-
-        # Replace the original function with our enhanced version
-        canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release
-        logging.info("Connected UndoRedoManager to attach_mode mouse release events (with duplicate save prevention)")
+        # Replace the original function with our suppression-handling version
+        canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release_suppression
+        logging.info("Connected UndoRedoManager suppression logic to attach_mode mouse release events")
     else:
-        logging.warning("Could not connect to attach_mode: attach_mode not found on canvas")
+        logging.warning("Could not connect suppression logic to attach_mode: attach_mode not found on canvas")
 
 
 def connect_to_mask_mode(canvas, undo_redo_manager):
@@ -2030,11 +2076,25 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
     """
     if hasattr(canvas, 'mask_mode') and canvas.mask_mode:
         # Connect the mask_created signal to save state
-        def on_mask_created(strand1, strand2):
-            logging.info("Mask created, saving state for undo/redo.")
-            undo_redo_manager.save_state()
+        def on_mask_created(_strand1, _strand2):
+            logging.info("Mask created signal received, scheduling state save.")
+            # Use QTimer.singleShot to delay the save until after the current event processing
+            # This ensures the new MaskedStrand is likely added to canvas.strands
+            QTimer.singleShot(0, lambda: ( 
+                logging.info("Executing delayed save state after mask creation."),
+                undo_redo_manager.save_state()
+            ))
             
         # Connect the signal to our handler
+        try:
+            # Disconnect existing connections first to prevent duplicates
+            canvas.mask_mode.mask_created.disconnect(on_mask_created)
+            logging.debug("Disconnected existing mask_created signals.")
+        except (TypeError, RuntimeError):
+            # Expected if no connection existed or it was already disconnected
+            logging.debug("No existing mask_created signal connection found to disconnect.")
+            pass
+            
         canvas.mask_mode.mask_created.connect(on_mask_created)
         logging.info("Connected UndoRedoManager to mask_mode mask_created signal")
     else:
@@ -2095,24 +2155,50 @@ def connect_to_group_operations(canvas, undo_redo_manager):
     logging.info("Successfully connected to group operations")
     return True
 
+# --- ADD NEW FUNCTION ---
+def connect_strand_creation(canvas, undo_redo_manager):
+    """
+    Connect the canvas's strand_created signal to save the state.
+    """
+    if hasattr(canvas, 'strand_created'):
+        def on_strand_really_created(strand):
+            # Check suppression flag *after* a tiny delay, allowing suppression to be lifted
+            def check_and_save():
+                if not getattr(undo_redo_manager, '_suppress_intermediate_saves', False):
+                    logging.info(f"strand_created signal processed for {strand.layer_name}, saving state.")
+                    undo_redo_manager.save_state()
+                else:
+                    logging.info(f"strand_created signal processed for {strand.layer_name}, but save was suppressed.")
+
+            # Use QTimer.singleShot to run the check slightly after the signal emission completes
+            QTimer.singleShot(10, check_and_save) # Small delay (10ms)
+
+        try:
+            canvas.strand_created.disconnect() # Clear previous connections if any
+        except TypeError:
+            pass # Ignore if no connection exists
+        canvas.strand_created.connect(on_strand_really_created)
+        logging.info("Connected UndoRedoManager directly to canvas.strand_created signal for state saving.")
+    else:
+        logging.warning("Canvas does not have strand_created signal.")
+# --- END ADD NEW FUNCTION ---
+
 
 def setup_undo_redo(canvas, layer_panel, base_path):
     """
     Set up undo/redo functionality for the application.
-    
+
     Args:
         canvas: The canvas object
         layer_panel: The layer panel to add buttons to
         base_path: The base directory path for storing temp states
-    
+
     Returns:
         UndoRedoManager: The created manager instance
     """
-
-    
     # Create the manager, passing the base_path
     manager = UndoRedoManager(canvas, layer_panel, base_path)
-    
+
     # Add buttons to the top layout (next to refresh button)
     if hasattr(layer_panel, 'top_panel') and layer_panel.top_panel:
         top_layout = layer_panel.top_panel.layout()
@@ -2128,16 +2214,19 @@ def setup_undo_redo(canvas, layer_panel, base_path):
             logging.warning("Could not find top_layout in layer_panel")
     else:
         logging.warning("Could not find top_panel in layer_panel")
-    
-    # Connect to move mode mouse release
+
+    # Connect to move mode mouse release for saving moves
     connect_to_move_mode(canvas, manager)
-    
-    # Connect to attach mode as well
+
+    # Connect to attach mode for *suppression* during strand creation
     connect_to_attach_mode(canvas, manager)
-    
-    # Connect to mask mode
+
+    # Connect directly to strand_created for saving *after* creation
+    connect_strand_creation(canvas, manager) # <-- ADD THIS CALL
+
+    # Connect to mask mode creation
     connect_to_mask_mode(canvas, manager)
-    
+
     # Connect to group operations if group_layer_manager exists
     if hasattr(canvas, 'group_layer_manager') and canvas.group_layer_manager:
         connect_to_group_operations(canvas, manager)
@@ -2145,18 +2234,23 @@ def setup_undo_redo(canvas, layer_panel, base_path):
         # Setup a function to connect when group_layer_manager becomes available
         def check_and_connect_group_operations():
             if hasattr(canvas, 'group_layer_manager') and canvas.group_layer_manager:
-                logging.info("Delayed connection: Group layer manager now available, connecting to group operations")
-                connect_to_group_operations(canvas, manager)
-                return True
+                if not getattr(canvas, '_group_ops_connected', False): # Check if already connected
+                    logging.info("Delayed connection: Group layer manager now available, connecting to group operations")
+                    connect_to_group_operations(canvas, manager)
+                    return True
             return False
-        
+
         # Try connecting after 500ms
         QTimer.singleShot(500, check_and_connect_group_operations)
-        
+
         # Schedule multiple retries
         for delay in [1000, 2000, 5000]:
-            QTimer.singleShot(delay, lambda: check_and_connect_group_operations() if not hasattr(canvas, '_group_ops_connected') else None)
-    
+             # Use a lambda that captures the current canvas and manager
+             def create_retry_lambda(c=canvas, m=manager):
+                 return lambda: check_and_connect_group_operations() if not getattr(c, '_group_ops_connected', False) else None
+             QTimer.singleShot(delay, create_retry_lambda())
+
+
     return manager
 
 # Add a new method to directly connect a group_panel to save state on group operations

@@ -78,6 +78,39 @@ class SettingsDialog(QDialog):
         
         # Apply initial theme
         self.apply_dialog_theme(self.current_theme)
+        
+        # Set layout direction based on language
+        self.update_layout_direction()
+
+    # New helper method to check if a language is RTL
+    def is_rtl_language(self, language_code):
+        # Currently only Hebrew is RTL in our supported languages
+        return language_code == 'he'
+        
+    # New method to update layout direction based on language
+    def update_layout_direction(self):
+        if self.is_rtl_language(self.current_language):
+            self.setLayoutDirection(Qt.RightToLeft)
+            
+            # Ensure the general settings widget also respects RTL
+            if hasattr(self, 'general_settings_widget'):
+                self.general_settings_widget.setLayoutDirection(Qt.RightToLeft)
+                # Specific layouts might need adjustment if the above is not enough
+                # e.g., self.performance_layout.setLayoutDirection(Qt.RightToLeft)
+            
+            # For RTL languages, ensure theme combobox items are also RTL
+            if hasattr(self, 'theme_combobox'):
+                self.theme_combobox.setLayoutDirection(Qt.RightToLeft)
+                self.theme_combobox.view().setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
+            # Ensure the general settings widget reverts to LTR
+            if hasattr(self, 'general_settings_widget'):
+                self.general_settings_widget.setLayoutDirection(Qt.LeftToRight)
+            # Ensure the theme combobox also reverts to LTR
+            if hasattr(self, 'theme_combobox'):
+                self.theme_combobox.setLayoutDirection(Qt.LeftToRight)
+                self.theme_combobox.view().setLayoutDirection(Qt.LeftToRight)
 
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
@@ -766,6 +799,7 @@ class SettingsDialog(QDialog):
         if self.canvas:
             # Use the new set_shadow_color method to update all strands
             self.canvas.set_shadow_color(self.shadow_color)
+            self.canvas.update()
             # Store the shadow color in the main window
             if hasattr(self.parent_window, 'canvas'):
                 self.parent_window.canvas.default_shadow_color = self.shadow_color
@@ -927,6 +961,33 @@ class SettingsDialog(QDialog):
             explanation_label.setText(_[f'gif_explanation_{i+1}'])
             play_button = self.video_buttons[i]
             play_button.setText(_['play_video'])
+            
+        # Update layout direction based on current language
+        self.update_layout_direction()
+        
+        # Update text alignment for RTL languages
+        self.update_text_alignment()
+
+    # New method to update text alignment based on language direction
+    def update_text_alignment(self):
+        # Set text alignment for all QLabel widgets based on language direction
+        rtl = self.is_rtl_language(self.current_language)
+        alignment = Qt.AlignRight | Qt.AlignVCenter if rtl else Qt.AlignLeft | Qt.AlignVCenter
+        
+        # Update alignment for all labels
+        for widget in self.findChildren(QLabel):
+            widget.setAlignment(alignment)
+            
+        # For text browsers, set alignment through HTML if RTL
+        if rtl:
+            # Update text browsers with RTL direction
+            for text_browser in self.findChildren(QTextBrowser):
+                # Get current HTML content
+                content = text_browser.toHtml()
+                # Add dir="rtl" attribute if not already present
+                if 'dir="rtl"' not in content:
+                    content = content.replace('<html>', '<html dir="rtl">')
+                    text_browser.setHtml(content)
 
     def save_settings_to_file(self):
         # Use the stored current theme and language
@@ -1545,7 +1606,6 @@ class SettingsDialog(QDialog):
 
         painter.end()
         label_widget.setPixmap(pixmap)
-
 
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):

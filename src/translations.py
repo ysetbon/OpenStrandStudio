@@ -1091,7 +1091,7 @@ translations = {
         'tutorial': 'מדריך',
         'history': 'היסטוריה',
         'whats_new': "מה חדש?",
-        'about': 'אודות OpenStrand Studio',
+        'about': ' אודות OpenStrand Studio',
         'select_theme': 'בחר ערכת נושא:',
         'select_language': 'בחר שפה:',
         'ok': 'אישור',

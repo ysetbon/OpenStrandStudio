@@ -334,7 +334,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.091 (Sortie : 8/04/2025)
+## Version 1.091 (Sortie : 9/04/2025)
 
 ### Améliorations et Nouvelles Fonctionnalités :
 

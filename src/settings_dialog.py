@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
     QColorDialog, QCheckBox
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -14,7 +14,6 @@ import os
 import sys
 import subprocess
 from PyQt5.QtCore import QStandardPaths, QDateTime
-
 # Import StrokeTextButton for displaying icons
 try:
     from undo_redo_manager import StrokeTextButton
@@ -73,6 +72,10 @@ class SettingsDialog(QDialog):
         self.setup_ui()
         self.load_video_paths()
         
+        # Connect to parent window's language_changed signal to update translations
+        # if hasattr(self.parent_window, 'language_changed'):
+        #     self.parent_window.language_changed.connect(self.update_translations)
+        
         # Apply initial theme
         self.apply_dialog_theme(self.current_theme)
 
@@ -130,7 +133,7 @@ class SettingsDialog(QDialog):
             logging.info(f"SettingsDialog: Settings file not found at {file_path}. Using default settings.")
 
     def setup_ui(self):
-        _ = translations[self.parent_window.language_code]
+        _ = translations[self.current_language]
         main_layout = QHBoxLayout(self)
         
         # Set layout margins to ensure consistent spacing
@@ -313,9 +316,13 @@ class SettingsDialog(QDialog):
             }}
         """)
         
-        # Add language items with generated icons
+        # Add language items with generated icons - using current translations
         self.add_lang_item_en(_['english'], 'en')
         self.add_lang_item_fr(_['french'], 'fr')
+        self.add_lang_item_it(_['italian'], 'it')
+        self.add_lang_item_es(_['spanish'], 'es')
+        self.add_lang_item_pt(_['portuguese'], 'pt')
+        self.add_lang_item_he(_['hebrew'], 'he')
         
         # Set the current language
         current_language = getattr(self, 'current_language', 'en')
@@ -397,7 +404,7 @@ class SettingsDialog(QDialog):
         self.whats_new_widget = QWidget()
         whats_new_layout = QVBoxLayout(self.whats_new_widget)
 
-        # Use QTextBrowser for What's New info - Part 1
+        # Use QTextBrowser for What's New info - Part 1 (Undo/Redo)
         self.whats_new_text_browser_part1 = QTextBrowser()
         self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
         self.whats_new_text_browser_part1.setOpenExternalLinks(True)
@@ -407,35 +414,49 @@ class SettingsDialog(QDialog):
         # Add Undo/Redo icons and labels
         self.icon_layout = QHBoxLayout()
         self.icon_layout.addStretch()
-
-        # Undo Icon
         self.undo_icon_label = QLabel(_['undo_icon_label'])
         self.undo_icon_widget = QLabel()
-        self.undo_icon_widget.setFixedSize(40, 40) # Match StrokeTextButton size
+        self.undo_icon_widget.setFixedSize(40, 40)
         self.update_icon_widget(self.undo_icon_widget, '↶')
-
         self.icon_layout.addWidget(self.undo_icon_label)
         self.icon_layout.addWidget(self.undo_icon_widget)
-        self.icon_layout.addSpacing(20) # Add spacing between icons
-
-        # Redo Icon
+        self.icon_layout.addSpacing(20)
         self.redo_icon_label = QLabel(_['redo_icon_label'])
         self.redo_icon_widget = QLabel()
-        self.redo_icon_widget.setFixedSize(40, 40) # Match StrokeTextButton size
+        self.redo_icon_widget.setFixedSize(40, 40)
         self.update_icon_widget(self.redo_icon_widget, '↷')
-
         self.icon_layout.addWidget(self.redo_icon_label)
         self.icon_layout.addWidget(self.redo_icon_widget)
-
         self.icon_layout.addStretch()
         whats_new_layout.addLayout(self.icon_layout)
 
-        # Use QTextBrowser for What's New info - Part 2
-        self.whats_new_text_browser_part2 = QTextBrowser()
-        self.whats_new_text_browser_part2.setHtml(_['whats_new_info_part2'])
-        self.whats_new_text_browser_part2.setOpenExternalLinks(True)
-        self.whats_new_text_browser_part2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        whats_new_layout.addWidget(self.whats_new_text_browser_part2)
+        # Use QTextBrowser for What's New info - Combined History/CP Text
+        self.whats_new_text_browser_history_cp = QTextBrowser()
+        self.whats_new_text_browser_history_cp.setHtml(_['whats_new_history_cp_text'])
+        self.whats_new_text_browser_history_cp.setOpenExternalLinks(True)
+        self.whats_new_text_browser_history_cp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        whats_new_layout.addWidget(self.whats_new_text_browser_history_cp)
+
+        # Add Third Control Point Icon Layout
+        self.third_cp_icon_layout = QHBoxLayout()
+        self.third_cp_icon_layout.addStretch()
+        self.third_cp_icon_label = QLabel(_['third_cp_icon_label'])
+        self.third_cp_icon_widget = QLabel()
+        self.third_cp_icon_widget.setFixedSize(40, 40)
+        self.update_third_cp_icon_widget(self.third_cp_icon_widget)
+        self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
+        self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
+        self.third_cp_icon_layout.addStretch()
+        whats_new_layout.addLayout(self.third_cp_icon_layout)
+
+        # Use QTextBrowser for What's New info - Bug Fixes
+        self.whats_new_text_browser_bugs = QTextBrowser()
+        self.whats_new_text_browser_bugs.setHtml(_['whats_new_bug_fixes_text'])
+        self.whats_new_text_browser_bugs.setOpenExternalLinks(True)
+        self.whats_new_text_browser_bugs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        whats_new_layout.addWidget(self.whats_new_text_browser_bugs)
+
+        whats_new_layout.addStretch()
 
         self.stacked_widget.addWidget(self.whats_new_widget)
 
@@ -790,8 +811,13 @@ class SettingsDialog(QDialog):
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
+        previous_language = self.current_language
+        
         # Update the language in the main window
         self.parent_window.set_language(language_code)
+        # Store the selected language
+        self.current_language = language_code
+        
         # Update the canvas language code and emit the signal
         if self.canvas:
             self.canvas.language_code = language_code
@@ -800,8 +826,11 @@ class SettingsDialog(QDialog):
             # Emit language_changed signal from the parent window
             self.parent_window.language_changed.emit()
         
-        # Store the selected language
-        self.current_language = language_code
+        # If language has changed, update translations in the dialog
+        if previous_language != language_code:
+            self.update_translations()
+            # Force redraw of language-specific elements
+            self.repaint()
         
         # Save all settings to file
         self.save_settings_to_file()
@@ -815,7 +844,7 @@ class SettingsDialog(QDialog):
         self.stacked_widget.setCurrentIndex(index)
 
     def update_translations(self):
-        _ = translations[self.parent_window.language_code]
+        _ = translations[self.current_language]
         self.setWindowTitle(_['settings'])
         # Update category names
         self.categories_list.item(0).setText(_['general_settings'])
@@ -843,7 +872,8 @@ class SettingsDialog(QDialog):
         self.clear_history_button.setText(_['clear_all_history'])
         # Update What's New page elements
         self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
-        self.whats_new_text_browser_part2.setHtml(_['whats_new_info_part2'])
+        self.whats_new_text_browser_history_cp.setHtml(_['whats_new_history_cp_text'])
+        self.whats_new_text_browser_bugs.setHtml(_['whats_new_bug_fixes_text'])
         # Find labels within the icon layout to update text
         if hasattr(self, 'icon_layout'):
             for i in range(self.icon_layout.count()):
@@ -860,16 +890,36 @@ class SettingsDialog(QDialog):
                         self.update_icon_widget(widget, '↶')
                     elif widget == self.redo_icon_widget:
                         self.update_icon_widget(widget, '↷')
+                    # Check for the new third CP icon label and widget
+                    elif widget == self.third_cp_icon_label:
+                        widget.setText(_['third_cp_icon_label'])
+                    elif widget == self.third_cp_icon_widget:
+                        self.update_third_cp_icon_widget(widget)
         else:
-            logging.warning("self.icon_layout not found during translation update.")
+            logging.warning("self.icon_layout or self.third_cp_icon_layout not found during translation update.")
 
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])
         self.theme_combobox.setItemText(2, _['dark'])
-        # Update language combobox items
-        self.language_combobox.setItemText(0, _['english'])
-        self.language_combobox.setItemText(1, _['french'])
+        
+        # Completely rebuild the language combobox to ensure proper translation
+        current_data = self.language_combobox.currentData()
+        self.language_combobox.clear()
+        
+        # Re-add language items with properly translated names
+        self.add_lang_item_en(_['english'], 'en')
+        self.add_lang_item_fr(_['french'], 'fr')
+        self.add_lang_item_it(_['italian'], 'it')
+        self.add_lang_item_es(_['spanish'], 'es')
+        self.add_lang_item_pt(_['portuguese'], 'pt')
+        self.add_lang_item_he(_['hebrew'], 'he')
+        
+        # Restore the previously selected language
+        index = self.language_combobox.findData(current_data)
+        if index >= 0:
+            self.language_combobox.setCurrentIndex(index)
+        
         # Update tutorial explanations and play buttons
         for i in range(5):  # Changed from 7 to 5
             index = i * 2  # Since each explanation and button are added sequentially
@@ -1044,13 +1094,18 @@ class SettingsDialog(QDialog):
     def add_lang_item_en(self, text, data):
         # Get the border color for the current theme
         pixmap = QPixmap(26, 26)
-        pixmap.fill(QColor("#cccccc"))
+        pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
         painter.setRenderHint(QPainter.Antialiasing, True)
 
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff") 
+
         # Surround emoji with theme-dependent border
-        painter.setPen(QPen(QColor("#000000"), 2))
+        painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
         painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
 
@@ -1063,18 +1118,119 @@ class SettingsDialog(QDialog):
     def add_lang_item_fr(self, text, data):
         # Get the border color for the current theme
         pixmap = QPixmap(26, 26)
-        pixmap.fill(QColor("#cccccc"))
+        pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
         painter.setRenderHint(QPainter.Antialiasing, True)
 
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff")
+
         # Surround emoji with theme-dependent border
-        painter.setPen(QPen(QColor("#000000"), 2))
+        painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
         painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
 
         # Draw the French flag emoji
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇫🇷")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+    def add_lang_item_it(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(Qt.transparent)  # Start with transparent background
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff")
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(border_color, 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the Italian flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇹")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+    def add_lang_item_es(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(Qt.transparent)  # Start with transparent background
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff")
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(border_color, 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the Spanish flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇪🇸")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+    def add_lang_item_pt(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(Qt.transparent)  # Start with transparent background
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff")
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(border_color, 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the Portuguese flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇵🇹")
+
+        painter.end()
+        self.language_combobox.addItem(QIcon(pixmap), text, data)
+
+    def add_lang_item_he(self, text, data):
+        # Get the border color for the current theme
+        pixmap = QPixmap(26, 26)
+        pixmap.fill(Qt.transparent)  # Start with transparent background
+        painter = QPainter(pixmap)
+
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Determine border color based on theme
+        border_color = QColor("#000000")
+        if self.current_theme == "dark":
+            border_color = QColor("#ffffff")
+
+        # Surround emoji with theme-dependent border
+        painter.setPen(QPen(border_color, 2))
+        painter.setBrush(Qt.transparent)
+        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+
+        # Draw the Israeli flag emoji
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇱")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
@@ -1270,21 +1426,26 @@ class SettingsDialog(QDialog):
             )
 
     def showEvent(self, event):
-        """Override showEvent to refresh the history list and icon widgets every time the dialog is shown."""
-        super().showEvent(event)
-        
-        # Refresh the history list
-        if hasattr(self, 'history_list') and hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            logging.info("Refreshing history list as dialog is shown")
-            self.populate_history_list()
-        else:
-            logging.warning("Cannot refresh history list - required components not initialized")
+        """Override showEvent to ensure translations are always up-to-date before showing."""
+        # Always get the current language from the parent and update translations
+        if hasattr(self.parent_window, 'language_code'):
+            self.current_language = self.parent_window.language_code
+            logging.info(f"SettingsDialog showEvent: Ensuring translations for '{self.current_language}'.")
+            self.update_translations()
 
-        # Refresh icon widgets on show
+        super().showEvent(event) # Call parent method AFTER ensuring translations
+
+        # Refresh the history list (can happen after super)
+        if hasattr(self, 'history_list') and hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.populate_history_list()
+
+        # Refresh icon widgets on show (can happen after super)
         if hasattr(self, 'undo_icon_widget'):
             self.update_icon_widget(self.undo_icon_widget, '↶')
         if hasattr(self, 'redo_icon_widget'):
             self.update_icon_widget(self.redo_icon_widget, '↷')
+        if hasattr(self, 'third_cp_icon_widget'):
+            self.update_third_cp_icon_widget(self.third_cp_icon_widget)
 
     def update_icon_widget(self, label_widget, character):
         """Helper function to draw the styled icon onto a QLabel's pixmap."""
@@ -1334,6 +1495,53 @@ class SettingsDialog(QDialog):
         # Draw fill
         painter.fillPath(path, fill_color)
         # --- End mimic --- 
+
+        painter.end()
+        label_widget.setPixmap(pixmap)
+
+    def update_third_cp_icon_widget(self, label_widget):
+        """Helper function to draw the styled third control point icon (green square)."""
+        pixmap_size = 40 # Match button size
+        pixmap = QPixmap(pixmap_size, pixmap_size)
+        pixmap.fill(Qt.transparent) # Ensure transparent background
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Parameters from draw_control_points for the center point
+        control_point_radius = 11 # Original radius used for sizing
+        stroke_color = QColor('black')
+        fill_color = QColor('green')
+        square_size_factor = 0.618 # Original factor
+        new_stroke_width = 2 # New smaller stroke width
+
+        # Calculate square size based on original parameters, centered in pixmap
+        # Scale based on pixmap size relative to original control point diameter
+        scale_factor = pixmap_size / (control_point_radius * 2.5) # Adjust scale factor as needed
+        square_dimension = control_point_radius * 2 * square_size_factor * scale_factor
+
+        center_x = pixmap_size / 2
+        center_y = pixmap_size / 2
+
+        # Define the square rectangle
+        square_rect = QRectF(
+            center_x - square_dimension / 2,
+            center_y - square_dimension / 2,
+            square_dimension,
+            square_dimension
+        )
+
+        # 1. Draw the filled green square
+        painter.setPen(Qt.NoPen) # No border for the fill
+        painter.setBrush(QBrush(fill_color))
+        painter.drawRect(square_rect)
+
+        # 2. Draw the thinner black stroke on top
+        stroke_pen = QPen(stroke_color, new_stroke_width)
+        stroke_pen.setJoinStyle(Qt.MiterJoin) # Sharp corners
+        painter.setPen(stroke_pen)
+        painter.setBrush(Qt.NoBrush) # No fill for the stroke
+        painter.drawRect(square_rect)
 
         painter.end()
         label_widget.setPixmap(pixmap)

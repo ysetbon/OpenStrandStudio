@@ -377,9 +377,8 @@ class SettingsDialog(QDialog):
         # Shadow Color Selection
         shadow_layout = QHBoxLayout()
         self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
-        if self.is_rtl_language(self.current_language):
-            print("RTL language detected")
-            self.shadow_color_label.setMinimumWidth(70)
+
+        self.shadow_color_label.setMinimumWidth(70)
         self.shadow_color_button = QPushButton()
         self.shadow_color_button.setFixedSize(30, 30)
         self.update_shadow_color_button()

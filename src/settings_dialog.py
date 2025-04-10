@@ -1123,17 +1123,17 @@ class SettingsDialog(QDialog):
             
             # Add padding to the Hebrew item in the language combobox
             hebrew_index = self.language_combobox.findData('he')
-            self.language_combobox.setItemText(hebrew_index, "       " + _['hebrew'])
+            self.language_combobox.setItemText(hebrew_index, "           " + _['hebrew'])
             english_index = self.language_combobox.findData('en')
-            self.language_combobox.setItemText(english_index, "       " + _['english'])
+            self.language_combobox.setItemText(english_index, "           " + _['english'])
             french_index = self.language_combobox.findData('fr')
-            self.language_combobox.setItemText(french_index, "       " + _['french'])
+            self.language_combobox.setItemText(french_index, "           " + _['french'])
             italian_index = self.language_combobox.findData('it')
-            self.language_combobox.setItemText(italian_index, "       " + _['italian'])
+            self.language_combobox.setItemText(italian_index, "           " + _['italian'])
             spanish_index = self.language_combobox.findData('es')
-            self.language_combobox.setItemText(spanish_index, "       " + _['spanish'])
+            self.language_combobox.setItemText(spanish_index, "           " + _['spanish'])
             portuguese_index = self.language_combobox.findData('pt')
-            self.language_combobox.setItemText(portuguese_index, "       " + _['portuguese'])
+            self.language_combobox.setItemText(portuguese_index, "           " + _['portuguese'])
 
         # Update tutorial explanations and play buttons
         for i in range(5):  # Changed from 7 to 5
@@ -1367,7 +1367,8 @@ class SettingsDialog(QDialog):
 
     def add_lang_item_en(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1376,22 +1377,28 @@ class SettingsDialog(QDialog):
         # Determine border color based on theme
         border_color = QColor("#000000")
         if self.current_theme == "dark":
-            border_color = QColor("#ffffff") 
+            border_color = QColor("#ffffff")
 
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the US flag emoji
+        # Draw the US flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇺🇸")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def add_lang_item_fr(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1405,17 +1412,23 @@ class SettingsDialog(QDialog):
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the French flag emoji
+        # Draw the French flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇫🇷")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def add_lang_item_it(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1429,17 +1442,23 @@ class SettingsDialog(QDialog):
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the Italian flag emoji
+        # Draw the Italian flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇹")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def add_lang_item_es(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1453,17 +1472,23 @@ class SettingsDialog(QDialog):
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the Spanish flag emoji
+        # Draw the Spanish flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇪🇸")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def add_lang_item_pt(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1477,17 +1502,23 @@ class SettingsDialog(QDialog):
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the Portuguese flag emoji
+        # Draw the Portuguese flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇵🇹")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def add_lang_item_he(self, text, data):
         # Get the border color for the current theme
-        pixmap = QPixmap(26, 26)
+        icon_size = 32 # Increased icon size
+        pixmap = QPixmap(icon_size, icon_size)
         pixmap.fill(Qt.transparent)  # Start with transparent background
         painter = QPainter(pixmap)
 
@@ -1501,13 +1532,18 @@ class SettingsDialog(QDialog):
         # Surround emoji with theme-dependent border
         painter.setPen(QPen(border_color, 2))
         painter.setBrush(Qt.transparent)
-        painter.drawRoundedRect(2, 2, 22, 22, 4, 4)
+        # Adjust border rect for new size
+        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
 
-        # Draw the Israeli flag emoji
+        # Draw the Israeli flag emoji - adjust font size if needed
+        font = painter.font()
+        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
+        painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇱")
 
         painter.end()
         self.language_combobox.addItem(QIcon(pixmap), text, data)
+        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
 
     def update_shadow_color_button(self):
         """Update the shadow color button appearance to reflect the current shadow color."""

@@ -334,7 +334,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.091 (Sortie : 9/04/2025)
+## Version 1.091 (Sortie : 10/04/2025)
 
 ### Améliorations et Nouvelles Fonctionnalités :
 
@@ -348,4 +348,8 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
     *   Amélioration du dessin visuel des brins et des points de contrôle en mode déplacement.
     *   Correction des problèmes de dessin lors de la connexion d'un brin attaché au point de départ d'un brin principal.
 
+4.  **Support des Langues :**
+    *   Ajout de la prise en charge des langues suivantes : Italien, Espagnol, Portugais et Hébreu.
+
 ------
+

@@ -347,4 +347,7 @@ These updates focus on performance improvements and visual enhancements to provi
     *   Improved visual drawing of strands and control points in move mode.
     *   Corrected drawing issues when connecting an attached strand to the starting point of a main strand.
 
+4.  **Language Support:**
+    *   Added support for the following languages: Italian, Spanish, Portuguese, and Hebrew.
+
 ------

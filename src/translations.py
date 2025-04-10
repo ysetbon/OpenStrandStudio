@@ -202,7 +202,7 @@ translations = {
         'history_cleared_title': 'History Cleared',
         'history_cleared_text': 'All past history sessions have been cleared.',
         'no_history_found': 'No past history sessions found.',
-        'history_explanation': 'Select a past session and click "Load Selected" to restore its final state. Warning: Loading history will clear your current undo/redo steps.'
+        'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.'
     },
     'fr': {
         # MainWindow translations
@@ -407,7 +407,7 @@ translations = {
         'history_cleared_title': 'Historique Effacé',
         'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
-        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final. Attention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.'
+        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.'
     },
     'it': {
         # MainWindow translations
@@ -610,7 +610,7 @@ translations = {
         'history_cleared_title': 'Cronologia Cancellata',
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
-        'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale. Attenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.'
+        'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.'
     },
     # New Spanish Translations
     'es': {
@@ -816,7 +816,7 @@ translations = {
         'history_cleared_title': 'Historial Borrado',
         'history_cleared_text': 'Todas las sesiones de historial pasadas han sido borradas.',
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
-        'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurar su estado final. Advertencia: Cargar historial borrará tus pasos actuales de deshacer/rehacer.'
+        'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.'
     },
     # New Portuguese Translations
     'pt': {
@@ -1022,7 +1022,7 @@ translations = {
         'history_cleared_title': 'Histórico Limpo',
         'history_cleared_text': 'Todas as sessões de histórico passadas foram limpas.',
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
-        'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final. Aviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.'
+        'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.'
     },
     # New Hebrew Translations (RTL language)
     'he': {
@@ -1061,7 +1061,7 @@ translations = {
         'toggle_control_points': 'נקודות',
         'toggle_shadow': 'צל',
         'shadow_color': 'צבע צל',
-        'draw_only_affected_strand': '                                     צייר רק את החוט המושפע בעת גרירה',
+        'draw_only_affected_strand': 'צייר רק את החוט המושפע בעת גרירה',
         'enable_third_control_point': 'הפעל נקודת בקרה שלישית במרכז',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -1228,7 +1228,8 @@ translations = {
         'history_cleared_title': 'היסטוריה נוקתה',
         'history_cleared_text': 'כל הפעלות ההיסטוריה הקודמות נוקו.',
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
-        'history_explanation': 'בחר הפעלה קודמת ולחץ על "טען נבחר" כדי לשחזר את המצב הסופי שלה. אזהרה: טעינת היסטוריה תנקה את צעדי הביטול/שחזור הנוכחיים שלך.'
+        'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
+            'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.'
     }
 }
 

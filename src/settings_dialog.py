@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
-    QColorDialog, QCheckBox
+    QColorDialog, QCheckBox, QBoxLayout
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
@@ -97,7 +97,26 @@ class SettingsDialog(QDialog):
         # Apply layout direction to widgets
         if hasattr(self, 'general_settings_widget'):
             self.general_settings_widget.setLayoutDirection(direction)
+
+        if hasattr(self, 'change_language_widget'):
+            self.change_language_widget.setLayoutDirection(direction)
+        if hasattr(self, 'tutorial_widget'):
+            self.tutorial_widget.setLayoutDirection(direction)
+        if hasattr(self, 'about_widget'):
+            self.about_widget.setLayoutDirection(direction)
+        if hasattr(self, 'whats_new_widget'):
+            self.whats_new_widget.setLayoutDirection(direction)
             
+        # Also set direction for specific sub-layouts
+        if hasattr(self, 'performance_layout'):
+             self.performance_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+        if hasattr(self, 'third_control_layout'):
+             self.third_control_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+        if hasattr(self, 'icon_layout'):
+             self.icon_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+        if hasattr(self, 'third_cp_icon_layout'):
+             self.third_cp_icon_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+             
         # Define specific style adjustments for comboboxes based on direction
         if is_rtl:
             combo_style_adjustments = """
@@ -360,13 +379,17 @@ class SettingsDialog(QDialog):
         self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         if self.is_rtl_language(self.current_language):
             print("RTL language detected")
-            self.shadow_color_label.setMinimumWidth(200)
+            self.shadow_color_label.setMinimumWidth(70)
         self.shadow_color_button = QPushButton()
         self.shadow_color_button.setFixedSize(30, 30)
         self.update_shadow_color_button()
         self.shadow_color_button.clicked.connect(self.choose_shadow_color)
         shadow_layout.addWidget(self.shadow_color_label)
-        shadow_layout.addWidget(self.shadow_color_button)
+        # Add alignment for RTL languages
+        if self.is_rtl_language(self.current_language) != True:
+            shadow_layout.addWidget(self.shadow_color_button)
+        else:
+            shadow_layout.addWidget(self.shadow_color_button, 0, Qt.AlignLeft)
         shadow_layout.addStretch()
 
         # Performance Settings - Option to draw only affected strand during dragging
@@ -466,9 +489,14 @@ class SettingsDialog(QDialog):
             self.language_combobox.setCurrentIndex(index)
 
         self.language_info_label = QLabel(_['language_settings_info'])
-        language_layout.addWidget(self.language_label)
-        language_layout.addWidget(self.language_combobox)
-        language_layout.addWidget(self.language_info_label)
+        # Add widgets to layout with alignment flags
+        if self.is_rtl_language(self.current_language) != True:
+            language_layout.addWidget(self.language_label, 0, Qt.AlignLeft) # Default alignment, will be updated
+            language_layout.addWidget(self.language_combobox, 0, Qt.AlignLeft)
+        else:
+            language_layout.addWidget(self.language_label, 0, Qt.AlignLeft) # Default alignment, will be updated
+            language_layout.addWidget(self.language_combobox, 0, Qt.AlignRight)
+        language_layout.addWidget(self.language_info_label, 0, Qt.AlignLeft) # Default alignment, will be updated
 
         # Add the "OK" button
         self.language_ok_button = QPushButton(_['ok'])
@@ -483,18 +511,18 @@ class SettingsDialog(QDialog):
 
         # Add a tutorial label
         self.tutorial_label = QLabel(_['tutorial_info'])
-        tutorial_layout.addWidget(self.tutorial_label)
+        tutorial_layout.addWidget(self.tutorial_label, 0, Qt.AlignLeft) # Default alignment, will be updated
 
         self.video_buttons = []
 
         for i in range(5):  # Changed from 7 to 5 tutorials
             # Explanation Label
             explanation_label = QLabel(_[f'gif_explanation_{i+1}'])
-            tutorial_layout.addWidget(explanation_label)
+            tutorial_layout.addWidget(explanation_label, 0, Qt.AlignLeft) # Default alignment, will be updated
 
             # Play Video Button
             play_button = QPushButton(_['play_video'])
-            tutorial_layout.addWidget(play_button)
+            tutorial_layout.addWidget(play_button) # Default alignment, will be updated
             play_button.clicked.connect(lambda checked, idx=i: self.play_video(idx))
             self.video_buttons.append(play_button)
 
@@ -505,8 +533,10 @@ class SettingsDialog(QDialog):
         history_layout = QVBoxLayout(self.history_widget)
 
         self.history_explanation_label = QLabel(_['history_explanation'])
-        self.history_explanation_label.setWordWrap(True)
-        history_layout.addWidget(self.history_explanation_label)
+        if self.is_rtl_language(self.current_language):
+            history_layout.addWidget(self.history_explanation_label, 0, Qt.AlignLeft)
+        else:
+            history_layout.addWidget(self.history_explanation_label) # Default alignment, will be updated later
 
         self.history_list = QListWidget()
         self.history_list.setToolTip("Select a session to load its final state")
@@ -553,15 +583,28 @@ class SettingsDialog(QDialog):
         self.undo_icon_widget = QLabel()
         self.undo_icon_widget.setFixedSize(40, 40)
         self.update_icon_widget(self.undo_icon_widget, '↶')
-        self.icon_layout.addWidget(self.undo_icon_label)
-        self.icon_layout.addWidget(self.undo_icon_widget)
+        if self.is_rtl_language(self.current_language) != True:
+            
+            self.icon_layout.addWidget(self.undo_icon_label)
+            self.icon_layout.addWidget(self.undo_icon_widget)
+            # Add the label second
+        else:
+            
+            self.icon_layout.addWidget(self.undo_icon_widget)
+            self.icon_layout.addWidget(self.undo_icon_label)
         self.icon_layout.addSpacing(20)
         self.redo_icon_label = QLabel(_['redo_icon_label'])
         self.redo_icon_widget = QLabel()
         self.redo_icon_widget.setFixedSize(40, 40)
         self.update_icon_widget(self.redo_icon_widget, '↷')
-        self.icon_layout.addWidget(self.redo_icon_label)
-        self.icon_layout.addWidget(self.redo_icon_widget)
+        if self.is_rtl_language(self.current_language) != True:
+            
+            self.icon_layout.addWidget(self.redo_icon_label)
+            self.icon_layout.addWidget(self.redo_icon_widget)
+        else:
+            self.icon_layout.addWidget(self.redo_icon_widget)
+            self.icon_layout.addWidget(self.redo_icon_label)
+            
         self.icon_layout.addStretch()
         whats_new_layout.addLayout(self.icon_layout)
 
@@ -579,8 +622,12 @@ class SettingsDialog(QDialog):
         self.third_cp_icon_widget = QLabel()
         self.third_cp_icon_widget.setFixedSize(40, 40)
         self.update_third_cp_icon_widget(self.third_cp_icon_widget)
-        self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
-        self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
+        if self.is_rtl_language(self.current_language) != True:
+            self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
+            self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
+        else:
+            self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
+            self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
         self.third_cp_icon_layout.addStretch()
         whats_new_layout.addLayout(self.third_cp_icon_layout)
 
@@ -1034,6 +1081,17 @@ class SettingsDialog(QDialog):
         else:
             logging.warning("self.icon_layout or self.third_cp_icon_layout not found during translation update.")
 
+        # Add separate handling for third_cp_icon_layout
+        if hasattr(self, 'third_cp_icon_layout'):
+            for i in range(self.third_cp_icon_layout.count()):
+                item = self.third_cp_icon_layout.itemAt(i)
+                if isinstance(item.widget(), QLabel):
+                    widget = item.widget()
+                    if widget == self.third_cp_icon_label:
+                        widget.setText(_['third_cp_icon_label'])
+                    elif widget == self.third_cp_icon_widget:
+                        self.update_third_cp_icon_widget(widget)
+
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])
@@ -1059,23 +1117,23 @@ class SettingsDialog(QDialog):
         # For Hebrew, adjust text in the combobox to get proper positioning
         if self.is_rtl_language(self.current_language):
             # Apply RTL text positioning to comboboxes
-            self.theme_combobox.setItemText(0, "           " + _['default'])  # Add space to move text closer to checkbox
-            self.theme_combobox.setItemText(1, "           " + _['light'])
-            self.theme_combobox.setItemText(2, "           " + _['dark'])
+            self.theme_combobox.setItemText(0, "        " + _['default'])  # Add space to move text closer to checkbox
+            self.theme_combobox.setItemText(1, "        " + _['light'])
+            self.theme_combobox.setItemText(2, "        " + _['dark'])
             
             # Add padding to the Hebrew item in the language combobox
             hebrew_index = self.language_combobox.findData('he')
-            self.language_combobox.setItemText(hebrew_index, "                            " + _['hebrew'])
+            self.language_combobox.setItemText(hebrew_index, "       " + _['hebrew'])
             english_index = self.language_combobox.findData('en')
-            self.language_combobox.setItemText(english_index, "                            " + _['english'])
+            self.language_combobox.setItemText(english_index, "       " + _['english'])
             french_index = self.language_combobox.findData('fr')
-            self.language_combobox.setItemText(french_index, "                            " + _['french'])
+            self.language_combobox.setItemText(french_index, "       " + _['french'])
             italian_index = self.language_combobox.findData('it')
-            self.language_combobox.setItemText(italian_index, "                            " + _['italian'])
+            self.language_combobox.setItemText(italian_index, "       " + _['italian'])
             spanish_index = self.language_combobox.findData('es')
-            self.language_combobox.setItemText(spanish_index, "                            " + _['spanish'])
+            self.language_combobox.setItemText(spanish_index, "       " + _['spanish'])
             portuguese_index = self.language_combobox.findData('pt')
-            self.language_combobox.setItemText(portuguese_index, "                            " + _['portuguese'])
+            self.language_combobox.setItemText(portuguese_index, "       " + _['portuguese'])
 
         # Update tutorial explanations and play buttons
         for i in range(5):  # Changed from 7 to 5
@@ -1091,6 +1149,8 @@ class SettingsDialog(QDialog):
         # Update text alignment for RTL languages
         self.update_text_alignment()
 
+
+
     # New method to update text alignment based on language direction
     def update_text_alignment(self):
         # Set text alignment for all QLabel widgets based on language direction
@@ -1102,8 +1162,9 @@ class SettingsDialog(QDialog):
             # Skip labels within specific layouts where alignment might be handled differently
             # or where center alignment is intended (like category items)
             parent_layout = widget.parentWidget().layout() if widget.parentWidget() else None
-            if parent_layout == self.icon_layout or parent_layout == self.third_cp_icon_layout:
-                 continue # Skip icon labels
+            # Remove the check that skips icon labels
+            # if parent_layout == self.icon_layout or parent_layout == self.third_cp_icon_layout:
+            #      continue # Skip icon labels
 
             # Check if the label is a direct child of the main categories list widget item
             # This is a bit fragile, might need a better way to identify category labels if structure changes
@@ -1114,15 +1175,21 @@ class SettingsDialog(QDialog):
                  is_category_label = True
 
             # Also skip the tutorial explanation labels which should follow document direction
-            if widget.objectName() and widget.objectName().startswith("tutorial_explanation_"): # Need to set object names
-                 continue # Skip tutorial explanations for now
+            # Remove the check for tutorial explanation labels
+            # if widget.objectName() and widget.objectName().startswith("tutorial_explanation_"): # Need to set object names
+            #      continue # Skip tutorial explanations for now
 
             # Apply alignment unless it's a category label or explicitly skipped
             if not is_category_label:
                  # *** Add condition to skip shadow color label in RTL ***
                  if widget == self.shadow_color_label and rtl:
                      continue
-                 widget.setAlignment(alignment)
+                 if parent_layout != self.icon_layout and parent_layout != self.third_cp_icon_layout: # Check it's not an icon label before aligning
+                    widget.setAlignment(alignment)
+                    if rtl:
+                        widget.setLayoutDirection(Qt.RightToLeft)
+                    else:
+                        widget.setLayoutDirection(Qt.LeftToRight)
 
         # For text browsers, set alignment through HTML if RTL
         if rtl:

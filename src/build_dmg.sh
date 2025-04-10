@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables to match ISS configuration
-APP_NAME="OpenStrand Studio"
+APP_NAME="OpenStrandStudio"
 VERSION="1.091"
 APP_DATE="10_Apr_2025"
 PUBLISHER="Yonatan Setbon"
@@ -17,7 +17,7 @@ INSTALLER_OUTPUT="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/ins
 mkdir -p "$INSTALLER_OUTPUT"
 
 # Copy the .app bundle from the correct location
-APP_SOURCE="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrand Studio.app"  # Updated path
+APP_SOURCE="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app"  # Updated path
 if [ ! -d "$APP_SOURCE" ]; then
     echo "Error: Could not find .app at: $APP_SOURCE"
     exit 1

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-APP_NAME="OpenStrand Studio"
+APP_NAME="OpenStrandStudio"
 VERSION="1_091"
 APP_DATE="10_Apr_2025"
 PUBLISHER="Yonatan Setbon"
@@ -23,7 +23,7 @@ cat > "$SCRIPTS_DIR/postinstall" << 'EOF'
 USER_HOME=$HOME
 
 # Create Desktop icon
-cp -f "/Applications/OpenStrand Studio.app/Contents/Resources/box_stitch.icns" "$USER_HOME/Desktop/OpenStrand Studio.icns"
+cp -f "/Applications/OpenStrand Studio.app/Contents/Resources/box_stitch.icns" "$USER_HOME/Desktop/OpenStrandStudio.icns"
 
 # Create Launch Agent for auto-start (optional)
 LAUNCH_AGENT_DIR="$USER_HOME/Library/LaunchAgents"
@@ -39,9 +39,9 @@ fi
 osascript <<EOD
     tell application "System Events"
         activate
-        set launch_now to button returned of (display dialog "Installation Complete! Would you like to launch OpenStrand Studio now?" buttons {"Launch Now", "Later"} default button "Launch Now")
+        set launch_now to button returned of (display dialog "Installation Complete! Would you like to launch OpenStrandStudio now?" buttons {"Launch Now", "Later"} default button "Launch Now")
         if launch_now is "Launch Now" then
-            tell application "OpenStrand Studio" to activate
+            tell application "OpenStrandStudio" to activate
         end if
     end tell
 EOD
@@ -108,7 +108,7 @@ EOF
 # Create component package
 pkgbuild \
     --root "/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
-    --install-location "/Applications/OpenStrand Studio.app" \
+    --install-location "/Applications/OpenStrandStudio.app" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "$IDENTIFIER" \
     --version "$VERSION" \

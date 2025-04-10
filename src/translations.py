@@ -109,6 +109,8 @@ translations = {
         """,
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+             <li style="font-size:15px;"><b> New Language Support:</b> Italian, Spanish, Portuguese, and Hebrew are now supported.
+             <br>
              <li style="font-size:15px;"><b>Bug Fixes:</b> Several bugs reported from the previous version (1.090) have been addressed to provide a smoother and more reliable experience.
              <br>
              <br>
@@ -314,6 +316,8 @@ translations = {
         """,
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+             <li style="font-size:15px;"><b>Support de nouvelles langues :</b> l'italien, l'espagnol, le portugais et l'hébreu sont désormais pris en charge.
+             <br>
              <li style="font-size:15px;"><b>Corrections de bugs :</b> Plusieurs bugs signalés dans la version précédente (1.090) ont été corrigés pour offrir une expérience plus fluide et plus fiable.
              <br>
              <br>
@@ -515,8 +519,12 @@ translations = {
             <li style="font-size:15px;"><b>Opzione Terzo Punto di Controllo:</b> Ora puoi abilitare un terzo punto di controllo inizialmente impostato al centro tra i due punti esistenti, fornendo un controllo più preciso sulle forme delle curve.</li>
         </ul>
         """,
+        # ##add here more langauge support (italian spanish portuguese hebrew)
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+            
+             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
+             <br>
              <li style="font-size:15px;"><b>Correzioni di bug:</b> Diversi bug segnalati dalla versione precedente (1.090) sono stati risolti per fornire un'esperienza più fluida e affidabile.
              <br>
              <br>
@@ -723,6 +731,8 @@ translations = {
         """,
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
+             <br>
              <li style="font-size:15px;"><b>Correcciones de errores:</b> Se han solucionado varios errores reportados de la versión anterior (1.090) para proporcionar una experiencia más fluida y confiable.
              <br>
              <br>
@@ -929,6 +939,8 @@ translations = {
         """,
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
+             <br>
              <li style="font-size:15px;"><b>Correções de bugs:</b> Vários bugs relatados da versão anterior (1.090) foram corrigidos para fornecer uma experiência mais suave e confiável.
              <br>
              <br>
@@ -1135,6 +1147,7 @@ translations = {
         """,
         'whats_new_bug_fixes_text': """
         <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>הוספת תמיכה בשפות נוספות:</b> הוספת תמיכה באיטלקית, ספרדית, פורטוגזית ועברית.
              <li style="font-size:15px;"><b>תיקוני באגים:</b> מספר באגים שדווחו מהגרסה הקודמת (1.090) טופלו כדי לספק חוויה חלקה ואמינה יותר.
              <br>
              <br>
@@ -1144,7 +1157,7 @@ translations = {
                  בנוסף, אם מחברים חוט מצורף לנקודת התחלה של חוט עיקרי, הציור של החוט העיקרי (בכל המצבים) מתוקן (היו בעיות במקרה ספציפי זה בגרסאות קודמות). </li>
          </ul>
          <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">מקווה שתהנה מהעדכונים האלה!</p>
+         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">מקווה שתהנו מהעדכונים האלה!</p>
          """,
         'undo_icon_label': 'סמל ביטול:',
         'redo_icon_label': 'סמל שחזור:',

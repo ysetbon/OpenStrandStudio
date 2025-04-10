@@ -1061,7 +1061,7 @@ translations = {
         'toggle_control_points': 'נקודות',
         'toggle_shadow': 'צל',
         'shadow_color': 'צבע צל',
-        'draw_only_affected_strand': 'צייר רק את החוט המושפע בעת גרירה',
+        'draw_only_affected_strand': '                                     צייר רק את החוט המושפע בעת גרירה',
         'enable_third_control_point': 'הפעל נקודת בקרה שלישית במרכז',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -1092,7 +1092,7 @@ translations = {
         'history': 'היסטוריה',
         'whats_new': "מה חדש?",
         'about': ' אודות OpenStrand Studio',
-        'select_theme': 'בחר ערכת נושא:',
+        'select_theme': 'בחר ערכת נושא:    ',
         'select_language': 'בחר שפה:',
         'ok': 'אישור',
         'cancel': 'ביטול',

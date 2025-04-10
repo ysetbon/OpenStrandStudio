@@ -89,28 +89,126 @@ class SettingsDialog(QDialog):
         
     # New method to update layout direction based on language
     def update_layout_direction(self):
-        if self.is_rtl_language(self.current_language):
-            self.setLayoutDirection(Qt.RightToLeft)
+        is_rtl = self.is_rtl_language(self.current_language)
+        direction = Qt.RightToLeft if is_rtl else Qt.LeftToRight
+
+        self.setLayoutDirection(direction)
+        
+        # Apply layout direction to widgets
+        if hasattr(self, 'general_settings_widget'):
+            self.general_settings_widget.setLayoutDirection(direction)
             
-            # Ensure the general settings widget also respects RTL
-            if hasattr(self, 'general_settings_widget'):
-                self.general_settings_widget.setLayoutDirection(Qt.RightToLeft)
-                # Specific layouts might need adjustment if the above is not enough
-                # e.g., self.performance_layout.setLayoutDirection(Qt.RightToLeft)
+        # Define specific style adjustments for comboboxes based on direction
+        if is_rtl:
+            combo_style_adjustments = """
+                QComboBox {
+                    padding-left: 30px; 
+                    padding-right: 0px;
+                    margin-right: 0px;
+                    text-align: right !important;
+                    direction: rtl;
+                }
+                QComboBox::drop-down {
+                    subcontrol-origin: padding;
+                    subcontrol-position: left top;
+                    left: 5px;
+                    border: none;
+                    width: 20px;
+                }
+
+                QComboBox QAbstractItemView {
+                    direction: rtl;
+                    text-align: right !important;
+                }
+            """
+            # Add styling for checkboxes in RTL mode
+            checkbox_style = """
+                QCheckBox {
+                    spacing: 0px;
+                }
+                QCheckBox::indicator {
+                    width: 13px;
+                    height: 13px;
+                }
+            """
             
-            # For RTL languages, ensure theme combobox items are also RTL
-            if hasattr(self, 'theme_combobox'):
-                self.theme_combobox.setLayoutDirection(Qt.RightToLeft)
-                self.theme_combobox.view().setLayoutDirection(Qt.RightToLeft)
-        else:
-            self.setLayoutDirection(Qt.LeftToRight)
-            # Ensure the general settings widget reverts to LTR
-            if hasattr(self, 'general_settings_widget'):
-                self.general_settings_widget.setLayoutDirection(Qt.LeftToRight)
-            # Ensure the theme combobox also reverts to LTR
-            if hasattr(self, 'theme_combobox'):
-                self.theme_combobox.setLayoutDirection(Qt.LeftToRight)
-                self.theme_combobox.view().setLayoutDirection(Qt.LeftToRight)
+            # Apply checkbox style to all checkboxes
+            for checkbox in self.findChildren(QCheckBox):
+                checkbox.setStyleSheet(checkbox_style)
+                # Set layout direction to RTL for the checkbox itself
+                checkbox.setLayoutDirection(Qt.RightToLeft)
+
+        else: # LTR
+            combo_style_adjustments = """
+                QComboBox {
+                    padding-left: 8px;
+                    padding-right: 24px;
+                    text-align: left;
+                    direction: ltr;
+                }
+                QComboBox::drop-down {
+                    border: none;
+                    padding-right: 8px;
+                }
+                QComboBox::down-arrow:after {
+                    right: 8px;
+                    left: auto;
+                }
+            """
+            
+        if hasattr(self, 'theme_combobox'):
+            self.theme_combobox.setLayoutDirection(direction)
+            self.theme_combobox.view().setLayoutDirection(direction)
+            # Get current style, append adjustments
+            current_style = self.theme_combobox.styleSheet() # Get theme/base style
+            self.theme_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+            
+            # Apply the same RTL fixes to theme combobox
+            if is_rtl:
+                # Force the list items in the dropdown to be right-aligned
+                view = self.theme_combobox.view()
+                if view:
+                    view.setTextElideMode(Qt.ElideLeft)  # Elide left for RTL text
+                
+                # Update item text alignment
+                if self.theme_combobox.count() > 0:
+                    # Apply text alignment to each item
+                    for i in range(self.theme_combobox.count()):
+                        item_text = self.theme_combobox.itemText(i)
+                        # This triggers a redraw of the item with proper RTL
+                        self.theme_combobox.setItemText(i, item_text)
+
+        if hasattr(self, 'language_combobox'):
+            self.language_combobox.setLayoutDirection(direction)
+            self.language_combobox.view().setLayoutDirection(direction)
+            # Get current style, append adjustments
+            current_style = self.language_combobox.styleSheet() # Get theme/base style
+            self.language_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+            
+            # Force the view to update its layout direction as well
+            if is_rtl:
+                # Check if the combobox has a lineEdit (editable combobox)
+                try:
+                    lineEdit = self.language_combobox.lineEdit()
+                    if lineEdit:
+                        lineEdit.setAlignment(Qt.AlignRight)
+                except:
+                    pass
+                
+                # Force the list items in the dropdown to be right-aligned
+                view = self.language_combobox.view()
+                if view:
+                    view.setTextElideMode(Qt.ElideLeft)  # Elide left for RTL text
+            
+            # If the combobox has items, update their text alignment
+            if is_rtl and self.language_combobox.count() > 0:
+                # Apply text alignment to each item
+                for i in range(self.language_combobox.count()):
+                    item_text = self.language_combobox.itemText(i)
+                    # Re-add the item with the same data but RTL-aware text
+                    item_data = self.language_combobox.itemData(i)
+                    # This triggers a redraw of the item with proper RTL
+                    self.language_combobox.setItemText(i, item_text)
 
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
@@ -209,42 +307,41 @@ class SettingsDialog(QDialog):
         self.theme_combobox = QComboBox()
         
         # Modified theme combobox stylesheet
-        self.theme_combobox.setStyleSheet(f"""
-            QComboBox {{
-                padding: 8px;
-                padding-right: 24px;
-                border: 1px solid #cccccc;
-                border-radius: 4px;
-                min-width: 150px;
-                font-size: 14px;
-            }}
-            QComboBox:hover {{
-                background-color: {theme_hover_color};
-                
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 24px;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                width: 24px;
-                height: 24px;
-            }}
-            QComboBox::down-arrow:after {{
-                content: "▼";
-                color: #666666;
-                position: absolute;
-                top: 0;
-                right: 8px;
-                font-size: 12px;
-            }}
-            QComboBox QAbstractItemView {{
-                padding: 8px;
-                selection-background-color: {selection_color};
-                
-            }}
-        """)
+        self.theme_combobox_base_style = f""" \
+            QComboBox {{ \
+                padding: 8px; \
+                padding-right: 24px; \
+                border: 1px solid #cccccc; \
+                border-radius: 4px; \
+                min-width: 150px; \
+                font-size: 14px; \
+            }} \
+            QComboBox:hover {{ \
+                background-color: {theme_hover_color}; \
+            }} \
+            QComboBox::drop-down {{ \
+                border: none; \
+                width: 24px; \
+            }} \
+            QComboBox::down-arrow {{ \
+                image: none; \
+                width: 24px; \
+                height: 24px; \
+            }} \
+            QComboBox::down-arrow:after {{ \
+                content: "▼"; \
+                color: #666666; \
+                position: absolute; \
+                top: 0; \
+                right: 8px; \
+                font-size: 12px; \
+            }} \
+            QComboBox QAbstractItemView {{ \
+                padding: 8px; \
+                selection-background-color: {selection_color}; \
+            }} \
+        """
+        self.theme_combobox.setStyleSheet(self.theme_combobox_base_style)
         
         # Add theme items with color preview icons
         self.add_theme_item(_['default'], 'default')
@@ -261,6 +358,9 @@ class SettingsDialog(QDialog):
         # Shadow Color Selection
         shadow_layout = QHBoxLayout()
         self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
+        if self.is_rtl_language(self.current_language):
+            print("RTL language detected")
+            self.shadow_color_label.setMinimumWidth(200)
         self.shadow_color_button = QPushButton()
         self.shadow_color_button.setFixedSize(30, 30)
         self.update_shadow_color_button()
@@ -313,41 +413,43 @@ class SettingsDialog(QDialog):
         self.language_combobox = QComboBox()
 
         # Modified language combobox stylesheet
-        self.language_combobox.setStyleSheet(f"""
-            QComboBox {{
-                padding: 8px;
-                padding-right: 24px;
-                border: 1px solid #cccccc;
-                border-radius: 4px;
-                min-width: 200px;
-                font-size: 14px;
-            }}
-            QComboBox:hover {{
-                background-color: {lang_hover_color};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 24px;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                width: 24px;
-                height: 24px;
-            }}
-            QComboBox::down-arrow:after {{
-                content: "▼";
-                color: #666666;
-                position: absolute;
-                top: 0;
-                right: 8px;
-                font-size: 12px;
-            }}
-            QComboBox QAbstractItemView {{
-                padding: 8px;
-                min-width: 200px;
-                selection-background-color: {selection_color};
-            }}
-        """)
+        self.lang_combobox_base_style = f""" \
+            QComboBox {{ \
+                padding: 8px; \
+                padding-right: 24px; \
+                border: 1px solid #cccccc; \
+                border-radius: 4px; \
+                min-width: 200px; \
+                font-size: 14px; \
+            }} \
+            QComboBox:hover {{ \
+                background-color: {lang_hover_color}; \
+            }} \
+            QComboBox::drop-down {{ \
+                border: none; \
+                width: 24px; \
+            }} \
+            QComboBox::down-arrow {{ \
+                image: none; \
+                width: 24px; \
+                height: 24px; \
+            }} \
+            QComboBox::down-arrow:after {{ \
+                content: "▼"; \
+                color: #666666; \
+                position: absolute; \
+                top: 0; \
+                right: 8px; \
+                font-size: 12px; \
+            }} \
+            QComboBox QAbstractItemView {{ \
+                padding: 8px; \
+                min-width: 200px; \
+                selection-background-color: {selection_color}; \
+                text-align: right; \
+            }} \
+        """
+        self.language_combobox.setStyleSheet(self.lang_combobox_base_style)
         
         # Add language items with generated icons - using current translations
         self.add_lang_item_en(_['english'], 'en')
@@ -954,6 +1056,27 @@ class SettingsDialog(QDialog):
         if index >= 0:
             self.language_combobox.setCurrentIndex(index)
         
+        # For Hebrew, adjust text in the combobox to get proper positioning
+        if self.is_rtl_language(self.current_language):
+            # Apply RTL text positioning to comboboxes
+            self.theme_combobox.setItemText(0, "           " + _['default'])  # Add space to move text closer to checkbox
+            self.theme_combobox.setItemText(1, "           " + _['light'])
+            self.theme_combobox.setItemText(2, "           " + _['dark'])
+            
+            # Add padding to the Hebrew item in the language combobox
+            hebrew_index = self.language_combobox.findData('he')
+            self.language_combobox.setItemText(hebrew_index, "                            " + _['hebrew'])
+            english_index = self.language_combobox.findData('en')
+            self.language_combobox.setItemText(english_index, "                            " + _['english'])
+            french_index = self.language_combobox.findData('fr')
+            self.language_combobox.setItemText(french_index, "                            " + _['french'])
+            italian_index = self.language_combobox.findData('it')
+            self.language_combobox.setItemText(italian_index, "                            " + _['italian'])
+            spanish_index = self.language_combobox.findData('es')
+            self.language_combobox.setItemText(spanish_index, "                            " + _['spanish'])
+            portuguese_index = self.language_combobox.findData('pt')
+            self.language_combobox.setItemText(portuguese_index, "                            " + _['portuguese'])
+
         # Update tutorial explanations and play buttons
         for i in range(5):  # Changed from 7 to 5
             index = i * 2  # Since each explanation and button are added sequentially
@@ -976,8 +1099,31 @@ class SettingsDialog(QDialog):
         
         # Update alignment for all labels
         for widget in self.findChildren(QLabel):
-            widget.setAlignment(alignment)
-            
+            # Skip labels within specific layouts where alignment might be handled differently
+            # or where center alignment is intended (like category items)
+            parent_layout = widget.parentWidget().layout() if widget.parentWidget() else None
+            if parent_layout == self.icon_layout or parent_layout == self.third_cp_icon_layout:
+                 continue # Skip icon labels
+
+            # Check if the label is a direct child of the main categories list widget item
+            # This is a bit fragile, might need a better way to identify category labels if structure changes
+            is_category_label = False
+            if isinstance(widget.parentWidget(), QListWidgetItem):
+                 is_category_label = True
+            elif hasattr(widget.parentWidget(), 'parentWidget') and isinstance(widget.parentWidget().parentWidget(), QListWidgetItem):
+                 is_category_label = True
+
+            # Also skip the tutorial explanation labels which should follow document direction
+            if widget.objectName() and widget.objectName().startswith("tutorial_explanation_"): # Need to set object names
+                 continue # Skip tutorial explanations for now
+
+            # Apply alignment unless it's a category label or explicitly skipped
+            if not is_category_label:
+                 # *** Add condition to skip shadow color label in RTL ***
+                 if widget == self.shadow_color_label and rtl:
+                     continue
+                 widget.setAlignment(alignment)
+
         # For text browsers, set alignment through HTML if RTL
         if rtl:
             # Update text browsers with RTL direction

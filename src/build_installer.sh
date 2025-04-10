@@ -2,8 +2,8 @@
 
 # Set variables
 APP_NAME="OpenStrand Studio"
-VERSION="1_090"
-APP_DATE="16_Mar_2025"
+VERSION="1_091"
+APP_DATE="10_Apr_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatansetbon.openstrandstudio"
 
@@ -84,11 +84,10 @@ cat > "$RESOURCES_DIR/welcome.html" << EOF
     <p>This will install $APP_NAME on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Improved UI for move and attached modes</li>
-        <li>Faster calculation when handling many strands</li>
-        <li>Fixed various bugs in main window</li>
-        <li>Fixed connection of strands that lost information</li>
-        <li>Added shading option for improved visual appearance</li>
+        <li>Undo/Redo Functionality: Easily undo and redo your actions using dedicated buttons.</li>
+        <li>History Tab: Added a "History" tab in the Settings dialog to view and load past action sessions.</li>
+        <li>Bug Fixes: Improved visual drawing of strands and control points in move mode. Corrected drawing issues when connecting an attached strand to the starting point of a main strand.</li>
+        <li>Language Support: Added support for Italian, Spanish, Portuguese, and Hebrew.</li>
     </ul>
 </body>
 </html>

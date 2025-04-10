@@ -2,8 +2,8 @@
 
 # Set variables to match ISS configuration
 APP_NAME="OpenStrand Studio"
-VERSION="1.090"
-APP_DATE="16_Mar_2025"
+VERSION="1.091"
+APP_DATE="10_Apr_2025"
 PUBLISHER="Yonatan Setbon"
 DMG_NAME="OpenStrandStudioSetup_${APP_DATE}_${VERSION}"
 
@@ -36,11 +36,10 @@ By $PUBLISHER
 Contact: ysetbon@gmail.com
 
 New in this version:
-- Improved UI for move and attached modes
-- Faster calculation when handling many strands
-- Fixed various bugs in main window
-- Fixed connection of strands that lost information
-- Added shading option for improved visual appearance
+- Undo/Redo Functionality: Easily undo and redo your actions using dedicated buttons.
+- History Tab: Added a "History" tab in the Settings dialog to view and load past action sessions.
+- Bug Fixes: Improved visual drawing of strands and control points in move mode. Corrected drawing issues when connecting an attached strand to the starting point of a main strand.
+- Language Support: Added support for Italian, Spanish, Portuguese, and Hebrew.
 
 Installation:
 1. Drag '$APP_NAME' to the Applications folder

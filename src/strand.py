@@ -4083,7 +4083,6 @@ class MaskedStrand(Strand):
         """
         Get the path representing the masked area.
         This includes base intersection and also subtracts any deletion rectangles.
-        ALWAYS recalculates based on current component strands and deletion rectangles.
         """
         if not self.first_selected_strand or not self.second_selected_strand:
             return QPainterPath()
@@ -4091,31 +4090,33 @@ class MaskedStrand(Strand):
         # Get the base paths for both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
         path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-
-        # Create the mask by intersecting the paths - Always start fresh
+        
+        # Create the final mask by intersecting the path1 shadow with path2
         result_path = path1.intersected(path2)
 
-        # Apply any saved deletion rectangles based on their current corner data
+        # If we have a custom mask path, use that instead
+        if self.custom_mask_path is not None:
+            result_path = self.custom_mask_path
+
+        # Apply any saved deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
             for rect in self.deletion_rectangles:
-                # Use corner-based data for precise deletion
+                # NEW code using corner-based data:
                 top_left = QPointF(*rect['top_left'])
                 top_right = QPointF(*rect['top_right'])
                 bottom_left = QPointF(*rect['bottom_left'])
                 bottom_right = QPointF(*rect['bottom_right'])
-
                 # Create a polygonal path from the four corners
                 deletion_path = QPainterPath()
+
                 deletion_path.moveTo(top_left)
                 deletion_path.lineTo(top_right)
                 deletion_path.lineTo(bottom_right)
                 deletion_path.lineTo(bottom_left)
                 deletion_path.closeSubpath()
 
-                # Subtract this specific rectangle's current shape
                 result_path = result_path.subtracted(deletion_path)
 
-        # Ignore self.custom_mask_path to ensure fresh calculation
         return result_path
 
     def get_stroked_path_for_strand(self, strand):
@@ -4391,7 +4392,7 @@ class MaskedStrand(Strand):
                         
                         # Create a more aggressive inset path to eliminate edge artifacts
                         shadow_inset_stroker = QPainterPathStroker()
-                        shadow_inset_stroker.setWidth(5)  # Increased inset value
+                        shadow_inset_stroker.setWidth(10)  # Increased inset value
                         shadow_inset_path = path_shadow.subtracted(shadow_inset_stroker.createStroke(path_shadow))
                         
                         # Create a separate buffer for the strand drawing to avoid artifacts

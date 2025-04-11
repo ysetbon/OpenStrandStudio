@@ -15,7 +15,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 # Now do the rest of the imports
 import json
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QImage, QPainter
+from PyQt5.QtGui import QImage, QPainter, QColor
 from PyQt5.QtCore import QSize, Qt, QRect
 from PIL import Image
 from tqdm import tqdm
@@ -48,11 +48,27 @@ class ImageProcessor:
         canvas.hide()
         
         try:
-            strands, groups = load_strands(json_path, canvas)
+            # Inner try-except specifically for load_strands and the KeyError
+            try:
+                strands, groups = load_strands(json_path, canvas)
+            except KeyError as ke:
+                # Check if the KeyError is specifically about 'attached_to'
+                if 'attached_to' in str(ke):
+                    print(f"\nSkipping {os.path.basename(json_path)}: Missing 'attached_to' key.")
+                    return None  # Skip processing this file
+                else:
+                    raise  # Re-raise other KeyErrors
+
+            # This code runs only if load_strands succeeds
             apply_loaded_strands(canvas, strands, groups)
 
+
+            # Set canvas mode, disable grid/controls, and configure shadows
+            canvas.set_mode("select")
             canvas.show_grid = False
             canvas.show_control_points = False
+            canvas.shadow_enabled = True
+            canvas.set_shadow_color(QColor(0, 0, 0, 50)) # Default shadow: semi-transparent black
 
             min_x, min_y, max_x, max_y = ImageProcessor._calculate_bounds(canvas)
             image = ImageProcessor._create_image(canvas, min_x, min_y, max_x, max_y)
@@ -60,11 +76,14 @@ class ImageProcessor:
             
             return output_path
         except Exception as e:
+            # Catch any other exceptions (including re-raised KeyErrors)
             print(f"\nError processing {os.path.basename(json_path)}: {str(e)}")
+            # Keep traceback for unexpected errors
             import traceback
             traceback.print_exc()
             return None
         finally:
+            # Ensure QApplication is quit regardless of errors
             app.quit()
 
     @staticmethod
@@ -214,8 +233,8 @@ def main():
     suppress_qt_warnings()
     
     # Define your directories
-    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn2_rh_continuation\optimal_configurations"  # Replace with your actual path
-    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\m1xn2_rh_continuation images optimal offset 2"    # Replace with your actual path
+    json_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\ver_1_73_mxn_lh"  # Replace with your actual path
+    output_directory = r"C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\samples\ver 1_073\ver_1_73_images"    # Replace with your actual path
     
     # Create output directory if it doesn't exist
     os.makedirs(output_directory, exist_ok=True)

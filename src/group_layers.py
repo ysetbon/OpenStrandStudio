@@ -1,34 +1,48 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
-                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea,
-                             QMessageBox, QAbstractButton)
+                             QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
+                             QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF
-from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon
-from PyQt5.QtCore import QMimeData, QPoint
-from PyQt5.QtGui import QPixmap
-from strand_drawing_canvas import StrandDrawingCanvas
-from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon,QIntValidator
 import logging
-from strand_drawing_canvas import StrandDrawingCanvas   
+from math import atan2, degrees
+from translations import translations
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PyQt5.QtCore import Qt
+import logging
+from PyQt5.QtWidgets import (
+    QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
+    QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,QScrollArea,
+    QMenu,  QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
+)
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF
+from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator
+from strand import Strand
+from masked_strand import MaskedStrand  # Add this import
+import logging
+from math import atan2, degrees
+import json
+from translations import translations
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
+)
+from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
+QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu,  QTableWidget, QTableWidgetItem, QHeaderView)
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF
+from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent
+import logging
 from math import atan2, degrees
 from PyQt5.QtGui import QIntValidator
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtCore import Qt
 import logging
-from PyQt5.QtGui import QPalette
-from PyQt5.QtWidgets import (
-    QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
-    QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea,
-    QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
+QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QScrollArea, QMenu,  QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QMimeData, QPoint
-from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon, QPixmap, QIntValidator
-from strand_drawing_canvas import StrandDrawingCanvas
-from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF
+from PyQt5.QtGui import QColor,  QDragEnterEvent, QDropEvent, QIcon, QIntValidator
 import logging
 from math import atan2, degrees
-import json
-from translations import translations
 class GroupedLayerTree(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -107,37 +121,7 @@ class GroupedLayerTree(QTreeWidget):
             pass
         else:
             logging.warning(f"Group '{group_name}' not found in GroupedLayerTree.")
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMenu, QSizePolicy
-)
-from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
-                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea, QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView)
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF
-from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent
-from PyQt5.QtCore import QMimeData, QPoint
-from PyQt5.QtGui import QPixmap
-from strand_drawing_canvas import StrandDrawingCanvas
-from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
-import logging
-from strand_drawing_canvas import StrandDrawingCanvas   
-from math import atan2, degrees
-from PyQt5.QtGui import QIntValidator
-from translations import translations
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
-from PyQt5.QtCore import Qt
-import logging
-from PyQt5.QtGui import QPalette, QColor, QPainter
-from PyQt5.QtWidgets import QStyleOptionButton
-from PyQt5.QtWidgets import (
-     QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
-     QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox, QFrame, QScrollArea,
-     QMenu, QAction, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
- )
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QMimeData, QPoint
-from PyQt5.QtGui import QColor, QDrag, QDragEnterEvent, QDropEvent, QIcon, QPixmap, QIntValidator
-from strand_drawing_canvas import StrandDrawingCanvas
-from strand import Strand, AttachedStrand, MaskedStrand  # Add this import
-import logging
-from math import atan2, degrees
+
 class CollapsibleGroupWidget(QWidget):
     def __init__(self, group_name, group_panel):
         super().__init__()

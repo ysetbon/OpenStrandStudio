@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths
 from PyQt5.QtGui import QColor, QPalette
 from functools import partial
 import logging
-from strand import MaskedStrand
+from masked_strand import MaskedStrand
 from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
@@ -20,7 +20,6 @@ import logging
 from functools import partial
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton
-from strand import MaskedStrand
 from group_layers import GroupPanel, GroupLayerManager
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
@@ -403,7 +402,7 @@ class LayerPanel(QWidget):
         button.color_changed.connect(self.on_color_changed)
 
         # -------------------------------------------------------------------------
-        # ADD THESE LINES TO PROVIDE HOVER/PRESS FEEDBACK USING A STYLESHEET
+        # Keep the stylesheet application
         original_hex = strand.color.name()  # Convert the QColor to hex string
         button.setStyleSheet(f"""
             QPushButton {{
@@ -424,13 +423,20 @@ class LayerPanel(QWidget):
         """)
         # -------------------------------------------------------------------------
 
-        # If this is a MaskedStrand, set up context menu, etc.
+        # --- COMMENT OUT Context menu setup (Handled by NumberedLayerButton.__init__) ---
+        # Ensure the button handles its own context menu to avoid conflicts
+        # button.setContextMenuPolicy(Qt.CustomContextMenu)
+        # button.customContextMenuRequested.connect(
+        #     lambda pos, idx=index: self.show_layer_context_menu(idx, pos)
+        # )
+        # --- END COMMENT OUT ---
+
+        # Keep border color setting for MaskedStrand
         if isinstance(strand, MaskedStrand):
             button.set_border_color(strand.second_selected_strand.color)
-            button.setContextMenuPolicy(Qt.CustomContextMenu)
-            button.customContextMenuRequested.connect(
-                lambda pos, idx=index: self.show_masked_layer_context_menu(idx, pos)
-            )
+
+        # Set initial hidden state
+        button.set_hidden(strand.is_hidden)
 
         return button
 
@@ -566,17 +572,22 @@ class LayerPanel(QWidget):
             # hovered items are dark (#333333) with white text.
             return "QMenu { background-color: #F0F0F0; color: black; } QMenu::item:selected { background-color: #333333; color: white; }"
 
-    def show_masked_layer_context_menu(self, strand_index, position):
+    def show_layer_context_menu(self, strand_index, position):
         """
-        # SECOND DEFINITION (kept)
-        Show context menu for masked layer buttons, with translations.
+        Show context menu for layer buttons, with translations.
+        Handles MaskedStrand specific actions and common actions like Hide/Show.
         """
-        if strand_index >= 0 and isinstance(self.canvas.strands[strand_index], MaskedStrand):
-            menu = QMenu(self)
-            # Apply a context menu style based on the current theme
-            menu.setStyleSheet(self.get_context_menu_stylesheet())
-            _ = translations[self.language_code]
+        if strand_index < 0 or strand_index >= len(self.canvas.strands):
+            logging.warning(f"show_layer_context_menu called with invalid index: {strand_index}")
+            return
 
+        strand = self.canvas.strands[strand_index]
+        menu = QMenu(self)
+        menu.setStyleSheet(self.get_context_menu_stylesheet())
+        _ = translations[self.language_code]
+
+        # --- Add actions specific to MaskedStrand ---
+        if isinstance(strand, MaskedStrand):
             edit_action = menu.addAction(_['edit_mask'])
             edit_action.triggered.connect(
                 lambda: self.on_edit_mask_click(menu, strand_index)
@@ -586,10 +597,12 @@ class LayerPanel(QWidget):
             reset_action.triggered.connect(
                 lambda: (self.reset_mask(strand_index), menu.close())
             )
+        # --- End MaskedStrand specific actions ---
 
-            button = self.layer_buttons[strand_index]
-            global_pos = button.mapToGlobal(button.rect().topRight())
-            menu.exec_(global_pos)
+        button = self.layer_buttons[strand_index]
+        # Use button's mapToGlobal to get correct position
+        global_pos = button.mapToGlobal(position)
+        menu.exec_(global_pos)
 
     def on_edit_mask_click(self, menu, strand_index):
         """
@@ -598,17 +611,45 @@ class LayerPanel(QWidget):
         """
         # Close the QMenu:
         menu.close()
-        menu.hide()
+        # menu.hide() # close() should be sufficient
 
         # Disconnect the old context-menu request from this button:
-        button = self.layer_buttons[strand_index]
-        try:
-            button.customContextMenuRequested.disconnect()
-        except TypeError:
-            pass
+        # No need to disconnect, context menu is recreated each time
 
         # Now actually enter mask-edit mode:
         self.request_edit_mask(strand_index)
+
+    # --- NEW: Method to toggle visibility ---
+    def toggle_layer_visibility(self, strand_index):
+        """Toggles the visibility of the strand at the given index."""
+        if 0 <= strand_index < len(self.canvas.strands):
+            strand = self.canvas.strands[strand_index]
+            strand.is_hidden = not strand.is_hidden
+            logging.info(f"Toggled visibility for strand {strand.layer_name} to hidden={strand.is_hidden}")
+            self.canvas.update() # Redraw canvas to reflect the change
+
+            # Optional: Update button appearance
+            button = self.layer_buttons[strand_index]
+            if strand.is_hidden:
+                # Add visual indication like strikethrough or different style
+                # For simplicity, let's just slightly dim it for now
+                button.setStyleSheet(button.styleSheet() + " QPushButton { color: gray; font-style: italic; }")
+            else:
+                # Restore original style - this might need refinement
+                # It's safer to store the original stylesheet and restore it.
+                # For now, we'll try removing the added style (might not be robust)
+                current_style = button.styleSheet()
+                new_style = current_style.replace(" QPushButton { color: gray; font-style: italic; }", "")
+                button.setStyleSheet(new_style)
+                # A better approach would be to fully reconstruct the style based on theme/state
+                self.refresh_layers() # Refresh might be easier to restore styles correctly
+            button.set_hidden(strand.is_hidden) # Call the button's method
+
+            self.canvas.update() # Redraw canvas to reflect the change
+
+        else:
+            logging.warning(f"toggle_layer_visibility called with invalid index: {strand_index}")
+    # --- END NEW ---
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""
@@ -631,28 +672,6 @@ class LayerPanel(QWidget):
         if self.group_layer_manager:
             self.group_layer_manager.language_code = self.language_code
             self.group_layer_manager.update_translations()
-    def update_translations(self):
-        _ = translations[self.parent().language_code]
-
-        # Update window title if applicable
-        self.setWindowTitle(_['layer_panel_title'])
-
-        # Update button texts
-        self.draw_names_button.setText(_['draw_names'])
-        self.lock_layers_button.setText(_['lock_layers'])
-        self.add_new_strand_button.setText(_['add_new_strand'])
-        self.delete_strand_button.setText(_['delete_strand'])
-        self.deselect_all_button.setText(_['deselect_all'])
-
-        # Update any labels or UI elements with text
-        if self.notification_label.text():
-            self.notification_label.setText(_['notification_message'])
-
-        # Update tooltips or other text properties if any
-        # Example:
-        # self.draw_names_button.setToolTip(_['draw_names_tooltip'])
-        # Similarly update other tooltips or accessible descriptions
-
 
     def request_draw_names(self):
         self.should_draw_names = not self.should_draw_names
@@ -941,15 +960,6 @@ class LayerPanel(QWidget):
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
         
-        # Set up context menu for masked layer buttons
-        button.setContextMenuPolicy(Qt.CustomContextMenu)
-        button.customContextMenuRequested.connect(
-            lambda pos: self.show_masked_layer_context_menu(
-                self.layer_buttons.index(button), 
-                button.mapToGlobal(pos)
-            )
-        )
-        
         # Store current scroll position
         scrollbar = self.scroll_area.verticalScrollBar()
         current_scroll = scrollbar.value()
@@ -1032,7 +1042,7 @@ class LayerPanel(QWidget):
             if i < len(self.canvas.strands) and isinstance(self.canvas.strands[i], MaskedStrand):
                 # Reconnect our customContextMenuRequested 
                 button.customContextMenuRequested.connect(
-                    lambda pos, idx=i: self.show_masked_layer_context_menu(idx, pos)
+                    lambda pos, idx=i: self.show_layer_context_menu(idx, pos)
                 )
 
         self.enable_controls()
@@ -1672,11 +1682,9 @@ class LayerPanel(QWidget):
                 # Ensure masked strand color is correct
                 if strand.first_selected_strand:
                     button.set_color(strand.first_selected_strand.color)
-                # Add context menu for masked strands
-                button.setContextMenuPolicy(Qt.CustomContextMenu)
-                button.customContextMenuRequested.connect(
-                    lambda pos, idx=i: self.show_masked_layer_context_menu(idx, pos)
-                )
+
+            # Set initial hidden state during refresh
+            button.set_hidden(strand.is_hidden)
             
             self.scroll_layout.insertWidget(0, button)
             self.layer_buttons.append(button)

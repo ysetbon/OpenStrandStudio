@@ -5,7 +5,9 @@ import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from mask_mode import MaskMode  # Add this import
-from strand import Strand, AttachedStrand, MaskedStrand
+from strand import Strand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
@@ -1744,8 +1746,23 @@ class StrandDrawingCanvas(QWidget):
                     
                     center = strand.start if i == 0 else strand.end
                     
+                    # --- NEW: Check for hidden attached strands at this connection point --- 
+                    skip_c_shape = False
+                    for other_strand in self.strands:
+                        if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
+                            # Check if the hidden attached strand connects to the current center point AND is the selected strand
+                            if (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand:
+                                skip_c_shape = True
+                                logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected hidden attached strand {other_strand.layer_name} connects here.")
+                                break # Found the selected hidden attached strand, no need to check further
+                                
+                    if skip_c_shape:
+                        painter.restore() # Restore painter state
+                        continue # Skip drawing C-shape for this point
+                    # --- END NEW CHECK --- 
+
                     # Calculate the proper radius for the highlight
-                    outer_radius = strand.width / 2 + strand.stroke_width +4
+                    outer_radius = strand.width / 2 + strand.stroke_width + 4
                     inner_radius = strand.width / 2 + 6
                     
                     # Create a full circle path for the outer circle
@@ -1759,37 +1776,28 @@ class StrandDrawingCanvas(QWidget):
                     # Create a ring path by subtracting the inner circle from the outer circle
                     ring_path = outer_circle.subtracted(inner_circle)
                     
-                    # --- Start Insert: Add special case angle calculation ---
                     # Calculate angle based on tangent or start/end points
                     angle = 0.0 # Default angle
                     if i == 0 and strand.control_point1 == strand.start and strand.control_point2 == strand.start:
-                        # Special case: If control points are at default start position, use start-to-end direction
                         direction_vector = strand.end - strand.start
-                        if direction_vector.manhattanLength() > 1e-6: # Avoid division by zero if start == end
+                        if direction_vector.manhattanLength() > 1e-6:
                             angle = math.atan2(direction_vector.y(), direction_vector.x())
                     else:
-                        # Otherwise, use the cubic tangent
                         tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-                        if tangent.manhattanLength() > 1e-6: # Avoid division by zero if tangent is zero
+                        if tangent.manhattanLength() > 1e-6:
                             angle = math.atan2(tangent.y(), tangent.x())
-                    # --- End Insert ---
 
-                    # Get the tangent angle at the connection point - REMOVED, handled above
-                    # tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-                    # angle = math.atan2(tangent.y(), tangent.x())
-                    
                     # Create a masking rectangle to create a C-shape
                     mask_rect = QPainterPath()
-                    rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+                    rect_width = (outer_radius + 5) * 2
                     rect_height = (outer_radius + 5) * 2
                     rect_x = center.x() - rect_width / 2
                     rect_y = center.y()
                     mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
                     
-                    # Apply rotation transform to the masking rectangle
+                    # Apply rotation transform
                     transform = QTransform()
                     transform.translate(center.x(), center.y())
-                    # Adjust angle based on whether it's start or end point
                     if i == 0:
                         transform.rotate(math.degrees(angle - math.pi / 2))
                     else:
@@ -1797,22 +1805,22 @@ class StrandDrawingCanvas(QWidget):
                     transform.translate(-center.x(), -center.y())
                     mask_rect = transform.map(mask_rect)
                     
-                    # Create the C-shaped highlight by subtracting the mask from the ring
+                    # Create the C-shaped highlight
                     c_shape_path = ring_path.subtracted(mask_rect)
                     
                     # Draw the C-shaped highlight
-                    # First draw the stroke (border) with the strand's stroke color
                     stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
                     stroke_pen.setJoinStyle(Qt.MiterJoin)
                     stroke_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(stroke_pen)
-                    painter.setBrush(QColor(255, 0, 0, 255))  # Fill with the strand's color
+                    painter.setBrush(QColor(255, 0, 0, 255))
                     painter.drawPath(c_shape_path)
                     
                     # Restore painter state
                     painter.restore()
             
-            painter.restore()
+            # This restore was likely misplaced inside the loop, moved outside
+            # painter.restore()
 
     def draw_moving_strand(self, painter, strand):
         """Draw a moving strand without any highlights."""
@@ -3843,113 +3851,3 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             return True
         return False
-    
-        # Add these new methods
-    def enter_mask_edit_mode(self, strand_index):
-        """Enter mask editing mode for the specified masked strand."""
-        if 0 <= strand_index < len(self.strands):
-            strand = self.strands[strand_index]
-            if isinstance(strand, MaskedStrand):
-                self.mask_edit_mode = True
-                self.editing_masked_strand = strand
-                self.mask_edit_path = strand.get_mask_path()
-                self.setCursor(Qt.CrossCursor)
-                self.erase_start_pos = None
-                self.current_erase_rect = None
-                self.setFocus()  # Explicitly set focus when entering mask edit mode
-                logging.info(f"Entered mask edit mode for strand {strand_index}")
-                self.update()
-    def keyPressEvent(self, event):
-        """Handle key press events."""
-        if event.key() == Qt.Key_Escape and self.mask_edit_mode:
-            logging.info("ESC key pressed, exiting mask edit mode")
-            self.exit_mask_edit_mode()
-            event.accept()  # Accept the event to prevent it from propagating
-        else:
-            super().keyPressEvent(event)
-    def exit_mask_edit_mode(self):
-        """Exit mask editing mode."""
-        if self.mask_edit_mode:
-            self.mask_edit_mode = False
-            self.editing_masked_strand = None
-            self.mask_edit_path = None
-            self.erase_start_pos = None
-            self.current_erase_rect = None
-            self.setCursor(Qt.ArrowCursor)
-            logging.info("Exited mask edit mode")
-            
-            # Get the parent window directly through the stored reference
-            if hasattr(self, 'parent_window'):
-                self.parent_window.exit_mask_edit_mode()
-            
-            # Emit signal to notify layer panel
-            self.mask_edit_exited.emit()
-            
-            self.update()
-
-
-
-    def reset_mask(self, strand_index):
-        """Reset the mask to its original intersection."""
-        if 0 <= strand_index < len(self.strands):
-            strand = self.strands[strand_index]
-            if isinstance(strand, MaskedStrand):
-                strand.reset_mask()
-                logging.info(f"Reset mask for strand {strand_index}")
-                self.update()
-
-    def save_strands(self, filename):
-        save_strands(self.strands, self.groups, filename, self)
-
-    def refresh_geometry_based_attachments(self):
-        """
-        Quickly scan all existing strands and reset their start/end attachments
-        by checking if any two strands share endpoints.
-        """
-        # First reset all attachments
-        for s in self.strands:
-            s.start_attached = False
-            s.end_attached = False
-            if hasattr(s, 'has_circles'):
-                s.has_circles = [False, False]
-
-        # Now re-check which endpoints coincide
-        for s1 in self.strands:
-            if isinstance(s1, MaskedStrand):
-                continue
-            for s2 in self.strands:
-                if s1 == s2 or isinstance(s2, MaskedStrand):
-                    continue
-
-                # Check s1 start
-                if self.points_are_close(s1.start, s2.start) or self.points_are_close(s1.start, s2.end):
-                    s1.start_attached = True
-                    if hasattr(s1, 'has_circles'):
-                        s1.has_circles[0] = True
-
-                # Check s1 end
-                if self.points_are_close(s1.end, s2.start) or self.points_are_close(s1.end, s2.end):
-                    s1.end_attached = True
-                    if hasattr(s1, 'has_circles'):
-                        s1.has_circles[1] = True
-
-        logging.info("Refreshed attachments via geometry scan, updated start/end attachments.")
-
-    def rectangles_overlap(self, rect1, rect2):
-        """
-        Check if two QRectF objects overlap.
-        """
-        if isinstance(rect1, QPainterPath) or isinstance(rect2, QPainterPath):
-            # For simplicity, if either is a path, use bounding rectangles
-            if isinstance(rect1, QPainterPath):
-                rect1 = rect1.boundingRect()
-            if isinstance(rect2, QPainterPath):
-                rect2 = rect2.boundingRect()
-        
-        return (rect1.left() < rect2.right() and
-                rect1.right() > rect2.left() and
-                rect1.top() < rect2.bottom() and
-                rect1.bottom() > rect2.top())
-
-
-# End of StrandDrawingCanvas class

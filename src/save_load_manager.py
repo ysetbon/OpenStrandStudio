@@ -2,7 +2,9 @@ import json
 import logging
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor
-from strand import Strand, AttachedStrand, MaskedStrand
+from strand import Strand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 
 
 

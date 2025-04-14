@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPath
 from PyQt5.QtWidgets import QApplication
-from strand import MaskedStrand, AttachedStrand, Strand
+from masked_strand import MaskedStrand
 import logging
 
 class MaskMode(QObject):

@@ -191,6 +191,10 @@ translations = {
         'reset_mask': 'Reset Mask',
         'transparent_stroke': 'Transparent Stroke',
         'restore_default_stroke': 'Restore Default Stroke',
+        # --- NEW ---
+        'hide_layer': 'Hide Layer',
+        'show_layer': 'Show Layer',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
         'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?',
@@ -398,6 +402,10 @@ translations = {
         'reset_mask': 'Réinit Masque',
         'transparent_stroke': 'Tracé Transparent',
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
+        # --- NEW ---
+        'hide_layer': 'Masquer Couche',
+        'show_layer': 'Afficher Couche',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Groupe Existant',
         'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?',
@@ -605,6 +613,10 @@ translations = {
         'reset_mask': 'Reimposta Maschera',
         'transparent_stroke': 'Traccia Trasparente',
         'restore_default_stroke': 'Ripristina Traccia Predefinita',
+        # --- NEW ---
+        'hide_layer': 'Nascondi Livello',
+        'show_layer': 'Mostra Livello',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Gruppo Esistente',
         'group_replace_confirm': 'Un gruppo chiamato "{}" esiste già. Vuoi sostituirlo?',
@@ -813,6 +825,10 @@ translations = {
         'reset_mask': 'Restablecer Máscara',
         'transparent_stroke': 'Trazo Transparente',
         'restore_default_stroke': 'Restaurar Trazo Predeterminado',
+        # --- NEW ---
+        'hide_layer': 'Ocultar Capa',
+        'show_layer': 'Mostrar Capa',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
         'group_replace_confirm': 'Ya existe un grupo llamado "{}". ¿Deseas reemplazarlo?',
@@ -1021,6 +1037,10 @@ translations = {
         'reset_mask': 'Redefinir Máscara',
         'transparent_stroke': 'Traço Transparente',
         'restore_default_stroke': 'Restaurar Traço Padrão',
+        # --- NEW ---
+        'hide_layer': 'Ocultar Camada',
+        'show_layer': 'Mostrar Camada',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
         'group_replace_confirm': 'Um grupo chamado "{}" já existe. Deseja substituí-lo?',
@@ -1228,6 +1248,10 @@ translations = {
         'reset_mask': 'אפס מסכה',
         'transparent_stroke': 'קו שקוף',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',
+        # --- NEW ---
+        'hide_layer': 'מסכה מוסתרת',
+        'show_layer': 'מסכה מוצגת',
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'קבוצה קיימת',
         'group_replace_confirm': 'קבוצה בשם "{}" כבר קיימת. האם ברצונך להחליף אותה?',

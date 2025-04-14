@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
 import logging
+from translations import translations
+from masked_strand import MaskedStrand
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -32,6 +34,7 @@ class NumberedLayerButton(QPushButton):
         self.selectable = False
         self.attachable = False  # Property to indicate if strand can be attached
         self.layer_context = layer_context
+        self.is_hidden = False # New state for visibility
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
 
@@ -102,6 +105,18 @@ class NumberedLayerButton(QPushButton):
             set_number = int(self.text().split('_')[0])
             self.attachable_changed.emit(set_number, attachable)  # Emit the signal
 
+    def set_hidden(self, hidden):
+        """
+        Set the hidden state of the button and update its appearance.
+
+        Args:
+            hidden (bool): Whether the button should be hidden.
+        """
+        if self.is_hidden != hidden:
+            self.is_hidden = hidden
+            self.update_style()
+            self.update() # Trigger repaint
+
     def update_style(self):
         """Update the button's style based on its current state."""
         # Use "rgba(...)" so that alpha is respected
@@ -109,26 +124,42 @@ class NumberedLayerButton(QPushButton):
         hovered_rgba = f"rgba({self.color.lighter().red()}, {self.color.lighter().green()}, {self.color.lighter().blue()}, {self.color.lighter().alpha()/255})"
         checked_rgba = f"rgba({self.color.darker().red()}, {self.color.darker().green()}, {self.color.darker().blue()}, {self.color.darker().alpha()/255})"
 
-        style = f"""
-            QPushButton {{
-                background-color: {normal_rgba};
-                border: none;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {hovered_rgba};
-            }}
-            QPushButton:checked {{
-                background-color: {checked_rgba};
-            }}
-        """
-        if self.border_color:
+        # NEW: Override background if hidden
+        if self.is_hidden:
+            style = """
+                QPushButton {
+                    background-color: gray;
+                    border: none;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: lightgray; /* Slightly lighter gray on hover */
+                }
+                QPushButton:checked {
+                    background-color: dimgray; /* Darker gray when checked */
+                }
+            """
+        else:
+            style = f"""
+                QPushButton {{
+                    background-color: {normal_rgba};
+                    border: none;
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    background-color: {hovered_rgba};
+                }}
+                QPushButton:checked {{
+                    background-color: {checked_rgba};
+                }}
+            """
+        if self.border_color and not self.is_hidden: # Don't show border when hidden
             style += f"""
                 QPushButton {{
                     border: 2px solid {self.border_color.name()};
                 }}
             """
-        if self.selectable:
+        if self.selectable and not self.is_hidden: # Don't show selection border when hidden
             style += """
                 QPushButton {
                     border: 2px solid blue;
@@ -205,6 +236,16 @@ class NumberedLayerButton(QPushButton):
             painter.setBrush(green_color)
             painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
 
+        # NEW: Draw dashed lines if hidden
+        if self.is_hidden:
+            painter.save()
+            pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine) # Slightly darker gray dashed line
+            painter.setPen(pen)
+            # Draw several diagonal lines
+            for i in range(-rect.height(), rect.width(), 10):
+                 painter.drawLine(i, rect.height(), i + rect.height(), 0)
+            painter.restore()
+
     def set_transparent_circle_stroke(self):
         """
         Sets the attached strand's circle stroke color to transparent.
@@ -233,61 +274,92 @@ class NumberedLayerButton(QPushButton):
         Args:
             pos (QPoint): The position where the menu should be shown.
         """
-        # Check if this is a masked layer (has format "set1_num1_set2_num2")
-        parts = self.text().split('_')
-        is_masked_layer = len(parts) == 4
-        
-        if is_masked_layer:
-            # For masked layers, let the layer panel handle the context menu
-            # Find the layer panel by traversing up the widget hierarchy
-            parent = self.parent()
-            while parent and not hasattr(parent, 'show_masked_layer_context_menu'):
-                parent = parent.parent()
-                
-            if parent and hasattr(parent, 'show_masked_layer_context_menu'):
+        # Find the layer panel by traversing up the widget hierarchy
+        layer_panel = None
+        parent = self.parent()
+        while parent:
+            # Check if the parent is the LayerPanel class directly
+            if parent.__class__.__name__ == 'LayerPanel':
                 layer_panel = parent
-                try:
-                    index = layer_panel.layer_buttons.index(self)
-                    # Set the context menu policy and connect the signal
-                    self.setContextMenuPolicy(Qt.CustomContextMenu)
-                    self.customContextMenuRequested.connect(
-                        lambda pos, idx=index: layer_panel.show_masked_layer_context_menu(idx, pos)
-                    )
-                    # Show the context menu
-                    layer_panel.show_masked_layer_context_menu(index, self.mapToGlobal(pos))
-                except ValueError:
-                    logging.warning("Button not found in layer_buttons list")
-        else:
-            # For regular layers, show color change option
-            context_menu = QMenu(self)
-            # Determine the current theme from parent chain
-            theme = self.get_parent_theme()
-            if theme == "dark":
-                # In dark theme, normal state is dark background and white text,
-                # and hovered items have a light background with dark text.
-                context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
-            else:
-                # In light/default themes, normal state is light background with dark text,
-                # and hovered items have a dark background with white text.
-                context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; } QMenu::item:selected { background-color: #333333; color: white; }")
+                break
+            parent = parent.parent()
 
-            change_color_action = QAction("Change Color", self)
+        if not layer_panel:
+            logging.error("Could not find LayerPanel parent for context menu.")
+            return
+            
+        try:
+            index = layer_panel.layer_buttons.index(self)
+            if index < 0 or index >= len(layer_panel.canvas.strands):
+                 logging.error(f"Button index {index} is out of bounds for strands.")
+                 return
+            strand = layer_panel.canvas.strands[index]
+        except (ValueError, IndexError) as e:
+            logging.error(f"Error getting strand for button {self.text()}: {e}")
+            return
+            
+        # Get translations from the layer panel
+        _ = translations[layer_panel.language_code]
+
+        # Check if this is a masked layer 
+        is_masked_layer = isinstance(strand, MaskedStrand) 
+
+        context_menu = QMenu(self)
+        # Determine the current theme from parent chain
+        theme = self.get_parent_theme()
+        if theme == "dark":
+            context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
+        else:
+            context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; } QMenu::item:selected { background-color: #333333; color: white; }")
+
+        # --- NEW Logic: Build menu based on layer type ---
+        # ALWAYS add Hide/Show first
+        hide_show_text = _['show_layer'] if strand.is_hidden else _['hide_layer']
+        hide_show_action = context_menu.addAction(hide_show_text)
+        hide_show_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
+
+        if is_masked_layer:
+            context_menu.addSeparator()
+            edit_action = context_menu.addAction(_['edit_mask'])
+            edit_action.triggered.connect(
+                lambda: layer_panel.on_edit_mask_click(context_menu, index)
+            )
+            reset_action = context_menu.addAction(_['reset_mask'])
+            reset_action.triggered.connect(
+                lambda: (layer_panel.reset_mask(index), context_menu.close())
+            )
+        else: # Regular layer actions
+            context_menu.addSeparator()
+            change_color_action = QAction(_['change_color'] if 'change_color' in _ else "Change Color", self)
             change_color_action.triggered.connect(self.change_color)
             context_menu.addAction(change_color_action)
+            
+            context_menu.addSeparator()
+            # Check if the strand has the necessary attribute before adding stroke actions
+            if hasattr(strand, 'circle_stroke_color'):
+                transparent_stroke_action = context_menu.addAction(_['transparent_stroke'])
+                reset_stroke_action = context_menu.addAction(_['restore_default_stroke'])
+                transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
+                reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
+        # --- END NEW Logic ---
 
-            transparent_stroke_action = context_menu.addAction("Set Transparent Circle Stroke")
-            reset_stroke_action = context_menu.addAction("Reset Default Stroke")
-
-            # Connect directly to helper methods
-            transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
-            reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
-
-            context_menu.exec_(self.mapToGlobal(pos))
+        context_menu.exec_(self.mapToGlobal(pos))
 
     def change_color(self):
         """Open a color dialog to change the button's color."""
+        # Find the layer panel to get translations
+        layer_panel = None
+        parent = self.parent()
+        while parent:
+            if parent.__class__.__name__ == 'LayerPanel':
+                layer_panel = parent
+                break
+            parent = parent.parent()
+        
+        _ = translations[layer_panel.language_code] if layer_panel else lambda k: k # Fallback
+
         color_dialog = QColorDialog(self)
-        # Enable alpha channel (transparency) option
+        color_dialog.setWindowTitle(_('change_color') if 'change_color' in _ else "Change Color")
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
         color = color_dialog.getColor(initial=self.color, options=QColorDialog.ShowAlphaChannel)
         if color.isValid():

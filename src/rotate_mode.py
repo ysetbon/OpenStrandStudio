@@ -4,7 +4,9 @@ from PyQt5.QtWidgets import QApplication
 import math
 import logging
 
-from strand import Strand, AttachedStrand, MaskedStrand
+from strand import Strand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 
 class RotateMode:
     def __init__(self, canvas):

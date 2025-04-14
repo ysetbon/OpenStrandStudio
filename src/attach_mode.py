@@ -5,7 +5,9 @@ import math
 import logging
 import time
 
-from strand import Strand, AttachedStrand, MaskedStrand
+from strand import Strand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 
 class AttachMode(QObject):
     # Signal emitted when a new strand is created

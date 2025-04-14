@@ -188,6 +188,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     # Create a combined shadow path that will hold all intersections
     combined_shadow_path = QPainterPath()
     has_shadow_content = False
+    all_shadow_paths = []
 
     # Try to get layer ordering from layer state manager
     canvas = strand.canvas
@@ -428,6 +429,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
             if other_layer not in layer_order:
                 continue
             
+            # Initialize should_be_above for this other_strand iteration
+            should_be_above = False
             # Get positions in layer order
             if this_layer in layer_order and other_layer in layer_order:
                 self_index = layer_order.index(this_layer)

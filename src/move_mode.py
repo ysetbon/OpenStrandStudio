@@ -5,7 +5,9 @@ from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt, QTime, QEventLoop
 from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush, QPolygonF, QPainterPath, QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QWidget
 import PyQt5.QtGui as QtGui
-from strand import Strand, AttachedStrand, MaskedStrand
+from strand import Strand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 
 class MoveMode:
     def __init__(self, canvas):

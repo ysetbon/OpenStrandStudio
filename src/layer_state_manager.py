@@ -3,7 +3,9 @@ import os
 import logging
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QPointF, QStandardPaths
 from PyQt5.QtGui import QColor
-from strand import Strand, MaskedStrand, AttachedStrand
+from strand import Strand
+from masked_strand import MaskedStrand
+from attached_strand import AttachedStrand
 import sys
 
 class LayerStateManager(QObject):

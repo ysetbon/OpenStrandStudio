@@ -16,7 +16,8 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QFont
 from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
-from strand import Strand, AttachedStrand, MaskedStrand
+from attached_strand import AttachedStrand
+from masked_strand import MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog

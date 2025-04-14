@@ -14,7 +14,7 @@ from PyQt5.QtCore import QTimer
 from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
 # Note: We don't import GroupPanel here, as it can cause issues with Qt objects
 # We'll work with instances that are already created
-from strand import MaskedStrand # Import MaskedStrand
+from masked_strand import MaskedStrand
 
 # StrokeTextButton class incorporated directly into this file
 class StrokeTextButton(QPushButton):

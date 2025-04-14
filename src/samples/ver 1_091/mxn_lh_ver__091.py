@@ -410,8 +410,8 @@ def generate_json_files():
     os.makedirs(output_dir, exist_ok=True)
 
     # Example with different spacings
-    for m in range(1, 11):
-        for n in range(1, 11):
+    for m in range(1, 3):
+        for n in range(1, 3):
             # You can adjust these values to change the spacing
             horizontal_gap = -28  # Adjust this to change horizontal spacing
             vertical_gap = -28    # Adjust this to change vertical spacing
@@ -493,7 +493,7 @@ class ImageProcessor:
             canvas.set_mode("select")
             canvas.show_grid = False
             canvas.show_control_points = False
-            canvas.shadow_enabled = True
+            canvas.shadow_enabled = False
             canvas.set_shadow_color(QColor(0, 0, 0, 50)) # Default shadow: semi-transparent black
 
             min_x, min_y, max_x, max_y = ImageProcessor._calculate_bounds(canvas)

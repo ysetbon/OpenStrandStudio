@@ -67,6 +67,10 @@ class AttachedStrand(Strand):
         if hasattr(parent, 'canvas'):
             self.canvas = parent.canvas
 
+        # Add line visibility flags (only end matters for attached)
+        self.start_line_visible = True # Still needed for attribute checks
+        self.end_line_visible = True
+
         # --------------------------------------------------------------------
         # Removed the force-default to black if circle_stroke_color is None.
         # Instead, keep the color from JSON if it has been deserialized.
@@ -425,7 +429,7 @@ class AttachedStrand(Strand):
         temp_painter.setBrush(self.color)
         temp_painter.drawPath(fill_path)
 
-        # Draw the end line
+        # Draw the end line conditionally
         side_pen = QPen(self.stroke_color, self.stroke_width)
         side_pen.setCapStyle(Qt.FlatCap)
 
@@ -437,7 +441,8 @@ class AttachedStrand(Strand):
         painter.setPen(side_pen)
 
         temp_painter.setPen(side_pen)
-        temp_painter.drawLine(self.end_line_start, self.end_line_end)
+        if self.end_line_visible: # Only draw end line if visible
+            temp_painter.drawLine(self.end_line_start, self.end_line_end)
 
         # Create a mask for the circle
         circle_mask = QPainterPath()

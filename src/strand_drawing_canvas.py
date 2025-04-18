@@ -1040,8 +1040,10 @@ class StrandDrawingCanvas(QWidget):
                 logging.info(f"Drawing strand '{strand.layer_name}'")
                 if not hasattr(strand, 'canvas'):
                     strand.canvas = self  # Ensure all strands have canvas reference
+                # --- MODIFIED: Check both selected_strand and selected_attached_strand --- 
+                is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand)
                 # Only highlight selected strand if we're not in mask mode
-                if strand == self.selected_strand and not isinstance(self.current_mode, MaskMode):
+                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode):
                     logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)
                 else:
@@ -1066,7 +1068,8 @@ class StrandDrawingCanvas(QWidget):
                 
                 # Final fallback to the selected strand if no other strand is being moved
                 if affected_strand is None:
-                    affected_strand = self.selected_strand
+                    # --- MODIFIED: Check both selected_strand and selected_attached_strand for fallback ---
+                    affected_strand = self.selected_strand or self.selected_attached_strand
                 
                 # Get any connected/attached strands that are also being affected
                 # Try to get attached strands from the current move operation
@@ -1085,10 +1088,18 @@ class StrandDrawingCanvas(QWidget):
             # Draw the affected strand if available
             if affected_strand:
                 logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
-                # Draw the affected strand without C-shape highlights
-                self.draw_moving_strand(painter, affected_strand)
+                # --- REVISED: Only draw highlight if NOT currently moving ---
+                is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
+                is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand)
                 
-                # Draw any connected strands
+                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_actively_moving:
+                    # Draw with highlight ONLY if selected AND move is finished
+                    self.draw_highlighted_strand(painter, affected_strand)
+                else:
+                    # Draw without highlight during active move or if not selected
+                    self.draw_moving_strand(painter, affected_strand)
+                
+                # Draw any connected strands (typically without highlight during move)
                 for strand in connected_strands:
                     logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
                     self.draw_moving_strand(painter, strand)

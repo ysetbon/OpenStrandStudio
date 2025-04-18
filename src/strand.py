@@ -56,6 +56,10 @@ class Strand:
         # Add canvas reference
         self.canvas = None
 
+        # Add line visibility flags
+        self.start_line_visible = True
+        self.end_line_visible = True
+
         self.layer_name = layer_name
         self.set_number = set_number
         self._circle_stroke_color = None
@@ -792,8 +796,12 @@ class Strand:
         side_pen.setColor(side_color)
 
         painter.setPen(side_pen)
-        painter.drawLine(self.start_line_start, self.start_line_end)
-        painter.drawLine(self.end_line_start, self.end_line_end)
+        # Conditionally draw start line
+        if self.start_line_visible:
+            painter.drawLine(self.start_line_start, self.start_line_end)
+        # Conditionally draw end line
+        if self.end_line_visible:
+            painter.drawLine(self.end_line_start, self.end_line_end)
 
         painter.restore()
 

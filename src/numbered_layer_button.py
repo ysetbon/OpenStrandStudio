@@ -4,6 +4,7 @@ from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
 import logging
 from translations import translations
 from masked_strand import MaskedStrand
+from attached_strand import AttachedStrand
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -341,6 +342,31 @@ class NumberedLayerButton(QPushButton):
                 reset_stroke_action = context_menu.addAction(_['restore_default_stroke'])
                 transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
                 reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
+
+            # --- NEW: Add start/end line visibility toggles ---
+            # Only show start line option for non-AttachedStrand instances
+            if hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand):
+                context_menu.addSeparator()
+                toggle_start_line_text = _['show_start_line'] if not strand.start_line_visible else _['hide_start_line']
+                toggle_start_line_action = context_menu.addAction(toggle_start_line_text)
+                # Connect action to toggle the strand's property and update canvas
+                toggle_start_line_action.triggered.connect(
+                    lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_line_visibility(s, 'start', lp)
+                )
+                
+            if hasattr(strand, 'end_line_visible'): # Check if the attribute exists
+                # Add separator only if start line action wasn't added (i.e., it IS an AttachedStrand)
+                # OR if start line action *was* added (it's not an AttachedStrand).
+                # Simplified: Add separator if this is the first line toggle option being added.
+                if isinstance(strand, AttachedStrand):
+                     context_menu.addSeparator()
+                toggle_end_line_text = _['show_end_line'] if not strand.end_line_visible else _['hide_end_line']
+                toggle_end_line_action = context_menu.addAction(toggle_end_line_text)
+                 # Connect action to toggle the strand's property and update canvas
+                toggle_end_line_action.triggered.connect(
+                    lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_line_visibility(s, 'end', lp)
+                )
+            # --- END NEW ---
         # --- END NEW Logic ---
 
         context_menu.exec_(self.mapToGlobal(pos))
@@ -474,3 +500,20 @@ class NumberedLayerButton(QPushButton):
                 # Fall back to just updating ourselves or the parent widget
                 self.update()
         # ---------------------------------------------
+
+    # +++ NEW METHOD TO TOGGLE LINE VISIBILITY +++
+    def toggle_strand_line_visibility(self, strand, line_type, layer_panel):
+        """Toggles the visibility of the start or end line of a strand."""
+        attr_name = f"{line_type}_line_visible"
+        if hasattr(strand, attr_name):
+            current_visibility = getattr(strand, attr_name)
+            setattr(strand, attr_name, not current_visibility)
+            print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update() # Request canvas repaint
+            else:
+                 print("Warning: Could not find canvas to update after toggling line visibility.")
+                 self.update() # Fallback update
+        else:
+            print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
+    # +++ END NEW METHOD +++

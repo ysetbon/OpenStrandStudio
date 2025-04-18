@@ -194,6 +194,10 @@ translations = {
         # --- NEW ---
         'hide_layer': 'Hide Layer',
         'show_layer': 'Show Layer',
+        'hide_start_line': 'Hide Start Line',
+        'show_start_line': 'Show Start Line',
+        'hide_end_line': 'Hide End Line',
+        'show_end_line': 'Show End Line',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
@@ -405,6 +409,10 @@ translations = {
         # --- NEW ---
         'hide_layer': 'Masquer Couche',
         'show_layer': 'Afficher Couche',
+        'hide_start_line': 'Masquer Ligne Départ',
+        'show_start_line': 'Afficher Ligne Départ',
+        'hide_end_line': 'Masquer Ligne Fin',
+        'show_end_line': 'Afficher Ligne Fin',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Groupe Existant',
@@ -616,6 +624,10 @@ translations = {
         # --- NEW ---
         'hide_layer': 'Nascondi Livello',
         'show_layer': 'Mostra Livello',
+        'hide_start_line': 'Nascondi Linea Inizio',
+        'show_start_line': 'Mostra Linea Inizio',
+        'hide_end_line': 'Nascondi Linea Fine',
+        'show_end_line': 'Mostra Linea Fine',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Gruppo Esistente',
@@ -828,6 +840,10 @@ translations = {
         # --- NEW ---
         'hide_layer': 'Ocultar Capa',
         'show_layer': 'Mostrar Capa',
+        'hide_start_line': 'Ocultar Línea Inicio',
+        'show_start_line': 'Mostrar Línea Inicio',
+        'hide_end_line': 'Ocultar Línea Fin',
+        'show_end_line': 'Mostrar Línea Fin',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
@@ -1040,6 +1056,10 @@ translations = {
         # --- NEW ---
         'hide_layer': 'Ocultar Camada',
         'show_layer': 'Mostrar Camada',
+        'hide_start_line': 'Ocultar Linha Início',
+        'show_start_line': 'Mostrar Linha Início',
+        'hide_end_line': 'Ocultar Linha Fim',
+        'show_end_line': 'Mostrar Linha Fim',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
@@ -1249,8 +1269,12 @@ translations = {
         'transparent_stroke': 'קו שקוף',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',
         # --- NEW ---
-        'hide_layer': 'מסכה מוסתרת',
-        'show_layer': 'מסכה מוצגת',
+        'hide_layer': 'הסתר שכבה',
+        'show_layer': 'הצג שכבה',
+        'hide_start_line': 'הסתר קו התחלה',
+        'show_start_line': 'הצג קו התחלה',
+        'hide_end_line': 'הסתר קו סיום',
+        'show_end_line': 'הצג קו סיום',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'קבוצה קיימת',

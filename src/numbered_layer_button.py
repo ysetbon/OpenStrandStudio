@@ -1,10 +1,11 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog
-from PyQt5.QtCore import Qt, pyqtSignal, QRect
-from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog 
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData 
+from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
 import logging
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
+from PyQt5.QtWidgets import QApplication
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -38,6 +39,7 @@ class NumberedLayerButton(QPushButton):
         self.is_hidden = False # New state for visibility
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
+        self._drag_start_position = None # To store mouse press position
 
     def setText(self, text):
         """
@@ -547,3 +549,67 @@ class NumberedLayerButton(QPushButton):
         else:
             print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
     # +++ END NEW METHOD +++
+
+    # --- Drag and Drop Logic ---
+    def mousePressEvent(self, event):
+        """Store the starting position for a potential drag."""
+        if event.button() == Qt.LeftButton:
+            self._drag_start_position = event.pos()
+        super().mousePressEvent(event) # Call base class implementation
+
+    def mouseMoveEvent(self, event):
+        """Initiate drag if the mouse moves significantly."""
+        if not (event.buttons() & Qt.LeftButton):
+            return
+        if not self._drag_start_position:
+            return
+        if (event.pos() - self._drag_start_position).manhattanLength() < QApplication.startDragDistance():
+            # Not enough movement to start drag
+            return
+
+        # Find the LayerPanel to get the index
+        layer_panel = self._find_layer_panel()
+        if not layer_panel:
+            logging.error("Could not find LayerPanel parent for drag.")
+            return
+
+        # Retrieve the *visual* index of this button inside the scroll_layout, not the
+        # position inside layer_panel.layer_buttons. The list of buttons is appended
+        # in the natural order of strands whereas the layout inserts each new widget
+        # at position 0, effectively reversing the visible order. Using the layout
+        # index guarantees that the drag operation references the correct widget no
+        # matter how the two orders differ.
+        index = layer_panel.scroll_layout.indexOf(self)
+        if index == -1:
+            logging.error(f"Could not find visual index for button {self.text()} during drag start.")
+            return
+
+        # Setup drag operation
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        # Use a custom MIME type to store the index
+        mime_data.setData("application/x-layerbutton-index", str(index).encode())
+        drag.setMimeData(mime_data)
+
+        # Optional: Set a pixmap for the drag cursor
+        pixmap = self.grab() # Get a snapshot of the button
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(event.pos() - self.rect().topLeft()) # Center pixmap on cursor
+
+        logging.info(f"Starting drag for button index {index}")
+        # Start the drag operation
+        drop_action = drag.exec_(Qt.MoveAction) # We want to move the layer
+
+        # Reset drag start position after drag finishes
+        self._drag_start_position = None
+        # super().mouseMoveEvent(event) # Don't call super if we started a drag
+
+    def _find_layer_panel(self):
+        """Helper to find the LayerPanel parent."""
+        parent = self.parent()
+        while parent:
+            if parent.__class__.__name__ == 'LayerPanel':
+                return parent
+            parent = parent.parent()
+        return None
+    # --- End Drag and Drop Logic ---

@@ -335,6 +335,14 @@ class UndoRedoManager(QObject):
                 if current_layer_names != prev_layer_names:
                     return False
                     
+                # --- NEW CHECK: Compare layer order ---
+                current_layer_order = [s.layer_name for s in self.canvas.strands if hasattr(s, 'layer_name')]
+                prev_layer_order = [s.get('layer_name') for s in prev_data.get('strands', []) if 'layer_name' in s]
+                if current_layer_order != prev_layer_order:
+                    logging.info("_would_be_identical_save: Layer order differs between current and previous state. Treating as different state.")
+                    return False
+                # --- END NEW CHECK ---
+
                 # Compare groups - this is a critical check
                 current_groups = getattr(self.canvas, 'groups', {})
                 prev_groups = prev_data.get('groups', {})
@@ -856,11 +864,15 @@ class UndoRedoManager(QObject):
 
     def redo(self):
         """Load the next state if available."""
+        logging.info(f"---") # Separator for clarity
+        logging.info(f"REDO initiated. Current Step: {self.current_step}, Max Step: {self.max_step}")
         if self.current_step < self.max_step:
             # Store the current strands for comparison
             original_strands = self.canvas.strands.copy() if hasattr(self.canvas, 'strands') else []
             original_strands_count = len(original_strands)
             original_layer_names = {s.layer_name for s in original_strands if hasattr(s, 'layer_name')}
+            original_layer_order = [s.layer_name for s in original_strands if hasattr(s, 'layer_name')]
+            logging.info(f"REDO: State BEFORE loading - Strands: {original_strands_count}, Order: {original_layer_order}")
             
             # Store original groups for comparison
             original_groups = {}
@@ -886,17 +898,20 @@ class UndoRedoManager(QObject):
             
             # Increment the step counter
             self.current_step += 1
+            logging.info(f"REDO: Attempting to load step {self.current_step}")
             
             # Load the state
             result = self._load_state(self.current_step)
 
             if result:
-                # Check if the state we just loaded is visually identical to the previous state
-                # If yes, continue redoing to the next state
+                # --- Log state AFTER loading --- 
                 new_strands = self.canvas.strands
                 new_strands_count = len(new_strands)
                 new_layer_names = {s.layer_name for s in new_strands if hasattr(s, 'layer_name')}
-                
+                new_layer_order = [s.layer_name for s in new_strands if hasattr(s, 'layer_name')]
+                logging.info(f"REDO: State AFTER loading step {self.current_step} - Strands: {new_strands_count}, Order: {new_layer_order}")
+                # --- End Log ---
+
                 # Get new groups for comparison
                 new_groups = {}
                 if hasattr(self.canvas, 'groups'):
@@ -1081,12 +1096,14 @@ class UndoRedoManager(QObject):
 
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:
-                        logging.info("States are visually identical, skipping to next state...")
+                        logging.info("REDO: States are visually identical, skipping to next state...")
                         # Recursively call redo to get to the next state
-                        return self.redo()
-                
+                        return self.redo() # Return the result of the recursive call
+                    else:
+                        logging.info("REDO: States have visual differences, completing redo step.")
+                        
                 self.redo_performed.emit()
-                logging.info(f"Redo performed, now at step {self.current_step}")
+                logging.info(f"REDO completed, now at step {self.current_step}")
             else:
                 # Rollback if loading failed
                 self.current_step -= 1
@@ -1108,10 +1125,12 @@ class UndoRedoManager(QObject):
             # Ensure the canvas is fully refreshed after redo
             self.canvas.update()
             
-            logging.info("UI updated after redo operation")
-            return result
+            logging.info("REDO: UI updated after redo operation")
+            logging.info(f"---") # Separator for clarity
+            return result # Return the actual result of the load operation
         else:
-            logging.info("Cannot redo: already at newest state")
+            logging.info("REDO: Cannot redo: already at newest state")
+            logging.info(f"---") # Separator for clarity
             return False # Indicate failure or no action
 
     def _clear_group_panel_ui(self, group_panel):

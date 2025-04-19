@@ -3862,3 +3862,8 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             return True
         return False
+
+    def rectangles_overlap(self, rect1, rect2):
+        """Check if two QRectF objects overlap."""
+        return rect1.intersects(rect2)
+

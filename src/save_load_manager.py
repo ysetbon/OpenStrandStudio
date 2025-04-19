@@ -335,71 +335,84 @@ def load_strands(filename, canvas):
         elif strand_data["type"] == "MaskedStrand":
             masked_strands_data.append(strand_data)
 
-    # Second pass: Create attached strands
-    for strand_data in data["strands"]:
-        if strand_data["type"] == "AttachedStrand":
+    # Collect all attached strand data first to process order-independently
+    attached_strands_data = [sd for sd in data["strands"] if sd["type"] == "AttachedStrand"]
+
+    # Process attached strands until no progress can be made
+    unresolved_count_prev = -1
+    while attached_strands_data and unresolved_count_prev != len(attached_strands_data):
+        unresolved_count_prev = len(attached_strands_data)
+        remaining = []
+        for strand_data in attached_strands_data:
             parent_layer_name = strand_data["attached_to"]
             parent_strand = strand_dict.get(parent_layer_name)
-            
-            if parent_strand:
-                start = deserialize_point(strand_data["start"])
-                end = deserialize_point(strand_data["end"])
-                strand = AttachedStrand(parent_strand, end)
-                
-                # Set all properties exactly as in saved data
-                strand.start = start
-                strand.end = end
-                strand.width = strand_data["width"]
-                strand.color = deserialize_color(strand_data["color"])
-                strand.stroke_color = deserialize_color(strand_data["stroke_color"])
-                strand.stroke_width = strand_data["stroke_width"]
-                strand.layer_name = strand_data["layer_name"]
-                strand.set_number = strand_data["set_number"]
-                strand.has_circles = strand_data["has_circles"]
-                strand.is_first_strand = strand_data["is_first_strand"]
-                strand.is_start_side = strand_data["is_start_side"]
-                strand.is_hidden = strand_data.get("is_hidden", False)
-                
-                # Load visibility flags
-                strand.start_line_visible = strand_data.get("start_line_visible", True)
-                strand.end_line_visible = strand_data.get("end_line_visible", True)
-                
-                # NEW: explicitly apply any circle_stroke_color from JSON
-                if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
-                    raw_color = strand_data["circle_stroke_color"]
-                    loaded_color = deserialize_color(raw_color)
-                    strand.circle_stroke_color = loaded_color
-                    logging.info(
-                        f"AttachedStrand {strand.layer_name} circle color from JSON: "
-                        f"(r={loaded_color.red()}, g={loaded_color.green()}, "
-                        f"b={loaded_color.blue()}, a={loaded_color.alpha()})"
-                    )
-                
-                # Add to collections
-                index = strand_data["index"]
+
+            if parent_strand is None:
+                # Parent not created yet – postpone
+                remaining.append(strand_data)
+                continue
+
+            # Parent exists – we can create this attached strand
+            start = deserialize_point(strand_data["start"])
+            end = deserialize_point(strand_data["end"])
+            strand = AttachedStrand(parent_strand, end)
+
+            # Set all properties
+            strand.start = start
+            strand.end = end
+            strand.width = strand_data["width"]
+            strand.color = deserialize_color(strand_data["color"])
+            strand.stroke_color = deserialize_color(strand_data["stroke_color"])
+            strand.stroke_width = strand_data["stroke_width"]
+            strand.layer_name = strand_data["layer_name"]
+            strand.set_number = strand_data["set_number"]
+            strand.has_circles = strand_data["has_circles"]
+            strand.is_first_strand = strand_data["is_first_strand"]
+            strand.is_start_side = strand_data["is_start_side"]
+            strand.is_hidden = strand_data.get("is_hidden", False)
+
+            # Visibility flags
+            strand.start_line_visible = strand_data.get("start_line_visible", True)
+            strand.end_line_visible = strand_data.get("end_line_visible", True)
+
+            # Circle stroke color
+            if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
+                raw_color = strand_data["circle_stroke_color"]
+                strand.circle_stroke_color = deserialize_color(raw_color)
+
+            # Add to collections
+            index = strand_data["index"]
+            if index < len(strands):
                 strands[index] = strand
-                strand_dict[strand.layer_name] = strand
-                parent_strand.attached_strands.append(strand)
-                
-                # Set control points if they exist
-                if "control_points" in strand_data and all(cp is not None for cp in strand_data["control_points"]):
-                    strand.control_point1 = deserialize_point(strand_data["control_points"][0])
-                    strand.control_point2 = deserialize_point(strand_data["control_points"][1])
+            else:
+                # Expand list if necessary (shouldn't usually happen)
+                strands.extend([None] * (index - len(strands) + 1))
+                strands[index] = strand
 
-                    # Now call the new method on the Strand class that preserves control points
-                    strand.update_control_points(reset_control_points=False)
-                
-                # Handle control_point_center if present
-                if "control_point_center" in strand_data:
-                    strand.control_point_center = deserialize_point(strand_data["control_point_center"])
-                    # Also set the locked state if available
-                    if "control_point_center_locked" in strand_data:
-                        strand.control_point_center_locked = strand_data["control_point_center_locked"]
-                    logging.info(f"Loaded control_point_center for AttachedStrand {strand.layer_name}")
+            strand_dict[strand.layer_name] = strand
+            parent_strand.attached_strands.append(strand)
 
-                # Update the canvas's layer state manager
-                if hasattr(canvas, 'layer_state_manager'):
-                    canvas.layer_state_manager.connect_layers(parent_layer_name, strand.layer_name)
+            # Control points
+            if "control_points" in strand_data and all(cp is not None for cp in strand_data["control_points"]):
+                strand.control_point1 = deserialize_point(strand_data["control_points"][0])
+                strand.control_point2 = deserialize_point(strand_data["control_points"][1])
+                strand.update_control_points(reset_control_points=False)
+
+            if "control_point_center" in strand_data:
+                strand.control_point_center = deserialize_point(strand_data["control_point_center"])
+                if "control_point_center_locked" in strand_data:
+                    strand.control_point_center_locked = strand_data["control_point_center_locked"]
+
+            # Layer state manager connections
+            if hasattr(canvas, 'layer_state_manager'):
+                canvas.layer_state_manager.connect_layers(parent_layer_name, strand.layer_name)
+
+        attached_strands_data = remaining
+
+    if attached_strands_data:
+        # Still unresolved attached strands – log warning
+        unresolved_names = [sd["layer_name"] for sd in attached_strands_data]
+        logging.warning(f"Could not resolve parent strands for AttachedStrands: {unresolved_names}")
 
     # Third pass: Create masked strands
     for masked_data in masked_strands_data:

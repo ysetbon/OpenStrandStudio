@@ -3,8 +3,11 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu  # Add QMenu here
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths
-from PyQt5.QtGui import QColor, QPalette
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect# Added QMimeData
+from PyQt5.QtGui import QColor, QPalette, QDrag # Added QDrag
+# --- Import Correct Drag/Drop Event Types --- 
+from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
+# --- End Import ---
 from functools import partial
 import logging
 from masked_strand import MaskedStrand
@@ -82,6 +85,44 @@ class LayerSelectionDialog(QDialog):
         return [self.layer_list.item(i).text() for i in range(self.layer_list.count()) 
                 if self.layer_list.item(i).checkState() == Qt.Checked]
 
+# --- Custom Widget for Drop Target Area ---
+class DropTargetWidget(QWidget):
+    def __init__(self, layer_panel, parent=None):
+        super().__init__(parent)
+        self.layer_panel = layer_panel # Reference to the main panel
+        self.setAcceptDrops(True)
+        self._drag_indicator_y = None
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        self.layer_panel.dragEnterEvent(event)
+
+    def dragMoveEvent(self, event: QDragMoveEvent):
+        self.layer_panel.dragMoveEvent(event)
+        # Calculate indicator position based on event position within this widget
+        self._drag_indicator_y = self.layer_panel.calculate_drop_indicator_y(event.pos())
+        self.update() # Trigger repaint to show indicator
+
+    def dragLeaveEvent(self, event):
+        self.layer_panel.dragLeaveEvent(event)
+        self._drag_indicator_y = None
+        self.update() # Trigger repaint to hide indicator
+
+    def dropEvent(self, event: QDropEvent):
+        self.layer_panel.dropEvent(event)
+        self._drag_indicator_y = None
+        self.update() # Trigger repaint to hide indicator
+        self.layer_panel.refresh_layers()
+        
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self._drag_indicator_y is not None:
+            painter = QPainter(self)
+            pen = QPen(QColor(0, 120, 215), 2, Qt.SolidLine) # Blue indicator line
+            painter.setPen(pen)
+            painter.drawLine(0, self._drag_indicator_y, self.width(), self._drag_indicator_y)
+# --- End Custom Widget ---
+
 
 class LayerPanel(QWidget):
     # Custom signals for various events
@@ -95,6 +136,7 @@ class LayerPanel(QWidget):
     masked_mode_exited = pyqtSignal()  # Signal when masked mode is exited
     lock_layers_changed = pyqtSignal(set, bool)  # Signal when locked layers change
     strand_deleted = pyqtSignal(int)  # Signal for strand deletion
+    layer_order_changed = pyqtSignal(list) # Signal when layer order changes
 
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
@@ -150,10 +192,17 @@ class LayerPanel(QWidget):
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_content = QWidget()
+        # Use the custom DropTargetWidget
+        self.scroll_content = DropTargetWidget(self)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.scroll_area.setWidget(self.scroll_content)
+        # --- Drag and Drop is now handled by DropTargetWidget ---
+        # self.scroll_content.setAcceptDrops(True)
+        # self.scroll_content.dragEnterEvent = self.dragEnterEvent
+        # self.scroll_content.dragMoveEvent = self.dragMoveEvent
+        # self.scroll_content.dropEvent = self.dropEvent
+        # --- End Drag and Drop ---
 
         # Add the scroll area to the left layout
         self.left_layout.addWidget(self.scroll_area)
@@ -305,7 +354,7 @@ class LayerPanel(QWidget):
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
         self.current_set = 1  # Current set number
-        self.set_counts = {1: 0}  # Dictionary to keep track of counts for each set
+        self.set_counts = {}
         self.set_colors = {1: QColor(200, 170, 230, 255) }  # Dictionary to store colors for each set
 
         # Initialize masked mode variables
@@ -341,59 +390,8 @@ class LayerPanel(QWidget):
 
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
-        logging.info("Starting refresh of layer panel")
-        
-        # Get the main window (either the direct parent or parent's parent)
-        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
-        
-        # 1. Create a screenshot of the current scroll area viewport
-        viewport = self.scroll_area.viewport()
-        pixmap = viewport.grab()
-        
-        # 2. Create a temporary overlay label with the screenshot
-        overlay = QLabel(self.scroll_area)
-        overlay.setPixmap(pixmap)
-        overlay.setGeometry(viewport.rect())
-        overlay.setStyleSheet("background-color: transparent;")
-        overlay.raise_()
-        overlay.show()
-        
-        # 3. Disable updates on the ENTIRE application window
-        if main_window:
-            main_window.setUpdatesEnabled(False)
-        
-        # 4. Also disable updates on scroll area for redundancy
-        self.scroll_area.setUpdatesEnabled(False)
-        
-        # 5. --- Remove widgets from layout ---
-        removed_count = 0
-        while self.scroll_layout.count():
-            item = self.scroll_layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                removed_count += 1
-            del item
-        
-        # 6. --- Re-add buttons in reverse order ---
-        added_count = 0
-        valid_buttons = [btn for btn in self.layer_buttons if btn]
-        for button in reversed(valid_buttons):
-            self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
-            button.show()
-            added_count += 1
-        
-        # 7. Force layout update before re-enabling window updates
-        self.scroll_layout.update()
-        
-        # 8. Re-enable updates in reverse order
-        self.scroll_area.setUpdatesEnabled(True)
-        if main_window:
-            main_window.setUpdatesEnabled(True)
-            
-        # 9. Remove the overlay after everything is ready
-        overlay.deleteLater()
-        
-        logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
+        logging.info("refresh_layers called, redirecting to refresh()")
+        self.refresh()
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -560,6 +558,11 @@ class LayerPanel(QWidget):
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme("default")
             # Similarly reset other buttons if necessary
+
+        self.mask_edit_label.hide() # Hide initially
+
+        # Connect the signal from the dialog to the handler in LayerPanel
+        # self.layer_selection_dialog.edit_mask_requested.connect(self.request_edit_mask) # Moved from dialog init
 
     # NEW: helper method to provide a context menu style sheet based on the current theme
     def get_context_menu_stylesheet(self):
@@ -1311,43 +1314,33 @@ class LayerPanel(QWidget):
         return max_set_number + 1
 
     def add_layer_button(self, set_number, count):
-        """Add a new layer button."""
+        """Add a new layer button directly to the layout."""
         logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
-        
+
         # Update set count
         self.set_counts[set_number] = count
         logging.info(f"Updated set count for set {set_number} to {count}")
-        
+
         # Create button name
         button_name = f"{set_number}_{count}"
         logging.info(f"Created new button: {button_name}")
-        
+
         # Get the strand index
         strand_index = len(self.canvas.strands) - 1
-        
+
         # Create and add the button
         button = self.create_layer_button(strand_index, self.canvas.strands[strand_index], count)
         self.layer_buttons.append(button)  # Add to end of list
-        
-        # Add button to layout at the top
-        button_container = QWidget()
-        button_container.setObjectName(f"container_for_{button_name}")
-        button_layout = QHBoxLayout(button_container)
-        button_layout.setAlignment(Qt.AlignHCenter)
-        button_layout.addWidget(button)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        self.scroll_layout.insertWidget(0, button_container)  # Insert at top
-        
-        logging.info(f"Added new button at top (index 0)")
+
+        # Add button directly to layout at the top, aligned center
+        self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter)
+
+        logging.info(f"Added new button directly to layout at top (index 0)")
         logging.info("Finished add_layer_button")
-        
+
         # Select the newly created strand
         self.select_layer(strand_index)
         return button
-
-
-
-
 
     def on_strand_attached(self):
         """Called when a strand is attached to another strand."""
@@ -1520,7 +1513,6 @@ class LayerPanel(QWidget):
             else:
                 logging.info(f"Skipping save after color change for set {set_number} due to suppression flag.")
             # --- END ADD --- 
-        # --- END ADD --- 
 
     def update_colors_for_set(self, set_number, color):
         """
@@ -1626,7 +1618,61 @@ class LayerPanel(QWidget):
                     logging.info(f"Kept original layer name for strand {i}: {button.text()}")
         self.update_layer_button_states()
         logging.info("Finished update_layer_names")
-
+    def refresh_layers(self):
+        """Refresh the drawing of the layers with zero visual flicker."""
+        logging.info("Starting refresh of layer panel")
+        
+        # Get the main window (either the direct parent or parent's parent)
+        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
+        
+        # 1. Create a screenshot of the current scroll area viewport
+        viewport = self.scroll_area.viewport()
+        pixmap = viewport.grab()
+        
+        # 2. Create a temporary overlay label with the screenshot
+        overlay = QLabel(self.scroll_area)
+        overlay.setPixmap(pixmap)
+        overlay.setGeometry(viewport.rect())
+        overlay.setStyleSheet("background-color: transparent;")
+        overlay.raise_()
+        overlay.show()
+        
+        # 3. Disable updates on the ENTIRE application window
+        if main_window:
+            main_window.setUpdatesEnabled(False)
+        
+        # 4. Also disable updates on scroll area for redundancy
+        self.scroll_area.setUpdatesEnabled(False)
+        
+        # 5. --- Remove widgets from layout ---
+        removed_count = 0
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                removed_count += 1
+            del item
+        
+        # 6. --- Re-add buttons in reverse order ---
+        added_count = 0
+        valid_buttons = [btn for btn in self.layer_buttons if btn]
+        for button in reversed(valid_buttons):
+            self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
+            button.show()
+            added_count += 1
+        
+        # 7. Force layout update before re-enabling window updates
+        self.scroll_layout.update()
+        
+        # 8. Re-enable updates in reverse order
+        self.scroll_area.setUpdatesEnabled(True)
+        if main_window:
+            main_window.setUpdatesEnabled(True)
+            
+        # 9. Remove the overlay after everything is ready
+        overlay.deleteLater()
+        
+        logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
     def refresh(self):
         """Comprehensive refresh of layer panel with zero visual flicker."""
         logging.info("Starting comprehensive refresh of layer panel")
@@ -1735,14 +1781,35 @@ class LayerPanel(QWidget):
         self.refresh()
 
     def on_layer_order_changed(self, new_order):
-        """Handle changes in the order of layers."""
-        reordered_buttons = [self.layer_buttons[i] for i in new_order]
-        self.layer_buttons = reordered_buttons
-        
-        for i, button in enumerate(self.layer_buttons):
-            self.scroll_layout.insertWidget(i, button)
-        
-        self.update_layer_button_states()
+        """Handle changes in the order of layers (DEPRECATED by drag/drop refresh)."""
+        # This method might become redundant if refresh_layers() is called after drop
+        # Keeping it for now in case it's needed elsewhere, but commenting out content
+        logging.warning("on_layer_order_changed called - may be deprecated by drag/drop refresh logic.")
+        # reordered_buttons = [self.layer_buttons[i] for i in new_order]
+        # self.layer_buttons = reordered_buttons
+
+        # # Clear the layout first
+        # while self.scroll_layout.count():
+        #     item = self.scroll_layout.takeAt(0)
+        #     widget = item.widget()
+        #     if widget:
+        #         widget.setParent(None) # Remove widget from layout management
+
+        # # Re-add buttons in the new order
+        # for button in self.layer_buttons:
+        #      # --- Modification: Add button container ---
+        #      button_container = QWidget()
+        #      button_container.setObjectName(f"container_for_{button.text()}")
+        #      button_layout = QHBoxLayout(button_container)
+        #      button_layout.setAlignment(Qt.AlignHCenter)
+        #      button_layout.addWidget(button)
+        #      button_layout.setContentsMargins(0, 0, 0, 0)
+        #      self.scroll_layout.addWidget(button_container) # Add container
+        #      # --- End Modification ---
+
+        # self.update_layer_button_states()
+        # self.scroll_layout.update() # Update layout
+
 
     def update_attachable_states(self):
         """Update the attachable state of all layer buttons based on strand connections."""
@@ -1802,6 +1869,219 @@ class LayerPanel(QWidget):
            # self.draw_names_button.setToolTip(_['draw_names_tooltip'])
            # Similarly update other tooltips or accessible descriptions
         # Update any other UI elements as needed
+
+    # --- Drag and Drop Event Handlers for scroll_content ---
+    # These are now called by DropTargetWidget
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        """Accept the drag if it contains the correct MIME type."""
+        if event.mimeData().hasFormat("application/x-layerbutton-index"):
+            event.acceptProposedAction()
+            logging.debug("Drag enter accepted")
+        else:
+            event.ignore()
+            logging.debug("Drag enter ignored - wrong mime type")
+
+    def dragMoveEvent(self, event: QDragMoveEvent):
+        """Accept the move event. Visual indicator is handled by DropTargetWidget."""
+        if event.mimeData().hasFormat("application/x-layerbutton-index"):
+            event.acceptProposedAction()
+            # Visual feedback is now handled by DropTargetWidget.paintEvent
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        """Handle drag leaving the drop area."""
+        # Reset indicator logic might be needed if DropTargetWidget doesn't cover all cases
+        logging.debug("Drag left drop area")
+
+    def dropEvent(self, event: QDropEvent):
+        """Handle the drop event to reorder layers visually and update data structures."""
+        if event.mimeData().hasFormat("application/x-layerbutton-index"):
+            mime_data = event.mimeData()
+            source_index_bytes = mime_data.data("application/x-layerbutton-index")
+            try:
+                # source_index is the VISUAL index in the scroll_layout
+                source_index = int(bytes(source_index_bytes).decode('utf-8'))
+            except ValueError:
+                logging.error("Failed to decode drop source index.")
+                event.ignore()
+                return
+
+            # Ensure source_index is valid before proceeding
+            if not (0 <= source_index < self.scroll_layout.count()):
+                logging.error(f"Invalid source index {source_index} from drop event.")
+                event.ignore()
+                return
+
+            # --- Store the selected strand object BEFORE any reordering ---
+            previously_selected_strand = self.canvas.selected_strand
+
+            # --- Create mapping from button object to strand object --- BEFORE layout change
+            button_to_strand_map = {}
+            if len(self.layer_buttons) == len(self.canvas.strands):
+                # Assuming self.layer_buttons[i] maps to self.canvas.strands[i]
+                # and visual layout index k maps to layer_buttons[len-1-k]
+                for i, btn in enumerate(self.layer_buttons):
+                     button_to_strand_map[btn] = self.canvas.strands[i]
+            else:
+                logging.error("Button/Strand count mismatch before drop! Aborting reorder.")
+                event.ignore()
+                self.refresh() # Refresh to fix inconsistency
+                return
+
+            # --- Determine visual target index for insertion --- 
+            drop_pos = event.pos()
+            target_visual_index = 0
+            layout_item_count = self.scroll_layout.count()
+            if layout_item_count > 0:
+                target_visual_index = layout_item_count # Default to bottom
+                for i in range(layout_item_count):
+                    item = self.scroll_layout.itemAt(i)
+                    widget = item.widget()
+                    if not widget:
+                        continue
+                    # Use mapToGlobal and mapFromGlobal for reliable coordinates within the scroll area
+                    widget_global_top_left = widget.mapToGlobal(QPoint(0, 0))
+                    widget_local_top_left = self.scroll_content.mapFromGlobal(widget_global_top_left)
+                    widget_rect_in_scroll = QRect(widget_local_top_left, widget.size())
+                    widget_center_y = widget_rect_in_scroll.y() + widget_rect_in_scroll.height() / 2
+                    if drop_pos.y() < widget_center_y:
+                        target_visual_index = i # Insert before this widget
+                        break
+
+            # --- Move the widget in the layout --- 
+            item_to_move = self.scroll_layout.takeAt(source_index)
+            if not item_to_move:
+                 logging.error(f"Could not get item at source index {source_index} to move.")
+                 event.ignore()
+                 return
+
+            # --- Adjust insertion index based on drag direction ---
+            final_insert_index = target_visual_index
+            if source_index < target_visual_index:
+                final_insert_index -= 1 # Adjust because takeAt shifted items up
+
+            # --- Use the final adjusted index for insertion ---
+            self.scroll_layout.insertItem(final_insert_index, item_to_move)
+            logging.info(f"Moved widget from visual index {source_index} to final insert index {final_insert_index}")
+
+            # --- Rebuild canvas.strands based on NEW VISUAL order using the map ---
+            new_canvas_strands_visual_order = []
+            success = True
+            for i in range(self.scroll_layout.count()):
+                item = self.scroll_layout.itemAt(i)
+                button = item.widget() # Get the widget directly
+                if isinstance(button, NumberedLayerButton): # Check if it's the button
+                    if button in button_to_strand_map:
+                        new_canvas_strands_visual_order.append(button_to_strand_map[button])
+                    else:
+                        logging.error(f"Button {button.text()} at new visual index {i} not found in map! Aborting.")
+                        success = False
+                        break
+                else:
+                     # Log an error if the widget isn't a NumberedLayerButton
+                     logging.error(f"Widget at layout index {i} is not a NumberedLayerButton (Type: {type(button)}). Aborting.")
+                     success = False
+                     break
+
+            if not success:
+                logging.error("Failed to rebuild canvas strands after drop. Attempting full refresh.")
+                event.ignore()
+                self.refresh()
+                return
+
+            # --- Commit the new order (Reverse visual order for canvas) --- 
+            self.canvas.strands = new_canvas_strands_visual_order[::-1]
+            logging.info(f"Reordered canvas.strands based on new visual layout. New count: {len(self.canvas.strands)}")
+            # self.layer_buttons will be rebuilt correctly by refresh()
+
+            # --- Update canvas selection index based on the stored object --- 
+            if previously_selected_strand:
+                try:
+                    # Find the new index in the reordered canvas.strands list
+                    new_selected_index = self.canvas.strands.index(previously_selected_strand)
+                    self.canvas.selected_strand_index = new_selected_index
+                    # Keep the selected_strand object consistent
+                    self.canvas.selected_strand = previously_selected_strand
+                    logging.info(f"Selection index updated to {new_selected_index} for strand {previously_selected_strand.layer_name} after reorder.")
+                except ValueError:
+                    logging.warning("Previously selected strand not found after reorder. Clearing selection.")
+                    self.canvas.selected_strand = None
+                    self.canvas.selected_strand_index = None
+            else:
+                 # No strand was selected before the drop
+                 self.canvas.selected_strand = None
+                 self.canvas.selected_strand_index = None
+                 logging.info("No strand was selected before drop, ensuring selection is clear.")
+
+            # --- Accept the event action FIRST ---
+            event.acceptProposedAction()
+            logging.info("Drop event action accepted.")
+
+            # --- THEN, refresh the UI to reflect the new order (this should fix internal states) ---
+            self.refresh()
+            logging.info("UI refreshed after drop to show reordered layers.")
+
+            # --- FINALLY, save the state AFTER refreshing ---
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                logging.info("Saving state AFTER refreshing UI post-reorder")
+                self.undo_redo_manager.save_state()
+
+        else:
+            event.ignore()
+            logging.info("Drop ignored - wrong mime type")
+
+    # --- Helper to calculate indicator line position ---
+    def calculate_drop_indicator_y(self, drop_pos):
+        """Calculate the Y position for the drop indicator line."""
+        target_y = -1
+        # Iterate through layout items (button containers) to find insertion point based on vertical position
+        current_y = 0
+        for i in range(self.scroll_layout.count()):
+            item = self.scroll_layout.itemAt(i)
+            widget = item.widget()
+            if not widget:
+                continue
+
+            widget_rect = widget.geometry()
+            widget_height = widget_rect.height()
+            widget_top_y = widget_rect.y()
+
+            # Calculate midpoint Y of the *widget* itself
+            widget_center_y = widget_top_y + widget_height / 2
+
+            if drop_pos.y() < widget_center_y:
+                # Drop position is above the center of this widget, line goes above it
+                target_y = widget_top_y - (self.scroll_layout.spacing() / 2)
+                break
+            else:
+                # Drop position is below center, potential line goes below it
+                target_y = widget_top_y + widget_height + (self.scroll_layout.spacing() / 2)
+                # Keep iterating in case it's above the next one
+
+        # Ensure target_y is within bounds (adjust slightly if needed)
+        if target_y < 0:
+             target_y = self.scroll_layout.spacing() / 2 # Line at the very top
+        elif target_y > self.scroll_content.height():
+             target_y = self.scroll_content.height() - self.scroll_layout.spacing() / 2 # Line at the very bottom
+
+        return int(target_y)
+    # --- End Helper ---
+
+    def get_strand_for_button(self, button):
+        """Find the canvas strand corresponding to a button."""
+        try:
+            index = self.layer_buttons.index(button)
+            if 0 <= index < len(self.canvas.strands):
+                return self.canvas.strands[index]
+        except ValueError:
+            pass # Button not found in list
+        except IndexError:
+             pass # Index out of bounds for canvas strands
+        logging.warning(f"Could not find strand for button: {button.text() if button else 'None'}")
+        return None
+
+
 # End of LayerPanel class
 
 # Note: The StrokeTextButton class has been moved to stroke_text_button.py

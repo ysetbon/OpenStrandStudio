@@ -487,8 +487,37 @@ class UndoRedoManager(QObject):
                                     abs(current_br[0] - prev_br[0]) > 0.1 or abs(current_br[1] - prev_br[1]) > 0.1):
                                     logging.info(f"Masked strand {current_strand.layer_name} deletion rectangle at index {idx} differs. State not identical.")
                                     return False
-                    # --- END ADD --- 
-                
+                    # --- ADD: Check line visibility ---
+                    if hasattr(current_strand, 'start_line_visible') and 'start_line_visible' in prev_strand:
+                        # Safer check using .get()
+                        prev_start_vis = prev_strand.get('start_line_visible', not current_strand.start_line_visible)
+                        if current_strand.start_line_visible != prev_start_vis:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_line_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'start_line_visible') != ('start_line_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_line_visible attribute presence differs.")
+                         return False
+
+                    if hasattr(current_strand, 'end_line_visible') and 'end_line_visible' in prev_strand:
+                        # Safer check using .get()
+                        prev_end_vis = prev_strand.get('end_line_visible', not current_strand.end_line_visible)
+                        if current_strand.end_line_visible != prev_end_vis:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_line_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'end_line_visible') != ('end_line_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_line_visible attribute presence differs.")
+                         return False
+                    # --- END ADD ---
+
+                    # --- ADD: Check layer visibility (is_hidden) ---
+                    current_hidden = getattr(current_strand, 'is_hidden', False)
+                    # Assume False if 'is_hidden' is not in the saved data (for backward compatibility)
+                    prev_hidden = prev_strand.get('is_hidden', False)
+                    if current_hidden != prev_hidden:
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} is_hidden differs (Current: {current_hidden}, Prev: {prev_hidden}).")
+                        return False
+                    # --- END ADD ---
+
                 # If we made it here, states are identical based on checked properties
                 return True
                 
@@ -754,6 +783,48 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END ADD ---
 
+                            # Check end line visibility
+                            if hasattr(new_strand, 'end_line_visible') and hasattr(original_strand, 'end_line_visible'):
+                                new_vis = new_strand.end_line_visible
+                                orig_vis = original_strand.end_line_visible
+                                logging.info(f"Comparing end_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
+                                if new_vis != orig_vis:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_line_visible') != hasattr(original_strand, 'end_line_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
+                            # --- NEW: Check start line visibility ---
+                            if hasattr(new_strand, 'start_line_visible') and hasattr(original_strand, 'start_line_visible'):
+                                new_vis = new_strand.start_line_visible
+                                orig_vis = original_strand.start_line_visible
+                                logging.info(f"Comparing start_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
+                                if new_vis != orig_vis:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_line_visible') != hasattr(original_strand, 'start_line_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
+                            # --- NEW: Check layer visibility (is_hidden) ---
+                            if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
+                                if new_strand.is_hidden != original_strand.is_hidden:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to previous state...")
@@ -942,7 +1013,72 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                     has_visual_difference = True
                                     break
-                    
+                            
+                            # --- ADD: Compare deletion rectangles for MaskedStrands ---
+                            if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):
+                                new_rects = getattr(new_strand, 'deletion_rectangles', [])
+                                original_rects = getattr(original_strand, 'deletion_rectangles', [])
+                                
+                                if len(new_rects) != len(original_rects):
+                                    logging.info(f"Redo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
+                                    has_visual_difference = True
+                                    break
+                                
+                                # Deep compare if counts are the same and non-zero
+                                if len(new_rects) > 0:
+                                    # Simple content comparison (assuming order is consistent or not critical for this check)
+                                    if new_rects != original_rects:
+                                        logging.info(f"Redo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
+                                        has_visual_difference = True
+                                        break
+                            elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):
+                                # If one is MaskedStrand and the other isn't, they are different
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
+                            # Check end line visibility
+                            if hasattr(new_strand, 'end_line_visible') and hasattr(original_strand, 'end_line_visible'):
+                                new_vis = new_strand.end_line_visible
+                                orig_vis = original_strand.end_line_visible
+                                logging.info(f"Comparing end_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
+                                if new_vis != orig_vis:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_line_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_line_visible') != hasattr(original_strand, 'end_line_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
+                            # --- NEW: Check start line visibility ---
+                            if hasattr(new_strand, 'start_line_visible') and hasattr(original_strand, 'start_line_visible'):
+                                new_vis = new_strand.start_line_visible
+                                orig_vis = original_strand.start_line_visible
+                                logging.info(f"Comparing start_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
+                                if new_vis != orig_vis:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_line_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_line_visible') != hasattr(original_strand, 'start_line_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
+                            # --- NEW: Check layer visibility (is_hidden) ---
+                            if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
+                                if new_strand.is_hidden != original_strand.is_hidden:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} is_hidden differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to next state...")

@@ -117,6 +117,25 @@ class NumberedLayerButton(QPushButton):
             self.is_hidden = hidden
             self.update_style()
             self.update() # Trigger repaint
+            # --- ADD: Save state after toggling visibility ---
+            try:
+                # Find LayerPanel parent
+                layer_panel = None
+                parent = self.parent()
+                while parent:
+                    if parent.__class__.__name__ == 'LayerPanel':
+                        layer_panel = parent
+                        break
+                    parent = parent.parent()
+
+                if layer_panel and hasattr(layer_panel.canvas, 'undo_redo_manager') and layer_panel.canvas.undo_redo_manager:
+                    logging.info(f"Saving state after toggling visibility for button {self.text()} via set_hidden")
+                    layer_panel.canvas.undo_redo_manager.save_state()
+                else:
+                    logging.warning(f"Could not find UndoRedoManager to save state for button {self.text()} visibility change.")
+            except Exception as e:
+                logging.error(f"Error finding UndoRedoManager in NumberedLayerButton.set_hidden: {e}")
+            # --- END ADD ---
 
     def update_style(self):
         """Update the button's style based on its current state."""
@@ -511,6 +530,17 @@ class NumberedLayerButton(QPushButton):
             print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
             if layer_panel and hasattr(layer_panel, 'canvas'):
                 layer_panel.canvas.update() # Request canvas repaint
+                # --- ADD: Save state for undo/redo ---
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    # --- ADD: Force save by resetting last save time ---
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0 
+                    print(f"Reset _last_save_time to force save for toggling {attr_name}")
+                    # --- END ADD ---
+                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    print(f"Undo/Redo state saved after toggling {attr_name}")
+                else:
+                    print("Warning: Could not find undo_redo_manager on canvas to save state.")
+                # --- END ADD ---
             else:
                  print("Warning: Could not find canvas to update after toggling line visibility.")
                  self.update() # Fallback update

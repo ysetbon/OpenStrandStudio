@@ -3603,16 +3603,13 @@ class StrandDrawingCanvas(QWidget):
         self.layer_state_manager = layer_state_manager
         # Connect any necessary signals here
 
-
-
-
-
-
-
-
-
-
-
+    def refresh_geometry_based_attachments(self):
+        """
+        Placeholder method to refresh attachments based on geometry.
+        Currently calls update_attachment_statuses.
+        """
+        logging.info("Refreshing geometry-based attachments (calling update_attachment_statuses)")
+        self.update_attachment_statuses()
 
     def update_non_group_attached_strands(self, strand, dx, dy, updated_strands, group_layers):
         attached_strands = self.find_attached_strands(strand)

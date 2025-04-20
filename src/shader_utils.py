@@ -82,6 +82,9 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     painter.restore()
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
+    """
+    Draw shadow for a circle at the start or end of a strand.
+    """
     pass
 
 def draw_strand_shadow(painter, strand, shadow_color=None):
@@ -362,6 +365,29 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         logging.info(f"Skipping shadow for transparent circle at {'start' if idx == 0 else 'end'} point")
                         continue
                 
+                # ----------------------------------------------------------
+                # Special handling for AttachedStrand circle shadows
+                # ----------------------------------------------------------
+                if strand.__class__.__name__ == 'AttachedStrand':
+                    # Decide per‑side based on child attachments to this strand.
+                    if hasattr(strand, 'attached_strands'):
+                
+                        if idx == 1:   # end‑circle
+                            child_attached_here = any(
+                                (getattr(child, 'start', None) and (child.start - strand.end).manhattanLength() < 1)
+                                for child in strand.attached_strands
+                            )
+                            if not child_attached_here:
+                                logging.info(
+                                    f"Skipping end‑circle shadow for AttachedStrand {strand.layer_name} (no child attachment)")
+                                continue
+                    else:
+                        # No child list –> skip both circles to avoid double shading
+                        logging.info(
+                            f"Skipping circle shadow for AttachedStrand {strand.layer_name}; no attachment info available")
+                        continue
+                # ----------------------------------------------------------
+
                 # Check if this is a main strand and if the current side has no attachment
                 is_main_strand = strand.__class__.__name__ != 'AttachedStrand'
                 has_attachment = False

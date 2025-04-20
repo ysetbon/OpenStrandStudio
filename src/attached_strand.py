@@ -620,6 +620,93 @@ class AttachedStrand(Strand):
             # --- END: MIRROR STRAND.PY LOGIC ---
         # ----------------------------------------------------------------
 
+        # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
+        # Start endpoint half-circle
+        if any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
+            painter.save()
+            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            temp_image.fill(Qt.transparent)
+            temp_painter = QPainter(temp_image)
+            temp_painter.setRenderHint(QPainter.Antialiasing)
+
+            tangent = self.calculate_cubic_tangent(0.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            mask = QPainterPath()
+            w = total_d * 2; h = total_d * 2
+            x = self.start.x() - w/2; y = self.start.y()
+            mask.addRect(x+1, y+1, w+1, h+1)
+
+            tr = QTransform().translate(self.start.x(), self.start.y())
+            tr.rotate(math.degrees(angle - math.pi/2))
+            tr.translate(-self.start.x(), -self.start.y())
+            mask = tr.map(mask)
+
+            outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
+            clip = outer.subtracted(mask)
+
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(clip)
+
+            inner = QPainterPath(); inner.addEllipse(self.start, self.width/2, self.width/2)
+            clip_in = inner.subtracted(mask)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(clip_in)
+
+            just_inner = QPainterPath(); just_inner.addEllipse(self.start, self.width/2, self.width/2)
+            temp_painter.drawPath(just_inner)
+
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+            painter.restore()
+
+        # End endpoint half-circle
+        if any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
+            painter.save()
+            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            temp_image.fill(Qt.transparent)
+            temp_painter = QPainter(temp_image)
+            temp_painter.setRenderHint(QPainter.Antialiasing)
+
+            tangent = self.calculate_cubic_tangent(1.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            mask = QPainterPath()
+            w = total_d * 2; h = total_d * 2
+            x = self.end.x() - w/2; y = self.end.y()
+            mask.addRect(x+1, y+1, w+1, h+1)
+
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle - math.pi/2) + 180)
+            tr.translate(-self.end.x(), -self.end.y())
+            mask = tr.map(mask)
+
+            outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+
+            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            temp_painter.setPen(Qt.NoPen)
+            temp_painter.setBrush(self.stroke_color)
+            temp_painter.drawPath(clip)
+
+            inner = QPainterPath(); inner.addEllipse(self.end, self.width/2, self.width/2)
+            clip_in = inner.subtracted(mask)
+            temp_painter.setBrush(self.color)
+            temp_painter.drawPath(clip_in)
+
+            just_inner = QPainterPath(); just_inner.addEllipse(self.end, self.width/2, self.width/2)
+            temp_painter.drawPath(just_inner)
+
+            painter.drawImage(0, 0, temp_image)
+            temp_painter.end()
+            painter.restore()
+
         # temp_painter.end() # REMOVE THIS - it corresponds to no active painter
         painter.restore()
 

@@ -1719,7 +1719,12 @@ class LayerPanel(QWidget):
             # Use the strand's actual color
             strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number,QColor(200, 170, 230, 255) )
             
+            # --- Store layer_name directly on button for easier lookup ---
             button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], strand_color)
+            # Store the definitive layer name for matching later
+            button.layer_name = strand.layer_name
+            # --- End Store layer_name ---
+
             button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
             button.color_changed.connect(self.on_color_changed)
             
@@ -1731,25 +1736,50 @@ class LayerPanel(QWidget):
 
             # Set initial hidden state during refresh
             button.set_hidden(strand.is_hidden)
-            
-            self.scroll_layout.insertWidget(0, button)
+
+            self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter) # Align center added
             self.layer_buttons.append(button)
         
         # Update button states
         self.update_layer_button_states()
         
-        # Ensure the correct button is selected
-        if self.canvas.selected_strand_index is not None and self.canvas.selected_strand_index < len(self.layer_buttons):
-            self.select_layer(self.canvas.selected_strand_index, emit_signal=False)
+        # --- Modified Selection Logic ---
+        # Ensure the correct button is selected by matching the strand object
+        selected_strand_object = self.canvas.selected_strand
+        if selected_strand_object:
+            found_button = None
+            for button in self.layer_buttons:
+                # Use the stored layer_name for reliable matching
+                if hasattr(button, 'layer_name') and button.layer_name == selected_strand_object.layer_name:
+                    found_button = button
+                    break
+            if found_button:
+                found_button.setChecked(True)
+                # Ensure canvas index is also correct (should already be, but for safety)
+                try:
+                    self.canvas.selected_strand_index = self.canvas.strands.index(selected_strand_object)
+                except ValueError:
+                     logging.warning(f"Refresh: Selected strand {selected_strand_object.layer_name} not found in canvas.strands after refresh.")
+                     self.clear_selection() # Clear if inconsistent
+            else:
+                logging.warning(f"Refresh: Could not find button for selected strand {selected_strand_object.layer_name}")
+                self.clear_selection() # Clear selection if button not found
         else:
+            # No strand object selected in canvas, clear visual selection
             self.clear_selection()
-        
+        # --- End Modified Selection Logic ---
+
         # Update the current set
-        self.current_set = max(self.set_counts.keys(), default=0)
+        # --- Ensure current_set uses set_number attribute ---
+        existing_sets = set(
+            s.set_number for s in self.canvas.strands if hasattr(s, 'set_number') and not isinstance(s, MaskedStrand)
+        )
+        self.current_set = max(existing_sets, default=0)
+        # --- End Ensure current_set ---
         
         # Refresh the GroupLayerManager
         self.group_layer_manager.refresh()
-        
+
         # Force layout update before re-enabling window updates
         self.scroll_layout.update()
         
@@ -1994,6 +2024,13 @@ class LayerPanel(QWidget):
             self.canvas.strands = new_canvas_strands_visual_order[::-1]
             logging.info(f"Reordered canvas.strands based on new visual layout. New count: {len(self.canvas.strands)}")
             # self.layer_buttons will be rebuilt correctly by refresh()
+
+            # --- Update LayerStateManager state --- 
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                self.canvas.layer_state_manager.save_current_state() # Update state based on new canvas.strands order
+                logging.info(f"Updated LayerStateManager state after drop.")
+            else:
+                logging.warning("LayerStateManager not found on canvas, cannot update state after drop.")
 
             # --- Update canvas selection index based on the stored object --- 
             if previously_selected_strand:

@@ -8,6 +8,7 @@ import PyQt5.QtGui as QtGui
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
+import os # Required for path normalization
 
 class MoveMode:
     def __init__(self, canvas):
@@ -379,8 +380,7 @@ class MoveMode:
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', []) # This is the key list
             affected_strands = getattr(self_canvas, 'affected_strands_for_drawing', truly_moving_strands) # Default to truly_moving if affected not set
 
-            # Log which strands are being drawn in this optimized pass
-            logging.info(f"MoveMode: Using optimized path. Active (for ref): {active_strand.layer_name if active_strand else 'None'}, Truly Moving: {[s.layer_name for s in truly_moving_strands]}")
+        
 
             # Store original order of all strands for proper z-ordering
             original_strands_order = list(self_canvas.strands)
@@ -389,12 +389,10 @@ class MoveMode:
             if not hasattr(self_canvas, 'active_strand_for_drawing') or self_canvas.active_strand_for_drawing is None:
                 if truly_moving_strands:
                     # Set the first truly moving strand as the active strand to avoid early exit
-                    logging.info(f"MoveMode: Setting first truly moving strand {truly_moving_strands[0].layer_name} as active_strand_for_drawing")
                     self_canvas.active_strand_for_drawing = truly_moving_strands[0]
                     active_strand = truly_moving_strands[0]
                 else:
                     # Only exit if no truly moving strands AND no active strand
-                    logging.info("MoveMode: No active strand and no truly moving strands, using original paint event")
                     self_canvas.original_paintEvent(event)
                     return
             # --- END MODIFIED ---
@@ -408,7 +406,6 @@ class MoveMode:
             
             # Special handling for the very first paint during movement to ensure consistent rendering
             first_movement = hasattr(self_canvas, 'movement_first_draw') and self_canvas.movement_first_draw == False
-            logging.info("MoveMode: First movement: %s", first_movement)
             
             # Create a background cache first time or if it's invalidated
             background_cache_needed = (not hasattr(self_canvas, 'background_cache') or 
@@ -428,14 +425,11 @@ class MoveMode:
             if not hasattr(self_canvas, '_frames_since_click'):
                 self_canvas._frames_since_click = 0
                 background_cache_needed = True
-                logging.info("MoveMode: Initializing frames_since_click counter")
             elif self_canvas._frames_since_click < 3:
                 self_canvas._frames_since_click += 1
                 background_cache_needed = True
-                logging.info("MoveMode: Incremented frames_since_click to %d, forcing full redraw", 
-                            self_canvas._frames_since_click)
+       
             
-            logging.info("MoveMode: Background cache needed: %s", background_cache_needed)
             
             if first_movement:
                 # Mark that we've completed the first draw
@@ -445,7 +439,6 @@ class MoveMode:
                 
                 # To ensure consistent rendering, force recreate the background cache
                 if hasattr(self_canvas, 'background_cache'):
-                    logging.info("MoveMode: Recreating background cache on first movement")
                     # Force recreation with proper dimensions
                     viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
                     width = max(1, viewport_rect.width())
@@ -456,7 +449,6 @@ class MoveMode:
             # Get truly moving strands from the canvas attribute if available, otherwise create it
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
             if not truly_moving_strands and hasattr(move_mode, 'affected_strand') and move_mode.affected_strand:
-                logging.info("MoveMode: Creating truly_moving_strands list from affected_strand")
                 truly_moving_strands = [move_mode.affected_strand]
                 # For attached strands, we want to also move immediate children but keep parents in original order
                 if isinstance(move_mode.affected_strand, AttachedStrand) and hasattr(move_mode.affected_strand, 'attached_strands'):
@@ -465,7 +457,6 @@ class MoveMode:
                 
                 # Special handling for MaskedStrand - ensure both selected strands are included
                 if isinstance(move_mode.affected_strand, MaskedStrand):
-                    logging.info("MoveMode: Adding constituent strands to truly_moving_strands for MaskedStrand")
                     if hasattr(move_mode.affected_strand, 'first_selected_strand') and move_mode.affected_strand.first_selected_strand:
                         if move_mode.affected_strand.first_selected_strand not in truly_moving_strands:
                             truly_moving_strands.append(move_mode.affected_strand.first_selected_strand)
@@ -478,7 +469,6 @@ class MoveMode:
                 
             # When moving control points, ensure the strand gets included in truly_moving_strands
             if getattr(move_mode, 'is_moving_control_point', False) and move_mode.affected_strand:
-                logging.info("MoveMode: Control point movement detected, updating truly_moving_strands")
                 if move_mode.affected_strand not in truly_moving_strands:
                     truly_moving_strands = [move_mode.affected_strand]
                     self_canvas.truly_moving_strands = truly_moving_strands
@@ -493,7 +483,6 @@ class MoveMode:
             
             # Always provide some truly_moving_strands even when static - critical for MaskedStrand
             if not truly_moving_strands and isinstance(active_strand, MaskedStrand):
-                logging.info("MoveMode: No truly_moving_strands for MaskedStrand, creating default list")
                 truly_moving_strands = [active_strand]
                 if hasattr(active_strand, 'first_selected_strand') and active_strand.first_selected_strand:
                     truly_moving_strands.append(active_strand.first_selected_strand)
@@ -502,7 +491,6 @@ class MoveMode:
                 self_canvas.truly_moving_strands = truly_moving_strands
             
             # Log the number of truly moving strands
-            logging.info("MoveMode: Truly moving strands: %d", len(truly_moving_strands))
             
             if background_cache_needed:
                 try:
@@ -601,14 +589,22 @@ class MoveMode:
                 # --- DRAW ALL MOVING STRAND BODIES (AFTER C-SHAPE) --- 
                 logging.info("MoveMode: Drawing moving strand bodies")
                 for strand in sorted_moving_strands:
-                    if hasattr(strand, 'draw'):
-                        # Temporarily deselect to avoid default highlights
-                        original_selected_state = strand.is_selected
-                        strand.is_selected = False 
-                        strand.draw(painter)
-                        strand.is_selected = original_selected_state # Restore selection state
-                        logging.info(f"MoveMode: Drew strand body for {strand.layer_name}")
-                # --- END DRAWING MOVING BODIES ---
+                    painter.save() # Ensure clean state for each strand
+                    try:
+                        if hasattr(strand, 'draw'):
+                            strand.draw(painter)
+                            logging.info(f"MoveMode: Drew strand body for {strand.layer_name}")
+
+                            # --- ADD C-SHAPE DRAW HERE ---
+                            # Check if this is the main affected strand and if it should be highlighted
+                            is_affected_and_selected = (strand == move_mode.affected_strand and strand.is_selected)
+                            if is_affected_and_selected:
+                                logging.info(f"MoveMode: Drawing C-shape highlight for affected strand: {strand.layer_name}")
+                                move_mode_ref.draw_c_shape_for_strand(painter, strand)
+                            # --- END ADD C-SHAPE DRAW --- 
+                    finally:
+                        painter.restore() # Restore state after drawing strand
+                # --- END DRAWING MOVING BODIES AND C-SHAPE ---
                 
                 # --- ADD POST-BODY C-SHAPE DRAW ---
                 is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
@@ -1119,7 +1115,7 @@ class MoveMode:
             # If we're not optimizing, invalidate the cache to ensure all strands are redrawn
             if hasattr(self.canvas, 'background_cache_valid'):
                 self.canvas.background_cache_valid = False
-                
+
         # Force a full redraw of the canvas
         self.canvas.update()
         
@@ -1272,26 +1268,10 @@ class MoveMode:
         self.affected_strand.update_shape()
         if hasattr(self.affected_strand, 'update_side_line'): self.affected_strand.update_side_line()
 
-        # Update connected strands geometry if moving an endpoint
-        if self.moving_side == 0 or self.moving_side == 1:
-            moving_point_coord = self.affected_strand.start if self.moving_side == 0 else self.affected_strand.end
-            for other_strand in self.canvas.strands:
-                 if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand): continue
-                 
-                 connected_moving_side = -1
-                 if self.points_are_close(other_strand.start, moving_point_coord):
-                     connected_moving_side = 0
-                 elif self.points_are_close(other_strand.end, moving_point_coord):
-                     connected_moving_side = 1
-                 
-                 if connected_moving_side == 0:
-                     other_strand.start = new_pos
-                     other_strand.update_shape()
-                     if hasattr(other_strand, 'update_side_line'): other_strand.update_side_line()
-                 elif connected_moving_side == 1:
-                     other_strand.end = new_pos
-                     other_strand.update_shape()
-                     if hasattr(other_strand, 'update_side_line'): other_strand.update_side_line()
+        # --- REMOVED connection update loop ---
+        # The update_strand_position method called during mouseMove should have handled connected strands.
+        # This final update only applies the very last position change to the main affected strand.
+        # --- END REMOVED connection update loop ---
 
     def gradual_move(self):
         """
@@ -1346,11 +1326,12 @@ class MoveMode:
                     return
 
         # Second pass: Check start and end points for all strands
-        for i, strand in enumerate(self.canvas.strands):
+        # --- CORRECTED: Iterate in reverse to check topmost strands first --- 
+        # for i, strand in enumerate(self.canvas.strands):
+        for i, strand in reversed(list(enumerate(self.canvas.strands))):
+        # --- END CORRECTION ---
             if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 if self.try_move_strand(strand, pos, i):
-                    return
-                if self.try_move_attached_strands_start_end(strand.attached_strands, pos):
                     return
 
     def try_move_attached_strands_control_points(self, attached_strands, pos):
@@ -1635,7 +1616,6 @@ class MoveMode:
         
         # If moving a start point and strand has attached strands, check for shared starting points
         if side == 0 and hasattr(strand, 'attached_strands'):
-            import logging
             moving_point = strand.start
             
             # Find attached strands sharing the same starting point
@@ -1652,7 +1632,6 @@ class MoveMode:
         # Also add the connected strand found earlier
         if connected_strand and connected_strand not in truly_moving_strands:
             truly_moving_strands.append(connected_strand)
-            import logging
             logging.info(f"MoveMode: Added connected strand {connected_strand.layer_name} to truly_moving_strands")
             
         # Store the list on the canvas for use in optimized_paint_event
@@ -1698,7 +1677,17 @@ class MoveMode:
                     connected_strand.is_selected = True
                     if isinstance(connected_strand, AttachedStrand):
                         self.temp_selected_strand = connected_strand
-
+        # --- REPLACE print with logging.info ---
+        logging.info("--------------------------------")
+        logging.info(f"StartMovement: affected_strand={self.affected_strand.layer_name if self.affected_strand else 'None'}")
+        logging.info(f"StartMovement: moving_side={side}") 
+        # We need to check if original_start and original_end are defined before logging
+        # These were defined in the context of the previous move_masked_strand or update_strand_position
+        # They are NOT directly available here. We should log the current start/end instead.
+        logging.info(f"StartMovement: current_start={strand.start}")
+        logging.info(f"StartMovement: current_end={strand.end}")
+        logging.info("--------------------------------")
+        # --- END REPLACE ---
         # Update the canvas
         self.canvas.update()
 
@@ -1741,7 +1730,11 @@ class MoveMode:
         affected_strands = set([self.affected_strand])
         
         # Identify truly moving strands (ones being dragged by user, not just connected)
-        truly_moving_strands = [self.affected_strand]
+        # --- CORRECTED: Preserve truly_moving_strands from start_movement --- 
+        # truly_moving_strands = [self.affected_strand] # OLD LOGIC
+        # Retrieve the list set by start_movement and ensure it's treated as read-only here
+        truly_moving_strands_read_only = getattr(self.canvas, 'truly_moving_strands', [self.affected_strand]) 
+        # --- END CORRECTION ---
         
         # --- Find and include connected strands for drawing --- NEW BLOCK
         connected_strands_at_moving_point = set()
@@ -1761,8 +1754,10 @@ class MoveMode:
                     if self.points_are_close(other_strand.start, moving_point_coord) or \
                        self.points_are_close(other_strand.end, moving_point_coord):
                         connected_strands_at_moving_point.add(other_strand)
-                        if other_strand not in truly_moving_strands: # Add to truly moving
-                            truly_moving_strands.append(other_strand)
+                        # --- CORRECTED: Don't add to truly moving here --- 
+                        # if other_strand not in truly_moving_strands: # Add to truly moving
+                        #     truly_moving_strands.append(other_strand)
+                        # --- END CORRECTION ---
                         affected_strands.add(other_strand) # Ensure it's also in affected
         # --- End finding and including connected strands ---
 
@@ -1772,30 +1767,31 @@ class MoveMode:
             for attached_strand in self.affected_strand.attached_strands:
                 # Check if the attached strand starts at the same point being moved
                 if self.points_are_close(attached_strand.start, moving_point_coord):
-                    if attached_strand not in truly_moving_strands:
-                        truly_moving_strands.append(attached_strand) # Add to the list for drawing
+                    # --- CORRECTED: Don't add to truly moving here --- 
+                    # if attached_strand not in truly_moving_strands:
+                    #     truly_moving_strands.append(attached_strand) # Add to the list for drawing
+                    # --- END CORRECTION ---
                     affected_strands.add(attached_strand) # Ensure it's also in affected
-                    logging.info(f"MoveMode: Added attached strand {attached_strand.layer_name} sharing start point to truly_moving_strands.")
+                    # Corrected Log Message:
+                    logging.info(f"MoveMode (Update Pos): Added attached strand {attached_strand.layer_name} sharing start point to affected_strands.")
         # --- End NEW BLOCK ---
 
-        # Special handling for MaskedStrand - add both selected strands to truly_moving_strands
+        # Special handling for MaskedStrand - add both selected strands to affected_strands (not truly_moving)
         is_masked_strand = isinstance(self.affected_strand, MaskedStrand)
         if is_masked_strand:
             if hasattr(self.affected_strand, 'first_selected_strand') and self.affected_strand.first_selected_strand:
-                if self.affected_strand.first_selected_strand not in truly_moving_strands:
-                    truly_moving_strands.append(self.affected_strand.first_selected_strand)
-                    affected_strands.add(self.affected_strand.first_selected_strand)
+                # --- CORRECTED: Don't add to truly moving here --- 
+                affected_strands.add(self.affected_strand.first_selected_strand)
             if hasattr(self.affected_strand, 'second_selected_strand') and self.affected_strand.second_selected_strand:
-                if self.affected_strand.second_selected_strand not in truly_moving_strands:
-                    truly_moving_strands.append(self.affected_strand.second_selected_strand)
-                    affected_strands.add(self.affected_strand.second_selected_strand)
+                 # --- CORRECTED: Don't add to truly moving here --- 
+                affected_strands.add(self.affected_strand.second_selected_strand)
         
-        # For attached strands, we want to also move immediate children but keep parent in original order
+        # For attached strands, ensure children are in affected set too (not truly_moving)
         if isinstance(self.affected_strand, AttachedStrand) and hasattr(self.affected_strand, 'attached_strands'):
             for attached in self.affected_strand.attached_strands:
-                 if attached not in truly_moving_strands:
-                     truly_moving_strands.append(attached)
+                 # --- CORRECTED: Don't add to truly moving here --- 
                  affected_strands.add(attached) # Ensure children are in affected set too
+        # --- End finding and including connected strands ---
 
         # Store the old path of the affected strand for proper redrawing
         old_path_rect = None
@@ -1826,6 +1822,7 @@ class MoveMode:
         if self.moving_side == 0 or self.moving_side == 1:
             original_start = QPointF(self.affected_strand.start)
             original_end = QPointF(self.affected_strand.end)
+ 
 
         if self.moving_side == 'control_point1':
             # Move the first control point
@@ -1979,9 +1976,19 @@ class MoveMode:
         # Ensure affected_strands includes everything needed (main, connected, parents, children)
         self.canvas.affected_strands_for_drawing = list(affected_strands)
 
-        # Also store truly moving strands (the ones that should be on top)
-        self.canvas.truly_moving_strands = truly_moving_strands
+        # --- CORRECTED: Re-assert the read-only list from the start of the function --- 
+        self.canvas.truly_moving_strands = truly_moving_strands_read_only
+        # --- END CORRECTION ---
+        logging.info(f"MoveMode (Update Pos): Final truly_moving_strands: {[s.layer_name for s in self.canvas.truly_moving_strands]}, affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
         
+        # --- NEW: Log positions of all affected strands AFTER updates in this step ---
+        if hasattr(self.canvas, 'affected_strands_for_drawing'):
+            logging.info("--- Positions after update_strand_position step ---")
+            for s in self.canvas.affected_strands_for_drawing:
+                logging.info(f"  Strand {s.layer_name}: Start={s.start}, End={s.end}")
+            logging.info("--------------------------------------------------")
+        # --- END NEW LOGGING ---
+
         # Check for attached strands that share the same start/end point with the affected strand
         # This is crucial for when moving a shared point between main strand and attached strand
         if self.affected_strand and hasattr(self.affected_strand, 'attached_strands'):
@@ -2008,6 +2015,9 @@ class MoveMode:
             
         # Force an immediate update for continuous visual feedback
         self.canvas.update()
+        
+        # Force a redraw while holding to ensure continuous visual feedback
+        self.force_redraw_while_holding()
 
     def move_masked_strand(self, new_pos, moving_side):
         """Move a masked strand's points.
@@ -2034,12 +2044,12 @@ class MoveMode:
                 new_pos = self.adjust_position_to_maintain_distance(new_pos, other_point)
         
         # Store original positions to preserve non-moving endpoints
-        old_start = None
-        old_end = None
+        original_start = None
+        original_end = None
         if moving_side == 0:
-            old_end = QPointF(self.affected_strand.end)
+            original_end = QPointF(self.affected_strand.end)
         else:
-            old_start = QPointF(self.affected_strand.start)
+            original_start = QPointF(self.affected_strand.start)
         
         # Update the MaskedStrand's own position using setter
         if moving_side == 0:
@@ -2048,11 +2058,16 @@ class MoveMode:
             self.affected_strand.end = new_pos
         
         # Restore non-moving endpoint
-        if moving_side == 0 and old_end:
-            self.affected_strand.end = old_end
-        elif moving_side == 1 and old_start:
-            self.affected_strand.start = old_start
-        
+        if moving_side == 0 and original_end:
+            self.affected_strand.end = original_end
+        elif moving_side == 1 and original_start:
+            self.affected_strand.start = original_start
+        print ("--------------------------------")
+        print ("affected_strand", self.affected_strand.layer_name)
+        print ("moving_side", moving_side)
+        print ("original_start", original_start)
+        print ("original_end", original_end)
+        print ("--------------------------------")
         # Update shape
         self.affected_strand.update_shape()
         
@@ -2138,6 +2153,11 @@ class MoveMode:
         Returns:
             Strand or None: The parent strand if one exists, otherwise None.
         """
+        # --- ADD LOGGING: Before update ---
+        logging.info(f"MoveStrandUpdate: Moving strand {strand.layer_name}, side {moving_side} to {new_pos}")
+        logging.info(f"MoveStrandUpdate: BEFORE - Start: {strand.start}, End: {strand.end}")
+        # --- END LOGGING ---
+        
         # Store original positions to preserve the non-moving endpoint
         old_start, old_end = QPointF(strand.start), QPointF(strand.end)
         
@@ -2276,6 +2296,10 @@ class MoveMode:
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
 
+        # --- ADD LOGGING: After update ---
+        logging.info(f"MoveStrandUpdate: AFTER - Strand {strand.layer_name} - Start: {strand.start}, End: {strand.end}")
+        # --- END LOGGING ---
+
         return parent_strand
 
     def update_parent_strands(self, strand):
@@ -2293,10 +2317,28 @@ class MoveMode:
         if isinstance(strand, AttachedStrand):
             parent = self.find_parent_strand(strand)
             if parent:
-                if strand.start == parent.start:
-                    parent.start = strand.start
+                # --- FIX: Update only the correct parent endpoint --- 
+                # Check which side of the parent the child (strand) is attached to
+                if hasattr(strand, 'attachment_side'):
+                    if strand.attachment_side == 0:
+                        # Child is attached to parent's start, update parent's start
+                        parent.start = strand.start
+                    elif strand.attachment_side == 1:
+                        # Child is attached to parent's end, update parent's end
+                        parent.end = strand.start # AttachedStrand.start is always the connection point
+                    else:
+                        # Handle potential unexpected attachment_side value
+                        logging.warning(f"update_parent_strands: Invalid attachment_side {strand.attachment_side} for {strand.layer_name}")
                 else:
-                    parent.end = strand.start
+                    # Fallback or error if attachment_side is missing (shouldn't happen)
+                    logging.error(f"update_parent_strands: Missing attachment_side for {strand.layer_name}")
+                    # As a fallback, try the old (potentially problematic) logic
+                    if strand.start == parent.start:
+                        parent.start = strand.start
+                    else:
+                        parent.end = strand.start
+                # --- END FIX ---
+
                 parent.update_shape()
                 parent.update_side_line()
                 updated_strands.add(parent)

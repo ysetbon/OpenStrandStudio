@@ -10,6 +10,47 @@ from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode, conn
 # Configure logging before importing other modules
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# --- Add this section for MoveMode specific logging ---
+class MoveModeFilter(logging.Filter):
+    """Filters log records to include only those from move_mode.py."""
+    def filter(self, record):
+        # Normalize path for reliable comparison across OS
+        # Use 'src' + os.sep + 'move_mode.py' for better cross-platform compatibility
+        move_mode_path_part = os.path.normpath(os.path.join('src', 'move_mode.py'))
+        # Check if the log record's pathname ends with the target file path
+        return record.pathname.endswith(move_mode_path_part)
+
+try:
+    # Define the log file name
+    move_mode_log_file = 'move_mode.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(move_mode_log_file):
+            os.remove(move_mode_log_file)
+            logging.info(f"Removed existing log file: {move_mode_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {move_mode_log_file}: {e}")
+
+    # Create a specific handler for MoveMode logs, overwriting the file each run ('w')
+    move_mode_handler = logging.FileHandler(move_mode_log_file, mode='w')
+
+    # Optional: Use a specific format for this file, otherwise it inherits root logger's format
+    # move_mode_formatter = logging.Formatter('%(asctime)s - MOVE_MODE - %(levelname)s - %(message)s')
+    # move_mode_handler.setFormatter(move_mode_formatter)
+
+    # Apply the filter to the handler
+    move_mode_handler.addFilter(MoveModeFilter())
+
+    # Add the configured handler to the root logger
+    logging.getLogger().addHandler(move_mode_handler)
+
+    logging.info("MoveMode logging configured to output to move_mode.log") # Confirmation message
+
+except Exception as e:
+    print(f"Error setting up MoveMode file logging: {e}") # Basic error handling
+# --- End of MoveMode logging section ---
+
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 

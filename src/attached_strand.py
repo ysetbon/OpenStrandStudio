@@ -19,7 +19,7 @@ class AttachedStrand(Strand):
     Represents a strand attached to another strand.
     """
 
-    def __init__(self, parent, start_point):
+    def __init__(self, parent, start_point, attachment_side):
         super().__init__(
             start_point, start_point, parent.width,
             color=parent.color, stroke_color=parent.stroke_color,
@@ -28,6 +28,7 @@ class AttachedStrand(Strand):
             layer_name=parent.layer_name
         )
         self.parent = parent
+        self.attachment_side = attachment_side
         self.angle = 0
         self.length = 0  # Changed from 140 to 0 to prevent initial length
         self.min_length = 40

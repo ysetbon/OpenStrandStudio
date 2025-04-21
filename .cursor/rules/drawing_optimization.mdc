@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Drawing Optimization and Painter State in MoveMode
+
+## Optimized Drawing Approach
+
+When moving strands in the application, the [src/move_mode.py](mdc:src/move_mode.py) employs an optimized drawing technique (`optimized_paint_event`) to enhance performance during dragging. This optimization works as follows:
+
+1.  **Background Caching:** A background image is created and cached, containing all elements *except* the strands currently being moved (referred to as `truly_moving_strands`).
+2.  **Optimized Redraw:** During the drag, only the cached background and the `truly_moving_strands` are redrawn in each frame, significantly reducing the rendering load.
+
+## Painter State Issues
+
+The primary drawing logic for individual strands is located in the `Strand.draw` method within [src/strand.py](mdc:src/strand.py). This method handles drawing the strand body, stroke, shadows (using functions likely from `src/shader_utils.py`), selection highlights, and endpoint decorations (like C-shapes).
+
+**Critical Consideration:** Proper management of the `QPainter` state using `painter.save()` and `painter.restore()` is crucial within `Strand.draw` and any functions it invokes. An imbalance in these calls (e.g., a `save()` without a matching `restore()` within a drawing sub-routine) can corrupt the painter's state (transformations, brushes, pens, etc.).
+
+This corruption can lead to unexpected rendering artifacts, such as subsequent drawing operations failing silently. This might manifest as parts of a strand, or even entire subsequent strands in the drawing loop, becoming invisible during the move operation, even though the logs indicate the drawing code was executed.
+
+**Debugging:** The Qt warning `QPainter::restore: Unbalanced save/restore` in the application logs is a strong indicator of such state management issues. Ensure all `save()` calls have a corresponding `restore()`, preferably using `try...finally` blocks to guarantee restoration even if errors occur. Simplifying or removing nested save/restore calls within complex drawing methods can also help prevent these problems.
+

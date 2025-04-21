@@ -567,7 +567,7 @@ class AttachMode(QObject):
         self.affected_strand = parent_strand
         self.affected_point = side
 
-        new_strand = AttachedStrand(parent_strand, attach_point)
+        new_strand = AttachedStrand(parent_strand, attach_point, side)
         new_strand.canvas = self.canvas
         
         # Set properties from parent strand

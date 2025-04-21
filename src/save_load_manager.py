@@ -87,6 +87,15 @@ def serialize_strand(strand, canvas, index=None):
         data["attached_to"] = connected_to
         logging.info(f"Serializing AttachedStrand {strand.layer_name} attached to {connected_to}")
 
+        # Add attachment_side for AttachedStrands
+        if hasattr(strand, 'attachment_side'):
+            data["attachment_side"] = strand.attachment_side
+            logging.info(f"Serializing attachment_side: {strand.attachment_side} for {strand.layer_name}")
+        else:
+            # Fallback or default if attribute doesn't exist (should exist based on constructor)
+            data["attachment_side"] = 0 # Default to start side if missing, though this indicates an issue
+            logging.warning(f"attachment_side attribute missing for AttachedStrand {strand.layer_name}, defaulting to 0")
+
     if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
         data["control_points"] = [
             serialize_point(strand.control_point1),
@@ -136,20 +145,10 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             parent_strand = strand_dict.get(parent_layer_name)
             
             if parent_strand:
-                # Determine if the attached strand should connect to the start or end of the main strand
-                is_connected_to_start = (
-                    start.x() == parent_strand.start.x() and 
-                    start.y() == parent_strand.start.y()
-                )
-                
-                if is_connected_to_start:
-                    # Connect to the start point of the main strand
-                    strand = AttachedStrand(parent_strand, end)
-                    strand.start = parent_strand.start
-                else:
-                    # Connect to the end point of the main strand
-                    strand = AttachedStrand(parent_strand, end)
-                    strand.start = parent_strand.end
+                # Retrieve attachment_side
+                attachment_side = data.get("attachment_side", 0) # Default to 0 if missing
+                logging.info(f"Deserializing {data['layer_name']} with attachment_side: {attachment_side}")
+                strand = AttachedStrand(parent_strand, end, attachment_side)
                 
                 # Set properties for the attached strand
                 strand.end = end
@@ -355,7 +354,10 @@ def load_strands(filename, canvas):
             # Parent exists – we can create this attached strand
             start = deserialize_point(strand_data["start"])
             end = deserialize_point(strand_data["end"])
-            strand = AttachedStrand(parent_strand, end)
+            # Retrieve attachment_side
+            attachment_side = strand_data.get("attachment_side", 0) # Default to 0 if missing
+            logging.info(f"Deserializing {strand_data['layer_name']} with attachment_side: {attachment_side}")
+            strand = AttachedStrand(parent_strand, end, attachment_side)
 
             # Set all properties
             strand.start = start

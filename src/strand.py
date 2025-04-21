@@ -713,8 +713,7 @@ class Strand:
         self.update_shape()  # Assuming you have this method to update the strand's appearance
 
     def draw(self, painter):
-        """Draw the strand with squared ends and highlight if selected."""
-        painter.save()
+        painter.save() # <<<< SAVE 1 (Top Level)
         painter.setRenderHint(QPainter.Antialiasing)
 
         # --- START: Handle hidden state --- 
@@ -738,10 +737,12 @@ class Strand:
         stroke_path = stroke_stroker.createStroke(path)
 
         # Draw shadow for overlapping strands - using the utility function
+        logging.info(f"Strand {self.layer_name}: Before shadow save()")
+        painter.save() # SAVE 2
         try:
             # Import is inside try block to handle potential import errors
             from shader_utils import draw_strand_shadow, draw_circle_shadow
-            
+
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 # Use canvas's shadow color if available
@@ -750,16 +751,19 @@ class Strand:
                     shadow_color = self.canvas.default_shadow_color
                     # Ensure the strand's shadow color is also updated for future reference
                     self.shadow_color = QColor(shadow_color)
-                
+
                 # Draw strand body shadow with explicit shadow color
                 draw_strand_shadow(painter, self, shadow_color)
-                
+
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):
                     draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
+        finally:
+            painter.restore() # RESTORE 2
+            logging.info(f"Strand {self.layer_name}: After shadow restore()")
 
         # Only draw highlight if this is not a MaskedStrand
         if self.is_selected and not isinstance(self, MaskedStrand):
@@ -778,11 +782,13 @@ class Strand:
         fill_path = fill_stroker.createStroke(path)
 
         # Draw the stroke path with the stroke color
+        logging.info(f"Strand {self.layer_name}: Before drawing stroke_path")
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.stroke_color)
         painter.drawPath(stroke_path)
 
         # Draw the fill path with the strand's color
+        logging.info(f"Strand {self.layer_name}: Before drawing fill_path")
         painter.setBrush(self.color)
         painter.drawPath(fill_path)
 
@@ -803,27 +809,22 @@ class Strand:
         if self.end_line_visible:
             painter.drawLine(self.end_line_start, self.end_line_end)
 
-        painter.restore()
-
         # Draw the selection path
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-
+        painter.save() # SAVE 3
         selection_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
         painter.setPen(selection_pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.get_selection_path())  # Use get_selection_path to show selection area
         painter.drawPath(path)
-        painter.restore()
+        painter.restore() # RESTORE 3
 
         # Draw the selection path for debugging
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.save() # SAVE 4
         debug_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
         painter.setPen(debug_pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.get_selection_path())
-        painter.restore()
+        painter.restore() # RESTORE 4
         # Draw the circles at connection points
         for i, has_circle in enumerate(self.has_circles):
             # --- REPLACE WITH THIS SIMPLE CHECK ---
@@ -833,7 +834,7 @@ class Strand:
             # --- END REPLACE ---
             
             # Save painter state (Original line)
-            painter.save()
+            painter.save() # SAVE 5
             
             center = self.start if i == 0 else self.end
             
@@ -903,7 +904,7 @@ class Strand:
             painter.drawPath(c_shape_path)
             
             # Restore painter state
-            painter.restore()
+           
         # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
         # This prevents duplicate drawing of control points
         # By keeping the try-except for compatibility but disabling the actual drawing
@@ -1082,13 +1083,11 @@ class Strand:
             painter.drawImage(0, 0, temp_image)
             temp_painter.end()
 
-        painter.restore()
-
         # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
         from attached_strand import AttachedStrand
         # Start endpoint half-circle
         if any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
-            painter.save()
+            painter.save() # SAVE 6
             temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
             temp_painter = QPainter(temp_image)
@@ -1127,11 +1126,11 @@ class Strand:
 
             painter.drawImage(0, 0, temp_image)
             temp_painter.end()
-            painter.restore()
+            painter.restore() # RESTORE 6
 
         # End endpoint half-circle
         if any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
-            painter.save()
+            painter.save() # SAVE 7
             temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
             temp_painter = QPainter(temp_image)
@@ -1170,7 +1169,10 @@ class Strand:
 
             painter.drawImage(0, 0, temp_image)
             temp_painter.end()
-            painter.restore()
+            painter.restore() # RESTORE 7
+
+        # Ensure the initial save is restored
+        painter.restore() # RESTORE 1
 
     def remove_attached_strands(self):
         """Recursively remove all attached strands."""

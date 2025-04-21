@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Optimized Drawing Bug Fix: Connected Strands Disappearing During Move
+
+This rule details a specific bug encountered with the optimized drawing logic in `MoveMode` ([`src/move_mode.py`](mdc:src/move_mode.py)) and its resolution.
+
+## Bug Scenario
+
+1.  Strand `1_1` is created.
+2.  Strand `1_2` is created, attached to the *start* point of `1_1`.
+3.  The layer order is manually changed so that `1_1` is listed (and thus drawn) *above* `1_2`.
+4.  The user clicks and drags the shared starting point of `1_1` and `1_2`.
+5.  **Result:** Strand `1_1` visually disappears during the drag operation and potentially remains invisible after releasing the mouse.
+
+## Root Cause (Flawed Logic)
+
+The `optimized_paint_event` aims to speed up drawing by caching static elements.
+
+*   **Incorrect Identification:** When the shared point was clicked, the previous logic incorrectly added *both* `1_1` and `1_2` to the `truly_moving_strands` list because both were geometrically affected.
+*   **Empty Cache:** The code then tried to create a background cache containing all strands *except* those in `truly_moving_strands`. Since both `1_1` and `1_2` were marked as moving, the list of static strands to cache became empty.
+*   **Drawing Order Issue:** The `optimized_paint_event` drew the (empty) cache, then drew `1_1` (the top layer), and finally drew `1_2` over `1_1` onto the empty background, making `1_1` invisible.
+
+## Corrected Logic
+
+The fix involves differentiating between the strand being directly dragged and those that are merely connected:
+
+1.  **`truly_moving_strands`:** This list (stored on the canvas) now **only** contains the single strand whose point was *directly clicked* (in this scenario, `1_1`, as it was higher in the layer order and thus the primary `affected_strand`).
+2.  **`affected_strands_for_drawing`:** This list (also on the canvas) includes the `truly_moving_strand` (`1_1`) *plus* all connected strands (`1_2`). This list is used to calculate the repaint area.
+3.  **Cache Generation:** When generating the `background_cache`, `static_strands` are correctly identified as all strands *except* the single `truly_moving_strand` (`1_1`). Therefore, the connected strand (`1_2`) is now drawn into the cache.
+4.  **Final Draw:** The `optimized_paint_event` draws the cache (containing the background and `1_2`), and then draws only the `truly_moving_strand` (`1_1`) on top.
+
+## Key Functions Implementing the Fix
+
+*   **`start_movement` ([`src/move_mode.py`](mdc:src/move_mode.py))**: Now correctly initializes `truly_moving_strands` with only the clicked strand and `affected_strands_for_drawing` with all geometrically affected strands.
+*   **`update_strand_position` ([`src/move_mode.py`](mdc:src/move_mode.py))**: Maintains the correct separation between these two lists while updating geometry for all affected strands.
+*   **`optimized_paint_event` (within `_setup_optimized_paint_handler` in [`src/move_mode.py`](mdc:src/move_mode.py))**: Uses the corrected lists to perform the cached drawing properly.
+
+
+

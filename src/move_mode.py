@@ -1610,34 +1610,26 @@ class MoveMode:
         moving_point = strand.start if side == 0 else strand.end
         connected_strand = self.find_connected_strand(strand, side, moving_point)
         
-        # --- NEW CODE: Initialize truly_moving_strands at start of movement ---
-        # Create an initial list with the affected strand
-        truly_moving_strands = [strand]
-        
-        # If moving a start point and strand has attached strands, check for shared starting points
-        if side == 0 and hasattr(strand, 'attached_strands'):
-            moving_point = strand.start
-            
-            # Find attached strands sharing the same starting point
-            for attached in strand.attached_strands:
-                # Check if attached strand shares same starting point
-                if (self.points_are_close(attached.start, moving_point) or 
-                    self.points_are_close(attached.end, moving_point)):
-                    
-                    # Add to truly_moving_strands if not already there
-                    if attached not in truly_moving_strands:
-                        truly_moving_strands.append(attached)
-                        logging.info(f"MoveMode: Added attached strand {attached.layer_name} sharing start point to truly_moving_strands")
-        
-        # Also add the connected strand found earlier
-        if connected_strand and connected_strand not in truly_moving_strands:
-            truly_moving_strands.append(connected_strand)
-            logging.info(f"MoveMode: Added connected strand {connected_strand.layer_name} to truly_moving_strands")
-            
+        # --- REVISED CODE: Initialize truly_moving_strands at start of movement ---
+        truly_moving_strands = [strand] # Start with the strand being directly interacted with
+        moving_point_coord = strand.start if side == 0 else strand.end # Define the point being moved
+
+        # Explicitly check ALL other strands for shared points at the moving coordinate
+        for other_strand in self.canvas.strands:
+            if other_strand == strand: # Skip self
+                continue
+            # Check if the other strand shares the start or end point being moved
+            if self.points_are_close(other_strand.start, moving_point_coord) or \
+               self.points_are_close(other_strand.end, moving_point_coord):
+                if other_strand not in truly_moving_strands:
+                    truly_moving_strands.append(other_strand)
+                    logging.info(f"MoveMode: Added strand {other_strand.layer_name} sharing moving point {moving_point_coord} to truly_moving_strands")
+
         # Store the list on the canvas for use in optimized_paint_event
         self.canvas.truly_moving_strands = truly_moving_strands
+        # Ensure affected_strands_for_drawing also contains all truly moving strands initially
         self.canvas.affected_strands_for_drawing = list(truly_moving_strands)
-        # --- END NEW CODE ---
+        # --- END REVISED CODE ---
 
         # Control point movement specific handling
         if self.is_moving_control_point:

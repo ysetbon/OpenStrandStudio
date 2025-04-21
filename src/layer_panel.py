@@ -1045,7 +1045,7 @@ class LayerPanel(QWidget):
             if i < len(self.canvas.strands) and isinstance(self.canvas.strands[i], MaskedStrand):
                 # Reconnect our customContextMenuRequested 
                 button.customContextMenuRequested.connect(
-                    lambda pos, idx=i: self.show_layer_context_menu(idx, pos)
+                    lambda pos, idx=i: self.show_masked_layer_context_menu(idx, pos)
                 )
 
         self.enable_controls()
@@ -1059,12 +1059,6 @@ class LayerPanel(QWidget):
         logging.info("Exited mask edit mode")
         self.show_notification(_['mask_edit_mode_exited'])
         self.update()
-
-        # --- ADD: Save state after exiting mask edit mode ---
-        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            logging.info("Saving state after exiting mask edit mode.")
-            self.undo_redo_manager.save_state()
-        # --- END ADD ---
 
     def disable_controls(self):
         """Disable controls that shouldn't be used during mask editing."""

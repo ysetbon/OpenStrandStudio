@@ -1446,6 +1446,11 @@ class MoveMode:
         Returns:
             bool: True if the strand was moved, False otherwise.
         """
+        # --- ADDED: Skip MaskedStrand instances for direct endpoint movement ---
+        if isinstance(strand, MaskedStrand):
+            return False
+        # --- END ADDED ---
+
         # Get selection areas
         start_area = self.get_start_area(strand)
         end_area = self.get_end_area(strand)
@@ -1615,15 +1620,24 @@ class MoveMode:
         moving_point_coord = strand.start if side == 0 else strand.end # Define the point being moved
 
         # Explicitly check ALL other strands for shared points at the moving coordinate
-        for other_strand in self.canvas.strands:
-            if other_strand == strand: # Skip self
-                continue
-            # Check if the other strand shares the start or end point being moved
-            if self.points_are_close(other_strand.start, moving_point_coord) or \
-               self.points_are_close(other_strand.end, moving_point_coord):
-                if other_strand not in truly_moving_strands:
-                    truly_moving_strands.append(other_strand)
-                    logging.info(f"MoveMode: Added strand {other_strand.layer_name} sharing moving point {moving_point_coord} to truly_moving_strands")
+        # UNLESS the initially clicked strand is a MaskedStrand (its components are handled separately)
+        if not isinstance(strand, MaskedStrand): # Check if the *initiating* strand is NOT a MaskedStrand
+            for other_strand in self.canvas.strands:
+                if other_strand == strand: # Skip self
+                    continue
+                # --- ADDED: Skip MaskedStrand instances ---
+                if isinstance(other_strand, MaskedStrand):
+                    continue
+                # --- END ADDED ---
+                # Check if the other strand shares the start or end point being moved
+                if self.points_are_close(other_strand.start, moving_point_coord) or \
+                   self.points_are_close(other_strand.end, moving_point_coord):
+                    if other_strand not in truly_moving_strands:
+                        truly_moving_strands.append(other_strand)
+                        logging.info(f"MoveMode: Added strand {other_strand.layer_name} sharing moving point {moving_point_coord} to truly_moving_strands (initiated by non-masked strand)")
+        # If the initiating strand *was* a MaskedStrand, truly_moving_strands remains just [MaskedStrand],
+        # and its components will be handled by the MaskedStrand-specific move logic.
+
 
         # Store the list on the canvas for use in optimized_paint_event
         self.canvas.truly_moving_strands = truly_moving_strands
@@ -1740,17 +1754,35 @@ class MoveMode:
                 moving_point_coord = self.affected_strand.end
 
             if moving_point_coord:
+                # Check for connected strands using the layer state manager
+                connected_strand_names = set()
+                if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                    connections = self.canvas.layer_state_manager.getConnections()
+                    connected_strand_names = set(connections.get(self.affected_strand.layer_name, []))
+                    # Also check the reverse connection
+                    for name, connected_list in connections.items():
+                         if self.affected_strand.layer_name in connected_list:
+                              connected_strand_names.add(name)
+
                 for other_strand in self.canvas.strands:
                     if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
                         continue
-                    if self.points_are_close(other_strand.start, moving_point_coord) or \
-                       self.points_are_close(other_strand.end, moving_point_coord):
+
+                    # Check if points are close
+                    points_close = (self.points_are_close(other_strand.start, moving_point_coord) or \
+                                    self.points_are_close(other_strand.end, moving_point_coord))
+
+                    # Check if they are connected according to the state manager
+                    is_manager_connected = other_strand.layer_name in connected_strand_names
+
+                    # Only add if points are close AND they are explicitly connected via the manager
+                    if points_close and is_manager_connected:
                         connected_strands_at_moving_point.add(other_strand)
-                        # --- CORRECTED: Don't add to truly moving here --- 
-                        # if other_strand not in truly_moving_strands: # Add to truly moving
-                        #     truly_moving_strands.append(other_strand)
-                        # --- END CORRECTION ---
-                        affected_strands.add(other_strand) # Ensure it's also in affected
+                        affected_strands.add(other_strand)
+                        logging.info(f"MoveMode (Update Pos): Adding {other_strand.layer_name} to affected (points close AND manager connected to {self.affected_strand.layer_name})")
+                    elif points_close:
+                         # Optional: Log when points are close but not connected
+                         logging.info(f"MoveMode (Update Pos): Points close for {other_strand.layer_name}, but not manager-connected to {self.affected_strand.layer_name}. Not adding to affected.")
         # --- End finding and including connected strands ---
 
         # --- NEW BLOCK: Explicitly include attached strands sharing the same starting point ---
@@ -1763,6 +1795,7 @@ class MoveMode:
                     # if attached_strand not in truly_moving_strands:
                     #     truly_moving_strands.append(attached_strand) # Add to the list for drawing
                     # --- END CORRECTION ---
+                    
                     affected_strands.add(attached_strand) # Ensure it's also in affected
                     # Corrected Log Message:
                     logging.info(f"MoveMode (Update Pos): Added attached strand {attached_strand.layer_name} sharing start point to affected_strands.")
@@ -2629,6 +2662,12 @@ class MoveMode:
         Args:
             event (QMouseEvent): The mouse event.
         """
+        # --- ADDED: Log current state on move ---
+        import logging
+        if self.is_moving:
+            logging.info(f"MouseMove Check: Affected={self.affected_strand.layer_name if self.affected_strand else 'None'}, Side={self.moving_side}")
+        # --- END ADDED ---
+
         # If we're not in a moving state, do nothing
         if not self.is_moving:
             return

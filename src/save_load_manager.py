@@ -112,9 +112,12 @@ def serialize_strand(strand, canvas, index=None):
     return data
 
 def save_strands(strands, groups, filename, canvas):
+    selected_strand_name = canvas.selected_strand.layer_name if canvas.selected_strand else None
+    logging.info(f"Saving state with selected strand: {selected_strand_name}")
     data = {
         "strands": [serialize_strand(strand, canvas, i) for i, strand in enumerate(strands)],
         "groups": serialize_groups(groups),
+        "selected_strand_name": selected_strand_name,  # Add selected strand name
     }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
@@ -316,6 +319,8 @@ def load_strands(filename, canvas):
         data = json.load(f)
 
     logging.info(f"Starting to load strands from {filename}")
+    selected_strand_name = data.get("selected_strand_name", None) # Get selected strand name
+    logging.info(f"Loaded selected strand name from file: {selected_strand_name}")
 
     # Initialize collections
     strands = [None] * len(data["strands"])  # Pre-allocate list with correct size
@@ -560,7 +565,7 @@ def load_strands(filename, canvas):
         canvas.repaint()
     logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
 
-    return strands, data.get("groups", {})
+    return strands, data.get("groups", {}), selected_strand_name # Return selected strand name
 
 
 def apply_loaded_strands(canvas, strands, groups):

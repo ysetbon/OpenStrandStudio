@@ -636,6 +636,11 @@ class Strand:
             # Standard cubic Bézier with 2 control points
             p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
+            # Ensure points are valid before calculation
+            if p0 is None or p1 is None or p2 is None or p3 is None:
+                 logging.error(f"Strand {self.layer_name}: Found None control point(s) in point_at. p0={p0}, p1={p1}, p2={p2}, p3={p3}")
+                 return QPointF(0, 0) # Or handle error appropriately
+
             x = (
                 (1 - t) ** 3 * p0.x() +
                 3 * (1 - t) ** 2 * t * p1.x() +
@@ -655,6 +660,12 @@ class Strand:
         # Always use the standard cubic Bézier with 2 control points for tangent calculation
         # This ensures consistent C-shape calculations regardless of third control point status
         p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+
+        # Ensure points are valid before calculation
+        if p0 is None or p1 is None or p2 is None or p3 is None:
+            logging.error(f"Strand {self.layer_name}: Cannot calculate tangent due to None point(s): p0={p0}, p1={p1}, p2={p2}, p3={p3}")
+            # Return a default zero vector or handle appropriately
+            return QPointF(0, 0) 
 
         # Compute the derivative at parameter t
         tangent = (

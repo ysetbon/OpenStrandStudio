@@ -845,6 +845,11 @@ class UndoRedoManager(QObject):
             # Make sure buttons are properly updated
             self._update_button_states()
 
+            # --- ADD LOGGING FOR SELECTED STRAND ---
+            selected_strand_after_undo = getattr(self.canvas, 'selected_strand', None)
+            logging.info(f"UNDO: Selected strand after undo: {selected_strand_after_undo.layer_name if selected_strand_after_undo else 'None'}")
+            # --- END LOGGING ---
+
             # Additional logging to track what's being refreshed
             logging.info("Refreshing UI after undo operation")
             
@@ -1112,6 +1117,11 @@ class UndoRedoManager(QObject):
 
             # Make sure buttons are properly updated
             self._update_button_states()
+
+            # --- ADD LOGGING FOR SELECTED STRAND ---
+            selected_strand_after_redo = getattr(self.canvas, 'selected_strand', None)
+            logging.info(f"REDO: Selected strand after redo: {selected_strand_after_redo.layer_name if selected_strand_after_redo else 'None'}")
+            # --- END LOGGING ---
 
             # Try to simulate a refresh button click (preferred method)
             if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
@@ -1522,7 +1532,9 @@ class UndoRedoManager(QObject):
                 logging.info(f"Found {group_count} groups in file: {group_names}")
             
             # Load the data using the normal method
-            loaded_strands, loaded_groups_data = load_strands(filename, self.canvas)
+            # --- MODIFIED: Receive selected_strand_name --- 
+            loaded_strands, loaded_groups_data, selected_strand_name = load_strands(filename, self.canvas)
+            # --- END MODIFIED ---
             state_has_groups = bool(loaded_groups_data)
             logging.info(f"Loaded {len(loaded_strands)} strands and {len(loaded_groups_data)} groups")
             logging.info(f"State has groups according to loaded_groups_data: {state_has_groups}")
@@ -1562,6 +1574,31 @@ class UndoRedoManager(QObject):
                       strand.set_canvas(self.canvas)
                  # Add any other necessary post-load initialization for strands here
                  
+            # --- NEW: Restore selection AFTER applying strands --- 
+            if selected_strand_name:
+                found_selected_strand = None
+                found_selected_index = -1
+                for i, strand in enumerate(self.canvas.strands):
+                    if strand.layer_name == selected_strand_name:
+                        found_selected_strand = strand
+                        found_selected_index = i
+                        break
+                if found_selected_strand:
+                    self.canvas.selected_strand = found_selected_strand
+                    self.canvas.selected_strand_index = found_selected_index
+                    self.canvas.selected_strand.is_selected = True
+                    logging.info(f"Restored selection to strand: {selected_strand_name} at index {found_selected_index}")
+                else:
+                    logging.warning(f"Could not find previously selected strand {selected_strand_name} after loading state.")
+                    self.canvas.selected_strand = None
+                    self.canvas.selected_strand_index = None
+            else:
+                # No selection saved, ensure canvas selection is cleared
+                self.canvas.selected_strand = None
+                self.canvas.selected_strand_index = None
+                logging.info("No selected strand name found in loaded state. Cleared selection.")
+            # --- END NEW --- 
+            
             # --- Step 3: Refresh UI Panels --- 
             # Refresh layer panel based on the new self.canvas.strands
             logging.info("Refreshing Layer Panel UI...")

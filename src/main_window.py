@@ -1799,25 +1799,19 @@ class MainWindow(QMainWindow):
 
 
     def keyPressEvent(self, event):
-        super().keyPressEvent(event)
-        self.layer_panel.keyPressEvent(event)
-        
+        """Handle key press events, specifically Escape to exit mask edit mode."""
         if event.key() == Qt.Key_Escape:
-            # If we're in mask edit mode, exit it
-            if self.canvas.mask_edit_mode:
-                self.exit_mask_edit_mode()
-                # Use translated message from the current language
+            # Check if we are in mask edit mode using the layer panel's flag
+            if hasattr(self, 'layer_panel') and self.layer_panel.mask_editing:
+                logging.info("Escape key pressed in mask edit mode - exiting.")
+                self.layer_panel.exit_mask_edit_mode()
                 _ = translations[self.language_code]
-                self.statusBar().showMessage(_['mask_edit_mode_exited'], 2000)
-        elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
-            if self.canvas.selected_strand and not isinstance(self.canvas.selected_strand, MaskedStrand):
-                self.toggle_angle_adjust_mode()
-            elif self.canvas.selected_strand and isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
-        elif self.canvas.is_angle_adjusting:
-            self.canvas.angle_adjust_mode.handle_key_press(event)
-        elif event.key() == Qt.Key_M and event.modifiers() == Qt.ControlModifier:
-            self.set_mask_mode()
+                self.canvas.exit_mask_edit_mode()
+                event.accept() # Indicate the event was handled
+                return # Stop further processing
+
+        # Call the base class implementation for other keys
+        super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         super().keyReleaseEvent(event)

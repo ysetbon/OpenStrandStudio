@@ -51,6 +51,79 @@ except Exception as e:
     print(f"Error setting up MoveMode file logging: {e}") # Basic error handling
 # --- End of MoveMode logging section ---
 
+# --- Add this section for Undo/Redo specific logging ---
+class UndoRedoFilter(logging.Filter):
+    """Filters log records to include only those from undo_redo_manager.py and related to UNDO/REDO actions."""
+    def filter(self, record):
+        # Normalize path for reliable comparison across OS
+        undo_redo_path_part = os.path.normpath(os.path.join('src', 'undo_redo_manager.py'))
+        # Check if the log record's pathname ends with the target file path
+        is_from_undo_redo_manager = record.pathname.endswith(undo_redo_path_part)
+        # Check if the message starts with "UNDO:" or "REDO:"
+        is_undo_redo_action = record.getMessage().startswith(("UNDO:", "REDO:"))
+        return is_from_undo_redo_manager and is_undo_redo_action
+
+try:
+    # Define the log file name
+    undo_redo_log_file = 'undo_redo.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(undo_redo_log_file):
+            os.remove(undo_redo_log_file)
+            logging.info(f"Removed existing log file: {undo_redo_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {undo_redo_log_file}: {e}")
+
+    # Create a specific handler for Undo/Redo logs, overwriting the file each run ('w')
+    undo_redo_handler = logging.FileHandler(undo_redo_log_file, mode='w')
+
+    # Apply the filter to the handler
+    undo_redo_handler.addFilter(UndoRedoFilter())
+
+    # Add the configured handler to the root logger
+    logging.getLogger().addHandler(undo_redo_handler)
+
+    logging.info("Undo/Redo logging configured to output to undo_redo.log") # Confirmation message
+
+except Exception as e:
+    print(f"Error setting up Undo/Redo file logging: {e}") # Basic error handling
+# --- End of Undo/Redo logging section ---
+
+# --- Add this section for Strand Creation specific logging ---
+class StrandCreationFilter(logging.Filter):
+    """Filters log records to include only those related to strand creation."""
+    def filter(self, record):
+        # Check if the message starts with "Strand Creation:"
+        return record.getMessage().startswith("Strand Creation:")
+
+try:
+    # Define the log file name
+    strand_creation_log_file = 'strand_creation.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(strand_creation_log_file):
+            os.remove(strand_creation_log_file)
+            logging.info(f"Removed existing log file: {strand_creation_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {strand_creation_log_file}: {e}")
+
+    # Create a specific handler for Strand Creation logs, overwriting the file each run ('w')
+    strand_creation_handler = logging.FileHandler(strand_creation_log_file, mode='w')
+
+    # Apply the filter to the handler
+    strand_creation_handler.addFilter(StrandCreationFilter())
+
+    # Add the configured handler to the root logger
+    logging.getLogger().addHandler(strand_creation_handler)
+
+    logging.info("Strand Creation logging configured to output to strand_creation.log") # Confirmation message
+
+except Exception as e:
+    print(f"Error setting up Strand Creation file logging: {e}") # Basic error handling
+# --- End of Strand Creation logging section ---
+
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 

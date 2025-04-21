@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Strand Creation Logging
+
+## Overview
+The final start and end coordinates of newly created strands are logged upon creation.
+
+## Implementation
+-   Strand creation (both the first strand of a set and attached strands) is primarily handled by the `AttachMode` defined in [src/attach_mode.py](mdc:src/attach_mode.py).
+-   The `mouseReleaseEvent` within `AttachMode` finalizes the strand creation after the user finishes dragging.
+-   Inside `mouseReleaseEvent`, there are two blocks where logging occurs:
+    -   One block handles the finalization of the *first* strand in a set (`if self.canvas.is_first_strand:`).
+    -   Another block handles the finalization of *attached* strands (`if self.is_attaching and self.canvas.current_strand:`).
+-   In both blocks, after the `strand_created` signal is emitted, a check (`if strand_ref:`) ensures a valid strand object exists before logging.
+-   The log message format is: `Strand Creation: Name={strand_ref.layer_name}, Start={strand_ref.start}, End={strand_ref.end}`
+
+## Log File
+-   These specific "Strand Creation:" messages are filtered and written exclusively to `strand_creation.log`, as configured in [src/main.py](mdc:src/main.py).
+

@@ -356,6 +356,13 @@ class AttachMode(QObject):
         if self.canvas.is_first_strand:
             # If it's the first strand and it has a non-zero length, create it
             if self.canvas.current_strand and self.canvas.current_strand.start != self.canvas.current_strand.end:
+                # --- ADD LOGGING FOR STRAND CREATION ---
+                strand_ref = self.canvas.current_strand
+                # Check *before* accessing attributes for logging
+                if strand_ref:
+                    logging.info(f"Strand Creation: Name={strand_ref.layer_name}, Start={strand_ref.start}, End={strand_ref.end}")
+                # --- END LOGGING ---
+                
                 self.strand_created.emit(self.canvas.current_strand)
                 self.canvas.is_first_strand = False
                 
@@ -363,6 +370,13 @@ class AttachMode(QObject):
         else:
             # If we're attaching a strand, create it
             if self.is_attaching and self.canvas.current_strand:
+                # --- ADD LOGGING FOR STRAND CREATION ---
+                strand_ref = self.canvas.current_strand
+                # Check *before* accessing attributes for logging
+                if strand_ref:
+                    logging.info(f"Strand Creation: Name={strand_ref.layer_name}, Start={strand_ref.start}, End={strand_ref.end}")
+                # --- END LOGGING ---
+                
                 self.strand_created.emit(self.canvas.current_strand)
                 
                 # State saving will be handled by the enhanced mouseReleaseEvent in undo_redo_manager.py
@@ -371,7 +385,8 @@ class AttachMode(QObject):
         
         # Reset all properties including affected_strand
         self.affected_strand = None
-        self.canvas.current_strand = None
+        # Ensure current_strand is set to None *after* potential logging
+        self.canvas.current_strand = None 
         self.move_timer.stop()
         self.start_pos = None
         self.current_end = None

@@ -2410,7 +2410,13 @@ class StrandDrawingCanvas(QWidget):
             # Add this line to emit the strand_created signal
             # This is crucial for updating the layer_state_manager and enabling proper shading
             self.strand_created.emit(new_strand)
-            
+
+            # --- ADD LOGGING FOR STRAND CREATION (Button initiated) ---
+            # Check *before* accessing attributes for logging
+            if new_strand:
+                logging.info(f"Strand Creation: Name={new_strand.layer_name}, Start={new_strand.start}, End={new_strand.end}")
+            # --- END LOGGING ---
+
             logging.info(f"Created and selected new main strand: {new_strand.layer_name}, index: {new_strand_index}")
         else:
             logging.warning("Attempted to finalize new strand without valid start and end points")
@@ -3864,3 +3870,38 @@ class StrandDrawingCanvas(QWidget):
         """Check if two QRectF objects overlap."""
         return rect1.intersects(rect2)
 
+        # Add these new methods
+    def enter_mask_edit_mode(self, strand_index):
+        """Enter mask editing mode for the specified masked strand."""
+        if 0 <= strand_index < len(self.strands):
+            strand = self.strands[strand_index]
+            if isinstance(strand, MaskedStrand):
+                self.mask_edit_mode = True
+                self.editing_masked_strand = strand
+                self.mask_edit_path = strand.get_mask_path()
+                self.setCursor(Qt.CrossCursor)
+                self.erase_start_pos = None
+                self.current_erase_rect = None
+                self.setFocus()  # Explicitly set focus when entering mask edit mode
+                logging.info(f"Entered mask edit mode for strand {strand_index}")
+                self.update()
+
+    def exit_mask_edit_mode(self):
+        """Exit mask editing mode."""
+        if self.mask_edit_mode:
+            self.mask_edit_mode = False
+            self.editing_masked_strand = None
+            self.mask_edit_path = None
+            self.erase_start_pos = None
+            self.current_erase_rect = None
+            self.setCursor(Qt.ArrowCursor)
+            logging.info("Exited mask edit mode")
+            
+            # Get the parent window directly through the stored reference
+            if hasattr(self, 'parent_window'):
+                self.parent_window.exit_mask_edit_mode()
+            
+            # Emit signal to notify layer panel
+            self.mask_edit_exited.emit()
+            
+            self.update()

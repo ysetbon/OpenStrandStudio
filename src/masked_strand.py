@@ -119,7 +119,7 @@ class MaskedStrand(Strand):
             return QPainterPath()
 
         # Get the base paths for both strands - always fresh calculation
-        shadow_width_offset = 10  # Use consistent shadow size
+        shadow_width_offset = 0  # Use consistent shadow size
 
         # Get fresh paths from both strands
         path1 = self.first_selected_strand.get_path()
@@ -431,7 +431,7 @@ class MaskedStrand(Strand):
                     if not path_shadow.isEmpty():
                             # Get the base paths for both strands
                         # Use moderate shadow size for realistic effect
-                        shadow_width_offset = 20  # Adjusted from 20 for more realistic effect
+                        shadow_width_offset = 9  # Adjusted from 20 for more realistic effect
 
                         path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                         shadow_stroker = QPainterPathStroker()

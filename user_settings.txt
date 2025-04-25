@@ -1,5 +1,5 @@
-Theme: dark
+Theme: default
 Language: en
-ShadowColor: 0,0,0,153
+ShadowColor: 0,0,0,145
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true

@@ -453,9 +453,9 @@ class SettingsDialog(QDialog):
         blur_radius_layout = QHBoxLayout()
         self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
         self.blur_radius_spinbox = QDoubleSpinBox()
-        self.blur_radius_spinbox.setRange(0.0, 100.0)
-        self.blur_radius_spinbox.setSingleStep(1.0)
-        self.blur_radius_spinbox.setDecimals(1)
+        self.blur_radius_spinbox.setRange(0.0, 99.0)
+        self.blur_radius_spinbox.setSingleStep(0.01)
+        self.blur_radius_spinbox.setDecimals(2)
         self.blur_radius_spinbox.setValue(self.max_blur_radius)
         self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 40.0)")
         blur_radius_layout.addWidget(self.blur_radius_label)

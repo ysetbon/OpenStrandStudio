@@ -177,7 +177,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
                         other_path = get_proper_masked_strand_path(other)
                     else:
                         o_stroker = QPainterPathStroker()
-                        o_stroker.setWidth(other.width + other.stroke_width * 2)
+                        o_stroker.setWidth(other.width + other.stroke_width * 2 + max_blur_radius)
                         o_stroker.setJoinStyle(Qt.MiterJoin)
                         o_stroker.setCapStyle(Qt.FlatCap)
                         other_path = o_stroker.createStroke(other.get_path())
@@ -198,7 +198,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
         if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
             s_first = strand.first_selected_strand
             stroker_crop = QPainterPathStroker()
-            stroker_crop.setWidth(s_first.width + s_first.stroke_width * 2)
+            stroker_crop.setWidth(s_first.width + s_first.stroke_width * 2 )
             stroker_crop.setJoinStyle(Qt.MiterJoin)
             stroker_crop.setCapStyle(Qt.FlatCap)
             first_stroke_path = stroker_crop.createStroke(s_first.get_path())
@@ -206,8 +206,21 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
             if not first_stroke_path.isEmpty():
                 clip_path = clip_path.subtracted(first_stroke_path)
                 logging.info("Cropped masked shadow by first_selected_strand area")
+        # 2. Keep only the second_selected_strand area
+        if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
+            s_second = strand.second_selected_strand
+            stroker_crop2 = QPainterPathStroker()
+            stroker_crop2.setWidth(s_second.width + s_second.stroke_width * 2)
+            stroker_crop2.setJoinStyle(Qt.MiterJoin)
+            stroker_crop2.setCapStyle(Qt.FlatCap)
+            second_stroke_path = stroker_crop2.createStroke(s_second.get_path())
 
-        # 2. Crop out deletion rectangles (if any)
+            if not second_stroke_path.isEmpty():
+                clip_path = (clip_path.intersected(second_stroke_path)
+                             if not clip_path.isEmpty()
+                             else second_stroke_path)
+            logging.info("Restricted masked shadow to second_selected_strand area")
+        # 3. Crop out deletion rectangles (if any)
         if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
             deletion_union = QPainterPath()
             for rect in strand.deletion_rectangles:
@@ -321,10 +334,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
     
     # Normal strand handling - use helper function to get proper path for any type of strand
     path = get_proper_masked_strand_path(strand)
-    shadow_width = 0
+    shadow_width = max_blur_radius
     # Create base shadow path without circles first
     shadow_stroker = QPainterPathStroker()
-    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2 + shadow_width)
+    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2)
     shadow_stroker.setJoinStyle(Qt.MiterJoin)
     shadow_stroker.setCapStyle(Qt.FlatCap)
     shadow_path = shadow_stroker.createStroke(path)
@@ -430,7 +443,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                 continue
             # Prevent shadow calculation if the other strand is a component of the *same* masked strand
             # (This check is redundant if part_of_same_visible_mask check is working correctly, but kept for safety)
-            # Check if other_strand is a component of any masked strand
+            # Check if other strand is a component of any masked strand
      
                     
             # Skip if other strand isn't in layer order
@@ -550,10 +563,16 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         width_masked_strand = max_blur_radius
-                        # --- NEW MASK SUBTRACTION LOGIC (Moved to draw_mask_strand_shadow      ) ---
+                        # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
-                        # If so, subtract the mask's area from the calculated combined shadow path.
-                        if not combined_shadow_path.isEmpty(): # Check if there's any shadow to modify
+                        # If so, subtract the mask's area from the calculated intersection BEFORE adding it
+                        # to the combined shadow path for this specific underlying strand.
+                        # This ensures the mask blocks shadow *only* where it covers the specific intersection.
+
+                        # Create a temporary path for the current intersection to modify
+                        current_intersection_shadow = QPainterPath(intersection)
+
+                        if not current_intersection_shadow.isEmpty(): # Check if there's any shadow intersection to modify
                             for mask_name_sub, mask_info_sub in masked_strands_map.items():
                                 mask_strand_sub = mask_info_sub['masked_strand']
                                 mask_layer_sub = mask_name_sub # Assuming mask_name is the layer name
@@ -564,93 +583,62 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
 
                                     mask_index_sub = layer_order.index(mask_layer_sub)
 
-                                    # Only subtract the mask if either the casting strand (this_layer)
-                                    # or the underlying strand (other_layer) is actually a component of
-                                    # that mask.  This prevents *unrelated* masks that merely happen to be
-                                    # stacked above the caster from removing its shadow.
-                                    if (mask_index_sub > self_index):
+                                    # Only subtract the mask if it is physically above the casting strand.
+                                    # We removed the check `and (other_layer in mask_info_sub['components'] or this_layer in mask_info_sub['components'])`
+                                    # so that *any* mask above blocks the shadow in its area.
+                                    if mask_index_sub > self_index:
 
                                         try:
-                                            # --- Calculate the path for subtraction CONSISTENTLY with mask shadow clipping ---
-                                            # Get the union of the stroked paths of the mask's components.
+                                            # Calculate the path for subtraction by simulating the mask's "blurred" area.
+                                            # We use the intersection of the mask's components, but stroked with max_blur_radius
+                                            # added, similar to shadow clipping logic.
                                             subtraction_path = QPainterPath()
-                                            subtraction_path_first = QPainterPath()
-                                            subtraction_path_second = QPainterPath()
-                                            if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand:
+                                            if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand and \
+                                               hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
+
                                                 s1 = mask_strand_sub.first_selected_strand
+                                                s2 = mask_strand_sub.second_selected_strand
+
+                                                # Calculate widened strokes for both components
                                                 stroker1 = QPainterPathStroker()
-                                                # Use consistent width calculation like in draw_mask_strand_shadow clipping?
-                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 + width_masked_strand) # Keep original offset for now
+                                                # Add max_blur_radius to simulate the blurred area
+                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 +max_blur_radius/2)
                                                 stroker1.setJoinStyle(Qt.MiterJoin)
                                                 stroker1.setCapStyle(Qt.FlatCap)
-                                                first_path = stroker1.createStroke(s1.get_path())
-                                                if subtraction_path_first.isEmpty():
-                                                    subtraction_path_first = first_path
-                                                else:
-                                                    subtraction_path_first = subtraction_path_first.united(first_path)
+                                                path1 = stroker1.createStroke(s1.get_path())
 
-
-                                            if hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
-                                                s2 = mask_strand_sub.second_selected_strand
                                                 stroker2 = QPainterPathStroker()
-                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 + width_masked_strand) # Keep original width calc for now
+                                                # Add max_blur_radius to simulate the blurred area
+                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 +max_blur_radius/2)
                                                 stroker2.setJoinStyle(Qt.MiterJoin)
                                                 stroker2.setCapStyle(Qt.FlatCap)
-                                                second_path = stroker2.createStroke(s2.get_path())
-                                                if subtraction_path_second.isEmpty():
-                                                    subtraction_path_second = second_path
-                                                else:
-                                                    subtraction_path_second = subtraction_path_second.united(second_path)
+                                                path2 = stroker2.createStroke(s2.get_path())
 
-                                            if subtraction_path_first.isEmpty() and subtraction_path_second.isEmpty():
-                                                 logging.warning(f"Could not calculate component union path for mask '{mask_layer_sub}', subtraction might be skipped or incorrect.")
-                                            # --- End of consistent path calculation ---
+                                                # Use the intersection of these widened paths as the subtraction area
+                                                subtraction_path = path1.intersected(path2)
 
-                                            if not subtraction_path_first.isEmpty() and not subtraction_path_second .isEmpty():
-                                                original_rect = combined_shadow_path.boundingRect()
-                                                combined_shadow_path = combined_shadow_path.subtracted(subtraction_path_first.intersected(subtraction_path_second)) # Apply to combined_shadow_path
-                                                new_rect = combined_shadow_path.boundingRect()
+                                            if not subtraction_path.isEmpty():
+                                                original_rect_intersect = current_intersection_shadow.boundingRect()
+                                                current_intersection_shadow = current_intersection_shadow.subtracted(subtraction_path) # Apply to current intersection
+                                                new_rect_intersect = current_intersection_shadow.boundingRect()
 
-                                                original_area = original_rect.width() * original_rect.height()
-                                                new_area = new_rect.width() * new_rect.height()
-                                                # Check if subtraction actually removed area
-                                                if abs(original_area - new_area) > 1e-6 or (original_area > 1e-6 and combined_shadow_path.isEmpty()):
-                                                    logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using component union path) from combined shadow of '{this_layer}'")
+                                                original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
+                                                new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
+
+                                                if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
+                                                   (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
+                                                    logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
+                                            else:
+                                                 logging.warning(f"Could not calculate subtraction path for mask '{mask_layer_sub}', subtraction skipped for this intersection.")
+
+
                                         except Exception as e:
-                                            logging.error(f"Error subtracting overlying mask '{mask_layer_sub}' from combined shadow: {e}")
-                        # --- END NEW MASK SUBTRACTION LOGIC ---
+                                            logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
+                        # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
-                        # Special case: Check if the other strand is a component of a masked strand
-                        # and if this strand should be above the masked strand.
-                        # If so, we need to prevent the shadow of the current strand (this_layer)
-                        # from appearing on the underlying strand (other_layer) within the area
-                        # defined by the mask itself. This ensures the mask visually 'cuts through'
-                        # the shadow correctly according to layer order.
-                        for masked_name, masked_info in masked_strands_map.items():
-                            if other_layer in masked_info['components']:
-                                masked_strand = masked_info['masked_strand']
-                                masked_layer = masked_name
-                                
-                                # Check if this strand should be above the masked strand
-                                if masked_layer in layer_order:
-                                    masked_index = layer_order.index(masked_layer)
-                                    should_be_above_masked = self_index > masked_index
-                                    
-                                    if should_be_above_masked:
-                                        # This strand should be above both the component and the masked strand
-                                        # Get the masked area to exclude from shadow
-                                        try:
-                                            mask_path = get_proper_masked_strand_path(masked_strand)
-                                            
-                                            # Remove the masked area from the intersection
-                                            # This prevents shadow from appearing on the z_w component in the masked area
-                                            intersection = intersection.subtracted(mask_path)
-                                            logging.info(f"Excluded masked area of {masked_layer} from shadow of {this_layer} on {other_layer}")
-                                        except Exception as e:
-                                            logging.error(f"Error excluding masked area: {e}")
-                        
-                        # Only add if there's an actual intersection
-                        if not intersection.isEmpty():
+
+                        # Only add the (potentially modified) intersection if it's still not empty
+                        if not current_intersection_shadow.isEmpty():
                             # Add the calculated intersection area to the path that will be drawn
                             # as the final shadow for this strand. Also, expand the clipping path
                             # to include the area of the underlying strand, ensuring the faded
@@ -662,9 +650,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                                 clip_path = clip_path.united(other_stroke_path)
                             # Add this intersection to the combined path
                             if has_shadow_content:
-                                combined_shadow_path = combined_shadow_path.united(intersection)
+                                combined_shadow_path = combined_shadow_path.united(current_intersection_shadow)
                             else:
-                                combined_shadow_path = intersection
+                                combined_shadow_path = current_intersection_shadow
                                 has_shadow_content = True
                                 
                             logging.info(f"Added shadow from {this_layer} onto {other_layer} to combined path")
@@ -837,6 +825,55 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                 # Intersect with other stroke
                 intersection = QPainterPath(final_circle_path).intersected(other_stroke_path)
 
+                # --- Apply Mask Subtraction to Circle Shadow Intersection ---
+                if not intersection.isEmpty():
+                    # Apply the same mask subtraction logic as for the main body shadow
+                    for mask_name_sub_c, mask_info_sub_c in masked_strands_map.items():
+                        mask_strand_sub_c = mask_info_sub_c['masked_strand']
+                        mask_layer_sub_c = mask_name_sub_c
+
+                        if (hasattr(mask_strand_sub_c, 'is_hidden') and not mask_strand_sub_c.is_hidden and
+                                mask_layer_sub_c in layer_order):
+
+                            mask_index_sub_c = layer_order.index(mask_layer_sub_c)
+
+                            # Check if mask is above the *casting strand* (this_layer)
+                            if mask_index_sub_c > self_index:
+                                try:
+                                    # Calculate the mask's subtraction path (blurred)
+                                    subtraction_path_c = QPainterPath()
+                                    if hasattr(mask_strand_sub_c, 'first_selected_strand') and mask_strand_sub_c.first_selected_strand and \
+                                       hasattr(mask_strand_sub_c, 'second_selected_strand') and mask_strand_sub_c.second_selected_strand:
+
+                                        s1_c = mask_strand_sub_c.first_selected_strand
+                                        s2_c = mask_strand_sub_c.second_selected_strand
+
+                                        stroker1_c = QPainterPathStroker()
+                                        # Use user-edited width: + max_blur_radius*2
+                                        stroker1_c.setWidth(s1_c.width + s1_c.stroke_width * 2 + max_blur_radius/2)
+                                        stroker1_c.setJoinStyle(Qt.MiterJoin)
+                                        stroker1_c.setCapStyle(Qt.FlatCap)
+                                        path1_c = stroker1_c.createStroke(s1_c.get_path())
+
+                                        stroker2_c = QPainterPathStroker()
+                                        # Use user-edited width: + max_blur_radius*2
+                                        stroker2_c.setWidth(s2_c.width + s2_c.stroke_width * 2 + max_blur_radius/2)
+                                        stroker2_c.setJoinStyle(Qt.MiterJoin)
+                                        stroker2_c.setCapStyle(Qt.FlatCap)
+                                        path2_c = stroker2_c.createStroke(s2_c.get_path())
+
+                                        subtraction_path_c = path1_c.intersected(path2_c)
+
+                                    if not subtraction_path_c.isEmpty():
+                                        intersection = intersection.subtracted(subtraction_path_c)
+                                        # Basic logging for circle shadow subtraction
+                                        if intersection.isEmpty(): # Check if subtraction removed everything
+                                             logging.info(f"Subtracted mask '{mask_layer_sub_c}' completely removed circle shadow intersection of '{this_layer}' on '{other_layer}'")
+
+                                except Exception as e_c:
+                                    logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
+                # --- End Mask Subtraction ---
+
                 if not intersection.isEmpty():
                     all_shadow_paths.append(intersection)
                     # Expand clip path as well
@@ -961,3 +998,4 @@ def get_proper_masked_strand_path(strand):
         path = QPainterPath()  # Empty path as last resort
         
     return path 
+

@@ -1,7 +1,7 @@
 Theme: default
 Language: en
-ShadowColor: 0,0,0,255
+ShadowColor: 0,0,0,180
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
-NumSteps: 4
-MaxBlurRadius: 60.0
+NumSteps: 3
+MaxBlurRadius: 40.0

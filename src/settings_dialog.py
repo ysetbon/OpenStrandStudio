@@ -2,7 +2,8 @@ from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
-    QColorDialog, QCheckBox, QBoxLayout
+    QColorDialog, QCheckBox, QBoxLayout,
+    QSpinBox, QDoubleSpinBox # Add these
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
@@ -47,6 +48,8 @@ class SettingsDialog(QDialog):
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
+        self.num_steps = 4  # Default shadow blur steps
+        self.max_blur_radius = 40.0  # Default shadow blur radius
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
@@ -275,8 +278,20 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
                             logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
+                        elif line.startswith('NumSteps:'):
+                            try:
+                                self.num_steps = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found NumSteps: {self.num_steps}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing NumSteps value. Using default {self.num_steps}.")
+                        elif line.startswith('MaxBlurRadius:'):
+                            try:
+                                self.max_blur_radius = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found MaxBlurRadius: {self.max_blur_radius}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
                 
-                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
+                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -421,6 +436,33 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(shadow_layout)
         general_layout.addLayout(performance_layout)
         general_layout.addLayout(third_control_layout)
+
+        # Add Shadow Blur Steps
+        num_steps_layout = QHBoxLayout()
+        self.num_steps_label = QLabel(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:") # Will be translated later
+        self.num_steps_spinbox = QSpinBox()
+        self.num_steps_spinbox.setRange(1, 50)
+        self.num_steps_spinbox.setValue(self.num_steps)
+        self.num_steps_spinbox.setToolTip("Number of steps for the shadow fade effect (default 4)")
+        num_steps_layout.addWidget(self.num_steps_label)
+        num_steps_layout.addWidget(self.num_steps_spinbox)
+        num_steps_layout.addStretch()
+        general_layout.addLayout(num_steps_layout)
+
+        # Add Max Blur Radius
+        blur_radius_layout = QHBoxLayout()
+        self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
+        self.blur_radius_spinbox = QDoubleSpinBox()
+        self.blur_radius_spinbox.setRange(0.0, 100.0)
+        self.blur_radius_spinbox.setSingleStep(1.0)
+        self.blur_radius_spinbox.setDecimals(1)
+        self.blur_radius_spinbox.setValue(self.max_blur_radius)
+        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 40.0)")
+        blur_radius_layout.addWidget(self.blur_radius_label)
+        blur_radius_layout.addWidget(self.blur_radius_spinbox)
+        blur_radius_layout.addStretch()
+        general_layout.addLayout(blur_radius_layout)
+
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
 
@@ -991,6 +1033,14 @@ class SettingsDialog(QDialog):
                     self.canvas.force_redraw()
                     logging.info("Called force_redraw to ensure proper highlighting of masked strands")
 
+        # Apply Shadow Blur Settings
+        self.num_steps = self.num_steps_spinbox.value()
+        self.max_blur_radius = self.blur_radius_spinbox.value()
+        if self.canvas:
+            self.canvas.num_steps = self.num_steps
+            self.canvas.max_blur_radius = self.max_blur_radius
+            logging.info(f"SettingsDialog: Set num_steps to {self.num_steps} and max_blur_radius to {self.max_blur_radius:.1f} on canvas")
+
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
         previous_language = self.current_language
@@ -1040,6 +1090,8 @@ class SettingsDialog(QDialog):
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
+        self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
@@ -1250,8 +1302,11 @@ class SettingsDialog(QDialog):
                 file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                 # Save enable third control point setting
                 file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
-            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
-            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}")
+                # Save shadow blur settings
+                file.write(f"NumSteps: {self.num_steps}\n")
+                file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
+            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
+            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -1262,6 +1317,8 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                     local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
+                    local_file.write(f"NumSteps: {self.num_steps}\n")
+                    local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")

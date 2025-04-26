@@ -280,7 +280,9 @@ class MaskedStrand(Strand):
                     
                     # Draw shadow on top of strands with proper composition mode
                     temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self, shadow_color)
+                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self, shadow_color,
+                                             num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 4,
+                                             max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 40.0)
 
  
         except Exception as e:

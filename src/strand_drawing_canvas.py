@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal
+from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 import logging
 from attach_mode import AttachMode
@@ -18,6 +18,9 @@ from rotate_mode import RotateMode
 from PyQt5.QtWidgets import QCheckBox, QLineEdit, QPushButton
 import logging
 import traceback
+import os
+import sys
+from PyQt5.QtCore import QStandardPaths
 
 from translations import translations
 # Add this import
@@ -74,6 +77,11 @@ class StrandDrawingCanvas(QWidget):
         self.strand_width = 46  # Width of strands
         self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
+        # --- Load Shadow Blur Settings --- 
+        self.num_steps = 4 # Default
+        self.max_blur_radius = 40.0 # Default
+        self.load_shadow_blur_settings() # Call helper to load from file
+        # --- End Load Shadow Blur Settings ---
         # In strand_drawing_canvas.py
         # Add new attributes for group moving
         self.moving_group = False
@@ -113,52 +121,116 @@ class StrandDrawingCanvas(QWidget):
         
         # Add shadow rendering control
         self.shadow_enabled = True  # Enable shadows by default
-    def load_shadow_color_from_settings(self):
-        """Load shadow color from user_settings.txt if available."""
-        try:
-            import os
-            import sys
-            from PyQt5.QtCore import QStandardPaths
-            from PyQt5.QtGui import QColor
-            
-            # Use the appropriate directory for each OS
-            app_name = "OpenStrand Studio"
-            if sys.platform == 'darwin':  # macOS
-                program_data_dir = os.path.expanduser('~/Library/Application Support')
-                settings_dir = os.path.join(program_data_dir, app_name)
-            else:
-                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-                settings_dir = program_data_dir  # AppDataLocation already includes the app name
 
-            file_path = os.path.join(settings_dir, 'user_settings.txt')
-            logging.info(f"StrandDrawingCanvas looking for settings file at: {file_path}")
-            
-            # Default shadow color
-            shadow_color = None
-            
-            if os.path.exists(file_path):
+    def load_shadow_color_from_settings(self):
+        """Load only the shadow color from the settings file."""
+        shadow_color = None
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Canvas: Looking for settings file at: {file_path}")
+        
+        if os.path.exists(file_path):
+            try:
                 with open(file_path, 'r', encoding='utf-8') as file:
+                    logging.info("Canvas: Reading settings from user_settings.txt")
                     for line in file:
                         line = line.strip()
                         if line.startswith('ShadowColor:'):
-                            # Parse the RGBA values
-                            rgba_str = line.strip().split(':', 1)[1].strip()
-                            logging.info(f"StrandDrawingCanvas found ShadowColor in settings: {rgba_str}")
+                            rgba_str = line.split(':', 1)[1].strip()
                             try:
                                 r, g, b, a = map(int, rgba_str.split(','))
-                                # Create a fresh QColor instance
                                 shadow_color = QColor(r, g, b, a)
-                                logging.info(f"StrandDrawingCanvas loaded shadow color from settings: {r},{g},{b},{a}")
-                                break  # Exit loop once we've found and parsed the shadow color
+                                logging.info(f"Canvas: Loaded shadow color from settings: {r},{g},{b},{a}")
+                                break # Found the color, no need to read further
                             except Exception as e:
-                                logging.error(f"StrandDrawingCanvas error parsing shadow color: {e}")
-            else:
-                logging.info(f"StrandDrawingCanvas: Settings file not found at {file_path}, will use default shadow color")
-                
-            return shadow_color
+                                logging.error(f"Canvas: Error parsing shadow color: {e}")
+                                shadow_color = None # Reset on error
+                                break
+            except Exception as e:
+                logging.error(f"Canvas: Error reading settings file: {e}")
+        else:
+            logging.info("Canvas: Settings file not found. Using default shadow color.")
+            
+        return shadow_color
+
+    def load_shadow_blur_settings(self):
+        """Load shadow blur settings (NumSteps, MaxBlurRadius) from the settings file."""
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('NumSteps:'):
+                            try:
+                                self.num_steps = int(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded NumSteps from settings: {self.num_steps}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing NumSteps value. Using default {self.num_steps}.")
+                        elif line.startswith('MaxBlurRadius:'):
+                            try:
+                                self.max_blur_radius = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded MaxBlurRadius from settings: {self.max_blur_radius:.1f}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
+            except Exception as e:
+                logging.error(f"Canvas: Error reading settings file for blur settings: {e}")
+        else:
+            logging.info("Canvas: Settings file not found. Using default shadow blur settings.")
+
+    def setup_modes(self):
+        """Initialize the interaction modes."""
+        # Attach mode setup
+        self.attach_mode = AttachMode(self)
+        self.attach_mode.strand_created.connect(self.on_strand_created)
+
+        # Move mode setup
+        self.move_mode = MoveMode(self)
+        
+        # Apply draw_only_affected_strand setting from user settings if available
+        try:
+            draw_only_setting = self.load_draw_only_affected_strand_setting()
+            if draw_only_setting is not None:
+                self.move_mode.draw_only_affected_strand = draw_only_setting
+                logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
         except Exception as e:
-            logging.error(f"StrandDrawingCanvas error loading shadow color from settings: {e}")
-            return None
+            logging.error(f"Error applying draw_only_affected_strand setting: {e}")
+
+        # Mask mode setup
+        # Pass the undo_redo_manager instance here
+        self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
+        self.mask_mode.mask_created.connect(self.create_masked_layer)
+
+        # Angle adjust mode setup (if used)
+        self.angle_adjust_mode = AngleAdjustMode(self)
+
+        # Set initial mode to attach
+        self.current_mode = self.attach_mode
+
+        # Connect mode-specific signals (if any)
+        # For example:
+        # self.move_mode.strand_moved.connect(self.on_strand_moved)
+        # self.angle_adjust_mode.angle_adjusted.connect(self.on_angle_adjusted)
+
+        # Initialize mode-specific properties
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
 
     def add_strand(self, strand):
         """Add a strand to the canvas and set its canvas reference."""
@@ -932,44 +1004,6 @@ class StrandDrawingCanvas(QWidget):
             self.strand_colors[set_number] = QColor(200, 170, 230, 255)   # Or get the color from LayerPanel
         
         logging.info(f"Entered new strand mode for set: {set_number}")
-    def setup_modes(self):
-        """Set up attach, move, and mask modes."""
-        # Attach mode setup
-        self.attach_mode = AttachMode(self)
-        self.attach_mode.strand_created.connect(self.on_strand_created)
-
-        # Move mode setup
-        self.move_mode = MoveMode(self)
-        
-        # Apply draw_only_affected_strand setting from user settings if available
-        try:
-            draw_only_setting = self.load_draw_only_affected_strand_setting()
-            if draw_only_setting is not None:
-                self.move_mode.draw_only_affected_strand = draw_only_setting
-                logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
-        except Exception as e:
-            logging.error(f"Error applying draw_only_affected_strand setting: {e}")
-
-        # Mask mode setup
-        # Pass the undo_redo_manager instance here
-        self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
-        self.mask_mode.mask_created.connect(self.create_masked_layer)
-
-        # Angle adjust mode setup (if used)
-        self.angle_adjust_mode = AngleAdjustMode(self)
-
-        # Set initial mode to attach
-        self.current_mode = self.attach_mode
-
-        # Connect mode-specific signals (if any)
-        # For example:
-        # self.move_mode.strand_moved.connect(self.on_strand_moved)
-        # self.angle_adjust_mode.angle_adjusted.connect(self.on_angle_adjusted)
-
-        # Initialize mode-specific properties
-        self.is_angle_adjusting = False
-        self.mask_mode_active = False
-
     def load_draw_only_affected_strand_setting(self):
         """Load draw_only_affected_strand setting from user_settings.txt if available."""
         try:

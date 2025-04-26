@@ -37,6 +37,8 @@ translations = {
         'shadow_color': 'Shadow Color',
         'draw_only_affected_strand': 'Draw only affected strand when dragging',
         'enable_third_control_point': 'Enable third control point at center',
+        'shadow_blur_steps': 'Shadow Blur Steps:',
+        'shadow_blur_radius': 'Shadow Blur Radius:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -252,6 +254,8 @@ translations = {
         'shadow_color': 'Couleur d\'ombre',
         'draw_only_affected_strand': 'Afficher uniquement le brin affecté lors du déplacement',
         'enable_third_control_point': 'Activer le troisième point de contrôle au centre',
+        'shadow_blur_steps': 'Étapes de flou d\'ombre:',
+        'shadow_blur_radius': 'Rayon de flou d\'ombre:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>
@@ -465,6 +469,8 @@ translations = {
         'shadow_color': 'Colore Ombra',
         'draw_only_affected_strand': 'Disegna solo il trefolo interessato durante il trascinamento',
         'enable_third_control_point': 'Abilita il terzo punto di controllo al centro',
+        'shadow_blur_steps': 'Passi di sfocatura dell\'ombra:',
+        'shadow_blur_radius': 'Raggio di sfocatura dell\'ombra:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Spiegazione delle informazioni sullo stato dei livelli:</b><br>
@@ -683,6 +689,8 @@ translations = {
         'shadow_color': 'Color de Sombra',
         'draw_only_affected_strand': 'Dibujar solo el cordón afectado al arrastrar',
         'enable_third_control_point': 'Habilitar tercer punto de control en el centro',
+        'shadow_blur_steps': 'Pasos de desenfoque de sombra:',
+        'shadow_blur_radius': 'Radio de desenfoque de sombra:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicación de la Información de Estado de Capas:</b><br>
@@ -899,6 +907,8 @@ translations = {
         'shadow_color': 'Cor da Sombra',
         'draw_only_affected_strand': 'Desenhar apenas a mecha afetada ao arrastar',
         'enable_third_control_point': 'Habilitar terceiro ponto de controle no centro',
+        'shadow_blur_steps': 'Passos de desfoque de sombra:',
+        'shadow_blur_radius': 'Raio de desfoque de sombra:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicação das Informações de Estado das Camadas:</b><br>
@@ -1115,6 +1125,8 @@ translations = {
         'shadow_color': 'צבע צל',
         'draw_only_affected_strand': 'צייר רק את החוט המושפע בעת גרירה',
         'enable_third_control_point': 'הפעל נקודת בקרה שלישית במרכז',
+        'shadow_blur_steps': 'סטודים של סגירת סגול:',
+        'shadow_blur_radius': 'רדיוס סגירת סגול:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>הסבר על מידע מצב השכבות:</b><br>

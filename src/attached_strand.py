@@ -381,7 +381,9 @@ class AttachedStrand(Strand):
                     self.shadow_color = QColor(shadow_color)
                 
                 # Draw strand body shadow with explicit shadow color
-                draw_strand_shadow(painter, self, shadow_color)
+                draw_strand_shadow(painter, self, shadow_color,
+                                  num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 4,
+                                  max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 40.0)
                 
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):

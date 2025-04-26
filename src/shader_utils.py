@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 
 
-def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
+def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=4, max_blur_radius=40.0):
     """
     Draw shadow for a masked strand 
     """
@@ -67,8 +67,6 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     # Calculate base shadow properties
-    num_steps = 4
-    max_blur_radius = 40.0
     base_color = shadow_color
     base_alpha = base_color.alpha()
 
@@ -280,7 +278,7 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     pass
 
-def draw_strand_shadow(painter, strand, shadow_color=None):
+def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur_radius=40.0):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -822,8 +820,6 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
 
         logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
-        num_steps = 4  # Fewer steps for performance, adjust as needed
-        max_blur_radius = 40.0 # Larger radius for more pronounced fade
         base_color = color_to_use
         base_alpha = base_color.alpha()
 

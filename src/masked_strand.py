@@ -365,7 +365,7 @@ class MaskedStrand(Strand):
 
                     # Get the base paths for both strands
                     # Use moderate shadow size for realistic effect
-                    shadow_width_offset = 11  # Adjusted from 20 for more realistic effect
+                    shadow_width_offset = 0  # Adjusted from 20 for more realistic effect
 
                     path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                     shadow_stroker = QPainterPathStroker()
@@ -431,7 +431,7 @@ class MaskedStrand(Strand):
                     if not path_shadow.isEmpty():
                             # Get the base paths for both strands
                         # Use moderate shadow size for realistic effect
-                        shadow_width_offset = 9  # Adjusted from 20 for more realistic effect
+                        shadow_width_offset = 5  # Adjusted from 20 for more realistic effect
 
                         path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                         shadow_stroker = QPainterPathStroker()
@@ -443,7 +443,7 @@ class MaskedStrand(Strand):
                         # Rest of the shadow drawing code remains the same
                         path2 = self.second_selected_strand.get_path()
                         shadow_stroker = QPainterPathStroker()
-                        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+                        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset+2)
                         shadow_stroker.setJoinStyle(Qt.MiterJoin)
                         shadow_stroker.setCapStyle(Qt.RoundCap)
                         shadow_path2 = shadow_stroker.createStroke(path2)

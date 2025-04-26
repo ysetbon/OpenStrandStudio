@@ -67,8 +67,8 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     # Calculate base shadow properties
-    num_steps = 8
-    max_blur_radius = 40.0
+    num_steps = 2
+    max_blur_radius = 35.0
     base_color = shadow_color
     base_alpha = base_color.alpha()
 
@@ -104,7 +104,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     # to its component strands.  Build a union of their stroke paths so we
     # can allow the fade to draw over their full width.
     try:
-        width_masked_strand = 15
+        width_masked_strand = 30
         if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
             s1 = strand.first_selected_strand
             stroker1 = QPainterPathStroker()
@@ -119,7 +119,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
         if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
             s2 = strand.second_selected_strand
             stroker2 = QPainterPathStroker()
-            stroker2.setWidth(s2.width + s2.stroke_width * 2 + 0)
+            stroker2.setWidth(s2.width + s2.stroke_width * 2 + width_masked_strand)
             stroker2.setJoinStyle(Qt.MiterJoin)
             stroker2.setCapStyle(Qt.FlatCap)
             second_path = stroker2.createStroke(s2.get_path())
@@ -159,7 +159,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
             # painter.intersect(path) # REMOVED - Use setClipPath before the loop instead
             painter.setPen(pen)
             painter.strokePath(path, pen) # Stroke the input path outline (will be clipped)
-
+            painter.setClipPath(clip_path)
         logging.info(f"Drew faded masked shadow stroke path with {num_steps} steps, clipped to path")
     else:
          # This case should not be reached due to the check above
@@ -192,7 +192,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
     if hasattr(strand, "get_mask_path"):
         logging.info(f"Skipping extra shadow for masked strand {getattr(strand, 'layer_name', 'unknown')} to avoid double shading")
         return
-        
+    if strand.__class__.__name__ == 'MaskedStrand':
+        return
     if not hasattr(strand, 'canvas') or not strand.canvas:
         return
         
@@ -316,13 +317,24 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                             'components': [first_layer, second_layer]
                         }
                         logging.info(f"Identified masked strand {masked_name} with components {first_layer} and {second_layer}")
-        
+        logging.info(f"Checking shadow for : {strand.layer_name}")
         # Check against all other strands
         for other_strand in canvas.strands:
+            logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
             # Skip self or strands without layer names
             if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
                 continue
-
+            # Skip masked strands
+            if other_strand.__class__.__name__ == 'MaskedStrand':
+                continue
+            # Prevent shadow calculation if the other strand is a component of the *same* masked strand
+            # (This check is redundant if part_of_same_visible_mask check is working correctly, but kept for safety)
+            # Check if other_strand is a component of any masked strand
+            for masked_name, masked_info in masked_strands_map.items():
+                components = masked_info['components']
+                if hasattr(other_strand, 'layer_name') and other_strand.layer_name in components:
+                    logging.info(f"Skipping shadow calculation for {other_strand.layer_name} because it is a component of the same masked strand {masked_name}")
+                    continue
             # Skip if other strand isn't in layer order
             other_layer = other_strand.layer_name
             if other_layer not in layer_order:
@@ -395,9 +407,78 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
-                        
+
+                        # --- NEW MASK SUBTRACTION LOGIC (Moved) ---
+                        # Check if any VISIBLE mask is layered ABOVE this_layer.
+                        # If so, subtract the mask's area from the calculated combined shadow path.
+                        if not combined_shadow_path.isEmpty(): # Check if there's any shadow to modify
+                            for mask_name_sub, mask_info_sub in masked_strands_map.items():
+                                mask_strand_sub = mask_info_sub['masked_strand']
+                                mask_layer_sub = mask_name_sub # Assuming mask_name is the layer name
+
+                                # Ensure mask is visible and its layer name is in the order
+                                if (hasattr(mask_strand_sub, 'is_hidden') and not mask_strand_sub.is_hidden and
+                                        mask_layer_sub in layer_order):
+
+                                    mask_index_sub = layer_order.index(mask_layer_sub)
+
+                                    # Check if mask is above ONLY this_layer (REVISED CONDITION)
+                                    if mask_index_sub > self_index:
+                                        try:
+                                            # --- Calculate the path for subtraction CONSISTENTLY with mask shadow clipping ---
+                                            # Get the union of the stroked paths of the mask's components.
+                                            subtraction_path = QPainterPath()
+
+                                            if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand:
+                                                s1 = mask_strand_sub.first_selected_strand
+                                                stroker1 = QPainterPathStroker()
+                                                # Use consistent width calculation like in draw_mask_strand_shadow clipping?
+                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 ) # Keep original offset for now
+                                                stroker1.setJoinStyle(Qt.MiterJoin)
+                                                stroker1.setCapStyle(Qt.FlatCap)
+                                                first_path = stroker1.createStroke(s1.get_path())
+                                                if subtraction_path.isEmpty():
+                                                    subtraction_path = first_path
+                                                else:
+                                                    subtraction_path = subtraction_path.united(first_path)
+
+
+                                            if hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
+                                                s2 = mask_strand_sub.second_selected_strand
+                                                stroker2 = QPainterPathStroker()
+                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 ) # Keep original width calc for now
+                                                stroker2.setJoinStyle(Qt.MiterJoin)
+                                                stroker2.setCapStyle(Qt.FlatCap)
+                                                second_path = stroker2.createStroke(s2.get_path())
+                                                if subtraction_path.isEmpty():
+                                                    subtraction_path = second_path
+                                                else:
+                                                    subtraction_path = subtraction_path.united(second_path)
+
+                                            if subtraction_path.isEmpty():
+                                                 logging.warning(f"Could not calculate component union path for mask '{mask_layer_sub}', subtraction might be skipped or incorrect.")
+                                            # --- End of consistent path calculation ---
+
+                                            if not subtraction_path.isEmpty():
+                                                original_rect = combined_shadow_path.boundingRect()
+                                                combined_shadow_path = combined_shadow_path.subtracted(subtraction_path) # Apply to combined_shadow_path
+                                                new_rect = combined_shadow_path.boundingRect()
+
+                                                original_area = original_rect.width() * original_rect.height()
+                                                new_area = new_rect.width() * new_rect.height()
+                                                # Check if subtraction actually removed area
+                                                if abs(original_area - new_area) > 1e-6 or (original_area > 1e-6 and combined_shadow_path.isEmpty()):
+                                                    logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using component union path) from combined shadow of '{this_layer}'")
+                                        except Exception as e:
+                                            logging.error(f"Error subtracting overlying mask '{mask_layer_sub}' from combined shadow: {e}")
+                        # --- END NEW MASK SUBTRACTION LOGIC ---
+
                         # Special case: Check if the other strand is a component of a masked strand
-                        # and if this strand should be above the masked strand
+                        # and if this strand should be above the masked strand.
+                        # If so, we need to prevent the shadow of the current strand (this_layer)
+                        # from appearing on the underlying strand (other_layer) within the area
+                        # defined by the mask itself. This ensures the mask visually 'cuts through'
+                        # the shadow correctly according to layer order.
                         for masked_name, masked_info in masked_strands_map.items():
                             if other_layer in masked_info['components']:
                                 masked_strand = masked_info['masked_strand']
@@ -423,6 +504,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                         
                         # Only add if there's an actual intersection
                         if not intersection.isEmpty():
+                            # Add the calculated intersection area to the path that will be drawn
+                            # as the final shadow for this strand. Also, expand the clipping path
+                            # to include the area of the underlying strand, ensuring the faded
+                            # shadow effect only renders where an underlying strand exists.
                             # Include the underlying strand area in the clip path so the shadow can't draw where there is no strand
                             if clip_path.isEmpty():
                                 clip_path = other_stroke_path
@@ -559,6 +644,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                 if hasattr(other_strand, 'get_mask_path'):
                     try:
                         other_stroke_path = get_proper_masked_strand_path(other_strand)
+                        logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
                     except Exception as ee:
                         logging.error(f"Error getting mask path for {other_layer}: {ee}")
             except Exception as e:
@@ -632,8 +718,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
 
         logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
-        num_steps = 8  # Fewer steps for performance, adjust as needed
-        max_blur_radius = 40.0 # Larger radius for more pronounced fade
+        num_steps = 2  # Fewer steps for performance, adjust as needed
+        max_blur_radius = 35.0 # Larger radius for more pronounced fade
         base_color = color_to_use
         base_alpha = base_color.alpha()
 

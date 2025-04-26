@@ -48,8 +48,10 @@ class SettingsDialog(QDialog):
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
-        self.num_steps = 4  # Default shadow blur steps
-        self.max_blur_radius = 40.0  # Default shadow blur radius
+        # NEW: Use extended mask option (controls extra expansion of masked areas)
+        self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
+        self.num_steps = 3  # Default shadow blur steps
+        self.max_blur_radius = 30.0  # Default shadow blur radius
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
@@ -278,6 +280,10 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
                             logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
+                        elif line.startswith('UseExtendedMask:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.use_extended_mask = (value == 'true')
+                            logging.info(f"SettingsDialog: Found UseExtendedMask: {self.use_extended_mask}")
                         elif line.startswith('NumSteps:'):
                             try:
                                 self.num_steps = int(line.split(':', 1)[1].strip())
@@ -291,7 +297,7 @@ class SettingsDialog(QDialog):
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
                 
-                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
+                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -424,6 +430,18 @@ class SettingsDialog(QDialog):
         third_control_layout.addWidget(self.third_control_checkbox)
         third_control_layout.addStretch()
 
+        # NEW: Use Extended Mask Option
+        extended_mask_layout = QHBoxLayout()
+        self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
+        self.extended_mask_checkbox = QCheckBox()
+        self.extended_mask_checkbox.setChecked(self.use_extended_mask)
+        extended_mask_layout.addWidget(self.extended_mask_label)
+        extended_mask_layout.addWidget(self.extended_mask_checkbox)
+        extended_mask_layout.addStretch()
+        # Add tooltip explaining usage
+        self.extended_mask_label.setToolTip(_['use_extended_mask_tooltip'])
+        self.extended_mask_checkbox.setToolTip(_['use_extended_mask_tooltip'])
+
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
         self.apply_button.clicked.connect(self.apply_all_settings)
@@ -436,14 +454,15 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(shadow_layout)
         general_layout.addLayout(performance_layout)
         general_layout.addLayout(third_control_layout)
+        general_layout.addLayout(extended_mask_layout)
 
         # Add Shadow Blur Steps
         num_steps_layout = QHBoxLayout()
         self.num_steps_label = QLabel(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:") # Will be translated later
         self.num_steps_spinbox = QSpinBox()
-        self.num_steps_spinbox.setRange(1, 50)
+        self.num_steps_spinbox.setRange(1, 100)
         self.num_steps_spinbox.setValue(self.num_steps)
-        self.num_steps_spinbox.setToolTip("Number of steps for the shadow fade effect (default 4)")
+        self.num_steps_spinbox.setToolTip("Number of steps for the shadow fade effect (default 3)")
         num_steps_layout.addWidget(self.num_steps_label)
         num_steps_layout.addWidget(self.num_steps_spinbox)
         num_steps_layout.addStretch()
@@ -453,11 +472,11 @@ class SettingsDialog(QDialog):
         blur_radius_layout = QHBoxLayout()
         self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
         self.blur_radius_spinbox = QDoubleSpinBox()
-        self.blur_radius_spinbox.setRange(0.0, 99.0)
+        self.blur_radius_spinbox.setRange(0.0, 30.0)
         self.blur_radius_spinbox.setSingleStep(0.01)
         self.blur_radius_spinbox.setDecimals(2)
         self.blur_radius_spinbox.setValue(self.max_blur_radius)
-        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 40.0)")
+        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 30.0)")
         blur_radius_layout.addWidget(self.blur_radius_label)
         blur_radius_layout.addWidget(self.blur_radius_spinbox)
         blur_radius_layout.addStretch()
@@ -1064,12 +1083,31 @@ class SettingsDialog(QDialog):
             # Force redraw of language-specific elements
             self.repaint()
         
-        # Save all settings to file
+        # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
 
         # Apply the theme to the dialog before hiding
         self.apply_dialog_theme(self.current_theme)
         self.hide()
+
+        # Apply Extended Mask Setting
+        previous_use_extended_mask = self.use_extended_mask
+        self.use_extended_mask = self.extended_mask_checkbox.isChecked()
+
+        if self.canvas:
+            # Provide property on canvas for access by MaskedStrand drawing
+            self.canvas.use_extended_mask = self.use_extended_mask
+
+        if previous_use_extended_mask != self.use_extended_mask:
+            logging.info(f"SettingsDialog: Use extended mask changed to {self.use_extended_mask}. Forcing redraw of masked strands")
+            if self.canvas and hasattr(self.canvas, 'strands'):
+                for strand in self.canvas.strands:
+                    if getattr(strand, '__class__', None) and strand.__class__.__name__ == 'MaskedStrand':
+                        # No need to reset mask, just force shadow update to refresh +3 offset
+                        if hasattr(strand, 'force_shadow_update'):
+                            strand.force_shadow_update()
+            if self.canvas:
+                self.canvas.update()
 
     def change_category(self, item):
         index = self.categories_list.row(item)
@@ -1090,6 +1128,7 @@ class SettingsDialog(QDialog):
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
         self.apply_button.setText(_['ok'])
@@ -1305,6 +1344,7 @@ class SettingsDialog(QDialog):
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
+                file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
@@ -1319,6 +1359,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
+                    local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")

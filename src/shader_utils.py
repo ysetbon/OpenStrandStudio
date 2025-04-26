@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 
 
-def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=4, max_blur_radius=40.0):
+def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=3, max_blur_radius=30.0):
     """
     Draw shadow for a masked strand 
     """
@@ -106,7 +106,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
         if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
             s1 = strand.first_selected_strand
             stroker1 = QPainterPathStroker()
-            stroker1.setWidth(s1.width + s1.stroke_width * 2 + width_masked_strand)
+            stroker1.setWidth(s1.width + s1.stroke_width * 2 )
             stroker1.setJoinStyle(Qt.MiterJoin)
             stroker1.setCapStyle(Qt.FlatCap)
             first_path = stroker1.createStroke(s1.get_path())
@@ -117,7 +117,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
         if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
             s2 = strand.second_selected_strand
             stroker2 = QPainterPathStroker()
-            stroker2.setWidth(s2.width + s2.stroke_width * 2 + width_masked_strand)
+            stroker2.setWidth(s2.width + s2.stroke_width * 2 )
             stroker2.setJoinStyle(Qt.MiterJoin)
             stroker2.setCapStyle(Qt.FlatCap)
             second_path = stroker2.createStroke(s2.get_path())
@@ -177,7 +177,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
                         other_path = get_proper_masked_strand_path(other)
                     else:
                         o_stroker = QPainterPathStroker()
-                        o_stroker.setWidth(other.width + other.stroke_width * 2 + max_blur_radius)
+                        o_stroker.setWidth(other.width + other.stroke_width * 2 )
                         o_stroker.setJoinStyle(Qt.MiterJoin)
                         o_stroker.setCapStyle(Qt.FlatCap)
                         other_path = o_stroker.createStroke(other.get_path())
@@ -191,7 +191,6 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
 
             # Intersect current clip with union of underlying strands so shadow never appears in empty space
             if not union_underlying.isEmpty():
-                clip_path = clip_path.intersected(union_underlying) if not clip_path.isEmpty() else union_underlying
                 logging.info("Applied underlying strands union to clip path for masked shadow")
 
         # 1. Crop out the first_selected_strand area completely
@@ -260,7 +259,7 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=
             # Distribute alpha across steps for smoother look
             # Adjusted alpha calculation slightly for potentially better distribution
             progress = (float(num_steps - i) / num_steps)
-            current_alpha = base_alpha * progress * progress *(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
+            current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
 
             # Width increases
             current_width = max_blur_radius * (float(i + 1) / num_steps)
@@ -290,7 +289,7 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     pass
 
-def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur_radius=40.0):
+def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=30.0):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -943,7 +942,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                 # Distribute alpha across steps for smoother look
                 # Adjusted alpha calculation slightly for potentially better distribution
                 progress = (float(num_steps - i) / num_steps)
-                current_alpha = base_alpha * progress * progress * (1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
+                current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
 
                 # Width increases
                 current_width = max_blur_radius * (float(i + 1) / num_steps)

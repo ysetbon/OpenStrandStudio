@@ -148,6 +148,7 @@ def load_user_settings():
     shadow_color = QColor(0, 0, 0, 150)  # Default shadow color (black with 59% opacity)
     draw_only_affected_strand = False  # Default to drawing all strands
     enable_third_control_point = False  # Default to two control points
+    use_extended_mask = False  # Default exact mask
     
     # Try to load from settings file
     shadow_color_loaded = False
@@ -192,9 +193,13 @@ def load_user_settings():
                         value = line.strip().split(':', 1)[1].strip().lower()
                         enable_third_control_point = (value == 'true')
                         logging.info(f"Found EnableThirdControlPoint: {enable_third_control_point}")
+                    elif line.startswith('UseExtendedMask:'):
+                        value = line.strip().split(':', 1)[1].strip().lower()
+                        use_extended_mask = (value == 'true')
+                        logging.info(f"Found UseExtendedMask: {use_extended_mask}")
             
             if shadow_color_loaded:
-                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}")
+                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}")
             else:
                 logging.warning(f"Shadow color not found in settings file. Using default: 0,0,0,150")
         except Exception as e:
@@ -202,7 +207,7 @@ def load_user_settings():
     else:
         logging.info(f"Settings file not found at {file_path}. Using default settings.")
 
-    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point
+    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask
 
 if __name__ == '__main__':
     logging.info("Starting the application...")
@@ -210,8 +215,8 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Load user settings
-    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point = load_user_settings()
-    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}")
+    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask = load_user_settings()
+    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}")
 
     # Initialize the main window with settings
     window = MainWindow()
@@ -258,6 +263,10 @@ if __name__ == '__main__':
         # Set enable third control point setting
         window.canvas.enable_third_control_point = enable_third_control_point
         logging.info(f"Set enable_third_control_point to {enable_third_control_point}")
+
+        # Set extended mask setting
+        window.canvas.use_extended_mask = use_extended_mask
+        logging.info(f"Set use_extended_mask to {use_extended_mask}")
     else:
         logging.error("Canvas not available on window object")
     

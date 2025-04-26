@@ -37,6 +37,9 @@ translations = {
         'shadow_color': 'Shadow Color',
         'draw_only_affected_strand': 'Draw only affected strand when dragging',
         'enable_third_control_point': 'Enable third control point at center',
+        'use_extended_mask': 'Use extended mask (wider overlap)',
+        'use_extended_mask_tooltip': 'If you want to use shadows, toggle on; if you don\'t want shadows, toggle off.',
+        'use_extended_mask_desc': 'If you want to use shadows, toggle on; if you don\'t want shadows, toggle off.',
         'shadow_blur_steps': 'Shadow Blur Steps:',
         'shadow_blur_radius': 'Shadow Blur Radius:',
         # Layer State Info Text
@@ -254,6 +257,9 @@ translations = {
         'shadow_color': 'Couleur d\'ombre',
         'draw_only_affected_strand': 'Afficher uniquement le brin affecté lors du déplacement',
         'enable_third_control_point': 'Activer le troisième point de contrôle au centre',
+        'use_extended_mask': 'Utiliser une extension de masque (surposition plus large)',
+        'use_extended_mask_tooltip': "Si vous voulez utiliser des ombres, cochez ; si vous ne voulez pas d'ombre, décochez.",
+        'use_extended_mask_desc': "Si vous voulez utiliser des ombres, cochez ; si vous ne voulez pas d'ombre, décochez.",
         'shadow_blur_steps': 'Étapes de flou d\'ombre:',
         'shadow_blur_radius': 'Rayon de flou d\'ombre:',
         # Layer State Info Text
@@ -469,6 +475,9 @@ translations = {
         'shadow_color': 'Colore Ombra',
         'draw_only_affected_strand': 'Disegna solo il trefolo interessato durante il trascinamento',
         'enable_third_control_point': 'Abilita il terzo punto di controllo al centro',
+        'use_extended_mask': 'Usa estensione di maschera (sovrapposizione più larga)',
+        'use_extended_mask_tooltip': 'Se vuoi usare le ombre, attiva; se non vuoi ombre, disattiva.',
+        'use_extended_mask_desc': 'Se vuoi usare le ombre, attiva; se non vuoi ombre, disattiva.',
         'shadow_blur_steps': 'Passi di sfocatura dell\'ombra:',
         'shadow_blur_radius': 'Raggio di sfocatura dell\'ombra:',
         # Layer State Info Text
@@ -689,6 +698,9 @@ translations = {
         'shadow_color': 'Color de Sombra',
         'draw_only_affected_strand': 'Dibujar solo el cordón afectado al arrastrar',
         'enable_third_control_point': 'Habilitar tercer punto de control en el centro',
+        'use_extended_mask': 'Usar extensión de máscara (superposición más ancha)',
+        'use_extended_mask_tooltip': 'Si quieres usar sombras, activa; si no quieres sombras, desactiva.',
+        'use_extended_mask_desc': 'Si quieres usar sombras, activa; si no quieres sombras, desactiva.',
         'shadow_blur_steps': 'Pasos de desenfoque de sombra:',
         'shadow_blur_radius': 'Radio de desenfoque de sombra:',
         # Layer State Info Text
@@ -907,6 +919,9 @@ translations = {
         'shadow_color': 'Cor da Sombra',
         'draw_only_affected_strand': 'Desenhar apenas a mecha afetada ao arrastar',
         'enable_third_control_point': 'Habilitar terceiro ponto de controle no centro',
+        'use_extended_mask': 'Usar extensão de máscara (superposição mais larga)',
+        'use_extended_mask_tooltip': 'Se você quiser usar sombras, ligue; se não quiser sombras, desligue.',
+        'use_extended_mask_desc': 'Se você quiser usar sombras, ligue; se não quiser sombras, desligue.',
         'shadow_blur_steps': 'Passos de desfoque de sombra:',
         'shadow_blur_radius': 'Raio de desfoque de sombra:',
         # Layer State Info Text
@@ -1125,8 +1140,11 @@ translations = {
         'shadow_color': 'צבע צל',
         'draw_only_affected_strand': 'צייר רק את החוט המושפע בעת גרירה',
         'enable_third_control_point': 'הפעל נקודת בקרה שלישית במרכז',
-        'shadow_blur_steps': 'סטודים של סגירת סגול:',
-        'shadow_blur_radius': 'רדיוס סגירת סגול:',
+        'use_extended_mask': 'השימוש במסכה המורחבת (הסובב מרחב יותר)',
+        'use_extended_mask_tooltip': 'אם אתה רוצה להשתמש בצללים, הפעל; אם אתה לא רוצה צללים, כבה.',
+        'use_extended_mask_desc': 'אם אתה רוצה להשתמש בצללים, הפעל; אם אתה לא רוצה צללים, כבה.',
+        'shadow_blur_steps': 'צעדי טשטוש צל:',
+        'shadow_blur_radius': 'רדיוס טשטוש צל:',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>הסבר על מידע מצב השכבות:</b><br>

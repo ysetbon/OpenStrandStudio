@@ -131,7 +131,7 @@ class MaskedStrand(Strand):
 
         path2 = self.second_selected_strand.get_path()
         shadow_stroker = QPainterPathStroker()
-        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2)
+        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path2 = shadow_stroker.createStroke(path2)
@@ -205,11 +205,17 @@ class MaskedStrand(Strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2 + 2)
+        stroker.setWidth(strand.width + strand.stroke_width * 2  )
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)
-
+    def get_stroked_path_for_strand_with_shadow(self, strand):
+        """Helper method to get the stroked path for a strand."""
+        path = strand.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width + strand.stroke_width * 2 + 2)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
     def draw(self, painter):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         logging.info(f"Drawing MaskedStrand - Has deletion rectangles: {hasattr(self, 'deletion_rectangles')}")
@@ -281,8 +287,8 @@ class MaskedStrand(Strand):
                     # Draw shadow on top of strands with proper composition mode
                     temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
                     draw_mask_strand_shadow(temp_painter, limited_shadow_path, self, shadow_color,
-                                             num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 4,
-                                             max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 40.0)
+                                             num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                             max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 30.0)
 
  
         except Exception as e:
@@ -365,13 +371,13 @@ class MaskedStrand(Strand):
             if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
 
 
-                    # Get the base paths for both strands
-                    # Use moderate shadow size for realistic effect
-                    shadow_width_offset = 0  # Adjusted from 20 for more realistic effect
-
+                
                     path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                     shadow_stroker = QPainterPathStroker()
-                    shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+                    width_offset = 3
+                    if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                        width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                    shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + width_offset)
                     shadow_stroker.setJoinStyle(Qt.MiterJoin)
                     shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
                     shadow_path1 = shadow_stroker.createStroke(path1)
@@ -379,7 +385,10 @@ class MaskedStrand(Strand):
                     # Rest of the shadow drawing code remains the same
                     path2 = self.second_selected_strand.get_path()
                     shadow_stroker = QPainterPathStroker()
-                    shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+                    width_offset = 3
+                    if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                        width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                    shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + width_offset)
                     shadow_stroker.setJoinStyle(Qt.MiterJoin)
                     shadow_stroker.setCapStyle(Qt.RoundCap)
                     shadow_path2 = shadow_stroker.createStroke(path2)
@@ -433,11 +442,16 @@ class MaskedStrand(Strand):
                     if not path_shadow.isEmpty():
                             # Get the base paths for both strands
                         # Use moderate shadow size for realistic effect
-                        shadow_width_offset = 5  # Adjusted from 20 for more realistic effect
+                        shadow_width_offset = self.canvas.max_blur_radius  # Adjusted from 20 for more realistic effect
 
                         path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                         shadow_stroker = QPainterPathStroker()
-                        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+                        
+                        shadow_stroker = QPainterPathStroker()
+                        width_offset = 3
+                        if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                            width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + width_offset)
                         shadow_stroker.setJoinStyle(Qt.MiterJoin)
                         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
                         shadow_path1 = shadow_stroker.createStroke(path1)
@@ -445,7 +459,11 @@ class MaskedStrand(Strand):
                         # Rest of the shadow drawing code remains the same
                         path2 = self.second_selected_strand.get_path()
                         shadow_stroker = QPainterPathStroker()
-                        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset+2)
+                        shadow_stroker = QPainterPathStroker()
+                        width_offset = 3
+                        if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                            width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + width_offset)
                         shadow_stroker.setJoinStyle(Qt.MiterJoin)
                         shadow_stroker.setCapStyle(Qt.RoundCap)
                         shadow_path2 = shadow_stroker.createStroke(path2)
@@ -482,7 +500,7 @@ class MaskedStrand(Strand):
                         
                         # Create a more aggressive inset path to eliminate edge artifacts
                         shadow_inset_stroker = QPainterPathStroker()
-                        shadow_inset_stroker.setWidth(5)  # Increased inset value
+                        shadow_inset_stroker.setWidth(0)  # Increased inset value
                         shadow_inset_path = path_shadow.subtracted(shadow_inset_stroker.createStroke(path_shadow))
                         
                         # Create a separate buffer for the strand drawing to avoid artifacts

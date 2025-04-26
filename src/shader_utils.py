@@ -474,6 +474,28 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                     try:
                         strand_rect = strand.boundingRect()
                         other_strand_rect = other_strand.boundingRect()
+                        # --- EXTEND bounding rectangle to include circle geometry of the underlying strand ---
+                        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
+                            try:
+                                base_circle_radius_br = other_strand.width + other_strand.stroke_width * 2
+                                for oc_idx_br, oc_flag_br in enumerate(other_strand.has_circles):
+                                    if not oc_flag_br:
+                                        continue
+                                    if hasattr(other_strand, 'circle_stroke_color'):
+                                        oc_color_br = other_strand.circle_stroke_color
+                                        if oc_color_br and oc_color_br.alpha() == 0:
+                                            continue  # Transparent circle – no geometry
+                                    oc_center_br = other_strand.start if oc_idx_br == 0 else other_strand.end
+                                    # Create a QRectF for this circle and unite with other_strand_rect
+                                    circle_rect_br = QRectF(
+                                        oc_center_br.x() - (base_circle_radius_br / 2) - 1,
+                                        oc_center_br.y() - (base_circle_radius_br / 2) - 1,
+                                        base_circle_radius_br + 2,
+                                        base_circle_radius_br + 2,
+                                    )
+                                    other_strand_rect = other_strand_rect.united(circle_rect_br)
+                            except Exception as br_e:
+                                logging.error(f"Error extending bounding rect with circle geometry for {other_layer}: {br_e}")
                         if not strand_rect.intersects(other_strand_rect):
                             logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
                             continue
@@ -501,6 +523,28 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                                 logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
                             except Exception as e:
                                 logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
+                        
+                        # ---------------------------------------------------------
+                        # NEW LOGIC: Include visible circle geometry from the underlying
+                        # strand into its stroke path so that circle areas also receive
+                        # shadow from the current strand's circles.
+                        # ---------------------------------------------------------
+                        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
+                            try:
+                                base_circle_radius_o = other_strand.width + other_strand.stroke_width * 2
+                                for oc_idx, oc_flag in enumerate(other_strand.has_circles):
+                                    if not oc_flag:
+                                        continue
+                                    if hasattr(other_strand, 'circle_stroke_color'):
+                                        oc_color = other_strand.circle_stroke_color
+                                        if oc_color and oc_color.alpha() == 0:
+                                            continue  # Transparent circle, ignore
+                                    oc_center = other_strand.start if oc_idx == 0 else other_strand.end
+                                    oc_path_tmp = QPainterPath()
+                                    oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) + 1, (base_circle_radius_o / 2) + 1)
+                                    other_stroke_path = other_stroke_path.united(oc_path_tmp)
+                            except Exception as oc_e:
+                                logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
                         
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
@@ -750,6 +794,28 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                         logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
                     except Exception as ee:
                         logging.error(f"Error getting mask path for {other_layer}: {ee}")
+
+                # ---------------------------------------------------------
+                # NEW LOGIC: Include visible circle geometry from the underlying
+                # strand into its stroke path so that circle areas also receive
+                # shadow from the current strand's circles.
+                # ---------------------------------------------------------
+                if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
+                    try:
+                        base_circle_radius_o = other_strand.width + other_strand.stroke_width * 2
+                        for oc_idx, oc_flag in enumerate(other_strand.has_circles):
+                            if not oc_flag:
+                                continue
+                            if hasattr(other_strand, 'circle_stroke_color'):
+                                oc_color = other_strand.circle_stroke_color
+                                if oc_color and oc_color.alpha() == 0:
+                                    continue  # Transparent circle, ignore
+                            oc_center = other_strand.start if oc_idx == 0 else other_strand.end
+                            oc_path_tmp = QPainterPath()
+                            oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) + 1, (base_circle_radius_o / 2) + 1)
+                            other_stroke_path = other_stroke_path.united(oc_path_tmp)
+                    except Exception as oc_e:
+                        logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
             except Exception as e:
                 logging.error(f"Could not create stroke path for other strand {other_layer}: {e}")
                 continue

@@ -1,6 +1,6 @@
 import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF, QPointF
 
 
 
@@ -67,8 +67,8 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     # Calculate base shadow properties
-    num_steps = 2
-    max_blur_radius = 35.0
+    num_steps = 4
+    max_blur_radius = 40.0
     base_color = shadow_color
     base_alpha = base_color.alpha()
 
@@ -133,9 +133,113 @@ def draw_mask_strand_shadow(painter, path, strand, shadow_color=None):
 
     # Fall back to the original path if we could not build a better clip path
     if clip_path.isEmpty():
-        clip_path = clip_path_first.intersected(clip_path_second)
+        # If both component paths exist, use their intersection as a safe fallback
+        try:
+            clip_path = clip_path_first.intersected(clip_path_second)
+        except Exception:
+            # As a last-resort, just use the incoming path so we never pass an empty clip
+            clip_path = QPainterPath(path)
 
-    # Finally apply the clip
+    # -------------------------------------------------------------
+    #  Additional cropping rules
+    #     1.  Remove the area of the FIRST (upper-most) component strand so the
+    #         shadow does not get painted on top of it.
+    #     2.  Remove any "holes" introduced by deletion rectangles so that the
+    #         shadow is never visible where no strand material exists.
+    # -------------------------------------------------------------
+
+    try:
+        # ---------------------------------------------------------
+        # 0. Restrict to the union of *underlying* strand geometry
+        # ---------------------------------------------------------
+        canvas = getattr(strand, 'canvas', None)
+        if canvas and hasattr(canvas, 'strands'):
+            union_underlying = QPainterPath()
+
+            # Determine layer ordering so we only gather strands that are below
+            layer_order = []
+            self_index = -1
+            if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
+                layer_order = canvas.layer_state_manager.getOrder()
+                if strand.layer_name in layer_order:
+                    self_index = layer_order.index(strand.layer_name)
+
+            for other in canvas.strands:
+                if other is strand or not hasattr(other, 'layer_name') or not other.layer_name:
+                    continue
+
+                # If we know the layer ordering, only take strands that are *below* this masked strand
+                if layer_order and self_index != -1 and other.layer_name in layer_order:
+                    if layer_order.index(other.layer_name) >= self_index:
+                        continue  # Skip strands that are on or above this one
+
+                try:
+                    # Use proper mask path for MaskedStrand, stroke path for regular strands
+                    if hasattr(other, 'get_mask_path'):
+                        other_path = get_proper_masked_strand_path(other)
+                    else:
+                        o_stroker = QPainterPathStroker()
+                        o_stroker.setWidth(other.width + other.stroke_width * 2)
+                        o_stroker.setJoinStyle(Qt.MiterJoin)
+                        o_stroker.setCapStyle(Qt.FlatCap)
+                        other_path = o_stroker.createStroke(other.get_path())
+
+                    if union_underlying.isEmpty():
+                        union_underlying = other_path
+                    else:
+                        union_underlying = union_underlying.united(other_path)
+                except Exception as ee:
+                    logging.error(f"Error building union path for underlying strand {getattr(other, 'layer_name', 'unknown')}: {ee}")
+
+            # Intersect current clip with union of underlying strands so shadow never appears in empty space
+            if not union_underlying.isEmpty():
+                clip_path = clip_path.intersected(union_underlying) if not clip_path.isEmpty() else union_underlying
+                logging.info("Applied underlying strands union to clip path for masked shadow")
+
+        # 1. Crop out the first_selected_strand area completely
+        if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
+            s_first = strand.first_selected_strand
+            stroker_crop = QPainterPathStroker()
+            stroker_crop.setWidth(s_first.width + s_first.stroke_width * 2)
+            stroker_crop.setJoinStyle(Qt.MiterJoin)
+            stroker_crop.setCapStyle(Qt.FlatCap)
+            first_stroke_path = stroker_crop.createStroke(s_first.get_path())
+
+            if not first_stroke_path.isEmpty():
+                clip_path = clip_path.subtracted(first_stroke_path)
+                logging.info("Cropped masked shadow by first_selected_strand area")
+
+        # 2. Crop out deletion rectangles (if any)
+        if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
+            deletion_union = QPainterPath()
+            for rect in strand.deletion_rectangles:
+                try:
+                    top_left = QPointF(*rect['top_left'])
+                    top_right = QPointF(*rect['top_right'])
+                    bottom_left = QPointF(*rect['bottom_left'])
+                    bottom_right = QPointF(*rect['bottom_right'])
+
+                    del_path = QPainterPath()
+                    del_path.moveTo(top_left)
+                    del_path.lineTo(top_right)
+                    del_path.lineTo(bottom_right)
+                    del_path.lineTo(bottom_left)
+                    del_path.closeSubpath()
+
+                    if deletion_union.isEmpty():
+                        deletion_union = del_path
+                    else:
+                        deletion_union = deletion_union.united(del_path)
+                except Exception as ee:
+                    logging.error(f"Error constructing deletion rectangle path: {ee}")
+
+            if not deletion_union.isEmpty():
+                clip_path = clip_path.subtracted(deletion_union)
+                logging.info("Cropped masked shadow by deletion rectangles")
+    except Exception as e:
+        logging.error(f"Error applying additional cropping rules to mask shadow: {e}")
+
+    # Finally apply the clip with all subtractions applied
     painter.setClipPath(clip_path)
     # ---------------------------------------------
 
@@ -433,7 +537,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                                                 s1 = mask_strand_sub.first_selected_strand
                                                 stroker1 = QPainterPathStroker()
                                                 # Use consistent width calculation like in draw_mask_strand_shadow clipping?
-                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 ) # Keep original offset for now
+                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 + 30) # Keep original offset for now
                                                 stroker1.setJoinStyle(Qt.MiterJoin)
                                                 stroker1.setCapStyle(Qt.FlatCap)
                                                 first_path = stroker1.createStroke(s1.get_path())
@@ -446,7 +550,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
                                             if hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
                                                 s2 = mask_strand_sub.second_selected_strand
                                                 stroker2 = QPainterPathStroker()
-                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 ) # Keep original width calc for now
+                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 + 30) # Keep original width calc for now
                                                 stroker2.setJoinStyle(Qt.MiterJoin)
                                                 stroker2.setCapStyle(Qt.FlatCap)
                                                 second_path = stroker2.createStroke(s2.get_path())
@@ -718,8 +822,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None):
 
         logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
-        num_steps = 2  # Fewer steps for performance, adjust as needed
-        max_blur_radius = 35.0 # Larger radius for more pronounced fade
+        num_steps = 4  # Fewer steps for performance, adjust as needed
+        max_blur_radius = 40.0 # Larger radius for more pronounced fade
         base_color = color_to_use
         base_alpha = base_color.alpha()
 

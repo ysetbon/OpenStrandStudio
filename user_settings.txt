@@ -3,6 +3,6 @@ Language: en
 ShadowColor: 0,0,0,255
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
-NumSteps: 2
+NumSteps: 3
 MaxBlurRadius: 30.0
 UseExtendedMask: true

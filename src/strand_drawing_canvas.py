@@ -3190,6 +3190,11 @@ class StrandDrawingCanvas(QWidget):
                 painter.setPen(control_point_pen)
                 painter.setBrush(QBrush(QColor('green')))
                 painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+                # Draw inner circle with strand's color
+                inner_radius = (control_point_radius - 1) * 0.5
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
                 # Draw control_point1 (triangle)
                 triangle = QPolygonF()
@@ -3234,7 +3239,15 @@ class StrandDrawingCanvas(QWidget):
                         center_y + vec_y * scale_factor
                     ))
                 painter.drawPolygon(filled_triangle)
-
+                # Draw inner triangle with strand's color
+                inner_triangle = QPolygonF()
+                for pt in filled_triangle:
+                    dx = pt.x() - center_x
+                    dy = pt.y() - center_y
+                    inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawPolygon(inner_triangle)
 
                 # Draw control_point_center (square) if enabled
                 if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
@@ -3260,6 +3273,17 @@ class StrandDrawingCanvas(QWidget):
                         inner_size
                     )
                     painter.drawRect(inner_rect)
+                    # Draw inner square with strand's color
+                    inner_square_size = inner_size * 0.5
+                    inner_square_rect = QRectF(
+                        strand.control_point_center.x() - inner_square_size / 2,
+                        strand.control_point_center.y() - inner_square_size / 2,
+                        inner_square_size,
+                        inner_square_size
+                    )
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(strand.color))
+                    painter.drawRect(inner_square_rect)
                 # --- End Replacement ---
 
                 continue # Move to the next strand after drawing the points for the affected strand
@@ -3298,6 +3322,11 @@ class StrandDrawingCanvas(QWidget):
             painter.setPen(control_point_pen)
             painter.setBrush(QBrush(QColor('green')))
             painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+            # Draw inner circle with strand's color
+            inner_radius = (control_point_radius - 1) * 0.5
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(strand.color))
+            painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
             # Draw control_point1 (triangle)
             triangle = QPolygonF()
@@ -3341,6 +3370,15 @@ class StrandDrawingCanvas(QWidget):
                     center_y + vec_y * scale_factor
                 ))
             painter.drawPolygon(filled_triangle)
+            # Draw inner triangle with strand's color
+            inner_triangle = QPolygonF()
+            for pt in filled_triangle:
+                dx = pt.x() - center_x
+                dy = pt.y() - center_y
+                inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(strand.color))
+            painter.drawPolygon(inner_triangle)
 
             # Draw control_point_center (square) if enabled
             if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
@@ -3367,6 +3405,17 @@ class StrandDrawingCanvas(QWidget):
                     inner_size
                 )
                 painter.drawRect(inner_rect)
+                # Draw inner square with strand's color
+                inner_square_size = inner_size * 0.5
+                inner_square_rect = QRectF(
+                    strand.control_point_center.x() - inner_square_size / 2,
+                    strand.control_point_center.y() - inner_square_size / 2,
+                    inner_square_size,
+                    inner_square_size
+                )
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawRect(inner_square_rect)
 
         painter.restore()
 

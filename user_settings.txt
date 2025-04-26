@@ -3,5 +3,5 @@ Language: en
 ShadowColor: 0,0,0,255
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
-NumSteps: 5
-MaxBlurRadius: 99.0
+NumSteps: 4
+MaxBlurRadius: 60.0

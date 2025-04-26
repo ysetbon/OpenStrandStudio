@@ -505,7 +505,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
-                        width_masked_strand = strand.stroke_width
+                        width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC (Moved to draw_mask_strand_shadow      ) ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
                         # If so, subtract the mask's area from the calculated combined shadow path.
@@ -530,7 +530,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                                             # --- Calculate the path for subtraction CONSISTENTLY with mask shadow clipping ---
                                             # Get the union of the stroked paths of the mask's components.
                                             subtraction_path = QPainterPath()
-
+                                            subtraction_path_first = QPainterPath()
+                                            subtraction_path_second = QPainterPath()
                                             if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand:
                                                 s1 = mask_strand_sub.first_selected_strand
                                                 stroker1 = QPainterPathStroker()
@@ -539,10 +540,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                                                 stroker1.setJoinStyle(Qt.MiterJoin)
                                                 stroker1.setCapStyle(Qt.FlatCap)
                                                 first_path = stroker1.createStroke(s1.get_path())
-                                                if subtraction_path.isEmpty():
-                                                    subtraction_path = first_path
+                                                if subtraction_path_first.isEmpty():
+                                                    subtraction_path_first = first_path
                                                 else:
-                                                    subtraction_path = subtraction_path.united(first_path)
+                                                    subtraction_path_first = subtraction_path_first.united(first_path)
 
 
                                             if hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
@@ -552,18 +553,18 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=4, max_blur
                                                 stroker2.setJoinStyle(Qt.MiterJoin)
                                                 stroker2.setCapStyle(Qt.FlatCap)
                                                 second_path = stroker2.createStroke(s2.get_path())
-                                                if subtraction_path.isEmpty():
-                                                    subtraction_path = second_path
+                                                if subtraction_path_second.isEmpty():
+                                                    subtraction_path_second = second_path
                                                 else:
-                                                    subtraction_path = subtraction_path.united(second_path)
+                                                    subtraction_path_second = subtraction_path_second.united(second_path)
 
-                                            if subtraction_path.isEmpty():
+                                            if subtraction_path_first.isEmpty() and subtraction_path_second.isEmpty():
                                                  logging.warning(f"Could not calculate component union path for mask '{mask_layer_sub}', subtraction might be skipped or incorrect.")
                                             # --- End of consistent path calculation ---
 
-                                            if not subtraction_path.isEmpty():
+                                            if not subtraction_path_first.isEmpty() and not subtraction_path_second .isEmpty():
                                                 original_rect = combined_shadow_path.boundingRect()
-                                                combined_shadow_path = combined_shadow_path.subtracted(subtraction_path) # Apply to combined_shadow_path
+                                                combined_shadow_path = combined_shadow_path.subtracted(subtraction_path_first.intersected(subtraction_path_second)) # Apply to combined_shadow_path
                                                 new_rect = combined_shadow_path.boundingRect()
 
                                                 original_area = original_rect.width() * original_rect.height()

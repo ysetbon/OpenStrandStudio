@@ -383,7 +383,7 @@ class AttachedStrand(Strand):
                 # Draw strand body shadow with explicit shadow color
                 draw_strand_shadow(painter, self, shadow_color,
                                   num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                                  max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 30.0)
+                                  max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
                 
                 # Draw circle shadows if this strand has circles
                 if hasattr(self, 'has_circles') and any(self.has_circles):

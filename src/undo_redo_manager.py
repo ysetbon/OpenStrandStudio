@@ -1852,7 +1852,7 @@ class UndoRedoManager(QObject):
                     logging.error(f"Error cleaning up original session files: {e}")
                 
                 # Load strands and groups from the specified file
-                strands, groups = load_strands(filepath, self.canvas)
+                strands, groups, selected_strand_name = load_strands(filepath, self.canvas)
                 logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
                 
                 # First inspect the raw JSON directly to ensure we didn't miss anything

@@ -78,8 +78,8 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
         # --- Load Shadow Blur Settings --- 
-        self.num_steps = 4 # Default
-        self.max_blur_radius = 40.0 # Default
+        self.num_steps = 3 # Default
+        self.max_blur_radius = 29.99 # Default
         self.load_shadow_blur_settings() # Call helper to load from file
         # --- End Load Shadow Blur Settings ---
         # In strand_drawing_canvas.py
@@ -1211,9 +1211,9 @@ class StrandDrawingCanvas(QWidget):
                 selected_side = self.current_mode.moving_side
                 
                 # Create the yellow rectangle with the consistent size for overlap checking
-                yellow_square_size = 85  # Size for the yellow selection square
+                yellow_square_size = 120  # Size for the yellow selection square
                 half_yellow_size = yellow_square_size / 2
-                square_control_size = 35  # Size for control points
+                square_control_size = 50  # Size for control points
                 half_control_size = square_control_size / 2
                 
                 if selected_side == 0:  # Start point
@@ -1280,11 +1280,11 @@ class StrandDrawingCanvas(QWidget):
                                 continue
                                 
                             # Increased square size for better visibility
-                            square_size = 85
+                            square_size = 120
                             half_size = square_size / 2
-                            square_control_size = 35
+                            square_control_size = 50
                             half_control_size = square_control_size / 2
-                            yellow_square_size = 85  # Size for the yellow selection square
+                            yellow_square_size = 120  # Size for the yellow selection square
                             half_yellow_size = yellow_square_size / 2
                             
                             # Skip drawing only the exact selected point, not any overlapping rectangles
@@ -3105,7 +3105,7 @@ class StrandDrawingCanvas(QWidget):
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        control_point_radius = 11  # Adjust as needed
+        control_point_radius = 11 * 1.333  # Scaled by 1.333 to enlarge control point shapes
 
         stroke_color = QColor('black')
 
@@ -3200,7 +3200,7 @@ class StrandDrawingCanvas(QWidget):
                 triangle = QPolygonF()
                 center_x = strand.control_point1.x()
                 # Adjust y slightly for better visual centering of triangle
-                center_y = strand.control_point1.y() + 1.06
+                center_y = strand.control_point1.y() + 1.06 * 1.333
 
                 # Create triangle vertices
                 angle1 = math.radians(270)
@@ -3254,10 +3254,10 @@ class StrandDrawingCanvas(QWidget):
                     # Draw stroke square
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
-                    square_size = control_point_radius * 2 * 0.618
+                    square_size = control_point_radius * 2 * 0.7
                     square_rect = QRectF(
-                        strand.control_point_center.x() - (control_point_radius * 0.618),
-                        strand.control_point_center.y() - (control_point_radius * 0.618),
+                        strand.control_point_center.x() - (control_point_radius * 0.7),
+                        strand.control_point_center.y() - (control_point_radius * 0.7),
                         square_size,
                         square_size
                     )
@@ -3267,8 +3267,8 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QBrush(QColor('green')))
                     inner_size = square_size - 2
                     inner_rect = QRectF(
-                        strand.control_point_center.x() - ((control_point_radius * 0.618) - 1),
-                        strand.control_point_center.y() - ((control_point_radius * 0.618) - 1),
+                        strand.control_point_center.x() - ((control_point_radius * 0.7) - 1),
+                        strand.control_point_center.y() - ((control_point_radius * 0.7) - 1),
                         inner_size,
                         inner_size
                     )
@@ -3385,10 +3385,10 @@ class StrandDrawingCanvas(QWidget):
                 # Draw stroke square
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)
-                square_size = control_point_radius * 2 * 0.618  # Made 0.618 times smaller
+                square_size = control_point_radius * 2 * 0.7  # Made 0.618 times smaller
                 square_rect = QRectF(
-                    strand.control_point_center.x() - (control_point_radius * 0.618),
-                    strand.control_point_center.y() - (control_point_radius * 0.618),
+                    strand.control_point_center.x() - (control_point_radius * 0.7),
+                    strand.control_point_center.y() - (control_point_radius * 0.7),
                     square_size,
                     square_size
                 )
@@ -3399,8 +3399,8 @@ class StrandDrawingCanvas(QWidget):
                 painter.setBrush(QBrush(QColor('green')))
                 inner_size = square_size - 2
                 inner_rect = QRectF(
-                    strand.control_point_center.x() - ((control_point_radius * 0.618) - 1),
-                    strand.control_point_center.y() - ((control_point_radius * 0.618) - 1),
+                    strand.control_point_center.x() - ((control_point_radius * 0.7) - 1),
+                    strand.control_point_center.y() - ((control_point_radius * 0.7) - 1),
                     inner_size,
                     inner_size
                 )

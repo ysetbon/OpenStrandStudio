@@ -51,7 +51,7 @@ class SettingsDialog(QDialog):
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         self.num_steps = 3  # Default shadow blur steps
-        self.max_blur_radius = 30.0  # Default shadow blur radius
+        self.max_blur_radius = 29.99  # Default shadow blur radius
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
@@ -472,11 +472,11 @@ class SettingsDialog(QDialog):
         blur_radius_layout = QHBoxLayout()
         self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
         self.blur_radius_spinbox = QDoubleSpinBox()
-        self.blur_radius_spinbox.setRange(0.0, 30.0)
+        self.blur_radius_spinbox.setRange(0.0, 60.0)
         self.blur_radius_spinbox.setSingleStep(0.01)
         self.blur_radius_spinbox.setDecimals(2)
         self.blur_radius_spinbox.setValue(self.max_blur_radius)
-        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 30.0)")
+        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 29.99)")
         blur_radius_layout.addWidget(self.blur_radius_label)
         blur_radius_layout.addWidget(self.blur_radius_spinbox)
         blur_radius_layout.addStretch()

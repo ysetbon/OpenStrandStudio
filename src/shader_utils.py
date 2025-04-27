@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 
 
-def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=3, max_blur_radius=30.0):
+def draw_mask_strand_shadow(painter, path, strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
     """
     Draw shadow for a masked strand 
     """
@@ -289,7 +289,7 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     pass
 
-def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=30.0):
+def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -601,14 +601,14 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                 # Calculate widened strokes for both components
                                                 stroker1 = QPainterPathStroker()
                                                 # Add max_blur_radius to simulate the blurred area
-                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 +max_blur_radius/2)
+                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 +max_blur_radius)
                                                 stroker1.setJoinStyle(Qt.MiterJoin)
                                                 stroker1.setCapStyle(Qt.FlatCap)
                                                 path1 = stroker1.createStroke(s1.get_path())
 
                                                 stroker2 = QPainterPathStroker()
                                                 # Add max_blur_radius to simulate the blurred area
-                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 +max_blur_radius/2)
+                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 +max_blur_radius)
                                                 stroker2.setJoinStyle(Qt.MiterJoin)
                                                 stroker2.setCapStyle(Qt.FlatCap)
                                                 path2 = stroker2.createStroke(s2.get_path())

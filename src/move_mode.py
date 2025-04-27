@@ -699,9 +699,9 @@ class MoveMode:
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
         
         # Draw the appropriate yellow rectangle based on moving_side
-        yellow_square_size = 85  # Size for the yellow selection square
+        yellow_square_size = 120  # Size for the yellow selection square
         half_yellow_size = yellow_square_size / 2
-        square_control_size = 35  # Size for control points
+        square_control_size = 50  # Size for control points
         half_control_size = square_control_size / 2
         
         # Only draw the currently moving point's selection square
@@ -1468,7 +1468,7 @@ class MoveMode:
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 30  # Size of the area for control point selection
+        size = 50  # Size of the area for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
@@ -1955,7 +1955,7 @@ class MoveMode:
             if hasattr(strand, 'path') and strand.path:
                 strand_rect = strand.path.boundingRect()
                 # Add padding
-                padding = 100
+                padding = 140
                 strand_rect = strand_rect.adjusted(-padding, -padding, padding, padding)
                 
                 if update_rect is None:

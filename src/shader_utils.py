@@ -365,7 +365,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 exclude_circle.addEllipse(point, circle_radius/2, circle_radius/2)
                 
                 # Subtract the circle area from the shadow path
-                #shadow_path = shadow_path.subtracted(exclude_circle)
+                shadow_path = shadow_path.subtracted(exclude_circle)
                 logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
 
     # Special case for AttachedStrand
@@ -385,7 +385,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 circle_radius = strand.width + strand.stroke_width * 2 + 10  # Increased from 10 to 15
                 exclude_end_circle = QPainterPath()
                 exclude_end_circle.addEllipse(strand.end, circle_radius/2, circle_radius/2)
-                #shadow_path = shadow_path.subtracted(exclude_end_circle)
+                shadow_path = shadow_path.subtracted(exclude_end_circle)
                 logging.info(f"Excluded transparent end circle for AttachedStrand: {strand.layer_name}")
             else:
                 # IMPORTANT: Do NOT add end circle to shadow - this will be handled by draw_circle_shadow
@@ -696,7 +696,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # ----------------------------------------------------------
 
     circle_shadow_paths = []  # List[Tuple[QPainterPath, QPointF]]
-    if hasattr(strand, 'has_circles'):
+    # Skip circle shadow generation if circle stroke is fully transparent
+    if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() == 0:
+        logging.info(f"Skipping circle shadow generation for transparent circle on strand {strand.layer_name}")
+    elif hasattr(strand, 'has_circles'):
         # Base circle radius (do not add extra shadow width – fade loop will handle blur)
         circle_radius = strand.width + strand.stroke_width * 2 
         

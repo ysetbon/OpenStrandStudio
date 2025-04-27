@@ -388,6 +388,25 @@ class NumberedLayerButton(QPushButton):
                     lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_line_visibility(s, 'end', lp)
                 )
             # --- END NEW ---
+
+            # Add extension line toggles
+            context_menu.addSeparator()
+            toggle_start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Extension"
+            if getattr(strand, 'start_extension_visible', False):
+                toggle_start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Extension"
+            toggle_start_ext_action = context_menu.addAction(toggle_start_ext_text)
+            toggle_start_ext_action.triggered.connect(
+                lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_extension_visibility(s, 'start', lp)
+            )
+
+            context_menu.addSeparator()
+            toggle_end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Extension"
+            if getattr(strand, 'end_extension_visible', False):
+                toggle_end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Extension"
+            toggle_end_ext_action = context_menu.addAction(toggle_end_ext_text)
+            toggle_end_ext_action.triggered.connect(
+                lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_extension_visibility(s, 'end', lp)
+            )
         # --- END NEW Logic ---
 
         context_menu.exec_(self.mapToGlobal(pos))
@@ -613,3 +632,30 @@ class NumberedLayerButton(QPushButton):
             parent = parent.parent()
         return None
     # --- End Drag and Drop Logic ---
+
+    # Add extension line toggles
+    def toggle_strand_extension_visibility(self, strand, line_type, layer_panel):
+        """Toggles the visibility of the start or end extension of a strand."""
+        attr_name = f"{line_type}_extension_visible"
+        if hasattr(strand, attr_name):
+            current_visibility = getattr(strand, attr_name)
+            setattr(strand, attr_name, not current_visibility)
+            print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update() # Request canvas repaint
+                # --- ADD: Save state for undo/redo ---
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    # --- ADD: Force save by resetting last save time ---
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0 
+                    print(f"Reset _last_save_time to force save for toggling {attr_name}")
+                    # --- END ADD ---
+                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    print(f"Undo/Redo state saved after toggling {attr_name}")
+                else:
+                    print("Warning: Could not find undo_redo_manager on canvas to save state.")
+                # --- END ADD ---
+            else:
+                 print("Warning: Could not find canvas to update after toggling extension visibility.")
+                 self.update() # Fallback update
+        else:
+            print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")

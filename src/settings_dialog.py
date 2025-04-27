@@ -50,6 +50,10 @@ class SettingsDialog(QDialog):
         self.enable_third_control_point = False  # Default to two control points
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
+        # Extension line parameters
+        self.extension_length = getattr(canvas, 'extension_length', 100)
+        self.extension_dash_count = getattr(canvas, 'extension_dash_count', 10)
+        self.extension_dash_width = getattr(canvas, 'extension_dash_width', getattr(canvas, 'extension_line_width', 2))  # Default dash width
         self.num_steps = 3  # Default shadow blur steps
         self.max_blur_radius = 29.99  # Default shadow blur radius
         
@@ -296,6 +300,30 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found MaxBlurRadius: {self.max_blur_radius}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
+                        elif line.startswith('ExtensionLength:'):
+                            try:
+                                self.extension_length = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ExtensionLength: {self.extension_length}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ExtensionLength value. Using default {self.extension_length}.")
+                        elif line.startswith('ExtensionDashCount:'):
+                            try:
+                                self.extension_dash_count = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ExtensionDashCount: {self.extension_dash_count}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ExtensionDashCount value. Using default {self.extension_dash_count}.")
+                        elif line.startswith('ExtensionDashWidth:'):
+                            try:
+                                self.extension_dash_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ExtensionDashWidth: {self.extension_dash_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ExtensionDashWidth value. Using default {self.extension_dash_width}.")
+                        elif line.startswith('ExtensionLineWidth:'):  # legacy key
+                            try:
+                                self.extension_dash_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ExtensionLineWidth (legacy): {self.extension_dash_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing legacy ExtensionLineWidth value. Using default {self.extension_dash_width}.")
                 
                 logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
@@ -323,6 +351,7 @@ class SettingsDialog(QDialog):
 
         categories = [
             _['general_settings'],
+            _['layer_panel_title'],  # Add Layer Panel Settings category
             _['change_language'],
             _['tutorial'],
             _['history'],
@@ -486,6 +515,52 @@ class SettingsDialog(QDialog):
         general_layout.addWidget(self.apply_button)
 
         self.stacked_widget.addWidget(self.general_settings_widget)
+
+        # Layer Panel Settings Page (index 1)
+        self.layer_panel_settings_widget = QWidget()
+        layer_panel_layout = QVBoxLayout(self.layer_panel_settings_widget)
+
+        # Extension line settings
+        ext_length_layout = QHBoxLayout()
+        self.extension_length_label = QLabel(_['extension_length'] if 'extension_length' in _ else "Extension Length")
+        self.extension_length_spinbox = QDoubleSpinBox()
+        self.extension_length_spinbox.setRange(0.0, 1000.0)
+        self.extension_length_spinbox.setValue(self.extension_length)
+        self.extension_length_spinbox.setToolTip(_['extension_length_tooltip'] if 'extension_length_tooltip' in _ else "Length of extension lines")
+        ext_length_layout.addWidget(self.extension_length_label)
+        ext_length_layout.addWidget(self.extension_length_spinbox)
+        ext_length_layout.addStretch()
+        layer_panel_layout.addLayout(ext_length_layout)
+
+        dash_count_layout = QHBoxLayout()
+        self.extension_dash_count_label = QLabel(_['extension_dash_count'] if 'extension_dash_count' in _ else "Dash Count")
+        self.extension_dash_count_spinbox = QSpinBox()
+        self.extension_dash_count_spinbox.setRange(1, 100)
+        self.extension_dash_count_spinbox.setValue(self.extension_dash_count)
+        self.extension_dash_count_spinbox.setToolTip(_['extension_dash_count_tooltip'] if 'extension_dash_count_tooltip' in _ else "Number of dashes in extension line")
+        dash_count_layout.addWidget(self.extension_dash_count_label)
+        dash_count_layout.addWidget(self.extension_dash_count_spinbox)
+        dash_count_layout.addStretch()
+        layer_panel_layout.addLayout(dash_count_layout)
+
+        line_width_layout = QHBoxLayout()
+        self.extension_dash_width_label = QLabel(_['extension_dash_width'] if 'extension_dash_width' in _ else "Extension Dash Width")
+        self.extension_dash_width_spinbox = QDoubleSpinBox()
+        self.extension_dash_width_spinbox.setRange(0.1, 20.0)
+        self.extension_dash_width_spinbox.setValue(self.extension_dash_width)
+        self.extension_dash_width_spinbox.setToolTip(_['extension_dash_width_tooltip'] if 'extension_dash_width_tooltip' in _ else "Width of extension dashes")
+        line_width_layout.addWidget(self.extension_dash_width_label)
+        line_width_layout.addWidget(self.extension_dash_width_spinbox)
+        line_width_layout.addStretch()
+        layer_panel_layout.addLayout(line_width_layout)
+
+        # OK button for layer panel settings
+        self.layer_panel_ok_button = QPushButton(_['ok'])
+        self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
+        layer_panel_layout.addWidget(self.layer_panel_ok_button)
+
+        layer_panel_layout.addStretch()
+        self.stacked_widget.addWidget(self.layer_panel_settings_widget)
 
         # Change Language Page (index 1)
         self.change_language_widget = QWidget()
@@ -1060,6 +1135,16 @@ class SettingsDialog(QDialog):
             self.canvas.max_blur_radius = self.max_blur_radius
             logging.info(f"SettingsDialog: Set num_steps to {self.num_steps} and max_blur_radius to {self.max_blur_radius:.1f} on canvas")
 
+        # Apply Extension Line Settings
+        self.extension_length = self.extension_length_spinbox.value()
+        self.extension_dash_count = self.extension_dash_count_spinbox.value()
+        self.extension_dash_width = self.extension_dash_width_spinbox.value()
+        if self.canvas:
+            self.canvas.extension_length = self.extension_length
+            self.canvas.extension_dash_count = self.extension_dash_count
+            self.canvas.extension_dash_width = self.extension_dash_width
+            logging.info(f"SettingsDialog: Set extension_length to {self.extension_length}, dash_count to {self.extension_dash_count}, dashed_width to {self.extension_dash_width} on canvas")
+
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
         previous_language = self.current_language
@@ -1083,6 +1168,11 @@ class SettingsDialog(QDialog):
             # Force redraw of language-specific elements
             self.repaint()
         
+        # Apply Layer Panel Settings
+        if self.canvas and hasattr(self.canvas, 'layer_panel'):
+            panel = self.canvas.layer_panel
+ 
+
         # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
 
@@ -1118,11 +1208,12 @@ class SettingsDialog(QDialog):
         self.setWindowTitle(_['settings'])
         # Update category names
         self.categories_list.item(0).setText(_['general_settings'])
-        self.categories_list.item(1).setText(_['change_language'])
-        self.categories_list.item(2).setText(_['tutorial'])
-        self.categories_list.item(3).setText(_['history']) # Update history category name
-        self.categories_list.item(4).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(5).setText(_['about']) # Adjust index for About
+        self.categories_list.item(1).setText(_['layer_panel_title'])
+        self.categories_list.item(2).setText(_['change_language'])
+        self.categories_list.item(3).setText(_['tutorial'])
+        self.categories_list.item(4).setText(_['history']) # Update history category name
+        self.categories_list.item(5).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(6).setText(_['about']) # Adjust index for About
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -1345,6 +1436,10 @@ class SettingsDialog(QDialog):
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                 file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
+                file.write(f"ExtensionLength: {self.extension_length}\n")
+                file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
+                file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
+                file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
@@ -1360,6 +1455,10 @@ class SettingsDialog(QDialog):
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                     local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
+                    local_file.write(f"ExtensionLength: {self.extension_length}\n")
+                    local_file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
+                    local_file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
+                    local_file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")

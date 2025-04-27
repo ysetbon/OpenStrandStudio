@@ -2,7 +2,11 @@ Theme: dark
 Language: en
 ShadowColor: 0,0,0,100
 DrawOnlyAffectedStrand: true
-EnableThirdControlPoint: true
+EnableThirdControlPoint: false
 NumSteps: 2
 MaxBlurRadius: 30.0
 UseExtendedMask: false
+ExtensionLength: 100.0
+ExtensionDashCount: 16
+ExtensionDashWidth: 20.0
+ExtensionLineWidth: 20.0

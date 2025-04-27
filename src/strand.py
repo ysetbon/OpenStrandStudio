@@ -59,6 +59,9 @@ class Strand:
         # Add line visibility flags
         self.start_line_visible = True
         self.end_line_visible = True
+        # Add dashed extension visibility flags
+        self.start_extension_visible = False
+        self.end_extension_visible = False
 
         self.layer_name = layer_name
         self.set_number = set_number
@@ -776,6 +779,32 @@ class Strand:
         finally:
             painter.restore() # RESTORE 2
             logging.info(f"Strand {self.layer_name}: After shadow restore()")
+            # Draw dashed extension lines under the strand (below base paths)
+            painter.save()
+            # Setup extension parameters from canvas or defaults
+            ext_len = getattr(self.canvas, 'extension_length', 100)
+            dash_count = getattr(self.canvas, 'extension_dash_count', 10)
+            line_w = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+            dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
+            # Extension color same as side color with original alpha
+            ext_color = QColor(self.stroke_color)
+            ext_color.setAlpha(self.color.alpha())
+            
+            # Create path for dashed line
+            dash_path = QPainterPath()
+            dash_path.setFillRule(Qt.WindingFill)
+            
+            # Create stroker to give the path width
+            stroker = QPainterPathStroker()
+            stroker.setWidth(line_w)
+            stroker.setCapStyle(Qt.FlatCap)
+            
+            # Set up pen for dashes but with width 0 since we'll stroke the path
+            ext_pen = QPen(ext_color, 0, Qt.CustomDashLine)
+            ext_pen.setDashPattern([dash_seg, dash_seg])
+            painter.setPen(ext_pen)
+     
+            painter.restore()
 
         # Only draw highlight if this is not a MaskedStrand
         if self.is_selected and not isinstance(self, MaskedStrand):
@@ -820,6 +849,35 @@ class Strand:
         # Conditionally draw end line
         if self.end_line_visible:
             painter.drawLine(self.end_line_start, self.end_line_end)
+        # Draw dashed extension lines with configured dash count and width
+        ext_len = getattr(self.canvas, 'extension_length', 100)
+        dash_count = getattr(self.canvas, 'extension_dash_count', 10)
+        # Determine dash width (thickness)
+        dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+        # Compute segment length so that there are dash_count dashes over ext_len
+        dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
+        # Compute dash pattern lengths independent of pen width
+        dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
+        pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
+        dash_pen.setDashPattern([pattern_len, pattern_len])
+        dash_pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(dash_pen)
+        # Start extension
+        if getattr(self, 'start_extension_visible', False):
+            tangent = self.calculate_cubic_tangent(0.0)
+            length = math.hypot(tangent.x(), tangent.y())
+            if length:
+                unit = QPointF(tangent.x()/length, tangent.y()/length)
+                ext_start = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
+                painter.drawLine(self.start, ext_start)
+        # End extension
+        if getattr(self, 'end_extension_visible', False):
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            length_end = math.hypot(tangent_end.x(), tangent_end.y())
+            if length_end:
+                unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
+                ext_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
+                painter.drawLine(self.end, ext_end)
 
         # Draw the selection path
         painter.save() # SAVE 3

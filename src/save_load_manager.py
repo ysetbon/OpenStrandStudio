@@ -114,6 +114,10 @@ def serialize_strand(strand, canvas, index=None):
     if isinstance(strand, MaskedStrand):
         data["deletion_rectangles"] = getattr(strand, 'deletion_rectangles', [])
 
+    # --- NEW: Save manual circle visibility overrides ---
+    if hasattr(strand, 'manual_circle_visibility'):
+        data["manual_circle_visibility"] = strand.manual_circle_visibility
+
     return data
 
 def save_strands(strands, groups, filename, canvas):
@@ -319,6 +323,10 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                         f"(r={final_color.red()}, g={final_color.green()}, "
                         f"b={final_color.blue()}, a={final_color.alpha()})")
 
+        # --- NEW: Load manual circle visibility overrides ---
+        if "manual_circle_visibility" in data:
+            strand.manual_circle_visibility = data["manual_circle_visibility"]
+
         return strand
 
     except Exception as e:
@@ -403,6 +411,10 @@ def load_strands(filename, canvas):
             if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
                 raw_color = strand_data["circle_stroke_color"]
                 strand.circle_stroke_color = deserialize_color(raw_color)
+
+            # --- NEW: Load manual circle visibility overrides ---
+            if "manual_circle_visibility" in strand_data:
+                strand.manual_circle_visibility = strand_data["manual_circle_visibility"]
 
             # Add to collections
             index = strand_data["index"]
@@ -495,6 +507,10 @@ def load_strands(filename, canvas):
                     if hasattr(strand, 'update_mask_path'):
                         strand.update_mask_path()
 
+                # --- NEW: Load manual circle visibility overrides ---
+                if "manual_circle_visibility" in masked_data:
+                    strand.manual_circle_visibility = masked_data["manual_circle_visibility"]
+
                 index = masked_data["index"]
                 strands[index] = strand
                 strand_dict[strand.layer_name] = strand
@@ -513,14 +529,23 @@ def load_strands(filename, canvas):
             if hasattr(strand, 'attached_strands'):
                 for attached in strand.attached_strands:
                     # Determine if attached to start or end
-                    if attached.start == strand.start:
+                    # Check attachment_side to be sure
+                    if attached.start == strand.start and getattr(attached, 'attachment_side', 0) == 0:
                         start_has_attachment = True
-                    elif attached.start == strand.end:
+                    elif attached.start == strand.end and getattr(attached, 'attachment_side', 0) == 1:
                         end_has_attachment = True
             
-            # Update has_circles to reflect actual attached strands
-            strand.has_circles[0] = start_has_attachment
-            strand.has_circles[1] = end_has_attachment
+            # Update has_circles to reflect actual attached strands, *unless* manually overridden
+            manual_override = getattr(strand, 'manual_circle_visibility', [None, None])
+            if manual_override[0] is None: # No manual override for start circle
+                strand.has_circles[0] = start_has_attachment
+            else: # Manual override exists, respect it
+                strand.has_circles[0] = manual_override[0]
+
+            if manual_override[1] is None: # No manual override for end circle
+                strand.has_circles[1] = end_has_attachment
+            else: # Manual override exists, respect it
+                strand.has_circles[1] = manual_override[1]
             
             # Call update_attachable to refresh the attachable property
             if hasattr(strand, 'update_attachable'):

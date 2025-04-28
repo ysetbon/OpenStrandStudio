@@ -564,6 +564,19 @@ class UndoRedoManager(QObject):
                          logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible attribute presence differs.")
                          return False
 
+                    # --- ADD: Check circle visibility (has_circles) ---
+                    if hasattr(current_strand, 'has_circles') and 'has_circles' in prev_strand:
+                        # Check if has_circles lists differ
+                        current_circles = getattr(current_strand, 'has_circles', [False, False])
+                        prev_circles = prev_strand.get('has_circles', [False, False])
+                        if current_circles != prev_circles:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} has_circles differs. Current: {current_circles}, Prev: {prev_circles}")
+                            return False
+                    elif hasattr(current_strand, 'has_circles') != ('has_circles' in prev_strand):
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} has_circles attribute presence differs.")
+                        return False
+                    # --- END ADD ---
+
                 # If we made it here, states are identical based on checked properties
                 return True
                 
@@ -914,6 +927,20 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- RE-ADD: Check circle visibility (has_circles) ---
+                            if hasattr(new_strand, 'has_circles') and hasattr(original_strand, 'has_circles'):
+                                current_circles = getattr(new_strand, 'has_circles', [False, False])
+                                original_circles = getattr(original_strand, 'has_circles', [False, False])
+                                if current_circles != original_circles:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} has_circles differs. {current_circles} vs {original_circles}")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'has_circles') != hasattr(original_strand, 'has_circles'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} has_circles attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END RE-ADD ---
+
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to previous state...")
@@ -1222,6 +1249,20 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
+
+                            # --- RE-ADD: Check circle visibility (has_circles) ---
+                            if hasattr(new_strand, 'has_circles') and hasattr(original_strand, 'has_circles'):
+                                current_circles = getattr(new_strand, 'has_circles', [False, False])
+                                original_circles = getattr(original_strand, 'has_circles', [False, False])
+                                if current_circles != original_circles:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} has_circles differs. {current_circles} vs {original_circles}")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'has_circles') != hasattr(original_strand, 'has_circles'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} has_circles attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END RE-ADD ---
 
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:

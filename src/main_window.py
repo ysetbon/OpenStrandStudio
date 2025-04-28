@@ -1349,37 +1349,63 @@ class MainWindow(QMainWindow):
 
     def load_project(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
-        if filename:
+        if not filename:
+            return
+
+        # First try to treat the file as a full history export
+        undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
+        history_loaded = False
+        if undo_mgr:
             try:
-                # Load strands and groups from file
-                strands, groups = load_strands(filename, self.canvas)
-                
-                # Clear existing canvas state
-                self.canvas.strands = []
-                self.canvas.groups = {}
-                
-                # Apply the loaded strands and groups
-                apply_loaded_strands(self.canvas, strands, groups)
-                
-                # Ensure control points are visible after loading
-                self.toggle_control_points_button.setChecked(True)
-                self.canvas.show_control_points = True
-                
-                # Update the layer panel
-                if hasattr(self.canvas, 'layer_panel'):
-                    self.canvas.layer_panel.refresh()
-                
-                # Force a canvas redraw
-                self.canvas.update()
-                
-                logging.info(f"Project successfully loaded from {filename}")
-                
-                # Save initial state after loading
-                self.layer_state_manager.save_initial_state()
-                
+                history_loaded = undo_mgr.import_history(filename)
             except Exception as e:
-                logging.error(f"Error loading project from {filename}: {str(e)}")
-                # You might want to show an error dialog to the user here
+                logging.error(f"load_project: import_history raised error: {e}")
+                history_loaded = False
+
+        if history_loaded:
+            logging.info(f"Project with history loaded from {filename}")
+            # The import_history() call already applied its current step to the canvas
+            # and refreshed UI through _load_state.  We just need to ensure some
+            # ancillary UI bits are correct.
+            if hasattr(self.canvas, 'layer_panel'):
+                self.canvas.layer_panel.refresh()
+            self.canvas.update()
+            return
+
+        # --- Fallback: load as simple snapshot (previous behaviour) ---
+        try:
+            strands, groups, _ = load_strands(filename, self.canvas)
+
+            # Clear existing canvas state
+            self.canvas.strands = []
+            self.canvas.groups = {}
+
+            # Apply the loaded strands and groups
+            apply_loaded_strands(self.canvas, strands, groups)
+
+            # Ensure control points are visible after loading
+            self.toggle_control_points_button.setChecked(True)
+            self.canvas.show_control_points = True
+
+            # Update the layer panel
+            if hasattr(self.canvas, 'layer_panel'):
+                self.canvas.layer_panel.refresh()
+
+            # Force a canvas redraw
+            self.canvas.update()
+
+            logging.info(f"Project successfully loaded from {filename} (snapshot only)")
+
+            # Reset undo history now because snapshot load discards previous history
+            if undo_mgr:
+                undo_mgr.clear_history(save_current=True)
+
+            # Save initial state after loading
+            self.layer_state_manager.save_initial_state()
+
+        except Exception as e:
+            logging.error(f"Error loading project from {filename}: {str(e)}")
+            # You might want to show an error dialog to the user here
 
     def show_layer_state_log(self):
         """Display the current layer state information."""
@@ -1983,12 +2009,18 @@ class MainWindow(QMainWindow):
     def save_project(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "JSON Files (*.json)")
         if filename:
-            # Retrieve the group data from the correct instance
-            groups = self.group_layer_manager.get_group_data()
-            logging.debug(f"Group data before saving: {groups}")
-            # Save the strands and groups
-            save_strands(self.canvas.strands, groups, filename, self.canvas)
-            logging.info(f"Project saved to {filename}")
+            # Attempt to export the full undo/redo history so that it can be
+            # restored on load.  If that fails for any reason we fall back to
+            # saving just the current canvas state (previous behaviour).
+            undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
+            if undo_mgr and undo_mgr.export_history(filename):
+                logging.info(f"Project (with history) saved to {filename}")
+            else:
+                # Fallback: save only the current snapshot
+                groups = self.group_layer_manager.get_group_data()
+                logging.debug(f"Fallback save path – saving only current snapshot. Group data: {groups}")
+                save_strands(self.canvas.strands, groups, filename, self.canvas)
+                logging.info(f"Project saved WITHOUT history to {filename}")
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:
             group_data = self.canvas.groups[group_name]

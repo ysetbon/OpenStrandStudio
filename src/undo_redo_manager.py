@@ -2407,6 +2407,123 @@ class UndoRedoManager(QObject):
             self.redo_button.set_theme(theme_name)
             logging.debug(f"Applied {theme_name} theme to redo button")
 
+    def export_history(self, filepath):
+        """Export the entire undo/redo history to a single JSON file.
+
+        The generated file contains a list of *all* state JSON blobs together
+        with bookkeeping information so that the history can be reconstructed
+        later via `import_history()`.  This allows a project to be saved and,
+        when re-opened, have the full undo/redo stack available.
+        """
+        try:
+            # Always make sure the current canvas state is captured first.
+            # This guarantees that any changes since the last automatic save
+            # are included in the exported history.
+            if not self._would_be_identical_save():
+                self.save_state()
+
+            history_payload = {
+                "type": "OpenStrandStudioHistory",
+                "version": 1,
+                "current_step": self.current_step,
+                "max_step": self.max_step,
+                "states": []
+            }
+
+            for step in range(1, self.max_step + 1):
+                state_file = self._get_state_filename(step)
+                if not os.path.exists(state_file):
+                    logging.warning(f"export_history: expected state file missing: {state_file}")
+                    continue
+                try:
+                    with open(state_file, "r", encoding="utf-8") as f:
+                        state_data = json.load(f)
+                    history_payload["states"].append({
+                        "step": step,
+                        "data": state_data
+                    })
+                except Exception as e:
+                    logging.error(f"export_history: failed reading {state_file}: {e}")
+                    return False
+
+            # Finally write the consolidated history file.
+            with open(filepath, "w", encoding="utf-8") as out_f:
+                json.dump(history_payload, out_f, indent=2)
+
+            logging.info(f"export_history: Successfully wrote history with {len(history_payload['states'])} steps to {filepath}")
+            return True
+        except Exception as e:
+            logging.exception(f"export_history: Unexpected error: {e}")
+            return False
+
+    def import_history(self, filepath):
+        """Import a history JSON previously produced by `export_history()`.
+
+        The function rebuilds the temp state files for a fresh session and
+        loads the *current* state so that the application reflects the saved
+        canvas exactly while also restoring the entire undo/redo stack.
+        """
+        try:
+            # Read the history file
+            with open(filepath, "r", encoding="utf-8") as f:
+                history_payload = json.load(f)
+
+            if not isinstance(history_payload, dict) or "states" not in history_payload:
+                logging.error("import_history: File does not appear to be a valid history export.")
+                return False
+
+            states_list = history_payload.get("states", [])
+            if not states_list:
+                logging.error("import_history: No states found in history export.")
+                return False
+
+            # Wipe existing temp state files for a clean import
+            try:
+                for fname in os.listdir(self.temp_dir):
+                    if fname.endswith(".json"):
+                        os.remove(os.path.join(self.temp_dir, fname))
+            except Exception as e:
+                logging.warning(f"import_history: Could not clean temp directory: {e}")
+
+            # Start a **new** session id to avoid clashing with prior sessions
+            self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
+
+            # Re-create each state file with the new session id while preserving step numbers
+            recreated_steps = 0
+            for entry in states_list:
+                step_num = entry.get("step")
+                state_data = entry.get("data")
+                if step_num is None or state_data is None:
+                    logging.warning(f"import_history: Malformed state entry skipped: {entry}")
+                    continue
+                try:
+                    target_path = self._get_state_filename(step_num)
+                    with open(target_path, "w", encoding="utf-8") as out_f:
+                        json.dump(state_data, out_f, indent=2)
+                    recreated_steps += 1
+                except Exception as e:
+                    logging.error(f"import_history: Failed writing state {step_num}: {e}")
+                    return False
+
+            # Restore bookkeeping counters
+            self.max_step = recreated_steps
+            self.current_step = min(history_payload.get("current_step", recreated_steps), recreated_steps)
+
+            logging.info(f"import_history: Recreated {recreated_steps} state files. Loading step {self.current_step}...")
+
+            # Load the canvas state corresponding to current_step
+            load_success = self._load_state(self.current_step)
+            if not load_success:
+                logging.error("import_history: Failed to load reconstructed current state.")
+                return False
+
+            # Update UI buttons
+            self._update_button_states()
+            return True
+        except Exception as e:
+            logging.exception(f"import_history: Unexpected error: {e}")
+            return False
+
 def connect_to_move_mode(canvas, undo_redo_manager):
     """
     Connect the move mode's mouse release event to save state, but only if a move occurred.

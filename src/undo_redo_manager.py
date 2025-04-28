@@ -526,6 +526,44 @@ class UndoRedoManager(QObject):
                         return False
                     # --- END ADD ---
 
+                    # --- NEW: Check extension visibility ---
+                    if hasattr(current_strand, 'start_extension_visible') and 'start_extension_visible' in prev_strand:
+                        prev_start_ext = prev_strand.get('start_extension_visible', not current_strand.start_extension_visible)
+                        if current_strand.start_extension_visible != prev_start_ext:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_extension_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'start_extension_visible') != ('start_extension_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_extension_visible attribute presence differs.")
+                         return False
+
+                    if hasattr(current_strand, 'end_extension_visible') and 'end_extension_visible' in prev_strand:
+                        prev_end_ext = prev_strand.get('end_extension_visible', not current_strand.end_extension_visible)
+                        if current_strand.end_extension_visible != prev_end_ext:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_extension_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'end_extension_visible') != ('end_extension_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_extension_visible attribute presence differs.")
+                         return False
+
+                    # --- NEW: Check arrow visibility ---
+                    if hasattr(current_strand, 'start_arrow_visible') and 'start_arrow_visible' in prev_strand:
+                        prev_start_arr = prev_strand.get('start_arrow_visible', not current_strand.start_arrow_visible)
+                        if current_strand.start_arrow_visible != prev_start_arr:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_arrow_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'start_arrow_visible') != ('start_arrow_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_arrow_visible attribute presence differs.")
+                         return False
+
+                    if hasattr(current_strand, 'end_arrow_visible') and 'end_arrow_visible' in prev_strand:
+                        prev_end_arr = prev_strand.get('end_arrow_visible', not current_strand.end_arrow_visible)
+                        if current_strand.end_arrow_visible != prev_end_arr:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'end_arrow_visible') != ('end_arrow_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible attribute presence differs.")
+                         return False
+
                 # If we made it here, states are identical based on checked properties
                 return True
                 
@@ -833,6 +871,49 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- NEW: Check extension visibility ---
+                            if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
+                                if new_strand.start_extension_visible != original_strand.start_extension_visible:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_extension_visible') != hasattr(original_strand, 'start_extension_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'end_extension_visible') and hasattr(original_strand, 'end_extension_visible'):
+                                if new_strand.end_extension_visible != original_strand.end_extension_visible:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_extension_visible') != hasattr(original_strand, 'end_extension_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            # --- NEW: Check arrow visibility ---
+                            if hasattr(new_strand, 'start_arrow_visible') and hasattr(original_strand, 'start_arrow_visible'):
+                                if new_strand.start_arrow_visible != original_strand.start_arrow_visible:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_arrow_visible') != hasattr(original_strand, 'start_arrow_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'end_arrow_visible') and hasattr(original_strand, 'end_arrow_visible'):
+                                if new_strand.end_arrow_visible != original_strand.end_arrow_visible:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_arrow_visible') != hasattr(original_strand, 'end_arrow_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to previous state...")
@@ -1095,6 +1176,49 @@ class UndoRedoManager(QObject):
                                     break
                             elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
                                 logging.info(f"Redo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
+                            # --- NEW: Check extension visibility ---
+                            if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
+                                if new_strand.start_extension_visible != original_strand.start_extension_visible:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_extension_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_extension_visible') != hasattr(original_strand, 'start_extension_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'end_extension_visible') and hasattr(original_strand, 'end_extension_visible'):
+                                if new_strand.end_extension_visible != original_strand.end_extension_visible:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_extension_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_extension_visible') != hasattr(original_strand, 'end_extension_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            # --- NEW: Check arrow visibility ---
+                            if hasattr(new_strand, 'start_arrow_visible') and hasattr(original_strand, 'start_arrow_visible'):
+                                if new_strand.start_arrow_visible != original_strand.start_arrow_visible:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'start_arrow_visible') != hasattr(original_strand, 'start_arrow_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'end_arrow_visible') and hasattr(original_strand, 'end_arrow_visible'):
+                                if new_strand.end_arrow_visible != original_strand.end_arrow_visible:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'end_arrow_visible') != hasattr(original_strand, 'end_arrow_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---

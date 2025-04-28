@@ -64,6 +64,11 @@ def serialize_strand(strand, canvas, index=None):
         "start_line_visible": getattr(strand, 'start_line_visible', True),
         "end_line_visible": getattr(strand, 'end_line_visible', True),
         "is_hidden": getattr(strand, 'is_hidden', False),
+        # NEW: Extension & Arrow visibility flags
+        "start_extension_visible": getattr(strand, 'start_extension_visible', False),
+        "end_extension_visible": getattr(strand, 'end_extension_visible', False),
+        "start_arrow_visible": getattr(strand, 'start_arrow_visible', False),
+        "end_arrow_visible": getattr(strand, 'end_arrow_visible', False),
     }
 
     # Only save circle_stroke_color if it exists
@@ -238,6 +243,12 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.end_line_visible = data.get("end_line_visible", True)
         strand.is_hidden = data.get("is_hidden", False)
 
+        # NEW: Extension & Arrow visibility flags
+        strand.start_extension_visible = data.get("start_extension_visible", False)
+        strand.end_extension_visible = data.get("end_extension_visible", False)
+        strand.start_arrow_visible = data.get("start_arrow_visible", False)
+        strand.end_arrow_visible = data.get("end_arrow_visible", False)
+
         # Now handle control_points if present
         if "control_points" in data:
             control_points = data["control_points"]
@@ -382,6 +393,12 @@ def load_strands(filename, canvas):
             strand.start_line_visible = strand_data.get("start_line_visible", True)
             strand.end_line_visible = strand_data.get("end_line_visible", True)
 
+            # NEW: Extension & Arrow visibility flags
+            strand.start_extension_visible = strand_data.get("start_extension_visible", False)
+            strand.end_extension_visible = strand_data.get("end_extension_visible", False)
+            strand.start_arrow_visible = strand_data.get("start_arrow_visible", False)
+            strand.end_arrow_visible = strand_data.get("end_arrow_visible", False)
+
             # Circle stroke color
             if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
                 raw_color = strand_data["circle_stroke_color"]
@@ -450,6 +467,12 @@ def load_strands(filename, canvas):
                 # Load visibility flags
                 strand.start_line_visible = masked_data.get("start_line_visible", True)
                 strand.end_line_visible = masked_data.get("end_line_visible", True)
+                
+                # NEW: Extension & Arrow visibility flags
+                strand.start_extension_visible = masked_data.get("start_extension_visible", False)
+                strand.end_extension_visible = masked_data.get("end_extension_visible", False)
+                strand.start_arrow_visible = masked_data.get("start_arrow_visible", False)
+                strand.end_arrow_visible = masked_data.get("end_arrow_visible", False)
                 
                 if "deletion_rectangles" in masked_data:
                     # Set a flag to prevent automatic repositioning

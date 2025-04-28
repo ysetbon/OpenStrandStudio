@@ -399,7 +399,6 @@ class NumberedLayerButton(QPushButton):
                 lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_extension_visibility(s, 'start', lp)
             )
 
-            context_menu.addSeparator()
             toggle_end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Extension"
             if getattr(strand, 'end_extension_visible', False):
                 toggle_end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Extension"

@@ -557,9 +557,8 @@ class SettingsDialog(QDialog):
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
         self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
-        layer_panel_layout.addWidget(self.layer_panel_ok_button)
-
         layer_panel_layout.addStretch()
+        layer_panel_layout.addWidget(self.layer_panel_ok_button)
         self.stacked_widget.addWidget(self.layer_panel_settings_widget)
 
         # Change Language Page (index 1)

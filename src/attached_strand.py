@@ -391,6 +391,33 @@ class AttachedStrand(Strand):
         except Exception as e:
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
+        # NEW: Draw dashed extension lines for attached strands
+        ext_len = getattr(self.canvas, 'extension_length', 100)
+        dash_count = getattr(self.canvas, 'extension_dash_count', 10)
+        dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+        dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
+        # Setup side color for extension
+        side_color = QColor(self.stroke_color)
+        side_color.setAlpha(self.color.alpha())
+        dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
+        pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
+        dash_pen.setDashPattern([pattern_len, pattern_len])
+        dash_pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(dash_pen)
+        if getattr(self, 'start_extension_visible', False):
+            tangent = self.calculate_cubic_tangent(0.0)
+            length = math.hypot(tangent.x(), tangent.y())
+            if length:
+                unit = QPointF(tangent.x()/length, tangent.y()/length)
+                ext_start = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
+                painter.drawLine(self.start, ext_start)
+        if getattr(self, 'end_extension_visible', False):
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            length_end = math.hypot(tangent_end.x(), tangent_end.y())
+            if length_end:
+                unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
+                ext_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
+                painter.drawLine(self.end, ext_end)
 
         # Draw highlight if selected (only when directly selected)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -711,6 +738,8 @@ class AttachedStrand(Strand):
             painter.restore()
 
         # temp_painter.end() # REMOVE THIS - it corresponds to no active painter
+
+
         painter.restore()
 
         # Control points are now only drawn by StrandDrawingCanvas.draw_control_points

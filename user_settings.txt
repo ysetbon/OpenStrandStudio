@@ -6,7 +6,7 @@ EnableThirdControlPoint: false
 NumSteps: 2
 MaxBlurRadius: 30.0
 UseExtendedMask: false
-ExtensionLength: 100.0
-ExtensionDashCount: 16
+ExtensionLength: 200.0
+ExtensionDashCount: 15
 ExtensionDashWidth: 20.0
 ExtensionLineWidth: 20.0

@@ -122,6 +122,10 @@ class StrandDrawingCanvas(QWidget):
         # Add shadow rendering control
         self.shadow_enabled = True  # Enable shadows by default
 
+        # --- Load Extension Line Settings ---
+        self.load_extension_line_settings()
+        # --- End Load Extension Line Settings ---
+
     def load_shadow_color_from_settings(self):
         """Load only the shadow color from the settings file."""
         shadow_color = None
@@ -193,6 +197,53 @@ class StrandDrawingCanvas(QWidget):
                 logging.error(f"Canvas: Error reading settings file for blur settings: {e}")
         else:
             logging.info("Canvas: Settings file not found. Using default shadow blur settings.")
+
+    def load_extension_line_settings(self):
+        """Load extension line settings (ExtensionLength, ExtensionDashCount, ExtensionDashWidth) from user_settings.txt if available."""
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Canvas: Looking for extension line settings at: {file_path}")
+
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('ExtensionLength:'):
+                            try:
+                                self.extension_length = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ExtensionLength from settings: {self.extension_length}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ExtensionLength. Using default {self.extension_length}")
+                        elif line.startswith('ExtensionDashCount:'):
+                            try:
+                                self.extension_dash_count = int(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ExtensionDashCount from settings: {self.extension_dash_count}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ExtensionDashCount. Using default {self.extension_dash_count}")
+                        elif line.startswith('ExtensionDashWidth:'):
+                            try:
+                                self.extension_dash_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ExtensionDashWidth from settings: {self.extension_dash_width}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ExtensionDashWidth. Using default {self.extension_dash_width}")
+                        elif line.startswith('ExtensionLineWidth:'):
+                            try:
+                                self.extension_dash_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ExtensionLineWidth (legacy): {self.extension_dash_width}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ExtensionLineWidth. Using default {self.extension_dash_width}")
+            except Exception as e:
+                logging.error(f"Canvas: Error reading settings file for extension settings: {e}")
+        else:
+            logging.info("Canvas: Settings file not found. Using default extension settings.")
 
     def setup_modes(self):
         """Initialize the interaction modes."""
@@ -991,6 +1042,10 @@ class StrandDrawingCanvas(QWidget):
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = False
+        # Default extension line settings
+        self.extension_length = 100.0
+        self.extension_dash_count = 10
+        self.extension_dash_width = 2.0
 
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number

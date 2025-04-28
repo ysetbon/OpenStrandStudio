@@ -1,12 +1,24 @@
-UNDO: Selected strand after undo: 1_2
+UNDO: Selected strand after undo: 1_1_2_1
+REDO: State BEFORE loading - Strands: 3, Order: ['1_1', '2_1', '1_1_2_1']
+REDO: Attempting to load step 4
+REDO: State AFTER loading step 4 - Strands: 3, Order: ['1_1', '2_1', '1_1_2_1']
+REDO: Selected strand after redo: 1_1_2_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1_2_1
+UNDO: Selected strand after undo: 2_1
 UNDO: Selected strand after undo: 1_1
 REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
 REDO: Attempting to load step 2
-REDO: State AFTER loading step 2 - Strands: 2, Order: ['1_1', '1_2']
-REDO: Selected strand after redo: 1_2
+REDO: State AFTER loading step 2 - Strands: 2, Order: ['1_1', '2_1']
+REDO: Selected strand after redo: 2_1
 REDO: UI updated after redo operation
-REDO: State BEFORE loading - Strands: 2, Order: ['1_1', '1_2']
+REDO: State BEFORE loading - Strands: 2, Order: ['1_1', '2_1']
 REDO: Attempting to load step 3
-REDO: State AFTER loading step 3 - Strands: 3, Order: ['1_1', '1_2', '1_3']
-REDO: Selected strand after redo: 1_3
+REDO: State AFTER loading step 3 - Strands: 3, Order: ['1_1', '2_1', '1_1_2_1']
+REDO: Selected strand after redo: 1_1_2_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 3, Order: ['1_1', '2_1', '1_1_2_1']
+REDO: Attempting to load step 4
+REDO: State AFTER loading step 4 - Strands: 3, Order: ['1_1', '2_1', '1_1_2_1']
+REDO: Selected strand after redo: 1_1_2_1
 REDO: UI updated after redo operation

@@ -771,6 +771,14 @@ class LayerPanel(QWidget):
             logging.info("Saving state after mask edit completed")
             self.undo_redo_manager.save_state()
 
+        # --- ADD: Save state after exiting mask edit mode ---
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
+            self.undo_redo_manager._last_save_time = 0
+            logging.info("Saving state after exiting mask edit mode")
+            self.undo_redo_manager.save_state()
+        # --- END ADD ---
+
     def toggle_lock_mode(self):
         """Toggle lock mode on/off and update UI accordingly."""
         self.lock_mode = self.lock_layers_button.isChecked()
@@ -1059,6 +1067,14 @@ class LayerPanel(QWidget):
         logging.info("Exited mask edit mode")
         self.show_notification(_['mask_edit_mode_exited'])
         self.update()
+
+        # --- ADD: Save state after exiting mask edit mode via ESC --- 
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
+            self.undo_redo_manager._last_save_time = 0
+            logging.info("Saving state after exiting mask edit mode")
+            self.undo_redo_manager.save_state()
+        # --- END ADD ---
 
     def disable_controls(self):
         """Disable controls that shouldn't be used during mask editing."""
@@ -1488,7 +1504,8 @@ class LayerPanel(QWidget):
             if len(parts) == 4:  # Masked layer format: "set1_num1_set2_num2"
                 if parts[0] == str(set_number):
                     button.set_color(color)
-
+                elif parts[2] == str(set_number):
+                    button.set_border_color(color)
         
         # Emit signal for other components
         self.color_changed.emit(set_number, color)

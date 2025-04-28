@@ -462,39 +462,36 @@ class UndoRedoManager(QObject):
                         
                         # Deep compare rectangles if counts are the same
                         if len(current_rects) > 0:
-                            # Sort both lists based on a stable representation (e.g., top-left corner)
-                            # Need a helper function to convert rectangle data to a sortable key
-                            def get_rect_key(rect_data):
-                                # Use corner coordinates as tuple for sorting
-                                tl = tuple(rect_data.get('top_left', (0,0)))
-                                return tl
-                            
-                            try:
-                                sorted_current_rects = sorted(current_rects, key=get_rect_key)
-                                sorted_prev_rects = sorted(prev_rects, key=get_rect_key)
-                            except Exception as e:
-                                logging.error(f"Error sorting deletion rectangles: {e}")
-                                return False # Treat sorting error as difference
+                            # Helper to produce a comparable tuple for each rectangle, handling both
+                            # the legacy corner-based schema and the (x,y,width,height) schema used
+                            # during interactive mask editing.
+                            def rect_signature(rect_data):
+                                if all(k in rect_data for k in ["top_left", "top_right", "bottom_left", "bottom_right"]):
+                                    # Corner based – use all four corners rounded to 2 decimals to reduce FP noise
+                                    tl = tuple(round(v, 2) for v in rect_data.get("top_left", (0, 0)))
+                                    tr = tuple(round(v, 2) for v in rect_data.get("top_right", (0, 0)))
+                                    bl = tuple(round(v, 2) for v in rect_data.get("bottom_left", (0, 0)))
+                                    br = tuple(round(v, 2) for v in rect_data.get("bottom_right", (0, 0)))
+                                    return (tl, tr, bl, br)
+                                else:
+                                    # Rectangle expressed with position/size.  Round to 2 decimals.
+                                    x = round(rect_data.get("x", 0), 2)
+                                    y = round(rect_data.get("y", 0), 2)
+                                    w = round(rect_data.get("width", 0), 2)
+                                    h = round(rect_data.get("height", 0), 2)
+                                    # Include optional offsets if present – otherwise default to 0.
+                                    ox = round(rect_data.get("offset_x", 0), 2)
+                                    oy = round(rect_data.get("offset_y", 0), 2)
+                                    return (x, y, w, h, ox, oy)
 
-                            # Compare each rectangle
-                            for idx, current_rect in enumerate(sorted_current_rects):
-                                prev_rect = sorted_prev_rects[idx]
-                                # Compare all corner points with tolerance
-                                current_tl = current_rect.get('top_left', (0,0))
-                                prev_tl = prev_rect.get('top_left', (0,0))
-                                current_tr = current_rect.get('top_right', (0,0))
-                                prev_tr = prev_rect.get('top_right', (0,0))
-                                current_bl = current_rect.get('bottom_left', (0,0))
-                                prev_bl = prev_rect.get('bottom_left', (0,0))
-                                current_br = current_rect.get('bottom_right', (0,0))
-                                prev_br = prev_rect.get('bottom_right', (0,0))
-                                
-                                if (abs(current_tl[0] - prev_tl[0]) > 0.1 or abs(current_tl[1] - prev_tl[1]) > 0.1 or
-                                    abs(current_tr[0] - prev_tr[0]) > 0.1 or abs(current_tr[1] - prev_tr[1]) > 0.1 or
-                                    abs(current_bl[0] - prev_bl[0]) > 0.1 or abs(current_bl[1] - prev_bl[1]) > 0.1 or
-                                    abs(current_br[0] - prev_br[0]) > 0.1 or abs(current_br[1] - prev_br[1]) > 0.1):
-                                    logging.info(f"Masked strand {current_strand.layer_name} deletion rectangle at index {idx} differs. State not identical.")
-                                    return False
+                            # Build ordered signature lists for comparison (order-independent)
+                            sig_curr = sorted([rect_signature(r) for r in current_rects])
+                            sig_prev = sorted([rect_signature(r) for r in prev_rects])
+
+                            if sig_curr != sig_prev:
+                                logging.info(
+                                    f"Masked strand {current_strand.layer_name} deletion rectangle data changed. State not identical.")
+                                return False
                     # --- ADD: Check line visibility ---
                     if hasattr(current_strand, 'start_line_visible') and 'start_line_visible' in prev_strand:
                         # Safer check using .get()
@@ -830,10 +827,30 @@ class UndoRedoManager(QObject):
                                 
                                 # Deep compare if counts are the same and non-zero
                                 if len(new_rects) > 0:
-                                    # Simple content comparison (assuming order is consistent or not critical for this check)
-                                    # For a more robust check, sorting could be added here like in _would_be_identical_save
-                                    if new_rects != original_rects:
-                                        logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
+                                    # Re-use the `rect_signature` logic introduced in _would_be_identical_save
+                                    def rect_signature(rect_data):
+                                        if all(k in rect_data for k in [
+                                            "top_left", "top_right", "bottom_left", "bottom_right"]):
+                                            tl = tuple(round(v, 2) for v in rect_data.get("top_left", (0, 0)))
+                                            tr = tuple(round(v, 2) for v in rect_data.get("top_right", (0, 0)))
+                                            bl = tuple(round(v, 2) for v in rect_data.get("bottom_left", (0, 0)))
+                                            br = tuple(round(v, 2) for v in rect_data.get("bottom_right", (0, 0)))
+                                            return (tl, tr, bl, br)
+                                        else:
+                                            x = round(rect_data.get("x", 0), 2)
+                                            y = round(rect_data.get("y", 0), 2)
+                                            w = round(rect_data.get("width", 0), 2)
+                                            h = round(rect_data.get("height", 0), 2)
+                                            ox = round(rect_data.get("offset_x", 0), 2)
+                                            oy = round(rect_data.get("offset_y", 0), 2)
+                                            return (x, y, w, h, ox, oy)
+
+                                    sig_new = sorted(rect_signature(r) for r in new_rects)
+                                    sig_orig = sorted(rect_signature(r) for r in original_rects)
+
+                                    if sig_new != sig_orig:
+                                        logging.info(
+                                            f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle geometry changed. State not identical.")
                                         has_visual_difference = True
                                         break
                             elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):

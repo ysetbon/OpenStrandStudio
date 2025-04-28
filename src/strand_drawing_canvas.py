@@ -3759,6 +3759,27 @@ class StrandDrawingCanvas(QWidget):
 
                 logging.info(f"Final state for {strand.layer_name}: has_circles={strand.has_circles}")
 
+        # --- NEW: Re-apply manual circle visibility overrides (recursive for attached strands) ---
+        def _apply_manual_circle_overrides(s):
+            if hasattr(s, 'manual_circle_visibility') and isinstance(s.manual_circle_visibility, (list, tuple)):
+                for idx in range(min(len(s.has_circles), len(s.manual_circle_visibility))):
+                    override = s.manual_circle_visibility[idx]
+                    if override is not None and s.has_circles[idx] != override:
+                        logging.info(
+                            f"Applying manual circle visibility override for {s.layer_name} index {idx}: {override}")
+                        s.has_circles[idx] = override
+
+            # Recurse into any attached strands
+            if hasattr(s, 'attached_strands') and s.attached_strands:
+                for child in s.attached_strands:
+                    _apply_manual_circle_overrides(child)
+
+        for strand in self.strands:
+            _apply_manual_circle_overrides(strand)
+        # --- END NEW ---
+
+        logging.info("update_attachment_statuses completed")
+
     def set_layer_state_manager(self, layer_state_manager):
         self.layer_state_manager = layer_state_manager
         # Connect any necessary signals here

@@ -535,6 +535,87 @@ class NumberedLayerButton(QPushButton):
                 start_ext_btn.setStyleSheet(widget_style)
                 end_ext_btn.setStyleSheet(widget_style)
                 label.setStyleSheet(widget_style)
+
+            # --- NEW: Group start/end circle visibility toggles into one row ---
+            # For Strands, only show circle toggles if an attached strand exists at the corresponding endpoint.
+            # For AttachedStrand, always allow circle toggles.
+            if isinstance(strand, AttachedStrand):
+                show_start_circle_toggle = True
+                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
+                )
+            else:
+                show_start_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.start for child in strand.attached_strands
+                )
+                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
+                )
+            if show_start_circle_toggle or show_end_circle_toggle:
+                context_menu.addSeparator()
+                circle_widget = QWidget()
+                circle_layout = QHBoxLayout(circle_widget)
+                circle_layout.setContentsMargins(5, 1, 5, 1)
+
+                # Label for the circle group
+                circle_label = QLabel(_['circle'] if 'circle' in _ else "Circle")
+                circle_layout.addWidget(circle_label)
+
+                # Start circle toggle
+                if show_start_circle_toggle:
+                    start_circle_visible = strand.has_circles[0]
+                    start_circle_text = _['show_start_circle'] if 'show_start_circle' in _ else "Show Start Circle"
+                    if start_circle_visible:
+                        start_circle_text = _['hide_start_circle'] if 'hide_start_circle' in _ else "Hide Start Circle"
+                    start_circle_btn = QPushButton(start_circle_text)
+                    start_circle_btn.setFlat(True)
+                    start_circle_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_circle_visibility(strand, 'start', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    circle_layout.addWidget(start_circle_btn)
+
+                # Insert a stretch between start and end toggles
+                circle_layout.addStretch()
+
+                # End circle toggle
+                if show_end_circle_toggle:
+                    end_circle_visible = strand.has_circles[1]
+                    end_circle_text = _['show_end_circle'] if 'show_end_circle' in _ else "Show End Circle"
+                    if end_circle_visible:
+                        end_circle_text = _['hide_end_circle'] if 'hide_end_circle' in _ else "Hide End Circle"
+                    end_circle_btn = QPushButton(end_circle_text)
+                    end_circle_btn.setFlat(True)
+                    end_circle_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_circle_visibility(strand, 'end', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    circle_layout.addWidget(end_circle_btn)
+
+                # Embed widget in menu
+                circle_action = QWidgetAction(self)
+                circle_action.setDefaultWidget(circle_widget)
+                context_menu.addAction(circle_action)
+
+                # Theme-aware styling
+                if theme == "dark":
+                    circle_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    circle_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                for child in circle_widget.findChildren(QWidget):
+                    child.setStyleSheet(circle_style)
         # --- END NEW Logic ---
 
         context_menu.exec_(self.mapToGlobal(pos))
@@ -814,4 +895,44 @@ class NumberedLayerButton(QPushButton):
                  self.update() # Fallback update
         else:
             print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
+    # --- END NEW ---
+
+    # --- NEW: Add circle visibility toggles ---
+    def toggle_strand_circle_visibility(self, strand, circle_type, layer_panel):
+        """Toggles the visibility (presence) of the start or end circle of a strand."""
+        if not hasattr(strand, 'has_circles') or not isinstance(strand.has_circles, (list, tuple)):
+            print(f"Warning: Strand {strand.layer_name} does not have has_circles attribute")
+            return
+
+        index = 0 if circle_type == 'start' else 1
+        if index >= len(strand.has_circles):
+            print(f"Warning: Invalid circle index {index} for strand {strand.layer_name}")
+            return
+
+        # Toggle circle presence
+        current_state = strand.has_circles[index]
+        new_state = not current_state
+        strand.has_circles[index] = new_state
+
+        # Record manual override so automatic attachment updates do not override the user's choice
+        if not hasattr(strand, 'manual_circle_visibility') or not isinstance(strand.manual_circle_visibility, (list, tuple)):
+            strand.manual_circle_visibility = [None, None]
+        # Store the explicit True/False chosen by the user
+        strand.manual_circle_visibility[index] = new_state
+
+        print(f"Set {strand.layer_name} has_circles[{index}] to {new_state} (manual override)")
+
+        # Update attachable property if applicable
+        if hasattr(strand, 'update_attachable'):
+            strand.update_attachable()
+
+        # Request canvas repaint
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            # Save state for undo/redo if manager exists
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+        else:
+            self.update()
     # --- END NEW ---

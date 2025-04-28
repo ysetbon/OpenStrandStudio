@@ -1266,8 +1266,8 @@ class Strand:
 
         # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
         from attached_strand import AttachedStrand
-        # Start endpoint half-circle
-        if any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
+        # Start endpoint half-circle (only if circle is enabled)
+        if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
             painter.save() # SAVE 6
             temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
@@ -1309,8 +1309,8 @@ class Strand:
             temp_painter.end()
             painter.restore() # RESTORE 6
 
-        # End endpoint half-circle
-        if any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
+        # End endpoint half-circle (only if circle is enabled)
+        if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
             painter.save() # SAVE 7
             temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)

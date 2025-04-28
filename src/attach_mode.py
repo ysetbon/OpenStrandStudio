@@ -545,15 +545,48 @@ class AttachMode(QObject):
                 print("Cannot attach to a masked strand layer.")
 
     def has_free_side(self, strand):
-        """Check if the strand has any free sides for attachment."""
-        return not all(strand.has_circles)
+        """Check if the strand has any free sides for attachment.
+
+        Notes
+        -----
+        For *AttachedStrand* instances the *start* side (index ``0``) is the point
+        where the strand itself is already attached to its parent.  Even if the
+        visual half-circle at that location is hidden by the user we must treat
+        that side as **permanently occupied** so that additional strands cannot
+        be connected there.  Therefore, for an ``AttachedStrand`` only the *end*
+        side (index ``1``) is considered when determining if the strand is
+        attachable.
+        """
+
+        from attached_strand import AttachedStrand  # Local import to avoid cycles
+
+        # For regular Strand we keep previous behaviour: a strand is free if at
+        # least one of its ends does **not** have a circle.
+        if not isinstance(strand, AttachedStrand):
+            return not all(strand.has_circles)
+
+        # AttachedStrand: ignore the start side (index 0) – it is never
+        # attachable.  Only report free if the *end* side (index 1) is free.
+        return not strand.has_circles[1]
 
     def try_attach_to_strand(self, strand, pos, circle_radius):
         """Try to attach a new strand to either end of an existing strand."""
         distance_to_start = (pos - strand.start).manhattanLength()
         distance_to_end = (pos - strand.end).manhattanLength()
 
-        start_attachable = distance_to_start <= circle_radius and not strand.has_circles[0]
+        # ------------------------------------------------------------
+        # START-SIDE ATTACHMENT RULES
+        # ------------------------------------------------------------
+        # The *start* point of an AttachedStrand is itself connected to another
+        # strand.  Even if the user hides the visual circle at that location we
+        # must still treat the side as occupied.  Consequently the start side
+        # is **never** attachable for AttachedStrand instances.
+        from attached_strand import AttachedStrand  # Local import to avoid cycles
+
+        if isinstance(strand, AttachedStrand):
+            start_attachable = False
+        else:
+            start_attachable = distance_to_start <= circle_radius and not strand.has_circles[0]
         end_attachable = distance_to_end <= circle_radius and not strand.has_circles[1]
 
         if start_attachable:

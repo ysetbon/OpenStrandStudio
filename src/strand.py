@@ -63,6 +63,11 @@ class Strand:
         self.start_extension_visible = False
         self.end_extension_visible = False
 
+        # --- NEW: Arrow visibility flags ---
+        self.start_arrow_visible = False
+        self.end_arrow_visible = False
+        # --- END NEW ---
+
         self.layer_name = layer_name
         self.set_number = set_number
         self._circle_stroke_color = None
@@ -875,9 +880,115 @@ class Strand:
             tangent_end = self.calculate_cubic_tangent(1.0)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
-                unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
-                ext_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
+                unit = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
+                ext_end = QPointF(self.end.x() + unit.x()*ext_len, self.end.y() + unit.y()*ext_len)
                 painter.drawLine(self.end, ext_end)
+        # --- NEW: Draw arrow heads ---
+        arrow_len = getattr(self.canvas, 'arrow_head_length', 20)
+        arrow_width = getattr(self.canvas, 'arrow_head_width', 10)
+        # Arrow gap and shaft parameters
+        # Distance between the strand end and the start of the arrow shaft (gap)
+        arrow_gap_length = getattr(self.canvas, 'arrow_gap_length', 10)
+        # Length of the arrow shaft itself
+        arrow_line_length = getattr(self.canvas, 'arrow_line_length', 20)
+        arrow_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+        # Fill and border styling
+        if hasattr(self.canvas, 'use_default_arrow_color') and self.canvas.use_default_arrow_color:
+            fill_color = self.canvas.default_arrow_fill_color
+        else:
+            fill_color = self.color
+        border_pen = QPen(self.stroke_color, self.stroke_width)
+        border_pen.setJoinStyle(Qt.MiterJoin)
+        border_pen.setCapStyle(Qt.FlatCap)
+
+        # Draw start arrow if visible (gap → shaft → head)
+        if getattr(self, 'start_arrow_visible', False):
+            tangent_start = self.calculate_cubic_tangent(0.0)
+            len_start = math.hypot(tangent_start.x(), tangent_start.y())
+            if len_start:
+                unit = QPointF(tangent_start.x() / len_start, tangent_start.y() / len_start)
+                arrow_dir = QPointF(-unit.x(), -unit.y())
+                # Compute shaft start and end positions (skip gap first)
+                shaft_start = QPointF(
+                    self.start.x() + arrow_dir.x() * arrow_gap_length,
+                    self.start.y() + arrow_dir.y() * arrow_gap_length
+                )
+                shaft_end = QPointF(
+                    shaft_start.x() + arrow_dir.x() * arrow_line_length,
+                    shaft_start.y() + arrow_dir.y() * arrow_line_length
+                )
+                # Draw the arrow shaft
+                line_pen = QPen(self.stroke_color, arrow_line_width)
+                line_pen.setCapStyle(Qt.FlatCap)
+                painter.setPen(line_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawLine(shaft_start, shaft_end)
+                # Compute arrow head base at end of shaft and tip at head length
+                base_center = shaft_end
+                tip = QPointF(
+                    base_center.x() + arrow_dir.x() * arrow_len,
+                    base_center.y() + arrow_dir.y() * arrow_len
+                )
+                # Build arrow polygon before drawing
+                perp = QPointF(-arrow_dir.y(), arrow_dir.x())
+                left = QPointF(base_center.x() + perp.x() * arrow_width / 2,
+                               base_center.y() + perp.y() * arrow_width / 2)
+                right = QPointF(base_center.x() - perp.x() * arrow_width / 2,
+                                base_center.y() - perp.y() * arrow_width / 2)
+                arrow_poly = QPolygonF([tip, left, right])
+                # Fill the arrow head
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(fill_color)
+                painter.drawPolygon(arrow_poly)
+                # Draw an outline around the arrow head so it matches the strand border
+                painter.setPen(border_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(arrow_poly)
+
+        # Draw end arrow if visible (gap → shaft → head)
+        if getattr(self, 'end_arrow_visible', False):
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            len_end = math.hypot(tangent_end.x(), tangent_end.y())
+            if len_end:
+                unit = QPointF(tangent_end.x() / len_end, tangent_end.y() / len_end)
+                arrow_dir = QPointF(unit.x(), unit.y())
+                # Compute shaft start and end positions (skip gap first)
+                shaft_start = QPointF(
+                    self.end.x() + arrow_dir.x() * arrow_gap_length,
+                    self.end.y() + arrow_dir.y() * arrow_gap_length
+                )
+                shaft_end = QPointF(
+                    shaft_start.x() + arrow_dir.x() * arrow_line_length,
+                    shaft_start.y() + arrow_dir.y() * arrow_line_length
+                )
+                # Draw the arrow shaft
+                line_pen = QPen(self.stroke_color, arrow_line_width)
+                line_pen.setCapStyle(Qt.FlatCap)
+                painter.setPen(line_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawLine(shaft_start, shaft_end)
+                # Compute arrow head base at end of shaft and tip at head length
+                base_center = shaft_end
+                tip = QPointF(
+                    base_center.x() + arrow_dir.x() * arrow_len,
+                    base_center.y() + arrow_dir.y() * arrow_len
+                )
+                # Build arrow polygon before drawing
+                perp = QPointF(-arrow_dir.y(), arrow_dir.x())
+                left = QPointF(base_center.x() + perp.x() * arrow_width / 2,
+                               base_center.y() + perp.y() * arrow_width / 2)
+                right = QPointF(base_center.x() - perp.x() * arrow_width / 2,
+                                base_center.y() - perp.y() * arrow_width / 2)
+                arrow_poly = QPolygonF([tip, left, right])
+                # Fill the arrow head
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(fill_color)
+                painter.drawPolygon(arrow_poly)
+                # Draw an outline around the arrow head so it matches the strand border
+                painter.setPen(border_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(arrow_poly)
+        # --- END NEW ---
 
         # Draw the selection path
         painter.save() # SAVE 3
@@ -1296,3 +1407,4 @@ class Strand:
         if reset_control_points:
             self.update_control_points_from_geometry()
         self.update_shape()
+

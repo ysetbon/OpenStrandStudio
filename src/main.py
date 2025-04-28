@@ -149,6 +149,15 @@ def load_user_settings():
     draw_only_affected_strand = False  # Default to drawing all strands
     enable_third_control_point = False  # Default to two control points
     use_extended_mask = False  # Default exact mask
+    # Initialize arrow settings defaults
+    arrow_head_length = 20.0
+    arrow_head_width = 10.0
+    arrow_gap_length = 10.0
+    arrow_line_length = 20.0
+    arrow_line_width = 10.0
+    # Initialize default arrow fill color and toggle for using default color
+    use_default_arrow_color = False
+    default_arrow_fill_color = QColor(0, 0, 0, 255)
     
     # Try to load from settings file
     shadow_color_loaded = False
@@ -197,9 +206,50 @@ def load_user_settings():
                         value = line.strip().split(':', 1)[1].strip().lower()
                         use_extended_mask = (value == 'true')
                         logging.info(f"Found UseExtendedMask: {use_extended_mask}")
+                    elif line.startswith('ArrowHeadLength:'):
+                        try:
+                            arrow_head_length = float(line.split(':', 1)[1].strip())
+                            logging.info(f"Found ArrowHeadLength: {arrow_head_length}")
+                        except ValueError:
+                            logging.error(f"Error parsing ArrowHeadLength value. Using default {arrow_head_length}.")
+                    elif line.startswith('ArrowHeadWidth:'):
+                        try:
+                            arrow_head_width = float(line.split(':', 1)[1].strip())
+                            logging.info(f"Found ArrowHeadWidth: {arrow_head_width}")
+                        except ValueError:
+                            logging.error(f"Error parsing ArrowHeadWidth value. Using default {arrow_head_width}.")
+                    elif line.startswith('ArrowGapLength:'):
+                        try:
+                            arrow_gap_length = float(line.split(':', 1)[1].strip())
+                            logging.info(f"Found ArrowGapLength: {arrow_gap_length}")
+                        except ValueError:
+                            logging.error(f"Error parsing ArrowGapLength value. Using default {arrow_gap_length}.")
+                    elif line.startswith('ArrowLineLength:'):
+                        try:
+                            arrow_line_length = float(line.split(':', 1)[1].strip())
+                            logging.info(f"Found ArrowLineLength: {arrow_line_length}")
+                        except ValueError:
+                            logging.error(f"Error parsing ArrowLineLength value. Using default {arrow_line_length}.")
+                    elif line.startswith('ArrowLineWidth:'):
+                        try:
+                            arrow_line_width = float(line.split(':', 1)[1].strip())
+                            logging.info(f"Found ArrowLineWidth: {arrow_line_width}")
+                        except ValueError:
+                            logging.error(f"Error parsing ArrowLineWidth value. Using default {arrow_line_width}.")
+                    elif line.startswith('UseDefaultArrowColor:'):
+                        value = line.split(':', 1)[1].strip().lower()
+                        use_default_arrow_color = (value == 'true')
+                        logging.info(f"Found UseDefaultArrowColor: {use_default_arrow_color}")
+                    elif line.startswith('DefaultArrowColor:'):
+                        try:
+                            r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                            default_arrow_fill_color = QColor(r, g, b, a)
+                            logging.info(f"Found DefaultArrowColor: {r},{g},{b},{a}")
+                        except Exception as e:
+                            logging.error(f"Error parsing DefaultArrowColor values: {e}. Using default {default_arrow_fill_color}.")
             
             if shadow_color_loaded:
-                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}")
+                logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
             else:
                 logging.warning(f"Shadow color not found in settings file. Using default: 0,0,0,150")
         except Exception as e:
@@ -207,7 +257,7 @@ def load_user_settings():
     else:
         logging.info(f"Settings file not found at {file_path}. Using default settings.")
 
-    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask
+    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color
 
 if __name__ == '__main__':
     logging.info("Starting the application...")
@@ -215,8 +265,8 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Load user settings
-    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask = load_user_settings()
-    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}")
+    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color = load_user_settings()
+    logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
 
     # Initialize the main window with settings
     window = MainWindow()
@@ -267,6 +317,16 @@ if __name__ == '__main__':
         # Set extended mask setting
         window.canvas.use_extended_mask = use_extended_mask
         logging.info(f"Set use_extended_mask to {use_extended_mask}")
+        # Apply arrow settings to canvas
+        window.canvas.arrow_head_length = arrow_head_length
+        window.canvas.arrow_head_width = arrow_head_width
+        window.canvas.arrow_gap_length = arrow_gap_length
+        window.canvas.arrow_line_length = arrow_line_length
+        window.canvas.arrow_line_width = arrow_line_width
+        # Apply default arrow color settings to canvas
+        window.canvas.use_default_arrow_color = use_default_arrow_color
+        window.canvas.default_arrow_fill_color = default_arrow_fill_color
+        logging.info(f"Set use_default_arrow_color to {use_default_arrow_color} and default_arrow_fill_color RGBA: {default_arrow_fill_color.red()},{default_arrow_fill_color.green()},{default_arrow_fill_color.blue()},{default_arrow_fill_color.alpha()}")
     else:
         logging.error("Canvas not available on window object")
     

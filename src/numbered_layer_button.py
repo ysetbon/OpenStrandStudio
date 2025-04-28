@@ -1,11 +1,10 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog 
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData 
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
 import logging
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
-from PyQt5.QtWidgets import QApplication
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -330,9 +329,9 @@ class NumberedLayerButton(QPushButton):
         # Determine the current theme from parent chain
         theme = self.get_parent_theme()
         if theme == "dark":
-            context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
+            context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; font-size: 8pt; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
         else:
-            context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; } QMenu::item:selected { background-color: #333333; color: white; }")
+            context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; font-size: 8pt; } QMenu::item:selected { background-color: #333333; color: white; }")
 
         # --- NEW Logic: Build menu based on layer type ---
         # ALWAYS add Hide/Show first
@@ -364,48 +363,178 @@ class NumberedLayerButton(QPushButton):
                 transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
                 reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
 
-            # --- NEW: Add start/end line visibility toggles ---
-            # Only show start line option for non-AttachedStrand instances
-            if hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand):
+            # --- NEW: Group start/end line visibility toggles into one row ---
+            if (
+                (hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand))
+                or hasattr(strand, 'end_line_visible')
+            ):
                 context_menu.addSeparator()
-                toggle_start_line_text = _['show_start_line'] if not strand.start_line_visible else _['hide_start_line']
-                toggle_start_line_action = context_menu.addAction(toggle_start_line_text)
-                # Connect action to toggle the strand's property and update canvas
-                toggle_start_line_action.triggered.connect(
-                    lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_line_visibility(s, 'start', lp)
+                line_widget = QWidget()
+                line_layout = QHBoxLayout(line_widget)
+                line_layout.setContentsMargins(5, 1, 5, 1)
+
+                # Label for the line group
+                line_label = QLabel(_['line'] if 'line' in _ else "Line")
+                line_layout.addWidget(line_label)
+
+                # Start-line toggle (skip for AttachedStrand)
+                if hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand):
+                    start_line_text = _['show_start_line'] if not strand.start_line_visible else _['hide_start_line']
+                    start_line_btn = QPushButton(start_line_text)
+                    start_line_btn.setFlat(True)
+                    start_line_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_line_visibility(strand, 'start', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    line_layout.addWidget(start_line_btn)
+
+                # End-line toggle
+                if hasattr(strand, 'end_line_visible'):
+                    end_line_text = _['show_end_line'] if not strand.end_line_visible else _['hide_end_line']
+                    end_line_btn = QPushButton(end_line_text)
+                    end_line_btn.setFlat(True)
+                    end_line_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_line_visibility(strand, 'end', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    line_layout.addWidget(end_line_btn)
+
+                # Embed widget in menu
+                line_action = QWidgetAction(self)
+                line_action.setDefaultWidget(line_widget)
+                context_menu.addAction(line_action)
+
+                # Theme-aware styling for label & buttons
+                if theme == "dark":
+                    line_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    line_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                # Apply style to all children widgets that were possibly created
+                for child in line_widget.findChildren(QWidget):
+                    child.setStyleSheet(line_style)
+
+            # --- NEW: Group start/end arrow visibility toggles into one row ---
+            if hasattr(strand, 'start_arrow_visible') or hasattr(strand, 'end_arrow_visible'):
+                context_menu.addSeparator()
+                arrow_widget = QWidget()
+                arrow_layout = QHBoxLayout(arrow_widget)
+                arrow_layout.setContentsMargins(5, 1, 5, 1)
+
+                # Label for the arrow group
+                arrow_label = QLabel(_['arrow'] if 'arrow' in _ else "Arrow")
+                arrow_layout.addWidget(arrow_label)
+
+                # Start arrow toggle
+                if hasattr(strand, 'start_arrow_visible'):
+                    # Use fallback defaults if translation keys are missing
+                    start_arrow_text = _['show_start_arrow'] if 'show_start_arrow' in _ else "Show Start Arrow"
+                    if getattr(strand, 'start_arrow_visible', False):
+                        start_arrow_text = _['hide_start_arrow'] if 'hide_start_arrow' in _ else "Hide Start Arrow"
+                    start_arrow_btn = QPushButton(start_arrow_text)
+                start_arrow_btn.setFlat(True)
+                start_arrow_btn.clicked.connect(
+                    lambda checked=False: (
+                        self.toggle_strand_arrow_visibility(strand, 'start', layer_panel),
+                        context_menu.close(),
+                    )
                 )
-                
-            if hasattr(strand, 'end_line_visible'): # Check if the attribute exists
-                # Add separator only if start line action wasn't added (i.e., it IS an AttachedStrand)
-                # OR if start line action *was* added (it's not an AttachedStrand).
-                # Simplified: Add separator if this is the first line toggle option being added.
-                if isinstance(strand, AttachedStrand):
-                     context_menu.addSeparator()
-                toggle_end_line_text = _['show_end_line'] if not strand.end_line_visible else _['hide_end_line']
-                toggle_end_line_action = context_menu.addAction(toggle_end_line_text)
-                 # Connect action to toggle the strand's property and update canvas
-                toggle_end_line_action.triggered.connect(
-                    lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_line_visibility(s, 'end', lp)
+                arrow_layout.addWidget(start_arrow_btn)
+
+                # End arrow toggle
+                if hasattr(strand, 'end_arrow_visible'):
+                    # Use fallback defaults if translation keys are missing
+                    end_arrow_text = _['show_end_arrow'] if 'show_end_arrow' in _ else "Show End Arrow"
+                    if getattr(strand, 'end_arrow_visible', False):
+                        end_arrow_text = _['hide_end_arrow'] if 'hide_end_arrow' in _ else "Hide End Arrow"
+                    end_arrow_btn = QPushButton(end_arrow_text)
+                end_arrow_btn.setFlat(True)
+                end_arrow_btn.clicked.connect(
+                    lambda checked=False: (
+                        self.toggle_strand_arrow_visibility(strand, 'end', layer_panel),
+                        context_menu.close(),
+                    )
                 )
-            # --- END NEW ---
+                arrow_layout.addWidget(end_arrow_btn)
+
+                arrow_action = QWidgetAction(self)
+                arrow_action.setDefaultWidget(arrow_widget)
+                context_menu.addAction(arrow_action)
+
+                # Apply same theme style as line/extension groups
+                if theme == "dark":
+                    arrow_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    arrow_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                for child in arrow_widget.findChildren(QWidget):
+                    child.setStyleSheet(arrow_style)
 
             # Add extension line toggles
-            context_menu.addSeparator()
-            toggle_start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Extension"
-            if getattr(strand, 'start_extension_visible', False):
-                toggle_start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Extension"
-            toggle_start_ext_action = context_menu.addAction(toggle_start_ext_text)
-            toggle_start_ext_action.triggered.connect(
-                lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_extension_visibility(s, 'start', lp)
-            )
+            if hasattr(strand, 'start_extension_visible') or hasattr(strand, 'end_extension_visible'):
+                context_menu.addSeparator()
+                ext_widget = QWidget()
+                layout = QHBoxLayout(ext_widget)
+                layout.setContentsMargins(5, 1, 5, 1)
+                # Label for the extension group
+                label = QLabel(_['extension'] if 'extension' in _ else "Extension")
+                layout.addWidget(label)
+                # Start extension toggle button with fallback labels
+                start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Extension"
+                if getattr(strand, 'start_extension_visible', False):
+                    start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Extension"
+                start_ext_btn = QPushButton(start_ext_text)
+                start_ext_btn.setFlat(True)
+                start_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'start', layer_panel), context_menu.close()))
+                layout.addWidget(start_ext_btn)
+                # End extension toggle button with fallback labels
+                end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Extension"
+                if getattr(strand, 'end_extension_visible', False):
+                    end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Extension"
+                end_ext_btn = QPushButton(end_ext_text)
+                end_ext_btn.setFlat(True)
+                end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))
+                layout.addWidget(end_ext_btn)
+                # Embed the widget into the menu
+                ext_action = QWidgetAction(self)
+                ext_action.setDefaultWidget(ext_widget)
+                context_menu.addAction(ext_action)
 
-            toggle_end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Extension"
-            if getattr(strand, 'end_extension_visible', False):
-                toggle_end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Extension"
-            toggle_end_ext_action = context_menu.addAction(toggle_end_ext_text)
-            toggle_end_ext_action.triggered.connect(
-                lambda checked=False, s=strand, lp=layer_panel: self.toggle_strand_extension_visibility(s, 'end', lp)
-            )
+                # --- Apply theme-aware styling to label and buttons ---
+                if theme == "dark":
+                    widget_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    widget_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+
+                start_ext_btn.setStyleSheet(widget_style)
+                end_ext_btn.setStyleSheet(widget_style)
+                label.setStyleSheet(widget_style)
         # --- END NEW Logic ---
 
         context_menu.exec_(self.mapToGlobal(pos))
@@ -658,3 +787,31 @@ class NumberedLayerButton(QPushButton):
                  self.update() # Fallback update
         else:
             print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
+
+    # --- NEW: Add arrow head visibility toggles ---
+    def toggle_strand_arrow_visibility(self, strand, line_type, layer_panel):
+        """Toggles the visibility of the start or end arrow of a strand."""
+        attr_name = f"{line_type}_arrow_visible"
+        if hasattr(strand, attr_name):
+            current_visibility = getattr(strand, attr_name)
+            setattr(strand, attr_name, not current_visibility)
+            print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update() # Request canvas repaint
+                # --- ADD: Save state for undo/redo ---
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    # --- ADD: Force save by resetting last save time ---
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0 
+                    print(f"Reset _last_save_time to force save for toggling {attr_name}")
+                    # --- END ADD ---
+                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    print(f"Undo/Redo state saved after toggling {attr_name}")
+                else:
+                    print("Warning: Could not find undo_redo_manager on canvas to save state.")
+                # --- END ADD ---
+            else:
+                 print("Warning: Could not find canvas to update after toggling arrow visibility.")
+                 self.update() # Fallback update
+        else:
+            print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
+    # --- END NEW ---

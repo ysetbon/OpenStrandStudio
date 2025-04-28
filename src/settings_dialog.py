@@ -56,12 +56,34 @@ class SettingsDialog(QDialog):
         self.extension_dash_width = getattr(canvas, 'extension_dash_width', getattr(canvas, 'extension_line_width', 2))  # Default dash width
         self.num_steps = 3  # Default shadow blur steps
         self.max_blur_radius = 29.99  # Default shadow blur radius
+        # Arrow head parameters
+        self.arrow_head_length = getattr(canvas, 'arrow_head_length', 20.0)
+        self.arrow_head_width = getattr(canvas, 'arrow_head_width', 10.0)
+        # Add arrow shaft parameters
+        self.arrow_gap_length = getattr(canvas, 'arrow_gap_length', 10)
+        self.arrow_line_length = getattr(canvas, 'arrow_line_length', 20)
+        self.arrow_line_width = getattr(canvas, 'arrow_line_width', 10)
+        # Default arrow color parameters
+        self.use_default_arrow_color = getattr(canvas, 'use_default_arrow_color', False)
+        self.default_arrow_fill_color = getattr(canvas, 'default_arrow_fill_color', QColor(0, 0, 0, 255))
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
         
         # Try to load settings from file first
         self.load_settings_from_file()
+        
+        # Apply loaded arrow settings to canvas
+        if self.canvas:
+            self.canvas.arrow_head_length = self.arrow_head_length
+            self.canvas.arrow_head_width = self.arrow_head_width
+            self.canvas.arrow_gap_length = self.arrow_gap_length
+            self.canvas.arrow_line_length = self.arrow_line_length
+            self.canvas.arrow_line_width = self.arrow_line_width
+            # Apply default arrow color settings
+            self.canvas.use_default_arrow_color = self.use_default_arrow_color
+            self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
+            logging.info(f"SettingsDialog: Applied default arrow color settings to canvas - use_default: {self.use_default_arrow_color}, color: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
         
         self.setWindowTitle(translations[self.current_language]['settings'])
         
@@ -324,6 +346,46 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found ExtensionLineWidth (legacy): {self.extension_dash_width}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing legacy ExtensionLineWidth value. Using default {self.extension_dash_width}.")
+                        elif line.startswith('ArrowHeadLength:'):
+                            try:
+                                self.arrow_head_length = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowHeadLength: {self.arrow_head_length}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowHeadLength value. Using default {getattr(self, 'arrow_head_length',20.0)}")
+                        elif line.startswith('ArrowHeadWidth:'):
+                            try:
+                                self.arrow_head_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowHeadWidth: {self.arrow_head_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowHeadWidth value. Using default {getattr(self, 'arrow_head_width',10.0)}")
+                        elif line.startswith('ArrowGapLength:'):
+                            try:
+                                self.arrow_gap_length = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowGapLength: {self.arrow_gap_length}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowGapLength value. Using default {self.arrow_gap_length}.")
+                        elif line.startswith('ArrowLineLength:'):
+                            try:
+                                self.arrow_line_length = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowLineLength: {self.arrow_line_length}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowLineLength value. Using default {self.arrow_line_length}.")
+                        elif line.startswith('ArrowLineWidth:'):
+                            try:
+                                self.arrow_line_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowLineWidth: {self.arrow_line_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowLineWidth value. Using default {self.arrow_line_width}.")
+                        elif line.startswith('UseDefaultArrowColor:'):
+                            self.use_default_arrow_color = (line.split(':', 1)[1].strip().lower() == 'true')
+                            logging.info(f"SettingsDialog: Found UseDefaultArrowColor: {self.use_default_arrow_color}")
+                        elif line.startswith('DefaultArrowColor:'):
+                            try:
+                                r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                                self.default_arrow_fill_color = QColor(r, g, b, a)
+                                logging.info(f"SettingsDialog: Found DefaultArrowColor: {r},{g},{b},{a}")
+                            except Exception as e:
+                                logging.error(f"SettingsDialog: Error parsing DefaultArrowColor: {e}. Using default {self.default_arrow_fill_color}.")
                 
                 logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
@@ -553,6 +615,78 @@ class SettingsDialog(QDialog):
         line_width_layout.addWidget(self.extension_dash_width_spinbox)
         line_width_layout.addStretch()
         layer_panel_layout.addLayout(line_width_layout)
+
+        # --- NEW: Arrow head settings ---
+        arrow_len_layout = QHBoxLayout()
+        self.arrow_head_length_label = QLabel(_['arrow_head_length'] if 'arrow_head_length' in _ else 'Arrow Head Length')
+        self.arrow_head_length_spinbox = QDoubleSpinBox()
+        self.arrow_head_length_spinbox.setRange(0.0, 500.0)
+        self.arrow_head_length_spinbox.setValue(self.arrow_head_length)
+        self.arrow_head_length_spinbox.setToolTip(_['arrow_head_length_tooltip'] if 'arrow_head_length_tooltip' in _ else 'Length of arrow head in pixels')
+        arrow_len_layout.addWidget(self.arrow_head_length_label)
+        arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
+        arrow_len_layout.addStretch()
+        layer_panel_layout.addLayout(arrow_len_layout)
+
+        arrow_width_layout = QHBoxLayout()
+        self.arrow_head_width_label = QLabel(_['arrow_head_width'] if 'arrow_head_width' in _ else 'Arrow Head Width')
+        self.arrow_head_width_spinbox = QDoubleSpinBox()
+        self.arrow_head_width_spinbox.setRange(0.0, 500.0)
+        self.arrow_head_width_spinbox.setValue(self.arrow_head_width)
+        self.arrow_head_width_spinbox.setToolTip(_['arrow_head_width_tooltip'] if 'arrow_head_width_tooltip' in _ else 'Width of arrow head base in pixels')
+        arrow_width_layout.addWidget(self.arrow_head_width_label)
+        arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
+        arrow_width_layout.addStretch()
+        layer_panel_layout.addLayout(arrow_width_layout)
+        # --- END NEW ---
+
+        # Add arrow shaft settings
+        gap_layout = QHBoxLayout()
+        self.arrow_gap_length_label = QLabel(_['arrow_gap_length'] if 'arrow_gap_length' in _ else 'Arrow Gap Length')
+        self.arrow_gap_length_spinbox = QDoubleSpinBox()
+        self.arrow_gap_length_spinbox.setRange(0.0, 1000.0)
+        self.arrow_gap_length_spinbox.setValue(self.arrow_gap_length)
+        self.arrow_gap_length_spinbox.setToolTip(_['arrow_gap_length_tooltip'] if 'arrow_gap_length_tooltip' in _ else 'Gap between strand end and arrow shaft start')
+        gap_layout.addWidget(self.arrow_gap_length_label)
+        gap_layout.addWidget(self.arrow_gap_length_spinbox)
+        gap_layout.addStretch()
+        layer_panel_layout.addLayout(gap_layout)
+
+        line_length_layout = QHBoxLayout()
+        self.arrow_line_length_label = QLabel(_['arrow_line_length'] if 'arrow_line_length' in _ else 'Arrow Line Length')
+        self.arrow_line_length_spinbox = QDoubleSpinBox()
+        self.arrow_line_length_spinbox.setRange(0.0, 1000.0)
+        self.arrow_line_length_spinbox.setValue(self.arrow_line_length)
+        self.arrow_line_length_spinbox.setToolTip(_['arrow_line_length_tooltip'] if 'arrow_line_length_tooltip' in _ else 'Length of the arrow shaft')
+        line_length_layout.addWidget(self.arrow_line_length_label)
+        line_length_layout.addWidget(self.arrow_line_length_spinbox)
+        line_length_layout.addStretch()
+        layer_panel_layout.addLayout(line_length_layout)
+
+        shaft_width_layout = QHBoxLayout()
+        self.arrow_line_width_label = QLabel(_['arrow_line_width'] if 'arrow_line_width' in _ else 'Arrow Line Width')
+        self.arrow_line_width_spinbox = QDoubleSpinBox()
+        self.arrow_line_width_spinbox.setRange(0.1, 100.0)
+        self.arrow_line_width_spinbox.setValue(self.arrow_line_width)
+        self.arrow_line_width_spinbox.setToolTip(_['arrow_line_width_tooltip'] if 'arrow_line_width_tooltip' in _ else 'Thickness of the arrow shaft')
+        shaft_width_layout.addWidget(self.arrow_line_width_label)
+        shaft_width_layout.addWidget(self.arrow_line_width_spinbox)
+        shaft_width_layout.addStretch()
+        layer_panel_layout.addLayout(shaft_width_layout)
+        # Default Arrow Color toggle and selector
+        default_arrow_layout = QHBoxLayout()
+        self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
+        self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
+        # Connect checkbox state change to immediate update
+        self.default_arrow_color_checkbox.stateChanged.connect(self.on_default_arrow_color_changed)
+        self.default_arrow_color_button = QPushButton()
+        self.default_arrow_color_button.setFixedSize(30, 30)
+        self.update_default_arrow_color_button()
+        self.default_arrow_color_button.clicked.connect(self.choose_default_arrow_color)
+        default_arrow_layout.addWidget(self.default_arrow_color_checkbox)
+        default_arrow_layout.addWidget(self.default_arrow_color_button)
+        default_arrow_layout.addStretch()
+        layer_panel_layout.addLayout(default_arrow_layout)
 
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
@@ -1138,11 +1272,27 @@ class SettingsDialog(QDialog):
         self.extension_length = self.extension_length_spinbox.value()
         self.extension_dash_count = self.extension_dash_count_spinbox.value()
         self.extension_dash_width = self.extension_dash_width_spinbox.value()
+        # --- NEW: Arrow head settings ---
+        self.arrow_head_length = self.arrow_head_length_spinbox.value()
+        self.arrow_head_width = self.arrow_head_width_spinbox.value()
+        # --- NEW: Arrow shaft settings ---
+        self.arrow_gap_length = self.arrow_gap_length_spinbox.value()
+        self.arrow_line_length = self.arrow_line_length_spinbox.value()
+        self.arrow_line_width = self.arrow_line_width_spinbox.value()
+        # --- END NEW ---
         if self.canvas:
             self.canvas.extension_length = self.extension_length
             self.canvas.extension_dash_count = self.extension_dash_count
             self.canvas.extension_dash_width = self.extension_dash_width
+            # --- NEW: apply arrow settings to canvas ---
+            self.canvas.arrow_head_length = self.arrow_head_length
+            self.canvas.arrow_head_width = self.arrow_head_width
+            self.canvas.arrow_gap_length = self.arrow_gap_length
+            self.canvas.arrow_line_length = self.arrow_line_length
+            self.canvas.arrow_line_width = self.arrow_line_width
+            # --- END NEW ---
             logging.info(f"SettingsDialog: Set extension_length to {self.extension_length}, dash_count to {self.extension_dash_count}, dashed_width to {self.extension_dash_width} on canvas")
+            logging.info(f"SettingsDialog: Set arrow_head_length to {self.arrow_head_length}, arrow_head_width to {self.arrow_head_width}")
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
@@ -1170,7 +1320,17 @@ class SettingsDialog(QDialog):
         # Apply Layer Panel Settings
         if self.canvas and hasattr(self.canvas, 'layer_panel'):
             panel = self.canvas.layer_panel
- 
+
+        # Apply Default Arrow Color Setting
+        self.use_default_arrow_color = self.default_arrow_color_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.use_default_arrow_color = self.use_default_arrow_color
+            self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
+            logging.info(f"SettingsDialog: Set use_default_arrow_color to {self.use_default_arrow_color} and default_arrow_fill_color RGBA: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
+            # Force redraw to update arrow colors
+            if hasattr(self.canvas, 'force_redraw'):
+                self.canvas.force_redraw()
+            self.canvas.update()
 
         # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
@@ -1224,6 +1384,17 @@ class SettingsDialog(QDialog):
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
+        # Update Layer Panel Settings labels for extension and arrow parameters
+        self.extension_length_label.setText(_['extension_length'] if 'extension_length' in _ else "Extension Length")
+        self.extension_dash_count_label.setText(_['extension_dash_count'] if 'extension_dash_count' in _ else "Dash Count")
+        self.extension_dash_width_label.setText(_['extension_dash_width'] if 'extension_dash_width' in _ else "Extension Dash Width")
+        self.arrow_head_length_label.setText(_['arrow_head_length'] if 'arrow_head_length' in _ else "Arrow Head Length")
+        self.arrow_head_width_label.setText(_['arrow_head_width'] if 'arrow_head_width' in _ else "Arrow Head Width")
+        self.arrow_gap_length_label.setText(_['arrow_gap_length'] if 'arrow_gap_length' in _ else "Arrow Gap Length")
+        self.arrow_line_length_label.setText(_['arrow_line_length'] if 'arrow_line_length' in _ else "Arrow Line Length")
+        self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
+        # Update default arrow color checkbox text
+        self.default_arrow_color_checkbox.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
@@ -1439,6 +1610,13 @@ class SettingsDialog(QDialog):
                 file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                 file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
                 file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
+                file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
+                file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
+                file.write(f"ArrowGapLength: {self.arrow_gap_length}\n")
+                file.write(f"ArrowLineLength: {self.arrow_line_length}\n")
+                file.write(f"ArrowLineWidth: {self.arrow_line_width}\n")
+                file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
+                file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
@@ -1458,6 +1636,13 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                     local_file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
                     local_file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
+                    local_file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
+                    local_file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
+                    local_file.write(f"ArrowGapLength: {self.arrow_gap_length}\n")
+                    local_file.write(f"ArrowLineLength: {self.arrow_line_length}\n")
+                    local_file.write(f"ArrowLineWidth: {self.arrow_line_width}\n")
+                    local_file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
+                    local_file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")
@@ -1772,6 +1957,40 @@ class SettingsDialog(QDialog):
             # Save settings to file to persist the change
             self.save_settings_to_file()
 
+    def update_default_arrow_color_button(self):
+        """Update the default arrow color button to reflect current color."""
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(self.default_arrow_fill_color)
+        self.default_arrow_color_button.setIcon(QIcon(pixmap))
+        self.default_arrow_color_button.setIconSize(pixmap.size())
+
+    def choose_default_arrow_color(self):
+        """Open a color dialog to choose a new default arrow color."""
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(self.default_arrow_fill_color)
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        if color_dialog.exec_():
+            self.default_arrow_fill_color = color_dialog.currentColor()
+            self.update_default_arrow_color_button()
+            # Save new setting immediately
+            self.save_settings_to_file()
+            # Apply to canvas immediately
+            if self.canvas:
+                self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
+                if hasattr(self.canvas, 'force_redraw'):
+                    self.canvas.force_redraw()
+                self.canvas.update()
+
+    def on_default_arrow_color_changed(self, state):
+        """Handle default arrow color checkbox state change."""
+        self.use_default_arrow_color = bool(state)
+        if self.canvas:
+            self.canvas.use_default_arrow_color = self.use_default_arrow_color
+            if hasattr(self.canvas, 'force_redraw'):
+                self.canvas.force_redraw()
+            self.canvas.update()
+            logging.info(f"SettingsDialog: Default arrow color enabled changed to {self.use_default_arrow_color}")
+
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""
         self.history_list.clear()
@@ -1951,6 +2170,11 @@ class SettingsDialog(QDialog):
             self.update_icon_widget(self.redo_icon_widget, '↷')
         if hasattr(self, 'third_cp_icon_widget'):
             self.update_third_cp_icon_widget(self.third_cp_icon_widget)
+
+        # Update default arrow color checkbox state
+        if hasattr(self, 'default_arrow_color_checkbox') and hasattr(self, 'use_default_arrow_color'):
+            self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
+            logging.info(f"SettingsDialog showEvent: Updated default arrow color checkbox to {self.use_default_arrow_color}")
 
     def update_icon_widget(self, label_widget, character):
         """Helper function to draw the styled icon onto a QLabel's pixmap."""

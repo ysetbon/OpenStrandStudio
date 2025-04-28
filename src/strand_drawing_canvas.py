@@ -234,6 +234,18 @@ class StrandDrawingCanvas(QWidget):
                                 logging.info(f"Canvas: Loaded ExtensionDashWidth from settings: {self.extension_dash_width}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ExtensionDashWidth. Using default {self.extension_dash_width}")
+                        elif line.startswith('ArrowHeadLength:'):
+                            try:
+                                self.arrow_head_length = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ArrowHeadLength from settings: {self.arrow_head_length}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ArrowHeadLength. Using default {self.arrow_head_length}")
+                        elif line.startswith('ArrowHeadWidth:'):
+                            try:
+                                self.arrow_head_width = float(line.split(':', 1)[1].strip())
+                                logging.info(f"Canvas: Loaded ArrowHeadWidth from settings: {self.arrow_head_width}")
+                            except ValueError:
+                                logging.error(f"Canvas: Error parsing ArrowHeadWidth. Using default {self.arrow_head_width}")
                         elif line.startswith('ExtensionLineWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
@@ -1046,6 +1058,10 @@ class StrandDrawingCanvas(QWidget):
         self.extension_length = 100.0
         self.extension_dash_count = 10
         self.extension_dash_width = 2.0
+        # --- NEW: Arrow head default settings ---
+        self.arrow_head_length = 20.0  # Length of arrow head (in pixels)
+        self.arrow_head_width = 10.0   # Width of arrow head base (in pixels)
+        # --- END NEW ---
 
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number

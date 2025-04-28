@@ -368,6 +368,36 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 shadow_path = shadow_path.subtracted(exclude_circle)
                 logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
 
+    # If strand has circles that are NOT visible (has_circles[x] == False) we should also
+    # exclude their area from the shadow path so that hidden circles do not cast shadows
+    # on underlying strands. This complements the existing logic that handles fully
+    # transparent circles.
+    if hasattr(strand, 'has_circles'):
+        # Determine a reasonable radius for exclusion – use the same base radius that is
+        # employed when *adding* circle shadows below (width + stroke_width * 2).
+        hidden_circle_radius = strand.width + strand.stroke_width * 2 + 10  # +10 for safe margin
+        for idx, circle_visible in enumerate(strand.has_circles):
+            # Skip circles that are still visible – we only care about hidden ones here
+            if circle_visible:
+                continue
+            # Safety: also respect manual overrides if present (it should already be reflected
+            # in has_circles but we double-check for robustness).
+            if hasattr(strand, 'manual_circle_visibility') and isinstance(strand.manual_circle_visibility, (list, tuple)):
+                manual_override = strand.manual_circle_visibility[idx] if idx < len(strand.manual_circle_visibility) else None
+                # If the manual override explicitly keeps the circle visible, skip exclusion
+                if manual_override is True:
+                    continue
+            # Determine circle center (start or end point)
+            circle_center = strand.start if idx == 0 else strand.end
+            exclude_circle_path = QPainterPath()
+            exclude_circle_path.addEllipse(circle_center, hidden_circle_radius / 2, hidden_circle_radius / 2)
+            # Subtract the circle area from the shadow path if it intersects
+            try:
+                if 'shadow_path' in locals() and not shadow_path.isEmpty():
+                    shadow_path = shadow_path.subtracted(exclude_circle_path)
+            except Exception as e_ex:
+                logging.error(f"Error subtracting hidden circle (index {idx}) from shadow path of {strand.layer_name}: {e_ex}")
+
     # Special case for AttachedStrand
     if strand.__class__.__name__ == 'AttachedStrand':
         # Check for transparent circles at the start

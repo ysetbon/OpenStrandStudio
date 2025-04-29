@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel, QBoxLayout
 from PyQt5.QtGui import QPainter, QPen, QColor
 import math
 import logging
@@ -126,38 +126,59 @@ class AngleAdjustMode:
         # dialog.setStyleSheet("")  # Commented out or removed
 
         layout = QVBoxLayout()
-        # Angle adjustment
+
+        # Angle adjustment row
         angle_layout = QHBoxLayout()
-        angle_layout.addWidget(QLabel(_['angle_label']))
+        # Mirror row order for Hebrew
+        if self.canvas.language_code == 'he':
+            angle_layout.setDirection(QBoxLayout.RightToLeft)
+        # Widgets
+        angle_label_widget = QLabel(_['angle_label'])
+        # Hebrew labels right-aligned
+        if self.canvas.language_code == 'he':
+            angle_label_widget.setAlignment(Qt.AlignRight)
         angle_slider = QSlider(Qt.Horizontal)
         angle_slider.setRange(-360, 360)
         angle_slider.setValue(int(current_angle))
-        angle_layout.addWidget(angle_slider)
-
         angle_spinbox = QDoubleSpinBox()
         angle_spinbox.setRange(-360, 360)
         angle_spinbox.setValue(current_angle)
         angle_spinbox.setSingleStep(1)
+        # Keep spinbox LTR for numbers
+        angle_spinbox.setLayoutDirection(Qt.LeftToRight)
+        angle_spinbox.setAlignment(Qt.AlignLeft)
+        # Add in order: label, slider (stretch), spinbox
+        angle_layout.addWidget(angle_label_widget)
+        angle_layout.addWidget(angle_slider, 1)
         angle_layout.addWidget(angle_spinbox)
-
         layout.addLayout(angle_layout)
 
-        # Length adjustment
+        # Length adjustment row
         length_layout = QHBoxLayout()
-        length_layout.addWidget(QLabel(_['length_label']))
+        # Mirror row order for Hebrew
+        if self.canvas.language_code == 'he':
+            length_layout.setDirection(QBoxLayout.RightToLeft)
+        # Widgets
+        length_label_widget = QLabel(_['length_label'])
+        # Hebrew labels right-aligned
+        if self.canvas.language_code == 'he':
+            length_label_widget.setAlignment(Qt.AlignRight)
         length_slider = QSlider(Qt.Horizontal)
         length_slider.setRange(10, self.max_length)
         length_slider.setValue(int(current_length))
         length_slider.setTickInterval(5)
         length_slider.setTickPosition(QSlider.TicksBelow)
-        length_layout.addWidget(length_slider)
-
         length_spinbox = QDoubleSpinBox()
         length_spinbox.setRange(10, self.max_length)
         length_spinbox.setValue(current_length)
         length_spinbox.setSingleStep(5)
+        # Keep spinbox LTR for numbers
+        length_spinbox.setLayoutDirection(Qt.LeftToRight)
+        length_spinbox.setAlignment(Qt.AlignLeft)
+        # Add in order: label, slider (stretch), spinbox
+        length_layout.addWidget(length_label_widget)
+        length_layout.addWidget(length_slider, 1)
         length_layout.addWidget(length_spinbox)
-
         layout.addLayout(length_layout)
 
         ok_button = QPushButton(_['ok'])

@@ -320,7 +320,7 @@ class NumberedLayerButton(QPushButton):
             return
             
         # Get translations from the layer panel
-        _ = translations[layer_panel.language_code]
+        _ = translations.get(layer_panel.language_code, translations['en'])
 
         # Check if this is a masked layer 
         is_masked_layer = isinstance(strand, MaskedStrand) 
@@ -631,10 +631,10 @@ class NumberedLayerButton(QPushButton):
                 break
             parent = parent.parent()
         
-        _ = translations[layer_panel.language_code] if layer_panel else lambda k: k # Fallback
+        _ = translations.get(layer_panel.language_code, translations['en'])
 
         color_dialog = QColorDialog(self)
-        color_dialog.setWindowTitle(_('change_color') if 'change_color' in _ else "Change Color")
+        color_dialog.setWindowTitle(_.get('change_color', "Change Color"))
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
         color = color_dialog.getColor(initial=self.color, options=QColorDialog.ShowAlphaChannel)
         if color.isValid():

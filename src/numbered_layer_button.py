@@ -1,10 +1,38 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData 
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
 import logging
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
+
+# Create a custom hover-aware label class
+class HoverLabel(QLabel):
+    def __init__(self, text, parent=None, theme="light"):
+        super().__init__(text, parent)
+        self.theme = theme
+        self.setMouseTracking(True)
+        self.normal_style()
+        
+    def enterEvent(self, event):
+        self.hover_style()
+        super().enterEvent(event)
+        
+    def leaveEvent(self, event):
+        self.normal_style()
+        super().leaveEvent(event)
+        
+    def normal_style(self):
+        bg_color = '#333333' if self.theme == 'dark' else '#F0F0F0'
+        fg_color = '#ffffff' if self.theme == 'dark' else '#000000'
+        # Use original vertical padding (1px) and user's horizontal padding (5px)
+        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 1px 5px 1px;") 
+
+    def hover_style(self):
+        bg_color = '#F0F0F0' if self.theme == 'dark' else '#333333'
+        fg_color = '#000000' if self.theme == 'dark' else '#ffffff'
+        # Use original vertical padding (1px) and user's horizontal padding (5px)
+        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 1px 5px 1px;")
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -39,7 +67,494 @@ class NumberedLayerButton(QPushButton):
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
         self._drag_start_position = None # To store mouse press position
+        self._resetting_mask = False # Flag to prevent menu re-opening during reset
+    def show_context_menu(self, pos):
+        """
+        Show a context menu when the button is right-clicked.
 
+        Args:
+            pos (QPoint): The position where the menu should be shown.
+        """
+        # --- NEW: Prevent re-entry during reset ---
+        if self._resetting_mask:
+            logging.info(f"[NumberedLayerButton] Context menu request ignored for button {self.text()} because reset is in progress.")
+            return
+        # --- END NEW ---
+
+        logging.info(f"[NumberedLayerButton] Context menu requested for button {self.text()} at pos {pos}")
+        
+        # Find the layer panel by traversing up the widget hierarchy
+        layer_panel = None
+        parent = self.parent()
+        while parent:
+            # Check if the parent is the LayerPanel class directly
+            if parent.__class__.__name__ == 'LayerPanel':
+                layer_panel = parent
+                break
+            parent = parent.parent()
+
+        if not layer_panel:
+            logging.error("Could not find LayerPanel parent for context menu.")
+            return
+            
+        try:
+            index = layer_panel.layer_buttons.index(self)
+            if index < 0 or index >= len(layer_panel.canvas.strands):
+                logging.error(f"Button index {index} is out of bounds for strands.")
+                return
+            strand = layer_panel.canvas.strands[index]
+        except (ValueError, IndexError) as e:
+            logging.error(f"Error getting strand for button {self.text()}: {e}")
+            return
+            
+        # Get translations from the layer panel
+        _ = translations.get(layer_panel.language_code, translations['en'])
+
+        # Check if this is a masked layer 
+        is_masked_layer = isinstance(strand, MaskedStrand) 
+
+        # Create the context menu
+        context_menu = QMenu(self)
+        
+        # Apply RTL layout direction for Hebrew before setting styles
+        is_hebrew = layer_panel.language_code == 'he'
+       
+        # Determine current theme and build base style
+        theme = self.get_parent_theme()
+        # ─── inside show_context_menu ──────────────────────────────────────────
+
+        base_style = """
+            QMenu {{
+                background-color: {{bg}};
+                color: {{fg}};
+                font-size: 8pt;
+            }}
+            /* Default item state */
+            QMenu::item {{
+                background-color: transparent; /* Ensure default is transparent */
+                color: {{fg}};
+            }}
+            /* Style for the item container on hover/select */
+            QMenu::item:selected, QMenu::item:hover {{
+                background-color: {{sel_bg}};
+                color: {{sel_fg}}; /* Set default text color for the item state */
+            }}
+            /* Style the QWidget inside hovered/selected items */
+            QMenu::item:selected QWidget,
+            QMenu::item:hover QWidget {{
+                 background-color: {{sel_bg}}; /* Make the inner widget background match */
+            }}
+             /* Style the QLabel text color inside hovered/selected items */
+            QMenu::item:selected QLabel,
+            QMenu::item:hover QLabel {{
+                 color: {{sel_fg}}; /* Make the label text match */
+                 background-color: transparent; /* Label itself is transparent, showing widget background */
+            }}
+        """.format(
+            bg=('#333333' if theme == 'dark' else '#F0F0F0'),
+            fg=('#ffffff' if theme == 'dark' else '#000000'), # Explicit hex for clarity
+            sel_bg=('#F0F0F0' if theme == 'dark' else '#333333'),
+            sel_fg=('#000000' if theme == 'dark' else '#ffffff')  # Explicit hex for clarity
+        )
+
+        if is_hebrew:
+            context_menu.setLayoutDirection(Qt.RightToLeft)
+            base_style += "QMenu::item { padding:3px 30px 3px 3px; }"        
+        else:
+            base_style += "QMenu::item { padding:3px 30px 3px 3px; }"
+
+
+
+ 
+        context_menu.setStyleSheet(base_style)
+        # ───────────────────────────────────────────────────────────────────────
+
+
+        # --- NEW Logic: Build menu based on layer type ---
+        # ALWAYS add Hide/Show first
+        hide_show_text = _['show_layer'] if strand.is_hidden else _['hide_layer']
+        # Use a widget action to allow right alignment of the label
+
+        # Use HoverLabel instead of QLabel
+        change_hide = HoverLabel(hide_show_text, self, theme)
+        # change_hide.setContentsMargins(5, 1, 5, 1) # Removed, handled by HoverLabel style
+        if is_hebrew:
+            change_hide.setLayoutDirection(Qt.RightToLeft)
+            change_hide.setAlignment(Qt.AlignLeft)
+        change_hide_action = QWidgetAction(self)
+        change_hide_action.setDefaultWidget(change_hide)
+        change_hide_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
+        context_menu.addAction(change_hide_action)
+
+        if is_masked_layer:
+            context_menu.addSeparator()
+
+            # --- Wrap masked layer actions in HoverLabel for hover feedback ---
+            # Edit Mask action
+            edit_label = HoverLabel(_['edit_mask'], self, theme)
+            if is_hebrew:
+                edit_label.setLayoutDirection(Qt.RightToLeft)
+                edit_label.setAlignment(Qt.AlignLeft)
+            edit_action = QWidgetAction(self)
+            edit_action.setDefaultWidget(edit_label)
+            edit_action.triggered.connect(
+                lambda: layer_panel.on_edit_mask_click(context_menu, index)
+            )
+            context_menu.addAction(edit_action)
+
+            # Reset Mask action
+            reset_label = HoverLabel(_['reset_mask'], self, theme)
+            if is_hebrew:
+                reset_label.setLayoutDirection(Qt.RightToLeft)
+                reset_label.setAlignment(Qt.AlignLeft)
+            reset_action = QWidgetAction(self)
+            reset_action.setDefaultWidget(reset_label)
+            reset_action.triggered.connect(
+                lambda: (
+                    logging.info(f"[NumberedLayerButton] Reset Mask action triggered for button {self.text()}"),
+                    setattr(self, '_resetting_mask', True),
+                    logging.info(f"[NumberedLayerButton] _resetting_mask set to True for {self.text()}"),
+                    context_menu.close(), 
+                    logging.info(f"[NumberedLayerButton] Context menu closed for button {self.text()}"),
+                    self.blockSignals(True),
+                    QTimer.singleShot(0, lambda: (
+                        logging.info(f"[NumberedLayerButton] Timer triggered for reset_mask({index}) for button {self.text()}"),
+                        layer_panel.reset_mask(index),
+                        self.blockSignals(False),
+                        logging.info(f"[NumberedLayerButton] Re-enabled signals for button {self.text()}"),
+                        setattr(self, '_resetting_mask', False),
+                        logging.info(f"[NumberedLayerButton] _resetting_mask set to False for {self.text()}")
+                    ))
+                )
+            )
+            context_menu.addAction(reset_action)
+        else: # Regular layer actions
+            context_menu.addSeparator()
+            # Use a widget action for the 'Change Color' entry to align text right
+            change_color = _['change_color'] if 'change_color' in _ else "Change Color"
+            # Use HoverLabel instead of QLabel
+            change_color_label = HoverLabel(change_color, self, theme)
+            # change_color_label.setContentsMargins(5, 1, 5, 1) # Removed, handled by HoverLabel style
+
+            if is_hebrew:
+                change_color_label.setLayoutDirection(Qt.RightToLeft)
+                change_color_label.setAlignment(Qt.AlignLeft)
+
+            change_action_color = QWidgetAction(self)
+            change_action_color.setDefaultWidget(change_color_label)
+            change_action_color.triggered.connect(self.change_color)
+            context_menu.addAction(change_action_color)
+            
+            context_menu.addSeparator()
+            # Check if the strand has the necessary attribute before adding stroke actions
+            if hasattr(strand, 'circle_stroke_color'):
+                # Only show one stroke action based on current color
+                if strand.circle_stroke_color.alpha() == 0:
+                    # Reset stroke entry as a widget action
+                    # Use HoverLabel instead of QLabel
+                    reset_label = HoverLabel(_['restore_default_stroke'], self, theme)
+                    # reset_label.setContentsMargins(5, 1, 5, 1) # Removed, handled by HoverLabel style
+                    if is_hebrew:
+                        reset_label.setLayoutDirection(Qt.RightToLeft)
+                        reset_label.setAlignment(Qt.AlignLeft)
+                    reset_action_stroke = QWidgetAction(self)
+                    reset_action_stroke.setDefaultWidget(reset_label)
+                    reset_action_stroke.triggered.connect(self.reset_default_circle_stroke)
+                    context_menu.addAction(reset_action_stroke)
+                else:
+                    # Transparent stroke entry as a widget action
+                    # Use HoverLabel instead of QLabel
+                    transparent_label = HoverLabel(_['transparent_stroke'], self, theme)
+                    # transparent_label.setContentsMargins(5, 1, 5, 1) # Removed, handled by HoverLabel style
+                    if is_hebrew:
+                        transparent_label.setLayoutDirection(Qt.RightToLeft)
+                        transparent_label.setAlignment(Qt.AlignLeft)
+                    transparent_action = QWidgetAction(self)
+                    transparent_action.setDefaultWidget(transparent_label)
+                    transparent_action.triggered.connect(self.set_transparent_circle_stroke)
+                    context_menu.addAction(transparent_action)
+
+            # --- NEW: Group start/end line visibility toggles into one row ---
+            if (
+                (hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand))
+                or hasattr(strand, 'end_line_visible')
+            ):
+                context_menu.addSeparator()
+                line_widget = QWidget()
+                line_layout = QHBoxLayout(line_widget)
+                line_layout.setContentsMargins(5, 1, 5, 1)
+                
+                # Label for the line group
+                line_label = QLabel(_['line'] if 'line' in _ else "Line")
+                # Always set RTL for Hebrew, including the widget itself
+                if is_hebrew:
+                    line_widget.setLayoutDirection(Qt.RightToLeft)
+                    line_label.setAlignment(Qt.AlignLeft)
+                
+                line_layout.addWidget(line_label)
+
+                # Start-line toggle (skip for AttachedStrand)
+                if hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand):
+                    start_line_text = _['show_start_line'] if not strand.start_line_visible else _['hide_start_line']
+                    start_line_btn = QPushButton(start_line_text)
+                    start_line_btn.setFlat(True)
+                    start_line_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_line_visibility(strand, 'start', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    line_layout.addWidget(start_line_btn)
+
+                # End-line toggle
+                if hasattr(strand, 'end_line_visible'):
+                    end_line_text = _['show_end_line'] if not strand.end_line_visible else _['hide_end_line']
+                    end_line_btn = QPushButton(end_line_text)
+                    end_line_btn.setFlat(True)
+                    end_line_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_line_visibility(strand, 'end', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    line_layout.addWidget(end_line_btn)
+
+                # Embed widget in menu
+                line_action = QWidgetAction(self)
+                line_action.setDefaultWidget(line_widget)
+                context_menu.addAction(line_action)
+
+                # Theme-aware styling for label & buttons
+                if theme == "dark":
+                    line_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    line_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                # Apply style to all children widgets that were possibly created
+                for child in line_widget.findChildren(QWidget):
+                    child.setStyleSheet(line_style)
+
+            # --- NEW: Group start/end arrow visibility toggles into one row ---
+            if hasattr(strand, 'start_arrow_visible') or hasattr(strand, 'end_arrow_visible'):
+                context_menu.addSeparator()
+                arrow_widget = QWidget()
+                arrow_layout = QHBoxLayout(arrow_widget)
+                arrow_layout.setContentsMargins(5, 1, 5, 1)
+                
+            
+                # Label for the arrow group
+                arrow_label = QLabel(_['arrow'] if 'arrow' in _ else "Arrow")
+                arrow_layout.addWidget(arrow_label)
+                # Always set RTL for Hebrew, including the widget itself
+                if is_hebrew:
+                    arrow_widget.setLayoutDirection(Qt.RightToLeft)
+                    arrow_label.setAlignment(Qt.AlignLeft)
+
+                # Start arrow toggle
+                if hasattr(strand, 'start_arrow_visible'):
+                    # Use fallback defaults if translation keys are missing
+                    start_arrow_text = _['show_start_arrow'] if 'show_start_arrow' in _ else "Show Start Arrow"
+                    if getattr(strand, 'start_arrow_visible', False):
+                        start_arrow_text = _['hide_start_arrow'] if 'hide_start_arrow' in _ else "Hide Start Arrow"
+                    start_arrow_btn = QPushButton(start_arrow_text)
+                    start_arrow_btn.setFlat(True)
+                    start_arrow_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_arrow_visibility(strand, 'start', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    arrow_layout.addWidget(start_arrow_btn)
+
+                # End arrow toggle
+                if hasattr(strand, 'end_arrow_visible'):
+                    # Use fallback defaults if translation keys are missing
+                    end_arrow_text = _['show_end_arrow'] if 'show_end_arrow' in _ else "Show End Arrow"
+                    if getattr(strand, 'end_arrow_visible', False):
+                        end_arrow_text = _['hide_end_arrow'] if 'hide_end_arrow' in _ else "Hide End Arrow"
+                    end_arrow_btn = QPushButton(end_arrow_text)
+                    end_arrow_btn.setFlat(True)
+                    end_arrow_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_arrow_visibility(strand, 'end', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    arrow_layout.addWidget(end_arrow_btn)
+
+                arrow_action = QWidgetAction(self)
+                arrow_action.setDefaultWidget(arrow_widget)
+                context_menu.addAction(arrow_action)
+
+                # Apply same theme style as line/extension groups
+                if theme == "dark":
+                    arrow_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    arrow_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                for child in arrow_widget.findChildren(QWidget):
+                    child.setStyleSheet(arrow_style)
+
+            # Add extension line toggles
+            if hasattr(strand, 'start_extension_visible') or hasattr(strand, 'end_extension_visible'):
+                context_menu.addSeparator()
+                ext_widget = QWidget()
+                layout = QHBoxLayout(ext_widget)
+                layout.setContentsMargins(5, 1, 5, 1)
+                
+
+                # Label for the extension group
+                label = QLabel(_['extension'] if 'extension' in _ else "Dash")
+                # Always set RTL for Hebrew, including the widget itself
+                if is_hebrew:
+                    ext_widget.setLayoutDirection(Qt.RightToLeft)
+                    label.setAlignment(Qt.AlignLeft)
+                layout.addWidget(label)
+                # Start extension toggle button with fallback labels
+                start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Dash"
+                if getattr(strand, 'start_extension_visible', False):
+                    start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Dash"
+                start_ext_btn = QPushButton(start_ext_text)
+                start_ext_btn.setFlat(True)
+                start_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'start', layer_panel), context_menu.close()))
+                layout.addWidget(start_ext_btn)
+                # End extension toggle button with fallback labels
+                end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Dash"
+                if getattr(strand, 'end_extension_visible', False):
+                    end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Dash"
+                end_ext_btn = QPushButton(end_ext_text)
+                end_ext_btn.setFlat(True)
+                end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))
+                layout.addWidget(end_ext_btn)
+                # Embed the widget into the menu
+                ext_action = QWidgetAction(self)
+                ext_action.setDefaultWidget(ext_widget)
+                context_menu.addAction(ext_action)
+
+                # --- Apply theme-aware styling to label and buttons ---
+                if theme == "dark":
+                    widget_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    widget_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+
+                for child in ext_widget.findChildren(QWidget):
+                    child.setStyleSheet(widget_style)
+
+            # --- NEW: Group start/end circle visibility toggles into one row ---
+            # For Strands, only show circle toggles if an attached strand exists at the corresponding endpoint.
+            # For AttachedStrand, always allow circle toggles.
+            if isinstance(strand, AttachedStrand):
+                show_start_circle_toggle = True
+                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
+                )
+            else:
+                show_start_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.start for child in strand.attached_strands
+                )
+                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
+                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
+                )
+            if show_start_circle_toggle or show_end_circle_toggle:
+                context_menu.addSeparator()
+                circle_widget = QWidget()
+                circle_layout = QHBoxLayout(circle_widget)
+                circle_layout.setContentsMargins(5, 1, 5, 1)
+                
+
+                # Label for the circle group
+                circle_label = QLabel(_['circle'] if 'circle' in _ else "Circle")
+                circle_label.setContentsMargins(5, 1, 5, 1)
+                # Always set RTL for Hebrew, including the widget itself
+                if is_hebrew:
+                    circle_widget.setLayoutDirection(Qt.RightToLeft)
+
+                    circle_label.setAlignment(Qt.AlignLeft)
+
+                
+                circle_layout.addWidget(circle_label)
+
+                # Start circle toggle
+                if show_start_circle_toggle:
+                    start_circle_visible = strand.has_circles[0]
+                    start_circle_text = _['show_start_circle'] if 'show_start_circle' in _ else "Show Start Circle"
+                    if start_circle_visible:
+                        start_circle_text = _['hide_start_circle'] if 'hide_start_circle' in _ else "Hide Start Circle"
+                    start_circle_btn = QPushButton(start_circle_text)
+                    start_circle_btn.setFlat(True)
+                    start_circle_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_circle_visibility(strand, 'start', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    circle_layout.addWidget(start_circle_btn)
+
+                # Insert a stretch between start and end toggles
+                circle_layout.addStretch()
+
+                # End circle toggle
+                if show_end_circle_toggle:
+                    end_circle_visible = strand.has_circles[1]
+                    end_circle_text = _['show_end_circle'] if 'show_end_circle' in _ else "Show End Circle"
+                    if end_circle_visible:
+                        end_circle_text = _['hide_end_circle'] if 'hide_end_circle' in _ else "Hide End Circle"
+                    end_circle_btn = QPushButton(end_circle_text)
+                    end_circle_btn.setFlat(True)
+                    end_circle_btn.clicked.connect(
+                        lambda checked=False: (
+                            self.toggle_strand_circle_visibility(strand, 'end', layer_panel),
+                            context_menu.close(),
+                        )
+                    )
+                    circle_layout.addWidget(end_circle_btn)
+
+                # Embed widget in menu
+                circle_action = QWidgetAction(self)
+                circle_action.setDefaultWidget(circle_widget)
+                context_menu.addAction(circle_action)
+
+                # Theme-aware styling
+                if theme == "dark":
+                    circle_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; }
+                    """
+                else:
+                    circle_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; }
+                    """
+                for child in circle_widget.findChildren(QWidget):
+                    child.setStyleSheet(circle_style)
+        # --- END NEW Logic ---
+
+        logging.info(f"[NumberedLayerButton] Executing context menu for button {self.text()}")
+        context_menu.exec_(self.mapToGlobal(pos))
     def setText(self, text):
         """
         Set the text of the button and trigger a repaint.
@@ -287,338 +802,6 @@ class NumberedLayerButton(QPushButton):
                 return parent.current_theme
             parent = parent.parent()
         return "default"
-
-    def show_context_menu(self, pos):
-        """
-        Show a context menu when the button is right-clicked.
-    
-        Args:
-            pos (QPoint): The position where the menu should be shown.
-        """
-        # Find the layer panel by traversing up the widget hierarchy
-        layer_panel = None
-        parent = self.parent()
-        while parent:
-            # Check if the parent is the LayerPanel class directly
-            if parent.__class__.__name__ == 'LayerPanel':
-                layer_panel = parent
-                break
-            parent = parent.parent()
-
-        if not layer_panel:
-            logging.error("Could not find LayerPanel parent for context menu.")
-            return
-            
-        try:
-            index = layer_panel.layer_buttons.index(self)
-            if index < 0 or index >= len(layer_panel.canvas.strands):
-                 logging.error(f"Button index {index} is out of bounds for strands.")
-                 return
-            strand = layer_panel.canvas.strands[index]
-        except (ValueError, IndexError) as e:
-            logging.error(f"Error getting strand for button {self.text()}: {e}")
-            return
-            
-        # Get translations from the layer panel
-        _ = translations.get(layer_panel.language_code, translations['en'])
-
-        # Check if this is a masked layer 
-        is_masked_layer = isinstance(strand, MaskedStrand) 
-
-        context_menu = QMenu(self)
-        # Determine the current theme from parent chain
-        theme = self.get_parent_theme()
-        if theme == "dark":
-            context_menu.setStyleSheet("QMenu { background-color: #333333; color: white; font-size: 8pt; } QMenu::item:selected { background-color: #F0F0F0; color: black; }")
-        else:
-            context_menu.setStyleSheet("QMenu { background-color: #F0F0F0; color: black; font-size: 8pt; } QMenu::item:selected { background-color: #333333; color: white; }")
-
-        # --- NEW Logic: Build menu based on layer type ---
-        # ALWAYS add Hide/Show first
-        hide_show_text = _['show_layer'] if strand.is_hidden else _['hide_layer']
-        hide_show_action = context_menu.addAction(hide_show_text)
-        hide_show_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
-
-        if is_masked_layer:
-            context_menu.addSeparator()
-            edit_action = context_menu.addAction(_['edit_mask'])
-            edit_action.triggered.connect(
-                lambda: layer_panel.on_edit_mask_click(context_menu, index)
-            )
-            reset_action = context_menu.addAction(_['reset_mask'])
-            reset_action.triggered.connect(
-                lambda: (layer_panel.reset_mask(index), context_menu.close())
-            )
-        else: # Regular layer actions
-            context_menu.addSeparator()
-            change_color_action = QAction(_['change_color'] if 'change_color' in _ else "Change Color", self)
-            change_color_action.triggered.connect(self.change_color)
-            context_menu.addAction(change_color_action)
-            
-            context_menu.addSeparator()
-            # Check if the strand has the necessary attribute before adding stroke actions
-            if hasattr(strand, 'circle_stroke_color'):
-                transparent_stroke_action = context_menu.addAction(_['transparent_stroke'])
-                reset_stroke_action = context_menu.addAction(_['restore_default_stroke'])
-                transparent_stroke_action.triggered.connect(self.set_transparent_circle_stroke)
-                reset_stroke_action.triggered.connect(self.reset_default_circle_stroke)
-
-            # --- NEW: Group start/end line visibility toggles into one row ---
-            if (
-                (hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand))
-                or hasattr(strand, 'end_line_visible')
-            ):
-                context_menu.addSeparator()
-                line_widget = QWidget()
-                line_layout = QHBoxLayout(line_widget)
-                line_layout.setContentsMargins(5, 1, 5, 1)
-
-                # Label for the line group
-                line_label = QLabel(_['line'] if 'line' in _ else "Line")
-                line_layout.addWidget(line_label)
-
-                # Start-line toggle (skip for AttachedStrand)
-                if hasattr(strand, 'start_line_visible') and not isinstance(strand, AttachedStrand):
-                    start_line_text = _['show_start_line'] if not strand.start_line_visible else _['hide_start_line']
-                    start_line_btn = QPushButton(start_line_text)
-                    start_line_btn.setFlat(True)
-                    start_line_btn.clicked.connect(
-                        lambda checked=False: (
-                            self.toggle_strand_line_visibility(strand, 'start', layer_panel),
-                            context_menu.close(),
-                        )
-                    )
-                    line_layout.addWidget(start_line_btn)
-
-                # End-line toggle
-                if hasattr(strand, 'end_line_visible'):
-                    end_line_text = _['show_end_line'] if not strand.end_line_visible else _['hide_end_line']
-                    end_line_btn = QPushButton(end_line_text)
-                    end_line_btn.setFlat(True)
-                    end_line_btn.clicked.connect(
-                        lambda checked=False: (
-                            self.toggle_strand_line_visibility(strand, 'end', layer_panel),
-                            context_menu.close(),
-                        )
-                    )
-                    line_layout.addWidget(end_line_btn)
-
-                # Embed widget in menu
-                line_action = QWidgetAction(self)
-                line_action.setDefaultWidget(line_widget)
-                context_menu.addAction(line_action)
-
-                # Theme-aware styling for label & buttons
-                if theme == "dark":
-                    line_style = """
-                        QPushButton { background-color: transparent; border: none; color: white; }
-                        QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
-                    """
-                else:
-                    line_style = """
-                        QPushButton { background-color: transparent; border: none; color: black; }
-                        QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
-                    """
-                # Apply style to all children widgets that were possibly created
-                for child in line_widget.findChildren(QWidget):
-                    child.setStyleSheet(line_style)
-
-            # --- NEW: Group start/end arrow visibility toggles into one row ---
-            if hasattr(strand, 'start_arrow_visible') or hasattr(strand, 'end_arrow_visible'):
-                context_menu.addSeparator()
-                arrow_widget = QWidget()
-                arrow_layout = QHBoxLayout(arrow_widget)
-                arrow_layout.setContentsMargins(5, 1, 5, 1)
-
-                # Label for the arrow group
-                arrow_label = QLabel(_['arrow'] if 'arrow' in _ else "Arrow")
-                arrow_layout.addWidget(arrow_label)
-
-                # Start arrow toggle
-                if hasattr(strand, 'start_arrow_visible'):
-                    # Use fallback defaults if translation keys are missing
-                    start_arrow_text = _['show_start_arrow'] if 'show_start_arrow' in _ else "Show Start Arrow"
-                    if getattr(strand, 'start_arrow_visible', False):
-                        start_arrow_text = _['hide_start_arrow'] if 'hide_start_arrow' in _ else "Hide Start Arrow"
-                    start_arrow_btn = QPushButton(start_arrow_text)
-                start_arrow_btn.setFlat(True)
-                start_arrow_btn.clicked.connect(
-                    lambda checked=False: (
-                        self.toggle_strand_arrow_visibility(strand, 'start', layer_panel),
-                        context_menu.close(),
-                    )
-                )
-                arrow_layout.addWidget(start_arrow_btn)
-
-                # End arrow toggle
-                if hasattr(strand, 'end_arrow_visible'):
-                    # Use fallback defaults if translation keys are missing
-                    end_arrow_text = _['show_end_arrow'] if 'show_end_arrow' in _ else "Show End Arrow"
-                    if getattr(strand, 'end_arrow_visible', False):
-                        end_arrow_text = _['hide_end_arrow'] if 'hide_end_arrow' in _ else "Hide End Arrow"
-                    end_arrow_btn = QPushButton(end_arrow_text)
-                end_arrow_btn.setFlat(True)
-                end_arrow_btn.clicked.connect(
-                    lambda checked=False: (
-                        self.toggle_strand_arrow_visibility(strand, 'end', layer_panel),
-                        context_menu.close(),
-                    )
-                )
-                arrow_layout.addWidget(end_arrow_btn)
-
-                arrow_action = QWidgetAction(self)
-                arrow_action.setDefaultWidget(arrow_widget)
-                context_menu.addAction(arrow_action)
-
-                # Apply same theme style as line/extension groups
-                if theme == "dark":
-                    arrow_style = """
-                        QPushButton { background-color: transparent; border: none; color: white; }
-                        QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
-                    """
-                else:
-                    arrow_style = """
-                        QPushButton { background-color: transparent; border: none; color: black; }
-                        QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
-                    """
-                for child in arrow_widget.findChildren(QWidget):
-                    child.setStyleSheet(arrow_style)
-
-            # Add extension line toggles
-            if hasattr(strand, 'start_extension_visible') or hasattr(strand, 'end_extension_visible'):
-                context_menu.addSeparator()
-                ext_widget = QWidget()
-                layout = QHBoxLayout(ext_widget)
-                layout.setContentsMargins(5, 1, 5, 1)
-                # Label for the extension group
-                label = QLabel(_['extension'] if 'extension' in _ else "Dash")
-                layout.addWidget(label)
-                # Start extension toggle button with fallback labels
-                start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Dash"
-                if getattr(strand, 'start_extension_visible', False):
-                    start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Dash"
-                start_ext_btn = QPushButton(start_ext_text)
-                start_ext_btn.setFlat(True)
-                start_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'start', layer_panel), context_menu.close()))
-                layout.addWidget(start_ext_btn)
-                # End extension toggle button with fallback labels
-                end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Dash"
-                if getattr(strand, 'end_extension_visible', False):
-                    end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Dash"
-                end_ext_btn = QPushButton(end_ext_text)
-                end_ext_btn.setFlat(True)
-                end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))
-                layout.addWidget(end_ext_btn)
-                # Embed the widget into the menu
-                ext_action = QWidgetAction(self)
-                ext_action.setDefaultWidget(ext_widget)
-                context_menu.addAction(ext_action)
-
-                # --- Apply theme-aware styling to label and buttons ---
-                if theme == "dark":
-                    widget_style = """
-                        QPushButton { background-color: transparent; border: none; color: white; }
-                        QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
-                    """
-                else:
-                    widget_style = """
-                        QPushButton { background-color: transparent; border: none; color: black; }
-                        QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
-                    """
-
-                start_ext_btn.setStyleSheet(widget_style)
-                end_ext_btn.setStyleSheet(widget_style)
-                label.setStyleSheet(widget_style)
-
-            # --- NEW: Group start/end circle visibility toggles into one row ---
-            # For Strands, only show circle toggles if an attached strand exists at the corresponding endpoint.
-            # For AttachedStrand, always allow circle toggles.
-            if isinstance(strand, AttachedStrand):
-                show_start_circle_toggle = True
-                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
-                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
-                )
-            else:
-                show_start_circle_toggle = hasattr(strand, 'attached_strands') and any(
-                    isinstance(child, AttachedStrand) and child.start == strand.start for child in strand.attached_strands
-                )
-                show_end_circle_toggle = hasattr(strand, 'attached_strands') and any(
-                    isinstance(child, AttachedStrand) and child.start == strand.end for child in strand.attached_strands
-                )
-            if show_start_circle_toggle or show_end_circle_toggle:
-                context_menu.addSeparator()
-                circle_widget = QWidget()
-                circle_layout = QHBoxLayout(circle_widget)
-                circle_layout.setContentsMargins(5, 1, 5, 1)
-
-                # Label for the circle group
-                circle_label = QLabel(_['circle'] if 'circle' in _ else "Circle")
-                circle_layout.addWidget(circle_label)
-
-                # Start circle toggle
-                if show_start_circle_toggle:
-                    start_circle_visible = strand.has_circles[0]
-                    start_circle_text = _['show_start_circle'] if 'show_start_circle' in _ else "Show Start Circle"
-                    if start_circle_visible:
-                        start_circle_text = _['hide_start_circle'] if 'hide_start_circle' in _ else "Hide Start Circle"
-                    start_circle_btn = QPushButton(start_circle_text)
-                    start_circle_btn.setFlat(True)
-                    start_circle_btn.clicked.connect(
-                        lambda checked=False: (
-                            self.toggle_strand_circle_visibility(strand, 'start', layer_panel),
-                            context_menu.close(),
-                        )
-                    )
-                    circle_layout.addWidget(start_circle_btn)
-
-                # Insert a stretch between start and end toggles
-                circle_layout.addStretch()
-
-                # End circle toggle
-                if show_end_circle_toggle:
-                    end_circle_visible = strand.has_circles[1]
-                    end_circle_text = _['show_end_circle'] if 'show_end_circle' in _ else "Show End Circle"
-                    if end_circle_visible:
-                        end_circle_text = _['hide_end_circle'] if 'hide_end_circle' in _ else "Hide End Circle"
-                    end_circle_btn = QPushButton(end_circle_text)
-                    end_circle_btn.setFlat(True)
-                    end_circle_btn.clicked.connect(
-                        lambda checked=False: (
-                            self.toggle_strand_circle_visibility(strand, 'end', layer_panel),
-                            context_menu.close(),
-                        )
-                    )
-                    circle_layout.addWidget(end_circle_btn)
-
-                # Embed widget in menu
-                circle_action = QWidgetAction(self)
-                circle_action.setDefaultWidget(circle_widget)
-                context_menu.addAction(circle_action)
-
-                # Theme-aware styling
-                if theme == "dark":
-                    circle_style = """
-                        QPushButton { background-color: transparent; border: none; color: white; }
-                        QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
-                    """
-                else:
-                    circle_style = """
-                        QPushButton { background-color: transparent; border: none; color: black; }
-                        QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
-                    """
-                for child in circle_widget.findChildren(QWidget):
-                    child.setStyleSheet(circle_style)
-        # --- END NEW Logic ---
-
-        context_menu.exec_(self.mapToGlobal(pos))
 
     def change_color(self):
         """Open a color dialog to change the button's color."""

@@ -656,6 +656,7 @@ class LayerPanel(QWidget):
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""
+        logging.info(f"[LayerPanel] reset_mask called for strand_index {strand_index}")
         if self.canvas:
             logging.info(f"Resetting mask for strand {strand_index}")
             self.canvas.reset_mask(strand_index)
@@ -1101,11 +1102,7 @@ class LayerPanel(QWidget):
         self.notification_label.setText(message)
         QTimer.singleShot(duration, lambda: self.notification_label.setText(""))
 
-    def reset_mask(self, strand_index):
-        """Reset the mask to its original intersection."""
-        if self.canvas:
-            self.canvas.reset_mask(strand_index)
-            logging.info(f"Reset mask for strand {strand_index}")
+
 
     def request_new_strand(self):
         """Request a new strand to be created in the selected set."""
@@ -2129,6 +2126,21 @@ class LayerPanel(QWidget):
         logging.warning(f"Could not find strand for button: {button.text() if button else 'None'}")
         return None
 
+    def show_masked_layer_context_menu(self, strand_index, pos):
+        """Delegate masked-layer context menu display to the corresponding button.
+
+        This wrapper restores compatibility with older lambda connections that
+        expect a LayerPanel.show_masked_layer_context_menu method.  It simply
+        forwards the call to the NumberedLayerButton's own show_context_menu,
+        which already handles masked-layer specific actions.
+        """
+        if 0 <= strand_index < len(self.layer_buttons):
+            button = self.layer_buttons[strand_index]
+            # Ensure the button exists and is a NumberedLayerButton
+            try:
+                button.show_context_menu(pos)
+            except Exception as e:
+                logging.error(f"Error showing context menu for masked layer button at index {strand_index}: {e}")
 
 # End of LayerPanel class
 

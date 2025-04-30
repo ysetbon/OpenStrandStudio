@@ -3,8 +3,8 @@ Language: en
 ShadowColor: 0,0,0,100
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: false
-NumSteps: 2
-MaxBlurRadius: 30.0
+NumSteps: 1
+MaxBlurRadius: 15.0
 UseExtendedMask: false
 ExtensionLength: 200.0
 ExtensionDashCount: 15

@@ -4080,3 +4080,68 @@ class StrandDrawingCanvas(QWidget):
             self.mask_edit_exited.emit()
             
             self.update()
+
+    def reset_mask(self, strand_index):
+        """Reset the custom mask (and deletion rectangles) of the masked strand at the given index.
+
+        This is invoked by LayerPanel and other UI components. It safely exits any
+        active mask-edit mode that targets the same strand, calls the underlying
+        MaskedStrand.reset_mask(), forces a canvas redraw, and records the action
+        in the undo/redo manager if present.
+        """
+        logging.info(f"[StrandDrawingCanvas] reset_mask START for index {strand_index}")
+        if not (0 <= strand_index < len(self.strands)):
+            logging.warning(f"reset_mask called with invalid index: {strand_index}")
+            return
+
+        strand = self.strands[strand_index]
+        if not isinstance(strand, MaskedStrand):
+            logging.warning(
+                f"reset_mask called for a non-masked strand at index {strand_index} ({getattr(strand, 'layer_name', 'unknown')})"
+            )
+            return
+
+        # If we are currently editing this mask, exit edit mode first
+        logging.info(f"[StrandDrawingCanvas] Checking if in mask edit mode for strand {strand_index}...")
+        if self.mask_edit_mode and self.editing_masked_strand is strand:
+            logging.info(f"[StrandDrawingCanvas] Exiting mask edit mode for strand {strand_index}")
+            self.exit_mask_edit_mode()
+
+        # --- NEW: Ensure any open context menus are closed before proceeding ---
+        logging.info(f"[StrandDrawingCanvas] Attempting to close active menus...")
+        from PyQt5.QtWidgets import QApplication, QMenu
+        # Close the currently active popup, if any
+        active_popup = QApplication.activePopupWidget()
+        if active_popup:
+            active_popup.close()
+            logging.info(f"[StrandDrawingCanvas] Closed active popup: {active_popup}")
+
+        # Additionally close ANY stray QMenu instances that might still be
+        # visible (sometimes nested or secondary menus can remain)
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, QMenu) and widget.isVisible():
+                widget.close()
+                logging.info(f"[StrandDrawingCanvas] Closed stray menu: {widget}")
+        logging.info(f"[StrandDrawingCanvas] Menu closing attempt finished.")
+        # --- END NEW ---
+
+        # Perform the reset on the MaskedStrand itself
+        try:
+            strand.reset_mask()
+        except Exception as e:
+            logging.error(f"Error resetting mask for strand {strand.layer_name}: {e}")
+            return
+
+        # Request a repaint
+        logging.info(f"[StrandDrawingCanvas] Requesting repaint after reset.")
+        self.update()
+
+        # Persist in undo/redo history if available
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force immediate save to capture this state change
+            self.undo_redo_manager._last_save_time = 0
+            self.undo_redo_manager.save_state()
+            logging.info(f"Undo/redo state saved after resetting mask for {strand.layer_name}")
+
+        logging.info(f"[StrandDrawingCanvas] reset_mask END for index {strand_index}, strand {strand.layer_name}")
+        logging.info(f"Mask reset for strand {strand.layer_name}")

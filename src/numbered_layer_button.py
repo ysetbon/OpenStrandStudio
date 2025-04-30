@@ -495,20 +495,20 @@ class NumberedLayerButton(QPushButton):
                 layout = QHBoxLayout(ext_widget)
                 layout.setContentsMargins(5, 1, 5, 1)
                 # Label for the extension group
-                label = QLabel(_['extension'] if 'extension' in _ else "Extension")
+                label = QLabel(_['extension'] if 'extension' in _ else "Dash")
                 layout.addWidget(label)
                 # Start extension toggle button with fallback labels
-                start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Extension"
+                start_ext_text = _['show_start_extension'] if 'show_start_extension' in _ else "Show Start Dash"
                 if getattr(strand, 'start_extension_visible', False):
-                    start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Extension"
+                    start_ext_text = _['hide_start_extension'] if 'hide_start_extension' in _ else "Hide Start Dash"
                 start_ext_btn = QPushButton(start_ext_text)
                 start_ext_btn.setFlat(True)
                 start_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'start', layer_panel), context_menu.close()))
                 layout.addWidget(start_ext_btn)
                 # End extension toggle button with fallback labels
-                end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Extension"
+                end_ext_text = _['show_end_extension'] if 'show_end_extension' in _ else "Show End Dash"
                 if getattr(strand, 'end_extension_visible', False):
-                    end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Extension"
+                    end_ext_text = _['hide_end_extension'] if 'hide_end_extension' in _ else "Hide End Dash"
                 end_ext_btn = QPushButton(end_ext_text)
                 end_ext_btn.setFlat(True)
                 end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))

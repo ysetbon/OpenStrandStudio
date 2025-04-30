@@ -121,15 +121,19 @@ class MaskedStrand(Strand):
         # Get the base paths for both strands - always fresh calculation
         shadow_width_offset = 0  # Use consistent shadow size
 
-        # Get fresh paths from both strands
+        # Get fresh paths from both strands - explicitly call get_path() here
         path1 = self.first_selected_strand.get_path()
+        path2 = self.second_selected_strand.get_path()
+        logging.info(f"MaskedStrand - Fresh path1 bounds: {path1.boundingRect()}")
+        logging.info(f"MaskedStrand - Fresh path2 bounds: {path2.boundingRect()}")
+
         shadow_stroker = QPainterPathStroker()
         shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path1 = shadow_stroker.createStroke(path1)
 
-        path2 = self.second_selected_strand.get_path()
+        # path2 already fetched above
         shadow_stroker = QPainterPathStroker()
         shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
@@ -139,6 +143,11 @@ class MaskedStrand(Strand):
         # Calculate fresh intersection
         intersection_path = shadow_path1.intersected(shadow_path2)
         path_shadow = intersection_path
+
+        # Log bounds before deletions
+        logging.info(f"MaskedStrand - Shadow path1 bounds: {shadow_path1.boundingRect()}")
+        logging.info(f"MaskedStrand - Shadow path2 bounds: {shadow_path2.boundingRect()}")
+        logging.info(f"MaskedStrand - Initial intersection (path_shadow) bounds before deletions: {path_shadow.boundingRect()}")
 
         # Apply any deletion rectangles to the shadow path
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
@@ -159,7 +168,8 @@ class MaskedStrand(Strand):
                 path_shadow = path_shadow.subtracted(deletion_path)
 
         # Log shadow path information for debugging
-        logging.info(f"Created fresh masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
+        # Moved logging after potential deletions
+        logging.info(f"MaskedStrand - Final masked shadow path (path_shadow) bounds after deletions: {path_shadow.boundingRect()}, empty={path_shadow.isEmpty()}")
         return path_shadow
         
     def get_mask_path(self):
@@ -269,10 +279,48 @@ class MaskedStrand(Strand):
                     shadow_color = self.canvas.default_shadow_color
                     # Also update the strand's shadow color for future reference
                     self.shadow_color = QColor(shadow_color)
-                
+                    
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
                 strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
+
+                # ------------------------------------------------------------------
+                # Ensure deletion rectangles also remove the corresponding shadow.
+                # We do this by subtracting the union of all deletion rectangles
+                # from *both* component stroke paths before they are supplied to
+                # draw_mask_strand_shadow().  The intersection subsequently used
+                # inside that function will therefore have the deleted portions
+                # already removed.
+                # ------------------------------------------------------------------
+
+                if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+                    deletion_union = QPainterPath()
+                    for rect in self.deletion_rectangles:
+                        try:
+                            top_left = QPointF(*rect['top_left'])
+                            top_right = QPointF(*rect['top_right'])
+                            bottom_left = QPointF(*rect['bottom_left'])
+                            bottom_right = QPointF(*rect['bottom_right'])
+
+                            del_path = QPainterPath()
+                            del_path.moveTo(top_left)
+                            del_path.lineTo(top_right)
+                            del_path.lineTo(bottom_right)
+                            del_path.lineTo(bottom_left)
+                            del_path.closeSubpath()
+
+                            if deletion_union.isEmpty():
+                                deletion_union = del_path
+                            else:
+                                deletion_union = deletion_union.united(del_path)
+                        except Exception as ee:
+                            logging.error(f"Error constructing deletion rect path for shadow subtraction: {ee}")
+
+                    if not deletion_union.isEmpty():
+                        strand1_path = strand1_path.subtracted(deletion_union)
+                        strand2_path = strand2_path.subtracted(deletion_union)
+                        logging.info("Subtracted deletion rectangles from component paths for shadow drawing")
+
                 combined_strand_area = QPainterPath(strand1_path)
                 combined_strand_area.addPath(strand2_path)
                 
@@ -286,9 +334,14 @@ class MaskedStrand(Strand):
                     
                     # Draw shadow on top of strands with proper composition mode
                     temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    draw_mask_strand_shadow(temp_painter, limited_shadow_path, self, shadow_color,
-                                             num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                                             max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                    draw_mask_strand_shadow(
+                        temp_painter,
+                        strand1_path,
+                        strand2_path,
+                        shadow_color,
+                        num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                        max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                    )
 
  
         except Exception as e:

@@ -124,6 +124,51 @@ except Exception as e:
     print(f"Error setting up Strand Creation file logging: {e}") # Basic error handling
 # --- End of Strand Creation logging section ---
 
+# --- Add this section for Masked Strand specific logging ---
+class MaskedStrandFilter(logging.Filter):
+    """Filters log records to include only those from masked_strand.py OR relevant logs from shader_utils.py."""
+    def filter(self, record):
+        # Normalize paths for reliable comparison across OS
+        masked_strand_path_part = os.path.normpath(os.path.join('src', 'masked_strand.py'))
+        shader_utils_path_part = os.path.normpath(os.path.join('src', 'shader_utils.py'))
+        
+        # Check conditions
+        from_masked_strand = record.pathname.endswith(masked_strand_path_part)
+        from_shader_utils_relevant = (
+            record.pathname.endswith(shader_utils_path_part) and 
+            record.getMessage().startswith("DrawMaskShadow -")
+        )
+        
+        # Allow if either condition is met
+        return from_masked_strand or from_shader_utils_relevant
+
+try:
+    # Define the log file name
+    masked_strand_log_file = 'masked_strand.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(masked_strand_log_file):
+            os.remove(masked_strand_log_file)
+            logging.info(f"Removed existing log file: {masked_strand_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {masked_strand_log_file}: {e}")
+
+    # Create a specific handler for Masked Strand logs, overwriting the file each run ('w')
+    masked_strand_handler = logging.FileHandler(masked_strand_log_file, mode='w')
+
+    # Apply the filter to the handler
+    masked_strand_handler.addFilter(MaskedStrandFilter())
+
+    # Add the configured handler to the root logger
+    logging.getLogger().addHandler(masked_strand_handler)
+
+    logging.info("Masked Strand logging configured to output to masked_strand.log") # Confirmation message
+
+except Exception as e:
+    print(f"Error setting up Masked Strand file logging: {e}") # Basic error handling
+# --- End of Masked Strand logging section ---
+
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 

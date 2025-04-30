@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Masked Strand Shadow Rendering
+
+This rule describes the process and relevant files for rendering shadows of `MaskedStrand` objects, particularly concerning interactions with edits (deletion rectangles) and movement.
+
+- The `MaskedStrand` class, defined in [src/masked_strand.py](mdc:src/masked_strand.py), represents the visual intersection of two parent strands.
+- `MaskedStrand` can be visually modified by applying deletion rectangles, which are stored within the `MaskedStrand` instance itself (`deletion_rectangles` attribute).
+- The geometric path for the masked strand's shadow, accounting for deletions, is calculated primarily within the `get_masked_shadow_path` method in [src/masked_strand.py](mdc:src/masked_strand.py).
+- The actual rendering of the blurred/faded shadow effect using this path occurs in the `draw_mask_strand_shadow` function within [src/shader_utils.py](mdc:src/shader_utils.py). This function also handles clipping based on layer order and other strands.
+- Standard strand shadows (for non-masked strands) are handled by `draw_strand_shadow` in the same utils file.
+- Moving strands, including `MaskedStrand` objects or their components, is managed by [src/move_mode.py](mdc:src/move_mode.py). Movement triggers updates to strand geometry and repaint events, which in turn call the relevant shadow calculation and drawing functions.
+- Debugging logs specific to `MaskedStrand` operations and the `draw_mask_strand_shadow` function are configured in [src/main.py](mdc:src/main.py) and output to `masked_strand.log`.
+
+**Key Interaction:** When a `MaskedStrand` with deletion rectangles is moved, `move_mode.py` updates its position. The subsequent repaint calls `MaskedStrand.draw()`, which relies on `get_masked_shadow_path` to get the correct shadow shape *after* deletions and movement, and then `draw_mask_strand_shadow` attempts to render this shape with appropriate clipping and effects. Issues can arise if the path calculation or the rendering/clipping logic doesn't handle the updated state correctly during rapid movement events.
+

@@ -2,20 +2,7 @@ import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QRectF, QPointF
 
-def get_stroked_path_for_strand(strand):
-    """Helper method to get the stroked path for a strand."""
-    path = strand.get_path()
-    stroker = QPainterPathStroker()
-    stroker.setWidth(strand.width + strand.stroke_width * 2  )
-    stroker.setJoinStyle(Qt.MiterJoin)
-    stroker.setCapStyle(Qt.FlatCap)
-    return stroker.createStroke(path)
-def get_stroked_path_for_strand_with_shadow(strand):
-    """Helper method to get the stroked path for a strand."""
-    stroker = QPainterPathStroker()
-    stroker.setWidth(strand.width + strand.stroke_width * 2 + 2)
-    stroker.setJoinStyle(Qt.MiterJoin)
-    stroker.setCapStyle(Qt.FlatCap)
+
 
 def draw_mask_strand_shadow(
     painter,
@@ -38,7 +25,12 @@ def draw_mask_strand_shadow(
     # Determine the region that should receive the shadow – this is the
     # intersection of the two supplied paths.
     # ------------------------------------------------------------------
+    # Log geometry of input paths
+    logging.info(f"draw_mask_strand_shadow: first_path bounds={first_path.boundingRect()}, elements={first_path.elementCount()} | second_path bounds={second_path.boundingRect()}, elements={second_path.elementCount()}")
+    # Compute intersection of component paths
     intersection_path = QPainterPath(first_path).intersected(second_path)
+    # Log intersection geometry
+    logging.info(f"draw_mask_strand_shadow: intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
 
     if intersection_path.isEmpty():
         logging.warning("draw_mask_strand_shadow: intersection path is empty – nothing to draw")
@@ -187,13 +179,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 
                 # Subtract the circle area from the shadow path
                 shadow_path = shadow_path.subtracted(exclude_circle)
-                logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}")
+                logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}: exclude path bounds={exclude_circle.boundingRect()}")
 
-    # If strand has circles that are NOT visible (has_circles[x] == False) we should also
-    # exclude their area from the shadow path so that hidden circles do not cast shadows
-    # on underlying strands. This complements the existing logic that handles fully
-    # transparent circles.
-    if hasattr(strand, 'has_circles'):
+    # Only exclude hidden circle areas when the strand truly has circles
+    if hasattr(strand, 'has_circles') and any(strand.has_circles):
         # Determine a reasonable radius for exclusion – use the same base radius that is
         # employed when *adding* circle shadows below (width + stroke_width * 2).
         hidden_circle_radius = strand.width + strand.stroke_width * 2 + 10  # +10 for safe margin
@@ -213,9 +202,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             exclude_circle_path = QPainterPath()
             exclude_circle_path.addEllipse(circle_center, hidden_circle_radius / 2, hidden_circle_radius / 2)
             # Subtract the circle area from the shadow path if it intersects
+            if 'shadow_path' in locals() and not shadow_path.isEmpty():
+                shadow_path = shadow_path.subtracted(exclude_circle_path)
+                logging.info(f"Excluded hidden circle at {'start' if idx == 0 else 'end'} for {strand.layer_name}: exclude path bounds={exclude_circle_path.boundingRect()}")
             try:
                 if 'shadow_path' in locals() and not shadow_path.isEmpty():
                     shadow_path = shadow_path.subtracted(exclude_circle_path)
+                    logging.info(f"Excluded hidden circle at {'start' if idx == 0 else 'end'} for {strand.layer_name}: exclude path bounds={exclude_circle_path.boundingRect()}")
             except Exception as e_ex:
                 logging.error(f"Error subtracting hidden circle (index {idx}) from shadow path of {strand.layer_name}: {e_ex}")
 
@@ -412,6 +405,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
+                        logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
@@ -754,6 +748,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # Draw all shadow paths at once using the faded effect (existing logic below)
     # ----------------------------------------------------------
     # Draw all shadow paths at once using the faded effect
+    logging.info(f"Shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}: count={len(all_shadow_paths)}, empty_paths={sum(1 for p in all_shadow_paths if p.isEmpty())}, non_empty={sum(1 for p in all_shadow_paths if not p.isEmpty())}")
+    if all_shadow_paths and logging.getLogger().isEnabledFor(logging.DEBUG):
+        for i, path in enumerate(all_shadow_paths):
+            if not path.isEmpty():
+                logging.debug(f"  Shadow path #{i+1}: bounds={path.boundingRect()}, elements={path.elementCount()}")
     if all_shadow_paths:
         # Combine all paths into one for the fading effect
         # (all_shadow_paths should contain only one path now, either combined intersections or fallback)

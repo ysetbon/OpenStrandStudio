@@ -2058,6 +2058,10 @@ class MoveMode:
             # This should not happen but handle it gracefully
             return
             
+        # Record original masked strand endpoints for deletion rectangle translation
+        old_masked_start = QPointF(self.affected_strand.start)
+        old_masked_end   = QPointF(self.affected_strand.end)
+
         # Apply minimum distance constraint for masked strands too
         if moving_side == 0:  # Moving start point
             other_point = self.affected_strand.end
@@ -2133,7 +2137,16 @@ class MoveMode:
                 # Restore non-moving endpoint
                 self.affected_strand.second_selected_strand.start = second_old_start
                 self.affected_strand.second_selected_strand.update_shape()
-    
+        # Translate deletion rectangles along with masked strand movement
+        if hasattr(self.affected_strand, 'deletion_rectangles') and self.affected_strand.deletion_rectangles:
+                # Compute movement delta
+                dx = (self.affected_strand.start.x() - old_masked_start.x()) if moving_side == 0 else (self.affected_strand.end.x() - old_masked_end.x())
+                dy = (self.affected_strand.start.y() - old_masked_start.y()) if moving_side == 0 else (self.affected_strand.end.y() - old_masked_end.y())
+                for rect in self.affected_strand.deletion_rectangles:
+                    rect['top_left'] = (rect['top_left'][0] + dx, rect['top_left'][1] + dy)
+                    rect['top_right'] = (rect['top_right'][0] + dx, rect['top_right'][1] + dy)
+                    rect['bottom_left'] = (rect['bottom_left'][0] + dx, rect['bottom_left'][1] + dy)
+                    rect['bottom_right'] = (rect['bottom_right'][0] + dx, rect['bottom_right'][1] + dy)
         # Use the new comprehensive update method if available
         if hasattr(self.affected_strand, 'force_complete_update'):
             self.affected_strand.force_complete_update()

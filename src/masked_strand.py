@@ -119,7 +119,7 @@ class MaskedStrand(Strand):
             return QPainterPath()
 
         # Get the base paths for both strands - always fresh calculation
-        shadow_width_offset = 0  # Use consistent shadow size
+        shadow_width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20  # Use consistent shadow size
 
         # Get fresh paths from both strands - explicitly call get_path() here
         path1 = self.first_selected_strand.get_path()
@@ -223,9 +223,10 @@ class MaskedStrand(Strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2 + 2)
+        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius/2)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(path)
     def draw(self, painter):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         logging.info(f"Drawing MaskedStrand - Has deletion rectangles: {hasattr(self, 'deletion_rectangles')}")
@@ -283,6 +284,8 @@ class MaskedStrand(Strand):
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
                 strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
+                strand1_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.first_selected_strand)
+                strand2_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.second_selected_strand)
 
                 # ------------------------------------------------------------------
                 # Ensure deletion rectangles also remove the corresponding shadow.
@@ -317,31 +320,49 @@ class MaskedStrand(Strand):
                             logging.error(f"Error constructing deletion rect path for shadow subtraction: {ee}")
 
                     if not deletion_union.isEmpty():
+                        
                         strand1_path = strand1_path.subtracted(deletion_union)
                         strand2_path = strand2_path.subtracted(deletion_union)
+                        strand1_shadow_path = strand1_shadow_path.subtracted(deletion_union)
+                        strand2_shadow_path = strand2_shadow_path.subtracted(deletion_union)
+                        
                         logging.info("Subtracted deletion rectangles from component paths for shadow drawing")
 
-                combined_strand_area = QPainterPath(strand1_path)
-                combined_strand_area.addPath(strand2_path)
-                
+                # Check if strand2_shadow_path is valid before attempting to constrain it
+                if not strand2_shadow_path.isEmpty():
+                    # Create a slightly expanded boundary to ensure we don't lose the shadow
+                    stroker = QPainterPathStroker()
+                    stroker.setWidth(0)  # Use a more substantial width to avoid losing the path
+                    strand2_boundary = stroker.createStroke(strand2_path)
+                    
+                    # Only apply the intersection if both paths are valid
+                    if not strand2_boundary.isEmpty():
+                        # Create a union with the original path to ensure we don't lose anything
+                        strand2_boundary = strand2_boundary.united(strand2_path)
+                        # Now constrain the shadow path
+                        constrained_path = strand2_shadow_path.intersected(strand2_boundary)
+                        # Only use the constrained path if it's not empty
+                        if not constrained_path.isEmpty():
+                            strand2_shadow_path = constrained_path
+                            logging.info(f"Successfully constrained shadow path for {self.layer_name}")
+                        else:
+                            logging.warning(f"Constrained shadow path became empty, keeping original for {self.layer_name}")
+                    else:
+                        logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
+                else:
+                    logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
                 # Always calculate fresh shadow paths - no caching at all
                 # IMPORTANT: Get a new shadow path directly without reusing any cached values
-                masked_shadow_path = self.get_masked_shadow_path()
-                
-                if masked_shadow_path and not masked_shadow_path.isEmpty():
-                    # Limit shadow only to areas where strands exist
-                    limited_shadow_path = masked_shadow_path.intersected(combined_strand_area)
-                    
                     # Draw shadow on top of strands with proper composition mode
-                    temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    draw_mask_strand_shadow(
-                        temp_painter,
-                        strand1_path,
-                        strand2_path,
-                        shadow_color,
-                        num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                        max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
-                    )
+                temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                draw_mask_strand_shadow(
+                    temp_painter,
+                    strand1_path,
+                    strand2_shadow_path,
+                    shadow_color,
+                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                )
 
  
         except Exception as e:

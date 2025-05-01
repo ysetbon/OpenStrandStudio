@@ -4,7 +4,7 @@ ShadowColor: 0,0,0,100
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 NumSteps: 3
-MaxBlurRadius: 30.0
+MaxBlurRadius: 28.0
 UseExtendedMask: true
 ExtensionLength: 200.0
 ExtensionDashCount: 15

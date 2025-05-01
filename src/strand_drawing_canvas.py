@@ -1153,6 +1153,7 @@ class StrandDrawingCanvas(QWidget):
                     self.draw_highlighted_strand(painter, strand)
                 else:
                     strand.draw(painter)
+                    logging.info(f"Drawing strand: {strand.layer_name}")
         else:
             # When optimizing, we only draw the moving strand and connected strands
             # Get the affected strand from MoveMode (the one being moved)
@@ -1965,6 +1966,8 @@ class StrandDrawingCanvas(QWidget):
             strand.is_selected = original_is_selected
             
             painter.restore()
+
+     
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
         import logging

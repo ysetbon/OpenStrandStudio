@@ -169,6 +169,55 @@ except Exception as e:
     print(f"Error setting up Masked Strand file logging: {e}") # Basic error handling
 # --- End of Masked Strand logging section ---
 
+# --- Add this section for Mask Shadow Issues logging ---
+class MaskShadowIssueFilter(logging.Filter):
+    """Filters log records for shadow paths and related issues in shader_utils.py."""
+    def filter(self, record):
+        shader_utils_path_part = os.path.normpath(os.path.join('src', 'shader_utils.py'))
+        # Only consider records from shader_utils.py
+        if not record.pathname.endswith(shader_utils_path_part):
+            return False
+        msg = record.getMessage()
+        # Include summary of shadow paths
+        if msg.startswith("Shadow paths for strand"):
+            return True
+        # Include individual shadow path debug logs
+        if msg.strip().startswith("Shadow path"):
+            return True
+        # Include circle exclusion logs
+        if msg.startswith("Excluded transparent circle") or msg.startswith("Excluded hidden circle"):
+            return True
+        # Include direct intersection info logs
+        if msg.startswith("Intersection path for"):
+            return True
+        # Include mask subtraction logs
+        if msg.startswith("Subtracted overlying mask") or msg.startswith("Subtracted mask"):
+            return True
+        return False
+
+try:
+    mask_shadow_issues_log_file = 'mask_shadow_issues.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(mask_shadow_issues_log_file):
+            os.remove(mask_shadow_issues_log_file)
+            logging.info(f"Removed existing log file: {mask_shadow_issues_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {mask_shadow_issues_log_file}: {e}")
+
+    # Create a specific handler for mask shadow issues logs, overwriting each run
+    mask_shadow_issues_handler = logging.FileHandler(mask_shadow_issues_log_file, mode='w')
+    # Capture debug-level logs for shadow path details
+    mask_shadow_issues_handler.setLevel(logging.DEBUG)
+    mask_shadow_issues_handler.addFilter(MaskShadowIssueFilter())
+    logging.getLogger().addHandler(mask_shadow_issues_handler)
+    logging.info("Mask Shadow Issues logging configured to output to mask_shadow_issues.log")
+
+except Exception as e:
+    print(f"Error setting up Mask Shadow Issues file logging: {e}") # Basic error handling
+# --- End of Mask Shadow Issues logging section ---
+
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 

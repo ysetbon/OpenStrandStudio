@@ -1200,6 +1200,8 @@ class SettingsDialog(QDialog):
         self.style_dialog_buttons()
 
     def apply_all_settings(self):
+        # Capture previous extended mask setting to detect changes
+        previous_use_extended_mask = self.use_extended_mask
         # Apply Theme Settings
         selected_theme = self.theme_combobox.currentData()
         if selected_theme and self.canvas:
@@ -1332,6 +1334,11 @@ class SettingsDialog(QDialog):
                 self.canvas.force_redraw()
             self.canvas.update()
 
+        # Apply Extended Mask Setting before saving
+        self.use_extended_mask = self.extended_mask_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.use_extended_mask = self.use_extended_mask
+
         # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
 
@@ -1339,14 +1346,7 @@ class SettingsDialog(QDialog):
         self.apply_dialog_theme(self.current_theme)
         self.hide()
 
-        # Apply Extended Mask Setting
-        previous_use_extended_mask = self.use_extended_mask
-        self.use_extended_mask = self.extended_mask_checkbox.isChecked()
-
-        if self.canvas:
-            # Provide property on canvas for access by MaskedStrand drawing
-            self.canvas.use_extended_mask = self.use_extended_mask
-
+        # If extended mask setting changed, force redraw of masked strands
         if previous_use_extended_mask != self.use_extended_mask:
             logging.info(f"SettingsDialog: Use extended mask changed to {self.use_extended_mask}. Forcing redraw of masked strands")
             if self.canvas and hasattr(self.canvas, 'strands'):

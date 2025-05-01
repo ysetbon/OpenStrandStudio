@@ -1,6 +1,7 @@
 import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QRectF, QPointF
+from typing import List
 
 
 
@@ -8,6 +9,7 @@ def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
     second_path: QPainterPath,
+    deletion_rects: List[QRectF] = None,
     shadow_color: QColor = None,
     num_steps: int = 3,
     max_blur_radius: float = 29.99,
@@ -32,9 +34,44 @@ def draw_mask_strand_shadow(
     # Log intersection geometry
     logging.info(f"draw_mask_strand_shadow: intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
 
-    if intersection_path.isEmpty():
-        logging.warning("draw_mask_strand_shadow: intersection path is empty – nothing to draw")
+    if not first_path.isEmpty() and not second_path.isEmpty():
+        intersection_path = QPainterPath(first_path).intersected(second_path)
+        logging.info("draw_mask_strand_shadow: using first_path as fallback")
+
+    else:
+        logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
         return
+
+    # Apply deletion rectangles to intersection_path if provided
+    if deletion_rects:
+        for rect in deletion_rects:
+            rect_path = QPainterPath()
+            try:
+                # Support both QRectF instances and dicts with corner coordinates
+                if isinstance(rect, QRectF):
+                    rect_path.addRect(rect)
+                elif isinstance(rect, dict) and all(k in rect for k in ("top_left", "top_right", "bottom_left", "bottom_right")):
+                    tl = QPointF(*rect["top_left"])
+                    tr = QPointF(*rect["top_right"])
+                    br = QPointF(*rect["bottom_right"])
+                    bl = QPointF(*rect["bottom_left"])
+
+                    rect_path.moveTo(tl)
+                    rect_path.lineTo(tr)
+                    rect_path.lineTo(br)
+                    rect_path.lineTo(bl)
+                    rect_path.closeSubpath()
+                else:
+                    # Fallback to axis-aligned QRectF if rectangular data present
+                    if all(k in rect for k in ("x", "y", "width", "height")):
+                        rect_path.addRect(QRectF(rect["x"], rect["y"], rect["width"], rect["height"]))
+            except Exception as de_err:
+                logging.error(f"draw_mask_strand_shadow: error constructing deletion rect path from {rect}: {de_err}")
+                continue
+
+            if not rect_path.isEmpty():
+                intersection_path = intersection_path.subtracted(rect_path)
+        logging.info(f"draw_mask_strand_shadow: applied {len(deletion_rects)} deletion rects; new bounds={intersection_path.boundingRect()}, empty={intersection_path.isEmpty()}")
 
     # ------------------------------------------------------------------
     # Resolve shadow colour.  If the caller did not provide one we default

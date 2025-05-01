@@ -188,28 +188,37 @@ class MaskedStrand(Strand):
         # Create the mask by intersecting the paths - Always start fresh
         result_path = path1.intersected(path2)
 
-        # Apply any saved deletion rectangles based on their current corner data
-        if hasattr(self, 'deletion_rectangles'):
+        # Initialize mask_path with the base intersection
+        mask_path = result_path
+        # Apply any saved deletion rectangles
+        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
             for rect in self.deletion_rectangles:
-                # Use corner-based data for precise deletion
-                top_left = QPointF(*rect['top_left'])
-                top_right = QPointF(*rect['top_right'])
-                bottom_left = QPointF(*rect['bottom_left'])
-                bottom_right = QPointF(*rect['bottom_right'])
-
-                # Create a polygonal path from the four corners
                 deletion_path = QPainterPath()
-                deletion_path.moveTo(top_left)
-                deletion_path.lineTo(top_right)
-                deletion_path.lineTo(bottom_right)
-                deletion_path.lineTo(bottom_left)
-                deletion_path.closeSubpath()
-
-                # Subtract this specific rectangle's current shape
-                result_path = result_path.subtracted(deletion_path)
-
-        # Ignore self.custom_mask_path to ensure fresh calculation
-        return result_path
+                try:
+                    # Corner-based rectangle
+                    if 'top_left' in rect and 'bottom_right' in rect:
+                        tl = QPointF(*rect['top_left'])
+                        tr = QPointF(*rect.get('top_right', rect['bottom_right']))
+                        br = QPointF(*rect['bottom_right'])
+                        bl = QPointF(*rect.get('bottom_left', rect['top_left']))
+                        deletion_path.moveTo(tl)
+                        deletion_path.lineTo(tr)
+                        deletion_path.lineTo(br)
+                        deletion_path.lineTo(bl)
+                        deletion_path.closeSubpath()
+                    # Simple axis-aligned rectangle
+                    elif all(k in rect for k in ('x', 'y', 'width', 'height')):
+                        deletion_path.addRect(QRectF(rect['x'], rect['y'], rect['width'], rect['height']))
+                    else:
+                        logging.warning(f"Invalid deletion rect format for mask cropping: {rect}")
+                        continue
+                except Exception as e:
+                    logging.error(f"Error constructing deletion rect for mask cropping: {e}")
+                    continue
+                mask_path = mask_path.subtracted(deletion_path)
+                logging.info(f"Applied deletion rect to mask_path: new bounds={mask_path.boundingRect()}, empty={mask_path.isEmpty()}")
+        # Return fresh mask including deletions
+        return mask_path
 
     def get_stroked_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
@@ -287,63 +296,22 @@ class MaskedStrand(Strand):
                 strand1_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.first_selected_strand)
                 strand2_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.second_selected_strand)
 
-                # ------------------------------------------------------------------
-                # Ensure deletion rectangles also remove the corresponding shadow.
-                # We do this by subtracting the union of all deletion rectangles
-                # from *both* component stroke paths before they are supplied to
-                # draw_mask_strand_shadow().  The intersection subsequently used
-                # inside that function will therefore have the deleted portions
-                # already removed.
-                # ------------------------------------------------------------------
-
-                if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-                    deletion_union = QPainterPath()
-                    for rect in self.deletion_rectangles:
-                        try:
-                            top_left = QPointF(*rect['top_left'])
-                            top_right = QPointF(*rect['top_right'])
-                            bottom_left = QPointF(*rect['bottom_left'])
-                            bottom_right = QPointF(*rect['bottom_right'])
-
-                            del_path = QPainterPath()
-                            del_path.moveTo(top_left)
-                            del_path.lineTo(top_right)
-                            del_path.lineTo(bottom_right)
-                            del_path.lineTo(bottom_left)
-                            del_path.closeSubpath()
-
-                            if deletion_union.isEmpty():
-                                deletion_union = del_path
-                            else:
-                                deletion_union = deletion_union.united(del_path)
-                        except Exception as ee:
-                            logging.error(f"Error constructing deletion rect path for shadow subtraction: {ee}")
-
-                    if not deletion_union.isEmpty():
-                        
-                        strand1_path = strand1_path.subtracted(deletion_union)
-                        strand2_path = strand2_path.subtracted(deletion_union)
-                        strand1_shadow_path = strand1_shadow_path.subtracted(deletion_union)
-                        strand2_shadow_path = strand2_shadow_path.subtracted(deletion_union)
-                        
-                        logging.info("Subtracted deletion rectangles from component paths for shadow drawing")
-
-                # Check if strand2_shadow_path is valid before attempting to constrain it
+                # Check if strand2_shadow_path is valid before attempting to constrain it (deletions handled in draw_mask_strand_shadow)
                 if not strand2_shadow_path.isEmpty():
                     # Create a slightly expanded boundary to ensure we don't lose the shadow
                     stroker = QPainterPathStroker()
                     stroker.setWidth(0)  # Use a more substantial width to avoid losing the path
-                    strand2_boundary = stroker.createStroke(strand2_path)
+                    strand1_shadow_path = stroker.createStroke(strand1_path)
                     
                     # Only apply the intersection if both paths are valid
-                    if not strand2_boundary.isEmpty():
+                    if not strand1_shadow_path.isEmpty():
                         # Create a union with the original path to ensure we don't lose anything
-                        strand2_boundary = strand2_boundary.united(strand2_path)
+                        strand1_shadow_path = strand1_shadow_path.united(strand1_shadow_path)
                         # Now constrain the shadow path
-                        constrained_path = strand2_shadow_path.intersected(strand2_boundary)
+                        constrained_path = strand1_shadow_path.intersected(strand1_shadow_path)
                         # Only use the constrained path if it's not empty
                         if not constrained_path.isEmpty():
-                            strand2_shadow_path = constrained_path
+                            strand1_shadow_path = constrained_path
                             logging.info(f"Successfully constrained shadow path for {self.layer_name}")
                         else:
                             logging.warning(f"Constrained shadow path became empty, keeping original for {self.layer_name}")
@@ -351,15 +319,13 @@ class MaskedStrand(Strand):
                         logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
                 else:
                     logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
-                # Always calculate fresh shadow paths - no caching at all
-                # IMPORTANT: Get a new shadow path directly without reusing any cached values
-                    # Draw shadow on top of strands with proper composition mode
-                temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                # Draw shadow and apply deletion rectangles at intersection stage
                 draw_mask_strand_shadow(
                     temp_painter,
-                    strand1_path,
-                    strand2_shadow_path,
-                    shadow_color,
+                    strand1_shadow_path,
+                    strand2_path,
+                    deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
+                    shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
                     max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
                 )

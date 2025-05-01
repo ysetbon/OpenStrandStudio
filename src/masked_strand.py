@@ -223,7 +223,7 @@ class MaskedStrand(Strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius/2)
+        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)

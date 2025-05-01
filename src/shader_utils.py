@@ -831,8 +831,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         painter.restore() # Restore painter state (render hints, brush, composition mode)
 
     else:
-        logging.warning(f"No shadow paths generated to draw for strand {strand.layer_name}")
-
+        # ADDED: Create a fallback shadow path when no paths are found
+        logging.warning(f"No shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}, creating fallback")
+        # Create a simple shadow based on the strand's own path
+        fallback_path = get_proper_masked_strand_path(strand)
+        if not fallback_path.isEmpty():
+            all_shadow_paths = [fallback_path]
 
 def get_proper_masked_strand_path(strand):
     """

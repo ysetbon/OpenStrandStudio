@@ -1413,6 +1413,7 @@ class SettingsDialog(QDialog):
         self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
         # Update default arrow color checkbox text
         self.default_arrow_color_checkbox.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
+        self.button_color_label.setText(_['button_color'] if 'button_color' in _ else "Button Color:")
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])

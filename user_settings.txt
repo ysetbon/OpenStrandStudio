@@ -1,8 +1,8 @@
 Theme: default
-Language: en
+Language: he
 ShadowColor: 0,0,0,250
-DrawOnlyAffectedStrand: true
-EnableThirdControlPoint: true
+DrawOnlyAffectedStrand: false
+EnableThirdControlPoint: false
 NumSteps: 3
 MaxBlurRadius: 30.0
 UseExtendedMask: true

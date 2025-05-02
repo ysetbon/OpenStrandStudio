@@ -79,25 +79,35 @@ translations = {
         'language_settings_info': 'Change the language of the application.',
         'tutorial_info': 'Press the "play video" button below each text to view the tutorial explaining:',
         'about_info': '''
-        <h2>About OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio was developed by Yonatan Setbon. The software is designed to create any knot in a diagrammatic way by using layers for each section of a strand and incorporating masked layers that allow for an "over-under effect."
-        </p>
-        <p style="font-size:15px;">
-            Yonatan runs a YouTube channel dedicated to lanyards called <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, where many tutorials feature diagrams of knots. This software was created to facilitate designing any knot, in order to demonstrate and explain how to make complex tutorials involving knot tying.
-        </p>
-        <p style="font-size:15px;">
-            Feel free to contact me at <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> or connect with me on
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> or
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Version 1.091
-        </p>
+        <h2>What's New in Version 1.092</h2>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Persistent Undo/Redo History:</b> Your undo and redo actions are now saved with your project. When you reopen a saved file, you can continue using undo and redo as if you never closed the application.</li>
+            <li style="font-size:15px;"><b>Customizable Dashed Lines and Arrows:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Easily configure dash patterns at both ends of each strand, adjusting the number, length, and spacing of dashes for precise visual control.</li>
+                    <li style="font-size:15px;">Add dashed arrowheads to strand endpoints, with detailed settings for head length, width, gap, and shaft appearance.</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Improved Control Point Visuals:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Control points are now larger for easier selection and manipulation.</li>
+                    <li style="font-size:15px;">Each handle features a distinct border and a filled center that matches the strand's color for instant identification.</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Mask Extension Options:</b> A new setting allows you to choose whether masks end at strand endpoints or extend beyond, giving you greater control over visual effects.</li>
+            <li style="font-size:15px;"><b>Enhanced Shading Algorithm:</b> The shading engine now produces smoother, more natural shadows with multi-buffer soft-edge feathering. New controls for blur steps and maximum blur radius are available in the settings.</li>
+            <li style="font-size:15px;"><b>Upgraded Layer Panel Interactions:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Reorder layers intuitively with drag-and-drop, complete with clear visual indicators.</li>
+                    <li style="font-size:15px;">Access a new right-click menu to quickly toggle the visibility of strand lines, arrowheads, and control circles.</li>
+                </ul>
+            </li>
+        </ul>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.092</p>
         ''',
         # Whats New Section
         'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">What's New in Version 1.091?</h2>
+        <h2 style="margin-top: 5px; margin-bottom: 5px;">What's New in Version 1.092?</h2>
         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
             This version introduces some exciting new features and improvements:
         </p>
@@ -139,6 +149,7 @@ translations = {
         'delete_strand': 'Delete Strand',
         'deselect_all': 'Deselect All',
         'notification_message': 'Notification',
+        'button_color': 'Choose a different button color (not default):',
         # Additional texts
         'adjust_angle_and_length': 'Adjust Angle and Length',
         'angle_label': 'Angle:',
@@ -316,57 +327,33 @@ translations = {
         'language_settings_info': 'Changer la langue de l\'application.',
         'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte pour voir le tutoriel explicatif :',
         'about_info': '''
-        <h2>À propos d'OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio a été développé par Yonatan Setbon. Le logiciel est conçu pour créer n'importe quel nœud de manière diagrammatique en utilisant des couches pour chaque section d'un brin et en incorporant des couches masquées qui permettent un "effet de dessus-dessous".
-        </p>
-        <p style="font-size:15px;">
-            Yonatan anime une chaîne YouTube dédiée aux lanières appelée <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, où de nombreux tutoriels présentent des diagrammes de nœuds. Ce logiciel a été créé pour faciliter la conception de nœuds, afin de démontrer et d'expliquer comment réaliser des tutoriels complexes impliquant le nouage de nœuds.
-        </p>
-        <p style="font-size:15px;">
-            N'hésitez pas à me contacter à <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou à me rejoindre sur
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Version 1.091
-        </p>
+        <h2>Nouveautés de la version 1.092</h2>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Persistance de l'historique Annuler/Rétablir :</b> L'historique de vos actions est désormais sauvegardé avec votre projet. Lorsque vous rechargez un fichier, vous pouvez continuer à utiliser Annuler/Rétablir comme si vous n'aviez jamais quitté l'application.</li>
+            <li style="font-size:15px;"><b>Lignes et flèches en pointillés :</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Personnalisez les motifs de tirets à chaque extrémité des brins, avec un contrôle précis sur le nombre, la longueur et l'espacement des segments.</li>
+                    <li style="font-size:15px;">Ajoutez des pointes de flèche en pointillés aux extrémités, avec des réglages détaillés pour la longueur, la largeur, l'espacement et la forme de la flèche.</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Points de contrôle améliorés :</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Les points de contrôle sont agrandis pour une manipulation plus aisée.</li>
+                    <li style="font-size:15px;">Chaque poignée possède désormais un contour distinct et un centre coloré correspondant à son brin, pour une identification immédiate.</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Extension des masques :</b> Un nouveau paramètre vous permet de choisir si les masques s'arrêtent aux extrémités des brins ou s'étendent au-delà, pour un contrôle visuel optimal.</li>
+            <li style="font-size:15px;"><b>Algorithme d'ombrage perfectionné :</b> Le moteur d'ombres a été repensé pour générer des tracés plus doux et précis, avec un adoucissement multi-tampons et un antialiasing de haute qualité. De nouveaux réglages pour le flou et le rayon maximal sont disponibles dans les paramètres.</li>
+            <li style="font-size:15px;"><b>Interactions enrichies du panneau de calques :</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Réorganisation intuitive par glisser-déposer, avec des indicateurs visuels clairs.</li>
+                    <li style="font-size:15px;">Nouveau menu contextuel (clic droit) pour afficher ou masquer rapidement les lignes, flèches et cercles de contrôle.</li>
+                </ul>
+            </li>
+        </ul>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.092</p>
         ''',
-        # Whats New Section (French)
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">Quoi de neuf dans la version 1.091 ?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            Cette version introduit de nouvelles fonctionnalités et améliorations intéressantes :
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Fonctionnalité Annuler/Rétablir :</b> Vous pouvez désormais annuler et rétablir facilement vos actions à l'aide des boutons dédiés. Cela aide à corriger les erreurs ou à explorer différentes variations de conception sans perdre votre progression. Voir les icônes ci-dessous :</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-             <li style="font-size:15px;"><b>Historique :</b> Dans la boîte de dialogue des paramètres, un nouvel onglet "Historique" vous permet de visualiser l'historique de vos actions. Ceci est utile pour examiner les actions passées et les restaurer si nécessaire.</li>
-             <br>
-             <li style="font-size:15px;"><b>Option Troisième Point de Contrôle :</b> Vous pouvez désormais activer un troisième point de contrôle, initialement placé au centre des deux points existants, offrant un contrôle plus précis sur les courbes.</li>
-        </ul>
-        """,
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-             <li style="font-size:15px;"><b>Support de nouvelles langues :</b> l'italien, l'espagnol, le portugais et l'hébreu sont désormais pris en charge.
-             <br>
-             <li style="font-size:15px;"><b>Corrections de bugs :</b> Plusieurs bugs signalés dans la version précédente (1.090) ont été corrigés pour offrir une expérience plus fluide et plus fiable.
-             <br>
-             <br>
-                 Par exemple, en mode déplacement, les brins et les points de contrôle sont mieux dessinés visuellement lors du déplacement, que l'option "brin affecté" soit activée ou désactivée.
-             <br>
-             <br>
-                 De plus, si l'on connecte un brin attaché à un point de départ d'un brin principal, le dessin du brin principal (dans tous les modes) est corrigé (il y avait des problèmes dans ce cas spécifique dans les versions précédentes). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Nous espérons que vous apprécierez ces mises à jour !</p>
-         """,
-        'undo_icon_label': 'Icône Annuler :',
-        'redo_icon_label': 'Icône Rétablir :',
-        'third_cp_icon_label': 'Icône Troisième Point Contrôle :',
+
 
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
@@ -376,6 +363,7 @@ translations = {
         'delete_strand': 'Supprimer Brin',
         'deselect_all': 'Désélect. Tous',
         'notification_message': 'Notification',
+        'button_color': 'Choisissez une couleur de bouton différente (pas par défaut) :',
         # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
@@ -551,59 +539,40 @@ translations = {
         'language_settings_info': 'Cambia la lingua dell\'applicazione.',
         'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo per visualizzare il tutorial che spiega:',
         'about_info': '''
-        <h2>Informazioni su OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio è stato sviluppato da Yonatan Setbon. Il software è progettato per creare qualsiasi nodo in modo diagrammatico utilizzando livelli per ogni sezione di un trefolo e incorporando livelli mascherati che consentono un "effetto sopra-sotto".
-        </p>
-        <p style="font-size:15px;">
-            Yonatan gestisce un canale YouTube dedicato ai cordini chiamato <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, dove molti tutorial presentano diagrammi di nodi. Questo software è stato creato per facilitare la progettazione di qualsiasi nodo, al fine di dimostrare e spiegare come realizzare tutorial complessi che coinvolgono l'annodatura.
-        </p>
-        <p style="font-size:15px;">
-            Non esitare a contattarmi a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o a connetterti con me su
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Versione 1.091
-        </p>
+        <h2>Novità della versione 1.092</h2>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+        <li style="font-size:15px;"><b>Persistenza di Annulla/Ripristina:</b> la cronologia delle azioni viene ora mantenuta anche dopo il salvataggio. Quando riapri un file salvato, puoi continuare a utilizzare Annulla/Ripristina come se l'app non fosse mai stata chiusa.</li>
+
+        <li style="font-size:15px;"><b>Linee e frecce tratteggiate:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">Tratteggi configurabili su entrambe le estremità di ogni filo, con controllo su numero, lunghezza e spaziatura per una migliore distinzione visiva.</li>
+            <li style="font-size:15px;">Punte di freccia tratteggiate alle estremità dei fili, con impostazioni dettagliate per lunghezza, larghezza, corpo e spaziatura, accessibili dalla finestra delle impostazioni.</li>
+            </ul>
+        </li>
+
+        <li style="font-size:15px;"><b>Visualizzazione ottimizzata dei punti di controllo:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">I punti di controllo sono ora più grandi per facilitare l'interazione.</li>
+            <li style="font-size:15px;">Ogni maniglia presenta un bordo netto e un centro colorato in base al filo corrispondente, per un’associazione visiva immediata.</li>
+            </ul>
+        </li>
+
+        <li style="font-size:15px;"><b>Estensione della maschera:</b> una nuova opzione nelle impostazioni consente di decidere se le maschere si fermano alle estremità del filo o si estendono oltre, offrendo maggiore controllo sul comportamento visivo.</li>
+
+        <li style="font-size:15px;"><b>Algoritmo di ombreggiatura migliorato:</b> il motore di rendering delle ombre ora genera percorsi più nitidi con sfumature multi-buffer e antialiasing avanzato. Sono stati aggiunti nuovi controlli per la sfocatura e il raggio massimo, accessibili dalla finestra delle impostazioni.</li>
+
+        <li style="font-size:15px;"><b>Interazioni avanzate nel pannello livelli:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">Riordinamento dei livelli tramite drag-and-drop, con indicatori visivi per il punto di rilascio.</li>
+            <li style="font-size:15px;">Menu contestuale (clic destro) con nuovi toggle per mostrare/nascondere linee, punte di freccia e cerchi dei punti di controllo.</li>
+            </ul>
+        </li>
+        </ul>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.092</p>
+
+
         ''',
-        # Whats New Section
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">Novità nella Versione 1.091?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            Questa versione introduce alcune nuove interessanti funzionalità e miglioramenti:
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Funzionalità Annulla/Ripristina:</b> Ora puoi facilmente annullare e ripristinare le tue azioni utilizzando i pulsanti dedicati. Questo aiuta a correggere errori o esplorare diverse varianti di design senza perdere i progressi. Vedi le icone qui sotto:</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Cronologia:</b> Nella finestra di dialogo delle impostazioni, c'è una nuova scheda "Cronologia" che ti consente di visualizzare la cronologia delle tue azioni. Questo è utile per rivedere le azioni passate e ripristinarle se necessario.</li>
-            <br> 
-            <li style="font-size:15px;"><b>Opzione Terzo Punto di Controllo:</b> Ora puoi abilitare un terzo punto di controllo inizialmente impostato al centro tra i due punti esistenti, fornendo un controllo più preciso sulle forme delle curve.</li>
-        </ul>
-        """,
-        # ##add here more langauge support (italian spanish portuguese hebrew)
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            
-             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
-             <br>
-             <li style="font-size:15px;"><b>Correzioni di bug:</b> Diversi bug segnalati dalla versione precedente (1.090) sono stati risolti per fornire un'esperienza più fluida e affidabile.
-             <br>
-             <br>
-                 In particolare, in modalità spostamento i trefoli e i punti di controllo vengono disegnati meglio visivamente durante lo spostamento, sia che "trefolo interessato" sia abilitato o disabilitato.
-             <br>
-             <br>
-                 Inoltre, se si collega un trefolo collegato a un punto di partenza di un trefolo principale, il disegno del trefolo principale (in tutte le modalità) viene corretto (c'erano problemi in quel caso specifico nelle versioni precedenti). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Spero che questi aggiornamenti ti piacciano!</p>
-         """,
-        'undo_icon_label': 'Icona Annulla:',
-        'redo_icon_label': 'Icona Ripristina:',
-        'third_cp_icon_label': 'Icona Terzo Punto Controllo:',
+
 
         # LayerPanel translations
         'layer_panel_title': 'Pannello Livelli',
@@ -613,6 +582,7 @@ translations = {
         'delete_strand': 'Elimina Trefolo',
         'deselect_all': 'Deseleziona Tutto',
         'notification_message': 'Notifica',
+        'button_color': 'Scegli un colore di pulsante diverso (non predefinito):',
         # Additional texts
         'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
         'angle_label': 'Angolo:',
@@ -791,57 +761,34 @@ translations = {
         'language_settings_info': 'Cambiar el idioma de la aplicación.',
         'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto para ver el tutorial que explica:',
         'about_info': '''
-        <h2>Acerca de OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio fue desarrollado por Yonatan Setbon. El software está diseñado para crear cualquier nudo de manera diagramática utilizando capas para cada sección de un cordón e incorporando capas enmascaradas que permiten un "efecto de arriba-abajo".
-        </p>
-        <p style="font-size:15px;">
-            Yonatan dirige un canal de YouTube dedicado a cordones llamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, donde muchos tutoriales presentan diagramas de nudos. Este software fue creado para facilitar el diseño de cualquier nudo, con el fin de demostrar y explicar cómo realizar tutoriales complejos que involucran la elaboración de nudos.
-        </p>
-        <p style="font-size:15px;">
-            No dudes en contactarme en <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o conectarte conmigo en
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Versión 1.091
-        </p>
+        <h2>Novedades de la versión 1.092</h2>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+        <li style="font-size:15px;"><b>Historial persistente de Deshacer/Rehacer:</b> ahora el historial de acciones permanece guardado con tu trabajo. Cuando vuelves a abrir un archivo guardado, puedes seguir utilizando las funciones de Deshacer y Rehacer exactamente donde lo dejaste.</li>
+        <li style="font-size:15px;"><b>Líneas y flechas punteadas avanzadas:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">Patrones de líneas punteadas personalizables en ambos extremos de cada hebra, con ajustes precisos en cantidad, longitud y espaciado para una visualización clara y efectiva.</li>
+            <li style="font-size:15px;">Flechas con puntas punteadas configurables en los extremos de las hebras, permitiendo un control exacto de longitud, ancho, separación y ángulo desde el panel de configuración.</li>
+            </ul>
+        </li>
+        <li style="font-size:15px;"><b>Mejoras visuales en puntos de control:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">Puntos de control ampliados para facilitar su selección y manipulación.</li>
+            <li style="font-size:15px;">Cada punto de control ahora tiene un borde distintivo y un relleno interior que coincide con el color de su hebra, proporcionando una identificación visual inmediata.</li>
+            </ul>
+        </li>
+        <li style="font-size:15px;"><b>Nuevo comportamiento de extensión para máscaras:</b> ahora puedes decidir desde la configuración si las máscaras se recortan exactamente en los extremos de las hebras o si se extienden más allá, otorgando mayor flexibilidad en el diseño.</li>
+        <li style="font-size:15px;"><b>Algoritmo mejorado de sombreado:</b> el motor gráfico ha sido optimizado para generar sombras más definidas, con suavizado multibuffer y antialiasing de alta calidad. Además, ahora puedes ajustar directamente desde la configuración los parámetros avanzados como las etapas de desenfoque y el radio máximo.</li>
+        <li style="font-size:15px;"><b>Mejoras en la interacción con el panel de capas:</b>
+            <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;">Reordena fácilmente capas mediante arrastrar y soltar, con indicadores visuales claros de la posición objetivo.</li>
+            <li style="font-size:15px;">Nuevo menú contextual con botón derecho para gestionar rápidamente la visibilidad de líneas, puntas de flecha y círculos de control.</li>
+            </ul>
+        </li>
+        </ul>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.092</p>
+
         ''',
-        # Whats New Section
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">¿Qué hay de nuevo en la Versión 1.091?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            Esta versión introduce algunas nuevas características y mejoras emocionantes:
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Funcionalidad Deshacer/Rehacer:</b> Ahora puedes deshacer y rehacer fácilmente tus acciones usando los botones dedicados. Esto ayuda a corregir errores o explorar diferentes variaciones de diseño sin perder tu progreso. Ver los iconos a continuación:</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Historial:</b> En el diálogo de configuración, hay una nueva pestaña "Historial" que te permite ver el historial de tus acciones. Esto es útil para revisar acciones pasadas y restaurarlas si es necesario.</li>
-            <br> 
-            <li style="font-size:15px;"><b>Opción Tercer Punto de Control:</b> Ahora puedes habilitar un tercer punto de control inicialmente ubicado en el centro entre los dos puntos existentes, proporcionando un control más preciso sobre las formas de las curvas.</li>
-        </ul>
-        """,
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
-             <br>
-             <li style="font-size:15px;"><b>Correcciones de errores:</b> Se han solucionado varios errores reportados de la versión anterior (1.090) para proporcionar una experiencia más fluida y confiable.
-             <br>
-             <br>
-                 Específicamente, en el modo de movimiento, los cordones y puntos de control se dibujan mejor visualmente al mover, ya sea que "cordón afectado" esté habilitado o deshabilitado.
-             <br>
-             <br>
-                 Además, si se conecta un cordón unido a un punto de inicio de un cordón principal, el dibujo del cordón principal (en todos los modos) se corrige (había problemas en ese caso específico en versiones anteriores). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">¡Espero que disfrutes estas actualizaciones!</p>
-         """,
-        'undo_icon_label': 'Icono Deshacer:',
-        'redo_icon_label': 'Icono Rehacer:',
-        'third_cp_icon_label': 'Icono Tercer Punto Control:',
+ 
 
         # LayerPanel translations
         'layer_panel_title': 'Panel de Capas',
@@ -851,6 +798,7 @@ translations = {
         'delete_strand': 'Eliminar Cordón',
         'deselect_all': 'Deseleccionar Todo',
         'notification_message': 'Notificación',
+        'button_color': 'Elija un color de botón diferente (no predeterminado):',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
         'angle_label': 'Ángulo:',
@@ -1029,57 +977,39 @@ translations = {
         'language_settings_info': 'Mudar o idioma da aplicação.',
         'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto para visualizar o tutorial explicando:',
         'about_info': '''
-        <h2>Sobre OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio foi desenvolvido por Yonatan Setbon. O software é projetado para criar qualquer nó de forma diagramática usando camadas para cada seção de uma mecha e incorporando camadas com máscara que permitem um "efeito de sobreposição".
-        </p>
-        <p style="font-size:15px;">
-            Yonatan administra um canal do YouTube dedicado a cordões chamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, onde muitos tutoriais apresentam diagramas de nós. Este software foi criado para facilitar o design de qualquer nó, a fim de demonstrar e explicar como fazer tutoriais complexos envolvendo a amarração de nós.
-        </p>
-        <p style="font-size:15px;">
-            Sinta-se à vontade para me contatar em <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou conectar-se comigo no
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - Versão 1.091
-        </p>
+        <h2>Novidades da versão 1.092</h2>
+        <ul style="margin-top: 5px; margin-bottom: 5px;">
+            <li style="font-size:15px;"><b>Persistência do histórico Desfazer/Refazer:</b> Agora o histórico das ações Desfazer e Refazer é salvo junto com o projeto. Ao abrir um arquivo salvo, você pode retomar o trabalho exatamente onde parou.</li>
+
+            <li style="font-size:15px;"><b>Linhas e setas tracejadas aprimoradas:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Configuração avançada dos traços: ajuste do número, comprimento e espaçamento dos traços.</li>
+                    <li style="font-size:15px;">Setas tracejadas com controle preciso do tamanho das pontas, largura, espaçamento e corpo das linhas.</li>
+                </ul>
+            </li>
+
+            <li style="font-size:15px;"><b>Pontos de controle melhorados:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Pontos maiores e mais fáceis de manipular.</li>
+                    <li style="font-size:15px;">Novo visual das alças, com bordas destacadas e centro preenchido com a cor da mecha.</li>
+                </ul>
+            </li>
+
+            <li style="font-size:15px;"><b>Extensão de máscaras:</b> Nova opção nas configurações para recortar ou expandir máscaras conforme necessário.</li>
+
+            <li style="font-size:15px;"><b>Algoritmo de sombreamento atualizado:</b> Melhoria significativa no cálculo de sombras usando múltiplos buffers, com novos controles de desfoque disponíveis.</li>
+
+            <li style="font-size:15px;"><b>Painel de camadas renovado:</b>
+                <ul style="margin-top: 5px; margin-bottom: 5px;">
+                    <li style="font-size:15px;">Reorganização intuitiva via arrastar e soltar com indicadores visuais.</li>
+                    <li style="font-size:15px;">Menus contextuais expandidos para linhas, setas e círculos.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.092</p>
         ''',
-        # Whats New Section
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">O que há de novo na Versão 1.091?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            Esta versão introduz alguns novos recursos e melhorias interessantes:
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Funcionalidade Desfazer/Refazer:</b> Agora você pode facilmente desfazer e refazer suas ações usando os botões dedicados. Isso ajuda a corrigir erros ou explorar diferentes variações de design sem perder seu progresso. Veja os ícones abaixo:</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Histórico:</b> Na caixa de diálogo de configurações, há uma nova aba "Histórico" que permite visualizar o histórico de suas ações. Isso é útil para revisar ações passadas e restaurá-las se necessário.</li>
-            <br> 
-            <li style="font-size:15px;"><b>Opção de Terceiro Ponto de Controle:</b> Agora você pode habilitar um terceiro ponto de controle inicialmente definido no centro entre os dois pontos existentes, proporcionando um controle mais preciso sobre as formas das curvas.</li>
-        </ul>
-        """,
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-             <li style="font-size:15px;"><b>Supporto nuove lingue:</b> Italiano, Spagnolo, Portoghese ed Ebraico sono ora supportati.
-             <br>
-             <li style="font-size:15px;"><b>Correções de bugs:</b> Vários bugs relatados da versão anterior (1.090) foram corrigidos para fornecer uma experiência mais suave e confiável.
-             <br>
-             <br>
-                 Especificamente, no modo de movimento, as mechas e pontos de controle são melhor desenhados visualmente durante o movimento, se "mecha afetada" estiver habilitada ou desabilitada.
-             <br>
-             <br>
-                 Além disso, se conectar uma mecha anexada a um ponto inicial de uma mecha principal, o desenho da mecha principal (em todos os modos) é corrigido (havia problemas nesse caso específico em versões anteriores). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Espero que você goste dessas atualizações!</p>
-         """,
-        'undo_icon_label': 'Ícone Desfazer:',
-        'redo_icon_label': 'Ícone Refazer:',
-        'third_cp_icon_label': 'Ícone Terceiro Ponto Controle:',
+
 
         # LayerPanel translations
         'layer_panel_title': 'Painel de Camadas',
@@ -1089,6 +1019,7 @@ translations = {
         'delete_strand': 'Excluir Mecha',
         'deselect_all': 'Desmarcar Tudo',
         'notification_message': 'Notificação',
+        'button_color': 'Escolha uma cor de botão diferente (não padrão):',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
         'angle_label': 'Ângulo:',
@@ -1267,65 +1198,19 @@ translations = {
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
         'about_info': '''
-        <h2>אודות OpenStrand Studio</h2>
-        <p style="font-size:15px;">
-            OpenStrand Studio פותח על ידי יונתן סטבון. התוכנה נועדה ליצור כל קשר בדרך דיאגרמטית באמצעות שכבות עבור כל חלק של חוט ושילוב שכבות ממוסכות המאפשרות "אפקט מעל-מתחת".
-        </p>
-        <p style="font-size:15px;">
-            יונתן מנהל ערוץ YouTube המוקדש לשרוכים בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, שבו מדריכים רבים מציגים דיאגרמות של קשרים. התוכנה נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד ליצור הדרכות מורכבות הכוללות קשירת קשרים.
-        </p>
-        <p style="font-size:15px;">
-            אל תהסס ליצור איתי קשר בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב-
-            <a href="https://www.instagram.com/ysetbon/">Instagram</a> או
-            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-        </p>
-        <p style="font-size:13px;">
-            © 2025 OpenStrand Studio - גרסה 1.091
-        </p>
+        <h2 dir="rtl" style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.092</h2> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;"><b>שמירת היסטוריית פעולות ביטול ושחזור:</b> פעולות הביטול והשחזור נשמרות מעתה בקובץ הפרויקט. כשתפתחו קובץ שמור, תוכלו להמשיך ישירות מהמקום בו הפסקתם, כולל יכולת ביטול ושחזור רציצה.</li> <li style="font-size:15px;"><b>קווים וחצים מקווקווים:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות להגדרת דפוסים מקווקווים בהתאמה אישית בקצות החוטים, עם שליטה מלאה בכמות הקווים, אורכם והמרווח ביניהם.</li> <li style="font-size:15px;">תמיכה חדשה בהוספת ראשי חץ מקווקווים בקצוות החוטים, כולל שליטה מדויקת באורך, ברוחב, בריווח ובצורת החץ מחלון ההגדרות.</li> </ul> </li> <li style="font-size:15px;"><b>שיפורים בתצוגת נקודות הבקרה:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">נקודות הבקרה גדולות וברורות יותר, לשיפור האחיזה והדיוק.</li> <li style="font-size:15px;">ידיות הבקרה קיבלו מתאר מודגש ומילוי בצבע התואם לחוט, לזיהוי מיידי וברור.</li> </ul> </li> <li style="font-size:15px;"><b>הרחבת מסכות:</b> נוספה אפשרות בחלון ההגדרות לשליטה מדויקת בהתנהגות המסכות – חיתוך המסכה בדיוק בקצה החוט, או הארכתה מעבר לו.</li> <li style="font-size:15px;"><b>אלגוריתם צללים משופר:</b> מנוע הצללים שופר משמעותית ומספק צללים חלקים וברורים יותר, עם תמיכה מלאה בריבוי שכבות ובאנטיאלייסינג איכותי. נוספו הגדרות מתקדמות לשליטה בכמות צעדי הטשטוש וברדיוס הטשטוש המרבי.</li> <li style="font-size:15px;"><b>שיפור ממשק פאנל השכבות:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות נוחה וברורה לגרירה ושחרור לשינוי סדר השכבות, כולל אינדיקטורים ויזואליים.</li> <li style="font-size:15px;">תפריט ימני חדש עם אפשרויות מתקדמות להצגה או להסתרה מהירה של קווים, חיצים ונקודות בקרה.</li> </ul> </li> </ul> <p style="font-size:13px; text-align: right;">© 2025 OpenStrand Studio - גרסה 1.092</p>
         ''',
-        # Whats New Section
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.091?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            גרסה זו מציגה כמה תכונות ושיפורים חדשים מרגשים:
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>פונקציונליות ביטול/שחזור:</b> כעת תוכל לבטל ולשחזר בקלות את הפעולות שלך באמצעות הכפתורים הייעודיים. זה עוזר בתיקון טעויות או בחקר וריאציות עיצוב שונות מבלי לאבד את ההתקדמות שלך. ראה את הסמלים למטה:</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>היסטוריה:</b> בתיבת הדו-שיח של ההגדרות, יש כרטיסייה חדשה "היסטוריה" המאפשרת לך לראות את היסטוריית הפעולות שלך. זה שימושי לסקירת פעולות קודמות ושחזורן במידת הצורך.</li>
-            <br> 
-            <li style="font-size:15px;"><b>אפשרות נקודת בקרה שלישית:</b> כעת תוכל להפעיל נקודת בקרה שלישית שהוגדרה תחילה במרכז בין שתי הנקודות הקיימות, המספקת שליטה מדויקת יותר על צורות העקומה.</li>
-        </ul>
-        """,
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>הוספת תמיכה בשפות נוספות:</b> הוספת תמיכה באיטלקית, ספרדית, פורטוגזית ועברית.
-             <li style="font-size:15px;"><b>תיקוני באגים:</b> מספר באגים שדווחו מהגרסה הקודמת (1.090) טופלו כדי לספק חוויה חלקה ואמינה יותר.
-             <br>
-             <br>
-                 באופן ספציפי, במצב תנועה, חוטים ונקודות בקרה מצויירים טוב יותר חזותית בעת תזוזה, אם "חוט מושפע" מופעל או מושבת.
-             <br>
-             <br>
-                 בנוסף, אם מחברים חוט מצורף לנקודת התחלה של חוט עיקרי, הציור של החוט העיקרי (בכל המצבים) מתוקן (היו בעיות במקרה ספציפי זה בגרסאות קודמות). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">מקווה שתהנו מהעדכונים האלה!</p>
-         """,
-        'undo_icon_label': 'סמל ביטול:',
-        'redo_icon_label': 'סמל שחזור:',
-        'third_cp_icon_label': 'סמל נקודת בקרה שלישית:',
+
 
         # LayerPanel translations
-        'layer_panel_title': 'לוח שכבות',
+        'layer_panel_title': 'חלונית השכבות',
         'draw_names': 'צייר שמות',
         'lock_layers': 'נעל שכבות',
         'add_new_strand': 'חוט חדש',
         'delete_strand': 'מחק חוט',
         'deselect_all': 'בטל בחירה',
         'notification_message': 'התראה',
+        'button_color': 'בחר צבע כפתור שונה (לא ברירת מחדל):',
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',
         'angle_label': 'זווית:',
@@ -1384,6 +1269,24 @@ translations = {
         'transparent_stroke': 'קצה התחלתי שקוף',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',
         'change_color': 'שנה צבע',
+        # Layer panel extension and arrow settings translations
+        'extension_length': 'אורך הרחבה',
+        'extension_length_tooltip': 'אורך קווי ההרחבה',
+        'extension_dash_count': 'מספר המקפים',
+        'extension_dash_count_tooltip': 'מספר המקפים בקו ההרחבה',
+        'extension_dash_width': 'עובי מקף ההרחבה',
+        'extension_dash_width_tooltip': 'עובי קטעי קו ההרחבה',
+        'arrow_head_length': 'אורך ראש החץ',
+        'arrow_head_length_tooltip': 'אורך ראש החץ בפיקסלים',
+        'arrow_head_width': 'רוחב ראש החץ',
+        'arrow_head_width_tooltip': 'רוחב ראש החץ בפיקסלים',
+        'arrow_gap_length': 'אורך הרווח לפני החץ',
+        'arrow_gap_length_tooltip': 'מרווח בין קצה החוט לתחילת החץ',
+        'arrow_line_length': 'אורך גוף החץ',
+        'arrow_line_length_tooltip': 'אורך גוף החץ בפיקסלים',
+        'arrow_line_width': 'עובי גוף החץ',
+        'arrow_line_width_tooltip': 'עובי גוף החץ בפיקסלים',
+        'use_default_arrow_color': 'השתמש בצבע ברירת המחדל של החצים',        
         # --- NEW ---
         'hide_layer': 'הסתר שכבה',
         'show_layer': 'הצג שכבה',

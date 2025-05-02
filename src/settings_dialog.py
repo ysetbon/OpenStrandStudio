@@ -260,6 +260,17 @@ class SettingsDialog(QDialog):
                     # This triggers a redraw of the item with proper RTL
                     self.language_combobox.setItemText(i, item_text)
 
+        # Apply RTL adjustments to layer panel rows
+        if hasattr(self, 'layer_panel_rows'):
+            self.layer_panel_settings_widget.setLayoutDirection(direction)
+            for layout in self.layer_panel_rows:
+                layout.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
+                if is_rtl:
+                    for idx in range(layout.count()):
+                        widget = layout.itemAt(idx).widget()
+                        if isinstance(widget, QLabel):
+                            widget.setAlignment(Qt.AlignRight )
+
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
         # Use the appropriate directory for each OS
@@ -580,10 +591,13 @@ class SettingsDialog(QDialog):
 
         # Layer Panel Settings Page (index 1)
         self.layer_panel_settings_widget = QWidget()
+        # Collect HBox layouts for RTL adjustments
+        self.layer_panel_rows = []
         layer_panel_layout = QVBoxLayout(self.layer_panel_settings_widget)
 
         # Extension line settings
         ext_length_layout = QHBoxLayout()
+        self.layer_panel_rows.append(ext_length_layout)
         self.extension_length_label = QLabel(_['extension_length'] if 'extension_length' in _ else "Extension Length")
         self.extension_length_spinbox = QDoubleSpinBox()
         self.extension_length_spinbox.setRange(0.0, 1000.0)
@@ -595,6 +609,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addLayout(ext_length_layout)
 
         dash_count_layout = QHBoxLayout()
+        self.layer_panel_rows.append(dash_count_layout)
         self.extension_dash_count_label = QLabel(_['extension_dash_count'] if 'extension_dash_count' in _ else "Dash Count")
         self.extension_dash_count_spinbox = QSpinBox()
         self.extension_dash_count_spinbox.setRange(1, 100)
@@ -606,6 +621,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addLayout(dash_count_layout)
 
         line_width_layout = QHBoxLayout()
+        self.layer_panel_rows.append(line_width_layout)
         self.extension_dash_width_label = QLabel(_['extension_dash_width'] if 'extension_dash_width' in _ else "Extension Dash Width")
         self.extension_dash_width_spinbox = QDoubleSpinBox()
         self.extension_dash_width_spinbox.setRange(0.1, 20.0)
@@ -618,6 +634,7 @@ class SettingsDialog(QDialog):
 
         # --- NEW: Arrow head settings ---
         arrow_len_layout = QHBoxLayout()
+        self.layer_panel_rows.append(arrow_len_layout)
         self.arrow_head_length_label = QLabel(_['arrow_head_length'] if 'arrow_head_length' in _ else 'Arrow Head Length')
         self.arrow_head_length_spinbox = QDoubleSpinBox()
         self.arrow_head_length_spinbox.setRange(0.0, 500.0)
@@ -629,6 +646,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addLayout(arrow_len_layout)
 
         arrow_width_layout = QHBoxLayout()
+        self.layer_panel_rows.append(arrow_width_layout)
         self.arrow_head_width_label = QLabel(_['arrow_head_width'] if 'arrow_head_width' in _ else 'Arrow Head Width')
         self.arrow_head_width_spinbox = QDoubleSpinBox()
         self.arrow_head_width_spinbox.setRange(0.0, 500.0)
@@ -642,6 +660,7 @@ class SettingsDialog(QDialog):
 
         # Add arrow shaft settings
         gap_layout = QHBoxLayout()
+        self.layer_panel_rows.append(gap_layout)
         self.arrow_gap_length_label = QLabel(_['arrow_gap_length'] if 'arrow_gap_length' in _ else 'Arrow Gap Length')
         self.arrow_gap_length_spinbox = QDoubleSpinBox()
         self.arrow_gap_length_spinbox.setRange(0.0, 1000.0)
@@ -653,6 +672,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addLayout(gap_layout)
 
         line_length_layout = QHBoxLayout()
+        self.layer_panel_rows.append(line_length_layout)
         self.arrow_line_length_label = QLabel(_['arrow_line_length'] if 'arrow_line_length' in _ else 'Arrow Line Length')
         self.arrow_line_length_spinbox = QDoubleSpinBox()
         self.arrow_line_length_spinbox.setRange(0.0, 1000.0)
@@ -664,6 +684,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addLayout(line_length_layout)
 
         shaft_width_layout = QHBoxLayout()
+        self.layer_panel_rows.append(shaft_width_layout)
         self.arrow_line_width_label = QLabel(_['arrow_line_width'] if 'arrow_line_width' in _ else 'Arrow Line Width')
         self.arrow_line_width_spinbox = QDoubleSpinBox()
         self.arrow_line_width_spinbox.setRange(0.1, 100.0)
@@ -674,20 +695,56 @@ class SettingsDialog(QDialog):
         shaft_width_layout.addStretch()
         layer_panel_layout.addLayout(shaft_width_layout)
         # Default Arrow Color toggle and selector
-        default_arrow_layout = QHBoxLayout()
+        # Create a vertical layout to hold the checkbox and button containers
+        default_arrow_container_layout = QVBoxLayout()
+        # We might not need to add this sub-layout to layer_panel_rows for RTL handling,
+        # as the parent widget's layout direction should propagate.
+
+        # --- Checkbox Container ---
+        checkbox_container = QWidget()
+        checkbox_layout = QHBoxLayout(checkbox_container)
+        checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        checkbox_layout.setSpacing(5)
+        # Ensure checkbox container uses LTR so the indicator appears on the left of the text
+        checkbox_layout.setLayoutDirection(Qt.LeftToRight)
+        self.layer_panel_rows.append(checkbox_layout)
         self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
-        # Connect checkbox state change to immediate update
         self.default_arrow_color_checkbox.stateChanged.connect(self.on_default_arrow_color_changed)
+        self.default_arrow_color_checkbox.setLayoutDirection(Qt.LeftToRight)
+
+        checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+        checkbox_layout.addStretch() # Add stretch to align checkbox left (or right in RTL)
+        # Add the checkbox container widget to the default arrow container layout
+        default_arrow_container_layout.addWidget(checkbox_container)
+
+
+        # ---text for the button---
+        button_color_width_layout = QHBoxLayout()
+        self.layer_panel_rows.append(button_color_width_layout)
+        self.button_color_label = QLabel(_['button_color'] if 'button_color' in _ else 'Button Color:')
+   
+        button_color_width_layout.addWidget(self.button_color_label)
+        button_color_width_layout.addStretch()
+        default_arrow_container_layout.addLayout(button_color_width_layout)
+
+        button_color_width_layout.addStretch() # Keep button aligned left (or right in RTL) within its indented space
+
+        # --- Button Container (should be under the button_color_width_layout)---
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
         self.update_default_arrow_color_button()
         self.default_arrow_color_button.clicked.connect(self.choose_default_arrow_color)
-        default_arrow_layout.addWidget(self.default_arrow_color_checkbox)
-        default_arrow_layout.addWidget(self.default_arrow_color_button)
-        default_arrow_layout.addStretch()
-        layer_panel_layout.addLayout(default_arrow_layout)
-
+        button_layout.addWidget(self.default_arrow_color_button)
+        button_layout.addStretch() # Keep button aligned left (or right in RTL) within its indented space
+        default_arrow_container_layout.addWidget(button_container)
+        
+        # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
+        layer_panel_layout.addLayout(default_arrow_container_layout)
+        self.layer_panel_rows.append(button_layout)
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
         self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
@@ -837,78 +894,8 @@ class SettingsDialog(QDialog):
         self.whats_new_widget = QWidget()
         whats_new_layout = QVBoxLayout(self.whats_new_widget)
 
-        # Use QTextBrowser for What's New info - Part 1 (Undo/Redo)
-        self.whats_new_text_browser_part1 = QTextBrowser()
-        self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
-        self.whats_new_text_browser_part1.setOpenExternalLinks(True)
-        self.whats_new_text_browser_part1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        whats_new_layout.addWidget(self.whats_new_text_browser_part1)
+   
 
-        # Add Undo/Redo icons and labels
-        self.icon_layout = QHBoxLayout()
-        self.icon_layout.addStretch()
-        self.undo_icon_label = QLabel(_['undo_icon_label'])
-        self.undo_icon_widget = QLabel()
-        self.undo_icon_widget.setFixedSize(40, 40)
-        self.update_icon_widget(self.undo_icon_widget, '↶')
-        if self.is_rtl_language(self.current_language) != True:
-            
-            self.icon_layout.addWidget(self.undo_icon_label)
-            self.icon_layout.addWidget(self.undo_icon_widget)
-            # Add the label second
-        else:
-            
-            self.icon_layout.addWidget(self.undo_icon_widget)
-            self.icon_layout.addWidget(self.undo_icon_label)
-        self.icon_layout.addSpacing(20)
-        self.redo_icon_label = QLabel(_['redo_icon_label'])
-        self.redo_icon_widget = QLabel()
-        self.redo_icon_widget.setFixedSize(40, 40)
-        self.update_icon_widget(self.redo_icon_widget, '↷')
-        if self.is_rtl_language(self.current_language) != True:
-            
-            self.icon_layout.addWidget(self.redo_icon_label)
-            self.icon_layout.addWidget(self.redo_icon_widget)
-        else:
-            self.icon_layout.addWidget(self.redo_icon_widget)
-            self.icon_layout.addWidget(self.redo_icon_label)
-            
-        self.icon_layout.addStretch()
-        whats_new_layout.addLayout(self.icon_layout)
-
-        # Use QTextBrowser for What's New info - Combined History/CP Text
-        self.whats_new_text_browser_history_cp = QTextBrowser()
-        self.whats_new_text_browser_history_cp.setHtml(_['whats_new_history_cp_text'])
-        self.whats_new_text_browser_history_cp.setOpenExternalLinks(True)
-        self.whats_new_text_browser_history_cp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        whats_new_layout.addWidget(self.whats_new_text_browser_history_cp)
-
-        # Add Third Control Point Icon Layout
-        self.third_cp_icon_layout = QHBoxLayout()
-        self.third_cp_icon_layout.addStretch()
-        self.third_cp_icon_label = QLabel(_['third_cp_icon_label'])
-        self.third_cp_icon_widget = QLabel()
-        self.third_cp_icon_widget.setFixedSize(40, 40)
-        self.update_third_cp_icon_widget(self.third_cp_icon_widget)
-        if self.is_rtl_language(self.current_language) != True:
-            self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
-            self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
-        else:
-            self.third_cp_icon_layout.addWidget(self.third_cp_icon_widget)
-            self.third_cp_icon_layout.addWidget(self.third_cp_icon_label)
-        self.third_cp_icon_layout.addStretch()
-        whats_new_layout.addLayout(self.third_cp_icon_layout)
-
-        # Use QTextBrowser for What's New info - Bug Fixes
-        self.whats_new_text_browser_bugs = QTextBrowser()
-        self.whats_new_text_browser_bugs.setHtml(_['whats_new_bug_fixes_text'])
-        self.whats_new_text_browser_bugs.setOpenExternalLinks(True)
-        self.whats_new_text_browser_bugs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        whats_new_layout.addWidget(self.whats_new_text_browser_bugs)
-
-        whats_new_layout.addStretch()
-
-        self.stacked_widget.addWidget(self.whats_new_widget)
 
         # About Page (index 5) - LAST
         self.about_widget = QWidget()
@@ -1405,43 +1392,7 @@ class SettingsDialog(QDialog):
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
         # Update What's New page elements
-        self.whats_new_text_browser_part1.setHtml(_['whats_new_info_part1'])
-        self.whats_new_text_browser_history_cp.setHtml(_['whats_new_history_cp_text'])
-        self.whats_new_text_browser_bugs.setHtml(_['whats_new_bug_fixes_text'])
-        # Find labels within the icon layout to update text
-        if hasattr(self, 'icon_layout'):
-            for i in range(self.icon_layout.count()):
-                item = self.icon_layout.itemAt(i)
-                if isinstance(item.widget(), QLabel):
-                    widget = item.widget()
-                    # Use more robust identification if possible
-                    if widget == self.undo_icon_label:
-                        widget.setText(_['undo_icon_label'])
-                    elif widget == self.redo_icon_label:
-                        widget.setText(_['redo_icon_label'])
-                    # Check if it is one of the icon widgets we need to redraw
-                    elif widget == self.undo_icon_widget:
-                        self.update_icon_widget(widget, '↶')
-                    elif widget == self.redo_icon_widget:
-                        self.update_icon_widget(widget, '↷')
-                    # Check for the new third CP icon label and widget
-                    elif widget == self.third_cp_icon_label:
-                        widget.setText(_['third_cp_icon_label'])
-                    elif widget == self.third_cp_icon_widget:
-                        self.update_third_cp_icon_widget(widget)
-        else:
-            logging.warning("self.icon_layout or self.third_cp_icon_layout not found during translation update.")
-
-        # Add separate handling for third_cp_icon_layout
-        if hasattr(self, 'third_cp_icon_layout'):
-            for i in range(self.third_cp_icon_layout.count()):
-                item = self.third_cp_icon_layout.itemAt(i)
-                if isinstance(item.widget(), QLabel):
-                    widget = item.widget()
-                    if widget == self.third_cp_icon_label:
-                        widget.setText(_['third_cp_icon_label'])
-                    elif widget == self.third_cp_icon_widget:
-                        self.update_third_cp_icon_widget(widget)
+ 
 
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
@@ -1535,13 +1486,7 @@ class SettingsDialog(QDialog):
                  # *** Add condition to skip shadow color label in RTL ***
                  if widget == self.shadow_color_label and rtl:
                      continue
-                 if parent_layout != self.icon_layout and parent_layout != self.third_cp_icon_layout: # Check it's not an icon label before aligning
-                    widget.setAlignment(alignment)
-                    if rtl:
-                        widget.setLayoutDirection(Qt.RightToLeft)
-                    else:
-                        widget.setLayoutDirection(Qt.LeftToRight)
-
+   
         # For text browsers, set alignment through HTML if RTL
         if rtl:
             # Update text browsers with RTL direction

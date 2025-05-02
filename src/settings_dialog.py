@@ -174,7 +174,7 @@ class SettingsDialog(QDialog):
             # Add styling for checkboxes in RTL mode
             checkbox_style = """
                 QCheckBox {
-                    spacing: 0px;
+                    spacing: 5px;
                 }
                 QCheckBox::indicator {
                     width: 13px;
@@ -185,8 +185,8 @@ class SettingsDialog(QDialog):
             # Apply checkbox style to all checkboxes
             for checkbox in self.findChildren(QCheckBox):
                 checkbox.setStyleSheet(checkbox_style)
-                # Set layout direction to RTL for the checkbox itself
-                checkbox.setLayoutDirection(Qt.RightToLeft)
+                # Use RTL so checkbox indicator is placed after the text (physically left of text in RTL)
+                checkbox.setLayoutDirection(Qt.LeftToRight if not self.is_rtl_language(self.current_language) else Qt.LeftToRight)
 
         else: # LTR
             combo_style_adjustments = """
@@ -263,14 +263,36 @@ class SettingsDialog(QDialog):
         # Apply RTL adjustments to layer panel rows
         if hasattr(self, 'layer_panel_rows'):
             self.layer_panel_settings_widget.setLayoutDirection(direction)
-            for layout in self.layer_panel_rows:
-                layout.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
-                if is_rtl:
-                    for idx in range(layout.count()):
-                        widget = layout.itemAt(idx).widget()
-                        if isinstance(widget, QLabel):
-                            widget.setAlignment(Qt.AlignRight )
 
+            for row in self.layer_panel_rows:
+                # The stored object can be either a layout or a container QWidget
+                if isinstance(row, QBoxLayout):
+                    # Directly adjust the box layout direction
+                    row.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
+
+                    # Additionally, for RTL make sure QLabel children are right-aligned
+                    if is_rtl:
+                        for idx in range(row.count()):
+                            widget = row.itemAt(idx).widget()
+                            if isinstance(widget, QLabel):
+                                widget.setAlignment(Qt.AlignLeft if is_rtl else Qt.AlignRight)
+
+                elif isinstance(row, QWidget):
+                    # Apply direction to the container widget and its internal layout
+                    row.setLayoutDirection(direction)
+                    # Update internal layout direction if present
+                    inner_layout = row.layout()
+                    if isinstance(inner_layout, QBoxLayout):
+                        inner_layout.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
+
+                    # Ensure any labels inside are aligned properly in RTL
+                    if is_rtl:
+                        for child in row.findChildren(QLabel):
+                            child.setAlignment(Qt.AlignRight)
+        try:
+                    self.default_arrow_color_checkbox.setLayoutDirection(Qt.RightToLeft if not is_rtl else Qt.LeftToRight)
+        except Exception:
+                    pass
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
         # Use the appropriate directory for each OS
@@ -702,25 +724,27 @@ class SettingsDialog(QDialog):
 
         # --- Checkbox Container ---
         checkbox_container = QWidget()
+        # Ensure the container widget uses LTR so the indicator appears on the left of the text
+        checkbox_container.setLayoutDirection(Qt.LeftToRight if self.is_rtl_language(self.current_language) else Qt.RightToLeft)
         checkbox_layout = QHBoxLayout(checkbox_container)
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
         checkbox_layout.setSpacing(5)
-        # Ensure checkbox container uses LTR so the indicator appears on the left of the text
-        checkbox_layout.setLayoutDirection(Qt.LeftToRight)
-        self.layer_panel_rows.append(checkbox_layout)
+        
         self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
         self.default_arrow_color_checkbox.stateChanged.connect(self.on_default_arrow_color_changed)
-        self.default_arrow_color_checkbox.setLayoutDirection(Qt.LeftToRight)
 
         checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-        checkbox_layout.addStretch() # Add stretch to align checkbox left (or right in RTL)
+        checkbox_layout.addStretch()  # Add stretch to align checkbox left (or right in RTL)
         # Add the checkbox container widget to the default arrow container layout
         default_arrow_container_layout.addWidget(checkbox_container)
 
+        # Ensure the checkbox row (container) is included for RTL direction updates
+        self.layer_panel_rows.append(checkbox_container)
 
         # ---text for the button---
         button_color_width_layout = QHBoxLayout()
+     
         self.layer_panel_rows.append(button_color_width_layout)
         self.button_color_label = QLabel(_['button_color'] if 'button_color' in _ else 'Button Color:')
    
@@ -732,18 +756,25 @@ class SettingsDialog(QDialog):
 
         # --- Button Container (should be under the button_color_width_layout)---
         button_container = QWidget()
+        # Force LTR layout direction (container) for consistency
+        button_container.setLayoutDirection(Qt.LeftToRight)
         button_layout = QHBoxLayout(button_container)
-        
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(5)
+        # Center the button by adding stretch before and after
+        button_layout.addStretch()
+         
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
         self.update_default_arrow_color_button()
         self.default_arrow_color_button.clicked.connect(self.choose_default_arrow_color)
         button_layout.addWidget(self.default_arrow_color_button)
-        button_layout.addStretch() # Keep button aligned left (or right in RTL) within its indented space
+        button_layout.addStretch()
         default_arrow_container_layout.addWidget(button_container)
         
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
+        # Append the HBoxLayout for the button so its direction is adjusted in RTL mode
         self.layer_panel_rows.append(button_layout)
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])

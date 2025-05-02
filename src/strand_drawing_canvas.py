@@ -1058,6 +1058,8 @@ class StrandDrawingCanvas(QWidget):
         self.extension_length = 100.0
         self.extension_dash_count = 10
         self.extension_dash_width = 2.0
+        # Default extension dash gap length (equal to half dash segment length)
+        self.extension_dash_gap_length = self.extension_length/(2*self.extension_dash_count) if self.extension_dash_count > 0 else 0.0
         # --- NEW: Arrow head default settings ---
         self.arrow_head_length = 20.0  # Length of arrow head (in pixels)
         self.arrow_head_width = 10.0   # Width of arrow head base (in pixels)

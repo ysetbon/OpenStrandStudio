@@ -804,10 +804,15 @@ class Strand:
             stroker.setWidth(line_w)
             stroker.setCapStyle(Qt.FlatCap)
             
-            # Set up pen for dashes but with width 0 since we'll stroke the path
-            ext_pen = QPen(ext_color, 0, Qt.CustomDashLine)
-            ext_pen.setDashPattern([dash_seg, dash_seg])
-            painter.setPen(ext_pen)
+            # Get configured gap length between dashes or default to dash segment, invert for offset
+            dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
+            dash_gap = -dash_gap
+            # Setup pen for dashed line
+            dash_pen = QPen(ext_color, line_w, Qt.CustomDashLine)
+            # Uniform dash pattern: equal on/off lengths based on dash_seg
+            pattern_len = dash_seg / line_w if line_w > 0 else dash_seg
+            dash_pen.setDashPattern([pattern_len, pattern_len])
+            painter.setPen(dash_pen)
      
             painter.restore()
 
@@ -861,28 +866,36 @@ class Strand:
         dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
         # Compute segment length so that there are dash_count dashes over ext_len
         dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
-        # Compute dash pattern lengths independent of pen width
+        # Get configured gap length between dashes or default to dash segment, invert for offset
+        dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
+        dash_gap = -dash_gap
+        # Setup pen for dashed line
         dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
+        # Uniform dash pattern: equal on/off lengths based on dash_seg
         pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
         dash_pen.setDashPattern([pattern_len, pattern_len])
         dash_pen.setCapStyle(Qt.FlatCap)
         painter.setPen(dash_pen)
-        # Start extension
+        # Start extension with gap offset at both ends
         if getattr(self, 'start_extension_visible', False):
             tangent = self.calculate_cubic_tangent(0.0)
             length = math.hypot(tangent.x(), tangent.y())
             if length:
                 unit = QPointF(tangent.x()/length, tangent.y()/length)
-                ext_start = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
-                painter.drawLine(self.start, ext_start)
-        # End extension
+                raw_end = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
+                start_pt = QPointF(self.start.x() + unit.x()*dash_gap, self.start.y() + unit.y()*dash_gap)
+                end_pt = QPointF(raw_end.x() + unit.x()*dash_gap, raw_end.y() + unit.y()*dash_gap)
+                painter.drawLine(start_pt, end_pt)
+        # End extension with gap offset at both ends
         if getattr(self, 'end_extension_visible', False):
             tangent_end = self.calculate_cubic_tangent(1.0)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
                 unit = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
-                ext_end = QPointF(self.end.x() + unit.x()*ext_len, self.end.y() + unit.y()*ext_len)
-                painter.drawLine(self.end, ext_end)
+                raw_end = QPointF(self.end.x() + unit.x()*ext_len, self.end.y() + unit.y()*ext_len)
+                start_pt = QPointF(self.end.x() - unit.x()*dash_gap, self.end.y() - unit.y()*dash_gap)
+                end_pt = QPointF(raw_end.x() - unit.x()*dash_gap, raw_end.y() - unit.y()*dash_gap)
+                painter.drawLine(start_pt, end_pt)
         # --- NEW: Draw arrow heads ---
         arrow_len = getattr(self.canvas, 'arrow_head_length', 20)
         arrow_width = getattr(self.canvas, 'arrow_head_width', 10)

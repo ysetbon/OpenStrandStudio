@@ -150,6 +150,8 @@ translations = {
         'deselect_all': 'Deselect All',
         'notification_message': 'Notification',
         'button_color': 'Choose a different button color (not default):',
+        'extension_dash_gap_length': 'Gap length between strand end and start of dashes',
+        'extension_dash_gap_length_tooltip': 'Gap between the strand end and the start of the dashes',
         # Additional texts
         'adjust_angle_and_length': 'Adjust Angle and Length',
         'angle_label': 'Angle:',
@@ -231,6 +233,26 @@ translations = {
         'arrow': 'Arrow',
         'extension': 'Dash',
         'circle': 'Circle',
+        # Layer panel extension and arrow settings translations
+        'extension_length': 'Extension Length',
+        'extension_length_tooltip': 'Length of extension lines',
+        'extension_dash_count': 'Dash Count',
+        'extension_dash_count_tooltip': 'Number of dashes in extension line',
+        'extension_dash_width': 'Extension Dash Width',
+        'extension_dash_width_tooltip': 'Width of extension dashes',
+        'extension_dash_gap_length': 'Gap length between strand end and start of dashes',
+        'extension_dash_gap_length_tooltip': 'Gap between the strand end and the start of the dashes',
+        'arrow_head_length': 'Arrow Head Length',
+        'arrow_head_length_tooltip': 'Length of arrow head in pixels',
+        'arrow_head_width': 'Arrow Head Width',
+        'arrow_head_width_tooltip': 'Width of arrow head base in pixels',
+        'arrow_gap_length': 'Arrow Gap Length',
+        'arrow_gap_length_tooltip': 'Gap between strand end and arrow shaft start',
+        'arrow_line_length': 'Arrow Line Length',
+        'arrow_line_length_tooltip': 'Length of the arrow shaft',
+        'arrow_line_width': 'Arrow Line Width',
+        'arrow_line_width_tooltip': 'Thickness of the arrow shaft',
+        'use_default_arrow_color': 'Use Default Arrow Color',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
@@ -245,7 +267,8 @@ translations = {
         'history_cleared_title': 'History Cleared',
         'history_cleared_text': 'All past history sessions have been cleared.',
         'no_history_found': 'No past history sessions found.',
-        'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.'
+        'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
+
     },
     'fr': {
         # MainWindow translations
@@ -445,6 +468,26 @@ translations = {
         'arrow': 'Flèche',
         'extension': 'Tiret',
         'circle': 'Cercle',
+        # Layer panel extension and arrow settings translations
+        'extension_length': "Longueur de l'Extension",
+        'extension_length_tooltip': "Longueur des lignes d'extension",
+        'extension_dash_count': "Nombre de Tirets",
+        'extension_dash_count_tooltip': "Nombre de tirets dans la ligne d'extension",
+        'extension_dash_width': "Largeur des Tirets d'Extension",
+        'extension_dash_width_tooltip': "Largeur des tirets d'extension",
+        'extension_dash_gap_length': "Longueur de l'espace entre l'extrémité du brin et le début des tirets",
+        'extension_dash_gap_length_tooltip': "Espace entre l'extrémité du brin et le début des tirets",
+        'arrow_head_length': "Longueur de la Tête de Flèche",
+        'arrow_head_length_tooltip': "Longueur de la tête de flèche en pixels",
+        'arrow_head_width': "Largeur de la Tête de Flèche",
+        'arrow_head_width_tooltip': "Largeur de la base de la tête de flèche en pixels",
+        'arrow_gap_length': "Longueur de l'Espace de la Flèche",
+        'arrow_gap_length_tooltip': "Espace entre l'extrémité du brin et le début du corps de la flèche",
+        'arrow_line_length': "Longueur de la Ligne de Flèche",
+        'arrow_line_length_tooltip': "Longueur du corps de la flèche",
+        'arrow_line_width': "Largeur de la Ligne de Flèche",
+        'arrow_line_width_tooltip': "Épaisseur du corps de la flèche",
+        'use_default_arrow_color': "Utiliser la Couleur de Flèche par Défaut",
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Groupe Existant',
@@ -459,7 +502,9 @@ translations = {
         'history_cleared_title': 'Historique Effacé',
         'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
-        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.'
+        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
+        'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
+        'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets'
     },
     'it': {
         # MainWindow translations
@@ -664,6 +709,27 @@ translations = {
         'arrow': 'Freccia',
         'extension': 'Trattino',
         'circle': 'Cerchio',
+        # Layer panel extension and arrow settings translations
+        'extension_length': 'Lunghezza estensione',
+        'extension_length_tooltip': 'Lunghezza della linea di estensione',
+        'extension_dash_count': 'Numero di trattini',
+        'extension_dash_count_tooltip': 'Numero di trattini nella linea di estensione',
+        'extension_dash_width': 'Spessore trattino estensione',
+        'extension_dash_width_tooltip': 'Spessore del trattino di estensione',
+        'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
+        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
+        'arrow_head_length': 'Lunghezza punta freccia',
+        'arrow_head_length_tooltip': 'Lunghezza della punta della freccia in pixel',
+        'arrow_head_width': 'Larghezza punta freccia',
+        'arrow_head_width_tooltip': 'Larghezza della punta della freccia in pixel',
+        'arrow_gap_length': 'Spazio prima della freccia',
+        'arrow_gap_length_tooltip': 'Spazio tra l\'estremità del filo e l\'inizio della freccia',
+        'arrow_line_length': 'Lunghezza corpo freccia',
+        'arrow_line_length_tooltip': 'Lunghezza del corpo della freccia in pixel',
+        'arrow_line_width': 'Spessore corpo freccia',
+        'arrow_line_width_tooltip': 'Spessore del corpo della freccia in pixel',
+        'use_default_arrow_color': 'Usa colore freccia predefinito',
+
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Gruppo Esistente',
@@ -678,7 +744,9 @@ translations = {
         'history_cleared_title': 'Cronologia Cancellata',
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
-        'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.'
+        'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
+        'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
+        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini'
     },
     # New Spanish Translations
     'es': {
@@ -880,6 +948,27 @@ translations = {
         'arrow': 'Flecha',
         'extension': 'Guión',
         'circle': 'Círculo',
+        # Layer panel extension and arrow settings translations
+        'extension_length': 'Longitud de la extensión',
+        'extension_length_tooltip': 'Longitud de la línea de extensión',
+        'extension_dash_count': 'Número de guiones de extensión',
+        'extension_dash_count_tooltip': 'Número de guiones en la línea de extensión',
+        'extension_dash_width': 'Grosor del guión de extensión',
+        'extension_dash_width_tooltip': 'Grosor de los guiones de extensión',
+        'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
+        'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
+        'arrow_head_length': 'Longitud de la punta de la flecha',
+        'arrow_head_length_tooltip': 'Longitud de la punta de la flecha en píxeles',
+        'arrow_head_width': 'Ancho de la punta de la flecha',
+        'arrow_head_width_tooltip': 'Ancho de la punta de la flecha en píxeles',
+        'arrow_gap_length': 'Longitud del espacio antes de la flecha',
+        'arrow_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de la flecha',
+        'arrow_line_length': 'Longitud del cuerpo de la flecha',
+        'arrow_line_length_tooltip': 'Longitud del cuerpo de la flecha en píxeles',
+        'arrow_line_width': 'Grosor del cuerpo de la flecha',
+        'arrow_line_width_tooltip': 'Grosor del cuerpo de la flecha en píxeles',
+        'use_default_arrow_color': 'Usar color predeterminado de las flechas',
+
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
@@ -894,7 +983,9 @@ translations = {
         'history_cleared_title': 'Historial Borrado',
         'history_cleared_text': 'Todas las sesiones de historial pasadas han sido borradas.',
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
-        'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.'
+        'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
+        'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
+        'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones'
     },
     # New Portuguese Translations
     'pt': {
@@ -1101,6 +1192,26 @@ translations = {
         'arrow': 'Flecha',
         'extension': 'Travessão',
         'circle': 'Círculo',
+        # Layer panel extension and arrow settings translations
+        'extension_length': 'Comprimento da extensão',
+        'extension_length_tooltip': 'Comprimento da linha de extensão',
+        'extension_dash_count': 'Número de traços de extensão',
+        'extension_dash_count_tooltip': 'Número de traços na linha de extensão',
+        'extension_dash_width': 'Espessura do traço de extensão',
+        'extension_dash_width_tooltip': 'Espessura dos traços de extensão',
+        'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
+        'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
+        'arrow_head_length': 'Comprimento da ponta da flecha',
+        'arrow_head_length_tooltip': 'Comprimento da ponta da flecha em pixels',
+        'arrow_head_width': 'Largura da ponta da flecha',
+        'arrow_head_width_tooltip': 'Largura da ponta da flecha em pixels',
+        'arrow_gap_length': 'Comprimento do espaço antes da flecha',
+        'arrow_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início da flecha',
+        'arrow_line_length': 'Comprimento do corpo da flecha',
+        'arrow_line_length_tooltip': 'Comprimento do corpo da flecha em pixels',
+        'arrow_line_width': 'Espessura do corpo da flecha',
+        'arrow_line_width_tooltip': 'Espessura do corpo da flecha em pixels',
+        'use_default_arrow_color': 'Usar cor padrão das flechas',
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Grupo Existente',
@@ -1115,7 +1226,9 @@ translations = {
         'history_cleared_title': 'Histórico Limpo',
         'history_cleared_text': 'Todas as sessões de histórico passadas foram limpas.',
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
-        'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.'
+        'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.',
+        'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
+        'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços'
     },
     # New Hebrew Translations (RTL language)
     'he': {
@@ -1276,6 +1389,8 @@ translations = {
         'extension_dash_count_tooltip': 'מספר המקפים בקו ההרחבה',
         'extension_dash_width': 'עובי מקף ההרחבה',
         'extension_dash_width_tooltip': 'עובי קטעי קו ההרחבה',
+        'extension_dash_gap_length': 'אורך הרווח בין קצה החוט לתחילת המקפים',
+        'extension_dash_gap_length_tooltip': 'מרווח בין החוט לתחילת המקפים',
         'arrow_head_length': 'אורך ראש החץ',
         'arrow_head_length_tooltip': 'אורך ראש החץ בפיקסלים',
         'arrow_head_width': 'רוחב ראש החץ',

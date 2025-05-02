@@ -54,6 +54,7 @@ class SettingsDialog(QDialog):
         self.extension_length = getattr(canvas, 'extension_length', 100)
         self.extension_dash_count = getattr(canvas, 'extension_dash_count', 10)
         self.extension_dash_width = getattr(canvas, 'extension_dash_width', getattr(canvas, 'extension_line_width', 2))  # Default dash width
+        self.extension_dash_gap_length = getattr(canvas, 'extension_dash_gap_length', 5.0)  # Default gap length for extension dashes
         self.num_steps = 3  # Default shadow blur steps
         self.max_blur_radius = 29.99  # Default shadow blur radius
         # Arrow head parameters
@@ -84,6 +85,14 @@ class SettingsDialog(QDialog):
             self.canvas.use_default_arrow_color = self.use_default_arrow_color
             self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
             logging.info(f"SettingsDialog: Applied default arrow color settings to canvas - use_default: {self.use_default_arrow_color}, color: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
+        
+        # Apply loaded extension line settings to canvas
+        if self.canvas:
+            self.canvas.extension_length = self.extension_length
+            self.canvas.extension_dash_count = self.extension_dash_count
+            self.canvas.extension_dash_width = self.extension_dash_width
+            self.canvas.extension_dash_gap_length = self.extension_dash_gap_length
+            logging.info(f"SettingsDialog: Applied extension settings to canvas - length: {self.extension_length}, dash_count: {self.extension_dash_count}, dash_width: {self.extension_dash_width}, dash_gap_length: {self.extension_dash_gap_length}")
         
         self.setWindowTitle(translations[self.current_language]['settings'])
         
@@ -393,13 +402,13 @@ class SettingsDialog(QDialog):
                                 logging.error(f"SettingsDialog: Error parsing ArrowHeadWidth value. Using default {getattr(self, 'arrow_head_width',10.0)}")
                         elif line.startswith('ArrowGapLength:'):
                             try:
-                                self.arrow_gap_length = int(line.split(':', 1)[1].strip())
+                                self.arrow_gap_length = float(line.split(':', 1)[1].strip())
                                 logging.info(f"SettingsDialog: Found ArrowGapLength: {self.arrow_gap_length}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing ArrowGapLength value. Using default {self.arrow_gap_length}.")
                         elif line.startswith('ArrowLineLength:'):
                             try:
-                                self.arrow_line_length = int(line.split(':', 1)[1].strip())
+                                self.arrow_line_length = float(line.split(':', 1)[1].strip())
                                 logging.info(f"SettingsDialog: Found ArrowLineLength: {self.arrow_line_length}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing ArrowLineLength value. Using default {self.arrow_line_length}.")
@@ -419,8 +428,14 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found DefaultArrowColor: {r},{g},{b},{a}")
                             except Exception as e:
                                 logging.error(f"SettingsDialog: Error parsing DefaultArrowColor: {e}. Using default {self.default_arrow_fill_color}.")
+                        elif line.startswith('ExtensionDashGapLength:'):
+                            try:
+                                self.extension_dash_gap_length = float(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ExtensionDashGapLength: {self.extension_dash_gap_length}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ExtensionDashGapLength value. Using default {self.extension_dash_gap_length}.")
                 
-                logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
+                    logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -644,15 +659,28 @@ class SettingsDialog(QDialog):
 
         line_width_layout = QHBoxLayout()
         self.layer_panel_rows.append(line_width_layout)
-        self.extension_dash_width_label = QLabel(_['extension_dash_width'] if 'extension_dash_width' in _ else "Extension Dash Width")
+        self.extension_dash_width_label = QLabel(_['extension_dash_width'] if 'extension_dash_width' in _ else "Dash Width")
         self.extension_dash_width_spinbox = QDoubleSpinBox()
         self.extension_dash_width_spinbox.setRange(0.1, 20.0)
         self.extension_dash_width_spinbox.setValue(self.extension_dash_width)
-        self.extension_dash_width_spinbox.setToolTip(_['extension_dash_width_tooltip'] if 'extension_dash_width_tooltip' in _ else "Width of extension dashes")
+        self.extension_dash_width_spinbox.setToolTip(_['extension_dash_width_tooltip'] if 'extension_dash_width_tooltip' in _ else "Width of  dashes")
         line_width_layout.addWidget(self.extension_dash_width_label)
         line_width_layout.addWidget(self.extension_dash_width_spinbox)
         line_width_layout.addStretch()
         layer_panel_layout.addLayout(line_width_layout)
+
+        # Extension Dash Gap Length setting
+        gap_length_layout = QHBoxLayout()
+        self.layer_panel_rows.append(gap_length_layout)
+        self.extension_dash_gap_length_label = QLabel(_['extension_dash_gap_length'] if 'extension_dash_gap_length' in _ else 'Dash Gap Length')
+        self.extension_dash_gap_length_spinbox = QDoubleSpinBox()
+        self.extension_dash_gap_length_spinbox.setRange(0.0, 1000.0)
+        self.extension_dash_gap_length_spinbox.setValue(self.extension_dash_gap_length)
+        self.extension_dash_gap_length_spinbox.setToolTip(_['extension_dash_gap_length_tooltip'] if 'extension_dash_gap_length_tooltip' in _ else 'Gap between strand and the start of the dashes')
+        gap_length_layout.addWidget(self.extension_dash_gap_length_label)
+        gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
+        gap_length_layout.addStretch()
+        layer_panel_layout.addLayout(gap_length_layout)
 
         # --- NEW: Arrow head settings ---
         arrow_len_layout = QHBoxLayout()
@@ -1292,6 +1320,7 @@ class SettingsDialog(QDialog):
         self.extension_length = self.extension_length_spinbox.value()
         self.extension_dash_count = self.extension_dash_count_spinbox.value()
         self.extension_dash_width = self.extension_dash_width_spinbox.value()
+        self.extension_dash_gap_length = self.extension_dash_gap_length_spinbox.value()
         # --- NEW: Arrow head settings ---
         self.arrow_head_length = self.arrow_head_length_spinbox.value()
         self.arrow_head_width = self.arrow_head_width_spinbox.value()
@@ -1304,6 +1333,7 @@ class SettingsDialog(QDialog):
             self.canvas.extension_length = self.extension_length
             self.canvas.extension_dash_count = self.extension_dash_count
             self.canvas.extension_dash_width = self.extension_dash_width
+            self.canvas.extension_dash_gap_length = self.extension_dash_gap_length
             # --- NEW: apply arrow settings to canvas ---
             self.canvas.arrow_head_length = self.arrow_head_length
             self.canvas.arrow_head_width = self.arrow_head_width
@@ -1406,6 +1436,8 @@ class SettingsDialog(QDialog):
         self.extension_length_label.setText(_['extension_length'] if 'extension_length' in _ else "Extension Length")
         self.extension_dash_count_label.setText(_['extension_dash_count'] if 'extension_dash_count' in _ else "Dash Count")
         self.extension_dash_width_label.setText(_['extension_dash_width'] if 'extension_dash_width' in _ else "Extension Dash Width")
+        self.extension_dash_gap_length_label.setText(_['extension_dash_gap_length'] if 'extension_dash_gap_length' in _ else "Gap length between strand end and start of dashes")
+        self.extension_dash_gap_length_spinbox.setToolTip(_['extension_dash_gap_length_tooltip'] if 'extension_dash_gap_length_tooltip' in _ else "Gap between the strand end and the start of the dashes")
         self.arrow_head_length_label.setText(_['arrow_head_length'] if 'arrow_head_length' in _ else "Arrow Head Length")
         self.arrow_head_width_label.setText(_['arrow_head_width'] if 'arrow_head_width' in _ else "Arrow Head Width")
         self.arrow_gap_length_label.setText(_['arrow_gap_length'] if 'arrow_gap_length' in _ else "Arrow Gap Length")
@@ -1586,12 +1618,13 @@ class SettingsDialog(QDialog):
                 file.write(f"ExtensionLength: {self.extension_length}\n")
                 file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                 file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
+                file.write(f"ExtensionDashGapLength: {self.extension_dash_gap_length:.1f}\n")
                 file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
                 file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
                 file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
-                file.write(f"ArrowGapLength: {self.arrow_gap_length}\n")
-                file.write(f"ArrowLineLength: {self.arrow_line_length}\n")
-                file.write(f"ArrowLineWidth: {self.arrow_line_width}\n")
+                file.write(f"ArrowGapLength: {self.arrow_gap_length:.1f}\n")
+                file.write(f"ArrowLineLength: {self.arrow_line_length:.1f}\n")
+                file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")
                 file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
                 file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
@@ -1612,12 +1645,13 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ExtensionLength: {self.extension_length}\n")
                     local_file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                     local_file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
+                    local_file.write(f"ExtensionDashGapLength: {self.extension_dash_gap_length:.1f}\n")
                     local_file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
                     local_file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
                     local_file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
-                    local_file.write(f"ArrowGapLength: {self.arrow_gap_length}\n")
-                    local_file.write(f"ArrowLineLength: {self.arrow_line_length}\n")
-                    local_file.write(f"ArrowLineWidth: {self.arrow_line_width}\n")
+                    local_file.write(f"ArrowGapLength: {self.arrow_gap_length:.1f}\n")
+                    local_file.write(f"ArrowLineLength: {self.arrow_line_length:.1f}\n")
+                    local_file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")
                     local_file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
                     local_file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                 print(f"Created copy of settings at: {local_file_path}")

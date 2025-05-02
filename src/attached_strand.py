@@ -375,7 +375,7 @@ class AttachedStrand(Strand):
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 # Use canvas's shadow color if available
                 shadow_color = None
-                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                if hasattr(self.canvas, 'default_shadow_color'):
                     shadow_color = self.canvas.default_shadow_color
                     # Ensure the strand's shadow color is also updated for future reference
                     self.shadow_color = QColor(shadow_color)
@@ -395,29 +395,40 @@ class AttachedStrand(Strand):
         ext_len = getattr(self.canvas, 'extension_length', 100)
         dash_count = getattr(self.canvas, 'extension_dash_count', 10)
         dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+        # Compute base dash segment length
         dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
-        # Setup side color for extension
+        # Get configured gap length or default to dash segment
+        dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
+        dash_gap = -dash_gap 
+        # Setup pen for dashed line using side color
         side_color = QColor(self.stroke_color)
         side_color.setAlpha(self.color.alpha())
         dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
+        # Uniform dash pattern: equal on/off lengths based on dash segment
         pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
         dash_pen.setDashPattern([pattern_len, pattern_len])
         dash_pen.setCapStyle(Qt.FlatCap)
         painter.setPen(dash_pen)
+        # Draw start extension with gap offsets
         if getattr(self, 'start_extension_visible', False):
             tangent = self.calculate_cubic_tangent(0.0)
             length = math.hypot(tangent.x(), tangent.y())
             if length:
                 unit = QPointF(tangent.x()/length, tangent.y()/length)
-                ext_start = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
-                painter.drawLine(self.start, ext_start)
+                raw_end = QPointF(self.start.x() - unit.x()*ext_len, self.start.y() - unit.y()*ext_len)
+                start_pt = QPointF(self.start.x() + unit.x()*dash_gap, self.start.y() + unit.y()*dash_gap)
+                end_pt = QPointF(raw_end.x() + unit.x()*dash_gap, raw_end.y() + unit.y()*dash_gap)
+                painter.drawLine(start_pt, end_pt)
+        # Draw end extension with gap offsets
         if getattr(self, 'end_extension_visible', False):
             tangent_end = self.calculate_cubic_tangent(1.0)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
                 unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
-                ext_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
-                painter.drawLine(self.end, ext_end)
+                raw_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
+                start_pt = QPointF(self.end.x() - unit_end.x()*dash_gap, self.end.y() - unit_end.y()*dash_gap)
+                end_pt = QPointF(raw_end.x() - unit_end.x()*dash_gap, raw_end.y() - unit_end.y()*dash_gap)
+                painter.drawLine(start_pt, end_pt)
 
         # --- NEW: Draw arrow heads for attached strands ---
         arrow_len = getattr(self.canvas, 'arrow_head_length', 20)
@@ -658,7 +669,7 @@ class AttachedStrand(Strand):
             temp_painter.setPen(Qt.NoPen)
 
             # --- Draw Start Circle (if not skipped) ---
-            # NOTE: AttachedStrand *always* has a start circle conceptually,
+            # NOTE: AttachedStrand *always* has a start circle (has_circles[0] is True)
             # but we skip drawing if another strand attaches *to* its start.
             # The `skip_start_circle` logic handles this.
             if not skip_start_circle:
@@ -1215,6 +1226,14 @@ class AttachedStrand(Strand):
         )
         # Reset the lock when recalculating from geometry
         self.control_point_center_locked = False
+    def update_control_points(self, reset_control_points=True):
+        """
+        Same idea, but for AttachedStrand.
+        """
+        if reset_control_points:
+            self.update_control_points_from_geometry()
+        self.update_shape()
+
     def update_control_points(self, reset_control_points=True):
         """
         Same idea, but for AttachedStrand.

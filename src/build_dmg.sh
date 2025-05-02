@@ -2,8 +2,8 @@
 
 # Set variables to match ISS configuration
 APP_NAME="OpenStrandStudio"
-VERSION="1.091"
-APP_DATE="10_Apr_2025"
+VERSION="1.092"
+APP_DATE="3_May_2025"
 PUBLISHER="Yonatan Setbon"
 DMG_NAME="OpenStrandStudioSetup_${APP_DATE}_${VERSION}"
 
@@ -35,11 +35,53 @@ $APP_NAME $VERSION
 By $PUBLISHER
 Contact: ysetbon@gmail.com
 
-New in this version:
-- Undo/Redo Functionality: Easily undo and redo your actions using dedicated buttons.
-- History Tab: Added a "History" tab in the Settings dialog to view and load past action sessions.
-- Bug Fixes: Improved visual drawing of strands and control points in move mode. Corrected drawing issues when connecting an attached strand to the starting point of a main strand.
-- Language Support: Added support for Italian, Spanish, Portuguese, and Hebrew.
+New in this version (English):
+- Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.
+- Customizable Dashed Lines and Arrowheads for strands.
+- Improved Control Point Visuals with larger handles.
+- Mask Extension Options for better visual effects.
+- Enhanced Shading Algorithm for smoother shadows.
+- Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.
+
+Nouveautés dans cette version (Français):
+- Historique Annuler/Rétablir persistant enregistré dans votre projet.
+- Lignes et flèches en pointillés personnalisables pour les brins.
+- Points de contrôle plus grands et plus visibles.
+- Options d'extension des masques pour un meilleur contrôle.
+- Algorithme d'ombrage amélioré pour des ombres plus douces.
+- Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.
+
+Novità in questa versione (Italiano):
+- Cronologia Annulla/Ripristina persistente salvata con il progetto.
+- Linee tratteggiate e frecce personalizzabili per i fili.
+- Punti di controllo più grandi e visibili.
+- Opzioni di estensione delle maschere per maggior controllo.
+- Algoritmo di ombreggiatura migliorato con ombre più naturali.
+- Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.
+
+Novedades en esta versión (Español):
+- Historial de Deshacer/Rehacer persistente guardado con el proyecto.
+- Líneas y flechas discontinuas personalizables para los hilos.
+- Puntos de control más grandes y visibles.
+- Opciones de extensión de máscaras para mayor control.
+- Algoritmo de sombreado mejorado con sombras más suaves.
+- Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.
+
+Novidades nesta versão (Português):
+- Histórico de Desfazer/Refazer persistente salvo com o projeto.
+- Linhas tracejadas e setas personalizáveis para os fios.
+- Pontos de controle maiores e mais visíveis.
+- Opções de extensão de máscara para maior controle.
+- Algoritmo de sombreamento aprimorado com sombras mais suaves.
+- Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.
+
+חדש בגרסה זו (עברית):
+- היסטוריית ביטול/חזרה נשמרת עם הפרויקט.
+- קווים וחיצים מקווקווים בהתאמה אישית.
+- נקודות בקרה גדולות וברורות יותר.
+- אפשרויות הארכת מסיכות לשליטה טובה יותר.
+- אלגוריתם הצללה משופר לצללים רכים יותר.
+- לוח שכבות משופר עם גרור-ושחרר ותפריט תצוגה מהירה.
 
 Installation:
 1. Drag '$APP_NAME' to the Applications folder

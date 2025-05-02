@@ -105,41 +105,7 @@ translations = {
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.092</p>
         ''',
-        # Whats New Section
-        'whats_new_info_part1': """
-        <h2 style="margin-top: 5px; margin-bottom: 5px;">What's New in Version 1.092?</h2>
-        <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">
-            This version introduces some exciting new features and improvements:
-        </p>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Undo/Redo Functionality:</b> You can now easily undo and redo your actions using the dedicated buttons. This helps in correcting mistakes or exploring different design variations without losing your progress. See the icons below:</li>
-        </ul>
-        """,
-        'whats_new_history_cp_text': """ 
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>History:</b> In the settings dialog, there is a new "History" tab that allows you to view the history of your actions. This is useful for reviewing past actions and restoring them if needed.</li>
-            <br> 
-            <li style="font-size:15px;"><b>Third Control Point Option:</b> You can now enable a third control point initially set at the center between the two existing points, providing more precise control over curve shapes.</li>
-        </ul>
-        """,
-        'whats_new_bug_fixes_text': """
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-             <li style="font-size:15px;"><b> New Language Support:</b> Italian, Spanish, Portuguese, and Hebrew are now supported.
-             <br>
-             <li style="font-size:15px;"><b>Bug Fixes:</b> Several bugs reported from the previous version (1.090) have been addressed to provide a smoother and more reliable experience.
-             <br>
-             <br>
-                 Specifically, in move mode strands and control points are better visually drawn when moving, if "affected strand" is enabled or disabled.
-             <br>
-             <br>
-                 Additionally, if connecting an attached strand to a starting point of a main strand, the drawing of the main strand (in all modes) is corrected (there were issues in that specific case in past versions). </li>
-         </ul>
-         <br>
-         <p style="font-size:15px; margin-top: 5px; margin-bottom: 5px;">Hope you enjoy these updates!</p>
-         """,
-        'undo_icon_label': 'Undo Icon:',
-        'redo_icon_label': 'Redo Icon:',
-        'third_cp_icon_label': 'Third Control Point Icon:',
+
 
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',

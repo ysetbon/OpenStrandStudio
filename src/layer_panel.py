@@ -110,8 +110,12 @@ class DropTargetWidget(QWidget):
     def dropEvent(self, event: QDropEvent):
         self.layer_panel.dropEvent(event)
         self._drag_indicator_y = None
-        self.update() # Trigger repaint to hide indicator
-        self.layer_panel.refresh_layers()
+        self.update()  # Trigger repaint to hide indicator
+        # Avoid a second immediate refresh on macOS (LayerPanel.dropEvent already schedules one)
+        if sys.platform != 'darwin':
+            self.layer_panel.refresh()
+        else:
+            QTimer.singleShot(0, self.layer_panel.refresh)
         
 
     def paintEvent(self, event):
@@ -196,6 +200,9 @@ class LayerPanel(QWidget):
         self.scroll_content = DropTargetWidget(self)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
+        # Ensure consistent vertical spacing between layer buttons across platforms
+        self.scroll_layout.setSpacing(2)  # Small, uniform gap
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)  # Remove layout margins
         self.scroll_area.setWidget(self.scroll_content)
         # --- Drag and Drop is now handled by DropTargetWidget ---
         # self.scroll_content.setAcceptDrops(True)
@@ -211,6 +218,8 @@ class LayerPanel(QWidget):
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(5, 5, 5, 5)
+        # Ensure consistent gap between control buttons across platforms
+        bottom_layout.setSpacing(2)
         
         # Draw Names button
         self.draw_names_button = QPushButton("Draw Names")
@@ -221,6 +230,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #e694e2; /* lighter on hover */
@@ -240,6 +250,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #FFB84D; /* lighter on hover */
@@ -260,6 +271,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #BFFFBF; /* even lighter on hover */
@@ -279,6 +291,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #FF4C4C; /* Lighter red on hover */
@@ -299,6 +312,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #9bc2e6; /* lighter on hover */
@@ -364,6 +378,7 @@ class LayerPanel(QWidget):
         # Create notification label
         self.notification_label = QLabel()
         self.notification_label.setAlignment(Qt.AlignCenter)
+        self.notification_label.hide()  # Hide initially to avoid extra spacing
         self.left_layout.addWidget(self.notification_label)
 
         # Initialize lock mode variables
@@ -455,7 +470,7 @@ class LayerPanel(QWidget):
                     font-weight: bold;
                     color: black;
                     background-color: #FF6B6B;
-                    border: none;
+                    border: 1px solid #888;
                     padding: 5px 10px;
                     border-radius: 5px;
                 }
@@ -485,7 +500,7 @@ class LayerPanel(QWidget):
                     font-weight: bold;
                     color: black;
                     background-color: #FF6B6B;
-                    border: none;
+                    border: 1px solid #888;
                     padding: 5px 10px;
                     border-radius: 5px;
                 }
@@ -513,7 +528,7 @@ class LayerPanel(QWidget):
                     font-weight: bold;
                     color: black;
                     background-color: #FF6B6B;
-                    border: none;
+                    border: 1px solid #888;
                     padding: 5px 10px;
                     border-radius: 5px;
                 }
@@ -541,7 +556,7 @@ class LayerPanel(QWidget):
                     font-weight: bold;
                     color: black;
                     background-color: #FF6B6B;
-                    border: none;
+                    border: 1px solid #888;
                     padding: 5px 10px;
                     border-radius: 5px;
                 }
@@ -1099,8 +1114,14 @@ class LayerPanel(QWidget):
 
     def show_notification(self, message, duration=2000):
         """Show a temporary notification message."""
+        # Show the notification label only when needed
         self.notification_label.setText(message)
-        QTimer.singleShot(duration, lambda: self.notification_label.setText(""))
+        self.notification_label.show()
+        # After the duration, clear and hide again to remove extra space
+        QTimer.singleShot(duration, lambda: (
+            self.notification_label.clear(),
+            self.notification_label.hide()
+        ))
 
 
 
@@ -1633,17 +1654,22 @@ class LayerPanel(QWidget):
         # Get the main window (either the direct parent or parent's parent)
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # 1. Create a screenshot of the current scroll area viewport
-        viewport = self.scroll_area.viewport()
-        pixmap = viewport.grab()
-        
-        # 2. Create a temporary overlay label with the screenshot
-        overlay = QLabel(self.scroll_area)
-        overlay.setPixmap(pixmap)
-        overlay.setGeometry(viewport.rect())
-        overlay.setStyleSheet("background-color: transparent;")
-        overlay.raise_()
-        overlay.show()
+        # --- Platform-specific overlay snapshot (avoids macOS CoreImage crash) ---
+        overlay = None
+        if sys.platform != 'darwin':
+            # 1. Create a screenshot of the current scroll area viewport (safe on non-macOS)
+            viewport = self.scroll_area.viewport()
+            pixmap = viewport.grab()
+
+            # 2. Create a temporary overlay label with the screenshot
+            overlay = QLabel(self.scroll_area)
+            overlay.setPixmap(pixmap)
+            overlay.setGeometry(viewport.rect())
+            overlay.setStyleSheet("background-color: transparent;")
+            overlay.raise_()
+            overlay.show()
+        else:
+            logging.debug("[macOS] Skipping viewport grab overlay in refresh_layers() to prevent segfault")
         
         # 3. Disable updates on the ENTIRE application window
         if main_window:
@@ -1677,8 +1703,9 @@ class LayerPanel(QWidget):
         if main_window:
             main_window.setUpdatesEnabled(True)
             
-        # 9. Remove the overlay after everything is ready
-        overlay.deleteLater()
+        # 9. Remove the overlay after everything is ready (if we actually created one)
+        if overlay is not None:
+            overlay.deleteLater()
         
         logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
     def refresh(self):
@@ -1688,17 +1715,20 @@ class LayerPanel(QWidget):
         # Get the main window (either the direct parent or parent's parent)
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # 1. Create a screenshot of the current scroll area viewport
-        viewport = self.scroll_area.viewport()
-        pixmap = viewport.grab()
-        
-        # 2. Create a temporary overlay label with the screenshot
-        overlay = QLabel(self.scroll_area)
-        overlay.setPixmap(pixmap)
-        overlay.setGeometry(viewport.rect())
-        overlay.setStyleSheet("background-color: transparent;")
-        overlay.raise_()
-        overlay.show()
+        # --- Platform-specific overlay snapshot (avoids macOS CoreImage crash) ---
+        overlay = None
+        if sys.platform != 'darwin':
+            viewport = self.scroll_area.viewport()
+            pixmap = viewport.grab()
+
+            overlay = QLabel(self.scroll_area)
+            overlay.setPixmap(pixmap)
+            overlay.setGeometry(viewport.rect())
+            overlay.setStyleSheet("background-color: transparent;")
+            overlay.raise_()
+            overlay.show()
+        else:
+            logging.debug("[macOS] Skipping viewport grab overlay in refresh() to prevent segfault")
         
         # 3. Disable updates on the ENTIRE application window
         if main_window:
@@ -1796,8 +1826,9 @@ class LayerPanel(QWidget):
         if main_window:
             main_window.setUpdatesEnabled(True)
         
-        # Remove the overlay after everything is ready
-        overlay.deleteLater()
+        # Remove the overlay after everything is ready (if we actually created one)
+        if overlay is not None:
+            overlay.deleteLater()
         
         logging.info(f"Finished comprehensive refresh of layer panel. Total buttons: {len(self.layer_buttons)}")
 
@@ -1912,15 +1943,25 @@ class LayerPanel(QWidget):
     # These are now called by DropTargetWidget
     def dragEnterEvent(self, event: QDragEnterEvent):
         """Accept the drag if it contains the correct MIME type."""
+        # Extra diagnostics for macOS
+        if sys.platform == 'darwin':
+            logging.info(f"[macOS] dragEnterEvent: pos={event.pos()} proposedAction={event.proposedAction()} "
+                         f"possibleActions={event.possibleActions()} mimeFormats={event.mimeData().formats()}")
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
-            event.acceptProposedAction()
-            logging.debug("Drag enter accepted")
+            # Explicitly set drop action to Move to ensure cross-platform consistency (macOS fix)
+            event.setDropAction(Qt.MoveAction)
+            event.accept()
+            logging.debug("Drag enter accepted (MoveAction)")
         else:
             event.ignore()
             logging.debug("Drag enter ignored - wrong mime type")
 
     def dragMoveEvent(self, event: QDragMoveEvent):
         """Accept the move event. Visual indicator is handled by DropTargetWidget."""
+        # Extra diagnostics for macOS during drag move
+        if sys.platform == 'darwin':
+            logging.info(f"[macOS] dragMoveEvent: pos={event.pos()} proposedAction={event.proposedAction()} "
+                         f"possibleActions={event.possibleActions()}")
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
             event.acceptProposedAction()
             # Visual feedback is now handled by DropTargetWidget.paintEvent
@@ -1934,6 +1975,10 @@ class LayerPanel(QWidget):
 
     def dropEvent(self, event: QDropEvent):
         """Handle the drop event to reorder layers visually and update data structures."""
+        # Extra diagnostics for macOS at the start of the drop
+        if sys.platform == 'darwin':
+            logging.info(f"[macOS] dropEvent START: pos={event.pos()} dropAction={event.dropAction()} "
+                         f"proposedAction={event.proposedAction()} mimeFormats={event.mimeData().formats()}")
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
             mime_data = event.mimeData()
             source_index_bytes = mime_data.data("application/x-layerbutton-index")
@@ -1987,21 +2032,29 @@ class LayerPanel(QWidget):
                         target_visual_index = i # Insert before this widget
                         break
 
-            # --- Move the widget in the layout --- 
+            # --- Move the widget in the layout (macOS-safe) ---
             item_to_move = self.scroll_layout.takeAt(source_index)
             if not item_to_move:
                  logging.error(f"Could not get item at source index {source_index} to move.")
                  event.ignore()
                  return
 
+            # Extract the actual widget from the QLayoutItem *before* deleting the item.
+            widget_to_move = item_to_move.widget()
+            # It is critical to delete the QLayoutItem instance after extracting the widget;
+            # re-using the same QLayoutItem by insertItem() can double-delete native resources
+            # on some Qt platforms (observed crash on macOS).
+            del item_to_move  # Prevent dangling pointer / double-free
+
             # --- Adjust insertion index based on drag direction ---
             final_insert_index = target_visual_index
             if source_index < target_visual_index:
                 final_insert_index -= 1 # Adjust because takeAt shifted items up
 
-            # --- Use the final adjusted index for insertion ---
-            self.scroll_layout.insertItem(final_insert_index, item_to_move)
-            logging.info(f"Moved widget from visual index {source_index} to final insert index {final_insert_index}")
+            # --- Insert the widget directly (safer than re-using QLayoutItem) ---
+            self.scroll_layout.insertWidget(final_insert_index, widget_to_move, 0, Qt.AlignHCenter)
+            widget_to_move.show()
+            logging.info(f"Moved widget from visual index {source_index} to final insert index {final_insert_index} (widget re-inserted)")
 
             # --- Rebuild canvas.strands based on NEW VISUAL order using the map ---
             new_canvas_strands_visual_order = []
@@ -2062,10 +2115,15 @@ class LayerPanel(QWidget):
             # --- Accept the event action FIRST ---
             event.acceptProposedAction()
             logging.info("Drop event action accepted.")
+            if sys.platform == 'darwin':
+                logging.info("[macOS] dropEvent: accepted proposed action, scheduling UI refresh.")
 
-            # --- THEN, refresh the UI to reflect the new order (this should fix internal states) ---
-            self.refresh()
-            logging.info("UI refreshed after drop to show reordered layers.")
+            # --- THEN, refresh the UI. On macOS, defer to the next event-loop cycle to avoid crash; on other OS refresh immediately ---
+            if sys.platform == 'darwin':
+                QTimer.singleShot(0, self.refresh)
+            else:
+                self.refresh()
+            logging.info("UI refreshed after drop to show reordered layers (platform-specific logic applied).")
 
             # --- FINALLY, save the state AFTER refreshing ---
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:

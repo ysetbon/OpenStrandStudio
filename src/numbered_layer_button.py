@@ -5,6 +5,7 @@ import logging
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
+import sys  # Add sys for platform detection
 
 # Create a custom hover-aware label class
 class HoverLabel(QLabel):
@@ -717,7 +718,8 @@ class NumberedLayerButton(QPushButton):
         # Set up the font
         font = QFont(painter.font())
         font.setBold(True)
-        font.setPointSize(10)
+        # Use slightly larger font on macOS to match visual size on Windows
+        font.setPointSize(16 if sys.platform == 'darwin' else 11)
         painter.setFont(font)
 
         # Get the button's rectangle

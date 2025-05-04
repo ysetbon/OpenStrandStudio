@@ -351,3 +351,28 @@ These updates focus on performance improvements and visual enhancements to provi
     *   Added support for the following languages: Italian, Spanish, Portuguese, and Hebrew.
 
 ------
+
+## Version 1.092 (Released: 3/05/2025)
+
+### Improvements and New Features:
+
+1.  **Persistent Undo/Redo History:**
+    *   Undo/Redo history is now saved with your project for persistent session support.
+
+2.  **Customizable Dashed Lines and Arrowheads:**
+    *   Configure dashed line patterns and arrowhead styles on strands for clearer visuals.
+
+3.  **Improved Control Point Visuals:**
+    *   Larger handles and enhanced highlighting for more accurate control point manipulation.
+
+4.  **Mask Extension Options:**
+    *   Fine-tune mask extension behavior with additional control settings.
+
+5.  **Enhanced Shading Algorithm:**
+    *   Produces smoother, more natural shadow effects on strands.
+
+6.  **Upgraded Layer Panel:**
+    *   Added drag-and-drop reordering of layers and quick visibility toggles in the panel.
+
+------
+

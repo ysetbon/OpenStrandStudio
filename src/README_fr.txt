@@ -353,3 +353,24 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
+## Version 1.092 (Sortie : 03/05/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1.  **Historique Annuler/Rétablir Persistant :**
+    *   L'historique Annuler/Rétablir est désormais enregistré avec votre projet pour une prise en charge de session persistante.
+
+2.  **Lignes et Flèches en Pointillés Personnalisables :**
+    *   Configurez les motifs de lignes pointillées et les styles de flèches sur les brins pour des visuels plus clairs.
+
+3.  **Visuels des Points de Contrôle Améliorés :**
+    *   Poignées plus grandes et mise en évidence améliorée pour une manipulation plus précise des points de contrôle.
+
+4.  **Options d'Extension de Masque :**
+    *   Affinez le comportement d'extension de masque avec des paramètres de contrôle supplémentaires.
+
+5.  **Algorithme d'Ombrage Amélioré :**
+    *   Produit des effets d'ombre plus lisses et plus naturels sur les brins.
+
+6.  **Panneau des Calques Amélioré :**
+    *   Ajout du réordonnancement par glisser-déposer des calques et de bascules rapides de visibilité dans le panneau.

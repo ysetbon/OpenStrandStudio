@@ -338,69 +338,104 @@ class AttachedStrand(Strand):
 
     def draw(self, painter):
         """Draw the attached strand with a rounded start and squared end."""
-        painter.save()
+        painter.save() # Top Level Save
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # --- NEW: Draw full strand arrow when strand is hidden (drawn early) ---
-        # Draw here only if the strand is hidden so the arrow remains visible.
-        if getattr(self, 'full_arrow_visible', False) and self.is_hidden:
-            painter.save()
-            # Draw Shaft (as a simple straight line)
-            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-            shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-            shaft_pen.setCapStyle(Qt.FlatCap)
-            painter.setPen(shaft_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawLine(self.start, self.end)
-
-            # Draw Arrowhead
-            arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
-            arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
-
-            if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color:
-                arrow_head_fill_color = self.canvas.default_arrow_fill_color
-            else:
-                arrow_head_fill_color = self.color
-
-            arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
-            arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
-            arrow_head_border_pen.setCapStyle(Qt.FlatCap)
-
-            direction_vector_shaft = self.end - self.start
-            len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
-            if len_vector_shaft > 0:
-                unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
-                tip = self.end
-                arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
-                perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
-                left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
-                right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
-                arrow_head_poly = QPolygonF([tip, left_point, right_point])
-
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(arrow_head_fill_color)
-                painter.drawPolygon(arrow_head_poly)
-
-                painter.setPen(arrow_head_border_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPolygon(arrow_head_poly)
-            painter.restore()
-
-        # --- START: Handle hidden state --- 
-        # --- MODIFIED: Make hidden strands completely invisible --- 
+        # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
-            painter.restore() # Arrow already drawn (if requested). Restore painter and exit.
-            return
-        # --- END MODIFICATION ---
-        # --- OLD CODE (Removed): ---
-        # if self.is_hidden:
-        #     hidden_pen = QPen(QColor(128, 128, 128, 150), 2, Qt.DashLine) # Gray, dashed
-        #     painter.setPen(hidden_pen)
-        #     painter.setBrush(Qt.NoBrush)
-        #     painter.drawPath(path)
-        #     painter.restore()
-        #     return # Don't draw the rest if hidden
-        # --- END OLD CODE ---
+            # Draw full arrow if requested
+            if getattr(self, 'full_arrow_visible', False):
+                painter.save() # Specific save for this drawing operation
+                # --- Draw Shaft (as a simple straight line) ---
+                full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+                shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
+                shaft_pen.setCapStyle(Qt.FlatCap)
+                painter.setPen(shaft_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawLine(self.start, self.end)
+                # --- End Shaft ---
+
+                # --- Draw Arrowhead ---
+                arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+                arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+                default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
+                arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+                
+                arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
+                arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
+                arrow_head_border_pen.setCapStyle(Qt.FlatCap)
+
+                direction_vector_shaft = self.end - self.start
+                len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
+                if len_vector_shaft > 0:
+                    unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
+                    tip = self.end
+                    arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
+                    perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+                    left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
+                    right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
+                    arrow_head_poly = QPolygonF([tip, left_point, right_point])
+                    painter.setPen(Qt.NoPen); painter.setBrush(arrow_head_fill_color); painter.drawPolygon(arrow_head_poly)
+                    painter.setPen(arrow_head_border_pen); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_head_poly)
+                painter.restore() # Specific restore for full arrow
+
+            # Draw dashed extension lines if requested when hidden
+            ext_len_hidden = getattr(self.canvas, 'extension_length', 100)
+            dash_count_hidden = getattr(self.canvas, 'extension_dash_count', 10)
+            dash_width_hidden = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+            dash_seg_hidden = ext_len_hidden / (2 * dash_count_hidden) if dash_count_hidden > 0 else ext_len_hidden
+            dash_gap_hidden = getattr(self.canvas, 'extension_dash_gap_length', dash_seg_hidden); dash_gap_hidden = -dash_gap_hidden
+            
+            side_color_hidden_dash = QColor(self.stroke_color)
+            if self.color: side_color_hidden_dash.setAlpha(self.color.alpha())
+            else: side_color_hidden_dash.setAlpha(255)
+            
+            dash_pen_hidden_ext = QPen(side_color_hidden_dash, dash_width_hidden, Qt.CustomDashLine)
+            pattern_len_hidden_ext = dash_seg_hidden / dash_width_hidden if dash_width_hidden > 0 else dash_seg_hidden
+            dash_pen_hidden_ext.setDashPattern([pattern_len_hidden_ext, pattern_len_hidden_ext])
+            dash_pen_hidden_ext.setCapStyle(Qt.FlatCap)
+
+            if getattr(self, 'start_extension_visible', False) or getattr(self, 'end_extension_visible', False):
+                painter.save()
+                painter.setPen(dash_pen_hidden_ext)
+                if getattr(self, 'start_extension_visible', False):
+                    tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0); length_hidden_start_ext = math.hypot(tangent_hidden_start_ext.x(), tangent_hidden_start_ext.y())
+                    if length_hidden_start_ext: unit_hidden_start_ext = QPointF(tangent_hidden_start_ext.x()/length_hidden_start_ext, tangent_hidden_start_ext.y()/length_hidden_start_ext); raw_end_hidden_start_ext = QPointF(self.start.x() - unit_hidden_start_ext.x()*ext_len_hidden, self.start.y() - unit_hidden_start_ext.y()*ext_len_hidden); start_pt_hidden_start_ext = QPointF(self.start.x() + unit_hidden_start_ext.x()*dash_gap_hidden, self.start.y() + unit_hidden_start_ext.y()*dash_gap_hidden); end_pt_hidden_start_ext = QPointF(raw_end_hidden_start_ext.x() + unit_hidden_start_ext.x()*dash_gap_hidden, raw_end_hidden_start_ext.y() + unit_hidden_start_ext.y()*dash_gap_hidden); painter.drawLine(start_pt_hidden_start_ext, end_pt_hidden_start_ext)
+                if getattr(self, 'end_extension_visible', False):
+                    tangent_hidden_end_ext = self.calculate_cubic_tangent(1.0); length_hidden_end_ext = math.hypot(tangent_hidden_end_ext.x(), tangent_hidden_end_ext.y())
+                    if length_hidden_end_ext: unit_end_hidden_ext = QPointF(tangent_hidden_end_ext.x()/length_hidden_end_ext, tangent_hidden_end_ext.y()/length_hidden_end_ext); raw_end_hidden_end_ext = QPointF(self.end.x() + unit_end_hidden_ext.x()*ext_len_hidden, self.end.y() + unit_end_hidden_ext.y()*ext_len_hidden); start_pt_hidden_end_ext = QPointF(self.end.x() - unit_end_hidden_ext.x()*dash_gap_hidden, self.end.y() - unit_end_hidden_ext.y()*dash_gap_hidden); end_pt_hidden_end_ext = QPointF(raw_end_hidden_end_ext.x() - unit_end_hidden_ext.x()*dash_gap_hidden, raw_end_hidden_end_ext.y() - unit_end_hidden_ext.y()*dash_gap_hidden); painter.drawLine(start_pt_hidden_end_ext, end_pt_hidden_end_ext)
+                painter.restore()
+
+            # Draw individual start/end arrows if requested when hidden
+            arrow_len_hidden_indiv = getattr(self.canvas, 'arrow_head_length', 20)
+            arrow_width_hidden_indiv = getattr(self.canvas, 'arrow_head_width', 10)
+            arrow_gap_length_hidden_indiv = getattr(self.canvas, 'arrow_gap_length', 10)
+            arrow_line_length_hidden_indiv = getattr(self.canvas, 'arrow_line_length', 20)
+            arrow_line_width_hidden_indiv = getattr(self.canvas, 'arrow_line_width', 10)
+            
+            default_fill_color_hidden_indiv = self.color if self.color else QColor(Qt.black)
+            fill_color_hidden_indiv = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_fill_color_hidden_indiv
+            
+            border_pen_hidden_indiv = QPen(self.stroke_color, self.stroke_width)
+            border_pen_hidden_indiv.setJoinStyle(Qt.MiterJoin)
+            border_pen_hidden_indiv.setCapStyle(Qt.FlatCap)
+
+            if getattr(self, 'start_arrow_visible', False) or getattr(self, 'end_arrow_visible', False):
+                painter.save()
+                if getattr(self, 'start_arrow_visible', False):
+                    tangent_s_hidden_indiv = self.calculate_cubic_tangent(0.0); len_s_hidden_indiv = math.hypot(tangent_s_hidden_indiv.x(), tangent_s_hidden_indiv.y())
+                    if len_s_hidden_indiv: unit_s_hidden_indiv = QPointF(tangent_s_hidden_indiv.x() / len_s_hidden_indiv, tangent_s_hidden_indiv.y() / len_s_hidden_indiv); arrow_dir_s_hidden_indiv = QPointF(-unit_s_hidden_indiv.x(), -unit_s_hidden_indiv.y()); shaft_start_s_hidden_indiv = QPointF(self.start.x() + arrow_dir_s_hidden_indiv.x() * arrow_gap_length_hidden_indiv, self.start.y() + arrow_dir_s_hidden_indiv.y() * arrow_gap_length_hidden_indiv); shaft_end_s_hidden_indiv = QPointF(shaft_start_s_hidden_indiv.x() + arrow_dir_s_hidden_indiv.x() * arrow_line_length_hidden_indiv, shaft_start_s_hidden_indiv.y() + arrow_dir_s_hidden_indiv.y() * arrow_line_length_hidden_indiv); line_pen_s_hidden_indiv = QPen(self.stroke_color, arrow_line_width_hidden_indiv); line_pen_s_hidden_indiv.setCapStyle(Qt.FlatCap); painter.setPen(line_pen_s_hidden_indiv); painter.setBrush(Qt.NoBrush); painter.drawLine(shaft_start_s_hidden_indiv, shaft_end_s_hidden_indiv); base_center_s_hidden_indiv = shaft_end_s_hidden_indiv; tip_s_hidden_indiv = QPointF(base_center_s_hidden_indiv.x() + arrow_dir_s_hidden_indiv.x() * arrow_len_hidden_indiv, base_center_s_hidden_indiv.y() + arrow_dir_s_hidden_indiv.y() * arrow_len_hidden_indiv); perp_s_hidden_indiv = QPointF(-arrow_dir_s_hidden_indiv.y(), arrow_dir_s_hidden_indiv.x()); left_s_hidden_indiv = QPointF(base_center_s_hidden_indiv.x() + perp_s_hidden_indiv.x() * arrow_width_hidden_indiv / 2, base_center_s_hidden_indiv.y() + perp_s_hidden_indiv.y() * arrow_width_hidden_indiv / 2); right_s_hidden_indiv = QPointF(base_center_s_hidden_indiv.x() - perp_s_hidden_indiv.x() * arrow_width_hidden_indiv / 2, base_center_s_hidden_indiv.y() - perp_s_hidden_indiv.y() * arrow_width_hidden_indiv / 2); arrow_poly_s_hidden_indiv = QPolygonF([tip_s_hidden_indiv, left_s_hidden_indiv, right_s_hidden_indiv]); painter.setPen(Qt.NoPen); painter.setBrush(fill_color_hidden_indiv); painter.drawPolygon(arrow_poly_s_hidden_indiv); painter.setPen(border_pen_hidden_indiv); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_poly_s_hidden_indiv)
+                if getattr(self, 'end_arrow_visible', False):
+                    tangent_e_hidden_indiv = self.calculate_cubic_tangent(1.0); len_e_hidden_indiv = math.hypot(tangent_e_hidden_indiv.x(), tangent_e_hidden_indiv.y())
+                    if len_e_hidden_indiv: unit_e_hidden_indiv = QPointF(tangent_e_hidden_indiv.x() / len_e_hidden_indiv, tangent_e_hidden_indiv.y() / len_e_hidden_indiv); arrow_dir_e_hidden_indiv = QPointF(unit_e_hidden_indiv.x(), unit_e_hidden_indiv.y()); shaft_start_e_hidden_indiv = QPointF(self.end.x() + arrow_dir_e_hidden_indiv.x() * arrow_gap_length_hidden_indiv, self.end.y() + arrow_dir_e_hidden_indiv.y() * arrow_gap_length_hidden_indiv); shaft_end_e_hidden_indiv = QPointF(shaft_start_e_hidden_indiv.x() + arrow_dir_e_hidden_indiv.x() * arrow_line_length_hidden_indiv, shaft_start_e_hidden_indiv.y() + arrow_dir_e_hidden_indiv.y() * arrow_line_length_hidden_indiv); line_pen_e_hidden_indiv = QPen(self.stroke_color, arrow_line_width_hidden_indiv); line_pen_e_hidden_indiv.setCapStyle(Qt.FlatCap); painter.setPen(line_pen_e_hidden_indiv); painter.setBrush(Qt.NoBrush); painter.drawLine(shaft_start_e_hidden_indiv, shaft_end_e_hidden_indiv); base_center_e_hidden_indiv = shaft_end_e_hidden_indiv; tip_e_hidden_indiv = QPointF(base_center_e_hidden_indiv.x() + arrow_dir_e_hidden_indiv.x() * arrow_len_hidden_indiv, base_center_e_hidden_indiv.y() + arrow_dir_e_hidden_indiv.y() * arrow_len_hidden_indiv); perp_e_hidden_indiv = QPointF(-arrow_dir_e_hidden_indiv.y(), arrow_dir_e_hidden_indiv.x()); left_e_hidden_indiv = QPointF(base_center_e_hidden_indiv.x() + perp_e_hidden_indiv.x() * arrow_width_hidden_indiv / 2, base_center_e_hidden_indiv.y() + perp_e_hidden_indiv.y() * arrow_width_hidden_indiv / 2); right_e_hidden_indiv = QPointF(base_center_e_hidden_indiv.x() - perp_e_hidden_indiv.x() * arrow_width_hidden_indiv / 2, base_center_e_hidden_indiv.y() - perp_e_hidden_indiv.y() * arrow_width_hidden_indiv / 2); arrow_poly_e_hidden_indiv = QPolygonF([tip_e_hidden_indiv, left_e_hidden_indiv, right_e_hidden_indiv]); painter.setPen(Qt.NoPen); painter.setBrush(fill_color_hidden_indiv); painter.drawPolygon(arrow_poly_e_hidden_indiv); painter.setPen(border_pen_hidden_indiv); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_poly_e_hidden_indiv)
+                painter.restore()
+
+            painter.restore() # Top Level Restore for hidden state
+            return # Skip drawing strand body etc.
+        # --- END MODIFIED ---
+
+        # --- REMOVED original full_arrow_visible and is_hidden check here ---
 
         # Get the path representing the strand as a cubic Bézier curve
         path = self.get_path()
@@ -892,26 +927,25 @@ class AttachedStrand(Strand):
             temp_painter.end()
             painter.restore()
 
-        # --- NEW: Draw full strand arrow on TOP of strand body ---
-        if getattr(self, 'full_arrow_visible', False) and not self.is_hidden:
+        # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
+        if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
-            # Draw Shaft (as a simple straight line)
+            # --- Draw Shaft (as a simple straight line) ---
             full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
             shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
             shaft_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(shaft_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawLine(self.start, self.end)
+            # --- End Shaft ---
 
-            # Draw Arrowhead
+            # --- Draw Arrowhead (at self.end, oriented by the straight shaft's direction) ---
             arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
             arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
-            if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color:
-                arrow_head_fill_color = self.canvas.default_arrow_fill_color
-            else:
-                arrow_head_fill_color = self.color
-
+            default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
+            arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+            
             arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
             arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
             arrow_head_border_pen.setCapStyle(Qt.FlatCap)
@@ -926,17 +960,16 @@ class AttachedStrand(Strand):
                 left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
                 right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
                 arrow_head_poly = QPolygonF([tip, left_point, right_point])
-
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(arrow_head_fill_color)
                 painter.drawPolygon(arrow_head_poly)
-
                 painter.setPen(arrow_head_border_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_head_poly)
             painter.restore()
+        # --- END Draw full strand arrow on TOP ---
 
-        painter.restore()
+        painter.restore() # This is the final restore for the AttachedStrand draw method
 
         # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
         # This code is removed to avoid duplicate drawing

@@ -561,6 +561,17 @@ class UndoRedoManager(QObject):
                          logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible attribute presence differs.")
                          return False
 
+                    # --- ADD: Check full_arrow_visible ---
+                    if hasattr(current_strand, 'full_arrow_visible') and 'full_arrow_visible' in prev_strand:
+                        prev_full_arrow_vis = prev_strand.get('full_arrow_visible', not getattr(current_strand, 'full_arrow_visible', False)) # Default to opposite if missing
+                        if getattr(current_strand, 'full_arrow_visible', False) != prev_full_arrow_vis:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} full_arrow_visible differs.")
+                            return False
+                    elif hasattr(current_strand, 'full_arrow_visible') != ('full_arrow_visible' in prev_strand):
+                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} full_arrow_visible attribute presence differs.")
+                         return False
+                    # --- END ADD ---
+
                     # --- ADD: Check circle visibility (has_circles) ---
                     if hasattr(current_strand, 'has_circles') and 'has_circles' in prev_strand:
                         # Check if has_circles lists differ
@@ -944,6 +955,18 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- ADD: Check full_arrow_visible for Undo ---
+                            if hasattr(new_strand, 'full_arrow_visible') and hasattr(original_strand, 'full_arrow_visible'):
+                                if getattr(new_strand, 'full_arrow_visible', False) != getattr(original_strand, 'full_arrow_visible', False):
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} full_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'full_arrow_visible') != hasattr(original_strand, 'full_arrow_visible'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} full_arrow_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
                             # --- RE-ADD: Check circle visibility (has_circles) ---
                             if hasattr(new_strand, 'has_circles') and hasattr(original_strand, 'has_circles'):
                                 current_circles = getattr(new_strand, 'has_circles', [False, False])
@@ -1266,6 +1289,18 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
+
+                            # --- ADD: Check full_arrow_visible for Redo ---
+                            if hasattr(new_strand, 'full_arrow_visible') and hasattr(original_strand, 'full_arrow_visible'):
+                                if getattr(new_strand, 'full_arrow_visible', False) != getattr(original_strand, 'full_arrow_visible', False):
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} full_arrow_visible differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'full_arrow_visible') != hasattr(original_strand, 'full_arrow_visible'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} full_arrow_visible attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
 
                             # --- RE-ADD: Check circle visibility (has_circles) ---
                             if hasattr(new_strand, 'has_circles') and hasattr(original_strand, 'has_circles'):

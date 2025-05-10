@@ -69,6 +69,7 @@ def serialize_strand(strand, canvas, index=None):
         "end_extension_visible": getattr(strand, 'end_extension_visible', False),
         "start_arrow_visible": getattr(strand, 'start_arrow_visible', False),
         "end_arrow_visible": getattr(strand, 'end_arrow_visible', False),
+        "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
     }
 
     # Only save circle_stroke_color if it exists
@@ -252,6 +253,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.end_extension_visible = data.get("end_extension_visible", False)
         strand.start_arrow_visible = data.get("start_arrow_visible", False)
         strand.end_arrow_visible = data.get("end_arrow_visible", False)
+        strand.full_arrow_visible = data.get("full_arrow_visible", False)
 
         # Now handle control_points if present
         if "control_points" in data:

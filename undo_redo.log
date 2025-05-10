@@ -1,0 +1,67 @@
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+REDO: State BEFORE loading - Strands: 0, Order: []
+REDO: Attempting to load step 1
+REDO: State AFTER loading step 1 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 2
+REDO: State AFTER loading step 2 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 3
+REDO: State AFTER loading step 3 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 5
+REDO: State AFTER loading step 5 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+REDO: State BEFORE loading - Strands: 0, Order: []
+REDO: Attempting to load step 1
+REDO: State AFTER loading step 1 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 2
+REDO: State AFTER loading step 2 - Strands: 1, Order: ['1_1']
+REDO: States have visual differences, completing redo step.
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 3
+REDO: State AFTER loading step 3 - Strands: 1, Order: ['1_1']
+REDO: States have visual differences, completing redo step.
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 4
+REDO: State AFTER loading step 4 - Strands: 1, Order: ['1_1']
+REDO: States have visual differences, completing redo step.
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 5
+REDO: State AFTER loading step 5 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1
+REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
+REDO: Attempting to load step 6
+REDO: State AFTER loading step 6 - Strands: 1, Order: ['1_1']
+REDO: Selected strand after redo: 1_1
+REDO: UI updated after redo operation
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1
+UNDO: Selected strand after undo: 1_1

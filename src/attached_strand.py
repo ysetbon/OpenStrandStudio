@@ -71,6 +71,9 @@ class AttachedStrand(Strand):
         # Add line visibility flags (only end matters for attached)
         self.start_line_visible = True # Still needed for attribute checks
         self.end_line_visible = True
+        # --- NEW: Full arrow visibility flag ---
+        self.full_arrow_visible = False
+        # --- END NEW ---
 
         # --------------------------------------------------------------------
         # Removed the force-default to black if circle_stroke_color is None.
@@ -338,11 +341,56 @@ class AttachedStrand(Strand):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # --- NEW: Draw full strand arrow when strand is hidden (drawn early) ---
+        # Draw here only if the strand is hidden so the arrow remains visible.
+        if getattr(self, 'full_arrow_visible', False) and self.is_hidden:
+            painter.save()
+            # Draw Shaft (as a simple straight line)
+            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+            shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
+            shaft_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(shaft_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawLine(self.start, self.end)
+
+            # Draw Arrowhead
+            arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+            arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+            if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color:
+                arrow_head_fill_color = self.canvas.default_arrow_fill_color
+            else:
+                arrow_head_fill_color = self.color
+
+            arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
+            arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
+            arrow_head_border_pen.setCapStyle(Qt.FlatCap)
+
+            direction_vector_shaft = self.end - self.start
+            len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
+            if len_vector_shaft > 0:
+                unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
+                tip = self.end
+                arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
+                perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+                left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
+                right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
+                arrow_head_poly = QPolygonF([tip, left_point, right_point])
+
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(arrow_head_fill_color)
+                painter.drawPolygon(arrow_head_poly)
+
+                painter.setPen(arrow_head_border_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(arrow_head_poly)
+            painter.restore()
+
         # --- START: Handle hidden state --- 
         # --- MODIFIED: Make hidden strands completely invisible --- 
         if self.is_hidden:
-            painter.restore() # Restore painter state before returning
-            return # Don't draw anything if hidden
+            painter.restore() # Arrow already drawn (if requested). Restore painter and exit.
+            return
         # --- END MODIFICATION ---
         # --- OLD CODE (Removed): ---
         # if self.is_hidden:
@@ -438,7 +486,7 @@ class AttachedStrand(Strand):
         arrow_line_length = getattr(self.canvas, 'arrow_line_length', 20)
         arrow_line_width = getattr(self.canvas, 'arrow_line_width', 10)
         # Fill and border styling
-        if hasattr(self.canvas, 'use_default_arrow_color') and self.canvas.use_default_arrow_color:
+        if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color:
             fill_color = self.canvas.default_arrow_fill_color
         else:
             fill_color = self.color
@@ -844,8 +892,49 @@ class AttachedStrand(Strand):
             temp_painter.end()
             painter.restore()
 
-        # temp_painter.end() # REMOVE THIS - it corresponds to no active painter
+        # --- NEW: Draw full strand arrow on TOP of strand body ---
+        if getattr(self, 'full_arrow_visible', False) and not self.is_hidden:
+            painter.save()
+            # Draw Shaft (as a simple straight line)
+            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+            shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
+            shaft_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(shaft_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawLine(self.start, self.end)
 
+            # Draw Arrowhead
+            arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+            arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+            if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color:
+                arrow_head_fill_color = self.canvas.default_arrow_fill_color
+            else:
+                arrow_head_fill_color = self.color
+
+            arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
+            arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
+            arrow_head_border_pen.setCapStyle(Qt.FlatCap)
+
+            direction_vector_shaft = self.end - self.start
+            len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
+            if len_vector_shaft > 0:
+                unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
+                tip = self.end
+                arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
+                perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+                left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
+                right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
+                arrow_head_poly = QPolygonF([tip, left_point, right_point])
+
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(arrow_head_fill_color)
+                painter.drawPolygon(arrow_head_poly)
+
+                painter.setPen(arrow_head_border_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(arrow_head_poly)
+            painter.restore()
 
         painter.restore()
 

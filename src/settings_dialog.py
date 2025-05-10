@@ -953,7 +953,13 @@ class SettingsDialog(QDialog):
         self.whats_new_widget = QWidget()
         whats_new_layout = QVBoxLayout(self.whats_new_widget)
 
-   
+        # Use QTextBrowser to display rich text content for What's New
+        self.whats_new_text_browser = QTextBrowser()
+        self.whats_new_text_browser.setHtml(_['whats_new_info'])
+        self.whats_new_text_browser.setOpenExternalLinks(True)
+        whats_new_layout.addWidget(self.whats_new_text_browser)
+
+        self.stacked_widget.addWidget(self.whats_new_widget)
 
 
         # About Page (index 5) - LAST
@@ -1449,15 +1455,14 @@ class SettingsDialog(QDialog):
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
-        # Update about text browser instead of label
-        self.about_text_browser.setHtml(_['about_info'])
         # Update history page elements
         self.history_explanation_label.setText(_['history_explanation'])
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
         # Update What's New page elements
- 
-
+        self.whats_new_text_browser.setHtml(_['whats_new_info'])
+        # Update about text browser instead of label
+        self.about_text_browser.setHtml(_['about_info'])
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])

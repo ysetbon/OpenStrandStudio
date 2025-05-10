@@ -78,7 +78,7 @@ translations = {
         'apply': 'Apply',
         'language_settings_info': 'Change the language of the application.',
         'tutorial_info': 'Press the "play video" button below each text to view the tutorial explaining:',
-        'about_info': '''
+        'whats_new_info': '''
         <h2>What's New in Version 1.092</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Persistent Undo/Redo History:</b> Your undo and redo actions are now saved with your project. When you reopen a saved file, you can continue using undo and redo as if you never closed the application.</li>
@@ -220,6 +220,10 @@ translations = {
         'arrow_line_width_tooltip': 'Thickness of the arrow shaft',
         'use_default_arrow_color': 'Use Default Arrow Color',
         # --- END NEW ---
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "Show Full Arrow",
+        'hide_full_arrow': "Hide Full Arrow",
+        # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
         'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?',
@@ -234,6 +238,25 @@ translations = {
         'history_cleared_text': 'All past history sessions have been cleared.',
         'no_history_found': 'No past history sessions found.',
         'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
+        # About translations
+        'about': 'About OpenStrand Studio',
+        'about_info': '''
+        <h2>About OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio was developed by Yonatan Setbon. The software is designed to create any knot in a diagrammatic way by using layers for each section of a strand and incorporating masked layers that allow for an "over-under effect."
+        </p>
+        <p style="font-size:15px;">
+            Yonatan runs a YouTube channel dedicated to lanyards called <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, where many tutorials feature diagrams of knots. This software was created to facilitate designing any knot, in order to demonstrate and explain how to make complex tutorials involving knot tying.
+        </p>
+        <p style="font-size:15px;">
+            Feel free to contact me at <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> or connect with me on
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> or
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''',
 
     },
     'fr': {
@@ -315,7 +338,7 @@ translations = {
         'apply': 'Appliquer',
         'language_settings_info': 'Changer la langue de l\'application.',
         'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte pour voir le tutoriel explicatif :',
-        'about_info': '''
+        'whats_new_info': '''
         <h2>Nouveautés de la version 1.092</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Persistance de l'historique Annuler/Rétablir :</b> L'historique de vos actions est désormais sauvegardé avec votre projet. Lorsque vous rechargez un fichier, vous pouvez continuer à utiliser Annuler/Rétablir comme si vous n'aviez jamais quitté l'application.</li>
@@ -470,7 +493,25 @@ translations = {
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
         'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
         'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
-        'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets'
+        'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
+        # About translations
+        'about_info': '''
+        <h2>À propos d'OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio a été développé par Yonatan Setbon. Ce logiciel a été conçu pour créer n'importe quel nœud de manière schématique en utilisant des calques pour chaque section d'un brin et en incorporant des calques masqués qui permettent un effet "dessus-dessous".
+        </p>
+        <p style="font-size:15px;">
+            Yonatan anime une chaîne YouTube dédiée aux bracelets appelée <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, où de nombreux tutoriels présentent des diagrammes de nœuds. Ce logiciel a été créé pour faciliter la conception de tout nœud, afin de démontrer et d'expliquer comment réaliser des tutoriels de nouage complexes.
+        </p>
+        <p style="font-size:15px;">
+            N'hésitez pas à me contacter à <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou à me suivre sur
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''' ,
     },
     'it': {
         # MainWindow translations
@@ -549,7 +590,7 @@ translations = {
         'apply': 'Applica',
         'language_settings_info': 'Cambia la lingua dell\'applicazione.',
         'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo per visualizzare il tutorial che spiega:',
-        'about_info': '''
+        'whats_new_info': '''
         <h2>Novità della versione 1.092</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
         <li style="font-size:15px;"><b>Persistenza di Annulla/Ripristina:</b> la cronologia delle azioni viene ora mantenuta anche dopo il salvataggio. Quando riapri un file salvato, puoi continuare a utilizzare Annulla/Ripristina come se l'app non fosse mai stata chiusa.</li>
@@ -564,7 +605,7 @@ translations = {
         <li style="font-size:15px;"><b>Visualizzazione ottimizzata dei punti di controllo:</b>
             <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;">I punti di controllo sono ora più grandi per facilitare l'interazione.</li>
-            <li style="font-size:15px;">Ogni maniglia presenta un bordo netto e un centro colorato in base al filo corrispondente, per un’associazione visiva immediata.</li>
+            <li style="font-size:15px;">Ogni maniglia presenta un bordo netto e un centro colorato in base al filo corrispondente, per un'associazione visiva immediata.</li>
             </ul>
         </li>
 
@@ -712,7 +753,25 @@ translations = {
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
         'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
-        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini'
+        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
+        # About translations
+        'about_info': '''
+        <h2>Informazioni su OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio è stato sviluppato da Yonatan Setbon. Il software è stato progettato per creare qualsiasi nodo in modo schematico utilizzando strati per ogni sezione di un filo e incorporando strati mascherati che consentono un effetto "sopra-sotto".
+        </p>
+        <p style="font-size:15px;">
+            Yonatan gestisce un canale YouTube dedicato ai nastro di sicurezza chiamato <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, dove molti tutorial presentano diagrammi di nodi. Questo software è stato creato per facilitare la progettazione di qualsiasi nodo, al fine di dimostrare e spiegare come realizzare tutorial di nuovo nodo complessi.
+        </p>
+        <p style="font-size:15px;">
+            Sentitevi liberi di contattarmi a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o di seguirmi su
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''' ,
     },
     # New Spanish Translations
     'es': {
@@ -794,7 +853,7 @@ translations = {
         'apply': 'Aplicar',
         'language_settings_info': 'Cambiar el idioma de la aplicación.',
         'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto para ver el tutorial que explica:',
-        'about_info': '''
+        'whats_new_info': '''
         <h2>Novedades de la versión 1.092</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
         <li style="font-size:15px;"><b>Historial persistente de Deshacer/Rehacer:</b> ahora el historial de acciones permanece guardado con tu trabajo. Cuando vuelves a abrir un archivo guardado, puedes seguir utilizando las funciones de Deshacer y Rehacer exactamente donde lo dejaste.</li>
@@ -951,7 +1010,25 @@ translations = {
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
         'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
         'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
-        'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones'
+        'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
+        # About translations
+        'about_info': '''
+        <h2>Acerca de OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio fue desarrollado por Yonatan Setbon. El software está diseñado para crear cualquier nudo de manera esquemática utilizando capas para cada sección de un cordón y utilizando capas enmascaradas que permiten un efecto "sobre-debajo".
+        </p>
+        <p style="font-size:15px;">
+            Yonatan mantiene un canal de YouTube dedicado a los nudos de lazo llamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, donde muchos tutoriales muestran diagramas de nudos. Este software fue creado para facilitar el diseño de cualquier nudo, con el fin de demostrar y explicar cómo realizar tutoriales de nudo complejos.
+        </p>
+        <p style="font-size:15px;">
+            Siéntase libre de contactarme a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o seguirme en
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''' ,
     },
     # New Portuguese Translations
     'pt': {
@@ -1033,7 +1110,7 @@ translations = {
         'apply': 'Aplicar',
         'language_settings_info': 'Mudar o idioma da aplicação.',
         'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto para visualizar o tutorial explicando:',
-        'about_info': '''
+        'whats_new_info': '''
         <h2>Novidades da versão 1.092</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Persistência do histórico Desfazer/Refazer:</b> Agora o histórico das ações Desfazer e Refazer é salvo junto com o projeto. Ao abrir um arquivo salvo, você pode retomar o trabalho exatamente onde parou.</li>
@@ -1194,7 +1271,25 @@ translations = {
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
         'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.',
         'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
-        'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços'
+        'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
+        # About translations
+        'about_info': '''
+        <h2>Sobre OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio foi desenvolvido por Yonatan Setbon. O software foi projetado para criar qualquer nó de forma esquemática usando camadas para cada seção de um fio e incorporando camadas mascaradas que permitem um efeito "sobre-sobre".
+        </p>
+        <p style="font-size:15px;">
+            Yonatan mantém um canal do YouTube dedicado a cordões de segurança chamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, onde vários tutoriais apresentam diagramas de nós. Este software foi criado para facilitar o design de qualquer nó, com o objetivo de demonstrar e explicar como realizar tutoriais de nó complexo.
+        </p>
+        <p style="font-size:15px;">
+            Sinta-se à vontade para me contatar em <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou me seguir no
+            <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
+            <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''' ,
     },
     # New Hebrew Translations (RTL language)
     'he': {
@@ -1276,7 +1371,7 @@ translations = {
         'apply': 'החל',
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
-        'about_info': '''
+        'whats_new_info': '''
         <h2 dir="rtl" style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.092</h2> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;"><b>שמירת היסטוריית פעולות ביטול ושחזור:</b> פעולות הביטול והשחזור נשמרות מעתה בקובץ הפרויקט. כשתפתחו קובץ שמור, תוכלו להמשיך ישירות מהמקום בו הפסקתם, כולל יכולת ביטול ושחזור רציצה.</li> <li style="font-size:15px;"><b>קווים וחצים מקווקווים:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות להגדרת דפוסים מקווקווים בהתאמה אישית בקצות החוטים, עם שליטה מלאה בכמות הקווים, אורכם והמרווח ביניהם.</li> <li style="font-size:15px;">תמיכה חדשה בהוספת ראשי חץ מקווקווים בקצוות החוטים, כולל שליטה מדויקת באורך, ברוחב, בריווח ובצורת החץ מחלון ההגדרות.</li> </ul> </li> <li style="font-size:15px;"><b>שיפורים בתצוגת נקודות הבקרה:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">נקודות הבקרה גדולות וברורות יותר, לשיפור האחיזה והדיוק.</li> <li style="font-size:15px;">ידיות הבקרה קיבלו מתאר מודגש ומילוי בצבע התואם לחוט, לזיהוי מיידי וברור.</li> </ul> </li> <li style="font-size:15px;"><b>הרחבת מסכות:</b> נוספה אפשרות בחלון ההגדרות לשליטה מדויקת בהתנהגות המסכות – חיתוך המסכה בדיוק בקצה החוט, או הארכתה מעבר לו.</li> <li style="font-size:15px;"><b>אלגוריתם צללים משופר:</b> מנוע הצללים שופר משמעותית ומספק צללים חלקים וברורים יותר, עם תמיכה מלאה בריבוי שכבות ובאנטיאלייסינג איכותי. נוספו הגדרות מתקדמות לשליטה בכמות צעדי הטשטוש וברדיוס הטשטוש המרבי.</li> <li style="font-size:15px;"><b>שיפור ממשק פאנל השכבות:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות נוחה וברורה לגרירה ושחרור לשינוי סדר השכבות, כולל אינדיקטורים ויזואליים.</li> <li style="font-size:15px;">תפריט ימני חדש עם אפשרויות מתקדמות להצגה או להסתרה מהירה של קווים, חיצים ונקודות בקרה.</li> </ul> </li> </ul> <p style="font-size:13px; text-align: right;">© 2025 OpenStrand Studio - גרסה 1.092</p>
         ''',
 
@@ -1406,8 +1501,25 @@ translations = {
         'history_cleared_text': 'כל הפעלות ההיסטוריה הקודמות נוקו.',
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
-            'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.'
-    }
+            'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
+    # About translations
+    'about': 'אודות OpenStrand Studio',
+    'about_info': '''
+    <h2>אודות OpenStrand Studio</h2>
+    <p style="font-size:15px;">
+        OpenStrand Studio פותחה על ידי יהונתן סטבון. התוכנה מיועדת ליצירת כל קשר באופן סכמטי על ידי שימוש בשכבות לכל קטע של חוט ושילוב שכבות עם מסכות המאפשרות אפקט "מעל-מתחת".
+    </p>
+    <p style="font-size:15px;">
+        יהונתן מפעיל ערוץ YouTube ייעודי לרצועות בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, בו מדריכים רבים מציגים דיאגרמות של קשרים. תוכנה זו נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד להכין מדריכים מורכבים הכוללים קשירת קשרים.
+    </p>
+    <p style="font-size:15px;">
+        אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+    </p>
+    <p style="font-size:13px;">
+        © 2025 OpenStrand Studio
+    </p>
+    ''',            
+    },
+
 }
 
-# Remove the update() calls since we've added the translations directly to the dictionaries

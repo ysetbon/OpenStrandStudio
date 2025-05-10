@@ -410,6 +410,24 @@ class NumberedLayerButton(QPushButton):
                 for child in arrow_widget.findChildren(QWidget):
                     child.setStyleSheet(arrow_style)
 
+            # --- NEW: Add Full Arrow toggle ---
+            context_menu.addSeparator()
+            full_arrow_text = _['show_full_arrow'] if not getattr(strand, 'full_arrow_visible', False) else _['hide_full_arrow']
+            full_arrow_label = HoverLabel(full_arrow_text, self, theme)
+            if is_hebrew:
+                full_arrow_label.setLayoutDirection(Qt.RightToLeft)
+                full_arrow_label.setAlignment(Qt.AlignLeft)
+            full_arrow_action = QWidgetAction(self)
+            full_arrow_action.setDefaultWidget(full_arrow_label)
+            full_arrow_action.triggered.connect(
+                lambda: (
+                    self.toggle_strand_full_arrow_visibility(strand, layer_panel),
+                    context_menu.close(),
+                )
+            )
+            context_menu.addAction(full_arrow_action)
+            # --- END NEW ---
+
             # Add extension line toggles
             if hasattr(strand, 'start_extension_visible') or hasattr(strand, 'end_extension_visible'):
                 context_menu.addSeparator()
@@ -1077,6 +1095,30 @@ class NumberedLayerButton(QPushButton):
                 # --- END ADD ---
             else:
                  print("Warning: Could not find canvas to update after toggling arrow visibility.")
+                 self.update() # Fallback update
+        else:
+            print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
+    # --- END NEW ---
+
+    # --- NEW: Add full arrow visibility toggle ---
+    def toggle_strand_full_arrow_visibility(self, strand, layer_panel):
+        """Toggles the visibility of the full arrow of a strand."""
+        attr_name = "full_arrow_visible"
+        if hasattr(strand, attr_name):
+            current_visibility = getattr(strand, attr_name)
+            setattr(strand, attr_name, not current_visibility)
+            print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update() # Request canvas repaint
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    print(f"Reset _last_save_time to force save for toggling {attr_name}")
+                    layer_panel.canvas.undo_redo_manager.save_state()
+                    print(f"Undo/Redo state saved after toggling {attr_name}")
+                else:
+                    print("Warning: Could not find undo_redo_manager on canvas to save state.")
+            else:
+                 print("Warning: Could not find canvas to update after toggling full arrow visibility.")
                  self.update() # Fallback update
         else:
             print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")

@@ -1,8 +1,8 @@
 Theme: default
-Language: he
+Language: en
 ShadowColor: 0,0,0,250
-DrawOnlyAffectedStrand: false
-EnableThirdControlPoint: false
+DrawOnlyAffectedStrand: true
+EnableThirdControlPoint: true
 NumSteps: 3
 MaxBlurRadius: 30.0
 UseExtendedMask: true
@@ -14,7 +14,7 @@ ExtensionLineWidth: 20.0
 ArrowHeadLength: 20.0
 ArrowHeadWidth: 30.0
 ArrowGapLength: 10.0
-ArrowLineLength: 20.0
-ArrowLineWidth: 30.0
+ArrowLineLength: 5.0
+ArrowLineWidth: 5.0
 UseDefaultArrowColor: true
 DefaultArrowColor: 255,170,127,255

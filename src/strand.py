@@ -744,13 +744,16 @@ class Strand:
             if getattr(self, 'full_arrow_visible', False):
                 painter.save()
 
-                # --- Draw Shaft (as a simple straight line) ---
+                # --- Draw Shaft (following the Bézier curve) ---
                 full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
                 shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
                 shaft_pen.setCapStyle(Qt.FlatCap)
+                shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
                 painter.setPen(shaft_pen)
                 painter.setBrush(Qt.NoBrush)
-                painter.drawLine(self.start, self.end) # Straight line from start to end
+                # Draw the curved path instead of a straight line
+                path = self.get_path()
+                painter.drawPath(path)
                 # --- End Shaft ---
 
                 # --- Draw Arrowhead (at self.end, oriented by the straight shaft's direction) ---
@@ -764,13 +767,13 @@ class Strand:
                 arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
                 arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-                # Calculate direction vector of the straight shaft
-                direction_vector_shaft = self.end - self.start
-                len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
+                # Calculate direction vector using the tangent at the end of the curve
+                tangent_at_end = self.calculate_cubic_tangent(1.0)
+                len_vector_shaft = math.hypot(tangent_at_end.x(), tangent_at_end.y())
 
                 if len_vector_shaft > 0:
-                    unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
-                    
+                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_vector_shaft, tangent_at_end.y() / len_vector_shaft)
+
                     tip = self.end
                     # Base of the arrowhead, moving back from the tip along the shaft's direction
                     arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
@@ -1533,16 +1536,19 @@ class Strand:
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
-            # --- Draw Shaft (as a simple straight line) ---
+            # --- Draw Shaft (following the Bézier curve) ---
             full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
             shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
             shaft_pen.setCapStyle(Qt.FlatCap)
+            shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
             painter.setPen(shaft_pen)
             painter.setBrush(Qt.NoBrush)
-            painter.drawLine(self.start, self.end)
+            # Draw the curved path instead of a straight line
+            path = self.get_path()
+            painter.drawPath(path)
             # --- End Shaft ---
 
-            # --- Draw Arrowhead (at self.end, oriented by the straight shaft's direction) ---
+            # --- Draw Arrowhead (at self.end, oriented by the curve's tangent) ---
             arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
             arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
@@ -1553,10 +1559,12 @@ class Strand:
             arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
             arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-            direction_vector_shaft = self.end - self.start
-            len_vector_shaft = math.hypot(direction_vector_shaft.x(), direction_vector_shaft.y())
+            # Calculate direction vector using the tangent at the end of the curve
+            tangent_at_end = self.calculate_cubic_tangent(1.0)
+            len_vector_shaft = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+            
             if len_vector_shaft > 0:
-                unit_vector_shaft = QPointF(direction_vector_shaft.x() / len_vector_shaft, direction_vector_shaft.y() / len_vector_shaft)
+                unit_vector_shaft = QPointF(tangent_at_end.x() / len_vector_shaft, tangent_at_end.y() / len_vector_shaft)
                 tip = self.end
                 arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
                 perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())

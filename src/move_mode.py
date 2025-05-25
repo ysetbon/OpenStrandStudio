@@ -2499,6 +2499,10 @@ class MoveMode:
             painter (QPainter): The painter object to draw with.
             strand: The strand to draw the C-shape for.
         """
+        # Check if strand is hidden - don't draw C-shape for hidden strands
+        if hasattr(strand, 'is_hidden') and strand.is_hidden:
+            return
+            
         # Extra check to prevent drawing when moving control points
         if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
             return

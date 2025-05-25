@@ -1834,6 +1834,11 @@ class StrandDrawingCanvas(QWidget):
         if isinstance(strand, MaskedStrand):
             self.draw_highlighted_masked_strand(painter, strand)
         else:
+            # Check if the strand is hidden - if so, just draw it normally without C-shapes
+            if hasattr(strand, 'is_hidden') and strand.is_hidden:
+                strand.draw(painter)
+                return
+                
             # Get the path representing the strand as a cubic Bézier curve
             path = strand.get_path()
 
@@ -1867,18 +1872,31 @@ class StrandDrawingCanvas(QWidget):
                     
                     # --- NEW: Check for hidden attached strands at this connection point --- 
                     skip_c_shape = False
-                    for other_strand in self.strands:
-                        if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
-                            # Check if the hidden attached strand connects to the current center point AND is the selected strand
-                            if (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand:
-                                skip_c_shape = True
-                                logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected hidden attached strand {other_strand.layer_name} connects here.")
-                                break # Found the selected hidden attached strand, no need to check further
+                    
+                    # First check if the selected strand itself is a hidden attached strand connecting here
+                    if (self.selected_attached_strand and 
+                        isinstance(self.selected_attached_strand, AttachedStrand) and 
+                        hasattr(self.selected_attached_strand, 'is_hidden') and 
+                        self.selected_attached_strand.is_hidden and
+                        (self.points_are_close(self.selected_attached_strand.start, center) or 
+                         self.points_are_close(self.selected_attached_strand.end, center))):
+                        skip_c_shape = True
+                        logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected attached strand is hidden and connects here.")
+                    
+                    # Also check other hidden attached strands
+                    if not skip_c_shape:
+                        for other_strand in self.strands:
+                            if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
+                                # Check if the hidden attached strand connects to the current center point AND is the selected strand
+                                if (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand:
+                                    skip_c_shape = True
+                                    logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected hidden attached strand {other_strand.layer_name} connects here.")
+                                    break # Found the selected hidden attached strand, no need to check further
                                 
                     if skip_c_shape:
                         painter.restore() # Restore painter state
                         continue # Skip drawing C-shape for this point
-                    # --- END NEW CHECK --- 
+                    # --- END NEW CHECK ---
 
                     # Calculate the proper radius for the highlight
                     outer_radius = strand.width / 2 + strand.stroke_width + 4

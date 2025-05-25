@@ -60,6 +60,8 @@ class SettingsDialog(QDialog):
         # Arrow head parameters
         self.arrow_head_length = getattr(canvas, 'arrow_head_length', 20.0)
         self.arrow_head_width = getattr(canvas, 'arrow_head_width', 10.0)
+        # Add arrow head stroke width parameter
+        self.arrow_head_stroke_width = getattr(canvas, 'arrow_head_stroke_width', 4)
         # Add arrow shaft parameters
         self.arrow_gap_length = getattr(canvas, 'arrow_gap_length', 10)
         self.arrow_line_length = getattr(canvas, 'arrow_line_length', 20)
@@ -78,6 +80,7 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.arrow_head_length = self.arrow_head_length
             self.canvas.arrow_head_width = self.arrow_head_width
+            self.canvas.arrow_head_stroke_width = self.arrow_head_stroke_width
             self.canvas.arrow_gap_length = self.arrow_gap_length
             self.canvas.arrow_line_length = self.arrow_line_length
             self.canvas.arrow_line_width = self.arrow_line_width
@@ -400,6 +403,12 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found ArrowHeadWidth: {self.arrow_head_width}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing ArrowHeadWidth value. Using default {getattr(self, 'arrow_head_width',10.0)}")
+                        elif line.startswith('ArrowHeadStrokeWidth:'):
+                            try:
+                                self.arrow_head_stroke_width = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found ArrowHeadStrokeWidth: {self.arrow_head_stroke_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing ArrowHeadStrokeWidth value. Using default {getattr(self, 'arrow_head_stroke_width',4)}")
                         elif line.startswith('ArrowGapLength:'):
                             try:
                                 self.arrow_gap_length = float(line.split(':', 1)[1].strip())
@@ -706,6 +715,20 @@ class SettingsDialog(QDialog):
         arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
         arrow_width_layout.addStretch()
         layer_panel_layout.addLayout(arrow_width_layout)
+        # --- END NEW ---
+
+        # --- NEW: Arrow head stroke width setting ---
+        arrow_stroke_layout = QHBoxLayout()
+        self.layer_panel_rows.append(arrow_stroke_layout)
+        self.arrow_head_stroke_width_label = QLabel(_['arrow_head_stroke_width'] if 'arrow_head_stroke_width' in _ else 'Arrow Head Stroke Width')
+        self.arrow_head_stroke_width_spinbox = QSpinBox()
+        self.arrow_head_stroke_width_spinbox.setRange(1, 30)
+        self.arrow_head_stroke_width_spinbox.setValue(getattr(self.canvas, 'arrow_head_stroke_width', 4))
+        self.arrow_head_stroke_width_spinbox.setToolTip(_['arrow_head_stroke_width_tooltip'] if 'arrow_head_stroke_width_tooltip' in _ else 'Thickness of arrow head border in pixels')
+        arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
+        arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
+        arrow_stroke_layout.addStretch()
+        layer_panel_layout.addLayout(arrow_stroke_layout)
         # --- END NEW ---
 
         # Add arrow shaft settings
@@ -1330,6 +1353,7 @@ class SettingsDialog(QDialog):
         # --- NEW: Arrow head settings ---
         self.arrow_head_length = self.arrow_head_length_spinbox.value()
         self.arrow_head_width = self.arrow_head_width_spinbox.value()
+        self.arrow_head_stroke_width = self.arrow_head_stroke_width_spinbox.value()
         # --- NEW: Arrow shaft settings ---
         self.arrow_gap_length = self.arrow_gap_length_spinbox.value()
         self.arrow_line_length = self.arrow_line_length_spinbox.value()
@@ -1343,6 +1367,7 @@ class SettingsDialog(QDialog):
             # --- NEW: apply arrow settings to canvas ---
             self.canvas.arrow_head_length = self.arrow_head_length
             self.canvas.arrow_head_width = self.arrow_head_width
+            self.canvas.arrow_head_stroke_width = self.arrow_head_stroke_width
             self.canvas.arrow_gap_length = self.arrow_gap_length
             self.canvas.arrow_line_length = self.arrow_line_length
             self.canvas.arrow_line_width = self.arrow_line_width
@@ -1446,6 +1471,7 @@ class SettingsDialog(QDialog):
         self.extension_dash_gap_length_spinbox.setToolTip(_['extension_dash_gap_length_tooltip'] if 'extension_dash_gap_length_tooltip' in _ else "Gap between the strand end and the start of the dashes")
         self.arrow_head_length_label.setText(_['arrow_head_length'] if 'arrow_head_length' in _ else "Arrow Head Length")
         self.arrow_head_width_label.setText(_['arrow_head_width'] if 'arrow_head_width' in _ else "Arrow Head Width")
+        self.arrow_head_stroke_width_label.setText(_['arrow_head_stroke_width'] if 'arrow_head_stroke_width' in _ else "Arrow Head Stroke Width")
         self.arrow_gap_length_label.setText(_['arrow_gap_length'] if 'arrow_gap_length' in _ else "Arrow Gap Length")
         self.arrow_line_length_label.setText(_['arrow_line_length'] if 'arrow_line_length' in _ else "Arrow Line Length")
         self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
@@ -1627,6 +1653,7 @@ class SettingsDialog(QDialog):
                 file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
                 file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
                 file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
+                file.write(f"ArrowHeadStrokeWidth: {self.arrow_head_stroke_width}\n")
                 file.write(f"ArrowGapLength: {self.arrow_gap_length:.1f}\n")
                 file.write(f"ArrowLineLength: {self.arrow_line_length:.1f}\n")
                 file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")
@@ -1654,6 +1681,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ExtensionLineWidth: {self.extension_dash_width:.1f}\n")
                     local_file.write(f"ArrowHeadLength: {self.arrow_head_length}\n")
                     local_file.write(f"ArrowHeadWidth: {self.arrow_head_width}\n")
+                    local_file.write(f"ArrowHeadStrokeWidth: {self.arrow_head_stroke_width}\n")
                     local_file.write(f"ArrowGapLength: {self.arrow_gap_length:.1f}\n")
                     local_file.write(f"ArrowLineLength: {self.arrow_line_length:.1f}\n")
                     local_file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")

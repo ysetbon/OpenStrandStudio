@@ -11,10 +11,11 @@ ExtensionDashCount: 15
 ExtensionDashWidth: 20.0
 ExtensionDashGapLength: 8.0
 ExtensionLineWidth: 20.0
-ArrowHeadLength: 20.0
-ArrowHeadWidth: 30.0
+ArrowHeadLength: 40.0
+ArrowHeadWidth: 80.0
+ArrowHeadStrokeWidth: 2
 ArrowGapLength: 10.0
 ArrowLineLength: 5.0
-ArrowLineWidth: 5.0
+ArrowLineWidth: 10.0
 UseDefaultArrowColor: true
 DefaultArrowColor: 255,170,127,255

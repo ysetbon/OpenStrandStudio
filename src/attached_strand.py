@@ -346,41 +346,101 @@ class AttachedStrand(Strand):
             # Draw full arrow if requested
             if getattr(self, 'full_arrow_visible', False):
                 painter.save() # Specific save for this drawing operation
-                # --- Draw Shaft (following the Bézier curve) ---
-                full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-                shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-                shaft_pen.setCapStyle(Qt.FlatCap)
-                shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
-                painter.setPen(shaft_pen)
-                painter.setBrush(Qt.NoBrush)
-                # Draw the curved path instead of a straight line
-                path = self.get_path()
-                painter.drawPath(path)
-                # --- End Shaft ---
-
-                # --- Draw Arrowhead ---
+                
+                # --- Draw Arrowhead first to calculate base position ---
                 arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
                 arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
                 default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
                 arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
                 
-                arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
+                arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
                 arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
                 arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-                # Calculate direction vector using the tangent at the end of the curve
-                tangent_at_end = self.calculate_cubic_tangent(1.0)
-                len_vector_shaft = math.hypot(tangent_at_end.x(), tangent_at_end.y())
-                if len_vector_shaft > 0:
-                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_vector_shaft, tangent_at_end.y() / len_vector_shaft)
-                    tip = self.end
-                    arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
+                # Find the point on the curve where straight-line distance to end equals arrow_head_len
+                end_point = self.end
+                best_t = 1.0
+                best_distance = 0.0
+                
+                # Search backwards along the curve
+                num_samples = 1000  # High precision sampling
+                for i in range(1, num_samples):
+                    t = 1.0 - (i / float(num_samples))
+                    point = self.point_at(t)
+                    
+                    # Calculate straight-line distance from this point to the end
+                    distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
+                    
+                    if distance >= arrow_head_len:
+                        # We've gone far enough - interpolate to get exact position
+                        if i > 1:
+                            # Previous point was closer to target distance
+                            t_prev = 1.0 - ((i - 1) / float(num_samples))
+                            point_prev = self.point_at(t_prev)
+                            dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
+                            
+                            # Linear interpolation between the two t values
+                            if distance - dist_prev != 0:
+                                fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
+                                best_t = t_prev + fraction * (t - t_prev)
+                            else:
+                                best_t = t
+                        else:
+                            best_t = t
+                        break
+                
+                # Calculate the tangent at the base position
+                tangent_at_base = self.calculate_cubic_tangent(best_t)
+                len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
+                
+                if len_at_base > 0:
+                    # Unit vector pointing along the curve at the base position
+                    unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
+                    
+                    # Calculate the base center position on the curve
+                    base_center = self.point_at(best_t)
+                    
+                    # Perpendicular vector to the shaft direction (for arrow width)
                     perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
-                    left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
-                    right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
+                    
+                    # Calculate the two base corners
+                    left_point = base_center + perp_vector * (arrow_head_width / 2)
+                    right_point = base_center - perp_vector * (arrow_head_width / 2)
+                    
+                    # Calculate tip position for isosceles triangle
+                    # The tip should be arrow_head_len away from base_center along the shaft direction
+                    tip = base_center + unit_vector_shaft * arrow_head_len
+                    
+                    # --- Draw Shaft (following the Bézier curve up to base_center) ---
+                    full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+                    shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
+                    shaft_pen.setCapStyle(Qt.FlatCap)
+                    shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
+                    painter.setPen(shaft_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    
+                    # Create a path that follows the curve but stops at base_center
+                    shaft_path = QPainterPath()
+                    shaft_path.moveTo(self.start)
+                    
+                    # Sample points along the curve up to best_t
+                    num_shaft_samples = 100
+                    for j in range(1, num_shaft_samples + 1):
+                        sample_t = best_t * (j / float(num_shaft_samples))
+                        sample_point = self.point_at(sample_t)
+                        shaft_path.lineTo(sample_point)
+                    
+                    painter.drawPath(shaft_path)
+                    # --- End Shaft ---
+                    
+                    # Create the arrow polygon
                     arrow_head_poly = QPolygonF([tip, left_point, right_point])
+                    
+                    # Fill the arrow
                     painter.setPen(Qt.NoPen); painter.setBrush(arrow_head_fill_color); painter.drawPolygon(arrow_head_poly)
+                    
+                    # Draw the border
                     painter.setPen(arrow_head_border_pen); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_head_poly)
                 painter.restore() # Specific restore for full arrow
 
@@ -421,7 +481,7 @@ class AttachedStrand(Strand):
             default_fill_color_hidden_indiv = self.color if self.color else QColor(Qt.black)
             fill_color_hidden_indiv = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_fill_color_hidden_indiv
             
-            border_pen_hidden_indiv = QPen(self.stroke_color, self.stroke_width)
+            border_pen_hidden_indiv = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
             border_pen_hidden_indiv.setJoinStyle(Qt.MiterJoin)
             border_pen_hidden_indiv.setCapStyle(Qt.FlatCap)
 
@@ -529,7 +589,7 @@ class AttachedStrand(Strand):
             fill_color = self.canvas.default_arrow_fill_color
         else:
             fill_color = self.color
-        border_pen = QPen(self.stroke_color, self.stroke_width)
+        border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
         border_pen.setJoinStyle(Qt.MiterJoin)
         border_pen.setCapStyle(Qt.FlatCap)
 
@@ -934,43 +994,103 @@ class AttachedStrand(Strand):
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
-            # --- Draw Shaft (following the Bézier curve) ---
-            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-            shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-            shaft_pen.setCapStyle(Qt.FlatCap)
-            shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
-            painter.setPen(shaft_pen)
-            painter.setBrush(Qt.NoBrush)
-            # Draw the curved path instead of a straight line
-            path = self.get_path()
-            painter.drawPath(path)
-            # --- End Shaft ---
-
-            # --- Draw Arrowhead (at self.end, oriented by the straight shaft's direction) ---
+            
+            # --- Draw Arrowhead first to calculate base position ---
             arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
             arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
             default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
             arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
             
-            arrow_head_border_pen = QPen(self.stroke_color, self.stroke_width)
+            arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
             arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
             arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-            # Calculate direction vector using the tangent at the end of the curve
-            tangent_at_end = self.calculate_cubic_tangent(1.0)
-            len_vector_shaft = math.hypot(tangent_at_end.x(), tangent_at_end.y())
-            if len_vector_shaft > 0:
-                unit_vector_shaft = QPointF(tangent_at_end.x() / len_vector_shaft, tangent_at_end.y() / len_vector_shaft)
-                tip = self.end
-                arrow_base_center = self.end - unit_vector_shaft * arrow_head_len
+            # Find the point on the curve where straight-line distance to end equals arrow_head_len
+            end_point = self.end
+            best_t = 1.0
+            best_distance = 0.0
+            
+            # Search backwards along the curve
+            num_samples = 1000  # High precision sampling
+            for i in range(1, num_samples):
+                t = 1.0 - (i / float(num_samples))
+                point = self.point_at(t)
+                
+                # Calculate straight-line distance from this point to the end
+                distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
+                
+                if distance >= arrow_head_len:
+                    # We've gone far enough - interpolate to get exact position
+                    if i > 1:
+                        # Previous point was closer to target distance
+                        t_prev = 1.0 - ((i - 1) / float(num_samples))
+                        point_prev = self.point_at(t_prev)
+                        dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
+                        
+                        # Linear interpolation between the two t values
+                        if distance - dist_prev != 0:
+                            fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
+                            best_t = t_prev + fraction * (t - t_prev)
+                        else:
+                            best_t = t
+                    else:
+                        best_t = t
+                    break
+            
+            # Calculate the tangent at the base position
+            tangent_at_base = self.calculate_cubic_tangent(best_t)
+            len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
+            
+            if len_at_base > 0:
+                # Unit vector pointing along the curve at the base position
+                unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
+                
+                # Calculate the base center position on the curve
+                base_center = self.point_at(best_t)
+                
+                # Perpendicular vector to the shaft direction (for arrow width)
                 perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
-                left_point = arrow_base_center + perp_vector * (arrow_head_width / 2)
-                right_point = arrow_base_center - perp_vector * (arrow_head_width / 2)
+                
+                # Calculate the two base corners
+                left_point = base_center + perp_vector * (arrow_head_width / 2)
+                right_point = base_center - perp_vector * (arrow_head_width / 2)
+                
+                # Calculate tip position for isosceles triangle
+                # The tip should be arrow_head_len away from base_center along the shaft direction
+                tip = base_center + unit_vector_shaft * arrow_head_len
+                
+                # --- Draw Shaft (following the Bézier curve up to base_center) ---
+                full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+                shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
+                shaft_pen.setCapStyle(Qt.FlatCap)
+                shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
+                painter.setPen(shaft_pen)
+                painter.setBrush(Qt.NoBrush)
+                
+                # Create a path that follows the curve but stops at base_center
+                shaft_path = QPainterPath()
+                shaft_path.moveTo(self.start)
+                
+                # Sample points along the curve up to best_t
+                num_shaft_samples = 100
+                for j in range(1, num_shaft_samples + 1):
+                    sample_t = best_t * (j / float(num_shaft_samples))
+                    sample_point = self.point_at(sample_t)
+                    shaft_path.lineTo(sample_point)
+                
+                painter.drawPath(shaft_path)
+                # --- End Shaft ---
+                
+                # Create the arrow polygon
                 arrow_head_poly = QPolygonF([tip, left_point, right_point])
+                
+                # Fill the arrow
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(arrow_head_fill_color)
                 painter.drawPolygon(arrow_head_poly)
+                
+                # Draw the border
                 painter.setPen(arrow_head_border_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_head_poly)
@@ -1008,37 +1128,88 @@ class AttachedStrand(Strand):
     def point_at(self, t):
         """Compute a point on the Bézier curve at parameter t."""
         # If third control point is enabled, use a composite curve with two segments
-        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            if t <= 0.5:
-                # Scale t to [0,1] for the first segment
-                scaled_t = t * 2
-                # First cubic segment: start to control_point_center
-                p0 = self.start
-                p1 = self.control_point1
-                p2 = self.control_point1
-                p3 = self.control_point_center
-            else:
-                # Scale t to [0,1] for the second segment
-                scaled_t = (t - 0.5) * 2
-                # Second cubic segment: control_point_center to end
-                p0 = self.control_point_center
-                p1 = self.control_point2
-                p2 = self.control_point2
-                p3 = self.end
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
             
-            # Standard cubic Bézier formula
-            x = (
-                (1 - scaled_t) ** 3 * p0.x() +
-                3 * (1 - scaled_t) ** 2 * scaled_t * p1.x() +
-                3 * (1 - scaled_t) * scaled_t ** 2 * p2.x() +
-                scaled_t ** 3 * p3.x()
+            # Use the same sophisticated curve construction as get_path
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate tangents (same as in get_path)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
+            
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
             )
-            y = (
-                (1 - scaled_t) ** 3 * p0.y() +
-                3 * (1 - scaled_t) ** 2 * scaled_t * p1.y() +
-                3 * (1 - scaled_t) * scaled_t ** 2 * p2.y() +
-                scaled_t ** 3 * p3.y()
-            )
+            center_tangent_normalized = normalize_vector(center_tangent)
+            
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent_normalized = normalize_vector(end_tangent)
+            
+            # Calculate distances
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
+            
+            fraction = 1.0 / 3.0
+            
+            # Calculate intermediate control points
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            
+            if t <= 0.5:
+                # First segment: start to center
+                scaled_t = t * 2
+                x = (
+                    (1 - scaled_t) ** 3 * p0.x() +
+                    3 * (1 - scaled_t) ** 2 * scaled_t * cp1.x() +
+                    3 * (1 - scaled_t) * scaled_t ** 2 * cp2.x() +
+                    scaled_t ** 3 * p2.x()
+                )
+                y = (
+                    (1 - scaled_t) ** 3 * p0.y() +
+                    3 * (1 - scaled_t) ** 2 * scaled_t * cp1.y() +
+                    3 * (1 - scaled_t) * scaled_t ** 2 * cp2.y() +
+                    scaled_t ** 3 * p2.y()
+                )
+            else:
+                # Second segment: center to end
+                scaled_t = (t - 0.5) * 2
+                x = (
+                    (1 - scaled_t) ** 3 * p2.x() +
+                    3 * (1 - scaled_t) ** 2 * scaled_t * cp3.x() +
+                    3 * (1 - scaled_t) * scaled_t ** 2 * cp4.x() +
+                    scaled_t ** 3 * p4.x()
+                )
+                y = (
+                    (1 - scaled_t) ** 3 * p2.y() +
+                    3 * (1 - scaled_t) ** 2 * scaled_t * cp3.y() +
+                    3 * (1 - scaled_t) * scaled_t ** 2 * cp4.y() +
+                    scaled_t ** 3 * p4.y()
+                )
+            
             return QPointF(x, y)
         else:
             # Standard cubic Bézier with 2 control points
@@ -1060,20 +1231,98 @@ class AttachedStrand(Strand):
                 
     def calculate_cubic_tangent(self, t):
         """Calculate the tangent vector at a given t value of the Bézier curve."""
-        # Always use the standard cubic Bézier with 2 control points for tangent calculation
-        # This ensures consistent C-shape calculations regardless of third control point status
-        p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
+        # Check if third control point is enabled and manually positioned
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            
+            # Use the same sophisticated curve construction as get_path
+            p0 = self.start
+            p1 = self.control_point1
+            p2 = self.control_point_center
+            p3 = self.control_point2
+            p4 = self.end
+            
+            # Calculate tangents (same as in get_path)
+            start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
+            in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
+            out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            def normalize_vector(v):
+                length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                if length < 0.001:
+                    return QPointF(0, 0)
+                return QPointF(v.x() / length, v.y() / length)
+            
+            start_tangent_normalized = normalize_vector(start_tangent)
+            in_tangent_normalized = normalize_vector(in_tangent)
+            out_tangent_normalized = normalize_vector(out_tangent)
+            
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+            )
+            center_tangent_normalized = normalize_vector(center_tangent)
+            
+            end_tangent = QPointF(p4.x() - p3.x(), p4.y() - p3.y())
+            end_tangent_normalized = normalize_vector(end_tangent)
+            
+            # Calculate distances
+            dist_p0_p1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+            dist_p1_p2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+            dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
+            
+            fraction = 1.0 / 3.0
+            
+            # Calculate intermediate control points
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            
+            if t <= 0.5:
+                # First segment: start to center
+                scaled_t = t * 2
+                # Tangent for the first segment
+                tangent = (
+                    3 * (1 - scaled_t) ** 2 * (cp1 - p0) +
+                    6 * (1 - scaled_t) * scaled_t * (cp2 - cp1) +
+                    3 * scaled_t ** 2 * (p2 - cp2)
+                )
+            else:
+                # Second segment: center to end
+                scaled_t = (t - 0.5) * 2
+                # Tangent for the second segment
+                tangent = (
+                    3 * (1 - scaled_t) ** 2 * (cp3 - p2) +
+                    6 * (1 - scaled_t) * scaled_t * (cp4 - cp3) +
+                    3 * scaled_t ** 2 * (p4 - cp4)
+                )
+            
+            # Handle zero-length tangent vector
+            if tangent.manhattanLength() == 0:
+                if t <= 0.5:
+                    tangent = p2 - p0
+                else:
+                    tangent = p4 - p2
+                
+        else:
+            # Standard cubic Bézier with 2 control points
+            p0, p1, p2, p3 = self.start, self.control_point1, self.control_point2, self.end
 
-        # Compute the derivative at parameter t
-        tangent = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t ** 2 * (p3 - p2)
-        )
+            # Compute the derivative at parameter t
+            tangent = (
+                3 * (1 - t) ** 2 * (p1 - p0) +
+                6 * (1 - t) * t * (p2 - p1) +
+                3 * t ** 2 * (p3 - p2)
+            )
 
-        # Handle zero-length tangent vector
-        if tangent.manhattanLength() == 0:
-            tangent = p3 - p0
+            # Handle zero-length tangent vector
+            if tangent.manhattanLength() == 0:
+                tangent = p3 - p0
 
         return tangent
 

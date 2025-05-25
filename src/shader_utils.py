@@ -149,6 +149,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         strand: The strand to draw shadow for
         shadow_color: Custom shadow color or None to use strand's shadow_color
     """
+    # Check if the strand is hidden - hidden strands should not cast shadows
+    if hasattr(strand, 'is_hidden') and strand.is_hidden:
+        logging.info(f"Skipping shadow for hidden strand {getattr(strand, 'layer_name', 'unknown')}")
+        return
+    
     # Early return for masked strands to avoid double shading
     # If this is a masked strand (has get_mask_path method), its shadow 
     # will already be drawn by draw_mask_strand_shadow
@@ -317,6 +322,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
             # Skip self or strands without layer names
             if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+                continue
+            # Skip hidden strands - hidden strands should not receive shadows
+            if hasattr(other_strand, 'is_hidden') and other_strand.is_hidden:
+                logging.info(f"Skipping shadow calculation onto hidden strand {other_strand.layer_name}")
                 continue
             # Skip masked strands
             if other_strand.__class__.__name__ == 'MaskedStrand':
@@ -670,6 +679,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
         for other_strand in canvas.strands:
             if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+                continue
+            
+            # Skip hidden strands - hidden strands should not receive shadows on their circles
+            if hasattr(other_strand, 'is_hidden') and other_strand.is_hidden:
+                logging.info(f"Skipping circle shadow calculation onto hidden strand {other_strand.layer_name}")
                 continue
 
             other_layer = other_strand.layer_name

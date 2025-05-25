@@ -212,6 +212,8 @@ translations = {
         'arrow_head_length_tooltip': 'Length of arrow head in pixels',
         'arrow_head_width': 'Arrow Head Width',
         'arrow_head_width_tooltip': 'Width of arrow head base in pixels',
+        'arrow_head_stroke_width': 'Arrow Head Stroke Width',
+        'arrow_head_stroke_width_tooltip': 'Thickness of arrow head border in pixels',
         'arrow_gap_length': 'Arrow Gap Length',
         'arrow_gap_length_tooltip': 'Gap between strand end and arrow shaft start',
         'arrow_line_length': 'Arrow Line Length',
@@ -470,6 +472,8 @@ translations = {
         'arrow_head_length_tooltip': "Longueur de la tête de flèche en pixels",
         'arrow_head_width': "Largeur de la Tête de Flèche",
         'arrow_head_width_tooltip': "Largeur de la base de la tête de flèche en pixels",
+        'arrow_head_stroke_width': "Épaisseur du Contour de la Tête de Flèche",
+        'arrow_head_stroke_width_tooltip': "Épaisseur du contour de la tête de flèche en pixels",
         'arrow_gap_length': "Longueur de l'Espace de la Flèche",
         'arrow_gap_length_tooltip': "Espace entre l'extrémité du brin et le début du corps de la flèche",
         'arrow_line_length': "Longueur de la Ligne de Flèche",
@@ -729,6 +733,8 @@ translations = {
         'arrow_head_length_tooltip': 'Lunghezza della punta della freccia in pixel',
         'arrow_head_width': 'Larghezza punta freccia',
         'arrow_head_width_tooltip': 'Larghezza della punta della freccia in pixel',
+        'arrow_head_stroke_width': 'Spessore Contorno Punta Freccia',
+        'arrow_head_stroke_width_tooltip': 'Spessore del contorno della punta della freccia in pixel',
         'arrow_gap_length': 'Spazio prima della freccia',
         'arrow_gap_length_tooltip': 'Spazio tra l\'estremità del filo e l\'inizio della freccia',
         'arrow_line_length': 'Lunghezza corpo freccia',
@@ -986,6 +992,8 @@ translations = {
         'arrow_head_length_tooltip': 'Longitud de la punta de la flecha en píxeles',
         'arrow_head_width': 'Ancho de la punta de la flecha',
         'arrow_head_width_tooltip': 'Ancho de la punta de la flecha en píxeles',
+        'arrow_head_stroke_width': 'Grosor del Contorno de la Punta de Flecha',
+        'arrow_head_stroke_width_tooltip': 'Grosor del contorno de la punta de la flecha en píxeles',
         'arrow_gap_length': 'Longitud del espacio antes de la flecha',
         'arrow_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de la flecha',
         'arrow_line_length': 'Longitud del cuerpo de la flecha',
@@ -1248,6 +1256,8 @@ translations = {
         'arrow_head_length_tooltip': 'Comprimento da ponta da flecha em pixels',
         'arrow_head_width': 'Largura da ponta da flecha',
         'arrow_head_width_tooltip': 'Largura da ponta da flecha em pixels',
+        'arrow_head_stroke_width': 'Espessura do Contorno da Ponta da Flecha',
+        'arrow_head_stroke_width_tooltip': 'Espessura do contorno da ponta da flecha em pixels',
         'arrow_gap_length': 'Comprimento do espaço antes da flecha',
         'arrow_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início da flecha',
         'arrow_line_length': 'Comprimento do corpo da flecha',
@@ -1456,6 +1466,8 @@ translations = {
         'arrow_head_length_tooltip': 'אורך ראש החץ בפיקסלים',
         'arrow_head_width': 'רוחב ראש החץ',
         'arrow_head_width_tooltip': 'רוחב ראש החץ בפיקסלים',
+        'arrow_head_stroke_width': 'עובי מתאר ראש החץ',
+        'arrow_head_stroke_width_tooltip': 'עובי מתאר ראש החץ בפיקסלים',
         'arrow_gap_length': 'אורך הרווח לפני החץ',
         'arrow_gap_length_tooltip': 'מרווח בין קצה החוט לתחילת החץ',
         'arrow_line_length': 'אורך גוף החץ',
@@ -1502,24 +1514,23 @@ translations = {
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
             'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
-    # About translations
-    'about': 'אודות OpenStrand Studio',
-    'about_info': '''
-    <h2>אודות OpenStrand Studio</h2>
-    <p style="font-size:15px;">
-        OpenStrand Studio פותחה על ידי יהונתן סטבון. התוכנה מיועדת ליצירת כל קשר באופן סכמטי על ידי שימוש בשכבות לכל קטע של חוט ושילוב שכבות עם מסכות המאפשרות אפקט "מעל-מתחת".
-    </p>
-    <p style="font-size:15px;">
-        יהונתן מפעיל ערוץ YouTube ייעודי לרצועות בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, בו מדריכים רבים מציגים דיאגרמות של קשרים. תוכנה זו נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד להכין מדריכים מורכבים הכוללים קשירת קשרים.
-    </p>
-    <p style="font-size:15px;">
-        אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
-    </p>
-    <p style="font-size:13px;">
-        © 2025 OpenStrand Studio
-    </p>
-    ''',            
+        # About translations
+        'about': 'אודות OpenStrand Studio',
+        'about_info': '''
+        <h2>אודות OpenStrand Studio</h2>
+        <p style="font-size:15px;">
+            OpenStrand Studio פותחה על ידי יהונתן סטבון. התוכנה מיועדת ליצירת כל קשר באופן סכמטי על ידי שימוש בשכבות לכל קטע של חוט ושילוב שכבות עם מסכות המאפשרות אפקט "מעל-מתחת".
+        </p>
+        <p style="font-size:15px;">
+            יהונתן מפעיל ערוץ YouTube ייעודי לרצועות בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, בו מדריכים רבים מציגים דיאגרמות של קשרים. תוכנה זו נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד להכין מדריכים מורכבים הכוללים קשירת קשרים.
+        </p>
+        <p style="font-size:15px;">
+            אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
+        </p>
+        <p style="font-size:13px;">
+            © 2025 OpenStrand Studio
+        </p>
+        ''',            
     },
 
 }
-

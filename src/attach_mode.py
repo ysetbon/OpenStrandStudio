@@ -688,6 +688,21 @@ class AttachMode(QObject):
         # Call canvas's attach_strand method
         self.canvas.attach_strand(parent_strand, new_strand)
         
+        # Update connections in layer state manager
+        if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            # Add the connection between parent and new strand
+            connections = self.canvas.layer_state_manager.getConnections()
+            if parent_strand.layer_name not in connections:
+                connections[parent_strand.layer_name] = []
+            connections[parent_strand.layer_name].append(new_strand.layer_name)
+            # Also add reverse connection
+            if new_strand.layer_name not in connections:
+                connections[new_strand.layer_name] = []
+            connections[new_strand.layer_name].append(parent_strand.layer_name)
+            logging.info(f"Added connection between {parent_strand.layer_name} and {new_strand.layer_name} in layer state manager")
+            # Save the updated state
+            self.canvas.layer_state_manager.save_current_state()
+        
         # Emit signals
         self.strand_attached.emit(parent_strand, new_strand)
 

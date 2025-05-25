@@ -2630,10 +2630,8 @@ class MoveMode:
     # Add a new method to reset selection state
     def reset_selection(self):
         """Reset the selection state when deselect all is requested."""
-        import logging
-        
-        # Log current state for debugging
-        logging.info(f"Reset selection called. is_moving_control_point: {self.is_moving_control_point}, is_moving_strand_point: {self.is_moving_strand_point}")
+        # Remove the problematic logging that causes recursion
+        # logging.info(f"Reset selection called. is_moving_control_point: {self.is_moving_control_point}, is_moving_strand_point: {self.is_moving_strand_point}")
         
         # --- Persist Selection Start ---
         # DO NOT clear originally_selected_strand here. It should persist until mouseReleaseEvent.

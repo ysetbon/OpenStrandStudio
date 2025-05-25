@@ -374,7 +374,7 @@ class LayerStateManager(QObject):
         return self.layer_state.get('order', [])
 
     def getConnections(self):
-        """Get the current connections between layers."""
+        """Return the current layer connections."""
         return self.layer_state.get('connections', {})
 
     def getMaskedLayers(self):
@@ -408,10 +408,6 @@ class LayerStateManager(QObject):
         connections.setdefault(layer_name2, []).append(layer_name1)
         logging.info(f"Connected layers: {layer_name1} and {layer_name2}")
 
-    def getConnections(self):
-        """Return the current layer connections."""
-        return self.layer_state.get('connections', {})
-
     def connectLayers(self, parent_strand, child_strand):
         """
         Called after loading or attaching a child_strand to a parent_strand.
@@ -438,6 +434,25 @@ class LayerStateManager(QObject):
                 f"For child {child_strand.layer_name}, leaving already-loaded circle color: "
                 f"rgba({old_color.red()}, {old_color.green()}, {old_color.blue()}, {old_color.alpha()})"
             )
+
+    def removeStrandConnections(self, strand_name):
+        """Remove all connections for a deleted strand."""
+        connections = self.layer_state.get('connections', {})
+        
+        # Remove the strand from connections dict
+        if strand_name in connections:
+            del connections[strand_name]
+            logging.info(f"Removed connections entry for {strand_name}")
+        
+        # Remove references to this strand from other strands' connections
+        for parent_name, child_names in connections.items():
+            if strand_name in child_names:
+                connections[parent_name] = [name for name in child_names if name != strand_name]
+                logging.info(f"Removed {strand_name} from {parent_name}'s connections")
+        
+        # Save the updated state
+        self.save_current_state()
+        logging.info(f"Cleaned up all connections for deleted strand: {strand_name}")
 
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 

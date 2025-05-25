@@ -156,8 +156,8 @@ class AttachedStrand(Strand):
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
         # Small values near 0 and 1 to get tangents that include control points
-        t_start = 0.01
-        t_end = 0.99
+        t_start = 0.0
+        t_end = 1.0
 
         # Compute tangents near the start and end
         tangent_start = self.calculate_cubic_tangent(t_start)

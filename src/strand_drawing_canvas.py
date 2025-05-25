@@ -1592,8 +1592,8 @@ class StrandDrawingCanvas(QWidget):
                     continue
 
                 # Draw circles regardless of proximity to other points
-                # Start circle
-                if not strand.start_attached:  # Only check the strand's own attachment state
+                # Start circle - check has_circles[0] instead of start_attached
+                if not strand.has_circles[0]:  # Show circle if no attachment at start
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 0):
@@ -1613,8 +1613,8 @@ class StrandDrawingCanvas(QWidget):
                     )
                     overlay_painter.drawEllipse(start_ellipse)
 
-                # End circle
-                if not strand.end_attached:  # Only check the strand's own attachment state
+                # End circle - check has_circles[1] instead of end_attached
+                if not strand.has_circles[1]:  # Show circle if no attachment at end
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 1):
@@ -2193,6 +2193,10 @@ class StrandDrawingCanvas(QWidget):
 
         # Add this line to emit the signal
         self.strand_created.emit(strand)
+        
+        # Force update of attachment statuses after strand is fully created
+        if isinstance(strand, AttachedStrand):
+            self.update_attachment_statuses()
     def get_next_available_set_number(self):
         existing_set_numbers = set(
             strand.set_number
@@ -3007,6 +3011,11 @@ class StrandDrawingCanvas(QWidget):
                 parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
                 logging.info(f"Updated parent strand {parent_strand.layer_name} attached_strands list")
                 self.remove_parent_circle(parent_strand, strand)
+                
+        # Clean up connections in layer state manager
+        if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
+            self.layer_state_manager.removeStrandConnections(strand.layer_name)
+            logging.info(f"Cleaned up connections for {strand.layer_name} in layer state manager")
 
         # Update layer names and set numbers
         if is_main_strand:
@@ -3017,6 +3026,9 @@ class StrandDrawingCanvas(QWidget):
 
         # Newly added step: re-check attachments via geometry
         self.refresh_geometry_based_attachments()
+        
+        # Force update of attachment statuses to ensure all has_circles arrays are correct
+        self.update_attachment_statuses()
 
         # Force a complete redraw of the canvas
         self.update()
@@ -3061,20 +3073,43 @@ class StrandDrawingCanvas(QWidget):
         """
         Remove the circle associated with the attached strand from the parent strand.
         """
-        if parent_strand.end == attached_strand.start:
-            # Check if there are other strands attached to the end
-            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.end]
+        logging.info(f"Removing parent circle for {parent_strand.layer_name} due to deletion of {attached_strand.layer_name}")
+        logging.info(f"Before removal - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+        
+        # Check which side the attached strand was connected to
+        attachment_side = None
+        if hasattr(attached_strand, 'attachment_side'):
+            attachment_side = attached_strand.attachment_side
+            logging.info(f"Found attachment_side from attached_strand: {attachment_side}")
+        else:
+            # Fallback: determine attachment side by comparing positions
+            if self.points_are_close(parent_strand.start, attached_strand.start):
+                attachment_side = 0
+                logging.info(f"Determined attachment_side by position comparison (start): {attachment_side}")
+            elif self.points_are_close(parent_strand.end, attached_strand.start):
+                attachment_side = 1
+                logging.info(f"Determined attachment_side by position comparison (end): {attachment_side}")
+        
+        if attachment_side is not None:
+            # Check if there are other strands still attached to this side
+            other_attachments = [s for s in parent_strand.attached_strands 
+                               if s != attached_strand and hasattr(s, 'attachment_side') and s.attachment_side == attachment_side]
+            
+            logging.info(f"Other attachments on side {attachment_side}: {[s.layer_name for s in other_attachments]}")
+            
             if not other_attachments:
-                parent_strand.has_circles[1] = False
-                logging.info(f"Removed circle from the end of parent strand: {parent_strand.layer_name}")
-        elif parent_strand.start == attached_strand.start:
-            # Check if there are other strands attached to the start
-            other_attachments = [s for s in parent_strand.attached_strands if s != attached_strand and s.start == parent_strand.start]
-            if not other_attachments:
-                parent_strand.has_circles[0] = False
-                logging.info(f"Removed circle from the start of parent strand: {parent_strand.layer_name}")
-
-
+                # No other strands attached to this side, remove the circle
+                parent_strand.has_circles[attachment_side] = False
+                logging.info(f"Removed circle from side {attachment_side} of parent strand: {parent_strand.layer_name}")
+                logging.info(f"After removal - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+            else:
+                logging.info(f"Keeping circle on side {attachment_side} of parent strand {parent_strand.layer_name} - other attachments exist")
+        else:
+            logging.warning(f"Could not determine attachment side for {attached_strand.layer_name} on parent {parent_strand.layer_name}")
+        
+        # Update the parent strand's attachable status
+        parent_strand.update_attachable()
+        logging.info(f"Final state after update_attachable - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
 
     def remove_main_strand(self, strand, set_number):
         logging.info(f"Removing main strand and related strands for set {set_number}")
@@ -3730,8 +3765,13 @@ class StrandDrawingCanvas(QWidget):
                 abs(point1.y() - point2.y()) <= tolerance)
 
     def update(self):
-        self.update_attachment_statuses()
-        super().update()
+        # Skip update_attachment_statuses if we're in the middle of attaching
+        if hasattr(self, 'current_mode') and hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching:
+            # Don't update attachment statuses while attaching
+            super().update()
+        else:
+            self.update_attachment_statuses()
+            super().update()
 
     def update_attachment_statuses(self):
         """Update attachment statuses and has_circles states of all strands."""
@@ -3739,6 +3779,7 @@ class StrandDrawingCanvas(QWidget):
             return
 
         connections = self.layer_state_manager.getConnections()
+        logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
         
         # Group strands by their prefix (e.g., "1_" or "2_")
         strand_groups = {}
@@ -3751,19 +3792,50 @@ class StrandDrawingCanvas(QWidget):
                 strand_groups[prefix] = []
             strand_groups[prefix].append(strand)
 
+        logging.info(f"update_attachment_statuses: Current strands in groups: {[(prefix, [s.layer_name for s in strands]) for prefix, strands in strand_groups.items()]}")
 
         # Second pass: Update based on connections from layer_state_manager
         for prefix, strands_in_group in strand_groups.items():
             for strand in strands_in_group:
+                logging.info(f"update_attachment_statuses: Processing strand {strand.layer_name}, current has_circles: {strand.has_circles}")
+                
                 # Get connections for this strand from layer_state_manager
                 strand_connections = connections.get(strand.layer_name, [])
+                logging.info(f"update_attachment_statuses: Connections for {strand.layer_name}: {strand_connections}")
                 
+                # Check if any connections are stale (strand no longer exists)
+                valid_connections = []
                 for connected_layer_name in strand_connections:
                     # Find the connected strand in the same group
                     connected_strand = next(
                         (s for s in strands_in_group if s.layer_name == connected_layer_name), 
                         None
                     )
+                    
+                    if connected_strand:
+                        valid_connections.append(connected_layer_name)
+                    else:
+                        logging.info(f"update_attachment_statuses: Connected strand {connected_layer_name} not found - removing stale connection")
+                
+                # If we found stale connections, clean them up
+                if len(valid_connections) != len(strand_connections):
+                    if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
+                        # Remove the stale connections for this strand
+                        connections[strand.layer_name] = valid_connections
+                        # Also remove this strand from the missing strand's connections
+                        for missing_strand in set(strand_connections) - set(valid_connections):
+                            self.layer_state_manager.removeStrandConnections(missing_strand)
+                        logging.info(f"update_attachment_statuses: Cleaned up stale connections for {strand.layer_name}")
+                
+                # Now process only valid connections
+                for connected_layer_name in valid_connections:
+                    # Find the connected strand in the same group
+                    connected_strand = next(
+                        (s for s in strands_in_group if s.layer_name == connected_layer_name), 
+                        None
+                    )
+                    
+                    logging.info(f"update_attachment_statuses: Looking for connected strand {connected_layer_name}, found: {connected_strand.layer_name if connected_strand else 'None'}")
                     
                     if connected_strand:
                     # Check start point connections
@@ -3779,6 +3851,8 @@ class StrandDrawingCanvas(QWidget):
                             strand.end_attached = True
                             strand.has_circles[1] = True
                             logging.info(f"Found end connection for {strand.layer_name} with {connected_strand.layer_name}")
+                    else:
+                        logging.info(f"update_attachment_statuses: Connected strand {connected_layer_name} not found in current strands - this connection should be cleaned up")
 
                 logging.info(f"Final state for {strand.layer_name}: has_circles={strand.has_circles}")
 

@@ -44,7 +44,7 @@ class SettingsDialog(QDialog):
         
         # Initialize with default values
         self.current_theme = getattr(parent, 'current_theme', 'default')
-        self.current_language = self.parent_window.language_code
+        # self.current_language = self.parent_window.language_code # REMOVED - Handled by showEvent
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
@@ -135,14 +135,89 @@ class SettingsDialog(QDialog):
         is_rtl = self.is_rtl_language(self.current_language)
         direction = Qt.RightToLeft if is_rtl else Qt.LeftToRight
 
-        self.setLayoutDirection(direction)
+        # Keep the main dialog layout as LTR to maintain categories on left, content on right
+        self.setLayoutDirection(Qt.LeftToRight)
         
-        # Apply layout direction to widgets
+        # Apply layout direction to content widgets only, not the main structure
         if hasattr(self, 'general_settings_widget'):
+            # Set the content area to RTL for Hebrew
             self.general_settings_widget.setLayoutDirection(direction)
+            
+            # Set proper text alignment for general settings labels
+            if is_rtl:
+                # For Hebrew, align labels to the right
+                if hasattr(self, 'theme_label'):
+                    self.theme_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'shadow_color_label'):
+                    self.shadow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'button_color_label'):
+                    self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'affected_strand_label'):
+                    self.affected_strand_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'third_control_label'):
+                    self.third_control_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'extended_mask_label'):
+                    self.extended_mask_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'num_steps_label'):
+                    self.num_steps_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'blur_radius_label'):
+                    self.blur_radius_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            else:
+                # For LTR languages, align labels to the left
+                if hasattr(self, 'theme_label'):
+                    self.theme_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'shadow_color_label'):
+                    self.shadow_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'button_color_label'):
+                    self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'affected_strand_label'):
+                    self.affected_strand_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'third_control_label'):
+                    self.third_control_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'extended_mask_label'):
+                    self.extended_mask_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'num_steps_label'):
+                    self.num_steps_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'blur_radius_label'):
+                    self.blur_radius_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
+            # Also update direction for QHBoxLayouts within General Settings
+            general_setting_layouts = [
+                'theme_layout', 'shadow_layout', 'performance_layout', 
+                'third_control_layout', 'extended_mask_layout', 
+                'num_steps_layout', 'blur_radius_layout'
+            ]
+            for layout_name in general_setting_layouts:
+                if hasattr(self, layout_name):
+                    layout = getattr(self, layout_name)
+                    if isinstance(layout, QHBoxLayout):
+                        layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+                        logging.info(f"Set direction for {layout_name} to {'RTL' if is_rtl else 'LTR'}")
+
+        # Apply content direction to other content widgets while keeping main structure
         if hasattr(self, 'change_language_widget'):
             self.change_language_widget.setLayoutDirection(direction)
+            # Set proper text alignment for language page labels
+            if is_rtl:
+                if hasattr(self, 'language_label'):
+                    self.language_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'language_info_label'):
+                    self.language_info_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            else:
+                if hasattr(self, 'language_label'):
+                    self.language_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'language_info_label'):
+                    self.language_info_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                    
+        # Update shadow layout spacing for RTL
+        if hasattr(self, 'shadow_layout'):
+            if is_rtl:
+                self.shadow_layout.setSpacing(2)  # Very tight spacing for RTL
+                self.shadow_layout.setContentsMargins(-300, 0, 0, 0)  # Push button to far left
+            else:
+                self.shadow_layout.setSpacing(15)  # Normal spacing for LTR
+                self.shadow_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins for LTR
+
         if hasattr(self, 'tutorial_widget'):
             self.tutorial_widget.setLayoutDirection(direction)
         if hasattr(self, 'about_widget'):
@@ -161,133 +236,152 @@ class SettingsDialog(QDialog):
              self.third_cp_icon_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
              
         # Define specific style adjustments for comboboxes based on direction
+        combo_style_adjustments = ""  # Initialize empty by default
+        
         if is_rtl:
-            combo_style_adjustments = """
-                QComboBox {
-                    padding-left: 30px; 
-                    padding-right: 0px;
-                    margin-right: 0px;
-                    text-align: right !important;
-                    direction: rtl;
-                }
-                QComboBox::drop-down {
-                    subcontrol-origin: padding;
-                    subcontrol-position: left top;
-                    left: 5px;
-                    border: none;
-                    width: 20px;
-                }
-
-                QComboBox QAbstractItemView {
-                    direction: rtl;
-                    text-align: right !important;
-                }
-            """
-            # Add styling for checkboxes in RTL mode
-            checkbox_style = """
-                QCheckBox {
-                    spacing: 5px;
-                }
-                QCheckBox::indicator {
-                    width: 13px;
-                    height: 13px;
-                }
-            """
-            
-            # Apply checkbox style to all checkboxes
-            for checkbox in self.findChildren(QCheckBox):
-                checkbox.setStyleSheet(checkbox_style)
-                # Use RTL so checkbox indicator is placed after the text (physically left of text in RTL)
-                checkbox.setLayoutDirection(Qt.LeftToRight if not self.is_rtl_language(self.current_language) else Qt.LeftToRight)
-
+            # Remove CSS styling that might interfere - rely on layout reorganization
+            logging.info("RTL mode: Relying on layout reorganization rather than CSS overrides")
         else: # LTR
             combo_style_adjustments = """
                 QComboBox {
                     padding-left: 8px;
                     padding-right: 24px;
                     text-align: left;
-                    direction: ltr;
                 }
                 QComboBox::drop-down {
                     border: none;
                     padding-right: 8px;
                 }
-                QComboBox::down-arrow:after {
-                    right: 8px;
-                    left: auto;
-                }
             """
             
+        # Apply checkbox style to all checkboxes
+        checkbox_style = """
+            QCheckBox {
+                spacing: 5px;
+            }
+            QCheckBox::indicator {
+                width: 13px;
+                height: 13px;
+            }
+        """
+        
+        for checkbox in self.findChildren(QCheckBox):
+            checkbox.setStyleSheet(checkbox_style)
+            # Use appropriate direction for checkbox
+            checkbox.setLayoutDirection(Qt.LeftToRight if not self.is_rtl_language(self.current_language) else Qt.LeftToRight)
+
         if hasattr(self, 'theme_combobox'):
             self.theme_combobox.setLayoutDirection(direction)
             self.theme_combobox.view().setLayoutDirection(direction)
-            # Get current style, append adjustments
-            current_style = self.theme_combobox.styleSheet() # Get theme/base style
-            self.theme_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+            # Only apply minimal CSS for LTR to avoid conflicts in RTL
+            if not is_rtl:
+                current_style = self.theme_combobox.styleSheet()
+                if combo_style_adjustments:
+                    self.theme_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
             
-            # Apply the same RTL fixes to theme combobox
             if is_rtl:
-                # Force the list items in the dropdown to be right-aligned
-                view = self.theme_combobox.view()
-                if view:
-                    view.setTextElideMode(Qt.ElideLeft)  # Elide left for RTL text
+                # Apply the same RTL CSS styling as the language combobox
+                current_style = self.theme_combobox.styleSheet()
+                rtl_style = """
+                    QComboBox {
+                        text-align: right;
+                        padding-right: 40px;
+                        padding-left: 8px;
+                    }
+                    QComboBox::drop-down {
+                        subcontrol-origin: padding;
+                        subcontrol-position: left center;
+                        width: 20px;
+                        border: none;
+                    }
+                    QComboBox::down-arrow {
+                        left: 4px;
+                    }
+                """
+                self.theme_combobox.setStyleSheet(current_style + "\n" + rtl_style)
+                logging.info("RTL: Applied RTL-specific CSS to theme combobox for proper text positioning")
                 
-                # Update item text alignment
-                if self.theme_combobox.count() > 0:
-                    # Apply text alignment to each item
-                    for i in range(self.theme_combobox.count()):
-                        item_text = self.theme_combobox.itemText(i)
-                        # This triggers a redraw of the item with proper RTL
-                        self.theme_combobox.setItemText(i, item_text)
+                # Force refresh of the theme combobox text display
+                current_index = self.theme_combobox.currentIndex()
+                if current_index >= 0:
+                    self.theme_combobox.setCurrentIndex(-1)
+                    self.theme_combobox.setCurrentIndex(current_index)
+                    self.theme_combobox.update()
+                    self.theme_combobox.repaint()
+                    logging.info(f"RTL: Forced theme combobox refresh for index {current_index}")
 
         if hasattr(self, 'language_combobox'):
             self.language_combobox.setLayoutDirection(direction)
             self.language_combobox.view().setLayoutDirection(direction)
-            # Get current style, append adjustments
-            current_style = self.language_combobox.styleSheet() # Get theme/base style
-            self.language_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
             
-            # Force the view to update its layout direction as well
+            # Apply appropriate CSS based on direction
+            current_style = self.language_combobox.styleSheet()
             if is_rtl:
-                # Check if the combobox has a lineEdit (editable combobox)
-                try:
-                    lineEdit = self.language_combobox.lineEdit()
-                    if lineEdit:
-                        lineEdit.setAlignment(Qt.AlignRight)
-                except:
-                    pass
+                # For Hebrew/RTL: Add specific CSS to force proper text positioning in main button
+                rtl_style = """
+                    QComboBox {
+                        text-align: right;
+                        padding-right: 40px;
+                        padding-left: 8px;
+                    }
+                    QComboBox::drop-down {
+                        subcontrol-origin: padding;
+                        subcontrol-position: left center;
+                        width: 20px;
+                        border: none;
+                    }
+                    QComboBox::down-arrow {
+                        left: 4px;
+                    }
+                """
+                self.language_combobox.setStyleSheet(current_style + "\n" + rtl_style)
+                logging.info("RTL: Applied RTL-specific CSS to force text positioning in language combobox")
                 
-                # Force the list items in the dropdown to be right-aligned
-                view = self.language_combobox.view()
-                if view:
-                    view.setTextElideMode(Qt.ElideLeft)  # Elide left for RTL text
-            
-            # If the combobox has items, update their text alignment
-            if is_rtl and self.language_combobox.count() > 0:
-                # Apply text alignment to each item
-                for i in range(self.language_combobox.count()):
-                    item_text = self.language_combobox.itemText(i)
-                    # Re-add the item with the same data but RTL-aware text
-                    item_data = self.language_combobox.itemData(i)
-                    # This triggers a redraw of the item with proper RTL
-                    self.language_combobox.setItemText(i, item_text)
+                # Force the combobox to update its text display for RTL
+                current_index = self.language_combobox.currentIndex()
+                if current_index >= 0:
+                    # Force refresh by temporarily changing and restoring the current item
+                    self.language_combobox.setCurrentIndex(-1)
+                    self.language_combobox.setCurrentIndex(current_index)
+                    # Also force a repaint of the combobox
+                    self.language_combobox.update()
+                    self.language_combobox.repaint()
+                    logging.info(f"RTL: Forced language combobox refresh for index {current_index}")
+            else:
+                # For LTR languages
+                if combo_style_adjustments:
+                    self.language_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+
+        # Remove the duplicate language_combobox section below this
 
         # Apply RTL adjustments to layer panel rows
         if hasattr(self, 'layer_panel_rows'):
+            # Keep the layer panel settings widget with content direction
             self.layer_panel_settings_widget.setLayoutDirection(direction)
 
             for row in self.layer_panel_rows:
                 # The stored object can be either a layout or a container QWidget
                 if isinstance(row, QBoxLayout):
-                    # Directly adjust the box layout direction
-                    row.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
+                    # Directly adjust the box layout direction - FIX: use RightToLeft for RTL
+                    row.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+                    # If it's the button_color_layout, apply its specific margins for RTL
+                    if row == getattr(self, 'button_color_layout', None) and is_rtl:
+                        row.setContentsMargins(-300, 0, 0, 0)
+                        row.setSpacing(2)
+                    elif row == getattr(self, 'button_color_layout', None) and not is_rtl:
+                        row.setContentsMargins(0,0,0,0)
+                        row.setSpacing(15)
 
                     # Additionally, for RTL make sure QLabel children are right-aligned
                     if is_rtl:
                         for idx in range(row.count()):
                             widget = row.itemAt(idx).widget()
                             if isinstance(widget, QLabel):
-                                widget.setAlignment(Qt.AlignLeft if is_rtl else Qt.AlignRight)
+                                # Special handling for button_color_label to ensure it aligns correctly with its button
+                                if widget == getattr(self, 'button_color_label', None):
+                                    widget.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                                elif widget.parentWidget() and widget.parentWidget().layout() == row:
+                                    widget.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
                 elif isinstance(row, QWidget):
                     # Apply direction to the container widget and its internal layout
@@ -295,16 +389,382 @@ class SettingsDialog(QDialog):
                     # Update internal layout direction if present
                     inner_layout = row.layout()
                     if isinstance(inner_layout, QBoxLayout):
-                        inner_layout.setDirection(QBoxLayout.LeftToRight if is_rtl else QBoxLayout.LeftToRight)
+                        # FIX: use RightToLeft for RTL
+                        inner_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
 
                     # Ensure any labels inside are aligned properly in RTL
                     if is_rtl:
                         for child in row.findChildren(QLabel):
-                            child.setAlignment(Qt.AlignRight)
-        try:
-                    self.default_arrow_color_checkbox.setLayoutDirection(Qt.RightToLeft if not is_rtl else Qt.LeftToRight)
-        except Exception:
-                    pass
+                            child.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                            
+        # Special handling for default arrow color checkbox
+        if is_rtl:
+            if hasattr(self, 'default_arrow_color_checkbox'):
+                # For checkboxes in RTL, we want the box on the left of the text
+                # So we use LeftToRight for the checkbox itself
+                self.default_arrow_color_checkbox.setLayoutDirection(Qt.LeftToRight)
+            
+            # But the container should still be RTL
+            for checkbox_container in self.findChildren(QWidget):
+                if checkbox_container.layout() and hasattr(self, 'default_arrow_color_checkbox') and self.default_arrow_color_checkbox in checkbox_container.findChildren(QCheckBox):
+                    checkbox_container.setLayoutDirection(Qt.RightToLeft)
+                    break
+        else:  # LTR
+            # Reset checkbox to normal LTR
+            if hasattr(self, 'default_arrow_color_checkbox'):
+                self.default_arrow_color_checkbox.setLayoutDirection(Qt.LeftToRight)
+                
+                # Reset container to LTR as well
+                for checkbox_container in self.findChildren(QWidget):
+                    if checkbox_container.layout() and self.default_arrow_color_checkbox in checkbox_container.findChildren(QCheckBox):
+                        checkbox_container.setLayoutDirection(Qt.LeftToRight)
+                        break
+                        
+        # Reorganize widget order for language change
+        self.reorganize_layouts_for_language(is_rtl)
+
+    def reorganize_layouts_for_language(self, is_rtl):
+        """Reorganize widget order in layouts based on language direction."""
+        
+        # Theme layout reorganization
+        if hasattr(self, 'theme_layout') and hasattr(self, 'theme_label') and hasattr(self, 'theme_combobox'):
+            # Clear and re-add widgets in correct order
+            self.clear_layout(self.theme_layout)
+            if is_rtl:
+                self.theme_layout.addStretch()
+                self.theme_layout.addWidget(self.theme_combobox)
+                self.theme_layout.addWidget(self.theme_label)
+            else:
+                self.theme_layout.addWidget(self.theme_label)
+                self.theme_layout.addWidget(self.theme_combobox)
+                self.theme_layout.addStretch()
+            # Force immediate update
+            self.theme_layout.invalidate()
+            self.theme_layout.activate()
+                
+        # Shadow layout reorganization  
+        if hasattr(self, 'shadow_layout') and hasattr(self, 'shadow_color_label') and hasattr(self, 'shadow_color_button'):
+            self.clear_layout(self.shadow_layout)
+            if is_rtl:
+                # For RTL: Button at far left, stretch in middle, label at far right
+                self.shadow_layout.addWidget(self.shadow_color_button)
+                self.shadow_layout.addStretch()
+                self.shadow_layout.addWidget(self.shadow_color_label)
+            else:
+                self.shadow_layout.addWidget(self.shadow_color_label)
+                self.shadow_layout.addWidget(self.shadow_color_button)
+                self.shadow_layout.addStretch()
+            # Force immediate update
+            self.shadow_layout.invalidate()
+            self.shadow_layout.activate()
+                
+        # Performance layout reorganization
+        if hasattr(self, 'performance_layout') and hasattr(self, 'affected_strand_label') and hasattr(self, 'affected_strand_checkbox'):
+            self.clear_layout(self.performance_layout)
+            if is_rtl:
+                self.performance_layout.addStretch()
+                self.performance_layout.addWidget(self.affected_strand_checkbox)
+                self.performance_layout.addWidget(self.affected_strand_label)
+            else:
+                self.performance_layout.addWidget(self.affected_strand_label)
+                self.performance_layout.addWidget(self.affected_strand_checkbox)
+                self.performance_layout.addStretch()
+            # Force immediate update
+            self.performance_layout.invalidate()
+            self.performance_layout.activate()
+                
+        # Third control layout reorganization
+        if hasattr(self, 'third_control_layout') and hasattr(self, 'third_control_label') and hasattr(self, 'third_control_checkbox'):
+            self.clear_layout(self.third_control_layout)
+            if is_rtl:
+                self.third_control_layout.addStretch()
+                self.third_control_layout.addWidget(self.third_control_checkbox)
+                self.third_control_layout.addWidget(self.third_control_label)
+            else:
+                self.third_control_layout.addWidget(self.third_control_label)
+                self.third_control_layout.addWidget(self.third_control_checkbox)
+                self.third_control_layout.addStretch()
+            # Force immediate update
+            self.third_control_layout.invalidate()
+            self.third_control_layout.activate()
+                
+        # Extended mask layout reorganization
+        if hasattr(self, 'extended_mask_layout') and hasattr(self, 'extended_mask_label') and hasattr(self, 'extended_mask_checkbox'):
+            self.clear_layout(self.extended_mask_layout)
+            if is_rtl:
+                self.extended_mask_layout.addStretch()
+                self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+                self.extended_mask_layout.addWidget(self.extended_mask_label)
+            else:
+                self.extended_mask_layout.addWidget(self.extended_mask_label)
+                self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+                self.extended_mask_layout.addStretch()
+            # Force immediate update
+            self.extended_mask_layout.invalidate()
+            self.extended_mask_layout.activate()
+                
+        # Num steps layout reorganization
+        if hasattr(self, 'num_steps_layout') and hasattr(self, 'num_steps_label') and hasattr(self, 'num_steps_spinbox'):
+            self.clear_layout(self.num_steps_layout)
+            if is_rtl:
+                self.num_steps_layout.addStretch()
+                self.num_steps_layout.addWidget(self.num_steps_spinbox)
+                self.num_steps_layout.addWidget(self.num_steps_label)
+            else:
+                self.num_steps_layout.addWidget(self.num_steps_label)
+                self.num_steps_layout.addWidget(self.num_steps_spinbox)
+                self.num_steps_layout.addStretch()
+            # Force immediate update
+            self.num_steps_layout.invalidate()
+            self.num_steps_layout.activate()
+                
+        # Blur radius layout reorganization
+        if hasattr(self, 'blur_radius_layout') and hasattr(self, 'blur_radius_label') and hasattr(self, 'blur_radius_spinbox'):
+            self.clear_layout(self.blur_radius_layout)
+            if is_rtl:
+                self.blur_radius_layout.addStretch()
+                self.blur_radius_layout.addWidget(self.blur_radius_spinbox)
+                self.blur_radius_layout.addWidget(self.blur_radius_label)
+            else:
+                self.blur_radius_layout.addWidget(self.blur_radius_label)
+                self.blur_radius_layout.addWidget(self.blur_radius_spinbox)
+                self.blur_radius_layout.addStretch()
+            # Force immediate update
+            self.blur_radius_layout.invalidate()
+            self.blur_radius_layout.activate()
+                
+        # Button color layout reorganization (this was missing!)
+        if hasattr(self, 'button_color_layout') and hasattr(self, 'button_color_label') and hasattr(self, 'default_arrow_color_button'):
+            self.clear_layout(self.button_color_layout)
+            if is_rtl:
+                # For RTL: Button at far left, stretch in middle, label at far right
+                self.button_color_layout.addWidget(self.default_arrow_color_button)
+                self.button_color_layout.addStretch()
+                self.button_color_layout.addWidget(self.button_color_label)
+            else:
+                self.button_color_layout.addWidget(self.button_color_label)
+                self.button_color_layout.addWidget(self.default_arrow_color_button)
+                self.button_color_layout.addStretch()
+            # Force immediate update (same as theme layout)
+            self.button_color_layout.invalidate()
+            self.button_color_layout.activate()
+
+        # Checkbox layout reorganization (this was also missing!)
+        if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_checkbox'):
+            self.clear_layout(self.checkbox_layout)
+            if is_rtl:
+                self.checkbox_layout.addStretch()
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                logging.info("RTL: Reorganized checkbox layout - checkbox on right")
+            else:
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                self.checkbox_layout.addStretch()
+                logging.info("LTR: Reorganized checkbox layout - checkbox on left")
+            
+            # Force immediate update and repaint
+            self.checkbox_layout.invalidate()
+            self.checkbox_layout.activate()
+            self.default_arrow_color_checkbox.update()
+            if hasattr(self, 'checkbox_container'):
+                self.checkbox_container.updateGeometry()
+                self.checkbox_container.update()
+                self.checkbox_container.repaint()
+
+        # Layer Panel layout reorganizations
+        if hasattr(self, 'ext_length_layout') and hasattr(self, 'extension_length_label') and hasattr(self, 'extension_length_spinbox'):
+            self.clear_layout(self.ext_length_layout)
+            if is_rtl:
+                self.ext_length_layout.addStretch()
+                self.ext_length_layout.addWidget(self.extension_length_spinbox)
+                self.ext_length_layout.addWidget(self.extension_length_label)
+            else:
+                self.ext_length_layout.addWidget(self.extension_length_label)
+                self.ext_length_layout.addWidget(self.extension_length_spinbox)
+                self.ext_length_layout.addStretch()
+            # Force immediate update
+            self.ext_length_layout.invalidate()
+            self.ext_length_layout.activate()
+                
+        if hasattr(self, 'dash_count_layout') and hasattr(self, 'extension_dash_count_label') and hasattr(self, 'extension_dash_count_spinbox'):
+            self.clear_layout(self.dash_count_layout)
+            if is_rtl:
+                self.dash_count_layout.addStretch()
+                self.dash_count_layout.addWidget(self.extension_dash_count_spinbox)
+                self.dash_count_layout.addWidget(self.extension_dash_count_label)
+            else:
+                self.dash_count_layout.addWidget(self.extension_dash_count_label)
+                self.dash_count_layout.addWidget(self.extension_dash_count_spinbox)
+                self.dash_count_layout.addStretch()
+            # Force immediate update
+            self.dash_count_layout.invalidate()
+            self.dash_count_layout.activate()
+                
+        if hasattr(self, 'extension_dash_width_layout') and hasattr(self, 'extension_dash_width_label') and hasattr(self, 'extension_dash_width_spinbox'):
+            self.clear_layout(self.extension_dash_width_layout)
+            if is_rtl:
+                self.extension_dash_width_layout.addStretch()
+                self.extension_dash_width_layout.addWidget(self.extension_dash_width_spinbox)
+                self.extension_dash_width_layout.addWidget(self.extension_dash_width_label)
+            else:
+                self.extension_dash_width_layout.addWidget(self.extension_dash_width_label)
+                self.extension_dash_width_layout.addWidget(self.extension_dash_width_spinbox)
+                self.extension_dash_width_layout.addStretch()
+            # Force immediate update
+            self.extension_dash_width_layout.invalidate()
+            self.extension_dash_width_layout.activate()
+                
+        if hasattr(self, 'gap_length_layout') and hasattr(self, 'extension_dash_gap_length_label') and hasattr(self, 'extension_dash_gap_length_spinbox'):
+            self.clear_layout(self.gap_length_layout)
+            if is_rtl:
+                self.gap_length_layout.addStretch()
+                self.gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
+                self.gap_length_layout.addWidget(self.extension_dash_gap_length_label)
+            else:
+                self.gap_length_layout.addWidget(self.extension_dash_gap_length_label)
+                self.gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
+                self.gap_length_layout.addStretch()
+            # Force immediate update
+            self.gap_length_layout.invalidate()
+            self.gap_length_layout.activate()
+                
+        if hasattr(self, 'arrow_len_layout') and hasattr(self, 'arrow_head_length_label') and hasattr(self, 'arrow_head_length_spinbox'):
+            self.clear_layout(self.arrow_len_layout)
+            if is_rtl:
+                self.arrow_len_layout.addStretch()
+                self.arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
+                self.arrow_len_layout.addWidget(self.arrow_head_length_label)
+            else:
+                self.arrow_len_layout.addWidget(self.arrow_head_length_label)
+                self.arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
+                self.arrow_len_layout.addStretch()
+            # Force immediate update
+            self.arrow_len_layout.invalidate()
+            self.arrow_len_layout.activate()
+                
+        if hasattr(self, 'arrow_width_layout') and hasattr(self, 'arrow_head_width_label') and hasattr(self, 'arrow_head_width_spinbox'):
+            self.clear_layout(self.arrow_width_layout)
+            if is_rtl:
+                self.arrow_width_layout.addStretch()
+                self.arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
+                self.arrow_width_layout.addWidget(self.arrow_head_width_label)
+            else:
+                self.arrow_width_layout.addWidget(self.arrow_head_width_label)
+                self.arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
+                self.arrow_width_layout.addStretch()
+            # Force immediate update
+            self.arrow_width_layout.invalidate()
+            self.arrow_width_layout.activate()
+                
+        if hasattr(self, 'arrow_stroke_layout') and hasattr(self, 'arrow_head_stroke_width_label') and hasattr(self, 'arrow_head_stroke_width_spinbox'):
+            self.clear_layout(self.arrow_stroke_layout)
+            if is_rtl:
+                self.arrow_stroke_layout.addStretch()
+                self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
+                self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
+            else:
+                self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
+                self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
+                self.arrow_stroke_layout.addStretch()
+            # Force immediate update
+            self.arrow_stroke_layout.invalidate()
+            self.arrow_stroke_layout.activate()
+                
+        if hasattr(self, 'arrow_gap_layout') and hasattr(self, 'arrow_gap_length_label') and hasattr(self, 'arrow_gap_length_spinbox'):
+            self.clear_layout(self.arrow_gap_layout)
+            if is_rtl:
+                self.arrow_gap_layout.addStretch()
+                self.arrow_gap_layout.addWidget(self.arrow_gap_length_spinbox)
+                self.arrow_gap_layout.addWidget(self.arrow_gap_length_label)
+            else:
+                self.arrow_gap_layout.addWidget(self.arrow_gap_length_label)
+                self.arrow_gap_layout.addWidget(self.arrow_gap_length_spinbox)
+                self.arrow_gap_layout.addStretch()
+            # Force immediate update
+            self.arrow_gap_layout.invalidate()
+            self.arrow_gap_layout.activate()
+                
+        if hasattr(self, 'arrow_line_length_layout') and hasattr(self, 'arrow_line_length_label') and hasattr(self, 'arrow_line_length_spinbox'):
+            self.clear_layout(self.arrow_line_length_layout)
+            if is_rtl:
+                self.arrow_line_length_layout.addStretch()
+                self.arrow_line_length_layout.addWidget(self.arrow_line_length_spinbox)
+                self.arrow_line_length_layout.addWidget(self.arrow_line_length_label)
+            else:
+                self.arrow_line_length_layout.addWidget(self.arrow_line_length_label)
+                self.arrow_line_length_layout.addWidget(self.arrow_line_length_spinbox)
+                self.arrow_line_length_layout.addStretch()
+            # Force immediate update
+            self.arrow_line_length_layout.invalidate()
+            self.arrow_line_length_layout.activate()
+                
+        if hasattr(self, 'arrow_line_width_layout') and hasattr(self, 'arrow_line_width_label') and hasattr(self, 'arrow_line_width_spinbox'):
+            self.clear_layout(self.arrow_line_width_layout)
+            if is_rtl:
+                self.arrow_line_width_layout.addStretch()
+                self.arrow_line_width_layout.addWidget(self.arrow_line_width_spinbox)
+                self.arrow_line_width_layout.addWidget(self.arrow_line_width_label)
+            else:
+                self.arrow_line_width_layout.addWidget(self.arrow_line_width_label)
+                self.arrow_line_width_layout.addWidget(self.arrow_line_width_spinbox)
+                self.arrow_line_width_layout.addStretch()
+            # Force immediate update
+            self.arrow_line_width_layout.invalidate()
+            self.arrow_line_width_layout.activate()
+
+        # Force a complete visual update after all reorganizations
+        logging.info(f"Completed layout reorganization for {'RTL' if is_rtl else 'LTR'} - forcing visual update")
+        
+        # Debug: Check actual widget order in shadow layout
+        if hasattr(self, 'shadow_layout'):
+            widgets_in_order = []
+            for i in range(self.shadow_layout.count()):
+                item = self.shadow_layout.itemAt(i)
+                if item.widget():
+                    widgets_in_order.append(item.widget().__class__.__name__)
+                elif item.spacerItem():
+                    widgets_in_order.append("Spacer")
+            logging.info(f"DEBUG: Shadow layout widget order: {widgets_in_order}")
+        
+        # Debug: Check actual widget order in button color layout  
+        if hasattr(self, 'button_color_layout'):
+            widgets_in_order = []
+            for i in range(self.button_color_layout.count()):
+                item = self.button_color_layout.itemAt(i)
+                if item.widget():
+                    widgets_in_order.append(item.widget().__class__.__name__)
+                elif item.spacerItem():
+                    widgets_in_order.append("Spacer")
+            logging.info(f"DEBUG: Button color layout widget order: {widgets_in_order}")
+        
+        # Force update of all relevant containers with aggressive repaints
+        if hasattr(self, 'general_settings_widget') and self.general_settings_widget:
+            self.general_settings_widget.updateGeometry()
+            self.general_settings_widget.update()
+            self.general_settings_widget.repaint()
+            
+        if hasattr(self, 'layer_panel_settings_widget') and self.layer_panel_settings_widget:
+            self.layer_panel_settings_widget.updateGeometry()
+            self.layer_panel_settings_widget.update()
+            self.layer_panel_settings_widget.repaint()
+        
+        # Force a complete repaint of the entire dialog multiple times to ensure update
+        self.updateGeometry()
+        self.update()
+        self.repaint()
+        
+        # Additional forced repaint after a short delay using QTimer
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(50, lambda: self.repaint())
+        
+        logging.info("Layout reorganization complete and aggressive visual update forced")
+
+    def clear_layout(self, layout):
+        """Helper method to clear all widgets from a layout."""
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().setParent(None)
+
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
         # Use the appropriate directory for each OS
@@ -455,7 +915,7 @@ class SettingsDialog(QDialog):
         main_layout = QHBoxLayout(self)
         
         # Set layout margins to ensure consistent spacing
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setContentsMargins(0, 20, 20, 20)  # Left margin 0 for buttons to reach edge
         main_layout.setSpacing(20)
 
         # Calculate hover colors based on actual current theme
@@ -490,44 +950,30 @@ class SettingsDialog(QDialog):
         general_layout = QVBoxLayout(self.general_settings_widget)
 
         # Theme Selection
-        theme_layout = QHBoxLayout()
+        self.theme_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.theme_label = QLabel(_['select_theme'])
         self.theme_combobox = QComboBox()
         
-        # Modified theme combobox stylesheet
-        self.theme_combobox_base_style = f""" \
-            QComboBox {{ \
-                padding: 8px; \
-                padding-right: 24px; \
-                border: 1px solid #cccccc; \
-                border-radius: 4px; \
-                min-width: 150px; \
-                font-size: 14px; \
-            }} \
-            QComboBox:hover {{ \
-                background-color: {theme_hover_color}; \
-            }} \
-            QComboBox::drop-down {{ \
-                border: none; \
-                width: 24px; \
-            }} \
-            QComboBox::down-arrow {{ \
-                image: none; \
-                width: 24px; \
-                height: 24px; \
-            }} \
-            QComboBox::down-arrow:after {{ \
-                content: "▼"; \
-                color: #666666; \
-                position: absolute; \
-                top: 0; \
-                right: 8px; \
-                font-size: 12px; \
-            }} \
-            QComboBox QAbstractItemView {{ \
-                padding: 8px; \
-                selection-background-color: {selection_color}; \
-            }} \
+        # Simplified theme combobox stylesheet - removed problematic CSS properties
+        self.theme_combobox_base_style = f"""
+            QComboBox {{
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                min-width: 150px;
+                font-size: 14px;
+            }}
+            QComboBox:hover {{
+                background-color: {theme_hover_color};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox QAbstractItemView {{
+                padding: 8px;
+                selection-background-color: {selection_color};
+            }}
         """
         self.theme_combobox.setStyleSheet(self.theme_combobox_base_style)
         
@@ -540,52 +986,100 @@ class SettingsDialog(QDialog):
         index = self.theme_combobox.findData(self.current_theme)
         if index >= 0:
             self.theme_combobox.setCurrentIndex(index)
-        theme_layout.addWidget(self.theme_label)
-        theme_layout.addWidget(self.theme_combobox)
+        
+        # Add widgets in proper order for current language - match shadow layout pattern exactly
+        if self.is_rtl_language(self.current_language):
+            self.theme_layout.addStretch()
+            self.theme_layout.addWidget(self.theme_combobox)
+            self.theme_layout.addWidget(self.theme_label)
+        else:
+            self.theme_layout.addWidget(self.theme_label)
+            self.theme_layout.addWidget(self.theme_combobox)
+            self.theme_layout.addStretch()
 
         # Shadow Color Selection
-        shadow_layout = QHBoxLayout()
+        self.shadow_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
+        self.shadow_layout.setContentsMargins(0, 0, 0, 0)  # No margins needed now that main layout is fixed
+        # Set spacing based on language direction - reduced for RTL
+        if self.is_rtl_language(self.current_language):
+            self.shadow_layout.setSpacing(5)  # Much smaller spacing for RTL to push button further left
+        else:
+            self.shadow_layout.setSpacing(15)  # Keep spacing between widgets for LTR
         self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
 
-        self.shadow_color_label.setMinimumWidth(70)
+        # self.shadow_color_label.setMinimumWidth(0)  # Increased width for better RTL alignment # REMOVED
         self.shadow_color_button = QPushButton()
         self.shadow_color_button.setFixedSize(30, 30)
         self.update_shadow_color_button()
         self.shadow_color_button.clicked.connect(self.choose_shadow_color)
-        shadow_layout.addWidget(self.shadow_color_label)
-        # Add alignment for RTL languages
-        if self.is_rtl_language(self.current_language) != True:
-            shadow_layout.addWidget(self.shadow_color_button)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.shadow_layout.addWidget(self.shadow_color_button)
+            self.shadow_layout.addStretch()
+            self.shadow_layout.addWidget(self.shadow_color_label)
+            logging.info(f"Initial setup: RTL shadow layout for language {self.current_language} - button at far left, label at far right")
         else:
-            shadow_layout.addWidget(self.shadow_color_button, 0, Qt.AlignLeft)
-        shadow_layout.addStretch()
+            self.shadow_layout.addWidget(self.shadow_color_label)
+            self.shadow_layout.addWidget(self.shadow_color_button)
+            self.shadow_layout.addStretch()
+            logging.info(f"Initial setup: LTR shadow layout for language {self.current_language} - label before button")
 
         # Performance Settings - Option to draw only affected strand during dragging
-        performance_layout = QHBoxLayout()
-        self.affected_strand_label = QLabel(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
+        # performance_layout = QHBoxLayout() # Already handled if it's self.performance_layout
+        # self.affected_strand_label = QLabel(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
+        # Ensure performance_layout is an instance attribute if not already
+        if not hasattr(self, 'performance_layout'):
+            self.performance_layout = QHBoxLayout()
+        self.affected_strand_label = QLabel(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")        
         self.affected_strand_checkbox = QCheckBox()
         self.affected_strand_checkbox.setChecked(self.draw_only_affected_strand)
-        performance_layout.addWidget(self.affected_strand_label)
-        performance_layout.addWidget(self.affected_strand_checkbox)
-        performance_layout.addStretch()
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.performance_layout.addStretch()
+            self.performance_layout.addWidget(self.affected_strand_checkbox)
+            self.performance_layout.addWidget(self.affected_strand_label)
+        else:
+            self.performance_layout.addWidget(self.affected_strand_label)
+            self.performance_layout.addWidget(self.affected_strand_checkbox)
+            self.performance_layout.addStretch()
 
         # Third Control Point Option
-        third_control_layout = QHBoxLayout()
+        # third_control_layout = QHBoxLayout() # Already handled if it's self.third_control_layout
+        # self.third_control_label = QLabel(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        # Ensure third_control_layout is an instance attribute
+        if not hasattr(self, 'third_control_layout'):
+            self.third_control_layout = QHBoxLayout()
         self.third_control_label = QLabel(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
         self.third_control_checkbox = QCheckBox()
         self.third_control_checkbox.setChecked(self.enable_third_control_point)
-        third_control_layout.addWidget(self.third_control_label)
-        third_control_layout.addWidget(self.third_control_checkbox)
-        third_control_layout.addStretch()
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.third_control_layout.addStretch()
+            self.third_control_layout.addWidget(self.third_control_checkbox)
+            self.third_control_layout.addWidget(self.third_control_label)
+        else:
+            self.third_control_layout.addWidget(self.third_control_label)
+            self.third_control_layout.addWidget(self.third_control_checkbox)
+            self.third_control_layout.addStretch()
 
         # NEW: Use Extended Mask Option
-        extended_mask_layout = QHBoxLayout()
+        self.extended_mask_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.extended_mask_checkbox = QCheckBox()
         self.extended_mask_checkbox.setChecked(self.use_extended_mask)
-        extended_mask_layout.addWidget(self.extended_mask_label)
-        extended_mask_layout.addWidget(self.extended_mask_checkbox)
-        extended_mask_layout.addStretch()
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.extended_mask_layout.addStretch()
+            self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+            self.extended_mask_layout.addWidget(self.extended_mask_label)
+        else:
+            self.extended_mask_layout.addWidget(self.extended_mask_label)
+            self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+            self.extended_mask_layout.addStretch()
         # Add tooltip explaining usage
         self.extended_mask_label.setToolTip(_['use_extended_mask_tooltip'])
         self.extended_mask_checkbox.setToolTip(_['use_extended_mask_tooltip'])
@@ -598,26 +1092,33 @@ class SettingsDialog(QDialog):
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # Add controls to general settings layout
-        general_layout.addLayout(theme_layout)
-        general_layout.addLayout(shadow_layout)
-        general_layout.addLayout(performance_layout)
-        general_layout.addLayout(third_control_layout)
-        general_layout.addLayout(extended_mask_layout)
+        general_layout.addLayout(self.theme_layout)
+        general_layout.addLayout(self.shadow_layout)
+        general_layout.addLayout(self.performance_layout)
+        general_layout.addLayout(self.third_control_layout)
+        general_layout.addLayout(self.extended_mask_layout)
 
         # Add Shadow Blur Steps
-        num_steps_layout = QHBoxLayout()
+        self.num_steps_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.num_steps_label = QLabel(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:") # Will be translated later
         self.num_steps_spinbox = QSpinBox()
         self.num_steps_spinbox.setRange(1, 100)
         self.num_steps_spinbox.setValue(self.num_steps)
         self.num_steps_spinbox.setToolTip("Number of steps for the shadow fade effect (default 3)")
-        num_steps_layout.addWidget(self.num_steps_label)
-        num_steps_layout.addWidget(self.num_steps_spinbox)
-        num_steps_layout.addStretch()
-        general_layout.addLayout(num_steps_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.num_steps_layout.addStretch()
+            self.num_steps_layout.addWidget(self.num_steps_spinbox)
+            self.num_steps_layout.addWidget(self.num_steps_label)
+        else:
+            self.num_steps_layout.addWidget(self.num_steps_label)
+            self.num_steps_layout.addWidget(self.num_steps_spinbox)
+            self.num_steps_layout.addStretch()
+        general_layout.addLayout(self.num_steps_layout)
 
         # Add Max Blur Radius
-        blur_radius_layout = QHBoxLayout()
+        self.blur_radius_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
         self.blur_radius_spinbox = QDoubleSpinBox()
         self.blur_radius_spinbox.setRange(0.0, 60.0)
@@ -625,10 +1126,17 @@ class SettingsDialog(QDialog):
         self.blur_radius_spinbox.setDecimals(2)
         self.blur_radius_spinbox.setValue(self.max_blur_radius)
         self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 29.99)")
-        blur_radius_layout.addWidget(self.blur_radius_label)
-        blur_radius_layout.addWidget(self.blur_radius_spinbox)
-        blur_radius_layout.addStretch()
-        general_layout.addLayout(blur_radius_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.blur_radius_layout.addStretch()
+            self.blur_radius_layout.addWidget(self.blur_radius_spinbox)
+            self.blur_radius_layout.addWidget(self.blur_radius_label)
+        else:
+            self.blur_radius_layout.addWidget(self.blur_radius_label)
+            self.blur_radius_layout.addWidget(self.blur_radius_spinbox)
+            self.blur_radius_layout.addStretch()
+        general_layout.addLayout(self.blur_radius_layout)
 
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
@@ -642,131 +1150,201 @@ class SettingsDialog(QDialog):
         layer_panel_layout = QVBoxLayout(self.layer_panel_settings_widget)
 
         # Extension line settings
-        ext_length_layout = QHBoxLayout()
-        self.layer_panel_rows.append(ext_length_layout)
+        self.ext_length_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.ext_length_layout)
         self.extension_length_label = QLabel(_['extension_length'] if 'extension_length' in _ else "Extension Length")
         self.extension_length_spinbox = QDoubleSpinBox()
         self.extension_length_spinbox.setRange(0.0, 1000.0)
         self.extension_length_spinbox.setValue(self.extension_length)
         self.extension_length_spinbox.setToolTip(_['extension_length_tooltip'] if 'extension_length_tooltip' in _ else "Length of extension lines")
-        ext_length_layout.addWidget(self.extension_length_label)
-        ext_length_layout.addWidget(self.extension_length_spinbox)
-        ext_length_layout.addStretch()
-        layer_panel_layout.addLayout(ext_length_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.ext_length_layout.addStretch()
+            self.ext_length_layout.addWidget(self.extension_length_spinbox)
+            self.ext_length_layout.addWidget(self.extension_length_label)
+        else:
+            self.ext_length_layout.addWidget(self.extension_length_label)
+            self.ext_length_layout.addWidget(self.extension_length_spinbox)
+            self.ext_length_layout.addStretch()
+        layer_panel_layout.addLayout(self.ext_length_layout)
 
-        dash_count_layout = QHBoxLayout()
-        self.layer_panel_rows.append(dash_count_layout)
+        self.dash_count_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.dash_count_layout)
         self.extension_dash_count_label = QLabel(_['extension_dash_count'] if 'extension_dash_count' in _ else "Dash Count")
         self.extension_dash_count_spinbox = QSpinBox()
         self.extension_dash_count_spinbox.setRange(1, 100)
         self.extension_dash_count_spinbox.setValue(self.extension_dash_count)
         self.extension_dash_count_spinbox.setToolTip(_['extension_dash_count_tooltip'] if 'extension_dash_count_tooltip' in _ else "Number of dashes in extension line")
-        dash_count_layout.addWidget(self.extension_dash_count_label)
-        dash_count_layout.addWidget(self.extension_dash_count_spinbox)
-        dash_count_layout.addStretch()
-        layer_panel_layout.addLayout(dash_count_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.dash_count_layout.addStretch()
+            self.dash_count_layout.addWidget(self.extension_dash_count_spinbox)
+            self.dash_count_layout.addWidget(self.extension_dash_count_label)
+        else:
+            self.dash_count_layout.addWidget(self.extension_dash_count_label)
+            self.dash_count_layout.addWidget(self.extension_dash_count_spinbox)
+            self.dash_count_layout.addStretch()
+        layer_panel_layout.addLayout(self.dash_count_layout)
 
-        line_width_layout = QHBoxLayout()
-        self.layer_panel_rows.append(line_width_layout)
+        self.extension_dash_width_layout = QHBoxLayout()  # Store as instance attribute - renamed for clarity
+        self.layer_panel_rows.append(self.extension_dash_width_layout)
         self.extension_dash_width_label = QLabel(_['extension_dash_width'] if 'extension_dash_width' in _ else "Dash Width")
         self.extension_dash_width_spinbox = QDoubleSpinBox()
         self.extension_dash_width_spinbox.setRange(0.1, 20.0)
         self.extension_dash_width_spinbox.setValue(self.extension_dash_width)
         self.extension_dash_width_spinbox.setToolTip(_['extension_dash_width_tooltip'] if 'extension_dash_width_tooltip' in _ else "Width of  dashes")
-        line_width_layout.addWidget(self.extension_dash_width_label)
-        line_width_layout.addWidget(self.extension_dash_width_spinbox)
-        line_width_layout.addStretch()
-        layer_panel_layout.addLayout(line_width_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.extension_dash_width_layout.addStretch()
+            self.extension_dash_width_layout.addWidget(self.extension_dash_width_spinbox)
+            self.extension_dash_width_layout.addWidget(self.extension_dash_width_label)
+        else:
+            self.extension_dash_width_layout.addWidget(self.extension_dash_width_label)
+            self.extension_dash_width_layout.addWidget(self.extension_dash_width_spinbox)
+            self.extension_dash_width_layout.addStretch()
+        layer_panel_layout.addLayout(self.extension_dash_width_layout)
 
         # Extension Dash Gap Length setting
-        gap_length_layout = QHBoxLayout()
-        self.layer_panel_rows.append(gap_length_layout)
+        self.gap_length_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.gap_length_layout)
         self.extension_dash_gap_length_label = QLabel(_['extension_dash_gap_length'] if 'extension_dash_gap_length' in _ else 'Dash Gap Length')
         self.extension_dash_gap_length_spinbox = QDoubleSpinBox()
         self.extension_dash_gap_length_spinbox.setRange(0.0, 1000.0)
         self.extension_dash_gap_length_spinbox.setValue(self.extension_dash_gap_length)
         self.extension_dash_gap_length_spinbox.setToolTip(_['extension_dash_gap_length_tooltip'] if 'extension_dash_gap_length_tooltip' in _ else 'Gap between strand and the start of the dashes')
-        gap_length_layout.addWidget(self.extension_dash_gap_length_label)
-        gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
-        gap_length_layout.addStretch()
-        layer_panel_layout.addLayout(gap_length_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.gap_length_layout.addStretch()
+            self.gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
+            self.gap_length_layout.addWidget(self.extension_dash_gap_length_label)
+        else:
+            self.gap_length_layout.addWidget(self.extension_dash_gap_length_label)
+            self.gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
+            self.gap_length_layout.addStretch()
+        layer_panel_layout.addLayout(self.gap_length_layout)
 
         # --- NEW: Arrow head settings ---
-        arrow_len_layout = QHBoxLayout()
-        self.layer_panel_rows.append(arrow_len_layout)
+        self.arrow_len_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.arrow_len_layout)
         self.arrow_head_length_label = QLabel(_['arrow_head_length'] if 'arrow_head_length' in _ else 'Arrow Head Length')
         self.arrow_head_length_spinbox = QDoubleSpinBox()
         self.arrow_head_length_spinbox.setRange(0.0, 500.0)
         self.arrow_head_length_spinbox.setValue(self.arrow_head_length)
         self.arrow_head_length_spinbox.setToolTip(_['arrow_head_length_tooltip'] if 'arrow_head_length_tooltip' in _ else 'Length of arrow head in pixels')
-        arrow_len_layout.addWidget(self.arrow_head_length_label)
-        arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
-        arrow_len_layout.addStretch()
-        layer_panel_layout.addLayout(arrow_len_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_len_layout.addStretch()
+            self.arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
+            self.arrow_len_layout.addWidget(self.arrow_head_length_label)
+        else:
+            self.arrow_len_layout.addWidget(self.arrow_head_length_label)
+            self.arrow_len_layout.addWidget(self.arrow_head_length_spinbox)
+            self.arrow_len_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_len_layout)
 
-        arrow_width_layout = QHBoxLayout()
-        self.layer_panel_rows.append(arrow_width_layout)
+        self.arrow_width_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.arrow_width_layout)
         self.arrow_head_width_label = QLabel(_['arrow_head_width'] if 'arrow_head_width' in _ else 'Arrow Head Width')
         self.arrow_head_width_spinbox = QDoubleSpinBox()
         self.arrow_head_width_spinbox.setRange(0.0, 500.0)
         self.arrow_head_width_spinbox.setValue(self.arrow_head_width)
         self.arrow_head_width_spinbox.setToolTip(_['arrow_head_width_tooltip'] if 'arrow_head_width_tooltip' in _ else 'Width of arrow head base in pixels')
-        arrow_width_layout.addWidget(self.arrow_head_width_label)
-        arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
-        arrow_width_layout.addStretch()
-        layer_panel_layout.addLayout(arrow_width_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_width_layout.addStretch()
+            self.arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
+            self.arrow_width_layout.addWidget(self.arrow_head_width_label)
+        else:
+            self.arrow_width_layout.addWidget(self.arrow_head_width_label)
+            self.arrow_width_layout.addWidget(self.arrow_head_width_spinbox)
+            self.arrow_width_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_width_layout)
         # --- END NEW ---
 
         # --- NEW: Arrow head stroke width setting ---
-        arrow_stroke_layout = QHBoxLayout()
-        self.layer_panel_rows.append(arrow_stroke_layout)
+        self.arrow_stroke_layout = QHBoxLayout()  # Store as instance attribute
+        self.layer_panel_rows.append(self.arrow_stroke_layout)
         self.arrow_head_stroke_width_label = QLabel(_['arrow_head_stroke_width'] if 'arrow_head_stroke_width' in _ else 'Arrow Head Stroke Width')
         self.arrow_head_stroke_width_spinbox = QSpinBox()
         self.arrow_head_stroke_width_spinbox.setRange(1, 30)
         self.arrow_head_stroke_width_spinbox.setValue(getattr(self.canvas, 'arrow_head_stroke_width', 4))
         self.arrow_head_stroke_width_spinbox.setToolTip(_['arrow_head_stroke_width_tooltip'] if 'arrow_head_stroke_width_tooltip' in _ else 'Thickness of arrow head border in pixels')
-        arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
-        arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
-        arrow_stroke_layout.addStretch()
-        layer_panel_layout.addLayout(arrow_stroke_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_stroke_layout.addStretch()
+            self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
+            self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
+        else:
+            self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_label)
+            self.arrow_stroke_layout.addWidget(self.arrow_head_stroke_width_spinbox)
+            self.arrow_stroke_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_stroke_layout)
         # --- END NEW ---
 
         # Add arrow shaft settings
-        gap_layout = QHBoxLayout()
-        self.layer_panel_rows.append(gap_layout)
+        self.arrow_gap_layout = QHBoxLayout()  # Store as instance attribute - renamed to avoid conflict
+        self.layer_panel_rows.append(self.arrow_gap_layout)
         self.arrow_gap_length_label = QLabel(_['arrow_gap_length'] if 'arrow_gap_length' in _ else 'Arrow Gap Length')
         self.arrow_gap_length_spinbox = QDoubleSpinBox()
         self.arrow_gap_length_spinbox.setRange(0.0, 1000.0)
         self.arrow_gap_length_spinbox.setValue(self.arrow_gap_length)
         self.arrow_gap_length_spinbox.setToolTip(_['arrow_gap_length_tooltip'] if 'arrow_gap_length_tooltip' in _ else 'Gap between strand end and arrow shaft start')
-        gap_layout.addWidget(self.arrow_gap_length_label)
-        gap_layout.addWidget(self.arrow_gap_length_spinbox)
-        gap_layout.addStretch()
-        layer_panel_layout.addLayout(gap_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_gap_layout.addStretch()
+            self.arrow_gap_layout.addWidget(self.arrow_gap_length_spinbox)
+            self.arrow_gap_layout.addWidget(self.arrow_gap_length_label)
+        else:
+            self.arrow_gap_layout.addWidget(self.arrow_gap_length_label)
+            self.arrow_gap_layout.addWidget(self.arrow_gap_length_spinbox)
+            self.arrow_gap_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_gap_layout)
 
-        line_length_layout = QHBoxLayout()
-        self.layer_panel_rows.append(line_length_layout)
+        self.arrow_line_length_layout = QHBoxLayout()  # Store as instance attribute - renamed to avoid conflict
+        self.layer_panel_rows.append(self.arrow_line_length_layout)
         self.arrow_line_length_label = QLabel(_['arrow_line_length'] if 'arrow_line_length' in _ else 'Arrow Line Length')
         self.arrow_line_length_spinbox = QDoubleSpinBox()
         self.arrow_line_length_spinbox.setRange(0.0, 1000.0)
         self.arrow_line_length_spinbox.setValue(self.arrow_line_length)
         self.arrow_line_length_spinbox.setToolTip(_['arrow_line_length_tooltip'] if 'arrow_line_length_tooltip' in _ else 'Length of the arrow shaft')
-        line_length_layout.addWidget(self.arrow_line_length_label)
-        line_length_layout.addWidget(self.arrow_line_length_spinbox)
-        line_length_layout.addStretch()
-        layer_panel_layout.addLayout(line_length_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_line_length_layout.addStretch()
+            self.arrow_line_length_layout.addWidget(self.arrow_line_length_spinbox)
+            self.arrow_line_length_layout.addWidget(self.arrow_line_length_label)
+        else:
+            self.arrow_line_length_layout.addWidget(self.arrow_line_length_label)
+            self.arrow_line_length_layout.addWidget(self.arrow_line_length_spinbox)
+            self.arrow_line_length_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_line_length_layout)
 
-        shaft_width_layout = QHBoxLayout()
-        self.layer_panel_rows.append(shaft_width_layout)
+        self.arrow_line_width_layout = QHBoxLayout()  # Store as instance attribute - renamed to avoid conflict
+        self.layer_panel_rows.append(self.arrow_line_width_layout)
         self.arrow_line_width_label = QLabel(_['arrow_line_width'] if 'arrow_line_width' in _ else 'Arrow Line Width')
         self.arrow_line_width_spinbox = QDoubleSpinBox()
         self.arrow_line_width_spinbox.setRange(0.1, 100.0)
         self.arrow_line_width_spinbox.setValue(self.arrow_line_width)
         self.arrow_line_width_spinbox.setToolTip(_['arrow_line_width_tooltip'] if 'arrow_line_width_tooltip' in _ else 'Thickness of the arrow shaft')
-        shaft_width_layout.addWidget(self.arrow_line_width_label)
-        shaft_width_layout.addWidget(self.arrow_line_width_spinbox)
-        shaft_width_layout.addStretch()
-        layer_panel_layout.addLayout(shaft_width_layout)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.arrow_line_width_layout.addStretch()
+            self.arrow_line_width_layout.addWidget(self.arrow_line_width_spinbox)
+            self.arrow_line_width_layout.addWidget(self.arrow_line_width_label)
+        else:
+            self.arrow_line_width_layout.addWidget(self.arrow_line_width_label)
+            self.arrow_line_width_layout.addWidget(self.arrow_line_width_spinbox)
+            self.arrow_line_width_layout.addStretch()
+        layer_panel_layout.addLayout(self.arrow_line_width_layout)
         # Default Arrow Color toggle and selector
         # Create a vertical layout to hold the checkbox and button containers
         default_arrow_container_layout = QVBoxLayout()
@@ -774,59 +1352,65 @@ class SettingsDialog(QDialog):
         # as the parent widget's layout direction should propagate.
 
         # --- Checkbox Container ---
-        checkbox_container = QWidget()
+        self.checkbox_container = QWidget()  # Store as instance attribute
         # Ensure the container widget uses LTR so the indicator appears on the left of the text
-        checkbox_container.setLayoutDirection(Qt.LeftToRight if self.is_rtl_language(self.current_language) else Qt.RightToLeft)
-        checkbox_layout = QHBoxLayout(checkbox_container)
-        checkbox_layout.setContentsMargins(0, 0, 0, 0)
-        checkbox_layout.setSpacing(5)
+        self.checkbox_container.setLayoutDirection(Qt.LeftToRight if self.is_rtl_language(self.current_language) else Qt.RightToLeft)
+        self.checkbox_layout = QHBoxLayout(self.checkbox_container)  # Store as instance attribute
+        self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        self.checkbox_layout.setSpacing(5)
         
         self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
         self.default_arrow_color_checkbox.stateChanged.connect(self.on_default_arrow_color_changed)
 
-        checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-        checkbox_layout.addStretch()  # Add stretch to align checkbox left (or right in RTL)
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.checkbox_layout.addStretch()
+            self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+        else:
+            self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+            self.checkbox_layout.addStretch()
         # Add the checkbox container widget to the default arrow container layout
-        default_arrow_container_layout.addWidget(checkbox_container)
+        default_arrow_container_layout.addWidget(self.checkbox_container)
 
         # Ensure the checkbox row (container) is included for RTL direction updates
-        self.layer_panel_rows.append(checkbox_container)
+        self.layer_panel_rows.append(self.checkbox_container)
 
-        # ---text for the button---
-        button_color_width_layout = QHBoxLayout()
-     
-        self.layer_panel_rows.append(button_color_width_layout)
+        # Button Color - Label and button in SAME layout
+        # self.button_color_container = QWidget() # REMOVED QWidget wrapper
+        self.button_color_layout = QHBoxLayout() # Create QHBoxLayout directly
+        
+        # Set initial margins and spacing for the button_color_layout (QHBoxLayout)
+        if self.is_rtl_language(self.current_language):
+            self.button_color_layout.setContentsMargins(-300, 0, 0, 0)  # Push layout left for RTL
+            self.button_color_layout.setSpacing(2) 
+        else:
+            self.button_color_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins for LTR
+            self.button_color_layout.setSpacing(15)
+
         self.button_color_label = QLabel(_['button_color'] if 'button_color' in _ else 'Button Color:')
-   
-        button_color_width_layout.addWidget(self.button_color_label)
-        button_color_width_layout.addStretch()
-        default_arrow_container_layout.addLayout(button_color_width_layout)
-
-        button_color_width_layout.addStretch() # Keep button aligned left (or right in RTL) within its indented space
-
-        # --- Button Container (should be under the button_color_width_layout)---
-        button_container = QWidget()
-        # Force LTR layout direction (container) for consistency
-        button_container.setLayoutDirection(Qt.LeftToRight)
-        button_layout = QHBoxLayout(button_container)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.setSpacing(5)
-        # Center the button by adding stretch before and after
-        button_layout.addStretch()
-         
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
         self.update_default_arrow_color_button()
         self.default_arrow_color_button.clicked.connect(self.choose_default_arrow_color)
-        button_layout.addWidget(self.default_arrow_color_button)
-        button_layout.addStretch()
-        default_arrow_container_layout.addWidget(button_container)
+
+        # Add widgets in proper order for current language (to self.button_color_layout)
+        if self.is_rtl_language(self.current_language):
+            self.button_color_layout.addWidget(self.default_arrow_color_button)
+            self.button_color_layout.addStretch()
+            self.button_color_layout.addWidget(self.button_color_label)
+            logging.info(f"Initial setup: RTL button color layout for language {self.current_language} - button at far left, label at far right")
+        else:
+            self.button_color_layout.addWidget(self.button_color_label)
+            self.button_color_layout.addWidget(self.default_arrow_color_button)
+            self.button_color_layout.addStretch()
+            logging.info(f"Initial setup: LTR button color layout for language {self.current_language} - label before button")
+
+        default_arrow_container_layout.addLayout(self.button_color_layout) # Add QHBoxLayout directly
+        self.layer_panel_rows.append(self.button_color_layout) # Add layout to rows for RTL handling
         
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
-        # Append the HBoxLayout for the button so its direction is adjusted in RTL mode
-        self.layer_panel_rows.append(button_layout)
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
         self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
@@ -842,42 +1426,27 @@ class SettingsDialog(QDialog):
         self.language_label = QLabel(_['select_language'])
         self.language_combobox = QComboBox()
 
-        # Modified language combobox stylesheet
-        self.lang_combobox_base_style = f""" \
-            QComboBox {{ \
-                padding: 8px; \
-                padding-right: 24px; \
-                border: 1px solid #cccccc; \
-                border-radius: 4px; \
-                min-width: 200px; \
-                font-size: 14px; \
-            }} \
-            QComboBox:hover {{ \
-                background-color: {lang_hover_color}; \
-            }} \
-            QComboBox::drop-down {{ \
-                border: none; \
-                width: 24px; \
-            }} \
-            QComboBox::down-arrow {{ \
-                image: none; \
-                width: 24px; \
-                height: 24px; \
-            }} \
-            QComboBox::down-arrow:after {{ \
-                content: "▼"; \
-                color: #666666; \
-                position: absolute; \
-                top: 0; \
-                right: 8px; \
-                font-size: 12px; \
-            }} \
-            QComboBox QAbstractItemView {{ \
-                padding: 8px; \
-                min-width: 200px; \
-                selection-background-color: {selection_color}; \
-                text-align: right; \
-            }} \
+        # Simplified language combobox stylesheet - removed problematic CSS properties
+        self.lang_combobox_base_style = f"""
+            QComboBox {{
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                min-width: 200px;
+                font-size: 14px;
+            }}
+            QComboBox:hover {{
+                background-color: {lang_hover_color};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox QAbstractItemView {{
+                padding: 8px;
+                min-width: 200px;
+                selection-background-color: {selection_color};
+            }}
         """
         self.language_combobox.setStyleSheet(self.lang_combobox_base_style)
         
@@ -1395,6 +1964,9 @@ class SettingsDialog(QDialog):
         # If language has changed, update translations in the dialog
         if previous_language != language_code:
             self.update_translations()
+            # Update layout direction immediately after language change
+            self.update_layout_direction()
+            logging.info(f"Applied layout direction change for language: {language_code}")
             # Force redraw of language-specific elements
             self.repaint()
         
@@ -1511,26 +2083,36 @@ class SettingsDialog(QDialog):
         if index >= 0:
             self.language_combobox.setCurrentIndex(index)
         
-        # For Hebrew, adjust text in the combobox to get proper positioning
+        # For Hebrew, force refresh the combobox text display after rebuilding
         if self.is_rtl_language(self.current_language):
-            # Apply RTL text positioning to comboboxes
-            self.theme_combobox.setItemText(0, "        " + _['default'])  # Add space to move text closer to checkbox
-            self.theme_combobox.setItemText(1, "        " + _['light'])
-            self.theme_combobox.setItemText(2, "        " + _['dark'])
+            # Force the combobox to update its text display for RTL after rebuild
+            if index >= 0:
+                # Force refresh by temporarily changing and restoring the current item
+                self.language_combobox.setCurrentIndex(-1)
+                self.language_combobox.setCurrentIndex(index)
+                # Also force a repaint of the combobox
+                self.language_combobox.update()
+                self.language_combobox.repaint()
+                logging.info(f"RTL: Forced language combobox refresh after rebuild for index {index}")
+        
+        # For Hebrew, use proper CSS styling instead of adding spaces to text
+        if self.is_rtl_language(self.current_language):
+            # Remove CSS that might interfere with layout - rely purely on layout reorganization
+            logging.info("RTL language detected - relying on layout reorganization for positioning")
+        else:
+            # For LTR languages, ensure clean text without any added spaces
+            # Reset theme combobox text to original translations
+            self.theme_combobox.setItemText(0, _['default'])
+            self.theme_combobox.setItemText(1, _['light'])
+            self.theme_combobox.setItemText(2, _['dark'])
             
-            # Add padding to the Hebrew item in the language combobox
-            hebrew_index = self.language_combobox.findData('he')
-            self.language_combobox.setItemText(hebrew_index, "           " + _['hebrew'])
-            english_index = self.language_combobox.findData('en')
-            self.language_combobox.setItemText(english_index, "           " + _['english'])
-            french_index = self.language_combobox.findData('fr')
-            self.language_combobox.setItemText(french_index, "           " + _['french'])
-            italian_index = self.language_combobox.findData('it')
-            self.language_combobox.setItemText(italian_index, "           " + _['italian'])
-            spanish_index = self.language_combobox.findData('es')
-            self.language_combobox.setItemText(spanish_index, "           " + _['spanish'])
-            portuguese_index = self.language_combobox.findData('pt')
-            self.language_combobox.setItemText(portuguese_index, "           " + _['portuguese'])
+            # Reset language combobox text to original translations
+            for lang_code in ['en', 'fr', 'it', 'es', 'pt', 'he']:
+                lang_index = self.language_combobox.findData(lang_code)
+                if lang_index >= 0:
+                    lang_key = {'en': 'english', 'fr': 'french', 'it': 'italian', 
+                               'es': 'spanish', 'pt': 'portuguese', 'he': 'hebrew'}[lang_code]
+                    self.language_combobox.setItemText(lang_index, _[lang_key])
 
         # Update tutorial explanations and play buttons
         for i in range(5):  # Changed from 7 to 5
@@ -1578,9 +2160,8 @@ class SettingsDialog(QDialog):
 
             # Apply alignment unless it's a category label or explicitly skipped
             if not is_category_label:
-                 # *** Add condition to skip shadow color label in RTL ***
-                 if widget == self.shadow_color_label and rtl:
-                     continue
+                 # Remove special exception for shadow_color_label - treat it normally
+                 widget.setAlignment(alignment)
    
         # For text browsers, set alignment through HTML if RTL
         if rtl:
@@ -2200,6 +2781,8 @@ class SettingsDialog(QDialog):
             self.current_language = self.parent_window.language_code
             logging.info(f"SettingsDialog showEvent: Ensuring translations for '{self.current_language}'.")
             self.update_translations()
+            # Update layout direction after updating translations
+            self.update_layout_direction()
 
         super().showEvent(event) # Call parent method AFTER ensuring translations
 

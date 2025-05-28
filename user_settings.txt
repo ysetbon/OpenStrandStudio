@@ -1,6 +1,6 @@
-Theme: default
-Language: en
-ShadowColor: 0,0,0,250
+Theme: dark
+Language: he
+ShadowColor: 42,42,42,250
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 NumSteps: 3

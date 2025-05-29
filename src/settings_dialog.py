@@ -152,7 +152,7 @@ class SettingsDialog(QDialog):
                 QComboBox::drop-down {{
                     subcontrol-origin: padding;
                     subcontrol-position: left center;
-                    width: 20px;
+                    width: 80px;
                     border: none;
                 }}
                 QComboBox::drop-down:hover {{
@@ -174,7 +174,7 @@ class SettingsDialog(QDialog):
                 QComboBox::drop-down {{
                     subcontrol-origin: padding;
                     subcontrol-position: right center;
-                    width: 20px;
+                    width: 50px;
                     border: none;
                 }}
                 QComboBox::drop-down:hover {{
@@ -213,6 +213,8 @@ class SettingsDialog(QDialog):
                     self.shadow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'button_color_label'):
                     self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    self.button_color_label.setLayoutDirection(Qt.RightToLeft)
+                    self.button_color_label.setTextFormat(Qt.PlainText)
                 if hasattr(self, 'affected_strand_label'):
                     self.affected_strand_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
@@ -345,7 +347,7 @@ class SettingsDialog(QDialog):
                     padding: 8px;
                     border: 1px solid #cccccc;
                     border-radius: 4px;
-                    min-width: 150px;
+                    min-width: 100px;
                     font-size: 14px;
                     {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
                 }}
@@ -377,14 +379,14 @@ class SettingsDialog(QDialog):
                     padding: 8px;
                     border: 1px solid #cccccc;
                     border-radius: 4px;
-                    min-width: 200px;
+                    min-width: 150px;
                     font-size: 14px;
                     {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
                 }}
                 {dropdown_arrow_css}
                 QComboBox QAbstractItemView {{
                     padding: 8px;
-                    min-width: 200px;
+                    min-width: 150px;
                     selection-background-color: {selection_color};
                 }}
             """
@@ -410,13 +412,6 @@ class SettingsDialog(QDialog):
                 if isinstance(row, QBoxLayout):
                     # Directly adjust the box layout direction - FIX: use RightToLeft for RTL
                     row.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
-                    # If it's the button_color_layout, apply its specific margins for RTL
-                    if row == getattr(self, 'button_color_layout', None) and is_rtl:
-                        row.setContentsMargins(-300, 0, 0, 0)
-                        row.setSpacing(2)
-                    elif row == getattr(self, 'button_color_layout', None) and not is_rtl:
-                        row.setContentsMargins(0,0,0,0)
-                        row.setSpacing(15)
 
                     # Additionally, for RTL make sure QLabel children are right-aligned
                     if is_rtl:
@@ -437,6 +432,15 @@ class SettingsDialog(QDialog):
                     if isinstance(inner_layout, QBoxLayout):
                         # FIX: use RightToLeft for RTL
                         inner_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+                        
+                        # Special handling for button_color_container
+                        if row == getattr(self, 'button_color_container', None):
+                            if is_rtl:
+                                inner_layout.setContentsMargins(0, 0, 0, 0)  # Use spacers instead of margins
+                                inner_layout.setSpacing(20)
+                            else:
+                                inner_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins
+                                inner_layout.setSpacing(15)
 
                     # Ensure any labels inside are aligned properly in RTL
                     if is_rtl:
@@ -580,20 +584,61 @@ class SettingsDialog(QDialog):
             self.blur_radius_layout.activate()
                 
         # Button color layout reorganization (this was missing!)
-        if hasattr(self, 'button_color_layout') and hasattr(self, 'button_color_label') and hasattr(self, 'default_arrow_color_button'):
+        if hasattr(self, 'button_color_container') and hasattr(self, 'button_color_label') and hasattr(self, 'default_arrow_color_button'):
+            # Clear the layout and set proper spacing
             self.clear_layout(self.button_color_layout)
+            self.button_color_container.setContentsMargins(0, 0, 0, 0)
             if is_rtl:
-                # For RTL: Button at far left, stretch in middle, label at far right
+                self.button_color_container.setLayoutDirection(Qt.RightToLeft)
+                self.button_color_layout.setDirection(QBoxLayout.RightToLeft)
+                self.button_color_layout.setContentsMargins(0, 0, 0, 0)
+                self.button_color_layout.setSpacing(10)  # Reduce spacing for RTL
+                # Set label properties for RTL
+                self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.button_color_label.setLayoutDirection(Qt.RightToLeft)
+                self.button_color_label.setTextFormat(Qt.PlainText)
+                self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                # Add widgets in RTL order
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
-                self.button_color_layout.addStretch()
+                self.button_color_layout.addSpacing(10)  # Small fixed spacing
                 self.button_color_layout.addWidget(self.button_color_label)
+                logging.info("RTL REORGANIZE: Added button, spacing, then label")
             else:
+                self.button_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.button_color_layout.setSpacing(15)
+                self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.button_color_layout.addWidget(self.button_color_label)
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
                 self.button_color_layout.addStretch()
+                logging.info("LTR REORGANIZE: Added label, button, then stretch")
             # Force immediate update (same as theme layout)
             self.button_color_layout.invalidate()
             self.button_color_layout.activate()
+            # Also update the container widget
+            if hasattr(self, 'button_color_container'):
+                self.button_color_container.updateGeometry()
+                self.button_color_container.update()
+                logging.info(f"REORGANIZE: Updated container geometry")
+                
+            # Log final reorganized layout state  
+            logging.info(f"REORGANIZE_FINAL: Total items after reorganize: {self.button_color_layout.count()}")
+            for i in range(self.button_color_layout.count()):
+                item = self.button_color_layout.itemAt(i)
+                if item.widget():
+                    widget = item.widget()
+                    logging.info(f"  Item {i}: Widget {widget.__class__.__name__} - text: '{getattr(widget, 'text', lambda: 'N/A')()}' geometry: {widget.geometry()} pos: {widget.pos()} size: {widget.size()}")
+                elif item.spacerItem():
+                    spacer = item.spacerItem()
+                    logging.info(f"  Item {i}: Spacer - size hint: {spacer.sizeHint()}, policy: {spacer.sizePolicy().horizontalPolicy()}")
+            # Log container and layout geometry
+            logging.info(f"BUTTON_COLOR_CONTAINER geometry: {self.button_color_container.geometry()} size: {self.button_color_container.size()} pos: {self.button_color_container.pos()}")
+            logging.info(f"BUTTON_COLOR_LAYOUT geometry: {self.button_color_layout.geometry()}")
+            # Try to force label to fill available space
+            self.button_color_label.setMinimumWidth(self.button_color_container.width())
+            self.button_color_label.updateGeometry()
+            self.button_color_label.repaint()
+            logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
 
         # Checkbox layout reorganization (this was also missing!)
         if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_checkbox'):
@@ -1025,7 +1070,7 @@ class SettingsDialog(QDialog):
                 padding: 8px;
                 border: 1px solid #cccccc;
                 border-radius: 4px;
-                min-width: 150px;
+                min-width: 100px;
                 font-size: 14px;
                 {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
             }}
@@ -1208,6 +1253,7 @@ class SettingsDialog(QDialog):
         # Collect HBox layouts for RTL adjustments
         self.layer_panel_rows = []
         layer_panel_layout = QVBoxLayout(self.layer_panel_settings_widget)
+        layer_panel_layout.setContentsMargins(0, 0, 0, 0)
 
         # Extension line settings
         self.ext_length_layout = QHBoxLayout()  # Store as instance attribute
@@ -1437,18 +1483,40 @@ class SettingsDialog(QDialog):
         self.layer_panel_rows.append(self.checkbox_container)
 
         # Button Color - Label and button in SAME layout
-        # self.button_color_container = QWidget() # REMOVED QWidget wrapper
-        self.button_color_layout = QHBoxLayout() # Create QHBoxLayout directly
+        # Create a container widget to hold the layout so margins work properly
+        self.button_color_container = QWidget()
+        self.button_color_layout = QHBoxLayout(self.button_color_container) # Create QHBoxLayout and assign to widget
         
         # Set initial margins and spacing for the button_color_layout (QHBoxLayout)
         if self.is_rtl_language(self.current_language):
-            self.button_color_layout.setContentsMargins(-300, 0, 0, 0)  # Push layout left for RTL
-            self.button_color_layout.setSpacing(2) 
+            self.button_color_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins, use spacer instead
+            self.button_color_layout.setSpacing(20) 
         else:
             self.button_color_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins for LTR
             self.button_color_layout.setSpacing(15)
 
         self.button_color_label = QLabel(_['button_color'] if 'button_color' in _ else 'Button Color:')
+        # Add these lines right after creating the label:
+        self.button_color_label.setTextFormat(Qt.PlainText)
+        self.button_color_label.setWordWrap(False)
+        self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # Set proper alignment for RTL
+        if self.is_rtl_language(self.current_language):
+            self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.button_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.button_color_label.setLayoutDirection(Qt.LeftToRight)
+        # Ensure text is visible with proper styling
+        self.button_color_label.setStyleSheet("QLabel { color: white; }" if self.current_theme == "dark" else "QLabel { color: black; }")
+        # Force word wrap off and ensure text is not clipped
+        self.button_color_label.setWordWrap(False)
+        self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.button_color_layout.setContentsMargins(0, 0, 0, 0)
+        self.button_color_container.setContentsMargins(0, 0, 0, 0)
+        # Force update to ensure label has proper size
+        self.button_color_label.adjustSize()
+        logging.info(f"LABEL CONFIG: After adjustSize - size: {self.button_color_label.size()}, sizeHint: {self.button_color_label.sizeHint()}")
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
         self.update_default_arrow_color_button()
@@ -1456,18 +1524,37 @@ class SettingsDialog(QDialog):
 
         # Add widgets in proper order for current language (to self.button_color_layout)
         if self.is_rtl_language(self.current_language):
-            self.button_color_layout.addWidget(self.default_arrow_color_button)
-            self.button_color_layout.addStretch()
             self.button_color_layout.addWidget(self.button_color_label)
-            logging.info(f"Initial setup: RTL button color layout for language {self.current_language} - button at far left, label at far right")
+            self.button_color_layout.addStretch()
+            self.button_color_layout.addWidget(self.default_arrow_color_button)
+            logging.info("RTL SETUP: Added label, stretch, then button")
         else:
             self.button_color_layout.addWidget(self.button_color_label)
             self.button_color_layout.addWidget(self.default_arrow_color_button)
             self.button_color_layout.addStretch()
-            logging.info(f"Initial setup: LTR button color layout for language {self.current_language} - label before button")
+            logging.info("LTR SETUP: Added label, button, then stretch")
+        
+        # Log final layout state
+        logging.info(f"BUTTON_COLOR_LAYOUT: Total items: {self.button_color_layout.count()}")
+        for i in range(self.button_color_layout.count()):
+            item = self.button_color_layout.itemAt(i)
+            if item.widget():
+                widget = item.widget()
+                logging.info(f"  Item {i}: Widget {widget.__class__.__name__} - text: '{getattr(widget, 'text', lambda: 'N/A')()}' size: {widget.size()} pos: {widget.pos()} geom: {widget.geometry()}")
+            elif item.spacerItem():
+                spacer = item.spacerItem()
+                logging.info(f"  Item {i}: Spacer - size hint: {spacer.sizeHint()}, policy: {spacer.sizePolicy().horizontalPolicy()}")
+        # Log container and layout geometry
+        logging.info(f"BUTTON_COLOR_CONTAINER geometry: {self.button_color_container.geometry()} size: {self.button_color_container.size()} pos: {self.button_color_container.pos()}")
+        logging.info(f"BUTTON_COLOR_LAYOUT geometry: {self.button_color_layout.geometry()}")
+        # Try to force label to fill available space
+        self.button_color_label.setMinimumWidth(self.button_color_container.width())
+        self.button_color_label.updateGeometry()
+        self.button_color_label.repaint()
+        logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
 
-        default_arrow_container_layout.addLayout(self.button_color_layout) # Add QHBoxLayout directly
-        self.layer_panel_rows.append(self.button_color_layout) # Add layout to rows for RTL handling
+        default_arrow_container_layout.addWidget(self.button_color_container) # Add the container widget instead of layout directly
+        self.layer_panel_rows.append(self.button_color_container) # Add container to rows for RTL handling instead of layout
         
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
@@ -1492,14 +1579,14 @@ class SettingsDialog(QDialog):
                 padding: 8px;
                 border: 1px solid #cccccc;
                 border-radius: 4px;
-                min-width: 200px;
+                min-width: 150px;
                 font-size: 14px;
                 {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
             }}
             {dropdown_arrow_css}
             QComboBox QAbstractItemView {{
                 padding: 8px;
-                min-width: 200px;
+                min-width: 150px;
                 selection-background-color: {selection_color};
             }}
         """
@@ -1520,14 +1607,10 @@ class SettingsDialog(QDialog):
             self.language_combobox.setCurrentIndex(index)
 
         self.language_info_label = QLabel(_['language_settings_info'])
-        # Add widgets to layout with alignment flags
-        if self.is_rtl_language(self.current_language) != True:
-            language_layout.addWidget(self.language_label, 0, Qt.AlignLeft) # Default alignment, will be updated
-            language_layout.addWidget(self.language_combobox, 0, Qt.AlignLeft)
-        else:
-            language_layout.addWidget(self.language_label, 0, Qt.AlignLeft) # Default alignment, will be updated
-            language_layout.addWidget(self.language_combobox, 0, Qt.AlignRight)
-        language_layout.addWidget(self.language_info_label, 0, Qt.AlignLeft) # Default alignment, will be updated
+        # Add widgets to language layout with logical leading alignment
+        language_layout.addWidget(self.language_label, 0, Qt.AlignLeading | Qt.AlignVCenter)
+        language_layout.addWidget(self.language_combobox, 0, Qt.AlignLeading | Qt.AlignVCenter)
+        language_layout.addWidget(self.language_info_label, 0, Qt.AlignLeading | Qt.AlignVCenter)
 
         # Add the "OK" button
         self.language_ok_button = QPushButton(_['ok'])
@@ -1702,7 +1785,7 @@ class SettingsDialog(QDialog):
                     border: 1px solid #505050;
                     padding: 8px;
                     border-radius: 4px;
-                    min-width: 150px;
+                    min-width: 100px;
                     {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
                 }}
                 {dropdown_arrow_css}
@@ -1831,7 +1914,7 @@ class SettingsDialog(QDialog):
                     border: 1px solid #CCCCCC;
                     padding: 8px;
                     border-radius: 4px;
-                    min-width: 150px;
+                    min-width: 100px;
                     {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
                 }}
                 {dropdown_arrow_css}
@@ -1876,7 +1959,7 @@ class SettingsDialog(QDialog):
                     border: 1px solid #CCCCCC;
                     padding: 8px;
                     border-radius: 4px;
-                    min-width: 150px;
+                    min-width: 100px;
                     {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
                 }}
                 {dropdown_arrow_css}
@@ -2106,6 +2189,12 @@ class SettingsDialog(QDialog):
         # Update default arrow color checkbox text
         self.default_arrow_color_checkbox.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         self.button_color_label.setText(_['button_color'] if 'button_color' in _ else "Button Color:")
+        if self.is_rtl_language(self.current_language):
+            self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.button_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.button_color_label.setLayoutDirection(Qt.LeftToRight)
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
@@ -2970,6 +3059,39 @@ class SettingsDialog(QDialog):
 
         painter.end()
         label_widget.setPixmap(pixmap)
+
+    def log_button_color_debug_info(self):
+        """Log detailed information about button color layout positioning for debugging."""
+        logging.info("=== BUTTON COLOR LAYOUT DEBUG INFO ===")
+        
+        if hasattr(self, 'button_color_container') and self.button_color_container:
+            logging.info(f"Container geometry: {self.button_color_container.geometry()}")
+            logging.info(f"Container size policy: {self.button_color_container.sizePolicy().horizontalPolicy()}")
+            
+        if hasattr(self, 'button_color_layout') and self.button_color_layout:
+            logging.info(f"Layout count: {self.button_color_layout.count()}")
+            logging.info(f"Layout geometry: {self.button_color_layout.geometry()}")
+            logging.info(f"Layout spacing: {self.button_color_layout.spacing()}")
+            logging.info(f"Layout margins: {self.button_color_layout.contentsMargins()}")
+            
+            for i in range(self.button_color_layout.count()):
+                item = self.button_color_layout.itemAt(i)
+                if item.widget():
+                    widget = item.widget()
+                    logging.info(f"  Widget {i} ({widget.__class__.__name__}): geometry={widget.geometry()}, visible={widget.isVisible()}, text='{getattr(widget, 'text', lambda: 'N/A')()}'")
+                elif item.spacerItem():
+                    spacer = item.spacerItem()
+                    logging.info(f"  Spacer {i}: sizeHint={spacer.sizeHint()}, geometry={spacer.geometry()}")
+                    
+        if hasattr(self, 'button_color_label') and self.button_color_label:
+            logging.info(f"Label: text='{self.button_color_label.text()}', geometry={self.button_color_label.geometry()}")
+            logging.info(f"Label: font={self.button_color_label.font().toString()}, alignment={self.button_color_label.alignment()}")
+            logging.info(f"Label: styleSheet='{self.button_color_label.styleSheet()}'")
+            
+        if hasattr(self, 'default_arrow_color_button') and self.default_arrow_color_button:
+            logging.info(f"Button: geometry={self.default_arrow_color_button.geometry()}, visible={self.default_arrow_color_button.isVisible()}")
+            
+        logging.info("=== END BUTTON COLOR LAYOUT DEBUG INFO ===")
 
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):

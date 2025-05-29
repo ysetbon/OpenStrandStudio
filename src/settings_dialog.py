@@ -130,6 +130,67 @@ class SettingsDialog(QDialog):
         # Currently only Hebrew is RTL in our supported languages
         return language_code == 'he'
         
+    # New method to get dropdown arrow CSS based on theme and direction
+    def get_dropdown_arrow_css(self, is_rtl=False):
+        """Get CSS for dropdown arrow positioning based on direction and theme."""
+        arrow_color = "#666666"
+        if self.current_theme == "dark":
+            arrow_color = "#cccccc"
+        elif self.current_theme == "light":
+            arrow_color = "#333333"
+        
+        # Define hover colors for dropdown area only
+        dropdown_hover_color = "#e0e0e0"
+        if self.current_theme == "dark":
+            dropdown_hover_color = "#4d4d4d"
+        elif self.current_theme == "light":
+            dropdown_hover_color = "#f0f0f0"
+        
+        if is_rtl:
+            # For RTL: dropdown arrow on the left side
+            return f"""
+                QComboBox::drop-down {{
+                    subcontrol-origin: padding;
+                    subcontrol-position: left center;
+                    width: 20px;
+                    border: none;
+                }}
+                QComboBox::drop-down:hover {{
+                    background-color: {dropdown_hover_color};
+                    border-radius: 4px;
+                }}
+                QComboBox::down-arrow {{
+                    width: 0;
+                    height: 0;
+                    border-left: 4px solid transparent;
+                    border-right: 4px solid transparent;
+                    border-top: 6px solid {arrow_color};
+                    margin-left: 6px;
+                }}
+            """
+        else:
+            # For LTR: dropdown arrow on the right side
+            return f"""
+                QComboBox::drop-down {{
+                    subcontrol-origin: padding;
+                    subcontrol-position: right center;
+                    width: 20px;
+                    border: none;
+                }}
+                QComboBox::drop-down:hover {{
+                    background-color: {dropdown_hover_color};
+                    border-radius: 4px;
+                }}
+                QComboBox::down-arrow {{
+                    width: 0;
+                    height: 0;
+                    border-left: 4px solid transparent;
+                    border-right: 4px solid transparent;
+                    border-top: 6px solid {arrow_color};
+                    margin-right: 6px;
+                }}
+            """
+    
     # New method to update layout direction based on language
     def update_layout_direction(self):
         is_rtl = self.is_rtl_language(self.current_language)
@@ -273,84 +334,69 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'theme_combobox'):
             self.theme_combobox.setLayoutDirection(direction)
             self.theme_combobox.view().setLayoutDirection(direction)
-            # Only apply minimal CSS for LTR to avoid conflicts in RTL
-            if not is_rtl:
-                current_style = self.theme_combobox.styleSheet()
-                if combo_style_adjustments:
-                    self.theme_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+            
+            # Update dropdown arrow positioning based on direction
+            dropdown_arrow_css = self.get_dropdown_arrow_css(is_rtl)
+            theme_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
+            selection_color = "#222222" if self.current_theme == 'dark' else "#666666"
+            
+            updated_theme_style = f"""
+                QComboBox {{
+                    padding: 8px;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    min-width: 150px;
+                    font-size: 14px;
+                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                }}
+                {dropdown_arrow_css}
+                QComboBox QAbstractItemView {{
+                    padding: 8px;
+                    selection-background-color: {selection_color};
+                }}
+            """
+            self.theme_combobox.setStyleSheet(updated_theme_style)
             
             if is_rtl:
-                # Apply the same RTL CSS styling as the language combobox
-                current_style = self.theme_combobox.styleSheet()
-                rtl_style = """
-                    QComboBox {
-                        text-align: right;
-                        padding-right: 40px;
-                        padding-left: 8px;
-                    }
-                    QComboBox::drop-down {
-                        subcontrol-origin: padding;
-                        subcontrol-position: left center;
-                        width: 20px;
-                        border: none;
-                    }
-                    QComboBox::down-arrow {
-                        left: 4px;
-                    }
-                """
-                self.theme_combobox.setStyleSheet(current_style + "\n" + rtl_style)
-                logging.info("RTL: Applied RTL-specific CSS to theme combobox for proper text positioning")
-                
-                # Force refresh of the theme combobox text display
-                current_index = self.theme_combobox.currentIndex()
-                if current_index >= 0:
-                    self.theme_combobox.setCurrentIndex(-1)
-                    self.theme_combobox.setCurrentIndex(current_index)
-                    self.theme_combobox.update()
-                    self.theme_combobox.repaint()
-                    logging.info(f"RTL: Forced theme combobox refresh for index {current_index}")
+                # Use Qt.TextAlignmentRole to properly position text next to the icon
+                self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignRight | Qt.AlignVCenter)
+                logging.info("RTL: Applied TextAlignmentRole for theme combobox text positioning")
+            else:
+                # For LTR, use default left alignment and standard padding
+                self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignLeft | Qt.AlignVCenter)
 
         if hasattr(self, 'language_combobox'):
             self.language_combobox.setLayoutDirection(direction)
             self.language_combobox.view().setLayoutDirection(direction)
             
-            # Apply appropriate CSS based on direction
-            current_style = self.language_combobox.styleSheet()
+            # Update dropdown arrow positioning based on direction
+            lang_hover_color = "#222222" if self.current_theme == 'dark' else "#666666"
+            
+            updated_lang_style = f"""
+                QComboBox {{
+                    padding: 8px;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    min-width: 200px;
+                    font-size: 14px;
+                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                }}
+                {dropdown_arrow_css}
+                QComboBox QAbstractItemView {{
+                    padding: 8px;
+                    min-width: 200px;
+                    selection-background-color: {selection_color};
+                }}
+            """
+            self.language_combobox.setStyleSheet(updated_lang_style)
+            
             if is_rtl:
-                # For Hebrew/RTL: Add specific CSS to force proper text positioning in main button
-                rtl_style = """
-                    QComboBox {
-                        text-align: right;
-                        padding-right: 40px;
-                        padding-left: 8px;
-                    }
-                    QComboBox::drop-down {
-                        subcontrol-origin: padding;
-                        subcontrol-position: left center;
-                        width: 20px;
-                        border: none;
-                    }
-                    QComboBox::down-arrow {
-                        left: 4px;
-                    }
-                """
-                self.language_combobox.setStyleSheet(current_style + "\n" + rtl_style)
-                logging.info("RTL: Applied RTL-specific CSS to force text positioning in language combobox")
-                
-                # Force the combobox to update its text display for RTL
-                current_index = self.language_combobox.currentIndex()
-                if current_index >= 0:
-                    # Force refresh by temporarily changing and restoring the current item
-                    self.language_combobox.setCurrentIndex(-1)
-                    self.language_combobox.setCurrentIndex(current_index)
-                    # Also force a repaint of the combobox
-                    self.language_combobox.update()
-                    self.language_combobox.repaint()
-                    logging.info(f"RTL: Forced language combobox refresh for index {current_index}")
+                # Use Qt.TextAlignmentRole to properly position text next to the flag icon
+                self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
+                logging.info("RTL: Applied TextAlignmentRole for language combobox text positioning")
             else:
-                # For LTR languages
-                if combo_style_adjustments:
-                    self.language_combobox.setStyleSheet(current_style + "\n" + combo_style_adjustments)
+                # For LTR, use default left alignment and standard padding
+                self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
 
         # Remove the duplicate language_combobox section below this
 
@@ -765,6 +811,21 @@ class SettingsDialog(QDialog):
             if child.widget():
                 child.widget().setParent(None)
 
+    def set_combobox_text_alignment(self, combobox, alignment):
+        """Set text alignment for combobox using editable mode with read-only line edit."""
+        if not combobox.isEditable():
+            # Make the combobox editable to get a QLineEdit we can control
+            combobox.setEditable(True)
+            # Make the line edit read-only to prevent user typing
+            combobox.lineEdit().setReadOnly(True)
+            
+        # Set the alignment on the line edit - this actually works!
+        combobox.lineEdit().setAlignment(alignment)
+        
+        # Also apply to dropdown items for consistency
+        for i in range(combobox.count()):
+            combobox.setItemData(i, alignment, Qt.TextAlignmentRole)
+    
     def load_settings_from_file(self):
         """Load user settings from file to initialize dialog with saved settings."""
         # Use the appropriate directory for each OS
@@ -954,7 +1015,11 @@ class SettingsDialog(QDialog):
         self.theme_label = QLabel(_['select_theme'])
         self.theme_combobox = QComboBox()
         
-        # Simplified theme combobox stylesheet - removed problematic CSS properties
+        # Get language direction for initial setup
+        is_rtl = self.is_rtl_language(self.current_language)
+        dropdown_arrow_css = self.get_dropdown_arrow_css(is_rtl)
+        
+        # Enhanced theme combobox stylesheet with dropdown arrow
         self.theme_combobox_base_style = f"""
             QComboBox {{
                 padding: 8px;
@@ -962,14 +1027,9 @@ class SettingsDialog(QDialog):
                 border-radius: 4px;
                 min-width: 150px;
                 font-size: 14px;
+                {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
             }}
-            QComboBox:hover {{
-                background-color: {theme_hover_color};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 24px;
-            }}
+            {dropdown_arrow_css}
             QComboBox QAbstractItemView {{
                 padding: 8px;
                 selection-background-color: {selection_color};
@@ -1426,7 +1486,7 @@ class SettingsDialog(QDialog):
         self.language_label = QLabel(_['select_language'])
         self.language_combobox = QComboBox()
 
-        # Simplified language combobox stylesheet - removed problematic CSS properties
+        # Enhanced language combobox stylesheet with dropdown arrow
         self.lang_combobox_base_style = f"""
             QComboBox {{
                 padding: 8px;
@@ -1434,14 +1494,9 @@ class SettingsDialog(QDialog):
                 border-radius: 4px;
                 min-width: 200px;
                 font-size: 14px;
+                {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
             }}
-            QComboBox:hover {{
-                background-color: {lang_hover_color};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 24px;
-            }}
+            {dropdown_arrow_css}
             QComboBox QAbstractItemView {{
                 padding: 8px;
                 min-width: 200px;
@@ -1606,16 +1661,21 @@ class SettingsDialog(QDialog):
 
     def apply_dialog_theme(self, theme_name):
         """Apply theme to dialog components"""
+        # Update current theme for dropdown arrow colors
+        self.current_theme = theme_name
+        is_rtl = self.is_rtl_language(self.current_language)
+        dropdown_arrow_css = self.get_dropdown_arrow_css(is_rtl)
+        
         if theme_name == "dark":
-            button_style = """
+            button_style = f"""
                 /* Main dialog background */
-                QDialog {
+                QDialog {{
                     background-color: #2C2C2C;
                     color: white;
-                }
+                }}
                 
                 /* Buttons */
-                QPushButton {
+                QPushButton {{
                     background-color: #3D3D3D;
                     color: white;
                     border: 1px solid #505050;
@@ -1623,139 +1683,130 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                     height: 32px;
                     min-width: 120px;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton:hover {{
                     background-color: #4D4D4D;
-                }
-                QPushButton:pressed {
+                }}
+                QPushButton:pressed {{
                     background-color: #2D2D2D;
-                }
-                QPushButton:checked {
+                }}
+                QPushButton:checked {{
                     background-color: #505050;
                     border: 2px solid #808080;
-                }
+                }}
                 
                 /* ComboBox */
-                QComboBox {
+                QComboBox {{
                     background-color: #3D3D3D;
                     color: white;
                     border: 1px solid #505050;
-                    padding: 5px;
+                    padding: 8px;
                     border-radius: 4px;
                     min-width: 150px;
-                }
-                QComboBox:hover {
-                    background-color: #4D4D4D;
-                }
-                QComboBox:drop-down {
-                    border: none;
-                    padding-right: 8px;
-                }
-                QComboBox::down-arrow {
-                    image: none;
-                    border: none;
-                }
-                QComboBox QAbstractItemView {
+                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                }}
+                {dropdown_arrow_css}
+                QComboBox QAbstractItemView {{
                     background-color: #3D3D3D;
                     color: white;
                     selection-background-color: #505050;
                     selection-color: white;
                     border: 1px solid #505050;
-                }
+                }}
                 
                 /* List Widget */
-                QListWidget {
+                QListWidget {{
                     background-color: #3D3D3D;
                     color: white;
                     border: 1px solid #505050;
                     border-radius: 4px;
-                }
-                QListWidget::item {
+                }}
+                QListWidget::item {{
                     padding: 8px;
-                }
-                QListWidget::item:selected {
+                }}
+                QListWidget::item:selected {{
                     background-color: #505050;
                     color: white;
-                }
-                QListWidget::item:hover {
+                }}
+                QListWidget::item:hover {{
                     background-color: #4D4D4D;
-                }
+                }}
                 
                 /* Labels */
-                QLabel {
+                QLabel {{
                     color: white;
-                }
+                }}
                 
                 /* Text Browser */
-                QTextBrowser {
+                QTextBrowser {{
                     background-color: #3D3D3D;
                     color: white;
                     border: 1px solid #505050;
                     border-radius: 4px;
                     padding: 8px;
-                }
+                }}
                 
                 /* Scroll Bars */
-                QScrollBar:vertical {
+                QScrollBar:vertical {{
                     background-color: #2C2C2C;
                     width: 12px;
                     border-radius: 6px;
-                }
-                QScrollBar::handle:vertical {
+                }}
+                QScrollBar::handle:vertical {{
                     background-color: #505050;
                     border-radius: 6px;
                     min-height: 20px;
-                }
-                QScrollBar::handle:vertical:hover {
+                }}
+                QScrollBar::handle:vertical:hover {{
                     background-color: #606060;
-                }
+                }}
                 QScrollBar::add-line:vertical,
-                QScrollBar::sub-line:vertical {
+                QScrollBar::sub-line:vertical {{
                     height: 0px;
-                }
+                }}
                 QScrollBar::add-page:vertical,
-                QScrollBar::sub-page:vertical {
+                QScrollBar::sub-page:vertical {{
                     background-color: #2C2C2C;
-                }
+                }}
                 
                 /* Horizontal Scroll Bar */
-                QScrollBar:horizontal {
+                QScrollBar:horizontal {{
                     background-color: #2C2C2C;
                     height: 12px;
                     border-radius: 6px;
-                }
-                QScrollBar::handle:horizontal {
+                }}
+                QScrollBar::handle:horizontal {{
                     background-color: #505050;
                     border-radius: 6px;
                     min-width: 20px;
-                }
-                QScrollBar::handle:horizontal:hover {
+                }}
+                QScrollBar::handle:horizontal:hover {{
                     background-color: #606060;
-                }
+                }}
                 QScrollBar::add-line:horizontal,
-                QScrollBar::sub-line:horizontal {
+                QScrollBar::sub-line:horizontal {{
                     width: 0px;
-                }
+                }}
                 QScrollBar::add-page:horizontal,
-                QScrollBar::sub-page:horizontal {
+                QScrollBar::sub-page:horizontal {{
                     background-color: #2C2C2C;
-                }
+                }}
                 
                 /* Widgets */
-                QWidget {
+                QWidget {{
                     background-color: #2C2C2C;
                     color: white;
-                }
+                }}
                 
                 /* Stacked Widget */
-                QStackedWidget {
+                QStackedWidget {{
                     background-color: #2C2C2C;
                     color: white;
-                }
+                }}
             """
         elif theme_name == "light":
-            button_style = """
-                QPushButton {
+            button_style = f"""
+                QPushButton {{
                     background-color: #F0F0F0;
                     color: black;
                     border: 1px solid #CCCCCC;
@@ -1763,42 +1814,44 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                     height: 32px;
                     min-width: 120px;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton:hover {{
                     background-color: #E0E0E0;
-                }
-                QPushButton:pressed {
+                }}
+                QPushButton:pressed {{
                     background-color: #D0D0D0;
-                }
-                QPushButton:checked {
+                }}
+                QPushButton:checked {{
                     background-color: #E0E0E0;
                     border: 2px solid #A0A0A0;
-                }
-                QComboBox {
+                }}
+                QComboBox {{
                     background-color: white;
                     color: black;
                     border: 1px solid #CCCCCC;
-                    padding: 5px;
+                    padding: 8px;
                     border-radius: 4px;
                     min-width: 150px;
-                }
-                QListWidget {
+                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                }}
+                {dropdown_arrow_css}
+                QListWidget {{
                     background-color: white;
                     color: black;
                     border: 1px solid #CCCCCC;
-                }
-                QLabel {
+                }}
+                QLabel {{
                     color: black;
-                }
-                QTextBrowser {
+                }}
+                QTextBrowser {{
                     background-color: white;
                     color: black;
                     border: 1px solid #CCCCCC;
-                }
+                }}
             """
         else:  # default theme
-            button_style = """
-                QPushButton {
+            button_style = f"""
+                QPushButton {{
                     background-color: #E8E8E8;
                     color: black;
                     border: 1px solid #CCCCCC;
@@ -1806,38 +1859,40 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                     height: 32px;
                     min-width: 120px;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton:hover {{
                     background-color: #DADADA;
-                }
-                QPushButton:pressed {
+                }}
+                QPushButton:pressed {{
                     background-color: #C8C8C8;
-                }
-                QPushButton:checked {
+                }}
+                QPushButton:checked {{
                     background-color: #D0D0D0;
                     border: 2px solid #A0A0A0;
-                }
-                QComboBox {
+                }}
+                QComboBox {{
                     background-color: #F5F5F5;
                     color: black;
                     border: 1px solid #CCCCCC;
-                    padding: 5px;
+                    padding: 8px;
                     border-radius: 4px;
                     min-width: 150px;
-                }
-                QListWidget {
+                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                }}
+                {dropdown_arrow_css}
+                QListWidget {{
                     background-color: #F5F5F5;
                     color: black;
                     border: 1px solid #CCCCCC;
-                }
-                QLabel {
+                }}
+                QLabel {{
                     color: black;
-                }
-                QTextBrowser {
+                }}
+                QTextBrowser {{
                     background-color: #F5F5F5;
                     color: black;
                     border: 1px solid #CCCCCC;
-                }
+                }}
             """
 
         self.setStyleSheet(button_style)
@@ -2034,6 +2089,7 @@ class SettingsDialog(QDialog):
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
+        self.layer_panel_ok_button.setText(_['ok'])
         self.language_label.setText(_['select_language'])
         # Update Layer Panel Settings labels for extension and arrow parameters
         self.extension_length_label.setText(_['extension_length'] if 'extension_length' in _ else "Extension Length")
@@ -2082,6 +2138,19 @@ class SettingsDialog(QDialog):
         index = self.language_combobox.findData(current_data)
         if index >= 0:
             self.language_combobox.setCurrentIndex(index)
+        
+        # Apply proper text alignment to both comboboxes after rebuild
+        is_rtl = self.is_rtl_language(self.current_language)
+        if is_rtl:
+            # For RTL languages, align text to the right so it sits next to the icons
+            self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignRight | Qt.AlignVCenter)
+            self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
+            logging.info("RTL: Applied text alignment to comboboxes after translation update")
+        else:
+            # For LTR languages, use left alignment
+            self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignLeft | Qt.AlignVCenter)
+            self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
+            logging.info("LTR: Applied text alignment to comboboxes after translation update")
         
         # For Hebrew, force refresh the combobox text display after rebuilding
         if self.is_rtl_language(self.current_language):

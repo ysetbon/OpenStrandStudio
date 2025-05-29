@@ -369,7 +369,11 @@ class LayerPanel(QWidget):
         self.layer_buttons = []  # List to store layer buttons
         self.current_set = 1  # Current set number
         self.set_counts = {}
-        self.set_colors = {1: QColor(200, 170, 230, 255) }  # Dictionary to store colors for each set
+        # Use canvas default strand color if available, otherwise fallback to purple
+        default_color = QColor(200, 170, 230, 255)  # Fallback
+        if canvas and hasattr(canvas, 'default_strand_color'):
+            default_color = canvas.default_strand_color
+        self.set_colors = {1: default_color}  # Dictionary to store colors for each set
 
         # Initialize masked mode variables
         self.masked_mode = False
@@ -1328,7 +1332,11 @@ class LayerPanel(QWidget):
                 new_set_number = set_number - 1
                 new_text = f"{new_set_number}_{parts[1]}"
                 button.setText(new_text)
-                button.set_color(self.set_colors.get(new_set_number, QColor(200, 170, 230, 255) ))
+                # Use canvas default strand color if available, otherwise fallback to purple
+                default_color = QColor(200, 170, 230, 255)  # Fallback
+                if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+                    default_color = self.canvas.default_strand_color
+                button.set_color(self.set_colors.get(new_set_number, default_color))
 
         self.update_layer_button_states()
 
@@ -1396,7 +1404,11 @@ class LayerPanel(QWidget):
         
         self.current_set = next_set
         self.set_counts[self.current_set] = 0
-        self.set_colors[self.current_set] = QColor(200, 170, 230, 255) 
+        # Use canvas default strand color if available, otherwise fallback to purple
+        default_color = QColor(200, 170, 230, 255)  # Fallback
+        if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+            default_color = self.canvas.default_strand_color
+        self.set_colors[self.current_set] = default_color
 
         
         logging.info(f"Starting new set {self.current_set} (Existing sets: {sorted(existing_sets)})")
@@ -1623,8 +1635,23 @@ class LayerPanel(QWidget):
         
         # Update color for the set if needed
         if set_number not in self.set_colors:
-            self.set_colors[set_number] = QColor(200, 170, 230, 255)  # Default color
-        self.update_colors_for_set(set_number, self.set_colors[set_number])
+            # Use canvas default strand color if available, otherwise fallback to purple
+            default_color = QColor(200, 170, 230, 255)  # Fallback
+            if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+                default_color = self.canvas.default_strand_color
+            self.set_colors[set_number] = default_color
+            
+        # Only update colors if the strand doesn't already have the correct default color
+        # This prevents overriding the strand's color if it was correctly created with the default
+        if (hasattr(self.canvas, 'default_strand_color') and 
+            hasattr(strand, 'color') and 
+            strand.color == self.canvas.default_strand_color):
+            # Strand already has correct default color, update set_colors to match
+            self.set_colors[set_number] = self.canvas.default_strand_color
+            logging.info(f"Strand already has correct default color, updated set_colors[{set_number}] to match")
+        else:
+            # Update strand color to match set color
+            self.update_colors_for_set(set_number, self.set_colors[set_number])
         
         # Simulate clicking the refresh button for consistency in layer display
         self.simulate_refresh_button_click()
@@ -1755,7 +1782,8 @@ class LayerPanel(QWidget):
             self.set_counts[set_number] += 1
             
             # Use the strand's actual color
-            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number,QColor(200, 170, 230, 255) )
+            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number, 
+                self.canvas.default_strand_color if hasattr(self.canvas, 'default_strand_color') else QColor(200, 170, 230, 255))
             
             # --- Store layer_name directly on button for easier lookup ---
             button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], strand_color)
@@ -1844,9 +1872,33 @@ class LayerPanel(QWidget):
             return self.layer_buttons[index]
         return None
 
+    def update_default_colors(self):
+        """Update the set_colors dictionary to use the canvas default colors."""
+        if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+            # Update existing set colors to use the new default
+            for set_number in self.set_colors:
+                # Only update if it's still the old purple default
+                if self.set_colors[set_number] == QColor(200, 170, 230, 255):
+                    self.set_colors[set_number] = self.canvas.default_strand_color
+                    logging.info(f"Updated set_colors[{set_number}] to new default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
+            
+            # Also update the canvas strand_colors dictionary for any existing sets
+            if hasattr(self.canvas, 'strand_colors'):
+                for set_number in self.canvas.strand_colors:
+                    # Only update if it's still the old purple default
+                    if self.canvas.strand_colors[set_number] == QColor(200, 170, 230, 255):
+                        self.canvas.strand_colors[set_number] = self.canvas.default_strand_color
+                        logging.info(f"Updated canvas strand_colors[{set_number}] to new default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
+                
+                # Ensure set 1 uses the correct default color for new projects
+                if 1 not in self.canvas.strand_colors:
+                    self.canvas.strand_colors[1] = self.canvas.default_strand_color
+                    logging.info(f"Pre-set strand_colors[1] to default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
+
     def set_canvas(self, canvas):
         """Set the canvas associated with this layer panel."""
         self.canvas = canvas
+        self.update_default_colors()  # Update colors when canvas is set
         self.refresh()
 
     def on_layer_order_changed(self, new_order):

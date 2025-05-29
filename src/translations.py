@@ -221,6 +221,9 @@ translations = {
         'arrow_line_width': 'Arrow Line Width',
         'arrow_line_width_tooltip': 'Thickness of the arrow shaft',
         'use_default_arrow_color': 'Use Default Arrow Color',
+        'button_color': 'Choose a different button color (not default):',
+        'default_strand_color': 'Default Strand Color:',
+        'default_stroke_color': 'Default Stroke Color:',
         # --- END NEW ---
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Show Full Arrow",
@@ -377,7 +380,9 @@ translations = {
         'delete_strand': 'Supprimer Brin',
         'deselect_all': 'Désélect. Tous',
         'notification_message': 'Notification',
-        'button_color': 'Choisissez une couleur de bouton différente (pas par défaut) :',
+        'button_color': 'Choisissez une couleur de bouton différente (pas par défaut):',
+        'default_strand_color': 'Couleur de Brin par Défaut :',
+        'default_stroke_color': 'Couleur de Contour par Défaut :',
         # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
@@ -639,6 +644,8 @@ translations = {
         'deselect_all': 'Deseleziona Tutto',
         'notification_message': 'Notifica',
         'button_color': 'Scegli un colore di pulsante diverso (non predefinito):',
+        'default_strand_color': 'Colore Trefolo Predefinito:',
+        'default_stroke_color': 'Colore Contorno Predefinito:',
         # Additional texts
         'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
         'angle_label': 'Angolo:',
@@ -758,8 +765,8 @@ translations = {
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
-        'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
-        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
+        'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
+        'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
         # About translations
         'about_info': '''
         <h2>Informazioni su OpenStrand Studio</h2>
@@ -898,6 +905,8 @@ translations = {
         'deselect_all': 'Deseleccionar Todo',
         'notification_message': 'Notificación',
         'button_color': 'Elija un color de botón diferente (no predeterminado):',
+        'default_strand_color': 'Color de Cordón Predeterminado:',
+        'default_stroke_color': 'Color de Contorno Predeterminado:',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
         'angle_label': 'Ángulo:',
@@ -965,7 +974,7 @@ translations = {
         'show_end_line': 'Mostrar Línea Fin',
         'hide_start_circle': 'Ocultar Círculo Inicio',
         'show_start_circle': 'Mostrar Círculo Inicio',
-        'hide_end_circle': 'Ocultar Círculo Fin',
+        'hide_end_circle': 'Ocultar Círculo Fim',
         'show_end_circle': 'Mostrar Círculo Fin',
         'hide_start_arrow': 'Ocultar Flecha Inicio',
         'show_start_arrow': 'Mostrar Flecha Inicio',
@@ -1162,6 +1171,8 @@ translations = {
         'deselect_all': 'Desmarcar Tudo',
         'notification_message': 'Notificação',
         'button_color': 'Escolha uma cor de botão diferente (não padrão):',
+        'default_strand_color': 'Cor de Mecha Padrão:',
+        'default_stroke_color': 'Cor de Contorno Padrão:',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
         'angle_label': 'Ângulo:',
@@ -1395,6 +1406,8 @@ translations = {
         'deselect_all': 'בטל בחירה',
         'notification_message': 'התראה',
         'button_color': 'בחר צבע כפתור שונה (לא ברירת מחדל):',
+        'default_strand_color': 'צבע חוט ברירת מחדל:',
+        'default_stroke_color': 'צבע מתאר ברירת מחדל:',
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',
         'angle_label': 'זווית:',

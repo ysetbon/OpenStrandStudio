@@ -1878,7 +1878,7 @@ class MainWindow(QMainWindow):
         set_number = max(self.canvas.strand_colors.keys(), default=0) + 1
         
         if set_number not in self.canvas.strand_colors:
-            self.canvas.strand_colors[set_number] = QColor(200, 170, 230, 255) 
+            self.canvas.strand_colors[set_number] = self.canvas.default_strand_color
         
         self.canvas.start_new_strand_mode(set_number)
         

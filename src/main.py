@@ -232,6 +232,10 @@ def load_user_settings():
     use_default_arrow_color = False
     default_arrow_fill_color = QColor(0, 0, 0, 255)
     
+    # Initialize default strand and stroke colors
+    default_strand_color = QColor(200, 170, 230, 255)  # Default purple
+    default_stroke_color = QColor(0, 0, 0, 255)  # Default black
+    
     # Try to load from settings file
     shadow_color_loaded = False
     
@@ -320,6 +324,20 @@ def load_user_settings():
                             logging.info(f"Found DefaultArrowColor: {r},{g},{b},{a}")
                         except Exception as e:
                             logging.error(f"Error parsing DefaultArrowColor values: {e}. Using default {default_arrow_fill_color}.")
+                    elif line.startswith('DefaultStrandColor:'):
+                        try:
+                            r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                            default_strand_color = QColor(r, g, b, a)
+                            logging.info(f"Found DefaultStrandColor: {r},{g},{b},{a}")
+                        except Exception as e:
+                            logging.error(f"Error parsing DefaultStrandColor values: {e}. Using default {default_strand_color}.")
+                    elif line.startswith('DefaultStrokeColor:'):
+                        try:
+                            r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                            default_stroke_color = QColor(r, g, b, a)
+                            logging.info(f"Found DefaultStrokeColor: {r},{g},{b},{a}")
+                        except Exception as e:
+                            logging.error(f"Error parsing DefaultStrokeColor values: {e}. Using default {default_stroke_color}.")
             
             if shadow_color_loaded:
                 logging.info(f"User settings loaded successfully. Theme: {theme_name}, Language: {language_code}, Shadow Color: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
@@ -330,7 +348,7 @@ def load_user_settings():
     else:
         logging.info(f"Settings file not found at {file_path}. Using default settings.")
 
-    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color
+    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color
 
 if __name__ == '__main__':
     logging.info("Starting the application...")
@@ -338,7 +356,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Load user settings
-    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color = load_user_settings()
+    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, use_extended_mask, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color = load_user_settings()
     logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
 
     # Initialize the main window with settings
@@ -399,7 +417,17 @@ if __name__ == '__main__':
         # Apply default arrow color settings to canvas
         window.canvas.use_default_arrow_color = use_default_arrow_color
         window.canvas.default_arrow_fill_color = default_arrow_fill_color
+        # Apply default strand and stroke colors to canvas
+        window.canvas.default_strand_color = default_strand_color
+        window.canvas.default_stroke_color = default_stroke_color
         logging.info(f"Set use_default_arrow_color to {use_default_arrow_color} and default_arrow_fill_color RGBA: {default_arrow_fill_color.red()},{default_arrow_fill_color.green()},{default_arrow_fill_color.blue()},{default_arrow_fill_color.alpha()}")
+        logging.info(f"Set default_strand_color RGBA: {default_strand_color.red()},{default_strand_color.green()},{default_strand_color.blue()},{default_strand_color.alpha()}")
+        logging.info(f"Set default_stroke_color RGBA: {default_stroke_color.red()},{default_stroke_color.green()},{default_stroke_color.blue()},{default_stroke_color.alpha()}")
+        
+        # Update LayerPanel's default colors to match the canvas
+        if hasattr(window, 'layer_panel') and window.layer_panel:
+            window.layer_panel.update_default_colors()
+            logging.info("Updated LayerPanel default colors to match canvas settings")
     else:
         logging.error("Canvas not available on window object")
     

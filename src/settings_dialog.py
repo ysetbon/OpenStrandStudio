@@ -70,6 +70,11 @@ class SettingsDialog(QDialog):
         self.use_default_arrow_color = getattr(canvas, 'use_default_arrow_color', False)
         self.default_arrow_fill_color = getattr(canvas, 'default_arrow_fill_color', QColor(0, 0, 0, 255))
         
+        # Add default strand and stroke color properties after line 70
+        # Default strand and stroke color parameters
+        self.default_strand_color = getattr(canvas, 'default_strand_color', QColor(200, 170, 230, 255))
+        self.default_stroke_color = getattr(canvas, 'default_stroke_color', QColor(0, 0, 0, 255))
+        
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
         
@@ -87,6 +92,9 @@ class SettingsDialog(QDialog):
             # Apply default arrow color settings
             self.canvas.use_default_arrow_color = self.use_default_arrow_color
             self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
+            # Apply default strand and stroke color settings
+            self.canvas.default_strand_color = self.default_strand_color
+            self.canvas.default_stroke_color = self.default_stroke_color
             logging.info(f"SettingsDialog: Applied default arrow color settings to canvas - use_default: {self.use_default_arrow_color}, color: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
         
         # Apply loaded extension line settings to canvas
@@ -666,6 +674,100 @@ class SettingsDialog(QDialog):
                 self.checkbox_container.update()
                 self.checkbox_container.repaint()
 
+        # Default Strand Color layout reorganization
+        if hasattr(self, 'default_strand_color_container') and hasattr(self, 'default_strand_color_label') and hasattr(self, 'default_strand_color_button'):
+            # Clear the layout and set proper spacing
+            self.clear_layout(self.default_strand_color_layout)
+            self.default_strand_color_container.setContentsMargins(0, 0, 0, 0)
+            if is_rtl:
+                self.default_strand_color_layout.addStretch()
+                self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_strand_color_layout.setContentsMargins(105, 0, 0, 0)
+                self.default_strand_color_layout.setSpacing(10)  # Add some spacing between widgets
+                self.default_strand_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.default_strand_color_label.setLayoutDirection(Qt.RightToLeft)
+                self.default_strand_color_label.setTextFormat(Qt.PlainText)
+                self.default_strand_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                 # Add spacer at the beginning to shift everything right
+                self.default_strand_color_layout.addWidget(self.default_strand_color_button)
+                self.default_strand_color_layout.addWidget(self.default_strand_color_label)
+                logging.info("RTL REORGANIZE: Added stretch, button, then label for default strand color proper RTL positioning")
+            else:
+                self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_strand_color_layout.setSpacing(10)  # Small, constant gap
+                self.default_strand_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                self.default_strand_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                self.default_strand_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
+                self.default_strand_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
+                self.default_strand_color_layout.addWidget(self.default_strand_color_label)
+               
+                self.default_strand_color_layout.addWidget(self.default_strand_color_button)
+                self.default_strand_color_layout.addStretch()
+                logging.info("LTR REORGANIZE: Added label, spacing, then button for default strand color")
+            # Force immediate update (same as theme layout)
+            self.default_strand_color_layout.invalidate()
+            self.default_strand_color_layout.activate()
+            # Also update the container widget
+            if hasattr(self, 'default_strand_color_container'):
+                self.default_strand_color_container.updateGeometry()
+                self.default_strand_color_container.update()
+                logging.info(f"REORGANIZE: Updated default strand color container geometry")
+                
+            # Let the layout decide the width – zero works fine
+            self.default_strand_color_label.setMinimumWidth(0)
+            self.default_strand_color_label.updateGeometry()
+            self.default_strand_color_label.repaint()
+            logging.info(f"DEFAULT_STRAND_COLOR_LABEL after min width set: minWidth={self.default_strand_color_label.minimumWidth()} size={self.default_strand_color_label.size()} geom={self.default_strand_color_label.geometry()} pos={self.default_strand_color_label.pos()}")
+
+        # Default Stroke Color layout reorganization
+        if hasattr(self, 'default_stroke_color_container') and hasattr(self, 'default_stroke_color_label') and hasattr(self, 'default_stroke_color_button'):
+            # Clear the layout and set proper spacing
+            self.clear_layout(self.default_stroke_color_layout)
+            self.default_stroke_color_container.setContentsMargins(0, 0, 0, 0)
+            if is_rtl:
+                self.default_stroke_color_layout.addStretch()
+                self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_stroke_color_layout.setContentsMargins(105, 0, 0, 0)
+                self.default_stroke_color_layout.setSpacing(10)  # Add some spacing between widgets
+                self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
+                self.default_stroke_color_label.setTextFormat(Qt.PlainText)
+                self.default_stroke_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                 # Add spacer at the beginning to shift everything right
+                self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
+                self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
+                logging.info("RTL REORGANIZE: Added stretch, button, then label for default stroke color proper RTL positioning")
+            else:
+                self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_stroke_color_layout.setSpacing(10)  # Small, constant gap
+                self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                self.default_stroke_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                self.default_stroke_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
+                self.default_stroke_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
+                self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
+               
+                self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
+                self.default_stroke_color_layout.addStretch()
+                logging.info("LTR REORGANIZE: Added label, spacing, then button for default stroke color")
+            # Force immediate update (same as theme layout)
+            self.default_stroke_color_layout.invalidate()
+            self.default_stroke_color_layout.activate()
+            # Also update the container widget
+            if hasattr(self, 'default_stroke_color_container'):
+                self.default_stroke_color_container.updateGeometry()
+                self.default_stroke_color_container.update()
+                logging.info(f"REORGANIZE: Updated default stroke color container geometry")
+                
+            # Let the layout decide the width – zero works fine
+            self.default_stroke_color_label.setMinimumWidth(0)
+            self.default_stroke_color_label.updateGeometry()
+            self.default_stroke_color_label.repaint()
+            logging.info(f"DEFAULT_STROKE_COLOR_LABEL after min width set: minWidth={self.default_stroke_color_label.minimumWidth()} size={self.default_stroke_color_label.size()} geom={self.default_stroke_color_label.geometry()} pos={self.default_stroke_color_label.pos()}")
+
         # Layer Panel layout reorganizations
         if hasattr(self, 'ext_length_layout') and hasattr(self, 'extension_length_label') and hasattr(self, 'extension_length_spinbox'):
             self.clear_layout(self.ext_length_layout)
@@ -1014,6 +1116,20 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found ExtensionDashGapLength: {self.extension_dash_gap_length}")
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing ExtensionDashGapLength value. Using default {self.extension_dash_gap_length}.")
+                        elif line.startswith('DefaultStrandColor:'):
+                            try:
+                                r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                                self.default_strand_color = QColor(r, g, b, a)
+                                logging.info(f"SettingsDialog: Found DefaultStrandColor: {r},{g},{b},{a}")
+                            except Exception as e:
+                                logging.error(f"SettingsDialog: Error parsing DefaultStrandColor: {e}. Using default {self.default_strand_color}.")
+                        elif line.startswith('DefaultStrokeColor:'):
+                            try:
+                                r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                                self.default_stroke_color = QColor(r, g, b, a)
+                                logging.info(f"SettingsDialog: Found DefaultStrokeColor: {r},{g},{b},{a}")
+                            except Exception as e:
+                                logging.error(f"SettingsDialog: Error parsing DefaultStrokeColor: {e}. Using default {self.default_stroke_color}.")
                 
                     logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
@@ -1560,6 +1676,92 @@ class SettingsDialog(QDialog):
 
         default_arrow_container_layout.addWidget(self.button_color_container) # Add the container widget instead of layout directly
         self.layer_panel_rows.append(self.button_color_container) # Add container to rows for RTL handling instead of layout
+        
+        # Default Strand Color - Label and button
+        self.default_strand_color_container = QWidget()
+        self.default_strand_color_layout = QHBoxLayout(self.default_strand_color_container)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_color_layout.setSpacing(20)
+        else:
+            self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_color_layout.setSpacing(15)
+
+        self.default_strand_color_label = QLabel(_['default_strand_color'] if 'default_strand_color' in _ else 'Default Strand Color:')
+        self.default_strand_color_label.setTextFormat(Qt.PlainText)
+        self.default_strand_color_label.setWordWrap(False)
+        self.default_strand_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.default_strand_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.default_strand_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.default_strand_color_label.setLayoutDirection(Qt.LeftToRight)
+        
+        self.default_strand_color_label.setStyleSheet("QLabel { color: white; }" if self.current_theme == "dark" else "QLabel { color: black; }")
+        self.default_strand_color_label.adjustSize()
+        
+        self.default_strand_color_button = QPushButton()
+        self.default_strand_color_button.setFixedSize(30, 30)
+        self.update_default_strand_color_button()
+        self.default_strand_color_button.clicked.connect(self.choose_default_strand_color)
+
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_color_layout.addWidget(self.default_strand_color_label)
+            self.default_strand_color_layout.addStretch()
+            self.default_strand_color_layout.addWidget(self.default_strand_color_button)
+        else:
+            self.default_strand_color_layout.addWidget(self.default_strand_color_label)
+            self.default_strand_color_layout.addWidget(self.default_strand_color_button)
+            self.default_strand_color_layout.addStretch()
+
+        default_arrow_container_layout.addWidget(self.default_strand_color_container)
+        self.layer_panel_rows.append(self.default_strand_color_container)
+        
+        # Default Stroke Color - Label and button
+        self.default_stroke_color_container = QWidget()
+        self.default_stroke_color_layout = QHBoxLayout(self.default_stroke_color_container)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_stroke_color_layout.setSpacing(20)
+        else:
+            self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_stroke_color_layout.setSpacing(15)
+
+        self.default_stroke_color_label = QLabel(_['default_stroke_color'] if 'default_stroke_color' in _ else 'Default Stroke Color:')
+        self.default_stroke_color_label.setTextFormat(Qt.PlainText)
+        self.default_stroke_color_label.setWordWrap(False)
+        self.default_stroke_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.default_stroke_color_label.setLayoutDirection(Qt.LeftToRight)
+        
+        self.default_stroke_color_label.setStyleSheet("QLabel { color: white; }" if self.current_theme == "dark" else "QLabel { color: black; }")
+        self.default_stroke_color_label.adjustSize()
+        
+        self.default_stroke_color_button = QPushButton()
+        self.default_stroke_color_button.setFixedSize(30, 30)
+        self.update_default_stroke_color_button()
+        self.default_stroke_color_button.clicked.connect(self.choose_default_stroke_color)
+
+        if self.is_rtl_language(self.current_language):
+            self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
+            self.default_stroke_color_layout.addStretch()
+            self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
+        else:
+            self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
+            self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
+            self.default_stroke_color_layout.addStretch()
+
+        default_arrow_container_layout.addWidget(self.default_stroke_color_container)
+        self.layer_panel_rows.append(self.default_stroke_color_container)
         
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
@@ -2200,6 +2402,22 @@ class SettingsDialog(QDialog):
         else:
             self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             self.button_color_label.setLayoutDirection(Qt.LeftToRight)
+        # Update default strand and stroke color labels
+        self.default_strand_color_label.setText(_['default_strand_color'] if 'default_strand_color' in _ else "Default Strand Color:")
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.default_strand_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.default_strand_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.default_strand_color_label.setLayoutDirection(Qt.LeftToRight)
+        
+        self.default_stroke_color_label.setText(_['default_stroke_color'] if 'default_stroke_color' in _ else "Default Stroke Color:")
+        if self.is_rtl_language(self.current_language):
+            self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.default_stroke_color_label.setLayoutDirection(Qt.LeftToRight)
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
@@ -2403,6 +2621,8 @@ class SettingsDialog(QDialog):
                 file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")
                 file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
                 file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
+                file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
+                file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
@@ -2431,6 +2651,8 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ArrowLineWidth: {self.arrow_line_width:.1f}\n")
                     local_file.write(f"UseDefaultArrowColor: {str(self.use_default_arrow_color).lower()}\n")
                     local_file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
+                    local_file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
+                    local_file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")
@@ -2778,6 +3000,58 @@ class SettingsDialog(QDialog):
                 self.canvas.force_redraw()
             self.canvas.update()
             logging.info(f"SettingsDialog: Default arrow color enabled changed to {self.use_default_arrow_color}")
+
+    def update_default_strand_color_button(self):
+        """Update the default strand color button to reflect current color."""
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(self.default_strand_color)
+        self.default_strand_color_button.setIcon(QIcon(pixmap))
+        self.default_strand_color_button.setIconSize(pixmap.size())
+
+    def choose_default_strand_color(self):
+        """Open a color dialog to choose a new default strand color."""
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(self.default_strand_color)
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        if color_dialog.exec_():
+            self.default_strand_color = color_dialog.currentColor()
+            self.update_default_strand_color_button()
+            # Save new setting immediately
+            self.save_settings_to_file()
+            # Apply to canvas immediately
+            if self.canvas:
+                self.canvas.default_strand_color = self.default_strand_color
+                # Update the strand_color property as well for backward compatibility
+                self.canvas.strand_color = self.default_strand_color
+                if hasattr(self.canvas, 'force_redraw'):
+                    self.canvas.force_redraw()
+                self.canvas.update()
+
+    def update_default_stroke_color_button(self):
+        """Update the default stroke color button to reflect current color."""
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(self.default_stroke_color)
+        self.default_stroke_color_button.setIcon(QIcon(pixmap))
+        self.default_stroke_color_button.setIconSize(pixmap.size())
+
+    def choose_default_stroke_color(self):
+        """Open a color dialog to choose a new default stroke color."""
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(self.default_stroke_color)
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        if color_dialog.exec_():
+            self.default_stroke_color = color_dialog.currentColor()
+            self.update_default_stroke_color_button()
+            # Save new setting immediately
+            self.save_settings_to_file()
+            # Apply to canvas immediately
+            if self.canvas:
+                self.canvas.default_stroke_color = self.default_stroke_color
+                # Update the stroke_color property as well for backward compatibility
+                self.canvas.stroke_color = self.default_stroke_color
+                if hasattr(self.canvas, 'force_redraw'):
+                    self.canvas.force_redraw()
+                self.canvas.update()
 
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""

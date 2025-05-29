@@ -53,6 +53,9 @@ class StrandDrawingCanvas(QWidget):
         # Load shadow color from user settings if available
         shadow_color = self.load_shadow_color_from_settings()
         
+        # Load default strand color from user settings if available
+        default_strand_color_from_settings = self.load_default_strand_color_from_settings()
+        
         # Initialize properties
         self.initialize_properties()
         
@@ -60,6 +63,12 @@ class StrandDrawingCanvas(QWidget):
         if shadow_color:
             self.default_shadow_color = shadow_color
             logging.info(f"Applied shadow color from settings during canvas initialization: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
+        
+        # If we loaded a default strand color from settings, apply it now
+        if default_strand_color_from_settings:
+            self.default_strand_color = default_strand_color_from_settings
+            self.strand_color = default_strand_color_from_settings  # Also update current strand color
+            logging.info(f"Applied default strand color from settings during canvas initialization: {default_strand_color_from_settings.red()},{default_strand_color_from_settings.green()},{default_strand_color_from_settings.blue()},{default_strand_color_from_settings.alpha()}")
         
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 0)  # Semi-transparent red
@@ -106,25 +115,53 @@ class StrandDrawingCanvas(QWidget):
         
         self._selected_strand = None
         self.show_control_points = True  # Initialize control points visibility
-        self.current_strand = None
-        self.mask_edit_mode = False
-        self.editing_masked_strand = None
-        self.mask_edit_path = None
-        self.eraser_size = 20  # Size of the eraser tool
-
-        # Add these new attributes for mask editing
-        self.mask_edit_mode = False
-        self.editing_masked_strand = None
-        self.mask_edit_path = None
-        self.erase_start_pos = None
-        self.current_erase_rect = None
+        self.current_strand = None  # Currently active strand
+        self.strand_width = 46  # Width of strands
+        # strand_color will be set from default_strand_color later in this method
+        self.stroke_color = QColor(0, 0, 0, 255)  # Color for strand outlines
+        self.stroke_width = 4  # Width of strand outlines
+        self.highlight_color = Qt.red  # Color for highlighting selected strands
+        self.highlight_width = 20  # Width of highlight
+        self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
+        self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
+        self.selected_strand_index = None  # Index of the currently selected strand
+        self.layer_panel = None  # Reference to the layer panel
+        self.selected_strand = None  # Currently selected strand
+        self.last_selected_strand_index = None  # Index of the last selected strand
+        self.strand_colors = {}  # Dictionary to store colors for each strand set
+        self.grid_size = 28  # Size of grid cells
+        self.show_grid = True  # Flag to show/hide grid
+        self.should_draw_names = False  # Flag to show/hide strand names
+        self.newest_strand = None  # Track the most recently created strand
+        self.is_angle_adjusting = False  # Add this line
+        self.mask_mode_active = False
+        self.mask_selected_strands = []
+        self.selected_attached_strand = None  # Add this line for selected attached strand
         
-        # Add shadow rendering control
-        self.shadow_enabled = True  # Enable shadows by default
+        # Always create a fresh QColor instance for the default shadow color
+        self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
+        logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
+        
+        # Initialize the flag for the third control point
+        self.enable_third_control_point = False
+        # Default extension line settings
+        self.extension_length = 100.0
+        self.extension_dash_count = 10
+        self.extension_dash_width = 2.0
+        # Default extension dash gap length (equal to half dash segment length)
+        self.extension_dash_gap_length = self.extension_length/(2*self.extension_dash_count) if self.extension_dash_count > 0 else 0.0
+        # --- NEW: Arrow head default settings ---
+        self.arrow_head_length = 20.0  # Length of arrow head (in pixels)
+        self.arrow_head_width = 10.0   # Width of arrow head base (in pixels)
+        # --- END NEW ---
 
-        # --- Load Extension Line Settings ---
-        self.load_extension_line_settings()
-        # --- End Load Extension Line Settings ---
+        # Default colors that can be changed in settings
+        self.default_strand_color = QColor(200, 170, 230, 255)  # Default strand color
+        self.default_stroke_color = QColor(0, 0, 0, 255)  # Default stroke color
+        
+        # Use the default colors for the current colors initially
+        self.strand_color = self.default_strand_color
+        self.stroke_color = self.default_stroke_color
 
     def load_shadow_color_from_settings(self):
         """Load only the shadow color from the settings file."""
@@ -163,6 +200,44 @@ class StrandDrawingCanvas(QWidget):
             logging.info("Canvas: Settings file not found. Using default shadow color.")
             
         return shadow_color
+
+    def load_default_strand_color_from_settings(self):
+        """Load the default strand color from the settings file."""
+        default_strand_color = None
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Canvas: Looking for default strand color settings at: {file_path}")
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    logging.info("Canvas: Reading default strand color from user_settings.txt")
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('DefaultStrandColor:'):
+                            rgba_str = line.split(':', 1)[1].strip()
+                            try:
+                                r, g, b, a = map(int, rgba_str.split(','))
+                                default_strand_color = QColor(r, g, b, a)
+                                logging.info(f"Canvas: Loaded default strand color from settings: {r},{g},{b},{a}")
+                                break # Found the color, no need to read further
+                            except Exception as e:
+                                logging.error(f"Canvas: Error parsing default strand color: {e}")
+                                default_strand_color = None # Reset on error
+                                break
+            except Exception as e:
+                logging.error(f"Canvas: Error reading settings file: {e}")
+        else:
+            logging.info("Canvas: Settings file not found. Using default strand color.")
+            
+        return default_strand_color
 
     def load_shadow_blur_settings(self):
         """Load shadow blur settings (NumSteps, MaxBlurRadius) from the settings file."""
@@ -648,7 +723,7 @@ class StrandDrawingCanvas(QWidget):
 
              
     def create_strand(self, start, end, set_number):
-        new_strand = Strand(start, end, self.strand_width, self.strand_color, self.stroke_color, self.stroke_width)
+        new_strand = Strand(start, end, self.strand_width, self.default_strand_color, self.default_stroke_color, self.stroke_width)
         new_strand.set_number = set_number
         new_strand.layer_name = f"{set_number}_{len([s for s in self.strands if s.set_number == set_number]) + 1}"
         # Set the shadow color to the default shadow color
@@ -1048,6 +1123,14 @@ class StrandDrawingCanvas(QWidget):
         self.mask_selected_strands = []
         self.selected_attached_strand = None  # Add this line for selected attached strand
         
+        # Mask edit mode attributes
+        self.mask_edit_mode = False  # Flag to indicate if we're in mask edit mode
+        self.editing_masked_strand = None  # The masked strand currently being edited
+        self.mask_edit_path = None  # The QPainterPath for the mask being edited
+        self.erase_start_pos = None  # Start position for erase operations
+        self.current_erase_rect = None  # Current erase rectangle
+        self.eraser_size = 20  # Size of the eraser tool
+        
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
         logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
@@ -1065,6 +1148,14 @@ class StrandDrawingCanvas(QWidget):
         self.arrow_head_width = 10.0   # Width of arrow head base (in pixels)
         # --- END NEW ---
 
+        # Default colors that can be changed in settings
+        self.default_strand_color = QColor(200, 170, 230, 255)  # Default strand color
+        self.default_stroke_color = QColor(0, 0, 0, 255)  # Default stroke color
+        
+        # Use the default colors for the current colors initially
+        self.strand_color = self.default_strand_color
+        self.stroke_color = self.default_stroke_color
+
     def start_new_strand_mode(self, set_number):
         self.new_strand_set_number = set_number
         self.new_strand_start_point = None
@@ -1074,7 +1165,10 @@ class StrandDrawingCanvas(QWidget):
         
         # **Add this line to ensure the color is set**
         if set_number not in self.strand_colors:
-            self.strand_colors[set_number] = QColor(200, 170, 230, 255)   # Or get the color from LayerPanel
+            self.strand_colors[set_number] = self.default_strand_color   # Use default strand color instead of hardcoded purple
+            logging.info(f"Set strand_colors[{set_number}] to default_strand_color: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}")
+        else:
+            logging.info(f"strand_colors[{set_number}] already exists with color: {self.strand_colors[set_number].red()},{self.strand_colors[set_number].green()},{self.strand_colors[set_number].blue()},{self.strand_colors[set_number].alpha()}")
         
         logging.info(f"Entered new strand mode for set: {set_number}")
     def load_draw_only_affected_strand_setting(self):
@@ -1220,14 +1314,16 @@ class StrandDrawingCanvas(QWidget):
         elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             if self.new_strand_set_number in self.strand_colors:
                 strand_color = self.strand_colors[self.new_strand_set_number]
+                logging.info(f"Drawing temporary strand: Using color from strand_colors[{self.new_strand_set_number}]: {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
             else:
-                strand_color = QColor(200, 170, 230, 255)
+                strand_color = self.default_strand_color
+                logging.info(f"Drawing temporary strand: Using default_strand_color: {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
             temp_strand = Strand(
                 self.new_strand_start_point,
                 self.new_strand_end_point,
                 self.strand_width,
                 color=strand_color,
-                stroke_color=self.stroke_color,
+                stroke_color=self.default_stroke_color,
                 stroke_width=self.stroke_width
             )
             temp_strand.canvas = self
@@ -2146,7 +2242,7 @@ class StrandDrawingCanvas(QWidget):
             if self.layer_panel and set_number in self.layer_panel.set_colors:
                 self.strand_colors[set_number] = self.layer_panel.set_colors[set_number]
             else:
-                self.strand_colors[set_number] = QColor(200, 170, 230, 255) 
+                self.strand_colors[set_number] = self.default_strand_color
         strand.set_color(self.strand_colors[set_number])
 
         # Add the new strand to the strands list

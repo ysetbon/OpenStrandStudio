@@ -416,11 +416,20 @@ class AttachMode(QObject):
                 self.canvas.layer_panel.current_set = current_set
             
             self.start_pos = self.canvas.snap_to_grid(event.pos())
+            
+            # Use default_strand_color instead of strand_color to ensure correct user settings are applied
+            strand_color = getattr(self.canvas, 'default_strand_color', self.canvas.strand_color)
+            
             new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width,
-                            self.canvas.strand_color, self.canvas.stroke_color,
+                            strand_color, self.canvas.stroke_color,
                             self.canvas.stroke_width)
             new_strand.is_first_strand = True
             new_strand.set_number = current_set
+            
+            # Ensure the color is set in the canvas's color management system
+            if hasattr(self.canvas, 'strand_colors'):
+                self.canvas.strand_colors[current_set] = strand_color
+                logging.info(f"AttachMode: Set strand_colors[{current_set}] to {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
             
             if hasattr(self.canvas, 'layer_panel'):
                 count = 1  # First strand in the set

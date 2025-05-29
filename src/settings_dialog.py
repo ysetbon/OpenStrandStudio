@@ -696,7 +696,7 @@ class SettingsDialog(QDialog):
             else:
                 self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_strand_color_layout.setSpacing(10)  # Small, constant gap
+                self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
                 self.default_strand_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.default_strand_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_strand_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
@@ -730,8 +730,7 @@ class SettingsDialog(QDialog):
                 self.default_stroke_color_layout.addStretch()
                 self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_stroke_color_layout.setContentsMargins(105, 0, 0, 0)
-                self.default_stroke_color_layout.setSpacing(10)  # Add some spacing between widgets
+                self.default_stroke_color_layout.setContentsMargins(260, 0, 0, 0) 
                 self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.default_stroke_color_label.setTextFormat(Qt.PlainText)
@@ -743,7 +742,7 @@ class SettingsDialog(QDialog):
             else:
                 self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_stroke_color_layout.setSpacing(10)  # Small, constant gap
+                self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
                 self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.default_stroke_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_stroke_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")

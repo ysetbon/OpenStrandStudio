@@ -223,7 +223,7 @@ translations = {
         'use_default_arrow_color': 'Use Default Arrow Color',
         'button_color': 'Choose a different button color (not default):',
         'default_strand_color': 'Default Strand Color:',
-        'default_stroke_color': 'Default Stroke Color:',
+        'default_stroke_color': 'Stroke Color:',
         # --- END NEW ---
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Show Full Arrow",
@@ -381,8 +381,8 @@ translations = {
         'deselect_all': 'Désélect. Tous',
         'notification_message': 'Notification',
         'button_color': 'Choisissez une couleur de bouton différente (pas par défaut):',
-        'default_strand_color': 'Couleur de Brin par Défaut :',
-        'default_stroke_color': 'Couleur de Contour par Défaut :',
+        'default_strand_color': 'Couleur de Brin par Défaut:',
+        'default_stroke_color': 'Couleur de Contour:',
         # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
@@ -645,7 +645,7 @@ translations = {
         'notification_message': 'Notifica',
         'button_color': 'Scegli un colore di pulsante diverso (non predefinito):',
         'default_strand_color': 'Colore Trefolo Predefinito:',
-        'default_stroke_color': 'Colore Contorno Predefinito:',
+        'default_stroke_color': 'Colore Contorno:',
         # Additional texts
         'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
         'angle_label': 'Angolo:',
@@ -906,7 +906,7 @@ translations = {
         'notification_message': 'Notificación',
         'button_color': 'Elija un color de botón diferente (no predeterminado):',
         'default_strand_color': 'Color de Cordón Predeterminado:',
-        'default_stroke_color': 'Color de Contorno Predeterminado:',
+        'default_stroke_color': 'Color de Contorno:',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
         'angle_label': 'Ángulo:',
@@ -1172,7 +1172,7 @@ translations = {
         'notification_message': 'Notificação',
         'button_color': 'Escolha uma cor de botão diferente (não padrão):',
         'default_strand_color': 'Cor de Mecha Padrão:',
-        'default_stroke_color': 'Cor de Contorno Padrão:',
+        'default_stroke_color': 'Cor de Contorno:',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
         'angle_label': 'Ângulo:',
@@ -1407,7 +1407,7 @@ translations = {
         'notification_message': 'התראה',
         'button_color': 'בחר צבע כפתור שונה (לא ברירת מחדל):',
         'default_strand_color': 'צבע חוט ברירת מחדל:',
-        'default_stroke_color': 'צבע מתאר ברירת מחדל:',
+        'default_stroke_color': 'צבע מתאר:',
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',
         'angle_label': 'זווית:',

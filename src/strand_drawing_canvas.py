@@ -56,6 +56,9 @@ class StrandDrawingCanvas(QWidget):
         # Load default strand color from user settings if available
         default_strand_color_from_settings = self.load_default_strand_color_from_settings()
         
+        # Load default stroke color from user settings if available
+        default_stroke_color_from_settings = self.load_default_stroke_color_from_settings()
+        
         # Initialize properties
         self.initialize_properties()
         
@@ -69,6 +72,12 @@ class StrandDrawingCanvas(QWidget):
             self.default_strand_color = default_strand_color_from_settings
             self.strand_color = default_strand_color_from_settings  # Also update current strand color
             logging.info(f"Applied default strand color from settings during canvas initialization: {default_strand_color_from_settings.red()},{default_strand_color_from_settings.green()},{default_strand_color_from_settings.blue()},{default_strand_color_from_settings.alpha()}")
+        
+        # If we loaded a default stroke color from settings, apply it now
+        if default_stroke_color_from_settings:
+            self.default_stroke_color = default_stroke_color_from_settings
+            self.stroke_color = default_stroke_color_from_settings  # Also update current stroke color
+            logging.info(f"Applied default stroke color from settings during canvas initialization: {default_stroke_color_from_settings.red()},{default_stroke_color_from_settings.green()},{default_stroke_color_from_settings.blue()},{default_stroke_color_from_settings.alpha()}")
         
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 0)  # Semi-transparent red
@@ -238,6 +247,44 @@ class StrandDrawingCanvas(QWidget):
             logging.info("Canvas: Settings file not found. Using default strand color.")
             
         return default_strand_color
+
+    def load_default_stroke_color_from_settings(self):
+        """Load the default stroke color from the settings file."""
+        default_stroke_color = None
+        app_name = "OpenStrand Studio"
+        if sys.platform == 'darwin':
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+            settings_dir = os.path.join(program_data_dir, app_name)
+        else:
+            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+            settings_dir = program_data_dir
+
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+        logging.info(f"Canvas: Looking for default stroke color settings at: {file_path}")
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    logging.info("Canvas: Reading default stroke color from user_settings.txt")
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('DefaultStrokeColor:'):
+                            rgba_str = line.split(':', 1)[1].strip()
+                            try:
+                                r, g, b, a = map(int, rgba_str.split(','))
+                                default_stroke_color = QColor(r, g, b, a)
+                                logging.info(f"Canvas: Loaded default stroke color from settings: {r},{g},{b},{a}")
+                                break # Found the color, no need to read further
+                            except Exception as e:
+                                logging.error(f"Canvas: Error parsing default stroke color: {e}")
+                                default_stroke_color = None # Reset on error
+                                break
+            except Exception as e:
+                logging.error(f"Canvas: Error reading settings file: {e}")
+        else:
+            logging.info("Canvas: Settings file not found. Using default stroke color.")
+            
+        return default_stroke_color
 
     def load_shadow_blur_settings(self):
         """Load shadow blur settings (NumSteps, MaxBlurRadius) from the settings file."""
@@ -1768,6 +1815,27 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Shadow color set to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
         self.update()  # Force a redraw of the canvas to apply the change
 
+    def set_stroke_color(self, color):
+        """Set the stroke color for all strands."""
+        logging.info(f"Setting stroke color: Received {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+        
+        # Create a fresh QColor to avoid reference issues
+        self.default_stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
+        
+        # Apply to all existing strands
+        for strand in self.strands:
+            # Create a fresh QColor for each strand to avoid reference issues
+            strand.stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
+            
+            # For AttachedStrand instances, also update circle_stroke_color if it's not transparent
+            if strand.__class__.__name__ == 'AttachedStrand':
+                if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
+                    strand.circle_stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
+                    logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name}: {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+        
+        logging.info(f"Stroke color set to: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}")
+        self.update()  # Force a redraw of the canvas to apply the change
+
 
 
 
@@ -2177,6 +2245,12 @@ class StrandDrawingCanvas(QWidget):
                     stroke_with_alpha = QColor(strand.stroke_color)
                     stroke_with_alpha.setAlpha(color.alpha())
                     strand.stroke_color = stroke_with_alpha
+                    
+                    # For AttachedStrand instances, also update circle_stroke_color if it's not transparent
+                    if strand.__class__.__name__ == 'AttachedStrand':
+                        if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
+                            strand.circle_stroke_color = QColor(stroke_with_alpha)
+                            logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name} in set update: {stroke_with_alpha.red()},{stroke_with_alpha.green()},{stroke_with_alpha.blue()},{stroke_with_alpha.alpha()}")
 
                 logging.info(f"Updated color for strand: {strand.layer_name}")
 
@@ -2190,6 +2264,12 @@ class StrandDrawingCanvas(QWidget):
                         stroke_with_alpha = QColor(strand.stroke_color)
                         stroke_with_alpha.setAlpha(color.alpha())
                         strand.stroke_color = stroke_with_alpha
+                        
+                        # For AttachedStrand instances, also update circle_stroke_color if it's not transparent
+                        if strand.__class__.__name__ == 'AttachedStrand':
+                            if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
+                                strand.circle_stroke_color = QColor(stroke_with_alpha)
+                                logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name} in masked set update: {stroke_with_alpha.red()},{stroke_with_alpha.green()},{stroke_with_alpha.blue()},{stroke_with_alpha.alpha()}")
 
                     logging.info(f"Updated color for masked strand: {strand.layer_name}")
 
@@ -2489,7 +2569,8 @@ class StrandDrawingCanvas(QWidget):
             # Create new strand
             if event.button() == Qt.LeftButton:
                 pos = event.pos()
-                self.current_strand = Strand(pos, pos, self.strand_width)
+                self.current_strand = Strand(pos, pos, self.strand_width, 
+                                           self.default_strand_color, self.default_stroke_color, self.stroke_width)
                 self.current_strand.canvas = self  # Set canvas reference immediately
                 self.is_drawing_new_strand = True
                 logging.info(f"Created new strand with canvas reference. Show control points: {self.show_control_points}")
@@ -2601,7 +2682,8 @@ class StrandDrawingCanvas(QWidget):
 
     def finalize_new_strand(self):
         if self.new_strand_start_point and self.new_strand_end_point:
-            new_strand = Strand(self.new_strand_start_point, self.new_strand_end_point, self.strand_width)
+            new_strand = Strand(self.new_strand_start_point, self.new_strand_end_point, self.strand_width, 
+                               self.default_strand_color, self.default_stroke_color, self.stroke_width)
             new_strand.set_number = self.new_strand_set_number
             new_strand.set_color(self.strand_colors[self.new_strand_set_number])
             new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand

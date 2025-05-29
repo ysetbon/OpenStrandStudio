@@ -22,7 +22,7 @@ class Strand:
         self.width = width
         self.color = color
         self.shadow_color = QColor(0, 0, 0, 150)  # Semi-transparent black shadow for overlaps
-        self.stroke_color = stroke_color
+        self._stroke_color = stroke_color  # Use private attribute for property
         self.stroke_width = stroke_width
         self.side_line_color = QColor(0, 0, 0, 255)
         self.attached_strands = []  # List to store attached strands
@@ -104,6 +104,25 @@ class Strand:
         """Setter for the end point."""
         self._end = value
         self.update_shape()
+
+    @property
+    def stroke_color(self):
+        """Getter for the stroke color."""
+        return self._stroke_color
+
+    @stroke_color.setter
+    def stroke_color(self, value):
+        """Setter for the stroke color that also updates circle_stroke_color."""
+        self._stroke_color = value
+        
+        # For AttachedStrand instances, also update circle_stroke_color
+        # Check class name to avoid circular import issues
+        if self.__class__.__name__ == 'AttachedStrand':
+            # Only update circle_stroke_color if it's not transparent (alpha > 0)
+            # This preserves intentionally transparent circle strokes
+            if hasattr(self, '_circle_stroke_color') and self._circle_stroke_color and self._circle_stroke_color.alpha() > 0:
+                self.circle_stroke_color = QColor(value)
+                logging.info(f"Updated circle_stroke_color for AttachedStrand {self.layer_name} to match stroke_color: {value.red()},{value.green()},{value.blue()},{value.alpha()}")
 
     @property
     def circle_stroke_color(self):

@@ -3046,9 +3046,8 @@ class SettingsDialog(QDialog):
             self.save_settings_to_file()
             # Apply to canvas immediately
             if self.canvas:
-                self.canvas.default_stroke_color = self.default_stroke_color
-                # Update the stroke_color property as well for backward compatibility
-                self.canvas.stroke_color = self.default_stroke_color
+                # Use the new set_stroke_color method to apply to all existing strands
+                self.canvas.set_stroke_color(self.default_stroke_color)
                 if hasattr(self.canvas, 'force_redraw'):
                     self.canvas.force_redraw()
                 self.canvas.update()

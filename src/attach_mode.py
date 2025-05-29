@@ -421,7 +421,7 @@ class AttachMode(QObject):
             strand_color = getattr(self.canvas, 'default_strand_color', self.canvas.strand_color)
             
             new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width,
-                            strand_color, self.canvas.stroke_color,
+                            strand_color, self.canvas.default_stroke_color,
                             self.canvas.stroke_width)
             new_strand.is_first_strand = True
             new_strand.set_number = current_set

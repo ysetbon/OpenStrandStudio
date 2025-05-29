@@ -75,6 +75,15 @@ class AttachedStrand(Strand):
         self.full_arrow_visible = False
         # --- END NEW ---
 
+        # Set circle stroke color to canvas default if available
+        if hasattr(parent, 'canvas') and parent.canvas and hasattr(parent.canvas, 'default_stroke_color'):
+            self.circle_stroke_color = QColor(parent.canvas.default_stroke_color)
+            logging.info(f"Set AttachedStrand circle_stroke_color to canvas default: {self.circle_stroke_color.red()},{self.circle_stroke_color.green()},{self.circle_stroke_color.blue()},{self.circle_stroke_color.alpha()}")
+        else:
+            # Fallback to parent's stroke_color if canvas is not available
+            self.circle_stroke_color = QColor(parent.stroke_color)
+            logging.info(f"Set AttachedStrand circle_stroke_color to parent stroke_color: {self.circle_stroke_color.red()},{self.circle_stroke_color.green()},{self.circle_stroke_color.blue()},{self.circle_stroke_color.alpha()}")
+
         # --------------------------------------------------------------------
         # Removed the force-default to black if circle_stroke_color is None.
         # Instead, keep the color from JSON if it has been deserialized.

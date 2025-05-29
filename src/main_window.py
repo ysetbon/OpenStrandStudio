@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea
 )
-from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 from PyQt5.QtWidgets import QApplication
 from layer_state_manager import LayerStateManager
@@ -115,6 +115,10 @@ class MainWindow(QMainWindow):
         
         # Then maximize
         self.setWindowState(Qt.WindowMaximized)
+        
+        # Ensure splitter sizes are properly set after the window is fully shown
+        # Use QTimer to defer this slightly so all widgets are fully laid out
+        QTimer.singleShot(100, self.set_initial_splitter_sizes)
 
     # Add the update_translations method here
     def update_translations(self):
@@ -386,11 +390,12 @@ class MainWindow(QMainWindow):
         # Set minimum widths and enforce them using size policies
         self.left_widget.setMinimumWidth(300)
         self.left_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.layer_panel.setMinimumWidth(300)
+        self.layer_panel.setMinimumWidth(350)
         self.layer_panel.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        # Set splitter stretch factors to enforce the minimum widths
-        self.splitter.setStretchFactor(-1, False)
+        # Set splitter stretch factors properly - left widget (index 0) gets more stretch, right panel (index 1) is fixed
+        self.splitter.setStretchFactor(0, 1)  # Left widget can stretch
+        self.splitter.setStretchFactor(1, 0)  # Right panel (layer panel) doesn't stretch
 
 
         # After creating the buttons, set their size policy
@@ -427,13 +432,24 @@ class MainWindow(QMainWindow):
     def set_initial_splitter_sizes(self):
         """
         Set the initial sizes of the splitter to make the layer panel narrower.
-        The layer panel is set to its minimum width (280 pixels), and the left widget
+        The layer panel is set to its minimum width, and the left widget
         takes the remaining space.
         """
-        layer_panel_width = self.layer_panel.minimumWidth()  # 280 pixels
-        total_width = self.width()  # Current maximized window width
+        # Use the minimum width of the layer panel (should be 350)
+        layer_panel_width = self.layer_panel.minimumWidth()
+        total_width = self.width()
+        
+        # Ensure we have a reasonable total width
+        if total_width < layer_panel_width + 300:  # Minimum for left widget
+            total_width = layer_panel_width + 800  # Default reasonable size
+        
         left_width = total_width - layer_panel_width
         self.splitter.setSizes([left_width, layer_panel_width])
+        
+        # Force an update to ensure the sizing takes effect
+        self.splitter.update()
+        
+        logging.info(f"Set initial splitter sizes: left={left_width}, right={layer_panel_width}, total={total_width}")
     def setup_connections(self):
         # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize

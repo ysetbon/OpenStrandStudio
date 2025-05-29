@@ -341,16 +341,32 @@ class LayerPanel(QWidget):
         # Create GroupLayerManager
         self.group_layer_manager = GroupLayerManager(parent=self, layer_panel=self, canvas=self.canvas)
 
-        # Add the create_group_button and group_panel to right layout
-        self.right_layout.addWidget(self.group_layer_manager.create_group_button)
+        # Add the create_group_button and group_panel to right layout with left alignment
+        # Create a container widget for the create_group_button to position it left
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(5, 2, 5, 2)  # Reduce padding: left, top, right, bottom
+        button_layout.addWidget(self.group_layer_manager.create_group_button, 0, Qt.AlignLeft)  # Left align the button
+        button_layout.addStretch()  # Right spacer only
+        
+        self.right_layout.addWidget(button_container)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
-        # Set a fixed width for the right panel (e.g., 200 pixels)
-        self.right_panel.setFixedWidth(135)  # Adjust this value as needed
-
+        # Remove fixed width from left panel so it can expand
+        # self.left_panel.setFixedWidth(200)
+        
+        # Set a fixed width for the right panel
+        self.right_panel.setFixedWidth(250)  # Set actual fixed width in pixels
         # Configure the right panel (group panel)
         self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-
+        
+        # Configure the left panel to expand horizontally
+        self.left_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # Set minimum width for left panel so it starts with reasonable width extending 
+        
+        # Configure the overall LayerPanel to expand leftward
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
         # Create a splitter to separate left and right panels
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.left_panel)
@@ -364,6 +380,8 @@ class LayerPanel(QWidget):
 
         # Add the splitter to the main layout
         self.layout.addWidget(self.splitter)
+
+        # Note: setSizes() doesn't work with Fixed size policy, use setFixedWidth() above instead
 
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons

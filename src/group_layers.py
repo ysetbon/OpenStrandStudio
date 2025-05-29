@@ -134,17 +134,20 @@ class CollapsibleGroupWidget(QWidget):
 
         # Main layout
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
-        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove padding to match button alignment
+        self.layout.setSpacing(3)  # Small spacing between elements
+        self.layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)  # Left align content to match button
 
         # Access the current language code
         self.language_code = 'en'
         self.update_translations()  # Call the method to set initial translations
 
-        # Group button (collapsible header)
+        # Group button (collapsible header) with narrower width and left alignment
         self.group_button = QPushButton()
-        self.layout.addWidget(self.group_button)
-        self.group_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.group_button.setMaximumWidth(160)  # Make button narrower
+        self.group_button.setMinimumWidth(100)  # Set reasonable minimum
+        self.layout.addWidget(self.group_button, 0, Qt.AlignLeft)  # Change from AlignHCenter to AlignLeft
+        self.group_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Don't expand
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
@@ -152,39 +155,59 @@ class CollapsibleGroupWidget(QWidget):
             QPushButton {
                 background-color: transparent;
                 border: 2px solid #3C3C3C;
+                padding: 6px 12px;  /* Better padding */
+                text-align: center;
+                font-weight: bold;
             }
             QPushButton:hover {
                 color: black;                       
                 background-color: #D3D3D3;  /* Light gray background on hover */
             }
         """)
-        # Content widget (collapsible content)
+        # Content widget (collapsible content) with centered dropdown
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(0)
-        self.layout.addWidget(self.content_widget)
+        self.content_layout.setContentsMargins(0, 5, 0, 5)  # Remove side padding to match button alignment
+        self.content_layout.setSpacing(2)
+        self.content_layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)  # Change to left align
+        self.layout.addWidget(self.content_widget, 0, Qt.AlignLeft)  # Keep widget left-aligned
 
-        # List widget to display layers
+        # List widget to display layers with centered alignment
         self.layers_list = QListWidget()
+        self.layers_list.setMaximumWidth(80)  # Make list much narrower for better centering
+        self.layers_list.setMinimumWidth(80)  # Set same min/max width for consistency
         self.layers_list.setStyleSheet("""
             QListWidget {
                 background-color: transparent;
                 border: none;
             }
             QListWidget::item {
-                padding: 5px;
-                font-size: 12px;
+                padding: 4px;
+                font-size: 11px;
+                text-align: center;
+                border: 1px solid #505050;
+                border-radius: 3px;
+                margin: 1px;
+                qproperty-alignment: AlignCenter;
             }
         """)
         self.layers_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.layers_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
-        self.content_layout.addWidget(self.layers_list)
+        self.layers_list.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.MinimumExpanding)  # Use Fixed instead of Expanding
+        
+        # Create a container widget with padding to center the list relative to the button
+        list_container = QWidget()
+        list_container_layout = QHBoxLayout(list_container)
+        list_container_layout.setContentsMargins(10, 0, 0, 0)  # Add 30px padding on left and right to center the 80px list within the 140px button width
+        list_container_layout.addWidget(self.layers_list)
+        
+        self.content_layout.addWidget(list_container, 0, Qt.AlignLeft)  # Add the container instead of the list directly
 
         # Store main strands
         self.main_strands = set()
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        # Better size policy for centering with adjusted width
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)  # Fixed width for proper centering
+        self.setFixedWidth(140)  # Match the Create Group button width for proper alignment
         self.content_widget.setVisible(not self.is_collapsed)
 
         # Update styles based on the current theme
@@ -315,6 +338,7 @@ class CollapsibleGroupWidget(QWidget):
             if main_strand not in self.main_strands:
                 self.main_strands.add(main_strand)
                 item = QListWidgetItem(main_strand)
+                item.setTextAlignment(Qt.AlignCenter)  # Ensure text is centered
                 if color:
                     item.setForeground(color)
                 if is_masked:
@@ -393,9 +417,14 @@ class GroupPanel(QWidget):
         palette.setColor(self.backgroundRole(), palette.window().color())
         self.setPalette(palette)
 
-        self.layout.setContentsMargins(5, 5, 5, 5)
-        self.layout.setSpacing(5)
+        # Improved margins and spacing for better centering - match button container padding
+        self.layout.setContentsMargins(10, 5, 10, 5)  # Match button container margins for alignment
+        self.layout.setSpacing(8)  # Slightly increased spacing
         self.setAcceptDrops(True)
+        
+        # Set minimum width to ensure the panel can accommodate UI elements
+        self.setMinimumWidth(220)  # Ensure panel is wide enough for buttons and content
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.canvas:
             logging.info(f"Canvas set on GroupPanel during initialization: {self.canvas}")
@@ -407,7 +436,10 @@ class GroupPanel(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_layout.setAlignment(Qt.AlignTop)
+        # Center align the content and add margins for better appearance
+        self.scroll_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self.scroll_layout.setContentsMargins(5, 5, 5, 5)
+        self.scroll_layout.setSpacing(5)
         self.scroll_area.setWidget(self.scroll_content)
         self.layout.addWidget(self.scroll_area)
     def create_group_widget(self, group_name, group_layers):
@@ -645,8 +677,16 @@ class GroupPanel(QWidget):
                 logging.info(f"Control points set for layer '{strand.layer_name}' in group '{group_name}'")
 
         self.groups[group_name]['widget'] = group_widget
-        self.scroll_layout.addWidget(group_widget)
-        logging.info(f"Group widget added to scroll layout for group '{group_name}'")
+        
+        # Create a horizontal layout to align the group widget with the create group button
+        group_container = QWidget()
+        group_container_layout = QHBoxLayout(group_container)
+        group_container_layout.setContentsMargins(5, 2, 5, 2)  # Match create group button container margins
+        group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)  # Align left instead of center
+        group_container_layout.addStretch()  # Right spacer only
+        
+        self.scroll_layout.addWidget(group_container)
+        logging.info(f"Group widget added to scroll layout for group '{group_name}' with centering container")
 
         # Additional logging to confirm the group is added to the canvas
         if self.canvas and hasattr(self.canvas, 'groups'):
@@ -1615,6 +1655,11 @@ class GroupLayerManager:
         # Create the 'Create Group' button
         self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)
+        
+        # Make the button with fixed width for better centering
+        self.create_group_button.setFixedWidth(140)  # Fixed width for consistent centering
+        self.create_group_button.setFixedHeight(50)  # Fixed height for consistency
+        self.create_group_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # Fixed size policy
 
         # Connect to language_changed signal
         if hasattr(self.parent, 'language_changed'):

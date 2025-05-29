@@ -54,7 +54,7 @@ class NumberedLayerButton(QPushButton):
         super().__init__(parent)
         self._text = text  # Store the text privately
         self.count = count
-        self.setFixedSize(100, 30)  # Set fixed size for the button
+        self.setFixedSize(130, 30)  # Set fixed size for the button - increased width from 100 to 130
         self.setCheckable(True)  # Make the button checkable (can be toggled)
         self.setContextMenuPolicy(Qt.CustomContextMenu)  # Enable context menu
         self.color = color

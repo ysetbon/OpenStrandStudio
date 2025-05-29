@@ -169,11 +169,11 @@ class SettingsDialog(QDialog):
                 }}
             """
         else:
-            # For LTR: dropdown arrow on the right side
+            # For LTR: dropdown arrow on the left side
             return f"""
                 QComboBox::drop-down {{
                     subcontrol-origin: padding;
-                    subcontrol-position: right center;
+                    subcontrol-position: left center;
                     width: 50px;
                     border: none;
                 }}
@@ -187,7 +187,7 @@ class SettingsDialog(QDialog):
                     border-left: 4px solid transparent;
                     border-right: 4px solid transparent;
                     border-top: 6px solid {arrow_color};
-                    margin-right: 6px;
+                    margin-left: 6px;
                 }}
             """
     
@@ -215,6 +215,8 @@ class SettingsDialog(QDialog):
                     self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     self.button_color_label.setLayoutDirection(Qt.RightToLeft)
                     self.button_color_label.setTextFormat(Qt.PlainText)
+                    self.button_color_label.setWordWrap(False)
+                    self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 if hasattr(self, 'affected_strand_label'):
                     self.affected_strand_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
@@ -589,29 +591,32 @@ class SettingsDialog(QDialog):
             self.clear_layout(self.button_color_layout)
             self.button_color_container.setContentsMargins(0, 0, 0, 0)
             if is_rtl:
-                self.button_color_container.setLayoutDirection(Qt.RightToLeft)
-                self.button_color_layout.setDirection(QBoxLayout.RightToLeft)
-                self.button_color_layout.setContentsMargins(0, 0, 0, 0)
-                self.button_color_layout.setSpacing(10)  # Reduce spacing for RTL
-                # Set label properties for RTL
+                self.button_color_layout.addStretch()
+                self.button_color_container.setLayoutDirection(Qt.LeftToRight)
+                self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.button_color_layout.setContentsMargins(105, 0, 0, 0)
+                self.button_color_layout.setSpacing(10)  # Add some spacing between widgets
                 self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.button_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.button_color_label.setTextFormat(Qt.PlainText)
                 self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                # Add widgets in RTL order
+                 # Add spacer at the beginning to shift everything right
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
-                self.button_color_layout.addSpacing(10)  # Small fixed spacing
                 self.button_color_layout.addWidget(self.button_color_label)
-                logging.info("RTL REORGANIZE: Added button, spacing, then label")
+                logging.info("RTL REORGANIZE: Added stretch, button, then label for proper RTL positioning")
             else:
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.button_color_layout.setSpacing(15)
+                self.button_color_layout.setSpacing(10)  # Small, constant gap
                 self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                self.button_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
+                self.default_arrow_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
                 self.button_color_layout.addWidget(self.button_color_label)
+               
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
                 self.button_color_layout.addStretch()
-                logging.info("LTR REORGANIZE: Added label, button, then stretch")
+                logging.info("LTR REORGANIZE: Added label, spacing, then button")
             # Force immediate update (same as theme layout)
             self.button_color_layout.invalidate()
             self.button_color_layout.activate()
@@ -634,8 +639,8 @@ class SettingsDialog(QDialog):
             # Log container and layout geometry
             logging.info(f"BUTTON_COLOR_CONTAINER geometry: {self.button_color_container.geometry()} size: {self.button_color_container.size()} pos: {self.button_color_container.pos()}")
             logging.info(f"BUTTON_COLOR_LAYOUT geometry: {self.button_color_layout.geometry()}")
-            # Try to force label to fill available space
-            self.button_color_label.setMinimumWidth(self.button_color_container.width())
+            # Let the layout decide the width – zero works fine
+            self.button_color_label.setMinimumWidth(0)
             self.button_color_label.updateGeometry()
             self.button_color_label.repaint()
             logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
@@ -1499,7 +1504,7 @@ class SettingsDialog(QDialog):
         # Add these lines right after creating the label:
         self.button_color_label.setTextFormat(Qt.PlainText)
         self.button_color_label.setWordWrap(False)
-        self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         # Set proper alignment for RTL
         if self.is_rtl_language(self.current_language):
             self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -1511,7 +1516,7 @@ class SettingsDialog(QDialog):
         self.button_color_label.setStyleSheet("QLabel { color: white; }" if self.current_theme == "dark" else "QLabel { color: black; }")
         # Force word wrap off and ensure text is not clipped
         self.button_color_label.setWordWrap(False)
-        self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.button_color_layout.setContentsMargins(0, 0, 0, 0)
         self.button_color_container.setContentsMargins(0, 0, 0, 0)
         # Force update to ensure label has proper size

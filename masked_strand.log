@@ -1,1343 +1,149 @@
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Initialized masked strand 1_1_1_2 with center point: 1073.10, 312.97
-Set color for masked strand 1_1_1_2 to #e61972, preserving second strand color
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1068.7086107530363, 280.0, 51.29138924696372, 49.12287544144988)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Initialized masked strand 1_1_2_1 with center point: 667.39, 303.66
+Set color for masked strand 1_1_2_1 to #e61972, preserving second strand color
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Skipping additional shadow for nested masked strand 1_1_1_2
-Transferred masked strand image to main painter for 1_1_1_2
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Drawing base center point at: 1073.10, 312.97
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1068.7086107530363, 280.0, 51.29138924696372, 49.12287544144988)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Skipping additional shadow for nested masked strand 1_1_1_2
-Transferred masked strand image to main painter for 1_1_1_2
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Drawing base center point at: 1073.10, 312.97
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1068.7086107530363, 280.0, 51.29138924696372, 49.12287544144988)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1030.6629978438802, 265.9957124042136, 103.34128975190674, 84.0105524273136)
-Skipping additional shadow for nested masked strand 1_1_1_2
-Transferred masked strand image to main painter for 1_1_1_2
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Calculated center point for 1_1_1_2: 1073.10, 312.97 from 1331 points
-Drawing base center point at: 1073.10, 312.97
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1263.4458052530752, 251.66175195994396, 55.99675301856564, 132.29906285935687)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1233.1325301906193, 88.32809692503396, 107.73493961876147, 548.3438061499321)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1263.4458052530752, 251.66175195994396, 55.99675301856564, 132.29906285935687)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1233.1325301906193, 88.32809692503396, 107.73493961876147, 548.3438061499321)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1263.4458052530752, 251.66175195994396, 55.99675301856564, 132.29906285935687)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1233.1325301906193, 88.32809692503396, 107.73493961876147, 548.3438061499321)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1263.4458052530752, 251.66175195994396, 55.99675301856564, 132.29906285935687)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1233.1325301906193, 88.32809692503396, 107.73493961876147, 548.3438061499321)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1263.4458052530752, 251.66175195994396, 55.99675301856564, 132.29906285935687)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1233.1325301906193, 88.32809692503396, 107.73493961876147, 548.3438061499321)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Initialized masked strand 2_1_3_1 with center point: 1291.44, 317.81
-Set color for masked strand 2_1_3_1 to #e61972, preserving second strand color
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
 Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Drawing selected strand highlights
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Calculated center point for 2_1_3_1: 1291.44, 317.81 from 1388 points
-Drawing base center point at: 1291.44, 317.81
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(943.0327544196447, 433.8488871568579, 64.63731862753127, 98.24798448605338)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(943.0327544196447, 433.8488871568579, 64.63731862753127, 98.24798448605338)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(943.0327544196447, 433.8488871568579, 64.63731862753127, 98.24798448605338)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(943.0327544196447, 433.8488871568579, 64.63731862753127, 98.24798448605338)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(943.0327544196447, 433.8488871568579, 64.63731862753127, 98.24798448605338)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Initialized masked strand 1_2_4_1 with center point: 975.35, 482.97
-Set color for masked strand 1_2_4_1 to #e61972, preserving second strand color
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
-Completed drawing masked strand
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 595.9571518857349, 56.0, 76.0428481142651)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(840.0, 280.0, 280.0, 392.0)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(1247.8911516368069, 214.91201227678908, 87.10606025110224, 205.7985422256665)
-Skipping additional shadow for nested masked strand 2_1_3_1
-Transferred masked strand image to main painter for 2_1_3_1
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(925.0779436897749, 406.5577803551763, 100.54694008727074, 152.8301980894165)
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1052.5690700424946, 280.0, 67.43092995750544, 56.0)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(743.9252329215011, 115.85046584300227, 376.0747670784989, 220.14953415699773)
-DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Skipping additional shadow for nested masked strand 1_2_4_1
-Transferred masked strand image to main painter for 1_2_4_1
-Drawing selected strand highlights
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Calculated center point for 1_2_4_1: 975.35, 482.97 from 1252 points
-Drawing base center point at: 975.35, 482.97
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
+Drawing base center point at: 667.39, 303.66
 Completed drawing masked strand

@@ -142,12 +142,12 @@ class CollapsibleGroupWidget(QWidget):
         self.language_code = 'en'
         self.update_translations()  # Call the method to set initial translations
 
-        # Group button (collapsible header) with narrower width and left alignment
+        # Group button (collapsible header) with dynamic width and left alignment
         self.group_button = QPushButton()
-        self.group_button.setMaximumWidth(160)  # Make button narrower
         self.group_button.setMinimumWidth(100)  # Set reasonable minimum
-        self.layout.addWidget(self.group_button, 0, Qt.AlignLeft)  # Change from AlignHCenter to AlignLeft
-        self.group_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Don't expand
+        self.group_button.setMaximumWidth(200)  # Increase max width to accommodate longer text
+        self.group_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Allow horizontal expansion
+        self.layout.addWidget(self.group_button, 0, Qt.AlignLeft)  # Keep left alignment
         self.group_button.clicked.connect(self.toggle_collapse)
         self.group_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.group_button.customContextMenuRequested.connect(self.show_context_menu)
@@ -205,9 +205,10 @@ class CollapsibleGroupWidget(QWidget):
         # Store main strands
         self.main_strands = set()
 
-        # Better size policy for centering with adjusted width
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)  # Fixed width for proper centering
-        self.setFixedWidth(140)  # Match the Create Group button width for proper alignment
+        # Better size policy for centering with dynamic width
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)  # Allow both width and height to adjust
+        self.setMinimumWidth(120)  # Set minimum width instead of fixed
+        # Remove the setFixedWidth to allow dynamic sizing
         self.content_widget.setVisible(not self.is_collapsed)
 
         # Update styles based on the current theme
@@ -442,6 +443,54 @@ class GroupPanel(QWidget):
         self.scroll_layout.setSpacing(5)
         self.scroll_area.setWidget(self.scroll_content)
         self.layout.addWidget(self.scroll_area)
+    
+    def refresh_group_alignment(self):
+        """Refresh the alignment of all groups in the panel."""
+        logging.info("Refreshing group alignment...")
+        
+        # Store references to group widgets before removing containers
+        group_widgets = {}
+        
+        # First, extract all group widgets from their containers
+        for i in range(self.scroll_layout.count()):
+            container = self.scroll_layout.itemAt(i).widget()
+            if container:
+                # Find the CollapsibleGroupWidget inside the container
+                group_widget = container.findChild(CollapsibleGroupWidget)
+                if group_widget:
+                    # Store the widget with its group name
+                    for group_name, group_info in self.groups.items():
+                        if group_info.get('widget') == group_widget:
+                            group_widgets[group_name] = group_widget
+                            # Remove the widget from its container but don't delete it
+                            group_widget.setParent(None)
+                            break
+        
+        # Remove all container widgets from the scroll layout
+        while self.scroll_layout.count():
+            child = self.scroll_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()  # Only delete the container, not the group widget
+        
+        # Re-add all group widgets with proper alignment containers
+        for group_name, group_info in self.groups.items():
+            group_widget = group_widgets.get(group_name) or group_info.get('widget')
+            if group_widget:
+                # Create a new horizontal layout container for alignment
+                group_container = QWidget()
+                group_container_layout = QHBoxLayout(group_container)
+                group_container_layout.setContentsMargins(5, 2, 5, 2)
+                group_container_layout.setSpacing(0)  # No spacing to keep tight alignment
+                group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)
+                group_container_layout.addStretch()
+                
+                self.scroll_layout.addWidget(group_container)
+        
+        # Force update of the scroll area
+        self.scroll_area.update()
+        self.update()
+        logging.info(f"Group alignment refreshed with {len(self.groups)} groups")
+    
     def create_group_widget(self, group_name, group_layers):
         pass
     def update_group_display(self, group_name):
@@ -626,7 +675,20 @@ class GroupPanel(QWidget):
 
         # Check if the group already exists
         if group_name in self.groups:
-            logging.warning(f"Group '{group_name}' already exists. Skipping creation.")
+            logging.warning(f"Group '{group_name}' already exists. Updating instead of creating new.")
+            # Update existing group
+            existing_widget = self.groups[group_name]['widget']
+            if existing_widget:
+                # Update the existing widget with new strands
+                for strand in strands:
+                    if strand.layer_name not in self.groups[group_name]['layers']:
+                        existing_widget.add_layer(
+                            layer_name=strand.layer_name,
+                            color=strand.color,
+                            is_masked=hasattr(strand, 'is_masked') and strand.is_masked
+                        )
+            # Refresh alignment to ensure proper display
+            self.refresh_group_alignment()
             return
 
         # Identify main strands (pattern: "x_1" where x is a number)
@@ -678,12 +740,13 @@ class GroupPanel(QWidget):
 
         self.groups[group_name]['widget'] = group_widget
         
-        # Create a horizontal layout to align the group widget with the create group button
+        # Create a horizontal layout to align the group widget with proper left alignment
         group_container = QWidget()
         group_container_layout = QHBoxLayout(group_container)
-        group_container_layout.setContentsMargins(5, 2, 5, 2)  # Match create group button container margins
-        group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)  # Align left instead of center
-        group_container_layout.addStretch()  # Right spacer only
+        group_container_layout.setContentsMargins(5, 2, 5, 2)  # Consistent margins
+        group_container_layout.setSpacing(0)  # No spacing to keep tight alignment
+        group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)  # Align left
+        group_container_layout.addStretch()  # Right spacer to push widget to left
         
         self.scroll_layout.addWidget(group_container)
         logging.info(f"Group widget added to scroll layout for group '{group_name}' with centering container")
@@ -697,7 +760,9 @@ class GroupPanel(QWidget):
                 logging.info(f"Main strands copied to canvas.groups: {[s.layer_name for s in main_strands]}")
             else:
                 logging.warning(f"Group '{group_name}' not found in canvas.groups after creation")
-
+        
+        # Ensure alignment is proper after adding new group
+        self.refresh_group_alignment()
 
     def start_group_rotation(self, group_name):
         # Fetch group data reliably from canvas.groups
@@ -1074,10 +1139,25 @@ class GroupPanel(QWidget):
                 logging.warning(f"Group '{group_name}' not found in canvas.")
 
             self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
-            group_widget = self.groups.pop(group_name)['widget']
-            self.scroll_layout.removeWidget(group_widget)
-            group_widget.deleteLater()
-            logging.info(f"Group '{group_name}' deleted.")
+            
+            # Get the widget and its parent container
+            group_widget = self.groups[group_name]['widget']
+            
+            # Find and remove the container widget (not just the group widget)
+            for i in range(self.scroll_layout.count()):
+                container = self.scroll_layout.itemAt(i).widget()
+                if container and container.findChild(CollapsibleGroupWidget) == group_widget:
+                    self.scroll_layout.removeWidget(container)
+                    container.deleteLater()
+                    break
+            
+            # Remove from groups dictionary
+            del self.groups[group_name]
+            
+            # Refresh alignment after deletion
+            self.refresh_group_alignment()
+            
+            logging.info(f"Group '{group_name}' deleted and alignment refreshed.")
         else:
             logging.warning(f"Group '{group_name}' not found in GroupPanel.")
     def update_layer(self, index, layer_name, color):
@@ -1926,6 +2006,11 @@ class GroupLayerManager:
             if self.canvas and group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
                 logging.info(f"Group '{group_name}' deleted from canvas groups")
+        
+        # If any groups were deleted, refresh the alignment
+        if groups_to_delete:
+            self.group_panel.refresh_group_alignment()
+            logging.info("Group alignment refreshed after masked strand creation")
 
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name (e.g., '1' from '1_1')."""

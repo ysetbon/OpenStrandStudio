@@ -246,6 +246,17 @@ class NumberedLayerButton(QPushButton):
             change_action_color.triggered.connect(self.change_color)
             context_menu.addAction(change_action_color)
             
+            # Add Change Stroke Color option
+            change_stroke_text = _['change_stroke_color'] if 'change_stroke_color' in _ else "Change Stroke Color"
+            change_stroke_label = HoverLabel(change_stroke_text, self, theme)
+            if is_hebrew:
+                change_stroke_label.setLayoutDirection(Qt.RightToLeft)
+                change_stroke_label.setAlignment(Qt.AlignLeft)
+            change_stroke_action = QWidgetAction(self)
+            change_stroke_action.setDefaultWidget(change_stroke_label)
+            change_stroke_action.triggered.connect(lambda: self.change_stroke_color(strand, layer_panel))
+            context_menu.addAction(change_stroke_action)
+            
             context_menu.addSeparator()
             # Check if the strand has the necessary attribute before adding stroke actions
             if hasattr(strand, 'circle_stroke_color'):
@@ -1163,3 +1174,33 @@ class NumberedLayerButton(QPushButton):
         else:
             self.update()
     # --- END NEW ---
+    
+    def change_stroke_color(self, strand, layer_panel):
+        """Open a color dialog to change the strand's stroke color."""
+        # Get translations
+        _ = translations.get(layer_panel.language_code, translations['en'])
+        
+        color_dialog = QColorDialog(self)
+        color_dialog.setWindowTitle(_.get('change_stroke_color', "Change Stroke Color"))
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        
+        # Get current stroke color
+        current_color = strand.stroke_color if hasattr(strand, 'stroke_color') else QColor(0, 0, 0, 255)
+        
+        color = color_dialog.getColor(initial=current_color, options=QColorDialog.ShowAlphaChannel)
+        if color.isValid():
+            # Set the stroke color on the strand
+            if hasattr(strand, 'stroke_color'):
+                strand.stroke_color = color
+                logging.info(f"Changed stroke color for strand {strand.layer_name} to {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+                
+                # Request canvas repaint
+                if layer_panel and hasattr(layer_panel, 'canvas'):
+                    layer_panel.canvas.update()
+                    # Save state for undo/redo
+                    if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                        layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                        layer_panel.canvas.undo_redo_manager.save_state()
+                        logging.info("Saved undo/redo state after changing stroke color")
+                else:
+                    self.update()

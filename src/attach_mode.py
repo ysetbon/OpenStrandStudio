@@ -629,6 +629,7 @@ class AttachMode(QObject):
         
         # Set properties from parent strand
         new_strand.color = parent_strand.color  # Directly set color property
+        new_strand.stroke_color = parent_strand.stroke_color  # Copy stroke color from parent
         new_strand.set_number = parent_strand.set_number
         new_strand.is_first_strand = False
         new_strand.is_start_side = False

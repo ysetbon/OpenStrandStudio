@@ -176,6 +176,7 @@ translations = {
         'transparent_stroke': 'Transparent Starting Edge',
         'restore_default_stroke': 'Restore Default Stroke',
         'change_color': 'Change Color',
+        'change_stroke_color': 'Change Stroke Color',
         # --- NEW ---
         'hide_layer': 'Hide Layer',
         'show_layer': 'Show Layer',
@@ -441,6 +442,7 @@ translations = {
         'transparent_stroke': 'Bord de Départ Transparent',
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
         'change_color': 'Changer la couleur',
+        'change_stroke_color': 'Changer la couleur du trait',
         # --- NEW ---
         'hide_layer': 'Masquer Couche',
         'show_layer': 'Afficher Couche',
@@ -1231,6 +1233,7 @@ translations = {
         'transparent_stroke': 'Borda Inicial Transparente',
         'restore_default_stroke': 'Restaurar Traço Padrão',
         'change_color': 'Mudar cor',
+        'change_stroke_color': 'Mudar cor do traço',
         # --- NEW ---
         'hide_layer': 'Ocultar Camada',
         'show_layer': 'Mostrar Camada',
@@ -1466,6 +1469,7 @@ translations = {
         'transparent_stroke': 'קצה התחלתי שקוף',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',
         'change_color': 'שנה צבע',
+        'change_stroke_color': 'שנה צבע קו',
         # Layer panel extension and arrow settings translations
         'extension_length': 'אורך הרחבה',
         'extension_length_tooltip': 'אורך קווי ההרחבה',

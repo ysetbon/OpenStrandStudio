@@ -297,7 +297,9 @@ class UndoRedoManager(QObject):
 
     def _would_be_identical_save(self):
         """Check if the current state would be identical to the previous saved state."""
+        logging.info(f"_would_be_identical_save: Checking if current state would be identical to previous state (current_step={self.current_step})")
         if self.current_step <= 0:
+            logging.info("_would_be_identical_save: No previous state to compare (current_step <= 0)")
             return False
             
         try:
@@ -443,6 +445,25 @@ class UndoRedoManager(QObject):
                         # Color attribute presence differs, state is not identical
                         return False
 
+                    # Compare stroke colors
+                    if hasattr(current_strand, 'stroke_color') and 'stroke_color' in prev_strand:
+                        prev_stroke_color_dict = prev_strand.get('stroke_color', {})
+                        current_stroke_color = current_strand.stroke_color
+                        # Use integer comparison for stroke colors (0-255)
+                        if (current_stroke_color.red() != prev_stroke_color_dict.get('r', 0) or
+                            current_stroke_color.green() != prev_stroke_color_dict.get('g', 0) or
+                            current_stroke_color.blue() != prev_stroke_color_dict.get('b', 0) or
+                            current_stroke_color.alpha() != prev_stroke_color_dict.get('a', 0)):
+                            # Stroke colors differ, so state is not identical
+                            current_rgba = f"({current_stroke_color.red()},{current_stroke_color.green()},{current_stroke_color.blue()},{current_stroke_color.alpha()})"
+                            prev_rgba = f"({prev_stroke_color_dict.get('r', 0)},{prev_stroke_color_dict.get('g', 0)},{prev_stroke_color_dict.get('b', 0)},{prev_stroke_color_dict.get('a', 0)})"
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_color differs. Current: {current_rgba}, Previous: {prev_rgba}")
+                            return False
+                    elif hasattr(current_strand, 'stroke_color') != ('stroke_color' in prev_strand):
+                        # Stroke color attribute presence differs, state is not identical
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_color attribute presence differs.")
+                        return False
+
                     # --- ADD: Compare mask path for MaskedStrands --- 
                     if isinstance(current_strand, MaskedStrand):
                         # Compare component strand names
@@ -586,6 +607,7 @@ class UndoRedoManager(QObject):
                     # --- END ADD ---
 
                 # If we made it here, states are identical based on checked properties
+                logging.info("_would_be_identical_save: States are identical, skipping save")
                 return True
                 
         except Exception as e:
@@ -825,6 +847,22 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                     has_visual_difference = True
                                     break
+                            
+                            # --- ADD: Check stroke colors (if one is visibly different) ---
+                            if (hasattr(new_strand, 'stroke_color') and hasattr(original_strand, 'stroke_color')):
+                                # Only consider stroke color difference significant if it's visible
+                                if (abs(new_strand.stroke_color.red() - original_strand.stroke_color.red()) > 0 or
+                                    abs(new_strand.stroke_color.green() - original_strand.stroke_color.green()) > 0 or
+                                    abs(new_strand.stroke_color.blue() - original_strand.stroke_color.blue()) > 0 or
+                                    abs(new_strand.stroke_color.alpha() - original_strand.stroke_color.alpha()) > 0):
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color differs visually.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'stroke_color') != hasattr(original_strand, 'stroke_color'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
                             
                             # --- ADD: Compare deletion rectangles for MaskedStrands ---
                             if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):
@@ -1181,6 +1219,22 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.color.alpha() - original_strand.color.alpha()) > 0):
                                     has_visual_difference = True
                                     break
+                            
+                            # --- ADD: Check stroke colors (if one is visibly different) ---
+                            if (hasattr(new_strand, 'stroke_color') and hasattr(original_strand, 'stroke_color')):
+                                # Only consider stroke color difference significant if it's visible
+                                if (abs(new_strand.stroke_color.red() - original_strand.stroke_color.red()) > 0 or
+                                    abs(new_strand.stroke_color.green() - original_strand.stroke_color.green()) > 0 or
+                                    abs(new_strand.stroke_color.blue() - original_strand.stroke_color.blue()) > 0 or
+                                    abs(new_strand.stroke_color.alpha() - original_strand.stroke_color.alpha()) > 0):
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color differs visually.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'stroke_color') != hasattr(original_strand, 'stroke_color'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
                             
                             # --- ADD: Compare deletion rectangles for MaskedStrands ---
                             if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):

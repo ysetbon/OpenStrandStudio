@@ -51,7 +51,24 @@ class AttachMode(QObject):
         Update only the current strand being dragged using highly optimized approach.
         This avoids redrawing all strands on every mouse movement.
         """
-        if not self.canvas.current_strand:
+        # When the user zooms *out* (zoom_factor < 1.0) the visible region is
+        # larger than the original viewport.  Our background-cache approach
+        # is based on a pixmap that matches the widget size, so portions of
+        # the newly visible area may not be refreshed correctly.  In that
+        # scenario we simply fall back to a normal full-canvas repaint which
+        # guarantees that everything on-screen is redrawn.
+
+        if (not self.canvas.current_strand) or (
+            hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor < 1.0
+        ):
+            # When zoomed-out we need the entire widget repainted **immediately**
+            # on every mouse-move; using ``update()`` often coalesces several
+            # requests and the intermediate frames never appear, which looks
+            # like the strand is being cropped.  ``repaint()`` forces an
+            # immediate full paint of the widget (synchronous) so the whole
+            # strand is always visible.
+
+            self.canvas.repaint()
             return
             
         # Frame limiting - don't update too frequently
@@ -102,8 +119,38 @@ class AttachMode(QObject):
             self.canvas.update()
 
     def _get_strand_bounds(self):
-        """Get the bounding rectangle of the entire canvas."""
-        # Return the full canvas bounds instead of calculating strand-specific bounds
+        """Return a rectangle that fully covers the *visible* logical area.
+
+        When the user zooms *out* (``zoom_factor`` < 1) the logical area that
+        fits into the widget becomes larger than the widget physical
+        rectangle.  If we continue to use ``self.canvas.rect()`` the update
+        region will be too small and anything that lies outside that rectangle
+        (in logical coordinates) will never be repainted.  To avoid the clipped
+        updates we expand the rectangle by the inverse of the current zoom
+        factor so that it encloses the whole region that is actually visible
+        on screen.
+        """
+
+        # If we are zoomed-out make a larger rectangle that, once scaled, maps
+        # exactly onto the widget.
+        if hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor < 1.0:
+            inv_scale = 1.0 / self.canvas.zoom_factor  # > 1.0 when zoomed-out
+
+            # Size of the logical area that fills the widget after scaling.
+            width  = int(self.canvas.width()  * inv_scale)
+            height = int(self.canvas.height() * inv_scale)
+
+            # Centre the rectangle on the widget centre so that translation in
+            # the paint routine still works as expected.
+            cx = self.canvas.width()  // 2
+            cy = self.canvas.height() // 2
+
+            left   = cx - width  // 2
+            top    = cy - height // 2
+
+            return QRect(left, top, width, height)
+
+        # Normal (zoom == 1.0 or zoomed-in) – widget rectangle is fine.
         if hasattr(self.canvas, 'viewport'):
             return self.canvas.viewport().rect()
         return self.canvas.rect()
@@ -120,6 +167,16 @@ class AttachMode(QObject):
             # Ensure valid dimensions
             width = max(1, viewport_rect.width())
             height = max(1, viewport_rect.height())
+            
+            # NOTE: Do NOT upscale the cache when zoomed-out. It causes the
+            # cached area to exceed the widget rectangle, so only the original
+            # (0,0,width,height) portion is ever blitted back, leaving the
+            # extra visible area unchanged.  By keeping the cache the same
+            # size as the widget we ensure the full onscreen region is always
+            # refreshed, regardless of the current zoom factor.
+            # (Zoom itself is handled via the painter's scale transform.)
+            # Therefore, we intentionally skip any width/height adjustment
+            # based on zoom_factor here.
             
             # Create the pixmap and fill it
             self.canvas.background_cache = QtGui.QPixmap(width, height)
@@ -157,6 +214,15 @@ class AttachMode(QObject):
                 self_canvas.original_paintEvent(event)
                 return
                 
+            # If we are zoomed OUT (<1.0) the cached-background approach can
+            # leave blank areas because the pixmap is only as large as the
+            # widget size.  In that situation just fall back to the regular
+            # paintEvent so the entire visible area is repainted.
+            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
+                logging.info("Zoomed out: Using original_paintEvent for full repaint.")
+                self_canvas.original_paintEvent(event)
+                return
+            
             # Get the active strand and update rect
             active_strand = self_canvas.active_strand_for_drawing
             update_rect = getattr(self_canvas, 'active_strand_update_rect', event.rect())

@@ -243,6 +243,15 @@ class MoveMode:
             width = max(1, viewport_rect.width())
             height = max(1, viewport_rect.height())
             
+            # Check if the canvas has a zoom factor and adjust size if zoomed out
+            if hasattr(self.canvas, 'zoom_factor'):
+                zoom_factor = self.canvas.zoom_factor
+                if zoom_factor < 1.0:  # Only adjust when zoomed out
+                    # Calculate the effective size needed when zoomed out
+                    width = int(width / zoom_factor)
+                    height = int(height / zoom_factor)
+                    logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
+            
             # Create the pixmap and fill it
             self.canvas.background_cache = QtGui.QPixmap(width, height)
             # Fill with transparent color, not white
@@ -443,6 +452,16 @@ class MoveMode:
                     viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
                     width = max(1, viewport_rect.width())
                     height = max(1, viewport_rect.height())
+                    
+                    # Check if the canvas has a zoom factor and adjust size if zoomed out
+                    if hasattr(self_canvas, 'zoom_factor'):
+                        zoom_factor = self_canvas.zoom_factor
+                        if zoom_factor < 1.0:  # Only adjust when zoomed out
+                            # Calculate the effective size needed when zoomed out
+                            width = int(width / zoom_factor)
+                            height = int(height / zoom_factor)
+                            logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
+                    
                     self_canvas.background_cache = QtGui.QPixmap(width, height)
                     self_canvas.background_cache.fill(Qt.transparent)
             
@@ -500,6 +519,16 @@ class MoveMode:
                         viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
                         width = max(1, viewport_rect.width())
                         height = max(1, viewport_rect.height())
+                        
+                        # Check if the canvas has a zoom factor and adjust size if zoomed out
+                        if hasattr(self_canvas, 'zoom_factor'):
+                            zoom_factor = self_canvas.zoom_factor
+                            if zoom_factor < 1.0:  # Only adjust when zoomed out
+                                # Calculate the effective size needed when zoomed out
+                                width = int(width / zoom_factor)
+                                height = int(height / zoom_factor)
+                                logging.info(f"MoveMode: Adjusting new background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
+                        
                         self_canvas.background_cache = QtGui.QPixmap(width, height)
                         self_canvas.background_cache.fill(Qt.transparent)
                     
@@ -786,6 +815,16 @@ class MoveMode:
             if current_width != viewport_rect.width() or current_height != viewport_rect.height():
                 width = max(1, viewport_rect.width())
                 height = max(1, viewport_rect.height())
+                
+                # Check if the canvas has a zoom factor and adjust size if zoomed out
+                if hasattr(self.canvas, 'zoom_factor'):
+                    zoom_factor = self.canvas.zoom_factor
+                    if zoom_factor < 1.0:  # Only adjust when zoomed out
+                        # Calculate the effective size needed when zoomed out
+                        width = int(width / zoom_factor)
+                        height = int(height / zoom_factor)
+                        logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
+                
                 self.canvas.background_cache = QtGui.QPixmap(width, height)
                 self.canvas.background_cache_valid = False
                 self.canvas.update()  # Ensure update after recreating pixmap

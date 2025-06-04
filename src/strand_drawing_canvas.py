@@ -147,6 +147,12 @@ class StrandDrawingCanvas(QWidget):
         self.mask_selected_strands = []
         self.selected_attached_strand = None  # Add this line for selected attached strand
         
+        # Zoom properties
+        self.zoom_factor = 1.0  # Current zoom level (1.0 = 100%)
+        self.min_zoom = 0.1  # Minimum zoom level (10%)
+        self.max_zoom = 5.0  # Maximum zoom level (500%)
+        self.zoom_step = 0.1  # Zoom increment/decrement step
+        
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
         logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
@@ -1258,6 +1264,50 @@ class StrandDrawingCanvas(QWidget):
         """Show or hide control points on the canvas."""
         self.control_points_visible = visible
         self.update()  # Redraw the canvas to reflect changes
+    
+    def zoom_in(self):
+        """Increase the zoom level."""
+        new_zoom = self.zoom_factor + self.zoom_step
+        if new_zoom <= self.max_zoom:
+            self.zoom_factor = new_zoom
+            self.update()
+            logging.info(f"Zoomed in to {self.zoom_factor:.1f}x")
+    
+    def zoom_out(self):
+        """Decrease the zoom level."""
+        new_zoom = self.zoom_factor - self.zoom_step
+        if new_zoom >= self.min_zoom:
+            self.zoom_factor = new_zoom
+            self.update()
+            logging.info(f"Zoomed out to {self.zoom_factor:.1f}x")
+    
+    def reset_zoom(self):
+        """Reset zoom to 100%."""
+        self.zoom_factor = 1.0
+        self.update()
+        logging.info("Reset zoom to 1.0x")
+    
+    def screen_to_canvas(self, screen_point):
+        """Convert screen coordinates to canvas coordinates (accounting for zoom)."""
+        # For now, we'll center the zoom at the canvas center
+        canvas_center = QPointF(self.width() / 2, self.height() / 2)
+        
+        # Convert screen point to canvas coordinates
+        canvas_x = (screen_point.x() - canvas_center.x()) / self.zoom_factor + canvas_center.x()
+        canvas_y = (screen_point.y() - canvas_center.y()) / self.zoom_factor + canvas_center.y()
+        
+        return QPointF(canvas_x, canvas_y)
+    
+    def canvas_to_screen(self, canvas_point):
+        """Convert canvas coordinates to screen coordinates (accounting for zoom)."""
+        # For now, we'll center the zoom at the canvas center
+        canvas_center = QPointF(self.width() / 2, self.height() / 2)
+        
+        # Convert canvas point to screen coordinates
+        screen_x = (canvas_point.x() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+        screen_y = (canvas_point.y() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+        
+        return QPointF(screen_x, screen_y)
     def paintEvent(self, event):
         """
         Handles the painting of the canvas.
@@ -1266,6 +1316,13 @@ class StrandDrawingCanvas(QWidget):
         painter = QPainter(self)
 
         painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Apply zoom transformation
+        painter.save()
+        canvas_center = QPointF(self.width() / 2, self.height() / 2)
+        painter.translate(canvas_center)
+        painter.scale(self.zoom_factor, self.zoom_factor)
+        painter.translate(-canvas_center)
 
         # The yellow rectangle definition has been moved to the MoveMode section below
 
@@ -1720,12 +1777,20 @@ class StrandDrawingCanvas(QWidget):
             f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
         )
 
+        # Restore painter state before ending (to undo zoom transformation)
+        painter.restore()
         painter.end()
 
         # ADD new painter to draw on top of everything:
         # ---------------------------------------------------------
         overlay_painter = QPainter(self)
         overlay_painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Apply zoom transformation to overlay painter as well
+        overlay_painter.save()
+        overlay_painter.translate(canvas_center)
+        overlay_painter.scale(self.zoom_factor, self.zoom_factor)
+        overlay_painter.translate(-canvas_center)
 
         # Draw attach-mode circles on top
         if isinstance(self.current_mode, AttachMode):
@@ -1779,6 +1844,7 @@ class StrandDrawingCanvas(QWidget):
 
             overlay_painter.restore()
         # ---------------------------------------------------------
+        overlay_painter.restore()  # Restore zoom transformation
         overlay_painter.end()
         # ---------------------------------------------------------
 
@@ -1948,14 +2014,75 @@ class StrandDrawingCanvas(QWidget):
             self.layer_panel.update_colors_for_set(set_number, color)
         self.update()
     def draw_grid(self, painter):
-        """Draw the grid on the canvas."""
-        painter.setPen(QPen(QColor(200, 200, 200), 1))
-        # Vertical lines
-        for x in range(0, self.width(), self.grid_size):
-            painter.drawLine(x, 0, x, self.height())
-        # Horizontal lines
-        for y in range(0, self.height(), self.grid_size):
-            painter.drawLine(0, y, self.width(), y)
+        """Draw the grid on the canvas, accounting for zoom level."""
+        # Adjust grid appearance based on zoom level
+        if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
+            # Adjust line thickness and opacity based on zoom
+            if self.zoom_factor < 0.5:
+                # When very zoomed out, make grid lines slightly thicker and more visible
+                line_width = 1.5
+                color = QColor(180, 180, 180)  # Slightly darker
+            elif self.zoom_factor < 1.0:
+                # When moderately zoomed out, standard appearance
+                line_width = 1
+                color = QColor(200, 200, 200)
+            else:
+                # When zoomed in, keep standard appearance
+                line_width = 1
+                color = QColor(200, 200, 200)
+        else:
+            line_width = 1
+            color = QColor(200, 200, 200)
+            
+        painter.setPen(QPen(color, line_width))
+        
+        # Calculate the visible area in canvas coordinates when zoomed
+        if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
+            # Calculate the visible bounds accounting for zoom transformation
+            canvas_center = QPointF(self.width() / 2, self.height() / 2)
+            
+            # Calculate the effective visible area
+            # When zoomed out (zoom_factor < 1), we can see a larger area
+            # When zoomed in (zoom_factor > 1), we see a smaller area
+            effective_width = self.width() / self.zoom_factor
+            effective_height = self.height() / self.zoom_factor
+            
+            # Calculate the bounds of the visible area in canvas coordinates
+            left = canvas_center.x() - effective_width / 2
+            right = canvas_center.x() + effective_width / 2
+            top = canvas_center.y() - effective_height / 2
+            bottom = canvas_center.y() + effective_height / 2
+            
+            # Add padding to ensure grid extends beyond visible edges
+            padding = max(self.grid_size * 5, 200)
+            left -= padding
+            right += padding
+            top -= padding
+            bottom += padding
+        else:
+            # No zoom, use widget bounds with some padding
+            padding = max(self.grid_size * 2, 100)
+            left = -padding
+            right = self.width() + padding
+            top = -padding
+            bottom = self.height() + padding
+        
+        # Calculate grid line positions
+        # Find the first grid line position that's <= left bound
+        start_x = int(left // self.grid_size) * self.grid_size
+        start_y = int(top // self.grid_size) * self.grid_size
+        
+        # Draw vertical lines
+        x = start_x
+        while x <= right:
+            painter.drawLine(int(x), int(top), int(x), int(bottom))
+            x += self.grid_size
+            
+        # Draw horizontal lines  
+        y = start_y
+        while y <= bottom:
+            painter.drawLine(int(left), int(y), int(right), int(y))
+            y += self.grid_size
     def draw_strand_label(self, painter, strand):
         """Draw the label for a strand."""
         if isinstance(strand, MaskedStrand):
@@ -2540,36 +2667,43 @@ class StrandDrawingCanvas(QWidget):
         self.update()  # Redraw the canvas to reflect changes
 
     def mousePressEvent(self, event):
+        # Convert screen coordinates to canvas coordinates for zoom
+        canvas_pos = self.screen_to_canvas(event.pos())
+        
         if self.mask_edit_mode and event.button() == Qt.LeftButton:
-            self.erase_start_pos = event.pos()
+            self.erase_start_pos = canvas_pos
             logging.info(f"Started mask deletion at position: ({self.erase_start_pos.x()}, {self.erase_start_pos.y()})")
             self.current_erase_rect = None
             self.update()
             event.accept()
             return
         elif self.current_mode == "rotate":
-            self.rotate_mode.mousePressEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.rotate_mode.mousePressEvent(new_event)
         elif self.moving_group:
-            self.move_start_pos = event.pos()
+            self.move_start_pos = canvas_pos
             self.setCursor(Qt.ClosedHandCursor)
         elif self.is_drawing_new_strand:
-            self.new_strand_start_point = event.pos()
+            self.new_strand_start_point = canvas_pos
 
         if self.current_mode == "select":
             # Get the position from the event
-            logging.info(f"Selecting strand at position: {event.pos()}")
-            pos = event.pos()
-            self.handle_strand_selection(pos)
+            logging.info(f"Selecting strand at position: {canvas_pos}")
+            self.handle_strand_selection(canvas_pos)
             
         elif self.current_mode == self.mask_mode:
-            self.mask_mode.handle_mouse_press(event)
-        elif self.current_mode:
-            self.current_mode.mousePressEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.mask_mode.handle_mouse_press(new_event)
+        elif self.current_mode and not isinstance(self.current_mode, str):
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.current_mode.mousePressEvent(new_event)
         elif self.current_mode == self.attach_mode:
             # Create new strand
             if event.button() == Qt.LeftButton:
-                pos = event.pos()
-                self.current_strand = Strand(pos, pos, self.strand_width, 
+                self.current_strand = Strand(canvas_pos, canvas_pos, self.strand_width, 
                                            self.default_strand_color, self.default_stroke_color, self.stroke_width)
                 self.current_strand.canvas = self  # Set canvas reference immediately
                 self.is_drawing_new_strand = True
@@ -2579,21 +2713,24 @@ class StrandDrawingCanvas(QWidget):
             super().mousePressEvent(event)
 
         if self.moving_group:
-            self.move_group_name = self.get_group_name_at_position(event.pos())
-            self.group_move_start_pos = event.pos()
+            self.move_group_name = self.get_group_name_at_position(canvas_pos)
+            self.group_move_start_pos = canvas_pos
             self.original_positions_initialized = False  # Will trigger re-initialization
 
         self.update()
 
 
     def mouseMoveEvent(self, event):
+        # Convert screen coordinates to canvas coordinates for zoom
+        canvas_pos = self.screen_to_canvas(event.pos())
+        
         if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
             # Update the current erase rectangle
             self.current_erase_rect = QRectF(
-                min(self.erase_start_pos.x(), event.pos().x()),
-                min(self.erase_start_pos.y(), event.pos().y()),
-                abs(event.pos().x() - self.erase_start_pos.x()),
-                abs(event.pos().y() - self.erase_start_pos.y())
+                min(self.erase_start_pos.x(), canvas_pos.x()),
+                min(self.erase_start_pos.y(), canvas_pos.y()),
+                abs(canvas_pos.x() - self.erase_start_pos.x()),
+                abs(canvas_pos.y() - self.erase_start_pos.y())
             )
             logging.info(f"Updated deletion rectangle: x={self.current_erase_rect.x():.2f}, "
                         f"y={self.current_erase_rect.y():.2f}, "
@@ -2604,19 +2741,31 @@ class StrandDrawingCanvas(QWidget):
             return
         elif self.moving_group and self.group_move_start_pos:
             # Calculate total dx and dy from the initial movement start position
-            total_dx = event.pos().x() - self.group_move_start_pos.x()
-            total_dy = event.pos().y() - self.group_move_start_pos.y()
+            total_dx = canvas_pos.x() - self.group_move_start_pos.x()
+            total_dy = canvas_pos.y() - self.group_move_start_pos.y()
             self.move_group(self.move_group_name, total_dx, total_dy)
         elif self.is_drawing_new_strand and self.new_strand_start_point:
-            self.new_strand_end_point = event.pos()
+            self.new_strand_end_point = canvas_pos
             self.update()
         elif self.current_mode == "rotate":
-            self.rotate_mode.mouseMoveEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.rotate_mode.mouseMoveEvent(new_event)
         elif self.current_mode and not isinstance(self.current_mode, str):
-            self.current_mode.mouseMoveEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.current_mode.mouseMoveEvent(new_event)
+        
+        # Store last position for mask edit mode eraser cursor
+        if self.mask_edit_mode:
+            self.last_pos = canvas_pos
+            
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
+        # Convert screen coordinates to canvas coordinates for zoom
+        canvas_pos = self.screen_to_canvas(event.pos())
+        
         if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
             # Save the deletion rectangle information
             if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
@@ -2660,7 +2809,9 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
         elif self.current_mode == "rotate":
-            self.rotate_mode.mouseReleaseEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.rotate_mode.mouseReleaseEvent(new_event)
         elif self.moving_group:
             self.moving_group = False
             self.move_group_name = None
@@ -2670,15 +2821,29 @@ class StrandDrawingCanvas(QWidget):
             self.original_positions_initialized = False  # Reset for next movement
             self.setCursor(Qt.ArrowCursor)
         elif self.is_drawing_new_strand and self.new_strand_start_point:
-            self.new_strand_end_point = event.pos()
+            self.new_strand_end_point = canvas_pos
             self.finalize_new_strand()
         elif self.current_mode and not isinstance(self.current_mode, str):
-            self.current_mode.mouseReleaseEvent(event)
+            # Create a new event with converted coordinates
+            new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+            self.current_mode.mouseReleaseEvent(new_event)
         self.update()
 
 
-
-
+    
+    def wheelEvent(self, event):
+        """Handle mouse wheel events for zooming."""
+        # Get the scroll delta
+        delta = event.angleDelta().y()
+        
+        # Zoom in or out based on scroll direction
+        if delta > 0:
+            self.zoom_in()
+        elif delta < 0:
+            self.zoom_out()
+        
+        # Accept the event to prevent it from being passed to parent widgets
+        event.accept()
 
     def finalize_new_strand(self):
         if self.new_strand_start_point and self.new_strand_end_point:
@@ -3955,9 +4120,24 @@ class StrandDrawingCanvas(QWidget):
         """Update attachment statuses and has_circles states of all strands."""
         if not hasattr(self, 'layer_state_manager') or not self.layer_state_manager:
             return
+        
+        # Prevent recursion in this function
+        if hasattr(self, '_updating_attachment_statuses'):
+            return
+        self._updating_attachment_statuses = True
 
-        connections = self.layer_state_manager.getConnections()
-        logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
+        try:
+            connections = self.layer_state_manager.getConnections()
+            # Limit logging to prevent recursion issues
+            if hasattr(self, '_logging_attachment_status'):
+                return  # Prevent recursive logging
+            self._logging_attachment_status = True
+            logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
+            delattr(self, '_logging_attachment_status')
+        except Exception as e:
+            logging.error(f"Error getting connections: {e}")
+            delattr(self, '_updating_attachment_statuses')
+            return
         
         # Group strands by their prefix (e.g., "1_" or "2_")
         strand_groups = {}
@@ -3970,16 +4150,20 @@ class StrandDrawingCanvas(QWidget):
                 strand_groups[prefix] = []
             strand_groups[prefix].append(strand)
 
-        logging.info(f"update_attachment_statuses: Current strands in groups: {[(prefix, [s.layer_name for s in strands]) for prefix, strands in strand_groups.items()]}")
+        # Skip detailed logging to prevent recursion
+        if not hasattr(self, '_logging_attachment_status_detailed'):
+            self._logging_attachment_status_detailed = True
+            logging.info(f"update_attachment_statuses: Current strands in groups: {[(prefix, [s.layer_name for s in strands]) for prefix, strands in strand_groups.items()]}")
+            delattr(self, '_logging_attachment_status_detailed')
 
         # Second pass: Update based on connections from layer_state_manager
         for prefix, strands_in_group in strand_groups.items():
             for strand in strands_in_group:
-                logging.info(f"update_attachment_statuses: Processing strand {strand.layer_name}, current has_circles: {strand.has_circles}")
+                # Skip detailed strand logging to prevent recursion
+                pass
                 
                 # Get connections for this strand from layer_state_manager
                 strand_connections = connections.get(strand.layer_name, [])
-                logging.info(f"update_attachment_statuses: Connections for {strand.layer_name}: {strand_connections}")
                 
                 # Check if any connections are stale (strand no longer exists)
                 valid_connections = []
@@ -3992,8 +4176,6 @@ class StrandDrawingCanvas(QWidget):
                     
                     if connected_strand:
                         valid_connections.append(connected_layer_name)
-                    else:
-                        logging.info(f"update_attachment_statuses: Connected strand {connected_layer_name} not found - removing stale connection")
                 
                 # If we found stale connections, clean them up
                 if len(valid_connections) != len(strand_connections):
@@ -4003,7 +4185,6 @@ class StrandDrawingCanvas(QWidget):
                         # Also remove this strand from the missing strand's connections
                         for missing_strand in set(strand_connections) - set(valid_connections):
                             self.layer_state_manager.removeStrandConnections(missing_strand)
-                        logging.info(f"update_attachment_statuses: Cleaned up stale connections for {strand.layer_name}")
                 
                 # Now process only valid connections
                 for connected_layer_name in valid_connections:
@@ -4013,26 +4194,18 @@ class StrandDrawingCanvas(QWidget):
                         None
                     )
                     
-                    logging.info(f"update_attachment_statuses: Looking for connected strand {connected_layer_name}, found: {connected_strand.layer_name if connected_strand else 'None'}")
-                    
                     if connected_strand:
                     # Check start point connections
                         if self.points_are_close(strand.start, connected_strand.start) or \
                            self.points_are_close(strand.start, connected_strand.end):
                             strand.start_attached = True
                             strand.has_circles[0] = True
-                            logging.info(f"Found start connection for {strand.layer_name} with {connected_strand.layer_name}")
 
                     # Check end point connections
                         if self.points_are_close(strand.end, connected_strand.start) or \
                            self.points_are_close(strand.end, connected_strand.end):
                             strand.end_attached = True
                             strand.has_circles[1] = True
-                            logging.info(f"Found end connection for {strand.layer_name} with {connected_strand.layer_name}")
-                    else:
-                        logging.info(f"update_attachment_statuses: Connected strand {connected_layer_name} not found in current strands - this connection should be cleaned up")
-
-                logging.info(f"Final state for {strand.layer_name}: has_circles={strand.has_circles}")
 
         # --- NEW: Re-apply manual circle visibility overrides (recursive for attached strands) ---
         def _apply_manual_circle_overrides(s):
@@ -4040,8 +4213,6 @@ class StrandDrawingCanvas(QWidget):
                 for idx in range(min(len(s.has_circles), len(s.manual_circle_visibility))):
                     override = s.manual_circle_visibility[idx]
                     if override is not None and s.has_circles[idx] != override:
-                        logging.info(
-                            f"Applying manual circle visibility override for {s.layer_name} index {idx}: {override}")
                         s.has_circles[idx] = override
 
             # Recurse into any attached strands
@@ -4053,7 +4224,8 @@ class StrandDrawingCanvas(QWidget):
             _apply_manual_circle_overrides(strand)
         # --- END NEW ---
 
-        logging.info("update_attachment_statuses completed")
+        # update_attachment_statuses completed
+        delattr(self, '_updating_attachment_statuses')
 
     def set_layer_state_manager(self, layer_state_manager):
         self.layer_state_manager = layer_state_manager
@@ -4064,7 +4236,7 @@ class StrandDrawingCanvas(QWidget):
         Placeholder method to refresh attachments based on geometry.
         Currently calls update_attachment_statuses.
         """
-        logging.info("Refreshing geometry-based attachments (calling update_attachment_statuses)")
+        # Refreshing geometry-based attachments (calling update_attachment_statuses)
         self.update_attachment_statuses()
 
     def update_non_group_attached_strands(self, strand, dx, dy, updated_strands, group_layers):

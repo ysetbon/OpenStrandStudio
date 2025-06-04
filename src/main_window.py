@@ -1700,6 +1700,13 @@ class MainWindow(QMainWindow):
                 painter = QPainter(image)
                 painter.setRenderHint(QPainter.Antialiasing)
                 
+                # Apply zoom transformation if zoom is not 1.0
+                if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor != 1.0:
+                    canvas_center = QPointF(canvas_size.width() / 2, canvas_size.height() / 2)
+                    painter.translate(canvas_center)
+                    painter.scale(self.canvas.zoom_factor, self.canvas.zoom_factor)
+                    painter.translate(-canvas_center)
+                
                 # Custom painting method to draw all strands and masks
                 def paint_canvas(painter):
                     # Draw the grid if it's visible
@@ -1863,7 +1870,8 @@ class MainWindow(QMainWindow):
         self.update_mode("attach")
         self.canvas.set_mode("attach")  # Explicitly set the canvas mode
         if self.canvas.last_selected_strand_index is not None:
-            self.select_strand(self.canvas.last_selected_strand_index)
+            # Use emit_signal=False to prevent recursion back to layer_panel
+            self.select_strand(self.canvas.last_selected_strand_index, emit_signal=False)
         
         # Ensure the attach button is checked and others are unchecked
         self.attach_button.setChecked(True)

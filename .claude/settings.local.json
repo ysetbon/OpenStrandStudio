@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(git add:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 20 \"def snap_to_grid\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 10 \"def snap_to_grid\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/group_layers.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 5 -A 15 \"snap_to_grid.*point\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 3 -A 3 \"snap_to_grid\\(\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 5 -A 5 \"zoom.*coord|coord.*zoom|transform.*zoom|zoom.*transform\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -B 5 -A 10 \"snap_to_grid_enabled\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)"
+    ],
+    "deny": []
+  }
+}

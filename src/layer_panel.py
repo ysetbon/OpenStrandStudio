@@ -192,6 +192,77 @@ class LayerPanel(QWidget):
         # Setup undo/redo manager and buttons AFTER top_panel is added to the layout
         # Pass the determined base_path to setup_undo_redo
         self.undo_redo_manager = setup_undo_redo(self.canvas, self, self.base_path)
+        
+        # Create a second row for zoom buttons
+        self.zoom_panel = QWidget()
+        zoom_layout = QHBoxLayout(self.zoom_panel)
+        zoom_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the first row
+        zoom_layout.setAlignment(Qt.AlignLeft)
+        
+        # Create zoom in button
+        self.zoom_in_button = QPushButton("+")
+        self.zoom_in_button.setFixedSize(40, 40)
+        self.zoom_in_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFD700;  /* Yellowish color */
+                color: black;
+                font-weight: bold;
+                font-size: 24px;
+                border: 1px solid #B8860B;
+                border-radius: 20px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: #FFA500;  /* Darker yellow/orange on hover */
+                border: 2px solid #B8860B;
+            }
+            QPushButton:pressed {
+                background-color: #FF8C00;  /* Even darker on press */
+                border: 2px solid #8B6914;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.zoom_in_button.clicked.connect(self.canvas.zoom_in)
+        
+        # Create zoom out button
+        self.zoom_out_button = QPushButton("-")
+        self.zoom_out_button.setFixedSize(40, 40)
+        self.zoom_out_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFD700;  /* Yellowish color */
+                color: black;
+                font-weight: bold;
+                font-size: 24px;
+                border: 1px solid #B8860B;
+                border-radius: 20px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: #FFA500;  /* Darker yellow/orange on hover */
+                border: 2px solid #B8860B;
+            }
+            QPushButton:pressed {
+                background-color: #FF8C00;  /* Even darker on press */
+                border: 2px solid #8B6914;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.zoom_out_button.clicked.connect(self.canvas.zoom_out)
+        
+        # Add buttons to zoom layout
+        zoom_layout.addWidget(self.zoom_in_button)
+        zoom_layout.addWidget(self.zoom_out_button)
+        
+        # Add zoom panel to left layout below the top panel
+        self.left_layout.addWidget(self.zoom_panel)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
@@ -928,8 +999,8 @@ class LayerPanel(QWidget):
                 self.strand_selected.emit(index)
             self.last_selected_index = index
 
-            # Switch to attach mode
-            if self.parent_window:
+            # Switch to attach mode (only if not already in recursion)
+            if self.parent_window and emit_signal:
                 self.parent_window.set_attach_mode()
 
     def handle_masked_layer_selection(self, index):

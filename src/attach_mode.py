@@ -176,6 +176,15 @@ class AttachMode(QObject):
                 
             # Start the painter
             painter = QtGui.QPainter(self_canvas)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            
+            # Apply zoom transformation if zoom is enabled
+            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                painter.save()
+                painter.translate(canvas_center)
+                painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                painter.translate(-canvas_center)
             
             try:
                 # Store original strands list before any manipulation

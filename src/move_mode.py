@@ -533,6 +533,15 @@ class MoveMode:
                     painter = QtGui.QPainter(self_canvas.background_cache)
                     painter.setRenderHint(QtGui.QPainter.Antialiasing)
                     
+                    # Apply zoom transformation to cache painter if zoom is enabled
+                    if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                        from PyQt5.QtCore import QPointF
+                        canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                        painter.save()
+                        painter.translate(canvas_center)
+                        painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                        painter.translate(-canvas_center)
+                    
                     # First clear the cache
                     painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
                     painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
@@ -545,6 +554,10 @@ class MoveMode:
                     
                     # Mark the cache as valid
                     self_canvas.background_cache_valid = True
+                    
+                    # Restore zoom transformation state if it was applied
+                    if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                        painter.restore()
                     
                     # Restore original strands
                     self_canvas.strands = original_strands
@@ -561,6 +574,14 @@ class MoveMode:
             # Draw the cached background first (has everything except truly moving strands)
             painter = QtGui.QPainter(self_canvas)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            
+            # Apply zoom transformation if zoom is enabled
+            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                painter.save()
+                painter.translate(canvas_center)
+                painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                painter.translate(-canvas_center)
 
             try:
                 if hasattr(self_canvas, 'background_cache'):
@@ -674,11 +695,17 @@ class MoveMode:
                 
             except Exception as e:
                 logging.error(f"MoveMode: Error in optimized paint event: {e}")
+                # Restore zoom transformation state if it was applied
+                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                    painter.restore()
                 # If an error occurs, fall back to the original paint event
                 if painter.isActive():
                     painter.end()
                 self_canvas.original_paintEvent(event)
             else:
+                # Restore zoom transformation state if it was applied
+                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
+                    painter.restore()
                 if painter.isActive():
                     painter.end()
                 

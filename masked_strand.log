@@ -1,149 +1,327 @@
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(628.8067929915356, 267.83656532291997, 77.17046539503951, 71.64289825434736)
-DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(462.7629465299209, 172.46746049763718, 474.4741069401582, 299.0650790047257)
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
 DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Initialized masked strand 1_1_2_1 with center point: 667.39, 303.66
-Set color for masked strand 1_1_2_1 to #e61972, preserving second strand color
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: []
-Using default intersection mask
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(607.3705526040247, 247.93576025226798, 120.04294617006133, 111.44450839565133)
-Skipping additional shadow for nested masked strand 1_1_2_1
-Transferred masked strand image to main painter for 1_1_2_1
-Drawing selected strand highlights
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Calculated center point for 1_1_2_1: 667.39, 303.66 from 1322 points
-Drawing base center point at: 667.39, 303.66
-Completed drawing masked strand
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(476.0, 339.40151498840925, 286.27038982832096, 472.59848501159075)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 952.0, 784.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(476.0, 339.40151498840925, 286.27038982832096, 472.59848501159075)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 952.0, 784.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 514.1640080143694, 56.0, 73.83599198563059)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(406.2643085725807, 172.75498373821347, 657.7356914274193, 415.24501626178653)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(1035.45836543402, 28.0, 56.541634565980075, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(1008.0, 28.0, 84.0, 560.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 71.68691769624715, 56.0)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 980.0, 56.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0
+DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty=False, bounds=PyQt5.QtCore.QRectF(476.0, 339.40151498840925, 286.27038982832096, 472.59848501159075)
+DrawMaskShadow - Before Clip/Stroke: clip_path empty=False, bounds=PyQt5.QtCore.QRectF(112.0, 28.0, 952.0, 784.0)
+DrawMaskShadow - Before Clip/Stroke: Painter composition mode=0

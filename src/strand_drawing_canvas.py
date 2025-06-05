@@ -1841,6 +1841,7 @@ class StrandDrawingCanvas(QWidget):
         overlay_painter.save()
         canvas_center = QPointF(self.width() / 2, self.height() / 2)
         overlay_painter.translate(canvas_center)
+        overlay_painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
         overlay_painter.scale(self.zoom_factor, self.zoom_factor)
         overlay_painter.translate(-canvas_center)
         

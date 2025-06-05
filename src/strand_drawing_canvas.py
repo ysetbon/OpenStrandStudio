@@ -2113,36 +2113,35 @@ class StrandDrawingCanvas(QWidget):
             
         painter.setPen(QPen(color, line_width))
         
-        # Calculate the visible area in canvas coordinates when zoomed
-        if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
-            # Calculate the visible bounds accounting for zoom transformation
-            canvas_center = QPointF(self.width() / 2, self.height() / 2)
-            
-            # Calculate the effective visible area
-            # When zoomed out (zoom_factor < 1), we can see a larger area
-            # When zoomed in (zoom_factor > 1), we see a smaller area
-            effective_width = self.width() / self.zoom_factor
-            effective_height = self.height() / self.zoom_factor
-            
-            # Calculate the bounds of the visible area in canvas coordinates
-            left = canvas_center.x() - effective_width / 2
-            right = canvas_center.x() + effective_width / 2
-            top = canvas_center.y() - effective_height / 2
-            bottom = canvas_center.y() + effective_height / 2
-            
-            # Add padding to ensure grid extends beyond visible edges
-            padding = max(self.grid_size * 5, 200)
-            left -= padding
-            right += padding
-            top -= padding
-            bottom += padding
+        # Get the content's bounding box
+        content_rect = self.get_bounding_rect()
+
+        # Get the visible area in canvas coordinates
+        top_left_canvas = self.screen_to_canvas(QPointF(0, 0))
+        bottom_right_canvas = self.screen_to_canvas(QPointF(self.width(), self.height()))
+        visible_rect = QRectF(top_left_canvas, bottom_right_canvas)
+        
+        # The area to draw the grid on is the union of the content and what's visible
+        if hasattr(self, 'zoom_factor') and self.zoom_factor > 1.0:
+            fixed_size = 8000
+            # Center the fixed-size grid area around the current view's center
+            grid_area = QRectF(
+                visible_rect.center().x() - fixed_size / 2,
+                visible_rect.center().y() - fixed_size / 2,
+                fixed_size,
+                fixed_size
+            )
         else:
-            # No zoom, use widget bounds with some padding
-            padding = max(self.grid_size * 2, 100)
-            left = -padding
-            right = self.width() + padding
-            top = -padding
-            bottom = self.height() + padding
+            grid_area = content_rect.united(visible_rect) if not content_rect.isEmpty() else visible_rect
+            
+            # Add padding to ensure the grid is drawn well beyond the edges.
+            padding = max(self.width(), self.height()) / self.zoom_factor
+            grid_area.adjust(-padding, -padding, padding, padding)
+
+        left = grid_area.left()
+        top = grid_area.top()
+        right = grid_area.right()
+        bottom = grid_area.bottom()
         
         # Calculate grid line positions
         # Find the first grid line position that's <= left bound
@@ -2817,6 +2816,21 @@ class StrandDrawingCanvas(QWidget):
                 
                 # Apply pan limits based on content bounding box
                 content_rect = self.get_bounding_rect()
+
+                if hasattr(self, 'zoom_factor') and self.zoom_factor > 1.0:
+                    # When zoomed in, ensure panning is possible within an 8000x8000 area
+                    view_center_in_canvas = self.screen_to_canvas(QPointF(self.width() / 2, self.height() / 2))
+                    fixed_size = 8000
+                    fixed_rect = QRectF(
+                        view_center_in_canvas.x() - fixed_size / 2,
+                        view_center_in_canvas.y() - fixed_size / 2,
+                        fixed_size,
+                        fixed_size
+                    )
+                    if content_rect.isEmpty():
+                        content_rect = fixed_rect
+                    else:
+                        content_rect = content_rect.united(fixed_rect)
 
                 if not content_rect.isEmpty():
                     canvas_center = QPointF(self.width() / 2, self.height() / 2)

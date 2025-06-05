@@ -1158,9 +1158,14 @@ class MoveMode:
             # When drawing only affected strands, we want to keep the background cache valid
             # This prevents redrawing all strands on every frame
             if hasattr(self.canvas, 'background_cache_valid') and not self.canvas.background_cache_valid:
-                # If the cache is invalidated, recreate it once
-                logging.info("MoveMode: Recreating background cache for optimized drawing")
-                self.prepare_optimized_drawing()
+                # Throttle cache recreation to prevent excessive recreations during movement
+                import time
+                current_time = time.time()
+                if not hasattr(self, '_last_cache_recreation') or (current_time - self._last_cache_recreation) > 0.1:
+                    # If the cache is invalidated and enough time has passed, recreate it once
+                    logging.info("MoveMode: Recreating background cache for optimized drawing")
+                    self.prepare_optimized_drawing()
+                    self._last_cache_recreation = current_time
         else:
             # If we're not optimizing, invalidate the cache to ensure all strands are redrawn
             if hasattr(self.canvas, 'background_cache_valid'):
@@ -1682,8 +1687,7 @@ class MoveMode:
             self.mouse_offset = QPointF(0, 0)
             import logging
             logging.warning("start_movement: No actual_click_pos provided, using strand position")
-            # Still move cursor to ensure it's at the correct position
-            self.update_cursor_position(strand_pos)
+            # Do not move cursor in fallback case to prevent jumps
             
         # Store the moving point as the strand position
         self.moving_point = strand_pos
@@ -1700,19 +1704,13 @@ class MoveMode:
         self.last_snapped_pos = strand_pos
         self.target_pos = strand_pos
         
-        # Move the mouse cursor to the strand position to prevent jumping
-        # This should happen after setting up all the movement state
-        logging.info(f"Moving cursor from click position to strand position: {strand_pos}")
-        self.update_cursor_position(strand_pos)
+        # Keep the mouse offset to maintain accurate positioning without cursor jumps
+        # The offset represents the difference between where user clicked and strand position
+        # This prevents visual jumps while maintaining precise control
+        logging.info(f"Maintaining mouse offset for smooth movement: {self.mouse_offset}")
         
-        # Process pending events to ensure cursor move takes effect
-        from PyQt5.QtWidgets import QApplication
-        QApplication.processEvents()
-        
-        # After moving the cursor to the strand position, we don't need the offset anymore
-        # since the cursor is now at the correct position
-        logging.info(f"Resetting mouse offset (was: {self.mouse_offset}) to zero after cursor move")
-        self.mouse_offset = QPointF(0, 0)
+        # Do not move cursor or reset offset - this prevents the visual jump
+        # The offset will be applied during mouse movement to maintain correct positioning
 
         # Find any other strands connected to this point using layer_state_manager
         moving_point = strand.start if side == 0 else strand.end

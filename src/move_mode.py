@@ -929,15 +929,21 @@ class MoveMode:
         logging.info("MoveMode: Control point moved: %s", control_point_moved)
 
         # If we're not moving a control point, proceed with normal strand movement
-        # Deselect all strands
+        # Store current selection state before handling movement
+        current_selection_states = {}
         for strand in self.canvas.strands:
-            strand.is_selected = False
+            current_selection_states[strand] = strand.is_selected
             if isinstance(strand, AttachedStrand):
                 for attached in strand.attached_strands:
-                    attached.is_selected = False
+                    current_selection_states[attached] = attached.is_selected
         
         # Handle strand selection and movement
         self.handle_strand_movement(pos)
+        
+        # If no movement was initiated, restore selection states
+        if not self.is_moving:
+            for strand, was_selected in current_selection_states.items():
+                strand.is_selected = was_selected
         
         logging.info("MoveMode: Is moving: %s, Affected strand: %s", 
                     self.is_moving, 
@@ -1114,17 +1120,20 @@ class MoveMode:
         else: # No move initiated (blank space click)
             # Keep the selection from the start of the press
             logging.info("MoveMode: Blank space click, preserving selection")
-            # Deselect all first to be safe
-            for strand in self.canvas.strands: strand.is_selected = False
-            self.canvas.selected_strand = None
-            self.canvas.selected_attached_strand = None
-            # Restore the selection from the start of the press
+            # Set selection state atomically to prevent flicker
+            for strand in self.canvas.strands: 
+                strand.is_selected = (strand == selection_at_press_start)
+            # Set canvas selection attributes directly to prevent flicker
             if selection_at_press_start:
-                selection_at_press_start.is_selected = True
                 if isinstance(selection_at_press_start, MaskedStrand):
                     self.canvas.selected_strand = selection_at_press_start
+                    self.canvas.selected_attached_strand = None
                 else:
                     self.canvas.selected_attached_strand = selection_at_press_start
+                    self.canvas.selected_strand = None
+            else:
+                self.canvas.selected_strand = None
+                self.canvas.selected_attached_strand = None
 
         # Final update
         self.canvas.update()
@@ -1232,15 +1241,6 @@ class MoveMode:
                     pass
 
         # --- 5. Restore Selection State --- 
-        # Deselect everything first
-        for strand in self.canvas.strands:
-            strand.is_selected = False
-            if hasattr(strand, 'attached_strands'):
-                for attached in strand.attached_strands:
-                    attached.is_selected = False
-        self.canvas.selected_strand = None
-        self.canvas.selected_attached_strand = None
-
         # Determine the final selection based on whether it was a click or a move
         final_selected_strand = None
         if was_moving:
@@ -1252,20 +1252,27 @@ class MoveMode:
             final_selected_strand = selection_at_release_start
             logging.info(f"MoveMode: Restoring selection after click: {final_selected_strand.layer_name if final_selected_strand else 'None'}")
 
-        # Assign to correct canvas attribute and set is_selected
-        if final_selected_strand:
-             # Ensure the strand still exists before selecting
-             if final_selected_strand in self.canvas.strands:
-                 final_selected_strand.is_selected = True # Ensure the final strand is marked selected
-                 if isinstance(final_selected_strand, MaskedStrand):
-                     self.canvas.selected_strand = final_selected_strand
-                     self.canvas.selected_attached_strand = None
-                 else:
-                     # Assume it's an attached strand if not MaskedStrand
-                     self.canvas.selected_attached_strand = final_selected_strand
-                     self.canvas.selected_strand = None # Ensure main selection is clear
-             else:
-                 logging.info("MoveMode: Final selection - No strand selected")
+        # Set selection state atomically to prevent flicker - clear all first, then set final selection
+        for strand in self.canvas.strands:
+            strand.is_selected = (strand == final_selected_strand)
+            if hasattr(strand, 'attached_strands'):
+                for attached in strand.attached_strands:
+                    attached.is_selected = (attached == final_selected_strand)
+
+        # Set canvas selection attributes directly to final state to prevent flicker
+        if final_selected_strand and final_selected_strand in self.canvas.strands:
+            if isinstance(final_selected_strand, MaskedStrand):
+                self.canvas.selected_strand = final_selected_strand
+                self.canvas.selected_attached_strand = None
+            else:
+                # Assume it's an attached strand if not MaskedStrand
+                self.canvas.selected_attached_strand = final_selected_strand
+                self.canvas.selected_strand = None
+        else:
+            # No valid selection
+            self.canvas.selected_strand = None
+            self.canvas.selected_attached_strand = None
+            logging.info("MoveMode: Final selection - No strand selected")
 
         # Clear the originally_selected_strand reference ONLY AFTER the release event is fully processed
         self.originally_selected_strand = None
@@ -1499,12 +1506,23 @@ class MoveMode:
 
         if start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
             self.start_movement(strand, 0, start_area, pos)
+            # Ensure the strand is selected when movement starts
+            strand.is_selected = True
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
-                strand.is_selected = True
+            else:
+                # Regular strand - treat as attached strand for selection
+                self.canvas.selected_attached_strand = strand
             return True
         elif end_area.contains(pos) and self.can_move_side(strand, 1, strand_index):
             self.start_movement(strand, 1, end_area, pos)
+            # Ensure the strand is selected when movement starts
+            strand.is_selected = True
+            if isinstance(strand, AttachedStrand):
+                self.canvas.selected_attached_strand = strand
+            else:
+                # Regular strand - treat as attached strand for selection
+                self.canvas.selected_attached_strand = strand
             return True
         return False
 
@@ -1757,12 +1775,21 @@ class MoveMode:
             if self.affected_strand:
                 self.affected_strand.is_selected = False
         else:
-            # Only set strands as selected when not moving control points and not in deselected state
-            if not self.user_deselected_all:
-                if isinstance(strand, AttachedStrand):
-                    self.canvas.selected_attached_strand = strand
-                    strand.is_selected = True
+            # For normal strand movement, ensure the strand stays selected
+            if self.affected_strand:
+                self.affected_strand.is_selected = True
+                if isinstance(self.affected_strand, MaskedStrand):
+                    self.canvas.selected_strand = self.affected_strand
+                    self.canvas.selected_attached_strand = None
+                elif isinstance(self.affected_strand, AttachedStrand):
+                    self.canvas.selected_attached_strand = self.affected_strand
+                    self.canvas.selected_strand = None
+                else:
+                    # Regular strand - treat as attached strand
+                    self.canvas.selected_attached_strand = self.affected_strand
+                    self.canvas.selected_strand = None
                 
+                # Also handle connected strands
                 if connected_strand:
                     connected_strand.is_selected = True
                     if isinstance(connected_strand, AttachedStrand):

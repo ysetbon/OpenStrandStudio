@@ -1457,15 +1457,16 @@ class StrandDrawingCanvas(QWidget):
             # Draw the affected strand if available
             if affected_strand:
                 logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
-                # --- REVISED: Only draw highlight if NOT currently moving ---
+                # --- REVISED: Handle highlighting based on movement type ---
                 is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
+                is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
                 is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand)
                 
-                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_actively_moving:
-                    # Draw with highlight ONLY if selected AND move is finished
+                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
+                    # Draw with highlight if selected and NOT moving control points (to prevent flickering for strand movement)
                     self.draw_highlighted_strand(painter, affected_strand)
                 else:
-                    # Draw without highlight during active move or if not selected
+                    # Draw without highlight if not selected OR if moving control points
                     self.draw_moving_strand(painter, affected_strand)
                 
                 # Draw any connected strands (typically without highlight during move)
@@ -2327,30 +2328,23 @@ class StrandDrawingCanvas(QWidget):
             # painter.restore()
 
     def draw_moving_strand(self, painter, strand):
-        """Draw a moving strand without any highlights."""
+        """Draw a moving strand without temporary state changes to prevent flickering."""
         if isinstance(strand, MaskedStrand):
-            # For masked strands, just draw normally without highlight
+            # For masked strands, just draw normally
             masked_strand = strand
             painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
             
-            # Just draw the regular masked strand without any highlight
+            # Draw the regular masked strand
             masked_strand.draw(painter)
             
             painter.restore()
         else:
-            # For regular strands, just draw normally without any highlight
+            # For regular strands, draw normally without modifying is_selected state
             painter.save()
             
-            # Temporarily set is_selected to False to prevent red highlight
-            original_is_selected = strand.is_selected
-            strand.is_selected = False
-            
-            # Draw the strand
+            # Draw the strand without changing its selection state to prevent flickering
             strand.draw(painter)
-            
-            # Restore the original is_selected value
-            strand.is_selected = original_is_selected
             
             painter.restore()
 

@@ -204,22 +204,44 @@ class AttachedStrand(Strand):
     def update_end(self):
         """Update the end point based on the current angle and length."""
         angle_rad = math.radians(self.angle)
-        self.end = QPointF(
+        proposed_end = QPointF(
             self.start.x() + self.length * math.cos(angle_rad),
             self.start.y() + self.length * math.sin(angle_rad)
         )
+        
+        # Apply viewport constraints if canvas is available
+        if hasattr(self, 'canvas') and self.canvas:
+            # Check if canvas has the constraint method (from AttachMode)
+            if hasattr(self.canvas, 'current_mode') and hasattr(self.canvas.current_mode, 'constrain_coordinates_to_visible_viewport'):
+                constrained_end = self.canvas.current_mode.constrain_coordinates_to_visible_viewport(proposed_end)
+                
+                # If the end was constrained, update it
+                if constrained_end != proposed_end:
+                    self.end = constrained_end
+                    # Recalculate length and angle after constraint
+                    delta_x = self.end.x() - self.start.x()
+                    delta_y = self.end.y() - self.start.y()
+                    self.length = math.sqrt(delta_x ** 2 + delta_y ** 2)
+                    if self.length > 0:
+                        self.angle = math.degrees(math.atan2(delta_y, delta_x))
+                else:
+                    self.end = proposed_end
+            else:
+                self.end = proposed_end
+        else:
+            self.end = proposed_end
         
         # Update control points when the end moves, but preserve their positions relative to start/end
         # when they've been manually adjusted
         if hasattr(self, 'control_point1') and (self.control_point1 == self.start or 
                                           self.control_point1 == QPointF(self.start.x(), self.start.y())):
             # Only reset control_point1 if it's at the default position
-            self.control_point1 = QPointF(self.start.x(), self.start.y())
+            self.control_point1 = QPointF(self.start)
         
-        if hasattr(self, 'control_point2') and (self.control_point2 == self.start or 
-                                         self.control_point2 == QPointF(self.start.x(), self.start.y())):
+        if hasattr(self, 'control_point2') and (self.control_point2 == self.end or 
+                                          self.control_point2 == QPointF(self.end.x(), self.end.y())):
             # Only reset control_point2 if it's at the default position
-            self.control_point2 = QPointF(self.start.x(), self.start.y())
+            self.control_point2 = QPointF(self.end)
             
         # Update the center control point only if not locked
         if not hasattr(self, 'control_point_center_locked') or not self.control_point_center_locked:
@@ -259,10 +281,18 @@ class AttachedStrand(Strand):
                 # Get current angle
                 angle = math.atan2(delta_y, delta_x)
                 # Set length to minimum while preserving angle
-                self.end = QPointF(
+                proposed_end = QPointF(
                     self.start.x() + self.min_length * math.cos(angle),
                     self.start.y() + self.min_length * math.sin(angle)
                 )
+                
+                # Apply viewport constraints if canvas is available
+                if hasattr(self, 'canvas') and self.canvas:
+                    # Check if canvas has the constraint method (from AttachMode)
+                    if hasattr(self.canvas, 'current_mode') and hasattr(self.canvas.current_mode, 'constrain_coordinates_to_visible_viewport'):
+                        proposed_end = self.canvas.current_mode.constrain_coordinates_to_visible_viewport(proposed_end)
+                
+                self.end = proposed_end
 
         if reset_control_points:
             # When resetting control points, set them to start and end
@@ -296,10 +326,77 @@ class AttachedStrand(Strand):
         self.update_shape()
         self.update_side_line()
 
+    def get_drawing_bounds(self, painter):
+        """Get proper drawing bounds that account for zoom and transformation."""
+        # Get the current transformation matrix
+        transform = painter.transform()
+        logging.info(f"[AttachedStrand.get_drawing_bounds] Called for strand {getattr(self, 'layer_name', 'unknown')}")
+        logging.info(f"  Transform: m11={transform.m11()}, m22={transform.m22()}, dx={transform.dx()}, dy={transform.dy()}")
+        
+        # Get the bounding rect of this strand
+        bounding_rect = self.boundingRect()
+        logging.info(f"  Original bounding rect: {bounding_rect}")
+        
+        # If there's a transformation, expand bounds to accommodate it
+        if not transform.isIdentity():
+            # Check if we're zoomed out
+            zoom_factor = transform.m11()  # Assuming uniform scaling
+            logging.info(f"  Detected zoom factor: {zoom_factor}")
+            
+            if zoom_factor < 1.0:
+                # When zoomed out, use the strand's full bounding rect
+                # Don't clip to viewport as that causes the cropping issue
+                result_rect = bounding_rect
+                logging.info(f"  Zoomed out - using full strand bounds without viewport clipping")
+            else:
+                # When zoomed in or at normal zoom, we can optimize by clipping to viewport
+                # Map the bounding rect through the transformation
+                mapped_rect = transform.mapRect(bounding_rect)
+                
+                # Get the painter's viewport
+                if hasattr(painter, 'viewport') and painter.viewport().isValid():
+                    viewport = QRectF(painter.viewport())
+                elif hasattr(painter.device(), 'width') and hasattr(painter.device(), 'height'):
+                    viewport = QRectF(0, 0, painter.device().width(), painter.device().height())
+                else:
+                    # Fallback to a reasonable default
+                    viewport = QRectF(-1000, -1000, 2000, 2000)
+                
+                # Use the intersection of mapped bounds and viewport for optimization
+                result_rect = mapped_rect.intersected(viewport)
+                logging.info(f"  Viewport: {viewport}")
+                logging.info(f"  Intersection result: {result_rect}")
+            
+            # Ensure minimum size for the temporary image
+            min_size = 100
+            if result_rect.width() < min_size:
+                center_x = result_rect.center().x()
+                result_rect.setLeft(center_x - min_size/2)
+                result_rect.setRight(center_x + min_size/2)
+            if result_rect.height() < min_size:
+                center_y = result_rect.center().y()
+                result_rect.setTop(center_y - min_size/2)
+                result_rect.setBottom(center_y + min_size/2)
+                
+            logging.info(f"  Final bounds returned: {result_rect}")
+            return result_rect
+        else:
+            # No transformation, use device size as fallback
+            if hasattr(painter.device(), 'width') and hasattr(painter.device(), 'height'):
+                fallback_rect = QRectF(0, 0, painter.device().width(), painter.device().height())
+                logging.info(f"  No transformation, using device size as bounds: {fallback_rect}")
+                return fallback_rect
+            else:
+                # Final fallback
+                fallback_rect = QRectF(-500, -500, 1000, 1000)
+                logging.info(f"  Using final fallback bounds: {fallback_rect}")
+                return fallback_rect
+
     def boundingRect(self):
         """Return the bounding rectangle of the strand."""
         # Get the path representing the strand as a cubic Bézier curve
         path = self.get_path()
+        logging.info(f"[AttachedStrand.boundingRect] Called for strand {getattr(self, 'layer_name', 'unknown')}")
 
         # Create a stroker for the stroke path with squared ends
         stroke_stroker = QPainterPathStroker()
@@ -310,14 +407,19 @@ class AttachedStrand(Strand):
 
         # Include side lines in the bounding rect
         bounding_rect = stroke_path.boundingRect()
+        logging.info(f"  Initial stroke path bounds: {bounding_rect}")
         bounding_rect = bounding_rect.united(QRectF(self.start_line_start, self.start_line_end))
         bounding_rect = bounding_rect.united(QRectF(self.end_line_start, self.end_line_end))
+        logging.info(f"  After including side lines: {bounding_rect}")
 
         # Adjust for any pen widths or additional drawing elements if necessary
         # Make bounding rect slightly larger to accommodate hidden dashed line
         if self.is_hidden:
-            bounding_rect = bounding_rect.adjusted(-5, -5, 5, 5)
+            # Make adjustment proportional to stroke width instead of fixed
+            adjustment = max(5, self.stroke_width * 2)
+            bounding_rect = bounding_rect.adjusted(-adjustment, -adjustment, adjustment, adjustment)
 
+        logging.info(f"  Final bounding rect: {bounding_rect}")
         return bounding_rect
     # Calculate the angle based on the tangent at the start point
     def calculate_start_tangent(self):
@@ -349,6 +451,13 @@ class AttachedStrand(Strand):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save() # Top Level Save
         painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Log drawing info
+        zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0
+        logging.info(f"[AttachedStrand.draw] Drawing strand {getattr(self, 'layer_name', 'unknown')} at zoom {zoom_factor}")
+        logging.info(f"  Start: {self.start}, End: {self.end}")
+        logging.info(f"  Painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
+        logging.info(f"  Painter window: {painter.window() if hasattr(painter, 'window') else 'No window'}")
 
         # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
@@ -692,13 +801,19 @@ class AttachedStrand(Strand):
             # --- END FIX ---
 
         # Create a temporary image for masking
+        # Get the bounds considering current transformation
+        bounds = self.get_drawing_bounds(painter)
+        logging.info(f"[AttachedStrand.draw] Creating temp image with bounds: {bounds}, size: {bounds.size().toSize()}")
         temp_image = QImage(
-            painter.device().size(),
+            bounds.size().toSize(),
             QImage.Format_ARGB32_Premultiplied
         )
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
         temp_painter.setRenderHint(QPainter.Antialiasing)
+        # Translate to account for bounds offset
+        temp_painter.translate(-bounds.topLeft())
+        logging.info(f"[AttachedStrand.draw] Translated temp_painter by {-bounds.topLeft()}")
 
         # Calculate the angle based on the tangent at the start point
         angle = self.calculate_start_tangent()
@@ -786,7 +901,8 @@ class AttachedStrand(Strand):
             inner_circle.addEllipse(self.start, self.width/2, self.width/2)
             temp_painter.drawPath(inner_circle)
         # Regardless of whether we drew the start circle, flush the current temp_image to the main painter
-        painter.drawImage(0, 0, temp_image)
+        logging.info(f"[AttachedStrand.draw] Drawing temp image at position: {bounds.topLeft()}")
+        painter.drawImage(bounds.topLeft(), temp_image)
         temp_painter.end()  # End the first temp_painter here
 
         # ----------------------------------------------------------------
@@ -813,10 +929,13 @@ class AttachedStrand(Strand):
 
             # --- START: MIRROR STRAND.PY LOGIC ---
             # Re-create a temp image for drawing the circles
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            bounds = self.get_drawing_bounds(painter)
+            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
             temp_painter = QPainter(temp_image)
             temp_painter.setRenderHint(QPainter.Antialiasing)
+            # Translate to account for bounds offset
+            temp_painter.translate(-bounds.topLeft())
 
             # Common drawing setup
             total_diameter = self.width + self.stroke_width * 2
@@ -908,7 +1027,7 @@ class AttachedStrand(Strand):
                 temp_painter.drawPath(just_inner_end)
 
             # --- Finalize drawing for this case ---
-            painter.drawImage(0, 0, temp_image)
+            painter.drawImage(bounds.topLeft(), temp_image)
             temp_painter.end()
             # --- END: MIRROR STRAND.PY LOGIC ---
         # ----------------------------------------------------------------
@@ -917,10 +1036,13 @@ class AttachedStrand(Strand):
         # Start endpoint half-circle (only if circle is enabled)
         if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
             painter.save()
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            bounds = self.get_drawing_bounds(painter)
+            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
             temp_painter = QPainter(temp_image)
             temp_painter.setRenderHint(QPainter.Antialiasing)
+            # Translate to account for bounds offset
+            temp_painter.translate(-bounds.topLeft())
 
             tangent = self.calculate_cubic_tangent(0.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -953,17 +1075,20 @@ class AttachedStrand(Strand):
             just_inner = QPainterPath(); just_inner.addEllipse(self.start, self.width/2, self.width/2)
             temp_painter.drawPath(just_inner)
 
-            painter.drawImage(0, 0, temp_image)
+            painter.drawImage(bounds.topLeft(), temp_image)
             temp_painter.end()
             painter.restore()
 
         # End endpoint half-circle (only if circle is enabled)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
             painter.save()
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
+            bounds = self.get_drawing_bounds(painter)
+            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
             temp_image.fill(Qt.transparent)
             temp_painter = QPainter(temp_image)
             temp_painter.setRenderHint(QPainter.Antialiasing)
+            # Translate to account for bounds offset
+            temp_painter.translate(-bounds.topLeft())
 
             tangent = self.calculate_cubic_tangent(1.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -996,7 +1121,7 @@ class AttachedStrand(Strand):
             just_inner = QPainterPath(); just_inner.addEllipse(self.end, self.width/2, self.width/2)
             temp_painter.drawPath(just_inner)
 
-            painter.drawImage(0, 0, temp_image)
+            painter.drawImage(bounds.topLeft(), temp_image)
             temp_painter.end()
             painter.restore()
 
@@ -1622,10 +1747,7 @@ class AttachedStrand(Strand):
             self.update_control_points_from_geometry()
         self.update_shape()
 
-    def update_control_points(self, reset_control_points=True):
-        """
-        Same idea, but for AttachedStrand.
-        """
-        if reset_control_points:
-            self.update_control_points_from_geometry()
-        self.update_shape()
+    def update_shape(self):
+        """Update the shape of the strand."""
+        # Call parent's update_shape
+        super().update_shape()

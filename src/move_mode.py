@@ -63,6 +63,8 @@ class MoveMode:
             self.canvas.deselect_all_signal.connect(self.reset_selection)
         # Minimum distance between start and end points of a strand
         self.MIN_STRAND_POINTS_DISTANCE = 10.0
+        # Track mouse offset to prevent jumps when starting movement
+        self.mouse_offset = QPointF(0, 0)
 
     def initialize_properties(self):
         """Initialize all properties used in the MoveMode."""
@@ -242,15 +244,6 @@ class MoveMode:
             # Ensure valid dimensions
             width = max(1, viewport_rect.width())
             height = max(1, viewport_rect.height())
-            
-            # Check if the canvas has a zoom factor and adjust size if zoomed out
-            if hasattr(self.canvas, 'zoom_factor'):
-                zoom_factor = self.canvas.zoom_factor
-                if zoom_factor < 1.0:  # Only adjust when zoomed out
-                    # Calculate the effective size needed when zoomed out
-                    width = int(width / zoom_factor)
-                    height = int(height / zoom_factor)
-                    logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
             
             # Create the pixmap and fill it
             self.canvas.background_cache = QtGui.QPixmap(width, height)
@@ -452,16 +445,6 @@ class MoveMode:
                     viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
                     width = max(1, viewport_rect.width())
                     height = max(1, viewport_rect.height())
-                    
-                    # Check if the canvas has a zoom factor and adjust size if zoomed out
-                    if hasattr(self_canvas, 'zoom_factor'):
-                        zoom_factor = self_canvas.zoom_factor
-                        if zoom_factor < 1.0:  # Only adjust when zoomed out
-                            # Calculate the effective size needed when zoomed out
-                            width = int(width / zoom_factor)
-                            height = int(height / zoom_factor)
-                            logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
-                    
                     self_canvas.background_cache = QtGui.QPixmap(width, height)
                     self_canvas.background_cache.fill(Qt.transparent)
             
@@ -519,16 +502,6 @@ class MoveMode:
                         viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
                         width = max(1, viewport_rect.width())
                         height = max(1, viewport_rect.height())
-                        
-                        # Check if the canvas has a zoom factor and adjust size if zoomed out
-                        if hasattr(self_canvas, 'zoom_factor'):
-                            zoom_factor = self_canvas.zoom_factor
-                            if zoom_factor < 1.0:  # Only adjust when zoomed out
-                                # Calculate the effective size needed when zoomed out
-                                width = int(width / zoom_factor)
-                                height = int(height / zoom_factor)
-                                logging.info(f"MoveMode: Adjusting new background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
-                        
                         self_canvas.background_cache = QtGui.QPixmap(width, height)
                         self_canvas.background_cache.fill(Qt.transparent)
                     
@@ -562,15 +535,6 @@ class MoveMode:
                     painter = QtGui.QPainter(self_canvas.background_cache)
                     painter.setRenderHint(QtGui.QPainter.Antialiasing)
                     
-                    # Apply zoom transformation to cache painter if zoom is enabled
-                    if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                        from PyQt5.QtCore import QPointF
-                        canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
-                        painter.save()
-                        painter.translate(canvas_center)
-                        painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
-                        painter.translate(-canvas_center)
-                    
                     # First clear the cache
                     painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
                     painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
@@ -583,10 +547,6 @@ class MoveMode:
                     
                     # Mark the cache as valid
                     self_canvas.background_cache_valid = True
-                    
-                    # Restore zoom transformation state if it was applied
-                    if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                        painter.restore()
                     
                     # Restore original strands
                     self_canvas.strands = original_strands
@@ -604,18 +564,21 @@ class MoveMode:
             painter = QtGui.QPainter(self_canvas)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
             
-            # Apply zoom transformation if zoom is enabled
-            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
-                painter.save()
-                painter.translate(canvas_center)
-                painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
-                painter.translate(-canvas_center)
+            # Apply the same zoom transformation as regular paintEvent
+            painter.save()
+            canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+            painter.translate(canvas_center)
+            painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+            painter.translate(-canvas_center)
 
             try:
                 if hasattr(self_canvas, 'background_cache'):
                     logging.info("MoveMode: Drawing background cache")
+                    # Draw background cache without transformation since it was pre-rendered
+                    painter.save()
+                    painter.resetTransform()
                     painter.drawPixmap(0, 0, self_canvas.background_cache)
+                    painter.restore()
                 else:
                     logging.warning("MoveMode: No background cache to draw!")
 
@@ -724,18 +687,14 @@ class MoveMode:
                 
             except Exception as e:
                 logging.error(f"MoveMode: Error in optimized paint event: {e}")
-                # Restore zoom transformation state if it was applied
-                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                    painter.restore()
                 # If an error occurs, fall back to the original paint event
                 if painter.isActive():
+                    painter.restore()  # Restore zoom transformation
                     painter.end()
                 self_canvas.original_paintEvent(event)
             else:
-                # Restore zoom transformation state if it was applied
-                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                    painter.restore()
                 if painter.isActive():
+                    painter.restore()  # Restore zoom transformation
                     painter.end()
                 
             # Log completion
@@ -755,9 +714,12 @@ class MoveMode:
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
         
         # Draw the appropriate yellow rectangle based on moving_side
-        yellow_square_size = 120  # Size for the yellow selection square
+        # Visual elements need to scale with zoom to appear consistent
+        base_yellow_square_size = 120
+        yellow_square_size = base_yellow_square_size / self.canvas.zoom_factor
         half_yellow_size = yellow_square_size / 2
-        square_control_size = 50  # Size for control points
+        base_square_control_size = 50
+        square_control_size = base_square_control_size / self.canvas.zoom_factor
         half_control_size = square_control_size / 2
         
         # Only draw the currently moving point's selection square
@@ -815,16 +777,6 @@ class MoveMode:
             if current_width != viewport_rect.width() or current_height != viewport_rect.height():
                 width = max(1, viewport_rect.width())
                 height = max(1, viewport_rect.height())
-                
-                # Check if the canvas has a zoom factor and adjust size if zoomed out
-                if hasattr(self.canvas, 'zoom_factor'):
-                    zoom_factor = self.canvas.zoom_factor
-                    if zoom_factor < 1.0:  # Only adjust when zoomed out
-                        # Calculate the effective size needed when zoomed out
-                        width = int(width / zoom_factor)
-                        height = int(height / zoom_factor)
-                        logging.info(f"MoveMode: Adjusting background cache size for zoom factor {zoom_factor}: {width}x{height} pixels")
-                
                 self.canvas.background_cache = QtGui.QPixmap(width, height)
                 self.canvas.background_cache_valid = False
                 self.canvas.update()  # Ensure update after recreating pixmap
@@ -877,6 +829,7 @@ class MoveMode:
         """
         import logging
         pos = event.pos()
+        
 
         # --- Capture selection at the absolute start ---
         selection_at_press_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
@@ -1228,6 +1181,7 @@ class MoveMode:
         self.accumulated_delta = QPointF(0, 0)
         self.last_snapped_pos = None
         self.target_pos = None
+        self.mouse_offset = QPointF(0, 0)  # Reset mouse offset to prevent jumps in next movement
         if hasattr(self, 'move_timer'): # Check if timer exists before stopping
             self.move_timer.stop()
         self.in_move_mode = False
@@ -1464,7 +1418,7 @@ class MoveMode:
             control_point_center_rect = self.get_control_point_rectangle(strand, 3)
 
         if control_point1_rect.contains(pos):
-            self.start_movement(strand, 'control_point1', control_point1_rect)
+            self.start_movement(strand, 'control_point1', control_point1_rect, pos)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
             # Store the strand explicitly in truly_moving_strands for proper z-ordering
@@ -1476,7 +1430,7 @@ class MoveMode:
             self.highlighted_strand = None
             return True
         elif control_point2_rect.contains(pos):
-            self.start_movement(strand, 'control_point2', control_point2_rect)
+            self.start_movement(strand, 'control_point2', control_point2_rect, pos)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
             if hasattr(self.canvas, 'truly_moving_strands'):
@@ -1488,7 +1442,7 @@ class MoveMode:
             return True
         # Only check center control point if it's enabled
         elif control_point_center_rect is not None and control_point_center_rect.contains(pos):
-            self.start_movement(strand, 'control_point_center', control_point_center_rect)
+            self.start_movement(strand, 'control_point_center', control_point_center_rect, pos)
             # Mark that we're moving a control point
             self.is_moving_control_point = True
             if hasattr(self.canvas, 'truly_moving_strands'):
@@ -1522,19 +1476,20 @@ class MoveMode:
         end_area = self.get_end_area(strand)
 
         if start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
-            self.start_movement(strand, 0, start_area)
+            self.start_movement(strand, 0, start_area, pos)
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
                 strand.is_selected = True
             return True
         elif end_area.contains(pos) and self.can_move_side(strand, 1, strand_index):
-            self.start_movement(strand, 1, end_area)
+            self.start_movement(strand, 1, end_area, pos)
             return True
         return False
 
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
-        size = 50  # Size of the area for control point selection
+        # Use fixed size in canvas coordinates - canvas handles zoom transformation
+        size = 50  # Size for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
@@ -1633,7 +1588,7 @@ class MoveMode:
 
         return True
 
-    def start_movement(self, strand, side, area):
+    def start_movement(self, strand, side, area, actual_click_pos=None):
         """Start movement tracking for a strand."""
         # Save the currently selected strand before starting a new movement operation
         if self.canvas.selected_strand is not None:
@@ -1649,33 +1604,59 @@ class MoveMode:
         self.moving = True
         self.moving_side = side
         
-        # For QPainterPath, get the bounding rectangle and center
-        if isinstance(area, QPainterPath):
-            bounding_rect = area.boundingRect()
-            self.moving_point = bounding_rect.center()
-        elif isinstance(area, QRectF):
-            self.moving_point = area.center()
+        # Get the exact current position of the strand point being moved
+        if side == 0:
+            strand_pos = QPointF(strand.start)
+        elif side == 1:
+            strand_pos = QPointF(strand.end)
+        elif side == 'control_point1':
+            strand_pos = QPointF(strand.control_point1)
+        elif side == 'control_point2':
+            strand_pos = QPointF(strand.control_point2)
+        elif side == 'control_point_center':
+            strand_pos = QPointF(strand.control_point_center)
         else:
-            # Default to using the strand's point
-            if side == 0:
-                self.moving_point = strand.start
-            elif side == 1:
-                self.moving_point = strand.end
-            else:
-                self.moving_point = QPointF(0, 0)
+            strand_pos = QPointF(0, 0)
+        
+        # Use the actual click position if provided
+        if actual_click_pos:
+            # This is where the user actually clicked
+            self.initial_mouse_pos = QPointF(actual_click_pos)
+            # Calculate offset from click position to strand position
+            # This offset will be maintained during movement
+            self.mouse_offset = QPointF(strand_pos.x() - actual_click_pos.x(), 
+                                       strand_pos.y() - actual_click_pos.y())
+            import logging
+            zoom_info = f", zoom={self.canvas.zoom_factor:.2f}" if hasattr(self.canvas, 'zoom_factor') else ""
+            logging.info(f"ZOOM_START: strand_pos={strand_pos}, click_pos={actual_click_pos}, offset={self.mouse_offset}{zoom_info}")
+            
+            # Additional logging for zoom-out debugging
+            if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
+                logging.info(f"ZOOM_DEBUG: ZOOMED_OUT detected! Initial strand point will be at {strand_pos}")
+                logging.info(f"ZOOM_DEBUG: Click was at {actual_click_pos} (canvas coordinates)")
+                logging.info(f"ZOOM_DEBUG: Calculated offset: {self.mouse_offset}")
+        else:
+            # Fallback: assume click was directly on the strand
+            self.initial_mouse_pos = QPointF(strand_pos)
+            self.mouse_offset = QPointF(0, 0)
+            import logging
+            logging.warning("start_movement: No actual_click_pos provided, using strand position")
+            
+        # Store the moving point as the strand position
+        self.moving_point = strand_pos
 
         self.affected_strand = strand
         self.selected_rectangle = area
         self.is_moving = True
         # Set the flag if we're moving a control point
-        self.is_moving_control_point = side == 'control_point1' or side == 'control_point2' or side == 'control_point_center'
+        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center']
         # Set the flag if we're moving a strand endpoint
-        self.is_moving_strand_point = side == 0 or side == 1
+        self.is_moving_strand_point = side in [0, 1]
         
-        snapped_pos = self.canvas.snap_to_grid(self.moving_point)
-        self.update_cursor_position(snapped_pos)
-        self.last_snapped_pos = snapped_pos
-        self.target_pos = snapped_pos
+        # Set initial positions to the strand position
+        self.update_cursor_position(strand_pos)
+        self.last_snapped_pos = strand_pos
+        self.target_pos = strand_pos
 
         # Find any other strands connected to this point using layer_state_manager
         moving_point = strand.start if side == 0 else strand.end
@@ -1775,6 +1756,7 @@ class MoveMode:
         Args:
             new_pos (QPointF): The new position.
         """
+        
         # Always invalidate the background cache during strand movement
         # to ensure the grid and all strands remain visible
         if hasattr(self.canvas, 'background_cache_valid'):
@@ -1961,20 +1943,26 @@ class MoveMode:
             if is_masked_strand:
                 # Special handling for MaskedStrand
                 self.move_masked_strand(new_pos, self.moving_side)
-                # Update the selection area
+                # Update the selection area  
                 if self.moving_side == 0:
+                    base_size = 90
+                    # For visual consistency, scale the selection rectangle with zoom
+                    visual_size = base_size / self.canvas.zoom_factor
                     self.selected_rectangle = QRectF(
-                        self.affected_strand.start.x() - 90/2,
-                        self.affected_strand.start.y() - 90/2,
-                        90,
-                        90
+                        self.affected_strand.start.x() - visual_size/2,
+                        self.affected_strand.start.y() - visual_size/2,
+                        visual_size,
+                        visual_size
                     )
                 else:
+                    base_size = 90
+                    # For visual consistency, scale the selection rectangle with zoom
+                    visual_size = base_size / self.canvas.zoom_factor
                     self.selected_rectangle = QRectF(
-                        self.affected_strand.end.x() - 90/2,
-                        self.affected_strand.end.y() - 90/2,
-                        90,
-                        90
+                        self.affected_strand.end.x() - visual_size/2,
+                        self.affected_strand.end.y() - visual_size/2,
+                        visual_size,
+                        visual_size
                     )
             else:
                 # Standard handling for normal strands
@@ -2048,15 +2036,21 @@ class MoveMode:
         # If we still don't have an update_rect, create one from the selection point
         if not update_rect and isinstance(self.selected_rectangle, QRectF):
             # Make it much larger than the selection rectangle to ensure the whole strand is visible
-            padding = 200
+            base_padding = 200
+            # Scale padding for visual consistency
+            padding = base_padding / self.canvas.zoom_factor
             update_rect = self.selected_rectangle.adjusted(-padding, -padding, padding, padding)
         elif not update_rect:
             # Fallback to a default size around the new position
+            base_radius = 250
+            # Scale radius for visual consistency
+            radius = base_radius / self.canvas.zoom_factor
+            size = radius * 2
             update_rect = QRectF(
-                new_pos.x() - 250,
-                new_pos.y() - 250,
-                500,
-                500
+                new_pos.x() - radius,
+                new_pos.y() - radius,
+                size,
+                size
             )
         
         # Store the update rectangle for optimized rendering
@@ -2753,14 +2747,62 @@ class MoveMode:
         if not self.is_moving:
             return
             
-        # Get the current position
+        # Get the current position (already converted to canvas coordinates by canvas)
         pos = event.pos()
         
-        # Snap to grid
-        snapped_pos = self.canvas.snap_to_grid(pos)
+        # Apply the mouse offset to maintain smooth movement from initial click position
+        if hasattr(self, 'mouse_offset'):
+            adjusted_pos = QPointF(pos.x() + self.mouse_offset.x(), 
+                                  pos.y() + self.mouse_offset.y())
+            # Debug logging for zoom-out issues
+            if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
+                logging.info(f"ZOOM_MOVE: zoom={self.canvas.zoom_factor:.2f}, raw_pos={pos}, offset={self.mouse_offset}, adjusted={adjusted_pos}")
+        else:
+            adjusted_pos = pos
+            logging.warning("MouseMove: No mouse_offset found!")
+        
+        # Smart grid snapping based on zoom level and modifiers
+        # Check if Ctrl key is pressed for forced grid snapping
+        from PyQt5.QtWidgets import QApplication
+        force_grid_snap = QApplication.keyboardModifiers() & Qt.ControlModifier
+        
+        # Extra logging for zoom-out debugging
+        if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
+            logging.info(f"ZOOM_SNAP: Before snapping - adjusted_pos={adjusted_pos}, zoom={self.canvas.zoom_factor:.2f}")
+        
+        if self.canvas.zoom_factor >= 0.8 or force_grid_snap:
+            # Near normal zoom OR Ctrl held - use full grid snapping
+            snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
+        elif self.canvas.zoom_factor >= 0.5:
+            # Moderately zoomed out - use very gentle snapping
+            snapped_pos = adjusted_pos
+            
+            # Only snap when EXTREMELY close to grid lines
+            grid_size = self.canvas.grid_size
+            # Scale threshold with zoom - smaller threshold when zoomed out
+            snap_threshold = (grid_size / 8) * self.canvas.zoom_factor
+            
+            # Check if close to grid lines
+            grid_x = round(adjusted_pos.x() / grid_size) * grid_size
+            grid_y = round(adjusted_pos.y() / grid_size) * grid_size
+            
+            # Snap only if very close to grid intersection
+            if (abs(adjusted_pos.x() - grid_x) < snap_threshold and 
+                abs(adjusted_pos.y() - grid_y) < snap_threshold):
+                snapped_pos = QPointF(grid_x, grid_y)
+        else:
+            # Very zoomed out (< 0.5) - NO grid snapping at all
+            snapped_pos = adjusted_pos
+        
+        # Extra logging for zoom-out debugging
+        if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
+            logging.info(f"ZOOM_SNAP: After snapping - snapped_pos={snapped_pos}, zoom={self.canvas.zoom_factor:.2f}")
         
         # Update target position for gradual movement
         self.target_pos = snapped_pos
+        
+        # Update last snapped position for next movement
+        self.last_snapped_pos = snapped_pos
         
         # Ensure the background cache is invalidated for continuous refresh
         if hasattr(self.canvas, 'background_cache_valid'):

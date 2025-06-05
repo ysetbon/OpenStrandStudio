@@ -1323,8 +1323,10 @@ class StrandDrawingCanvas(QWidget):
         painter.translate(canvas_center)
         painter.scale(self.zoom_factor, self.zoom_factor)
         painter.translate(-canvas_center)
-
-        # The yellow rectangle definition has been moved to the MoveMode section below
+        
+        # When zoomed out, disable clipping to allow more drawing area
+        if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+            painter.setClipping(False)
 
         # Draw the grid, if applicable
         if self.show_grid:
@@ -1414,6 +1416,12 @@ class StrandDrawingCanvas(QWidget):
         if self.current_strand:
             if not hasattr(self.current_strand, 'canvas'):
                 self.current_strand.canvas = self
+            # Log for debugging zoom-out issues
+            if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+                logging.info(f"Drawing current_strand while zoomed out (zoom={self.zoom_factor}): {type(self.current_strand).__name__} {getattr(self.current_strand, 'layer_name', 'no_name')} start={self.current_strand.start} end={self.current_strand.end}")
+            logging.info(f"[Canvas.paintEvent] Drawing current_strand with painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
+            logging.info(f"[Canvas.paintEvent] Painter device size: {painter.device().size() if hasattr(painter.device(), 'size') else 'No size'}")
+            logging.info(f"[Canvas.paintEvent] Painter clipping enabled: {painter.hasClipping()}, clipRegion: {painter.clipRegion().boundingRect() if painter.hasClipping() else 'No clipping'}")
             self.current_strand.draw(painter)
         elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             if self.new_strand_set_number in self.strand_colors:
@@ -1788,9 +1796,14 @@ class StrandDrawingCanvas(QWidget):
         
         # Apply zoom transformation to overlay painter as well
         overlay_painter.save()
+        canvas_center = QPointF(self.width() / 2, self.height() / 2)
         overlay_painter.translate(canvas_center)
         overlay_painter.scale(self.zoom_factor, self.zoom_factor)
         overlay_painter.translate(-canvas_center)
+        
+        # When zoomed out, disable clipping for overlay painter
+        if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+            overlay_painter.setClipping(False)
 
         # Draw attach-mode circles on top
         if isinstance(self.current_mode, AttachMode):

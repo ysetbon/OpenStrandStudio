@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
-from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QCursor, QPainter, QPixmap
 from PyQt5.QtWidgets import QApplication
 import math
 import logging
@@ -58,16 +58,26 @@ class AttachMode(QObject):
         # scenario we simply fall back to a normal full-canvas repaint which
         # guarantees that everything on-screen is redrawn.
 
-        if (not self.canvas.current_strand) or (
-            hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor < 1.0
-        ):
-            # When zoomed-out we need the entire widget repainted **immediately**
-            # on every mouse-move; using ``update()`` often coalesces several
-            # requests and the intermediate frames never appear, which looks
-            # like the strand is being cropped.  ``repaint()`` forces an
-            # immediate full paint of the widget (synchronous) so the whole
-            # strand is always visible.
-
+        if not self.canvas.current_strand:
+            return
+            
+        # When zoomed-out we need the entire widget repainted **immediately**
+        # on every mouse-move; using ``update()`` often coalesces several
+        # requests and the intermediate frames never appear, which looks
+        # like the strand is being cropped.  ``repaint()`` forces an
+        # immediate full paint of the widget (synchronous) so the whole
+        # strand is always visible.
+        if hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor < 1.0:
+            logging.info(f"[AttachMode.partial_update] Zoomed out (zoom={self.canvas.zoom_factor}), using full repaint for attached strand")
+            logging.info(f"  Current strand type: {type(self.canvas.current_strand).__name__}")
+            logging.info(f"  Current strand pos: start={self.canvas.current_strand.start}, end={self.canvas.current_strand.end}")
+            # Don't use optimized paint handler when zoomed out
+            if hasattr(self.canvas, 'original_paintEvent'):
+                self.canvas.paintEvent = self.canvas.original_paintEvent
+                delattr(self.canvas, 'original_paintEvent')
+                # Clear optimization flags
+                if hasattr(self.canvas, 'active_strand_for_drawing'):
+                    self.canvas.active_strand_for_drawing = None
             self.canvas.repaint()
             return
             
@@ -83,6 +93,7 @@ class AttachMode(QObject):
         
         # Store the current strand and calculate minimal update region
         strand = self.canvas.current_strand
+        logging.info(f"[AttachMode.partial_update] Normal zoom partial update for strand {getattr(strand, 'layer_name', 'unknown')}")
         
         # Setup background caching if needed
         if not hasattr(self.canvas, 'background_cache'):
@@ -116,10 +127,13 @@ class AttachMode(QObject):
                 self._setup_optimized_paint_handler()
             
             # Only update the canvas - can't use update(rect) as it's not supported
+            logging.info(f"[AttachMode.partial_update] Calling canvas.update() with active_strand_update_rect: {update_rect}")
             self.canvas.update()
 
     def _get_strand_bounds(self):
         """Return a rectangle that fully covers the *visible* logical area.
+        
+        logging.info(f"[AttachMode._get_strand_bounds] Called with zoom_factor: {getattr(self.canvas, 'zoom_factor', 1.0)}")
 
         When the user zooms *out* (``zoom_factor`` < 1) the logical area that
         fits into the widget becomes larger than the widget physical
@@ -139,6 +153,7 @@ class AttachMode(QObject):
             # Size of the logical area that fills the widget after scaling.
             width  = int(self.canvas.width()  * inv_scale)
             height = int(self.canvas.height() * inv_scale)
+            logging.info(f"[AttachMode._get_strand_bounds] Zoomed out - inv_scale: {inv_scale}, logical size: {width}x{height}")
 
             # Centre the rectangle on the widget centre so that translation in
             # the paint routine still works as expected.
@@ -148,12 +163,17 @@ class AttachMode(QObject):
             left   = cx - width  // 2
             top    = cy - height // 2
 
-            return QRect(left, top, width, height)
+            bounds = QRect(left, top, width, height)
+            logging.info(f"[AttachMode._get_strand_bounds] Returning zoomed-out bounds: {bounds}")
+            return bounds
 
         # Normal (zoom == 1.0 or zoomed-in) – widget rectangle is fine.
         if hasattr(self.canvas, 'viewport'):
-            return self.canvas.viewport().rect()
-        return self.canvas.rect()
+            bounds = self.canvas.viewport().rect()
+        else:
+            bounds = self.canvas.rect()
+        logging.info(f"[AttachMode._get_strand_bounds] Normal zoom - returning widget bounds: {bounds}")
+        return bounds
             
     def _setup_background_cache(self):
         """Setup background caching for efficient updates."""
@@ -205,8 +225,8 @@ class AttachMode(QObject):
         
         def optimized_paint_event(self_canvas, event):
             """Optimized paint event that uses background caching for efficiency."""
-            import PyQt5.QtGui as QtGui
-            from PyQt5.QtCore import Qt
+            from PyQt5.QtGui import QPainter, QPixmap
+            from PyQt5.QtCore import Qt, QPointF, QRectF
             import logging
             
             # Regular paint if no active strand
@@ -214,15 +234,6 @@ class AttachMode(QObject):
                 self_canvas.original_paintEvent(event)
                 return
                 
-            # If we are zoomed OUT (<1.0) the cached-background approach can
-            # leave blank areas because the pixmap is only as large as the
-            # widget size.  In that situation just fall back to the regular
-            # paintEvent so the entire visible area is repainted.
-            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
-                logging.info("Zoomed out: Using original_paintEvent for full repaint.")
-                self_canvas.original_paintEvent(event)
-                return
-            
             # Get the active strand and update rect
             active_strand = self_canvas.active_strand_for_drawing
             update_rect = getattr(self_canvas, 'active_strand_update_rect', event.rect())
@@ -239,53 +250,52 @@ class AttachMode(QObject):
                 if not update_rect.intersects(event.rect()):
                     self_canvas.original_paintEvent(event)
                     return
-                
+
             # Start the painter
-            painter = QtGui.QPainter(self_canvas)
-            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            painter = QPainter(self_canvas)
+            painter.setRenderHint(QPainter.Antialiasing)
             
-            # Apply zoom transformation if zoom is enabled
-            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0:
-                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
-                painter.save()
-                painter.translate(canvas_center)
-                painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
-                painter.translate(-canvas_center)
+            # Apply zoom transformation
+            painter.save()
+            canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+            painter.translate(canvas_center)
+            painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+            painter.translate(-canvas_center)
+            
+            # When zoomed out, disable clipping entirely to avoid any cropping
+            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
+                painter.setClipping(False)
+            else:
+                # Normal clipping when not zoomed out
+                painter.setClipRect(update_rect)
             
             try:
                 # Store original strands list before any manipulation
                 original_strands = list(self_canvas.strands)
                 
-                # Force full redraw on first attachment operation
-                if self.is_attaching and not getattr(self_canvas, 'attachment_first_draw', False):
-                    self_canvas.background_cache_valid = False
-                    self_canvas.attachment_first_draw = True
-                
                 # Use background cache if available
                 if (hasattr(self_canvas, 'background_cache') and 
-                    getattr(self_canvas, 'use_background_cache', True)):  # Default to True if not set
-                    # Update cache if needed - only once per application cycle
+                    getattr(self_canvas, 'use_background_cache', True)):
+                    # Update cache if needed
                     if not getattr(self_canvas, 'background_cache_valid', False):
                         try:
                             # Draw everything except the active strand to the cache
-                            cache_painter = QtGui.QPainter(self_canvas.background_cache)
-                            cache_painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                            cache_painter = QPainter(self_canvas.background_cache)
+                            cache_painter.setRenderHint(QPainter.Antialiasing)
                             
                             # Clear the cache
-                            cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
+                            cache_painter.setCompositionMode(QPainter.CompositionMode_Clear)
                             cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
-                            cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceOver)
+                            cache_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
                             
                             # Temporarily remove the active strand from the strands list for cache drawing
                             temp_index = -1
                             if active_strand in self_canvas.strands:
                                 temp_index = self_canvas.strands.index(active_strand)
                                 self_canvas.strands.remove(active_strand)
-                                
+            
                             # Draw background and all strands except active one
                             try:
-                                # Keep background transparent
-                                
                                 # Draw the grid first if it's enabled
                                 if getattr(self_canvas, 'show_grid', False):
                                     if hasattr(self_canvas, 'draw_grid'):
@@ -297,8 +307,6 @@ class AttachMode(QObject):
                                         strand.draw(cache_painter)
                             except Exception as render_error:
                                 logging.error(f"Error rendering to cache: {render_error}")
-                                # Try a simpler approach if render fails
-                                # Use transparent background instead of palette color
                                 cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
                             
                             # Restore the strand if needed
@@ -309,9 +317,7 @@ class AttachMode(QObject):
                             self_canvas.background_cache_valid = True
                         except Exception as e:
                             logging.error(f"Error updating cache: {e}")
-                            # Make sure cache is reset if there's an error
                             self_canvas.background_cache_valid = False
-                            # Restore original strands list in case of error
                             self_canvas.strands = original_strands
                     
                     # Draw the cached background to the update region
@@ -320,7 +326,6 @@ class AttachMode(QObject):
                         painter.drawPixmap(update_rect_adjusted, self_canvas.background_cache, update_rect_adjusted)
                     except Exception as draw_error:
                         logging.error(f"Error drawing cached background: {draw_error}")
-                        # If we can't draw the cache, maintain transparency
                         painter.fillRect(update_rect, Qt.transparent)
                         
                         # Draw the grid first if it's enabled
@@ -346,35 +351,13 @@ class AttachMode(QObject):
                         if strand != active_strand and hasattr(strand, 'draw'):
                             strand.draw(painter)
                 
-                # Save state for safety
-                painter.save()
-                
-                # Set clip rect for efficient drawing
-                painter.setClipRect(update_rect)
-                
-                # Draw the highlight for the affected strand first
-                affected_strand = getattr(self_canvas.current_mode, 'affected_strand', None) if hasattr(self_canvas, 'current_mode') else None
-                if affected_strand and hasattr(self_canvas, 'draw_highlighted_strand'):
-                    # Temporarily set is_selected to ensure highlighting
-                    was_selected = getattr(affected_strand, 'is_selected', False)
-                    affected_strand.is_selected = True
-                    self_canvas.draw_highlighted_strand(painter, affected_strand)
-                    # Restore original selection state
-                    affected_strand.is_selected = was_selected
-                
-                # Draw any interaction elements
-                if hasattr(self_canvas, 'draw_interaction_elements'):
-                    self_canvas.draw_interaction_elements(painter)
-                
-                # Now draw the active strand last (on top of everything)
+                # Draw the active strand last (on top of everything)
+                if not hasattr(active_strand, 'canvas'):
+                    active_strand.canvas = self_canvas
+                # Log for debugging zoom-out issues
+                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
+                    logging.info(f"Drawing active_strand while zoomed out (zoom={self_canvas.zoom_factor}): {type(active_strand).__name__} {getattr(active_strand, 'layer_name', 'no_name')} start={active_strand.start} end={active_strand.end}")
                 active_strand.draw(painter)
-                
-                # Make sure control points are drawn properly
-                if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points and hasattr(self_canvas, 'draw_control_points'):
-                    self_canvas.draw_control_points(painter)
-                
-                # Always restore what we saved
-                painter.restore()
                 
                 # Ensure strands list is restored to its original state
                 self_canvas.strands = original_strands
@@ -384,18 +367,25 @@ class AttachMode(QObject):
                 # Restore original strands list in case of error
                 self_canvas.strands = original_strands
             finally:
+                painter.restore()
                 # End the painter properly
                 if painter.isActive():
                     painter.end()
-        
+
         # Replace with our optimized paint event
         self.canvas.paintEvent = optimized_paint_event.__get__(self.canvas, type(self.canvas))
 
     def mouseReleaseEvent(self, event):
         """Handle mouse release events."""
         if self.canvas.current_strand:
-            # Snap the final position to the grid once on release
-            final_snapped_pos = self.canvas.snap_to_grid(event.pos())
+            # Use the already-converted coordinates from the event
+            # The main canvas has already converted from screen to canvas coordinates
+            canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            
+            # Constrain coordinates to stay within visible viewport when zoomed out
+            constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
+            
+            final_snapped_pos = self.canvas.snap_to_grid(constrained_pos)
             self.canvas.current_strand.end = final_snapped_pos
             self.canvas.current_strand.update_shape()
             
@@ -490,7 +480,14 @@ class AttachMode(QObject):
                     current_set += 1
                 self.canvas.layer_panel.current_set = current_set
             
-            self.start_pos = self.canvas.snap_to_grid(event.pos())
+            # Use the already-converted coordinates from the event
+            # The main canvas has already converted from screen to canvas coordinates
+            canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            
+            # Constrain coordinates to stay within visible viewport when zoomed out
+            constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
+            
+            self.start_pos = self.canvas.snap_to_grid(constrained_pos)
             
             # Use default_strand_color instead of strand_color to ensure correct user settings are applied
             strand_color = getattr(self.canvas, 'default_strand_color', self.canvas.strand_color)
@@ -519,14 +516,21 @@ class AttachMode(QObject):
             self.move_timer.start(16)
         elif not self.is_attaching:
             # Remove the requirement for a selected strand
-            self.handle_strand_attachment(event.pos())
+            # Use the already-converted coordinates from the event
+            canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            self.handle_strand_attachment(canvas_pos)
 
     def mouseMoveEvent(self, event):
         """Handle mouse move events."""
         if self.canvas.current_strand:
-            # 1) Move freely, no snap, for a smooth drag
-            free_pos = event.pos()
-            self.canvas.current_strand.end = free_pos
+            # Use the already-converted coordinates from the event
+            # The main canvas has already converted from screen to canvas coordinates
+            canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            
+            # Constrain coordinates to stay within visible viewport when zoomed out
+            constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
+            
+            self.canvas.current_strand.end = constrained_pos
             self.canvas.current_strand.update_shape()
 
             if not self.move_timer.isActive():
@@ -611,8 +615,50 @@ class AttachMode(QObject):
         global_pos = self.canvas.mapToGlobal(pos)
         QCursor.setPos(global_pos)
 
+    def constrain_coordinates_to_visible_viewport(self, pos):
+        """Constrain coordinates to reasonable bounds based on zoom level."""
+        if not hasattr(self.canvas, 'zoom_factor'):
+            return pos
+            
+        zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0)
+        
+        # Get canvas dimensions
+        canvas_width = self.canvas.width()
+        canvas_height = self.canvas.height()
+        
+        if zoom_factor < 1.0:
+            # When zoomed out, allow larger bounds but not extreme negatives
+            # Calculate reasonable bounds based on zoom level
+            extra_factor = (1.0 / zoom_factor) * 0.8  # 80% of theoretical max to be safe
+            
+            # Define expanded bounds
+            min_x = -canvas_width * extra_factor * 0.3  # Allow some negative space but not too much
+            max_x = canvas_width * (1 + extra_factor * 0.3)
+            min_y = -canvas_height * extra_factor * 0.3
+            max_y = canvas_height * (1 + extra_factor * 0.3)
+            
+            # Apply bounds
+            constrained_x = max(min_x, min(pos.x(), max_x))
+            constrained_y = max(min_y, min(pos.y(), max_y))
+            
+            logging.info(f"[AttachMode.constrain_coordinates] Zoomed out - bounds: x=[{min_x}, {max_x}], y=[{min_y}, {max_y}]")
+            logging.info(f"[AttachMode.constrain_coordinates] Constrained pos: ({constrained_x}, {constrained_y})")
+            return QPointF(constrained_x, constrained_y)
+        else:
+            # Normal zoom or zoomed in - apply tighter constraints
+            margin = 50
+            
+            # Constrain position to canvas bounds with margin
+            constrained_x = max(margin, min(pos.x(), canvas_width - margin))
+            constrained_y = max(margin, min(pos.y(), canvas_height - margin))
+            
+            return QPointF(constrained_x, constrained_y)
+
     def handle_strand_attachment(self, pos):
         """Handle the attachment of a new strand to an existing one."""
+        # Constrain coordinates to stay within visible viewport when zoomed out
+        pos = self.constrain_coordinates_to_visible_viewport(pos)
+        
         circle_radius = self.canvas.strand_width * 1.1
 
         for strand in self.canvas.strands:

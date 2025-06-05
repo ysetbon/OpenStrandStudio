@@ -12,7 +12,16 @@
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 5 -A 15 \"snap_to_grid.*point\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 3 -A 3 \"snap_to_grid\\(\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -B 5 -A 5 \"zoom.*coord|coord.*zoom|transform.*zoom|zoom.*transform\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
-      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -B 5 -A 10 \"snap_to_grid_enabled\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)"
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -B 5 -A 10 \"snap_to_grid_enabled\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(python:*)",
+      "Bash(awk:*)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 20 -B 5 \"def snap_to_grid\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -C 10 \"snap_to_grid\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -C 5 \"snap_to_grid\\(\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -C 5 \"self\\.snap_to_grid\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 50 \"def optimized_paint_event\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 100 -B 5 \"painter\\.scale\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)",
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 100 \"painter = QtGui.QPainter\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)"
     ],
     "deny": []
   }

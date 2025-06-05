@@ -1287,19 +1287,37 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Zoomed in to {self.zoom_factor:.1f}x")
     
     def zoom_out(self):
-        """Decrease the zoom level."""
+        """Decrease the zoom level and progressively re-center when zooming out."""
         new_zoom = self.zoom_factor - self.zoom_step
         if new_zoom >= self.min_zoom:
+            old_zoom = self.zoom_factor
             self.zoom_factor = new_zoom
+            
+            # Progressive re-centering: as we zoom out, gradually reduce pan offset
+            # The closer we get to 1.0x zoom, the more centered we become
+            if self.zoom_factor <= 1.0:
+                # When at or below 100% zoom, progressively center based on how close to 1.0 we are
+                center_factor = max(0.0, 1.0 - self.zoom_factor) / (1.0 - self.min_zoom)
+                # Reduce pan offset gradually - the lower the zoom, the more centered
+                self.pan_offset_x *= (1.0 - center_factor * 0.3)  # Reduce by up to 30% each zoom step
+                self.pan_offset_y *= (1.0 - center_factor * 0.3)
+                
+                # When very close to 1.0x, snap to center
+                if abs(self.zoom_factor - 1.0) < self.zoom_step * 0.5:
+                    self.pan_offset_x = 0
+                    self.pan_offset_y = 0
+            
             self.update_canvas_bounds()
             self.update()
-            logging.info(f"Zoomed out to {self.zoom_factor:.1f}x")
+            logging.info(f"Zoomed out to {self.zoom_factor:.1f}x, pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
     
     def reset_zoom(self):
-        """Reset zoom to 100%."""
+        """Reset zoom to 100% and center the view."""
         self.zoom_factor = 1.0
+        self.pan_offset_x = 0
+        self.pan_offset_y = 0
         self.update()
-        logging.info("Reset zoom to 1.0x")
+        logging.info("Reset zoom to 1.0x and centered view")
     
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
@@ -2733,7 +2751,7 @@ class StrandDrawingCanvas(QWidget):
             # Only allow panning if we're not at the maximum zoom out view
             if self.zoom_factor > self.min_zoom_achieved:
                 self.pan_start_pos = event.pos()
-                self.pan_start_offset = QPoint(self.pan_offset_x, self.pan_offset_y)
+                self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
                 self.setCursor(Qt.ClosedHandCursor)
             event.accept()
             return

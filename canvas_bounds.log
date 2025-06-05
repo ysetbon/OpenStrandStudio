@@ -1,0 +1,11 @@
+Canvas: Looking for settings file at: C:/Users/YonatanSetbon/AppData/Roaming/python\user_settings.txt
+Canvas: Reading settings from user_settings.txt
+Canvas: Loaded shadow color from settings: 42,42,42,250
+Canvas: Looking for default strand color settings at: C:/Users/YonatanSetbon/AppData/Roaming/python\user_settings.txt
+Canvas: Reading default strand color from user_settings.txt
+Canvas: Loaded default strand color from settings: 179,230,215,255
+Canvas: Looking for default stroke color settings at: C:/Users/YonatanSetbon/AppData/Roaming/python\user_settings.txt
+Canvas: Reading default stroke color from user_settings.txt
+Canvas: Loaded default stroke color from settings: 0,0,0,255
+Canvas: Loaded NumSteps from settings: 3
+Canvas: Loaded MaxBlurRadius from settings: 30.0

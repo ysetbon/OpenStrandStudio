@@ -197,6 +197,34 @@ except Exception as e:
     print(f"Error setting up Mask Shadow Issues file logging: {e}") # Basic error handling
 # --- End of Mask Shadow Issues logging section ---
 
+# --- Add this section for Canvas Bounds logging ---
+class CanvasBoundsFilter(logging.Filter):
+    """Filters log records for canvas bounds messages."""
+    def filter(self, record):
+        # Check if the message starts with "Canvas:"
+        return record.getMessage().startswith("Canvas:")
+
+try:
+    canvas_bounds_log_file = 'canvas_bounds.log'
+
+    # Attempt to delete the log file if it exists
+    try:
+        if os.path.exists(canvas_bounds_log_file):
+            os.remove(canvas_bounds_log_file)
+            logging.info(f"Removed existing log file: {canvas_bounds_log_file}")
+    except OSError as e:
+        logging.error(f"Error removing log file {canvas_bounds_log_file}: {e}")
+
+    # Create a specific handler for canvas bounds logs, overwriting each run
+    canvas_bounds_handler = logging.FileHandler(canvas_bounds_log_file, mode='w')
+    canvas_bounds_handler.addFilter(CanvasBoundsFilter())
+    logging.getLogger().addHandler(canvas_bounds_handler)
+    logging.info("Canvas Bounds logging configured to output to canvas_bounds.log")
+
+except Exception as e:
+    print(f"Error setting up Canvas Bounds file logging: {e}") # Basic error handling
+# --- End of Canvas Bounds logging section ---
+
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 

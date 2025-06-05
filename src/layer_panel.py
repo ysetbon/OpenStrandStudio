@@ -258,31 +258,35 @@ class LayerPanel(QWidget):
         self.zoom_out_button.clicked.connect(self.canvas.zoom_out)
         
         # Create pan button
-        self.pan_button = QPushButton("✋")
+        self.pan_button = QPushButton("🖐")  # Using a more modern hand emoji
         self.pan_button.setFixedSize(40, 40)
         self.pan_button.setCheckable(True)  # Make it toggleable
         self.pan_button.clicked.connect(self.toggle_pan_mode)
         self.pan_button.setStyleSheet("""
             QPushButton {
-                background-color: #FFD700;  /* Yellowish color */
-                color: black;
+                background-color: #8B0000;  /* Dark red color */
+                color: white;
                 font-weight: bold;
-                font-size: 20px;
-                border: 1px solid #B8860B;
+                font-size: 24px;
+                border: 1px solid #4B0000;
                 border-radius: 20px;
                 padding: 0px;
+                margin: 0px;
+                min-width: 40px;
+                min-height: 40px;
+                text-align: center;
             }
             QPushButton:hover {
-                background-color: #FFA500;  /* Darker yellow/orange on hover */
-                border: 2px solid #B8860B;
+                background-color: #A52A2A;  /* Slightly lighter red on hover */
+                border: 2px solid #4B0000;
             }
             QPushButton:pressed {
-                background-color: #FF8C00;  /* Even darker on press */
-                border: 2px solid #8B6914;
+                background-color: #400000;  /* Much darker red when pressed */
+                border: 2px solid #4B0000;
             }
             QPushButton:checked {
-                background-color: #FF8C00;  /* Dark yellow when active */
-                border: 2px solid #8B6914;
+                background-color: #400000;  /* Much darker red when active */
+                border: 2px solid #4B0000;
             }
             QPushButton:disabled {
                 background-color: #D3D3D3;
@@ -803,6 +807,11 @@ class LayerPanel(QWidget):
             self.canvas.toggle_pan_mode()
             # Update button state based on canvas pan mode
             self.pan_button.setChecked(self.canvas.pan_mode)
+            # Update the button icon to indicate pan mode
+            if self.canvas.pan_mode:
+                self.pan_button.setText("✊")  # Closed hand emoji when active
+            else:
+                self.pan_button.setText("🖐")  # Open hand emoji when inactive
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""

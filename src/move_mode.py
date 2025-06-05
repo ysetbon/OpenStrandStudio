@@ -1644,6 +1644,7 @@ class MoveMode:
         self.moving = True
         self.moving_side = side
         
+        # INITIAL POSITION CAPTURE: record the starting coordinates of the strand endpoint or control point here
         # Get the exact current position of the strand point being moved
         if side == 0:
             strand_pos = QPointF(strand.start)
@@ -2297,6 +2298,10 @@ class MoveMode:
         # Force a complete redraw of the canvas
         if hasattr(self.canvas, 'background_cache_valid'):
             self.canvas.background_cache_valid = False
+        
+        # Update canvas bounds to track the new strand positions
+        if hasattr(self.canvas, 'update_canvas_bounds'):
+            self.canvas.update_canvas_bounds()
         
         # Ensure the canvas is updated
         self.canvas.update()

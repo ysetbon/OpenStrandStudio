@@ -2815,20 +2815,45 @@ class StrandDrawingCanvas(QWidget):
                 new_offset_x = self.pan_start_offset.x() + delta.x()
                 new_offset_y = self.pan_start_offset.y() + delta.y()
                 
-                # Apply pan limits based on max canvas bounds
-                if self.max_canvas_bounds:
-                    # Calculate the visible area in canvas coordinates
-                    visible_width = self.width() / self.zoom_factor
-                    visible_height = self.height() / self.zoom_factor
-                    
-                    # Calculate max allowed pan in screen coordinates
-                    max_pan_x = (self.max_canvas_bounds.width() - visible_width) * self.zoom_factor / 2
-                    max_pan_y = (self.max_canvas_bounds.height() - visible_height) * self.zoom_factor / 2
-                    
-                    # Clamp the pan offset
-                    new_offset_x = max(-max_pan_x, min(max_pan_x, new_offset_x))
-                    new_offset_y = max(-max_pan_y, min(max_pan_y, new_offset_y))
-                
+                # Apply pan limits based on content bounding box
+                content_rect = self.get_bounding_rect()
+
+                if not content_rect.isEmpty():
+                    canvas_center = QPointF(self.width() / 2, self.height() / 2)
+
+                    # Calculate screen coordinates of the content box without panning
+                    unpanned_screen_left = (content_rect.left() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                    unpanned_screen_right = (content_rect.right() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                    unpanned_screen_top = (content_rect.top() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+                    unpanned_screen_bottom = (content_rect.bottom() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+
+                    content_screen_width = unpanned_screen_right - unpanned_screen_left
+                    content_screen_height = unpanned_screen_bottom - unpanned_screen_top
+
+                    # Horizontal panning limits
+                    if content_screen_width > self.width():
+                        # Content is wider than view, so we pan to see the overflowing parts
+                        min_pan_x = self.width() - unpanned_screen_right
+                        max_pan_x = -unpanned_screen_left
+                    else:
+                        # Content is narrower than view, we can pan it from edge to edge
+                        min_pan_x = -unpanned_screen_left
+                        max_pan_x = self.width() - unpanned_screen_right
+                        
+                    # Vertical panning limits
+                    if content_screen_height > self.height():
+                        # Content is taller than view
+                        min_pan_y = self.height() - unpanned_screen_bottom
+                        max_pan_y = -unpanned_screen_top
+                    else:
+                        # Content is shorter than view
+                        min_pan_y = -unpanned_screen_top
+                        max_pan_y = self.height() - unpanned_screen_bottom
+
+                    # Clamp the new pan offset
+                    new_offset_x = max(min_pan_x, min(max_pan_x, new_offset_x))
+                    new_offset_y = max(min_pan_y, min(max_pan_y, new_offset_y))
+
                 self.pan_offset_x = new_offset_x
                 self.pan_offset_y = new_offset_y
                 self.update()
@@ -3300,17 +3325,27 @@ class StrandDrawingCanvas(QWidget):
         if not self.strands:
             return QRectF()
 
-        min_x = min_y = float('inf')
-        max_x = max_y = float('-inf')
+        total_rect = QRectF()
 
         for strand in self.strands:
-            rect = strand.get_path().boundingRect()
-            min_x = min(min_x, rect.left())
-            min_y = min(min_y, rect.top())
-            max_x = max(max_x, rect.right())
-            max_y = max(max_y, rect.bottom())
-
-        return QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
+            strand_rect = QRectF()
+            if isinstance(strand, MaskedStrand):
+                strand_rect = strand.get_mask_path().boundingRect()
+            else:
+                path = strand.get_path()
+                stroker = QPainterPathStroker()
+                stroker.setWidth(strand.width + strand.stroke_width * 2)
+                stroker.setJoinStyle(Qt.MiterJoin)
+                stroker.setCapStyle(Qt.FlatCap)
+                stroke_path = stroker.createStroke(path)
+                strand_rect = stroke_path.boundingRect()
+            
+            if total_rect.isNull():
+                total_rect = strand_rect
+            else:
+                total_rect = total_rect.united(strand_rect)
+                
+        return total_rect
 
     def zoom_to_fit(self):
         """Zoom and center the view to fit all strands."""

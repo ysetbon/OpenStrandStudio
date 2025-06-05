@@ -84,6 +84,7 @@ class MoveMode:
         self.last_strand_position = None  # Track the last position for strand movement
         self.is_moving_control_point = False  # Flag to indicate if we're moving a control point
         self.is_moving_strand_point = False  # Flag to indicate if we're moving a strand endpoint
+        self.mouse_offset = QPointF(0, 0)  # Track mouse offset to prevent jumps when starting movement
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -117,13 +118,33 @@ class MoveMode:
     def update_cursor_position(self, pos):
         """
         Update the cursor position to match the strand end point.
+        Properly handles zoom transformation.
 
         Args:
-            pos (QPointF): The new position for the cursor.
+            pos (QPointF): The new position for the cursor in canvas coordinates.
         """
-        if isinstance(pos, QPointF):
-            pos = pos.toPoint()
-        global_pos = self.canvas.mapToGlobal(pos)
+        # Convert canvas coordinates to widget coordinates accounting for zoom
+        # Apply the same transformation that the canvas uses for drawing
+        canvas_center = QPointF(self.canvas.width() / 2, self.canvas.height() / 2)
+        
+        # Apply zoom transformation: translate to center, scale, translate back
+        transformed_pos = QPointF(pos)
+        
+        # Translate to center
+        transformed_pos -= canvas_center
+        
+        # Apply zoom scaling
+        if hasattr(self.canvas, 'zoom_factor'):
+            transformed_pos *= self.canvas.zoom_factor
+        
+        # Translate back from center
+        transformed_pos += canvas_center
+        
+        # Convert to integer coordinates
+        widget_pos = transformed_pos.toPoint()
+        
+        # Convert widget coordinates to global screen coordinates
+        global_pos = self.canvas.mapToGlobal(widget_pos)
         QCursor.setPos(global_pos)
 
     def partial_update(self):
@@ -1641,6 +1662,8 @@ class MoveMode:
             self.mouse_offset = QPointF(0, 0)
             import logging
             logging.warning("start_movement: No actual_click_pos provided, using strand position")
+            # Still move cursor to ensure it's at the correct position
+            self.update_cursor_position(strand_pos)
             
         # Store the moving point as the strand position
         self.moving_point = strand_pos
@@ -1654,9 +1677,22 @@ class MoveMode:
         self.is_moving_strand_point = side in [0, 1]
         
         # Set initial positions to the strand position
-        self.update_cursor_position(strand_pos)
         self.last_snapped_pos = strand_pos
         self.target_pos = strand_pos
+        
+        # Move the mouse cursor to the strand position to prevent jumping
+        # This should happen after setting up all the movement state
+        logging.info(f"Moving cursor from click position to strand position: {strand_pos}")
+        self.update_cursor_position(strand_pos)
+        
+        # Process pending events to ensure cursor move takes effect
+        from PyQt5.QtWidgets import QApplication
+        QApplication.processEvents()
+        
+        # After moving the cursor to the strand position, we don't need the offset anymore
+        # since the cursor is now at the correct position
+        logging.info(f"Resetting mouse offset (was: {self.mouse_offset}) to zero after cursor move")
+        self.mouse_offset = QPointF(0, 0)
 
         # Find any other strands connected to this point using layer_state_manager
         moving_point = strand.start if side == 0 else strand.end
@@ -2751,15 +2787,16 @@ class MoveMode:
         pos = event.pos()
         
         # Apply the mouse offset to maintain smooth movement from initial click position
-        if hasattr(self, 'mouse_offset'):
+        if (hasattr(self, 'mouse_offset') and self.mouse_offset and 
+            (self.mouse_offset.x() != 0 or self.mouse_offset.y() != 0)):
             adjusted_pos = QPointF(pos.x() + self.mouse_offset.x(), 
                                   pos.y() + self.mouse_offset.y())
             # Debug logging for zoom-out issues
             if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
                 logging.info(f"ZOOM_MOVE: zoom={self.canvas.zoom_factor:.2f}, raw_pos={pos}, offset={self.mouse_offset}, adjusted={adjusted_pos}")
         else:
+            # No offset needed (cursor was moved to strand position) or offset is zero
             adjusted_pos = pos
-            logging.warning("MouseMove: No mouse_offset found!")
         
         # Smart grid snapping based on zoom level and modifiers
         # Check if Ctrl key is pressed for forced grid snapping

@@ -61,17 +61,17 @@ class AttachMode(QObject):
         if not self.canvas.current_strand:
             return
             
-        # When zoomed-out we need the entire widget repainted **immediately**
+        # When zoomed (either in or out) we need the entire widget repainted **immediately**
         # on every mouse-move; using ``update()`` often coalesces several
         # requests and the intermediate frames never appear, which looks
         # like the strand is being cropped.  ``repaint()`` forces an
         # immediate full paint of the widget (synchronous) so the whole
         # strand is always visible.
-        if hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor < 1.0:
-            logging.info(f"[AttachMode.partial_update] Zoomed out (zoom={self.canvas.zoom_factor}), using full repaint for attached strand")
+        if hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor != 1.0:
+            logging.info(f"[AttachMode.partial_update] Zoomed (zoom={self.canvas.zoom_factor}), using full repaint for attached strand")
             logging.info(f"  Current strand type: {type(self.canvas.current_strand).__name__}")
             logging.info(f"  Current strand pos: start={self.canvas.current_strand.start}, end={self.canvas.current_strand.end}")
-            # Don't use optimized paint handler when zoomed out
+            # Don't use optimized paint handler when zoomed
             if hasattr(self.canvas, 'original_paintEvent'):
                 self.canvas.paintEvent = self.canvas.original_paintEvent
                 delattr(self.canvas, 'original_paintEvent')
@@ -143,6 +143,9 @@ class AttachMode(QObject):
         updates we expand the rectangle by the inverse of the current zoom
         factor so that it encloses the whole region that is actually visible
         on screen.
+        
+        Note: This method is now primarily used for fallback cases since we
+        use full repaints for any zoom level != 1.0.
         """
 
         # If we are zoomed-out make a larger rectangle that, once scaled, maps
@@ -259,14 +262,26 @@ class AttachMode(QObject):
             painter.save()
             canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
             painter.translate(canvas_center)
+            # ------------------------------------------------------------
+            # Apply pan translation BEFORE scaling so that logical
+            # coordinates match the main canvas paintEvent transformation.
+            # This keeps the active strand aligned correctly when the
+            # user has panned the view.
+            # ------------------------------------------------------------
+            if hasattr(self_canvas, 'pan_offset_x') and (
+                self_canvas.pan_offset_x != 0 or self_canvas.pan_offset_y != 0):
+                painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
             painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
             painter.translate(-canvas_center)
             
-            # When zoomed out, disable clipping entirely to avoid any cropping
-            if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
+            # Disable clipping whenever zoomed out, zoomed in, OR a pan offset is active.
+            # When panning, the logical drawing area is translated, so a static
+            # clip rect based on widget coordinates would crop the active strand.
+            if (hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor != 1.0) or \
+               (hasattr(self_canvas, 'pan_offset_x') and (self_canvas.pan_offset_x != 0 or self_canvas.pan_offset_y != 0)):
                 painter.setClipping(False)
             else:
-                # Normal clipping when not zoomed out
+                # Normal clipping when not zoomed and not panned
                 painter.setClipRect(update_rect)
             
             try:

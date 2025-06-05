@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt, QPointF, QRectF, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 import logging
 from attach_mode import AttachMode
@@ -21,6 +21,7 @@ import traceback
 import os
 import sys
 from PyQt5.QtCore import QStandardPaths
+
 
 from translations import translations
 # Add this import
@@ -152,6 +153,17 @@ class StrandDrawingCanvas(QWidget):
         self.min_zoom = 0.1  # Minimum zoom level (10%)
         self.max_zoom = 5.0  # Maximum zoom level (500%)
         self.zoom_step = 0.1  # Zoom increment/decrement step
+        
+        # Pan mode variables
+        self.pan_mode = False  # Whether pan mode is active
+        self.pan_offset_x = 0  # Current pan offset in X direction
+        self.pan_offset_y = 0  # Current pan offset in Y direction
+        self.pan_start_pos = None  # Mouse position when pan starts
+        self.pan_start_offset = None  # Pan offset when drag starts
+        
+        # Canvas boundary tracking (based on zoom history)
+        self.min_zoom_achieved = 1.0  # Tracks the minimum zoom level achieved
+        self.max_canvas_bounds = None  # Will store the maximum canvas area seen
         
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
@@ -1270,6 +1282,7 @@ class StrandDrawingCanvas(QWidget):
         new_zoom = self.zoom_factor + self.zoom_step
         if new_zoom <= self.max_zoom:
             self.zoom_factor = new_zoom
+            self.update_canvas_bounds()
             self.update()
             logging.info(f"Zoomed in to {self.zoom_factor:.1f}x")
     
@@ -1278,6 +1291,7 @@ class StrandDrawingCanvas(QWidget):
         new_zoom = self.zoom_factor - self.zoom_step
         if new_zoom >= self.min_zoom:
             self.zoom_factor = new_zoom
+            self.update_canvas_bounds()
             self.update()
             logging.info(f"Zoomed out to {self.zoom_factor:.1f}x")
     
@@ -1287,25 +1301,52 @@ class StrandDrawingCanvas(QWidget):
         self.update()
         logging.info("Reset zoom to 1.0x")
     
+    def toggle_pan_mode(self):
+        """Toggle pan mode on/off"""
+        self.pan_mode = not self.pan_mode
+        self.pan_start_pos = None
+        self.pan_start_offset = None
+        self.setCursor(Qt.OpenHandCursor if self.pan_mode else Qt.ArrowCursor)
+        self.update()
+        logging.info(f"Pan mode {'enabled' if self.pan_mode else 'disabled'}")
+    
+    def update_canvas_bounds(self):
+        """Update the maximum canvas bounds based on current zoom level"""
+        if self.zoom_factor < self.min_zoom_achieved:
+            self.min_zoom_achieved = self.zoom_factor
+            # Calculate visible area at this zoom level
+            visible_width = self.width() / self.zoom_factor
+            visible_height = self.height() / self.zoom_factor
+            
+            # Update max canvas bounds
+            if self.max_canvas_bounds is None:
+                self.max_canvas_bounds = QRectF(-visible_width/2, -visible_height/2, 
+                                               visible_width, visible_height)
+            else:
+                # Expand bounds if necessary
+                left = min(self.max_canvas_bounds.left(), -visible_width/2 - self.pan_offset_x/self.zoom_factor)
+                top = min(self.max_canvas_bounds.top(), -visible_height/2 - self.pan_offset_y/self.zoom_factor)
+                right = max(self.max_canvas_bounds.right(), visible_width/2 - self.pan_offset_x/self.zoom_factor)
+                bottom = max(self.max_canvas_bounds.bottom(), visible_height/2 - self.pan_offset_y/self.zoom_factor)
+                self.max_canvas_bounds = QRectF(left, top, right - left, bottom - top)
+    
     def screen_to_canvas(self, screen_point):
-        """Convert screen coordinates to canvas coordinates (accounting for zoom)."""
-        # For now, we'll center the zoom at the canvas center
+        """Convert screen coordinates to canvas coordinates (accounting for zoom and pan)."""
         canvas_center = QPointF(self.width() / 2, self.height() / 2)
         
-        # Convert screen point to canvas coordinates
-        canvas_x = (screen_point.x() - canvas_center.x()) / self.zoom_factor + canvas_center.x()
-        canvas_y = (screen_point.y() - canvas_center.y()) / self.zoom_factor + canvas_center.y()
+        # Convert screen point to canvas coordinates, accounting for pan offset
+        canvas_x = (screen_point.x() - canvas_center.x() - self.pan_offset_x) / self.zoom_factor + canvas_center.x()
+        canvas_y = (screen_point.y() - canvas_center.y() - self.pan_offset_y) / self.zoom_factor + canvas_center.y()
         
         return QPointF(canvas_x, canvas_y)
     
     def canvas_to_screen(self, canvas_point):
-        """Convert canvas coordinates to screen coordinates (accounting for zoom)."""
-        # For now, we'll center the zoom at the canvas center
+        """Convert canvas coordinates to screen coordinates (accounting for zoom and pan)."""
         canvas_center = QPointF(self.width() / 2, self.height() / 2)
         
-        # Convert canvas point to screen coordinates
-        screen_x = (canvas_point.x() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
-        screen_y = (canvas_point.y() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+        # Convert canvas point to screen coordinates, accounting for pan offset
+        screen_x = (canvas_point.x() - canvas_center.x()) * self.zoom_factor + canvas_center.x() + self.pan_offset_x
+        screen_y = (canvas_point.y() - canvas_center.y()) * self.zoom_factor + canvas_center.y() + self.pan_offset_y
         
         return QPointF(screen_x, screen_y)
     def paintEvent(self, event):
@@ -1317,15 +1358,17 @@ class StrandDrawingCanvas(QWidget):
 
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Apply zoom transformation
+        # Apply zoom and pan transformation
         painter.save()
         canvas_center = QPointF(self.width() / 2, self.height() / 2)
         painter.translate(canvas_center)
+        painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
         painter.scale(self.zoom_factor, self.zoom_factor)
         painter.translate(-canvas_center)
         
-        # When zoomed out, disable clipping to allow more drawing area
-        if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+        # When zoomed out or panning, disable clipping to allow more drawing area
+        if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
+           (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
             painter.setClipping(False)
 
         # Draw the grid, if applicable
@@ -1801,8 +1844,9 @@ class StrandDrawingCanvas(QWidget):
         overlay_painter.scale(self.zoom_factor, self.zoom_factor)
         overlay_painter.translate(-canvas_center)
         
-        # When zoomed out, disable clipping for overlay painter
-        if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+        # When zoomed out or panning, disable clipping for overlay painter
+        if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
+           (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
             overlay_painter.setClipping(False)
 
         # Draw attach-mode circles on top
@@ -2683,6 +2727,16 @@ class StrandDrawingCanvas(QWidget):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
         
+        # Handle pan mode
+        if self.pan_mode and event.button() == Qt.LeftButton:
+            # Only allow panning if we're not at the maximum zoom out view
+            if self.zoom_factor > self.min_zoom_achieved:
+                self.pan_start_pos = event.pos()
+                self.pan_start_offset = QPoint(self.pan_offset_x, self.pan_offset_y)
+                self.setCursor(Qt.ClosedHandCursor)
+            event.accept()
+            return
+        
         if self.mask_edit_mode and event.button() == Qt.LeftButton:
             self.erase_start_pos = canvas_pos
             logging.info(f"Started mask deletion at position: ({self.erase_start_pos.x()}, {self.erase_start_pos.y()})")
@@ -2737,6 +2791,37 @@ class StrandDrawingCanvas(QWidget):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
         
+        # Handle pan mode dragging
+        if self.pan_mode and event.buttons() & Qt.LeftButton and self.pan_start_pos:
+            # Only allow panning if we're not at the maximum zoom out view
+            if self.zoom_factor > self.min_zoom_achieved:
+                # Calculate the drag distance
+                delta = event.pos() - self.pan_start_pos
+                
+                # Update pan offset
+                new_offset_x = self.pan_start_offset.x() + delta.x()
+                new_offset_y = self.pan_start_offset.y() + delta.y()
+                
+                # Apply pan limits based on max canvas bounds
+                if self.max_canvas_bounds:
+                    # Calculate the visible area in canvas coordinates
+                    visible_width = self.width() / self.zoom_factor
+                    visible_height = self.height() / self.zoom_factor
+                    
+                    # Calculate max allowed pan in screen coordinates
+                    max_pan_x = (self.max_canvas_bounds.width() - visible_width) * self.zoom_factor / 2
+                    max_pan_y = (self.max_canvas_bounds.height() - visible_height) * self.zoom_factor / 2
+                    
+                    # Clamp the pan offset
+                    new_offset_x = max(-max_pan_x, min(max_pan_x, new_offset_x))
+                    new_offset_y = max(-max_pan_y, min(max_pan_y, new_offset_y))
+                
+                self.pan_offset_x = new_offset_x
+                self.pan_offset_y = new_offset_y
+                self.update()
+            event.accept()
+            return
+        
         if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
             # Update the current erase rectangle
             self.current_erase_rect = QRectF(
@@ -2778,6 +2863,14 @@ class StrandDrawingCanvas(QWidget):
     def mouseReleaseEvent(self, event):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
+        
+        # Handle pan mode release
+        if self.pan_mode and event.button() == Qt.LeftButton:
+            self.pan_start_pos = None
+            self.pan_start_offset = None
+            self.setCursor(Qt.OpenHandCursor)
+            event.accept()
+            return
         
         if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
             # Save the deletion rectangle information

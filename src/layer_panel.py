@@ -257,9 +257,44 @@ class LayerPanel(QWidget):
         """)
         self.zoom_out_button.clicked.connect(self.canvas.zoom_out)
         
+        # Create pan button
+        self.pan_button = QPushButton("✋")
+        self.pan_button.setFixedSize(40, 40)
+        self.pan_button.setCheckable(True)  # Make it toggleable
+        self.pan_button.clicked.connect(self.toggle_pan_mode)
+        self.pan_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FFD700;  /* Yellowish color */
+                color: black;
+                font-weight: bold;
+                font-size: 20px;
+                border: 1px solid #B8860B;
+                border-radius: 20px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: #FFA500;  /* Darker yellow/orange on hover */
+                border: 2px solid #B8860B;
+            }
+            QPushButton:pressed {
+                background-color: #FF8C00;  /* Even darker on press */
+                border: 2px solid #8B6914;
+            }
+            QPushButton:checked {
+                background-color: #FF8C00;  /* Dark yellow when active */
+                border: 2px solid #8B6914;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        
         # Add buttons to zoom layout
         zoom_layout.addWidget(self.zoom_in_button)
         zoom_layout.addWidget(self.zoom_out_button)
+        zoom_layout.addWidget(self.pan_button)
         
         # Add zoom panel to left layout below the top panel
         self.left_layout.addWidget(self.zoom_panel)
@@ -761,6 +796,13 @@ class LayerPanel(QWidget):
         else:
             logging.warning(f"toggle_layer_visibility called with invalid index: {strand_index}")
     # --- END NEW ---
+    
+    def toggle_pan_mode(self):
+        """Toggle pan mode on/off"""
+        if self.canvas:
+            self.canvas.toggle_pan_mode()
+            # Update button state based on canvas pan mode
+            self.pan_button.setChecked(self.canvas.pan_mode)
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""

@@ -589,6 +589,7 @@ class MoveMode:
             painter.save()
             canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
             painter.translate(canvas_center)
+            painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
             painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
             painter.translate(-canvas_center)
 

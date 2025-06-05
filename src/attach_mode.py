@@ -746,6 +746,20 @@ class AttachMode(QObject):
         """Start the attachment process for a new strand."""
         logging.info(f"[AttachMode.start_attachment] Starting attachment to parent strand {parent_strand.layer_name} at side {side}")
         
+        # Clear any previous selection/highlighting before starting attachment
+        if self.canvas.selected_strand:
+            logging.info(f"[AttachMode.start_attachment] Clearing previous selected strand: {self.canvas.selected_strand.layer_name}")
+            # Also clear the is_selected property on the strand itself
+            if hasattr(self.canvas.selected_strand, 'is_selected'):
+                self.canvas.selected_strand.is_selected = False
+            self.canvas.selected_strand = None
+        if self.canvas.selected_attached_strand:
+            logging.info(f"[AttachMode.start_attachment] Clearing previous selected attached strand: {self.canvas.selected_attached_strand.layer_name}")
+            # Also clear the is_selected property on the strand itself
+            if hasattr(self.canvas.selected_attached_strand, 'is_selected'):
+                self.canvas.selected_attached_strand.is_selected = False
+            self.canvas.selected_attached_strand = None
+        
         # Find the parent strand's group before creating new strand
         parent_group = None
         parent_group_name = None

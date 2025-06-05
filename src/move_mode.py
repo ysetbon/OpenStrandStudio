@@ -737,10 +737,10 @@ class MoveMode:
         # Draw the appropriate yellow rectangle based on moving_side
         # Visual elements need to scale with zoom to appear consistent
         base_yellow_square_size = 120
-        yellow_square_size = base_yellow_square_size / self.canvas.zoom_factor
+        yellow_square_size = base_yellow_square_size 
         half_yellow_size = yellow_square_size / 2
         base_square_control_size = 50
-        square_control_size = base_square_control_size / self.canvas.zoom_factor
+        square_control_size = base_square_control_size 
         half_control_size = square_control_size / 2
         
         # Only draw the currently moving point's selection square

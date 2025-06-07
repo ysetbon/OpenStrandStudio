@@ -539,6 +539,8 @@ class LayerPanel(QWidget):
         """Refresh the drawing of the layers with zero visual flicker."""
         logging.info("refresh_layers called, redirecting to refresh()")
         self.refresh()
+        # Reset canvas zoom and pan to original view
+        self.canvas.reset_zoom()
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -1873,6 +1875,9 @@ class LayerPanel(QWidget):
         # 9. Remove the overlay after everything is ready (if we actually created one)
         if overlay is not None:
             overlay.deleteLater()
+        
+        # Reset canvas zoom and pan to original view
+        self.canvas.reset_zoom()
         
         logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
     def refresh(self):

@@ -1445,6 +1445,13 @@ class MoveMode:
         # Skip control point checks for MaskedStrands
         if isinstance(strand, MaskedStrand):
             return False
+            
+        # Check if the strand is locked
+        if self.lock_mode_active and strand in self.canvas.strands:
+            strand_index = self.canvas.strands.index(strand)
+            if strand_index in self.locked_layers:
+                logging.info(f"Skipping control point movement for locked strand {strand.layer_name}")
+                return False
 
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
@@ -1516,6 +1523,7 @@ class MoveMode:
             self.start_movement(strand, 0, start_area, pos)
             # Ensure the strand is selected when movement starts
             strand.is_selected = True
+            logging.info(f"Selected strand {strand.layer_name} for start movement")
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
             else:
@@ -1526,6 +1534,7 @@ class MoveMode:
             self.start_movement(strand, 1, end_area, pos)
             # Ensure the strand is selected when movement starts
             strand.is_selected = True
+            logging.info(f"Selected strand {strand.layer_name} for end movement")
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
             else:

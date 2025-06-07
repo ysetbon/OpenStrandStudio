@@ -1013,11 +1013,53 @@ class LayerPanel(QWidget):
             else:
                 # Toggle lock state only if not in attach mode
                 if index in self.locked_layers:
+                    logging.info(f"Unlocking strand at index {index}")
                     self.locked_layers.remove(index)
+                    # When unlocking, also deselect and unhighlight the strand
+                    if 0 <= index < len(self.canvas.strands):
+                        strand = self.canvas.strands[index]
+                        strand.is_selected = False
+                        logging.info(f"Set strand.is_selected = False for strand {strand.layer_name}")
+                    # Clear canvas selection if this was the selected strand
+                    if self.canvas.selected_strand_index == index:
+                        logging.info(f"Clearing canvas selection for strand index {index}")
+                        self.canvas.selected_strand = None
+                        self.canvas.selected_strand_index = None
+                        self.canvas.selected_attached_strand = None
+                    # Uncheck the layer button
+                    if 0 <= index < len(self.layer_buttons):
+                        self.layer_buttons[index].setChecked(False)
+                        logging.info(f"Unchecked layer button for index {index}")
+                    # Update canvas to reflect deselection and unhighlighting
+                    self.canvas.update()
+                    self.update_layer_buttons_lock_state()
+                    self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+                    # Don't re-select the strand after unlocking
+                    return
                 else:
+                    logging.info(f"Locking strand at index {index}")
                     self.locked_layers.add(index)
+                    # When locking, also deselect and unhighlight the strand if it's currently selected
+                    if 0 <= index < len(self.canvas.strands):
+                        strand = self.canvas.strands[index]
+                        strand.is_selected = False
+                        logging.info(f"Set strand.is_selected = False for locked strand {strand.layer_name}")
+                    # Clear canvas selection if this was the selected strand
+                    if self.canvas.selected_strand_index == index:
+                        logging.info(f"Clearing canvas selection for locked strand index {index}")
+                        self.canvas.selected_strand = None
+                        self.canvas.selected_strand_index = None
+                        self.canvas.selected_attached_strand = None
+                    # Uncheck the layer button
+                    if 0 <= index < len(self.layer_buttons):
+                        self.layer_buttons[index].setChecked(False)
+                        logging.info(f"Unchecked layer button for locked index {index}")
+                    # Update canvas to reflect deselection
+                    self.canvas.update()
                 self.update_layer_buttons_lock_state()
                 self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+                # Don't re-select the strand after locking
+                return
         else:
             for i, button in enumerate(self.layer_buttons):
                 button.setChecked(i == index)

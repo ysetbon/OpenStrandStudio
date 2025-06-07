@@ -2220,6 +2220,13 @@ class StrandDrawingCanvas(QWidget):
                 if move_mode.lock_mode_active and strand in self.strands:
                     strand_index = self.strands.index(strand)
                     is_strand_locked = strand_index in move_mode.locked_layers
+            
+            # Also check if strand is locked in layer panel (even outside of move mode)
+            if not is_strand_locked and self.layer_panel and strand in self.strands:
+                strand_index = self.strands.index(strand)
+                is_strand_locked = strand_index in self.layer_panel.locked_layers
+                if is_strand_locked:
+                    logging.info(f"Strand {strand.layer_name} at index {strand_index} is locked in layer panel")
 
             # Draw the regular strand first (including shadow)
             strand.draw(painter)
@@ -2228,6 +2235,16 @@ class StrandDrawingCanvas(QWidget):
             # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
                 # Skip drawing C-shapes when moving control points or when strand is locked
+                if has_circle:
+                    if is_moving_control_point:
+                        logging.info(f"Skipping C-shape for {strand.layer_name} - moving control point")
+                    elif is_strand_locked:
+                        logging.info(f"Skipping C-shape for {strand.layer_name} - strand is locked")
+                    elif not has_circle:
+                        logging.info(f"Skipping C-shape for {strand.layer_name} - no circle")
+                    else:
+                        logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
+                        
                 if has_circle and not is_moving_control_point and not is_strand_locked:
                     # Save painter state
                     painter.save()
@@ -4108,6 +4125,13 @@ class StrandDrawingCanvas(QWidget):
         if strands_at_point:
             selected_strand = strands_at_point[-1]  # Select the topmost strand
             index = self.strands.index(selected_strand)
+
+            # Check if the strand is locked and prevent selection
+            if (hasattr(self, 'layer_panel') and self.layer_panel and 
+                hasattr(self.layer_panel, 'locked_layers') and 
+                index in self.layer_panel.locked_layers):
+                logging.info(f"Preventing selection of locked strand {selected_strand.layer_name} at index {index}")
+                return
 
             # When directly clicking on a strand, reset the user_deselected_all flag in MoveMode
             if isinstance(self.current_mode, MoveMode) and hasattr(self.current_mode, 'user_deselected_all'):

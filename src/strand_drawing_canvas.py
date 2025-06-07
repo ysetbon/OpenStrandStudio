@@ -1193,6 +1193,9 @@ class StrandDrawingCanvas(QWidget):
         self.editing_masked_strand = None  # The masked strand currently being edited
         self.mask_edit_path = None  # The QPainterPath for the mask being edited
         self.erase_start_pos = None  # Start position for erase operations
+        
+        # Shadow rendering
+        self.shadow_enabled = True  # Flag to enable/disable shadow rendering
         self.current_erase_rect = None  # Current erase rectangle
         self.eraser_size = 20  # Size of the eraser tool
         
@@ -2206,32 +2209,26 @@ class StrandDrawingCanvas(QWidget):
                 strand.draw(painter)
                 return
                 
-            # Get the path representing the strand as a cubic Bézier curve
-            path = strand.get_path()
-
-            # Create a stroker for the stroke path with squared ends - EXACTLY like in strand.draw()
-            stroke_stroker = QPainterPathStroker()
-            stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-            stroke_stroker.setJoinStyle(Qt.MiterJoin)
-            stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
-            stroke_path = stroke_stroker.createStroke(path)
-
-        
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(stroke_path)
-            # Draw the regular strand
-            strand.draw(painter)
-            
-            # Check if we're moving a control point
+            # Check if we're moving a control point and get lock mode info
             is_moving_control_point = False
+            is_strand_locked = False
             if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
                 move_mode = self.current_mode
                 is_moving_control_point = move_mode.is_moving_control_point
+                
+                # Check if strand is locked in lock mode
+                if move_mode.lock_mode_active and strand in self.strands:
+                    strand_index = self.strands.index(strand)
+                    is_strand_locked = strand_index in move_mode.locked_layers
+
+            # Draw the regular strand first (including shadow)
+            strand.draw(painter)
             
+
             # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
-                # Skip drawing C-shapes when moving control points
-                if has_circle and not is_moving_control_point:
+                # Skip drawing C-shapes when moving control points or when strand is locked
+                if has_circle and not is_moving_control_point and not is_strand_locked:
                     # Save painter state
                     painter.save()
                     

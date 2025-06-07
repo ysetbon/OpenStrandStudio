@@ -875,10 +875,13 @@ class MoveMode:
         
         if not self.in_move_mode:
             # Set the originally_selected_strand to the currently selected strand in the layer panel
-            # Only set if there is actually a selected strand
+            # Check both selected_strand and selected_attached_strand
             if self.canvas.selected_strand:
                 self.originally_selected_strand = self.canvas.selected_strand
                 logging.info("MoveMode: Set originally_selected_strand from selected_strand")
+            elif self.canvas.selected_attached_strand:
+                self.originally_selected_strand = self.canvas.selected_attached_strand
+                logging.info("MoveMode: Set originally_selected_strand from selected_attached_strand")
             # --- REMOVE ELSE BLOCK --- It is handled by current_selection logic and mouseReleaseEvent
             # else:
             #     # If there's no selection, make sure we clear our stored selection

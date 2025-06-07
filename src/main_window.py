@@ -31,6 +31,8 @@ from PyQt5.QtWidgets import (
     # ... existing imports ...
     QLabel
 )
+from PyQt5.QtCore import QPointF
+
 # main_window.py
 
 class MainWindow(QMainWindow):

@@ -958,6 +958,15 @@ class LayerPanel(QWidget):
 
         self.update_layer_buttons_lock_state()
         self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+        
+        # Save state for undo/redo when entering/exiting lock mode
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force save by temporarily clearing the last save time to bypass timing check
+            old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
+            self.undo_redo_manager._last_save_time = 0
+            self.undo_redo_manager.save_state()
+            # Restore the last save time
+            self.undo_redo_manager._last_save_time = old_last_save_time
 
     def update_layer_buttons_lock_state(self):
         """Update the lock state and attachability of all layer buttons."""
@@ -1034,6 +1043,14 @@ class LayerPanel(QWidget):
                     self.canvas.update()
                     self.update_layer_buttons_lock_state()
                     self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+                    # Save state for undo/redo
+                    if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                        # Force save by temporarily clearing the last save time to bypass timing check
+                        old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
+                        self.undo_redo_manager._last_save_time = 0
+                        self.undo_redo_manager.save_state()
+                        # Restore the last save time
+                        self.undo_redo_manager._last_save_time = old_last_save_time
                     # Don't re-select the strand after unlocking
                     return
                 else:
@@ -1058,6 +1075,9 @@ class LayerPanel(QWidget):
                     self.canvas.update()
                 self.update_layer_buttons_lock_state()
                 self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+                # Save state for undo/redo
+                if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                    self.undo_redo_manager.save_state()
                 # Don't re-select the strand after locking
                 return
         else:

@@ -124,10 +124,30 @@ def serialize_strand(strand, canvas, index=None):
 def save_strands(strands, groups, filename, canvas):
     selected_strand_name = canvas.selected_strand.layer_name if canvas.selected_strand else None
     logging.info(f"Saving state with selected strand: {selected_strand_name}")
+    
+    # Get locked layers from layer panel if available
+    locked_layers = set()
+    lock_mode = False
+    if hasattr(canvas, 'layer_panel') and canvas.layer_panel:
+        if hasattr(canvas.layer_panel, 'locked_layers'):
+            locked_layers = canvas.layer_panel.locked_layers.copy()
+            logging.info(f"save_strands: Found locked_layers = {locked_layers}")
+        else:
+            logging.warning("save_strands: layer_panel has no locked_layers attribute")
+        if hasattr(canvas.layer_panel, 'lock_mode'):
+            lock_mode = canvas.layer_panel.lock_mode
+            logging.info(f"save_strands: Found lock_mode = {lock_mode}")
+        else:
+            logging.warning("save_strands: layer_panel has no lock_mode attribute")
+    else:
+        logging.warning("save_strands: canvas has no layer_panel or layer_panel is None")
+    
     data = {
         "strands": [serialize_strand(strand, canvas, i) for i, strand in enumerate(strands)],
         "groups": serialize_groups(groups),
         "selected_strand_name": selected_strand_name,  # Add selected strand name
+        "locked_layers": list(locked_layers),  # Add locked layers information
+        "lock_mode": lock_mode,  # Add lock mode state
     }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
@@ -615,7 +635,9 @@ def load_strands(filename, canvas):
         canvas.repaint()
     logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
 
-    return strands, data.get("groups", {}), selected_strand_name # Return selected strand name
+    locked_layers = set(data.get("locked_layers", []))  # Get locked layers from saved data
+    lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data
+    return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode # Return selected strand name, locked layers, and lock mode
 
 
 def apply_loaded_strands(canvas, strands, groups):

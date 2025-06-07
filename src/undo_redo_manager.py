@@ -606,6 +606,35 @@ class UndoRedoManager(QObject):
                         return False
                     # --- END ADD ---
 
+                # Check for differences in locked layers
+                current_locked_layers = set()
+                if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'locked_layers'):
+                    current_locked_layers = self.canvas.layer_panel.locked_layers.copy()
+                
+                prev_locked_layers = set(prev_data.get("locked_layers", []))
+                
+                if current_locked_layers != prev_locked_layers:
+                    logging.info(f"_would_be_identical_save: Locked layers differ. Current: {current_locked_layers}, Prev: {prev_locked_layers}")
+                    return False
+                
+                # Check for differences in lock mode
+                current_lock_mode = False
+                if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
+                    if hasattr(self.canvas.layer_panel, 'lock_mode'):
+                        current_lock_mode = self.canvas.layer_panel.lock_mode
+                        logging.info(f"_would_be_identical_save: Found current lock_mode = {current_lock_mode}")
+                    else:
+                        logging.warning("_would_be_identical_save: layer_panel has no lock_mode attribute")
+                else:
+                    logging.warning("_would_be_identical_save: canvas has no layer_panel or layer_panel is None")
+                
+                prev_lock_mode = prev_data.get("lock_mode", False)
+                logging.info(f"_would_be_identical_save: Previous lock_mode = {prev_lock_mode}")
+                
+                if current_lock_mode != prev_lock_mode:
+                    logging.info(f"_would_be_identical_save: Lock mode differs. Current: {current_lock_mode}, Prev: {prev_lock_mode}")
+                    return False
+
                 # If we made it here, states are identical based on checked properties
                 logging.info("_would_be_identical_save: States are identical, skipping save")
                 return True
@@ -689,6 +718,10 @@ class UndoRedoManager(QObject):
             original_groups = {}
             if hasattr(self.canvas, 'groups'):
                 original_groups = self.canvas.groups.copy()
+            
+            # Store original lock state for comparison
+            original_lock_mode = getattr(self.layer_panel, 'lock_mode', False) if hasattr(self.layer_panel, 'lock_mode') else False
+            original_locked_layers = getattr(self.layer_panel, 'locked_layers', set()).copy() if hasattr(self.layer_panel, 'locked_layers') else set()
             
             # Store original group names and contents for detailed comparison
             original_group_names = set(original_groups.keys())
@@ -777,6 +810,19 @@ class UndoRedoManager(QObject):
                         # --- Original checks (now nested) --- 
                         # Check for meaningful visual differences between states
                         has_visual_difference = False
+                        
+                        # Check lock state differences
+                        # Compare the original lock state with the current (post-undo) lock state
+                        current_lock_mode = getattr(self.layer_panel, 'lock_mode', False)
+                        current_locked_layers = getattr(self.layer_panel, 'locked_layers', set())
+                        
+                        if current_lock_mode != original_lock_mode:
+                            logging.info(f"Lock mode differs after undo: original={original_lock_mode}, current={current_lock_mode}")
+                            has_visual_difference = True
+                        
+                        if current_locked_layers != original_locked_layers:
+                            logging.info(f"Locked layers differ after undo: original={original_locked_layers}, current={current_locked_layers}")
+                            has_visual_difference = True
                         
                         # Check positions and other visual properties
                         for i, new_strand in enumerate(new_strands):
@@ -1039,14 +1085,9 @@ class UndoRedoManager(QObject):
             # Additional logging to track what's being refreshed
             logging.info("Refreshing UI after undo operation")
             
-            # Try to simulate a refresh button click (preferred method)
-            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                logging.info("Simulating refresh button click after undo")
-                self.layer_panel.simulate_refresh_button_click()
-            # Fallback to direct method call if simulate method not available
-            elif hasattr(self.layer_panel, 'refresh_layers'):
-                logging.info("Explicitly refreshing layer panel")
-                self.layer_panel.refresh_layers()
+            # NOTE: Removed additional refresh calls here as they were overriding
+            # the lock state that was properly restored in _load_state()
+            # The _load_state() method already handles all necessary refreshing
                 
             # Final update of the canvas
             self.canvas.update()
@@ -1069,6 +1110,10 @@ class UndoRedoManager(QObject):
             original_groups = {}
             if hasattr(self.canvas, 'groups'):
                 original_groups = self.canvas.groups.copy()
+            
+            # Store original lock state for comparison
+            original_lock_mode = getattr(self.layer_panel, 'lock_mode', False) if hasattr(self.layer_panel, 'lock_mode') else False
+            original_locked_layers = getattr(self.layer_panel, 'locked_layers', set()).copy() if hasattr(self.layer_panel, 'locked_layers') else set()
             
             # Store original group names and contents for detailed comparison
             original_group_names = set(original_groups.keys())
@@ -1149,6 +1194,19 @@ class UndoRedoManager(QObject):
                         # --- Original checks (now nested) --- 
                         # Check for meaningful visual differences between states
                         has_visual_difference = False
+                        
+                        # Check lock state differences
+                        # Compare the original lock state with the current (post-undo) lock state
+                        current_lock_mode = getattr(self.layer_panel, 'lock_mode', False)
+                        current_locked_layers = getattr(self.layer_panel, 'locked_layers', set())
+                        
+                        if current_lock_mode != original_lock_mode:
+                            logging.info(f"Lock mode differs after undo: original={original_lock_mode}, current={current_lock_mode}")
+                            has_visual_difference = True
+                        
+                        if current_locked_layers != original_locked_layers:
+                            logging.info(f"Locked layers differ after undo: original={original_locked_layers}, current={current_locked_layers}")
+                            has_visual_difference = True
                         
                         # Check positions and other visual properties
                         for i, new_strand in enumerate(new_strands):
@@ -1804,7 +1862,7 @@ class UndoRedoManager(QObject):
             
             # Load the data using the normal method
             # --- MODIFIED: Receive selected_strand_name --- 
-            loaded_strands, loaded_groups_data, selected_strand_name = load_strands(filename, self.canvas)
+            loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
             state_has_groups = bool(loaded_groups_data)
             logging.info(f"Loaded {len(loaded_strands)} strands and {len(loaded_groups_data)} groups")
@@ -1870,7 +1928,53 @@ class UndoRedoManager(QObject):
                 logging.info("No selected strand name found in loaded state. Cleared selection.")
             # --- END NEW --- 
             
-            # --- Step 3: Refresh UI Panels --- 
+            # --- Step 3: Restore locked layers and lock mode BEFORE UI refresh ---
+            # Restore lock mode state first
+            if hasattr(self.layer_panel, 'lock_mode'):
+                logging.info(f"Restoring lock mode: {lock_mode}")
+                self.layer_panel.lock_mode = lock_mode
+                if hasattr(self.layer_panel, 'lock_layers_button'):
+                    self.layer_panel.lock_layers_button.setChecked(lock_mode)
+                    if lock_mode:
+                        self.layer_panel.lock_layers_button.setText("Exit Lock Mode")
+                        if hasattr(self.layer_panel, 'notification_label'):
+                            self.layer_panel.notification_label.setText("Select layers to lock/unlock")
+                        if hasattr(self.layer_panel, 'deselect_all_button'):
+                            self.layer_panel.deselect_all_button.setText("Clear All Locks")
+                    else:
+                        self.layer_panel.lock_layers_button.setText("Lock Layers")
+                        if hasattr(self.layer_panel, 'notification_label'):
+                            self.layer_panel.notification_label.setText("")
+                        if hasattr(self.layer_panel, 'deselect_all_button'):
+                            self.layer_panel.deselect_all_button.setText("Deselect All")
+            
+            # Restore locked layers state after lock mode is set
+            if hasattr(self.layer_panel, 'locked_layers'):
+                logging.info(f"Restoring locked layers: {locked_layers}")
+                self.layer_panel.locked_layers = locked_layers.copy()
+                
+                # Log current button count for debugging
+                button_count = len(getattr(self.layer_panel, 'layer_buttons', []))
+                logging.info(f"Layer panel has {button_count} layer buttons before applying lock state")
+                
+                # Always call update_layer_buttons_lock_state to apply the visual state
+                if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
+                    logging.info("Calling update_layer_buttons_lock_state to apply visual lock state")
+                    self.layer_panel.update_layer_buttons_lock_state()
+                
+                # Also update MoveMode's locked_layers if it exists
+                if hasattr(self.canvas, 'current_mode') and self.canvas.current_mode.__class__.__name__ == 'MoveMode':
+                    move_mode = self.canvas.current_mode
+                    if hasattr(move_mode, 'set_locked_layers'):
+                        logging.info(f"Updating MoveMode locked_layers to: {locked_layers}")
+                        move_mode.set_locked_layers(locked_layers.copy(), lock_mode)
+                    else:
+                        # Fallback - set directly if set_locked_layers doesn't exist
+                        move_mode.locked_layers = locked_layers.copy()
+                        move_mode.lock_mode_active = lock_mode
+                        logging.info(f"Directly set MoveMode locked_layers to: {locked_layers}")
+
+            # --- Step 4: Refresh UI Panels AFTER lock state restoration --- 
             # Refresh layer panel based on the new self.canvas.strands
             logging.info("Refreshing Layer Panel UI...")
             self._refresh_layer_panel() 
@@ -1883,6 +1987,19 @@ class UndoRedoManager(QObject):
             elif hasattr(self.layer_panel, 'refresh_layers'):
                 logging.info("Explicitly refreshing layer panel UI...")
                 self.layer_panel.refresh_layers()
+            
+            # Apply lock state again after refresh since refresh recreates buttons
+            if hasattr(self.layer_panel, 'locked_layers') and hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
+                logging.info("Reapplying lock state after refresh to newly created buttons")
+                self.layer_panel.update_layer_buttons_lock_state()
+            
+            # Log which buttons are now locked for verification after refresh
+            if hasattr(self.layer_panel, 'layer_buttons'):
+                for i in range(min(len(getattr(self.layer_panel, 'layer_buttons', [])), 5)):  # Only log first 5 for brevity
+                    button = self.layer_panel.layer_buttons[i]
+                    is_locked = getattr(button, 'locked', False)
+                    should_be_locked = i in locked_layers
+                    logging.info(f"Button {i} locked state after refresh: {is_locked} (should be: {should_be_locked})")
 
             # Refresh group panel based on the new self.canvas.groups
             logging.info("Refreshing Group Panel UI...")
@@ -2123,7 +2240,7 @@ class UndoRedoManager(QObject):
                     logging.error(f"Error cleaning up original session files: {e}")
                 
                 # Load strands and groups from the specified file
-                strands, groups, selected_strand_name = load_strands(filepath, self.canvas)
+                strands, groups, selected_strand_name, locked_layers, lock_mode = load_strands(filepath, self.canvas)
                 logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
                 
                 # First inspect the raw JSON directly to ensure we didn't miss anything
@@ -2158,6 +2275,32 @@ class UndoRedoManager(QObject):
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
                     logging.info("Layer panel refreshed via its refresh method")
+                
+                # Restore locked layers
+                if hasattr(self.layer_panel, 'locked_layers') and locked_layers:
+                    logging.info(f"Restoring locked layers: {locked_layers}")
+                    self.layer_panel.locked_layers = locked_layers.copy()
+                    if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
+                        self.layer_panel.update_layer_buttons_lock_state()
+                
+                # Restore lock mode state
+                if hasattr(self.layer_panel, 'lock_mode'):
+                    logging.info(f"Restoring lock mode: {lock_mode}")
+                    self.layer_panel.lock_mode = lock_mode
+                    if hasattr(self.layer_panel, 'lock_layers_button'):
+                        self.layer_panel.lock_layers_button.setChecked(lock_mode)
+                        if lock_mode:
+                            self.layer_panel.lock_layers_button.setText("Exit Lock Mode")
+                            if hasattr(self.layer_panel, 'notification_label'):
+                                self.layer_panel.notification_label.setText("Select layers to lock/unlock")
+                            if hasattr(self.layer_panel, 'deselect_all_button'):
+                                self.layer_panel.deselect_all_button.setText("Clear All Locks")
+                        else:
+                            self.layer_panel.lock_layers_button.setText("Lock Layers")
+                            if hasattr(self.layer_panel, 'notification_label'):
+                                self.layer_panel.notification_label.setText("")
+                            if hasattr(self.layer_panel, 'deselect_all_button'):
+                                self.layer_panel.deselect_all_button.setText("Deselect All")
                 
                 # Now handle the group panel update
                 state_has_groups = bool(self.canvas.groups)

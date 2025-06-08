@@ -2710,7 +2710,7 @@ class MoveMode:
             # Calculate the proper radius for the highlight
             # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
             # This pen is drawn around the stroke path, so the outer edge is at:
-            highlight_pen_thickness = strand.stroke_width + 8
+            highlight_pen_thickness = 10  # Fixed thickness instead of strand.stroke_width + 8
             stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
             outer_radius = stroke_path_radius + highlight_pen_thickness / 2
             inner_radius = strand.width / 2 + 6

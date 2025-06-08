@@ -1182,7 +1182,7 @@ class Strand:
 
         # Only draw highlight if this is not a MaskedStrand
         if self.is_selected and not isinstance(self, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             painter.setPen(highlight_pen)

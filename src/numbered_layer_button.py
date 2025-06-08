@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QPushButton as QDialogButton
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
 import logging
@@ -1227,6 +1227,8 @@ class NumberedLayerButton(QPushButton):
             old_stroke_width = strand.stroke_width
             strand.width = new_width
             strand.stroke_width = new_stroke_width
+            # Save the grid units value from the dialog
+            strand.width_in_grid_units = dialog.thickness_spinbox.value()
             
             # Update strand shape to recalculate side lines with new stroke width
             if hasattr(strand, 'update_shape'):
@@ -1241,12 +1243,15 @@ class NumberedLayerButton(QPushButton):
                     
                     # Update all strands that belong to the same set
                     updated_strands = []
+                    grid_units_value = dialog.thickness_spinbox.value()
                     for other_strand in layer_panel.canvas.strands:
                         if (hasattr(other_strand, 'layer_name') and 
                             other_strand.layer_name and 
                             other_strand.layer_name.startswith(set_prefix)):
                             other_strand.width = new_width
                             other_strand.stroke_width = new_stroke_width
+                            # Save the grid units value for all strands in the set
+                            other_strand.width_in_grid_units = grid_units_value
                             # Update shape for all strands in the set
                             if hasattr(other_strand, 'update_shape'):
                                 other_strand.update_shape()
@@ -1291,7 +1296,172 @@ class WidthConfigDialog(QDialog):
         
         self.setWindowTitle(_['change_width'] if 'change_width' in _ else "Change Width")
         self.setModal(True)
-        self.setFixedSize(350, 200)
+        self.setMinimumSize(400, 220)
+        self.resize(450, 240)
+        
+        # Find the main window to inherit its theme
+        main_window = parent
+        while main_window and not hasattr(main_window, 'current_theme'):
+            main_window = main_window.parent()
+        
+                # Apply theme styling to dialog if main window found
+        if main_window and hasattr(main_window, 'current_theme'):
+            theme = main_window.current_theme
+            if theme == 'dark':
+                self.setStyleSheet("""
+                    QDialog {
+                        background-color: #2C2C2C;
+                        color: white;
+                    }
+                    QLabel {
+                        color: white;
+                    }
+                    QSpinBox, QSlider {
+                        background-color: #3D3D3D;
+                        color: white;
+                        border: 1px solid #555;
+                        border-radius: 3px;
+                        padding: 2px;
+                    }
+                    QSpinBox:hover, QSlider:hover {
+                        border: 1px solid #777;
+                    }
+                    QPushButton, QDialogButtonBox QPushButton {
+                        background-color: #252525;
+                        color: white;
+                        font-weight: bold;
+                        border: 2px solid #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                        background-color: #505050;
+                    }
+                    QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                        background-color: #151515;
+                        border: 2px solid #000000;
+                    }
+                    QDialogButtonBox {
+                        background-color: transparent;
+                    }
+                """)
+            elif theme == 'light':
+                self.setStyleSheet("""
+                    QDialog {
+                        background-color: #F5F5F5;
+                        color: black;
+                    }
+                    QLabel {
+                        color: black;
+                    }
+                    QSpinBox, QSlider {
+                        background-color: white;
+                        color: black;
+                        border: 1px solid #CCC;
+                        border-radius: 3px;
+                        padding: 2px;
+                    }
+                    QSpinBox:hover, QSlider:hover {
+                        border: 1px solid #999;
+                    }
+                    QPushButton, QDialogButtonBox QPushButton {
+                        background-color: #F0F0F0;
+                        color: #000000;
+                        border: 1px solid #BBBBBB;
+                        border-radius: 5px;
+                        padding: 10px;
+                        min-width: 80px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                        background-color: #E0E0E0;
+                    }
+                    QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                        background-color: #D0D0D0;
+                    }
+                    QDialogButtonBox {
+                        background-color: transparent;
+                    }
+                """)
+            else:
+                # Default theme styling
+                self.setStyleSheet("""
+                    QDialog {
+                        background-color: #F5F5F5;
+                        color: black;
+                    }
+                    QLabel {
+                        color: black;
+                    }
+                    QSpinBox, QSlider {
+                        background-color: white;
+                        color: black;
+                        border: 1px solid #CCC;
+                        border-radius: 3px;
+                        padding: 2px;
+                    }
+                    QSpinBox:hover, QSlider:hover {
+                        border: 1px solid #999;
+                    }
+                    QPushButton, QDialogButtonBox QPushButton {
+                        background-color: #F0F0F0;
+                        color: #000000;
+                        border: 1px solid #BBBBBB;
+                        border-radius: 5px;
+                        padding: 10px;
+                        min-width: 80px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                        background-color: #E0E0E0;
+                    }
+                    QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                        background-color: #D0D0D0;
+                    }
+                    QDialogButtonBox {
+                        background-color: transparent;
+                                         }
+                 """)
+        else:
+            # Fallback styling when no main window found or no theme attribute
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #F5F5F5;
+                    color: black;
+                }
+                QLabel {
+                    color: black;
+                }
+                QSpinBox, QSlider {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid #CCC;
+                    border-radius: 3px;
+                    padding: 2px;
+                }
+                QSpinBox:hover, QSlider:hover {
+                    border: 1px solid #999;
+                }
+                QPushButton, QDialogButtonBox QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    border: 1px solid #BBBBBB;
+                    border-radius: 5px;
+                    padding: 10px;
+                    min-width: 80px;
+                    font-weight: bold;
+                }
+                QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                    background-color: #E0E0E0;
+                }
+                QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                    background-color: #D0D0D0;
+                }
+                QDialogButtonBox {
+                    background-color: transparent;
+                }
+            """)
         
         # Calculate grid unit (assuming 23 pixels per grid square)
         self.grid_unit = 23
@@ -1331,12 +1501,10 @@ class WidthConfigDialog(QDialog):
         
         # Slider labels
         slider_labels = QHBoxLayout()
-        slider_labels.addWidget(QLabel("More Stroke"))
         slider_labels.addStretch()
         self.percentage_label = QLabel(f"{self.color_slider.value()}% Color")
         slider_labels.addWidget(self.percentage_label)
         slider_labels.addStretch()
-        slider_labels.addWidget(QLabel("More Color"))
         color_layout.addLayout(slider_labels)
         
         layout.addLayout(color_layout)
@@ -1345,9 +1513,10 @@ class WidthConfigDialog(QDialog):
         self.color_slider.valueChanged.connect(self.update_percentage_label)
         
         # Preview section
-        preview_layout = QHBoxLayout()
-        preview_layout.addWidget(QLabel("Preview:"))
+        preview_layout = QVBoxLayout()
         self.preview_label = QLabel()
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setMinimumHeight(40)
         self.update_preview()
         preview_layout.addWidget(self.preview_label)
         layout.addLayout(preview_layout)
@@ -1356,15 +1525,11 @@ class WidthConfigDialog(QDialog):
         self.thickness_spinbox.valueChanged.connect(self.update_preview)
         self.color_slider.valueChanged.connect(self.update_preview)
         
-        # Buttons
-        button_layout = QHBoxLayout()
-        ok_button = QDialogButton("OK")
-        cancel_button = QDialogButton("Cancel")
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
+        # Buttons using QDialogButtonBox for consistent theme styling
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        layout.addWidget(self.button_box)
     
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""

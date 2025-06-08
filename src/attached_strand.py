@@ -898,7 +898,7 @@ class AttachedStrand(Strand):
 
         # Draw highlight if selected (only when directly selected)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             
@@ -2287,7 +2287,7 @@ class AttachedStrand(Strand):
 
         # Draw highlight if selected (only when directly selected)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), self.stroke_width + 8)
+            highlight_pen = QPen(QColor('red'), 10 )  # Fixed width instead of self.stroke_width + 8
             highlight_pen.setJoinStyle(Qt.MiterJoin)
             highlight_pen.setCapStyle(Qt.FlatCap)
             

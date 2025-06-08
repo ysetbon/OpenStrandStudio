@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QPushButton as QDialogButton
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
 import logging
@@ -256,6 +256,17 @@ class NumberedLayerButton(QPushButton):
             change_stroke_action.setDefaultWidget(change_stroke_label)
             change_stroke_action.triggered.connect(lambda: self.change_stroke_color(strand, layer_panel))
             context_menu.addAction(change_stroke_action)
+            
+            # Add Change Width option
+            change_width_text = _['change_width'] if 'change_width' in _ else "Change Width"
+            change_width_label = HoverLabel(change_width_text, self, theme)
+            if is_hebrew:
+                change_width_label.setLayoutDirection(Qt.RightToLeft)
+                change_width_label.setAlignment(Qt.AlignLeft)
+            change_width_action = QWidgetAction(self)
+            change_width_action.setDefaultWidget(change_width_label)
+            change_width_action.triggered.connect(lambda: self.change_width(strand, layer_panel))
+            context_menu.addAction(change_width_action)
             
             context_menu.addSeparator()
             # Check if the strand has the necessary attribute before adding stroke actions
@@ -1204,3 +1215,177 @@ class NumberedLayerButton(QPushButton):
                         logging.info("Saved undo/redo state after changing stroke color")
                 else:
                     self.update()
+
+    def change_width(self, strand, layer_panel):
+        """Open a width configuration dialog to change strand width."""
+        dialog = WidthConfigDialog(strand, layer_panel, self)
+        if dialog.exec_() == QDialog.Accepted:
+            new_width, new_stroke_width = dialog.get_values()
+            
+            # Apply changes to the strand
+            old_width = strand.width
+            old_stroke_width = strand.stroke_width
+            strand.width = new_width
+            strand.stroke_width = new_stroke_width
+            
+            # Update strand shape to recalculate side lines with new stroke width
+            if hasattr(strand, 'update_shape'):
+                strand.update_shape()
+            
+            # Find and update related strands with the same set number (like color changes)
+            if hasattr(strand, 'layer_name') and strand.layer_name:
+                layer_parts = strand.layer_name.split('_')
+                if len(layer_parts) >= 1:
+                    set_number = layer_parts[0]
+                    set_prefix = f"{set_number}_"
+                    
+                    # Update all strands that belong to the same set
+                    updated_strands = []
+                    for other_strand in layer_panel.canvas.strands:
+                        if (hasattr(other_strand, 'layer_name') and 
+                            other_strand.layer_name and 
+                            other_strand.layer_name.startswith(set_prefix)):
+                            other_strand.width = new_width
+                            other_strand.stroke_width = new_stroke_width
+                            # Update shape for all strands in the set
+                            if hasattr(other_strand, 'update_shape'):
+                                other_strand.update_shape()
+                            updated_strands.append(other_strand.layer_name)
+                    
+                    logging.info(f"Updated width for all strands in set {set_number}: {updated_strands}")
+            
+            logging.info(f"Changed width from {old_width} to {new_width} and stroke width from {old_stroke_width} to {new_stroke_width} for strand {getattr(strand, 'layer_name', 'unnamed')}")
+            
+            # Force a complete canvas repaint
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                # Clear any cached drawing data
+                layer_panel.canvas.repaint()
+                # Also call update for good measure
+                layer_panel.canvas.update()
+                # Save state for undo/redo
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    layer_panel.canvas.undo_redo_manager.save_state()
+                    logging.info("Saved undo/redo state after changing width")
+
+
+class WidthConfigDialog(QDialog):
+    """Dialog for configuring strand width and stroke width."""
+    
+    def __init__(self, strand, layer_panel, parent=None):
+        super().__init__(parent)
+        self.strand = strand
+        self.layer_panel = layer_panel
+        
+        # Get translations
+        _ = translations.get(layer_panel.language_code, translations['en'])
+        
+        self.setWindowTitle(_['change_width'] if 'change_width' in _ else "Change Width")
+        self.setModal(True)
+        self.setFixedSize(350, 200)
+        
+        # Calculate grid unit (assuming 23 pixels per grid square)
+        self.grid_unit = 23
+        
+        # Current values
+        current_total_squares = round(strand.width / self.grid_unit)
+        current_stroke_pixels = strand.stroke_width
+        
+        # Create layout
+        layout = QVBoxLayout(self)
+        
+        # Total thickness in grid squares
+        thickness_layout = QHBoxLayout()
+        thickness_layout.addWidget(QLabel("Total Thickness (grid squares):"))
+        self.thickness_spinbox = QSpinBox()
+        self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
+        self.thickness_spinbox.setSingleStep(2)  # Only even numbers
+        self.thickness_spinbox.setValue(current_total_squares if current_total_squares % 2 == 0 else current_total_squares + 1)
+        thickness_layout.addWidget(self.thickness_spinbox)
+        thickness_layout.addWidget(QLabel("squares"))
+        layout.addLayout(thickness_layout)
+        
+        # Color width percentage (slider)
+        color_layout = QVBoxLayout()
+        color_layout.addWidget(QLabel("Color vs Stroke ratio:"))
+        
+        self.color_slider = QSlider(Qt.Horizontal)
+        self.color_slider.setRange(10, 90)  # 10% to 90% color
+        
+        # Calculate current color percentage
+        # Total visible width = color_width + 2 * stroke_width = strand.width + 2 * strand.stroke_width
+        current_total_width = strand.width + 2 * strand.stroke_width
+        current_percentage = int((strand.width / current_total_width) * 100) if current_total_width > 0 else 50
+        self.color_slider.setValue(max(10, min(90, current_percentage)))
+        
+        color_layout.addWidget(self.color_slider)
+        
+        # Slider labels
+        slider_labels = QHBoxLayout()
+        slider_labels.addWidget(QLabel("More Stroke"))
+        slider_labels.addStretch()
+        self.percentage_label = QLabel(f"{self.color_slider.value()}% Color")
+        slider_labels.addWidget(self.percentage_label)
+        slider_labels.addStretch()
+        slider_labels.addWidget(QLabel("More Color"))
+        color_layout.addLayout(slider_labels)
+        
+        layout.addLayout(color_layout)
+        
+        # Connect slider to update label
+        self.color_slider.valueChanged.connect(self.update_percentage_label)
+        
+        # Preview section
+        preview_layout = QHBoxLayout()
+        preview_layout.addWidget(QLabel("Preview:"))
+        self.preview_label = QLabel()
+        self.update_preview()
+        preview_layout.addWidget(self.preview_label)
+        layout.addLayout(preview_layout)
+        
+        # Connect changes to update preview
+        self.thickness_spinbox.valueChanged.connect(self.update_preview)
+        self.color_slider.valueChanged.connect(self.update_preview)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_button = QDialogButton("OK")
+        cancel_button = QDialogButton("Cancel")
+        ok_button.clicked.connect(self.accept)
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+    
+    def update_percentage_label(self):
+        """Update the percentage label when slider changes."""
+        self.percentage_label.setText(f"{self.color_slider.value()}% Color")
+    
+    def update_preview(self):
+        """Update the preview display."""
+        total_width = self.thickness_spinbox.value() * self.grid_unit
+        color_percentage = self.color_slider.value() / 100.0
+        
+        # Use the same calculation as get_values()
+        stroke_width = total_width * (1 - color_percentage) / 2
+        color_width = total_width - 2 * stroke_width
+        
+        self.preview_label.setText(
+            f"Total: {total_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
+        )
+    
+    def get_values(self):
+        """Get the configured width and stroke width values."""
+        total_width = self.thickness_spinbox.value() * self.grid_unit
+        color_percentage = self.color_slider.value() / 100.0
+        
+        # Calculate stroke width first, then color width
+        # The total visible width = color_width + 2 * stroke_width
+        # So: stroke_width = total_width * (1 - color_percentage) / 2
+        # And: color_width = total_width - 2 * stroke_width
+        stroke_width = total_width * (1 - color_percentage) / 2
+        color_width = total_width - 2 * stroke_width
+        
+        logging.info(f"Width dialog values: total={total_width}, color%={color_percentage*100:.0f}%, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}")
+        
+        return int(color_width), int(stroke_width)

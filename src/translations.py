@@ -177,6 +177,7 @@ translations = {
         'restore_default_stroke': 'Restore Default Stroke',
         'change_color': 'Change Color',
         'change_stroke_color': 'Change Stroke Color',
+        'change_width': 'Change Width',
         # --- NEW ---
         'hide_layer': 'Hide Layer',
         'show_layer': 'Show Layer',
@@ -443,6 +444,7 @@ translations = {
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
         'change_color': 'Changer la couleur',
         'change_stroke_color': 'Changer la couleur du trait',
+        'change_width': 'Changer la largeur',
         # --- NEW ---
         'hide_layer': 'Masquer Couche',
         'show_layer': 'Afficher Couche',
@@ -706,6 +708,8 @@ translations = {
         'transparent_stroke': 'Bordo di Partenza Trasparente',
         'restore_default_stroke': 'Ripristina Traccia Predefinita',
         'change_color': 'Cambia colore',
+        'change_stroke_color': 'Cambia colore del tratto',
+        'change_width': 'Cambia larghezza',
         # --- NEW ---
         'hide_layer': 'Nascondi Livello',
         'show_layer': 'Mostra Livello',
@@ -967,6 +971,8 @@ translations = {
         'transparent_stroke': 'Borde de Inicio Transparente',
         'restore_default_stroke': 'Restaurar Trazo Predeterminado',
         'change_color': 'Cambiar color',
+        'change_stroke_color': 'Cambiar color del trazo',
+        'change_width': 'Cambiar ancho',
         # --- NEW ---
         'hide_layer': 'Ocultar Capa',
         'show_layer': 'Mostrar Capa',
@@ -1234,6 +1240,7 @@ translations = {
         'restore_default_stroke': 'Restaurar Traço Padrão',
         'change_color': 'Mudar cor',
         'change_stroke_color': 'Mudar cor do traço',
+        'change_width': 'Mudar largura',
         # --- NEW ---
         'hide_layer': 'Ocultar Camada',
         'show_layer': 'Mostrar Camada',
@@ -1470,6 +1477,7 @@ translations = {
         'restore_default_stroke': 'שחזר קו ברירת מחדל',
         'change_color': 'שנה צבע',
         'change_stroke_color': 'שנה צבע קו',
+        'change_width': 'שנה רוחב',
         # Layer panel extension and arrow settings translations
         'extension_length': 'אורך הרחבה',
         'extension_length_tooltip': 'אורך קווי ההרחבה',

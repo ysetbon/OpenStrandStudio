@@ -2662,7 +2662,11 @@ class MoveMode:
             center = strand.start if i == 0 else strand.end
             
             # Calculate the proper radius for the highlight
-            outer_radius = strand.width / 2 + strand.stroke_width + 4
+            # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
+            # This pen is drawn around the stroke path, so the outer edge is at:
+            highlight_pen_thickness = strand.stroke_width + 8
+            stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
+            outer_radius = stroke_path_radius + highlight_pen_thickness / 2
             inner_radius = strand.width / 2 + 6
             
             # Create a full circle path for the outer circle
@@ -2702,17 +2706,37 @@ class MoveMode:
             # Create the C-shaped highlight by subtracting the mask from the ring
             c_shape_path = ring_path.subtracted(mask_rect)
             
-            # Draw the C-shaped highlight
-            # First draw the stroke (border) with the strand's stroke color
-            stroke_pen = QPen(QColor(255, 0, 0, 255), strand.stroke_width)
-            stroke_pen.setJoinStyle(Qt.MiterJoin)
-            stroke_pen.setCapStyle(Qt.FlatCap)
-            painter.setPen(stroke_pen)
-            # --- CHANGE: Use NoBrush instead of solid red fill ---
-            # painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
-            painter.setBrush(Qt.NoBrush)
-            # --- END CHANGE ---
-            painter.drawPath(c_shape_path)
+            # Now create the stroke and color parts within the C-shape
+            # Outer part (stroke area) - from outer_radius to stroke boundary
+            stroke_outer_radius = outer_radius
+            stroke_inner_radius = strand.width / 2 + strand.stroke_width
+            
+            stroke_outer_circle = QPainterPath()
+            stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
+            stroke_inner_circle = QPainterPath()
+            stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
+            stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
+            stroke_c_shape = stroke_ring.subtracted(mask_rect)
+            
+            # Inner part (color area) - from stroke boundary to inner_radius
+            color_outer_radius = strand.width / 2 + strand.stroke_width
+            color_inner_radius = inner_radius
+            
+            color_outer_circle = QPainterPath()
+            color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
+            color_inner_circle = QPainterPath()
+            color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
+            color_ring = color_outer_circle.subtracted(color_inner_circle)
+            color_c_shape = color_ring.subtracted(mask_rect)
+            
+            # Draw the stroke part in red
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(255, 0, 0, 255))
+            painter.drawPath(stroke_c_shape)
+            
+            # Draw the color part in black
+            painter.setBrush(QColor(0, 0, 0, 255))
+            painter.drawPath(color_c_shape)
             
             # Restore painter state
             painter.restore()

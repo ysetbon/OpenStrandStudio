@@ -1397,8 +1397,16 @@ class Strand:
             center = self.start if i == 0 else self.end
             
             # Calculate the proper radius for the highlight
-            outer_radius = self.width / 2 + self.stroke_width + 4
-            inner_radius = self.width / 2 + 6
+            # For attached strands, we need to avoid covering the circle stroke area
+            if hasattr(self, '__class__') and self.__class__.__name__ == 'AttachedStrand':
+                # For attached strands, the circle radius is (width + stroke_width * 2) / 2
+                circle_outer_radius = (self.width + self.stroke_width * 2) / 2
+                outer_radius = circle_outer_radius + 6  # Highlight outside the circle
+                inner_radius = circle_outer_radius + 2  # Leave a small gap
+            else:
+                # For regular strands, use the original calculation
+                outer_radius = self.width / 2 + self.stroke_width + 4
+                inner_radius = self.width / 2 + 6
             
             # Create a full circle path for the outer circle
             outer_circle = QPainterPath()

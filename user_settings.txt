@@ -5,7 +5,7 @@ DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 NumSteps: 3
 MaxBlurRadius: 30.0
-UseExtendedMask: true
+UseExtendedMask: false
 ExtensionLength: 200.0
 ExtensionDashCount: 15
 ExtensionDashWidth: 20.0

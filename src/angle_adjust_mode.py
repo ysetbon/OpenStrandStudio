@@ -39,6 +39,10 @@ class AngleAdjustMode:
         self.current_angle = self.calculate_angle(strand.start, strand.end)
         self.initial_length = self.original_length
         
+        # Store initial positions for cancel functionality
+        self.initial_start = QPointF(strand.start)
+        self.initial_end = QPointF(strand.end)
+        
         # Reset the cumulative length adjustment each time we activate
         self.length_adjustment = 0
         
@@ -113,6 +117,10 @@ class AngleAdjustMode:
 
         # Get the current language translations
         _ = translations[self.canvas.language_code]
+        
+        # Set flag to prevent undo/redo saves during dialog interaction
+        if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+            self.canvas.layer_panel.undo_redo_manager._skip_save = True
 
         current_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end)
         current_length = self.calculate_length(self.active_strand.start, self.active_strand.end)
@@ -219,8 +227,17 @@ class AngleAdjustMode:
         length_slider.valueChanged.connect(update_length)
         length_spinbox.valueChanged.connect(update_length)
 
-        if dialog.exec_() == QDialog.Accepted:
+        result = dialog.exec_()
+        
+        # Always re-enable saving when dialog closes, regardless of result
+        if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+            self.canvas.layer_panel.undo_redo_manager._skip_save = False
+        
+        if result == QDialog.Accepted:
             self.confirm_adjustment()
+        else:
+            # Dialog was cancelled, reset to initial state if needed
+            self.cancel_adjustment()
 
     def handle_key_press(self, event):
         if not self.active_strand:
@@ -549,7 +566,7 @@ class AngleAdjustMode:
             self.active_strand.update_shape()
             self.active_strand.update_side_line()
 
-            # Save state for undo/redo after angle adjustment
+            # Save state for undo/redo after angle adjustment (skip_save flag already cleared in dialog cleanup)
             if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                 self.canvas.layer_panel.undo_redo_manager.save_state()
                 logging.info("Saved state after angle adjustment")

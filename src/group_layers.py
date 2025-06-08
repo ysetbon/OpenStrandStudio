@@ -1181,6 +1181,12 @@ class GroupPanel(QWidget):
 
             logging.info(f"Editing angles for group {group_name} with {len(all_strands)} strands from canvas.groups.")
             
+            # Set flag to prevent undo/redo saves during dialog interaction
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager._skip_save = True
+            if hasattr(self.canvas, 'undo_redo_manager'):
+                self.canvas.undo_redo_manager._skip_save = True
+            
             # Create editable layers list
             editable_layers = [strand.layer_name for strand in all_strands 
                               if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
@@ -2694,6 +2700,12 @@ class GroupLayerManager:
 
             logging.info(f"Editing angles for group {group_name} with {len(all_strands)} strands from canvas.groups.")
             
+            # Set flag to prevent undo/redo saves during dialog interaction
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager._skip_save = True
+            if hasattr(self.canvas, 'undo_redo_manager'):
+                self.canvas.undo_redo_manager._skip_save = True
+            
             # Create editable layers list
             editable_layers = [strand.layer_name for strand in all_strands 
                               if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
@@ -3035,6 +3047,9 @@ class StrandAngleEditDialog(QDialog):
         self.delta_minus = -1
         self.delta_plus_plus = 5
         self.delta_minus_minus = -5
+        
+        # Flag to track if dialog is closing (to prevent multiple saves)
+        self.dialog_closing = False
 
         # Continuous adjustment delta values
         self.delta_continuous_plus = 0.025
@@ -3479,10 +3494,18 @@ class StrandAngleEditDialog(QDialog):
             self.canvas.layer_state_manager.save_current_state()
             logging.info("Updated layer state manager connections after angle adjustments")
         
-        # Save state when adjustment stops
-        logging.info("Group angle edit finished, saving state")
-        if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
-            self.canvas.undo_redo_manager.save_state()
+        # Only save state if dialog is actually closing, not on every button release
+        if self.dialog_closing:
+            logging.info("Group angle edit finished, saving state")
+            if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager._skip_save = False
+                self.canvas.layer_panel.undo_redo_manager.save_state()
+            if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
+                # Clear flag for direct undo_redo_manager access too
+                self.canvas.undo_redo_manager._skip_save = False
+                # Only save if we didn't already save above
+                if not (hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager')):
+                    self.canvas.undo_redo_manager.save_state()
     def start_continuous_adjustment_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_plus
@@ -4311,16 +4334,29 @@ class StrandAngleEditDialog(QDialog):
 
     def accept(self):
         # Perform any final actions before closing the dialog
-        
-                # Only save state if we're not in continuous adjustment mode
-        if not getattr(self, 'is_adjusting_continuously', False):
-            # Update the layer state manager's connections to reflect the new strand positions
-            if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
-                # Save the current state to update connections in the layer state manager
-                self.canvas.layer_state_manager.save_current_state()
-                logging.info("Updated layer state manager connections after angle adjustments")
-
+        self._cleanup_on_close()  # This will handle cleanup and save state
         super().accept()
+    
+    def closeEvent(self, event):
+        # Ensure cleanup happens regardless of how dialog closes
+        self._cleanup_on_close()
+        super().closeEvent(event)
+    
+    def reject(self):
+        # Handle cancel/reject case
+        self._cleanup_on_close()
+        super().reject()
+    
+    def _cleanup_on_close(self):
+        # Set flag to indicate dialog is closing
+        self.dialog_closing = True
+        # Perform final cleanup and save state
+        self.stop_adjustment()
+        # Re-enable saving when dialog closes
+        if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+            self.canvas.layer_panel.undo_redo_manager._skip_save = False
+        if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
+            self.canvas.undo_redo_manager._skip_save = False
 
     def update_x_angle(self):
         try:

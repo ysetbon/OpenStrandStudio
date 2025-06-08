@@ -1181,6 +1181,72 @@ class MoveMode:
         from PyQt5.QtCore import QTimer
         QTimer.singleShot(0, self.canvas.update)
 
+    def cancel_movement(self):
+        """Externally cancel any ongoing move operation."""
+        import logging
+        if self.is_moving:
+            logging.info("MoveMode: Movement cancelled externally.")
+            self.reset_movement_state()
+            # Restore selection to what it was before the move started
+            final_selected_strand = self.originally_selected_strand
+            if final_selected_strand:
+                if isinstance(final_selected_strand, MaskedStrand):
+                    self.canvas.selected_strand = final_selected_strand
+                    self.canvas.selected_attached_strand = None
+                else:
+                    self.canvas.selected_attached_strand = final_selected_strand
+                    self.canvas.selected_strand = None
+                final_selected_strand.is_selected = True
+
+            self.originally_selected_strand = None # Clear after use
+            self.canvas.update()
+
+    def reset_movement_state(self):
+        """Resets all state related to an active move operation."""
+        from PyQt5.QtCore import QPointF
+
+        # --- 1. Stop Timers ---
+        if hasattr(self, 'hold_timer'):
+            self.hold_timer.stop()
+        if hasattr(self, 'redraw_timer'):
+            self.redraw_timer.stop()
+ 
+        # --- 2. Reset MoveMode State COMPLETELY ---
+        self.is_moving = False
+        self.moving_point = None
+        self.affected_strand = None
+        self.moving_side = None
+        self.selected_rectangle = None
+        self.last_update_pos = None
+        self.accumulated_delta = QPointF(0, 0)
+        self.last_snapped_pos = None
+        self.target_pos = None
+        self.mouse_offset = QPointF(0, 0)
+        if hasattr(self, 'move_timer'):
+            self.move_timer.stop()
+        self.in_move_mode = False
+        self.temp_selected_strand = None
+        self.last_update_rect = None
+        self.is_moving_control_point = False
+        self.is_moving_strand_point = False
+        self.user_deselected_all = False
+        self.last_update_time = 0
+
+        # --- 3. Clean up Canvas Temp Attributes & Restore Paint Event ---
+        if hasattr(self.canvas, 'original_paintEvent'):
+            self.canvas.paintEvent = self.canvas.original_paintEvent
+            delattr(self.canvas, 'original_paintEvent')
+        attrs_to_clean = ['active_strand_for_drawing', 'active_strand_update_rect',
+                          'last_strand_rect', 'background_cache', 'background_cache_valid',
+                          'movement_first_draw', 'affected_strands_for_drawing',
+                          'truly_moving_strands', '_frames_since_click']
+        for attr in attrs_to_clean:
+            if hasattr(self.canvas, attr):
+                try:
+                    delattr(self.canvas, attr)
+                except AttributeError:
+                    pass
+
     def mouseReleaseEvent(self, event):
         """
         Handle mouse release events.
@@ -1195,53 +1261,9 @@ class MoveMode:
         selection_at_release_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
         original_selection_ref = self.originally_selected_strand # Keep reference used during move
         was_moving_control_point = self.is_moving_control_point
-        affected_strand_ref = self.affected_strand # Keep ref for potential masked strand check
-
-        # --- 1. Stop Timers ---
-        if hasattr(self, 'hold_timer'):
-            self.hold_timer.stop()
-        if hasattr(self, 'redraw_timer'):
-            self.redraw_timer.stop()
-
- 
-        # --- 2. Reset MoveMode State COMPLETELY ---
-        self.is_moving = False
-        self.moving_point = None
-        self.affected_strand = None
-        self.moving_side = None
-        self.selected_rectangle = None
-        self.last_update_pos = None
-        self.accumulated_delta = QPointF(0, 0)
-        self.last_snapped_pos = None
-        self.target_pos = None
-        self.mouse_offset = QPointF(0, 0)  # Reset mouse offset to prevent jumps in next movement
-        if hasattr(self, 'move_timer'): # Check if timer exists before stopping
-            self.move_timer.stop()
-        self.in_move_mode = False
-        self.temp_selected_strand = None
-        self.last_update_rect = None
-        self.is_moving_control_point = False
-        self.is_moving_strand_point = False
-        # Keep originally_selected_strand for now, clear user_deselected_all
-        self.user_deselected_all = False # Reset this flag on release
-        self.last_update_time = 0 # Reset time limiter
-
-        # --- 3. Clean up Canvas Temp Attributes & Restore Paint Event ---
-        if hasattr(self.canvas, 'original_paintEvent'):
-            self.canvas.paintEvent = self.canvas.original_paintEvent
-            delattr(self.canvas, 'original_paintEvent')
-        # Cleanup optimization attributes
-        attrs_to_clean = ['active_strand_for_drawing', 'active_strand_update_rect',
-                          'last_strand_rect', 'background_cache', 'background_cache_valid',
-                          'movement_first_draw', 'affected_strands_for_drawing',
-                          'truly_moving_strands', '_frames_since_click']
-        for attr in attrs_to_clean:
-            if hasattr(self.canvas, attr):
-                try: # Wrap in try-except in case attribute doesn't exist
-                    delattr(self.canvas, attr)
-                except AttributeError:
-                    pass
-
+        
+        self.reset_movement_state()
+        
         # --- 4. Restore Selection State --- 
         # Determine the final selection based on whether it was a click or a move
         final_selected_strand = None

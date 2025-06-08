@@ -3045,6 +3045,7 @@ class StrandAngleEditDialog(QDialog):
         self.current_button = None
         self.last_press_time = None
         self.x_angle = 0
+        self.is_adjusting_continuously = False  # Flag to prevent state saves during continuous adjustment
 
         # Apply the current theme after setting up the UI
         self.apply_theme()
@@ -3453,6 +3454,9 @@ class StrandAngleEditDialog(QDialog):
         self.current_adjustment = None
         self.current_button = None
         self.last_press_time = None
+        
+        # Clear the continuous adjustment flag
+        self.is_adjusting_continuously = False
 
         # Disconnect timers to avoid multiple connections
         try:
@@ -3464,6 +3468,21 @@ class StrandAngleEditDialog(QDialog):
             self.adjustment_timer.timeout.disconnect()
         except TypeError:
             pass  # Not connected
+            
+        # Update the group data after the angle edit is complete
+        if self.parent() and hasattr(self.parent(), 'update_group_after_angle_edit'):
+            self.parent().update_group_after_angle_edit(self.group_name)
+        
+        # Update the layer state manager's connections to reflect the new strand positions
+        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            # Save the current state to update connections in the layer state manager
+            self.canvas.layer_state_manager.save_current_state()
+            logging.info("Updated layer state manager connections after angle adjustments")
+        
+        # Save state when adjustment stops
+        logging.info("Group angle edit finished, saving state")
+        if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
+            self.canvas.undo_redo_manager.save_state()
     def start_continuous_adjustment_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_plus
@@ -3490,6 +3509,8 @@ class StrandAngleEditDialog(QDialog):
 
     def perform_continuous_adjustment(self):
         if self.current_adjustment is not None:
+            # Set flag to prevent state saves during continuous adjustment
+            self.is_adjusting_continuously = True
             self.adjust_x_angle(self.current_adjustment)
 
     def adjust_dialog_size(self):
@@ -4214,6 +4235,9 @@ class StrandAngleEditDialog(QDialog):
         self.adjust_angle(row, self.delta_minus_minus)
 
     def adjust_angle(self, row, delta):
+        if hasattr(self.canvas, 'move_mode'):
+            self.canvas.move_mode.cancel_movement()
+
         strand = self.group_data['strands'][row]
         current_angle_item = self.table.item(row, 1)
         if current_angle_item:
@@ -4226,6 +4250,11 @@ class StrandAngleEditDialog(QDialog):
             self.update_strand_angle(strand, new_angle)
 
     def on_checkbox_changed(self, row, col, state):
+        # Only cancel movement if we're not in continuous adjustment mode
+        if not getattr(self, 'is_adjusting_continuously', False):
+            if hasattr(self.canvas, 'move_mode'):
+                self.canvas.move_mode.cancel_movement()
+            
         strand = self.group_data['strands'][row]
 
         if col == 6:  # x checkbox
@@ -4283,12 +4312,14 @@ class StrandAngleEditDialog(QDialog):
     def accept(self):
         # Perform any final actions before closing the dialog
         
-        # Update the layer state manager's connections to reflect the new strand positions
-        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
-            # Save the current state to update connections in the layer state manager
-            self.canvas.layer_state_manager.save_current_state()
-            logging.info("Updated layer state manager connections after angle adjustments")
-        
+                # Only save state if we're not in continuous adjustment mode
+        if not getattr(self, 'is_adjusting_continuously', False):
+            # Update the layer state manager's connections to reflect the new strand positions
+            if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                # Save the current state to update connections in the layer state manager
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info("Updated layer state manager connections after angle adjustments")
+
         super().accept()
 
     def update_x_angle(self):
@@ -4367,10 +4398,10 @@ class StrandAngleEditDialog(QDialog):
                              if hasattr(potential_masked_strand, 'force_shadow_update'): potential_masked_strand.force_shadow_update()
 
 
-        # Update the layer state manager's connections to reflect the new strand positions
-        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
-            # Save the current state to update connections in the layer state manager
-            self.canvas.layer_state_manager.save_current_state()
-            logging.info("Updated layer state manager connections after angle adjustments")
-
-        super().accept()
+        # Only save state if we're not in continuous adjustment mode
+        if not getattr(self, 'is_adjusting_continuously', False):
+            # Update the layer state manager's connections to reflect the new strand positions
+            if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                # Save the current state to update connections in the layer state manager
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info("Updated layer state manager connections after angle adjustments")

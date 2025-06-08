@@ -4325,9 +4325,12 @@ class StrandDrawingCanvas(QWidget):
                 abs(point1.y() - point2.y()) <= tolerance)
 
     def update(self):
-        # Skip update_attachment_statuses if we're in the middle of attaching
-        if hasattr(self, 'current_mode') and hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching:
-            # Don't update attachment statuses while attaching
+        # Skip update_attachment_statuses if we're in the middle of attaching or moving
+        if hasattr(self, 'current_mode') and (
+            (hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching) or
+            (hasattr(self.current_mode, 'is_moving') and self.current_mode.is_moving)
+        ):
+            # Don't update attachment statuses while attaching or moving
             super().update()
         else:
             self.update_attachment_statuses()

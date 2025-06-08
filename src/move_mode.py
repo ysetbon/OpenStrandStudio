@@ -1203,14 +1203,8 @@ class MoveMode:
         if hasattr(self, 'redraw_timer'):
             self.redraw_timer.stop()
 
-        # --- 2. Final Position Update (if moving) ---
-        if was_moving:
-            # Snap the final position once on release
-            final_snapped_pos = self.canvas.snap_to_grid(final_pos)
-            # Update geometry *without* triggering optimized drawing paths now
-            self.update_strand_geometry_only(final_snapped_pos)
-
-        # --- 3. Reset MoveMode State COMPLETELY ---
+ 
+        # --- 2. Reset MoveMode State COMPLETELY ---
         self.is_moving = False
         self.moving_point = None
         self.affected_strand = None
@@ -1232,7 +1226,7 @@ class MoveMode:
         self.user_deselected_all = False # Reset this flag on release
         self.last_update_time = 0 # Reset time limiter
 
-        # --- 4. Clean up Canvas Temp Attributes & Restore Paint Event ---
+        # --- 3. Clean up Canvas Temp Attributes & Restore Paint Event ---
         if hasattr(self.canvas, 'original_paintEvent'):
             self.canvas.paintEvent = self.canvas.original_paintEvent
             delattr(self.canvas, 'original_paintEvent')
@@ -1248,7 +1242,7 @@ class MoveMode:
                 except AttributeError:
                     pass
 
-        # --- 5. Restore Selection State --- 
+        # --- 4. Restore Selection State --- 
         # Determine the final selection based on whether it was a click or a move
         final_selected_strand = None
         if was_moving:
@@ -1285,13 +1279,13 @@ class MoveMode:
         # Clear the originally_selected_strand reference ONLY AFTER the release event is fully processed
         self.originally_selected_strand = None
 
-        # --- 6. Save State if Control Point Moved ---
+        # --- 5. Save State if Control Point Moved ---
         if was_moving_control_point and hasattr(self, 'undo_redo_manager'):
              logging.info("MoveMode: Control point movement finished, saving state.")
              if hasattr(self.undo_redo_manager, '_last_save_time'): self.undo_redo_manager._last_save_time = 0
              self.undo_redo_manager.save_state()
 
-        # --- 7. Force Updates ---
+        # --- 6. Force Updates ---
         self.canvas.update() # Force immediate redraw with restored state
         QTimer.singleShot(0, self.canvas.update) # Schedule another for next cycle
 
@@ -1325,10 +1319,46 @@ class MoveMode:
         self.affected_strand.update_shape()
         if hasattr(self.affected_strand, 'update_side_line'): self.affected_strand.update_side_line()
 
-        # --- REMOVED connection update loop ---
-        # The update_strand_position method called during mouseMove should have handled connected strands.
-        # This final update only applies the very last position change to the main affected strand.
-        # --- END REMOVED connection update loop ---
+        # Update connected strands to maintain connection synchronization
+        # This is critical to prevent disconnection on mouse release
+        is_moving_endpoint = self.moving_side == 0 or self.moving_side == 1
+        if is_moving_endpoint:
+            moving_point_coord = self.affected_strand.start if self.moving_side == 0 else self.affected_strand.end
+            
+            if moving_point_coord and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                # Get connections from layer state manager
+                connections = self.canvas.layer_state_manager.getConnections()
+                connected_strand_names = set(connections.get(self.affected_strand.layer_name, []))
+                # Also check reverse connections
+                for name, connected_list in connections.items():
+                    if self.affected_strand.layer_name in connected_list:
+                        connected_strand_names.add(name)
+                
+                # Update positions of connected strands
+                for other_strand in self.canvas.strands:
+                    if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
+                        continue
+                    
+                    # Check if they are connected according to the state manager
+                    if other_strand.layer_name in connected_strand_names:
+                        # Determine which end of the connected strand needs to move
+                        connected_moving_side = -1
+                        if self.points_are_close(other_strand.start, moving_point_coord):
+                            connected_moving_side = 0
+                        elif self.points_are_close(other_strand.end, moving_point_coord):
+                            connected_moving_side = 1
+                        
+                        # Update the appropriate end to maintain connection
+                        if connected_moving_side == 0:
+                            other_strand.start = new_pos
+                            other_strand.update_shape()
+                            if hasattr(other_strand, 'update_side_line'):
+                                other_strand.update_side_line()
+                        elif connected_moving_side == 1:
+                            other_strand.end = new_pos
+                            other_strand.update_shape()
+                            if hasattr(other_strand, 'update_side_line'):
+                                other_strand.update_side_line()
 
     def gradual_move(self):
         """
@@ -1882,10 +1912,12 @@ class MoveMode:
                 if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                     connections = self.canvas.layer_state_manager.getConnections()
                     connected_strand_names = set(connections.get(self.affected_strand.layer_name, []))
+                    logging.info(f"MoveMode: Direct connections for {self.affected_strand.layer_name}: {connected_strand_names}")
                     # Also check the reverse connection
                     for name, connected_list in connections.items():
                          if self.affected_strand.layer_name in connected_list:
                               connected_strand_names.add(name)
+                    logging.info(f"MoveMode: All connections for {self.affected_strand.layer_name}: {connected_strand_names}")
 
                 for other_strand in self.canvas.strands:
                     if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
@@ -2441,34 +2473,26 @@ class MoveMode:
                 
                 affected_strands.add(strand.second_selected_strand)
                 
-        # Find any connected strands
-        moving_point = strand.start if moving_side == 0 else strand.end
-        connected_strand = self.find_connected_strand(strand, moving_side, moving_point)
+        # Find any connected strands using the OLD position before the move
+        old_moving_point = old_start if moving_side == 0 else old_end
+        connected_strand = self.find_connected_strand(strand, moving_side, old_moving_point)
+        logging.info(f"MoveStrandUpdate: find_connected_strand for {strand.layer_name} side {moving_side} at {old_moving_point} -> {connected_strand.layer_name if connected_strand else None}")
+        
         if connected_strand:
-            # Store the non-moving endpoint of connected strand
-            if moving_side == 0 and hasattr(connected_strand, 'start'):
-                connected_old_start = QPointF(connected_strand.start)
-            elif moving_side == 1 and hasattr(connected_strand, 'end'):
-                connected_old_end = QPointF(connected_strand.end)
-                
             affected_strands.add(connected_strand)
             
-            # Update connected strand's position
+            # Update connected strand's connection point to match the new position
             if moving_side == 0:
+                # Moving strand's start -> update connected strand's end
                 connected_strand.end = new_pos
+                logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} end to {new_pos}")
             else:
+                # Moving strand's end -> update connected strand's start
                 connected_strand.start = new_pos
+                logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} start to {new_pos}")
                 
             connected_strand.update_shape()
             connected_strand.update_side_line()
-            
-            # Restore the non-moving endpoint of connected strand
-            if moving_side == 0 and hasattr(connected_strand, 'start'):
-                connected_strand.start = connected_old_start
-                connected_strand.update_shape()
-            elif moving_side == 1 and hasattr(connected_strand, 'end'):
-                connected_strand.end = connected_old_end
-                connected_strand.update_shape()
             
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
@@ -2746,17 +2770,22 @@ class MoveMode:
     def find_connected_strand(self, strand, side, moving_point):
         """Find a strand connected to the given strand at the specified side."""
         if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
+            logging.info(f"find_connected_strand: No layer_state_manager available")
             return None
 
         connections = self.canvas.layer_state_manager.getConnections()
         strand_connections = connections.get(strand.layer_name, [])
+        logging.info(f"find_connected_strand: {strand.layer_name} has connections: {strand_connections}")
 
         # Get prefix of the current strand
         prefix = strand.layer_name.split('_')[0]
 
+        # Check outgoing connections (strand connects TO other strands)
         for connected_layer_name in strand_connections:
+            logging.info(f"find_connected_strand: Checking outgoing connection {connected_layer_name}")
             # Only check strands with the same prefix
             if not connected_layer_name.startswith(f"{prefix}_"):
+                logging.info(f"find_connected_strand: Skipping {connected_layer_name} (different prefix)")
                 continue
 
             # Find the connected strand
@@ -2767,7 +2796,7 @@ class MoveMode:
                 None
             )
 
-            if connected_strand and connected_strand != strand:
+            if connected_strand and connected_strand != strand:             
                 # Check if the connection point matches the side we're moving
                 if (side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
                 (side == 1 and self.points_are_close(connected_strand.start, moving_point)):

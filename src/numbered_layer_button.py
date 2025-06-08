@@ -1264,9 +1264,18 @@ class NumberedLayerButton(QPushButton):
                 layer_panel.canvas.update()
                 # Save state for undo/redo
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    # Force save by resetting the time check
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    # Get current step before saving
+                    current_step = layer_panel.canvas.undo_redo_manager.current_step
+                    # Save the state
                     layer_panel.canvas.undo_redo_manager.save_state()
-                    logging.info("Saved undo/redo state after changing width")
+                    # Check if save actually happened
+                    new_step = layer_panel.canvas.undo_redo_manager.current_step
+                    if new_step > current_step:
+                        logging.info(f"Successfully saved undo/redo state after changing width (step {current_step} -> {new_step})")
+                    else:
+                        logging.warning(f"Width change may not have been saved to undo/redo (step remained at {current_step})")
 
 
 class WidthConfigDialog(QDialog):

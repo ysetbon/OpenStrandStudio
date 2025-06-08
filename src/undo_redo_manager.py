@@ -535,6 +535,24 @@ class UndoRedoManager(QObject):
                          return False
                     # --- END ADD ---
 
+                    # --- ADD: Check strand width and stroke_width ---
+                    if hasattr(current_strand, 'width') and 'width' in prev_strand:
+                        if abs(current_strand.width - prev_strand.get('width', 0)) > 0.1:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} width differs (Current: {current_strand.width}, Prev: {prev_strand.get('width', 0)}).")
+                            return False
+                    elif hasattr(current_strand, 'width') != ('width' in prev_strand):
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} width attribute presence differs.")
+                        return False
+
+                    if hasattr(current_strand, 'stroke_width') and 'stroke_width' in prev_strand:
+                        if abs(current_strand.stroke_width - prev_strand.get('stroke_width', 0)) > 0.1:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_width differs (Current: {current_strand.stroke_width}, Prev: {prev_strand.get('stroke_width', 0)}).")
+                            return False
+                    elif hasattr(current_strand, 'stroke_width') != ('stroke_width' in prev_strand):
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_width attribute presence differs.")
+                        return False
+                    # --- END ADD ---
+
                     # --- ADD: Check layer visibility (is_hidden) ---
                     current_hidden = getattr(current_strand, 'is_hidden', False)
                     # Assume False if 'is_hidden' is not in the saved data (for backward compatibility)
@@ -636,7 +654,7 @@ class UndoRedoManager(QObject):
                     return False
 
                 # If we made it here, states are identical based on checked properties
-                logging.info("_would_be_identical_save: States are identical, skipping save")
+                logging.info("_would_be_identical_save: All checks passed - states are identical, will skip save")
                 return True
                 
         except Exception as e:
@@ -1065,6 +1083,28 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END RE-ADD ---
 
+                            # --- ADD: Check width for Undo ---
+                            if hasattr(new_strand, 'width') and hasattr(original_strand, 'width'):
+                                if abs(new_strand.width - original_strand.width) > 0.1:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} width differs (Current: {new_strand.width}, Previous: {original_strand.width}).")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'width') != hasattr(original_strand, 'width'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} width attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'stroke_width') and hasattr(original_strand, 'stroke_width'):
+                                if abs(new_strand.stroke_width - original_strand.stroke_width) > 0.1:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_width differs (Current: {new_strand.stroke_width}, Previous: {original_strand.stroke_width}).")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'stroke_width') != hasattr(original_strand, 'stroke_width'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_width attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
+
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         logging.info("States are visually identical, skipping to previous state...")
@@ -1427,6 +1467,28 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                             # --- END RE-ADD ---
+
+                            # --- ADD: Check width for Redo ---
+                            if hasattr(new_strand, 'width') and hasattr(original_strand, 'width'):
+                                if abs(new_strand.width - original_strand.width) > 0.1:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} width differs (Current: {new_strand.width}, Previous: {original_strand.width}).")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'width') != hasattr(original_strand, 'width'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} width attribute presence differs.")
+                                has_visual_difference = True
+                                break
+
+                            if hasattr(new_strand, 'stroke_width') and hasattr(original_strand, 'stroke_width'):
+                                if abs(new_strand.stroke_width - original_strand.stroke_width) > 0.1:
+                                    logging.info(f"Redo check: Strand {new_strand.layer_name} stroke_width differs (Current: {new_strand.stroke_width}, Previous: {original_strand.stroke_width}).")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'stroke_width') != hasattr(original_strand, 'stroke_width'):
+                                logging.info(f"Redo check: Strand {new_strand.layer_name} stroke_width attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END ADD ---
 
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:

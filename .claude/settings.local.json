@@ -22,7 +22,9 @@
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 50 \"def optimized_paint_event\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 100 -B 5 \"painter\\.scale\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 100 \"painter = QtGui.QPainter\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/move_mode.py)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(ls:*)",
+      "Bash(source:*)"
     ],
     "deny": []
   }

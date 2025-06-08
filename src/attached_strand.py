@@ -907,6 +907,67 @@ class AttachedStrand(Strand):
             # --- FIX: Use stroke_path for highlight --- 
             painter.drawPath(stroke_path)
             # --- END FIX ---
+            # --- NEW: Draw highlight for AttachedStrand's side line ---
+            if isinstance(self, AttachedStrand):
+                painter.save()
+                
+                # To make the side-line highlight match the main body's 10px highlight,
+                # we will draw it with a 10px pen. The line's length must be extended
+                # by 5px on each side to align with the outer edge of the body highlight.
+                highlight_pen_thickness = 10
+                
+                # Calculate the half-width of the black part of the strand
+                black_half_width = (self.width + self.stroke_width * 2) / 2
+                
+                # The red highlight line's half-length needs to extend beyond the black part.
+                highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
+
+                # Calculate angles of tangents
+                tangent_start = self.calculate_cubic_tangent(0.0)
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                
+                # Handle zero-length tangent vectors
+                if tangent_start.manhattanLength() == 0:
+                    tangent_start = self.end - self.start
+                if tangent_end.manhattanLength() == 0:
+                    tangent_end = self.start - self.end
+                
+                # Calculate angles of tangents
+                angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+                
+                # Perpendicular angles at start and end
+                perp_angle_start = angle_start + math.pi / 2
+                perp_angle_end = angle_end + math.pi / 2
+                
+                # Calculate extended positions for start line
+                dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
+                dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
+                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
+                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
+                
+                # Calculate extended positions for end line
+                dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
+                dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
+                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
+                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+                
+                # Create a pen for the red sideline highlight
+                # Use the same thickness that we use for the main highlight so that they match exactly.
+                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
+                highlight_pen.setCapStyle(Qt.FlatCap)
+                highlight_pen.setJoinStyle(Qt.MiterJoin)
+                
+                painter.setPen(highlight_pen)
+                painter.setBrush(Qt.NoBrush)
+                
+        
+                if self.end_line_visible:
+                    painter.drawLine(end_line_start_extended, end_line_end_extended)
+                
+                painter.restore()
+            # --- END NEW ---
+
 
         # Create a temporary image for masking
         # Get the bounds considering current transformation

@@ -2232,6 +2232,7 @@ class StrandDrawingCanvas(QWidget):
             strand.draw(painter)
             
 
+
             # Slightly thinner stroke for circles
             for i, has_circle in enumerate(strand.has_circles):
                 # Skip drawing C-shapes when moving control points or when strand is locked

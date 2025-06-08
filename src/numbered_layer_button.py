@@ -1470,6 +1470,10 @@ class WidthConfigDialog(QDialog):
         current_total_squares = round(strand.width / self.grid_unit)
         current_stroke_pixels = strand.stroke_width
         
+        # Store original values so stroke width scales with total thickness changes
+        self.original_grid_squares = current_total_squares if current_total_squares > 0 else 1  # Avoid division by zero
+        self.original_stroke_width_px = current_stroke_pixels
+        
         # Create layout
         layout = QVBoxLayout(self)
         
@@ -1486,13 +1490,12 @@ class WidthConfigDialog(QDialog):
         
         # Color width percentage (slider)
         color_layout = QVBoxLayout()
-        color_layout.addWidget(QLabel("Color vs Stroke ratio:"))
+        color_layout.addWidget(QLabel("Color vs Stroke Distribution (total thickness fixed):"))
         
         self.color_slider = QSlider(Qt.Horizontal)
-        self.color_slider.setRange(10, 90)  # 10% to 90% color
+        self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
         
-        # Calculate current color percentage
-        # Total visible width = color_width + 2 * stroke_width = strand.width + 2 * strand.stroke_width
+        # Calculate current color percentage based on total width
         current_total_width = strand.width + 2 * strand.stroke_width
         current_percentage = int((strand.width / current_total_width) * 100) if current_total_width > 0 else 50
         self.color_slider.setValue(max(10, min(90, current_percentage)))
@@ -1502,7 +1505,7 @@ class WidthConfigDialog(QDialog):
         # Slider labels
         slider_labels = QHBoxLayout()
         slider_labels.addStretch()
-        self.percentage_label = QLabel(f"{self.color_slider.value()}% Color")
+        self.percentage_label = QLabel(f"{self.color_slider.value()}% of Available Color Space")
         slider_labels.addWidget(self.percentage_label)
         slider_labels.addStretch()
         color_layout.addLayout(slider_labels)
@@ -1533,33 +1536,38 @@ class WidthConfigDialog(QDialog):
     
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""
-        self.percentage_label.setText(f"{self.color_slider.value()}% Color")
+        slider_value = self.color_slider.value()
+        logging.info(f"[WidthConfigDialog] Color slider changed to {slider_value}%")
+        self.percentage_label.setText(f"{slider_value}% of Available Color Space")
     
     def update_preview(self):
-        """Update the preview display."""
-        total_width = self.thickness_spinbox.value() * self.grid_unit
+        """Update the preview display keeping total thickness fixed."""
+        total_grid_squares = self.thickness_spinbox.value()
+        total_grid_width = total_grid_squares * self.grid_unit
         color_percentage = self.color_slider.value() / 100.0
-        
-        # Use the same calculation as get_values()
-        stroke_width = total_width * (1 - color_percentage) / 2
-        color_width = total_width - 2 * stroke_width
-        
+
+        logging.info(f"[WidthConfigDialog] Preview updated - Grid squares: {total_grid_squares}, Color percentage: {color_percentage*100:.0f}%")
+
+        # Compute widths
+        color_width = total_grid_width * color_percentage
+        stroke_width = (total_grid_width - color_width) / 2
+
+        logging.info(f"[WidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
+
         self.preview_label.setText(
-            f"Total: {total_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
+            f"Total: {total_grid_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
         )
     
     def get_values(self):
-        """Get the configured width and stroke width values."""
-        total_width = self.thickness_spinbox.value() * self.grid_unit
+        """Return new color and stroke width ensuring total thickness remains fixed."""
+        total_grid_width = self.thickness_spinbox.value() * self.grid_unit
         color_percentage = self.color_slider.value() / 100.0
-        
-        # Calculate stroke width first, then color width
-        # The total visible width = color_width + 2 * stroke_width
-        # So: stroke_width = total_width * (1 - color_percentage) / 2
-        # And: color_width = total_width - 2 * stroke_width
-        stroke_width = total_width * (1 - color_percentage) / 2
-        color_width = total_width - 2 * stroke_width
-        
-        logging.info(f"Width dialog values: total={total_width}, color%={color_percentage*100:.0f}%, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}")
-        
+
+        color_width = total_grid_width * color_percentage
+        stroke_width = (total_grid_width - color_width) / 2
+
+        logging.info(
+            f"FIXED TOTAL - Values: grid_total={total_grid_width}, color%={color_percentage*100:.0f}, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}"
+        )
+
         return int(color_width), int(stroke_width)

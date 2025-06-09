@@ -1188,6 +1188,71 @@ class Strand:
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(stroke_path)
+            
+            # Add side line highlighting for regular strands (not attached strands)
+            # Only highlight sides that don't have attached strands
+            if not hasattr(self, 'parent'):  # This is a regular strand, not an attached strand
+                logging.info(f"[Side Line Highlighting] Processing regular strand {getattr(self, 'layer_name', 'unknown')}")
+                logging.info(f"  start_line_visible={self.start_line_visible}, start_attached={self.start_attached}")
+                logging.info(f"  end_line_visible={self.end_line_visible}, end_attached={self.end_attached}")
+                
+                painter.save()
+                
+                # Calculate the half-width for side line highlighting
+                highlight_pen_thickness = 10
+                black_half_width = (self.width + self.stroke_width * 2) / 2
+                highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
+                
+                # Calculate angles of tangents
+                tangent_start = self.calculate_cubic_tangent(0.0)
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                
+                # Handle zero-length tangent vectors
+                if tangent_start.manhattanLength() == 0:
+                    tangent_start = self.end - self.start
+                if tangent_end.manhattanLength() == 0:
+                    tangent_end = self.start - self.end
+                
+                # Calculate angles
+                angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+                
+                # Perpendicular angles
+                perp_angle_start = angle_start + math.pi / 2
+                perp_angle_end = angle_end + math.pi / 2
+                
+                # Calculate extended positions for start line
+                dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
+                dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
+                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
+                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
+                
+                # Calculate extended positions for end line
+                dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
+                dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
+                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
+                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+                
+                # Create highlight pen for side lines
+                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
+                highlight_pen.setCapStyle(Qt.FlatCap)
+                highlight_pen.setJoinStyle(Qt.MiterJoin)
+                
+                painter.setPen(highlight_pen)
+                painter.setBrush(Qt.NoBrush)
+                
+                # Only draw side lines where there are no attached strands
+                if self.start_line_visible and not self.start_attached:
+                    logging.info(f"  Drawing start side line for {getattr(self, 'layer_name', 'unknown')}")
+                    painter.drawLine(start_line_start_extended, start_line_end_extended)
+                
+                if self.end_line_visible and not self.end_attached:
+                    logging.info(f"  Drawing end side line for {getattr(self, 'layer_name', 'unknown')}")
+                    painter.drawLine(end_line_start_extended, end_line_end_extended)
+                
+                painter.restore()
+            else:
+                logging.info(f"[Side Line Highlighting] Skipping attached strand {getattr(self, 'layer_name', 'unknown')}")
 
         # Create a stroker for the fill path with squared ends
         fill_stroker = QPainterPathStroker()
@@ -1399,13 +1464,16 @@ class Strand:
             # Calculate the proper radius for the highlight
             # For attached strands, we need to avoid covering the circle stroke area
             if hasattr(self, '__class__') and self.__class__.__name__ == 'AttachedStrand':
-                # For attached strands, the circle radius is (width + stroke_width * 2) / 2
-                circle_outer_radius = (self.width + self.stroke_width * 2) / 2
-                outer_radius = circle_outer_radius + 6  # Highlight outside the circle
-                inner_radius = circle_outer_radius + 2  # Leave a small gap
+                # Match the attached strand implementation
+                highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
+                stroke_path_radius = (self.width + self.stroke_width * 2) / 2
+                outer_radius = stroke_path_radius + highlight_pen_thickness / 2
+                inner_radius = self.width / 2 + 6
             else:
-                # For regular strands, use the original calculation
-                outer_radius = self.width / 2 + self.stroke_width + 4
+                # Match the attached strand implementation
+                highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
+                stroke_path_radius = (self.width + self.stroke_width * 2) / 2
+                outer_radius = stroke_path_radius + highlight_pen_thickness / 2
                 inner_radius = self.width / 2 + 6
             
             # Create a full circle path for the outer circle
@@ -1467,7 +1535,7 @@ class Strand:
             # painter.setBrush(QColor(255, 0, 0, 255))  # Fill with red color
             painter.setBrush(Qt.NoBrush)
             # --- END CHANGE ---
-            painter.drawPath(c_shape_path)
+            #painter.drawPath(c_shape_path)
             
             # Restore painter state
             painter.restore() # RESTORE 5 <-- FIXED by adding this

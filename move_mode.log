@@ -1,1 +1,2441 @@
 MoveMode: Initializing
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(980.0, 336.0), click_pos=PyQt5.QtCore.QPoint(986, 360), offset=PyQt5.QtCore.QPointF(-6.0, -24.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(-6.0, -24.0)
+find_connected_strand: 1_2 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=control_point1
+StartMovement: current_start=PyQt5.QtCore.QPointF(980.0, 336.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(1148.0, 336.0), click_pos=PyQt5.QtCore.QPoint(1155, 350), offset=PyQt5.QtCore.QPointF(-7.0, -14.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(-7.0, -14.0)
+find_connected_strand: 1_2 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=control_point1
+StartMovement: current_start=PyQt5.QtCore.QPointF(980.0, 336.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(868.0, 532.0), click_pos=PyQt5.QtCore.QPoint(861, 545), offset=PyQt5.QtCore.QPointF(7.0, -13.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(7.0, -13.0)
+find_connected_strand: 1_2 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=control_point1
+StartMovement: current_start=PyQt5.QtCore.QPointF(980.0, 336.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_strand
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(1316.0, 756.0), click_pos=PyQt5.QtCore.QPoint(1322, 764), offset=PyQt5.QtCore.QPointF(-6.0, -8.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(-6.0, -8.0)
+find_connected_strand: 1_3 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_3
+StartMovement: moving_side=control_point1
+StartMovement: current_start=PyQt5.QtCore.QPointF(1316.0, 756.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point1
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_attached_strand
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(1316.0, 756.0), click_pos=PyQt5.QtCore.QPoint(1325, 780), offset=PyQt5.QtCore.QPointF(-9.0, -24.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(-9.0, -24.0)
+find_connected_strand: 1_3 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_3
+StartMovement: moving_side=control_point2
+StartMovement: current_start=PyQt5.QtCore.QPointF(1316.0, 756.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_3, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_attached_strand
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(980.0, 336.0), click_pos=PyQt5.QtCore.QPoint(975, 343), offset=PyQt5.QtCore.QPointF(5.0, -7.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(5.0, -7.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveMode: Added strand 1_3 sharing moving point PyQt5.QtCore.QPointF(1316.0, 756.0) to truly_moving_strands (initiated by non-masked strand)
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=control_point2
+StartMovement: current_start=PyQt5.QtCore.QPointF(980.0, 336.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+MoveMode: Moving control point
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MouseMove Check: Affected=1_2, Side=control_point2
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Control point movement finished, saving state.
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_attached_strand
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(980.0, 336.0), click_pos=PyQt5.QtCore.QPoint(962, 375), offset=PyQt5.QtCore.QPointF(18.0, -39.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(18.0, -39.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveMode: Added strand 1_1 sharing moving point PyQt5.QtCore.QPointF(980.0, 336.0) to truly_moving_strands (initiated by non-masked strand)
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=0
+StartMovement: current_start=PyQt5.QtCore.QPointF(980.0, 336.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+Selected strand 1_2 for start movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(924.0, 392.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(980.0, 336.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(980.0, 336.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(924.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(924.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(924.0, 392.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 392.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(924.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(924.0, 392.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 392.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(840.0, 476.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 392.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(840.0, 476.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(840.0, 476.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(840.0, 476.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(840.0, 476.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(840.0, 476.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(840.0, 476.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(840.0, 476.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(840.0, 476.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(840.0, 476.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(840.0, 504.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(840.0, 476.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(840.0, 476.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(840.0, 504.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(840.0, 504.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(840.0, 504.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_attached_strand
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(840.0, 504.0), click_pos=PyQt5.QtCore.QPoint(830, 527), offset=PyQt5.QtCore.QPointF(10.0, -23.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(10.0, -23.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveMode: Added strand 1_1 sharing moving point PyQt5.QtCore.QPointF(840.0, 504.0) to truly_moving_strands (initiated by non-masked strand)
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=0
+StartMovement: current_start=PyQt5.QtCore.QPointF(840.0, 504.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+Selected strand 1_2 for start movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(840.0, 504.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(840.0, 504.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(840.0, 504.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(840.0, 504.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(840.0, 504.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(840.0, 504.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(840.0, 448.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(840.0, 504.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(840.0, 504.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(840.0, 448.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(840.0, 448.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(840.0, 448.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(868.0, 420.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(840.0, 448.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(840.0, 448.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(868.0, 420.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 420.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(868.0, 420.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 392.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(868.0, 420.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(868.0, 420.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 392.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 364.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 392.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 364.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 364.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_attached_strand
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(896.0, 364.0), click_pos=PyQt5.QtCore.QPoint(900, 369), offset=PyQt5.QtCore.QPointF(-4.0, -5.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(-4.0, -5.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveMode: Added strand 1_1 sharing moving point PyQt5.QtCore.QPointF(896.0, 364.0) to truly_moving_strands (initiated by non-masked strand)
+--------------------------------
+StartMovement: affected_strand=1_2
+StartMovement: moving_side=0
+StartMovement: current_start=PyQt5.QtCore.QPointF(896.0, 364.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1316.0, 756.0)
+--------------------------------
+Selected strand 1_2 for start movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 364.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 364.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 364.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 364.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 364.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 364.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 364.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 364.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 364.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 364.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 364.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 364.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(896.0, 392.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 364.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 364.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(896.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(896.0, 392.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_2, Side=0
+MoveMode: Direct connections for 1_2: {'1_3'}
+MoveMode: All connections for 1_2: {'1_3', '1_1'}
+MoveMode (Update Pos): Adding 1_1 to affected (points close AND manager connected to 1_2)
+MoveStrandUpdate: Moving strand 1_2, side 0 to PyQt5.QtCore.QPointF(868.0, 392.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(896.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+find_connected_strand: 1_2 has connections: ['1_3']
+find_connected_strand: Checking outgoing connection 1_3
+MoveStrandUpdate: find_connected_strand for 1_2 side 0 at PyQt5.QtCore.QPointF(896.0, 392.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_2 - Start: PyQt5.QtCore.QPointF(868.0, 392.0), End: PyQt5.QtCore.QPointF(1316.0, 756.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_2', '1_1'], affected_strands_for_drawing: ['1_2', '1_1', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_1: Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(868.0, 392.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 3
+MoveMode: Original strands: 3, Static strands: 1
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_2', '1_1']
+MoveMode: Drawing C-shape EARLY for affected: 1_2
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_1
+MoveMode: Drew strand body for 1_2
+MoveMode: Drawing C-shape highlight for affected strand: 1_2
+MoveMode: Drawing C-shape POST bodies for affected: 1_2
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Restoring selection after move: 1_3
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(1148.0, 168.0), click_pos=PyQt5.QtCore.QPoint(1118, 190), offset=PyQt5.QtCore.QPointF(30.0, -22.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(30.0, -22.0)
+find_connected_strand: 1_3 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_3
+StartMovement: moving_side=1
+StartMovement: current_start=PyQt5.QtCore.QPointF(1316.0, 756.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------
+Selected strand 1_3 for end movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Captured originally_selected_strand on move start: None
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 1
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1148.0, 168.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1148.0, 168.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1148.0, 168.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1148.0, 168.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1204.0, 196.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1148.0, 168.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1148.0, 168.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1204.0, 196.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1204.0, 196.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1204.0, 196.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1204.0, 196.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1232.0, 196.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1232.0, 196.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1232.0, 196.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1232.0, 196.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1232.0, 196.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(1232.0, 196.0), click_pos=PyQt5.QtCore.QPoint(1223, 230), offset=PyQt5.QtCore.QPointF(9.0, -34.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(9.0, -34.0)
+find_connected_strand: 1_3 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_3
+StartMovement: moving_side=1
+StartMovement: current_start=PyQt5.QtCore.QPointF(1316.0, 756.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(1232.0, 196.0)
+--------------------------------
+Selected strand 1_3 for end movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Captured originally_selected_strand on move start: None
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 1
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1232.0, 196.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1232.0, 196.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1120.0, 140.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1232.0, 196.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1232.0, 196.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1120.0, 140.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1120.0, 140.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1036.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1120.0, 140.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1120.0, 140.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1036.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1036.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1008.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1036.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1036.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1008.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1008.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(980.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(980.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(980.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(980.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(980.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(980.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(980.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(980.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(952.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(896.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(952.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(896.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(896.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(896.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(896.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(896.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(896.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(896.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected
+MoveMode: Preparing optimized drawing - caching background
+Background cache initialized: 1517x854 pixels (transparent)
+MoveMode: Background cache is now valid
+MoveMode: Control point moved: False
+ZOOM_START: strand_pos=PyQt5.QtCore.QPointF(896.0, 112.0), click_pos=PyQt5.QtCore.QPoint(890, 130), offset=PyQt5.QtCore.QPointF(6.0, -18.0), zoom=1.00
+Maintaining mouse offset for smooth movement: PyQt5.QtCore.QPointF(6.0, -18.0)
+find_connected_strand: 1_3 has connections: []
+--------------------------------
+StartMovement: affected_strand=1_3
+StartMovement: moving_side=1
+StartMovement: current_start=PyQt5.QtCore.QPointF(1316.0, 756.0)
+StartMovement: current_end=PyQt5.QtCore.QPointF(896.0, 112.0)
+--------------------------------
+Selected strand 1_3 for end movement
+MoveMode: Is moving: True, Affected strand: AttachedStrand
+MoveMode: Captured originally_selected_strand on move start: None
+MoveMode: Setting up optimized paint handler
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 1
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(896.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(896.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(952.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(952.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(952.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(952.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(952.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(980.0, 112.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(980.0, 112.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(980.0, 112.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1008.0, 140.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 140.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1008.0, 140.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1008.0, 140.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Recreating background cache for optimized drawing
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MouseMove Check: Affected=1_3, Side=1
+MoveMode: Direct connections for 1_3: set()
+MoveMode: All connections for 1_3: {'1_2'}
+MoveStrandUpdate: Moving strand 1_3, side 1 to PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveStrandUpdate: BEFORE - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 140.0)
+find_connected_strand: 1_3 has connections: []
+MoveStrandUpdate: find_connected_strand for 1_3 side 1 at PyQt5.QtCore.QPointF(1008.0, 140.0) -> None
+MoveStrandUpdate: AFTER - Strand 1_3 - Start: PyQt5.QtCore.QPointF(1316.0, 756.0), End: PyQt5.QtCore.QPointF(1008.0, 140.0)
+MoveMode (Update Pos): Final truly_moving_strands: ['1_3'], affected_strands_for_drawing: ['1_2', '1_3']
+--- Positions after update_strand_position step ---
+  Strand 1_2: Start=PyQt5.QtCore.QPointF(868.0, 392.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
+  Strand 1_3: Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1008.0, 140.0)
+--------------------------------------------------
+MoveMode: Forcing redraw while holding
+MoveMode: Optimized paint event triggered
+MoveMode: Active strand: AttachedStrand, Affected strands: 2
+MoveMode: Original strands: 3, Static strands: 2
+MoveMode: Drawing background with original_paintEvent
+MoveMode: Drawing background cache
+MoveMode (Optimized Paint): Drawing truly_moving_strands: ['1_3']
+MoveMode: Drawing C-shape EARLY for affected: 1_3
+MoveMode: Drawing moving strand bodies
+MoveMode: Drew strand body for 1_3
+MoveMode: Drawing C-shape highlight for affected strand: 1_3
+MoveMode: Drawing C-shape POST bodies for affected: 1_3
+MoveMode: Drawing selection square
+MoveMode: Drawing control points
+MoveMode: Optimized paint event completed
+MoveMode: Forcing redraw while holding
+MoveMode: Restoring selection after move: None
+MoveMode: Final selection - No strand selected

@@ -1193,8 +1193,8 @@ class Strand:
             # Only highlight sides that don't have attached strands
             if not hasattr(self, 'parent'):  # This is a regular strand, not an attached strand
                 logging.info(f"[Side Line Highlighting] Processing regular strand {getattr(self, 'layer_name', 'unknown')}")
-                logging.info(f"  start_line_visible={self.start_line_visible}, start_attached={self.start_attached}")
-                logging.info(f"  end_line_visible={self.end_line_visible}, end_attached={self.end_attached}")
+                logging.info(f"  start_line_visible={self.start_line_visible}, has_circles[0]={self.has_circles[0]}")
+                logging.info(f"  end_line_visible={self.end_line_visible}, has_circles[1]={self.has_circles[1]}")
                 
                 painter.save()
                 
@@ -1242,11 +1242,12 @@ class Strand:
                 painter.setBrush(Qt.NoBrush)
                 
                 # Only draw side lines where there are no attached strands
-                if self.start_line_visible and not self.start_attached:
+                # has_circles[0] = True means start has attached strand, has_circles[1] = True means end has attached strand
+                if self.start_line_visible and not self.has_circles[0]:
                     logging.info(f"  Drawing start side line for {getattr(self, 'layer_name', 'unknown')}")
                     painter.drawLine(start_line_start_extended, start_line_end_extended)
                 
-                if self.end_line_visible and not self.end_attached:
+                if self.end_line_visible and not self.has_circles[1]:
                     logging.info(f"  Drawing end side line for {getattr(self, 'layer_name', 'unknown')}")
                     painter.drawLine(end_line_start_extended, end_line_end_extended)
                 

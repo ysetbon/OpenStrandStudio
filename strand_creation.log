@@ -1,3 +1,2 @@
-Strand Creation: Name=1_1, Start=PyQt5.QtCore.QPointF(364.0, 280.0), End=PyQt5.QtCore.QPointF(980.0, 336.0)
-Strand Creation: Name=1_2, Start=PyQt5.QtCore.QPointF(980.0, 336.0), End=PyQt5.QtCore.QPointF(1316.0, 756.0)
-Strand Creation: Name=1_3, Start=PyQt5.QtCore.QPointF(1316.0, 756.0), End=PyQt5.QtCore.QPointF(1148.0, 168.0)
+Strand Creation: Name=1_1, Start=PyQt5.QtCore.QPointF(532.0, 196.0), End=PyQt5.QtCore.QPointF(952.0, 280.0)
+Strand Creation: Name=1_2, Start=PyQt5.QtCore.QPointF(952.0, 280.0), End=PyQt5.QtCore.QPointF(952.0, 672.0)

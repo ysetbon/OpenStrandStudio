@@ -962,7 +962,8 @@ class AttachedStrand(Strand):
                 painter.setBrush(Qt.NoBrush)
                 
         
-                if self.end_line_visible:
+                # Only draw end line if there's no attached strand on the end
+                if self.end_line_visible and not self.has_circles[1]:
                     painter.drawLine(end_line_start_extended, end_line_end_extended)
                 
                 painter.restore()

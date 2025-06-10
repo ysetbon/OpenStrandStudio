@@ -629,7 +629,7 @@ if __name__ == '__main__':
             logging.error(f"Error in final screen check: {e}")
     
     # Run final check after a longer delay
-    QTimer.singleShot(500, final_screen_check)
+    QTimer.singleShot(0, final_screen_check)
     
     # Set the initial splitter sizes to make the layer panel narrower
     window.set_initial_splitter_sizes()

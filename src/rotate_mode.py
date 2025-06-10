@@ -42,11 +42,16 @@ class RotateMode:
         Update the cursor position to match the strand end point.
 
         Args:
-            pos (QPointF): The new position for the cursor.
+            pos (QPointF): The new position for the cursor (in canvas coordinates).
         """
-        if isinstance(pos, QPointF):
-            pos = pos.toPoint()
-        global_pos = self.canvas.mapToGlobal(pos)
+        if not isinstance(pos, QPointF):
+            pos = QPointF(pos)
+        
+        # Convert canvas coordinates to screen coordinates (accounting for zoom and pan)
+        screen_pos = self.canvas.canvas_to_screen(pos)
+        
+        # Convert screen coordinates to global coordinates
+        global_pos = self.canvas.mapToGlobal(screen_pos.toPoint())
         QCursor.setPos(global_pos)
 
     def mousePressEvent(self, event):

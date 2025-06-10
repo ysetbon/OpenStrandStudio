@@ -11,6 +11,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, Q
 from functools import partial
 import logging
 from masked_strand import MaskedStrand
+from attached_strand import AttachedStrand
 from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
@@ -541,6 +542,20 @@ class LayerPanel(QWidget):
         self.refresh()
         # Reset canvas zoom and pan to original view
         self.canvas.reset_zoom()
+    
+    def refresh_layers_no_zoom(self):
+        """Refresh the drawing of the layers without resetting zoom/pan. Used for strand attachment."""
+        logging.info("refresh_layers_no_zoom called, redirecting to refresh()")
+        self.refresh()
+        # Intentionally not resetting zoom to preserve state during strand attachment
+    
+    def refresh_after_attachment(self):
+        """Complete refresh after strand attachment without resetting zoom/pan.
+        This function does everything refresh_layers does except the zoom reset."""
+        logging.info("refresh_after_attachment called - refreshing without zoom reset")
+        self.refresh()
+        # Do NOT reset zoom - preserve user's current view after attachment
+        self.canvas.update()  # Just update the canvas without changing zoom/pan
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -1886,8 +1901,14 @@ class LayerPanel(QWidget):
                 strand.color = self.set_colors[set_number]
                 logging.info(f"Set {set_number} color already exists, updated strand to match")
         
-        # Simulate clicking the refresh button for consistency in layer display
-        self.simulate_refresh_button_click()
+        # Refresh the layer panel
+        # For attached strands, use special refresh that preserves zoom/pan
+        if isinstance(strand, AttachedStrand):
+            logging.info("Using refresh_after_attachment for attached strand")
+            self.refresh_after_attachment()
+        else:
+            logging.info("Using normal refresh with zoom reset")
+            self.simulate_refresh_button_click()
         
         logging.info("Finished on_strand_created")
 

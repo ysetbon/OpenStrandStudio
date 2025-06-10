@@ -1314,6 +1314,11 @@ class StrandDrawingCanvas(QWidget):
     
     def reset_zoom(self):
         """Reset zoom to 100% and center the view."""
+        import traceback
+        logging.info("reset_zoom() called from:")
+        for line in traceback.format_stack():
+            logging.info(f"  {line.strip()}")
+        
         self.zoom_factor = 1.0
         self.pan_offset_x = 0
         self.pan_offset_y = 0

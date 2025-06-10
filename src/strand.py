@@ -27,7 +27,6 @@ class Strand:
         self.side_line_color = QColor(0, 0, 0, 255)
         self.attached_strands = []  # List to store attached strands
         self.has_circles = [False, False]  # Flags for circles at start and end
-        self.is_first_strand = False
         self.is_start_side = True
         self.is_selected = False  # Indicates if the strand is selected
         self.is_hidden = False # Indicates if the strand is hidden

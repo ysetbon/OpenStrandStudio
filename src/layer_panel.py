@@ -1829,33 +1829,72 @@ class LayerPanel(QWidget):
         """Handle strand creation event."""
         logging.info(f"Starting on_strand_created for strand: {strand.layer_name if hasattr(strand, 'layer_name') else ''}")
         
-        # Get the set number and count
-        set_number = strand.set_number
-        count = self.set_counts.get(set_number, 0) + 1  # Get current count + 1
+        # SUPER EXPLICIT DEBUG - log everything before processing
+        logging.info(f"STRAND_DEBUG: strand.layer_name = '{strand.layer_name}'")
+        logging.info(f"STRAND_DEBUG: strand.set_number = {strand.set_number}")
+        logging.info(f"STRAND_DEBUG: hasattr(strand, 'layer_name') = {hasattr(strand, 'layer_name')}")
+        if hasattr(strand, 'layer_name') and strand.layer_name:
+            logging.info(f"STRAND_DEBUG: '_' in strand.layer_name = {'_' in strand.layer_name}")
+            if '_' in strand.layer_name:
+                parts = strand.layer_name.split('_')
+                logging.info(f"STRAND_DEBUG: parts from split = {parts}")
+        
+        # Extract set number and count from the strand's layer_name
+        if hasattr(strand, 'layer_name') and strand.layer_name and '_' in strand.layer_name:
+            try:
+                parts = strand.layer_name.split('_')
+                set_number = int(parts[0])
+                count = int(parts[1])
+                logging.info(f"STRAND_DEBUG: Successfully extracted set_number={set_number}, count={count}")
+            except (ValueError, IndexError) as e:
+                logging.info(f"STRAND_DEBUG: Exception during parsing: {e}")
+                # Fallback to using strand.set_number if layer_name parsing fails
+                set_number = strand.set_number
+                count = self.set_counts.get(set_number, 0) + 1
+                logging.info(f"STRAND_DEBUG: Used fallback set_number={set_number}, count={count}")
+        else:
+            # Fallback to using strand.set_number if no valid layer_name
+            set_number = strand.set_number
+            count = self.set_counts.get(set_number, 0) + 1
+            logging.info(f"STRAND_DEBUG: Used fallback (no valid layer_name) set_number={set_number}, count={count}")
+        
+        # Debug logging
+        logging.info(f"DEBUG on_strand_created: strand.layer_name='{strand.layer_name}', extracted set_number={set_number}, count={count}")
+        logging.info(f"DEBUG on_strand_created: self.set_counts={self.set_counts}")
         
         # Add the new layer button
         logging.info(f"Adding new layer button for set {set_number}, count {count}")
         self.add_layer_button(set_number, count)
         
-        # Update color for the set if needed
-        if set_number not in self.set_colors:
-            # Use canvas default strand color if available, otherwise fallback to purple
-            default_color = QColor(200, 170, 230, 255)  # Fallback
-            if self.canvas and hasattr(self.canvas, 'default_strand_color'):
-                default_color = self.canvas.default_strand_color
-            self.set_colors[set_number] = default_color
-            
-        # Only update colors if the strand doesn't already have the correct default color
-        # This prevents overriding the strand's color if it was correctly created with the default
-        if (hasattr(self.canvas, 'default_strand_color') and 
-            hasattr(strand, 'color') and 
-            strand.color == self.canvas.default_strand_color):
-            # Strand already has correct default color, update set_colors to match
-            self.set_colors[set_number] = self.canvas.default_strand_color
-            logging.info(f"Strand already has correct default color, updated set_colors[{set_number}] to match")
+        # Check if there are existing strands in this set with different colors
+        existing_strands_in_set = [s for s in self.canvas.strands if hasattr(s, 'set_number') and s.set_number == set_number and s != strand]
+        
+        if existing_strands_in_set:
+            # There are existing strands in this set - preserve their color
+            existing_color = existing_strands_in_set[0].color  # Use the color of the first existing strand
+            self.set_colors[set_number] = existing_color
+            # Update the new strand to match the existing set color
+            strand.color = existing_color
+            logging.info(f"Set {set_number} already exists with color {existing_color.red()},{existing_color.green()},{existing_color.blue()},{existing_color.alpha()}, updated new strand to match")
         else:
-            # Update strand color to match set color
-            self.update_colors_for_set(set_number, self.set_colors[set_number])
+            # This is a new set or first strand in set - use the strand's current color or default
+            if set_number not in self.set_colors:
+                # Use the strand's current color if it has one, otherwise use default
+                if hasattr(strand, 'color') and strand.color:
+                    self.set_colors[set_number] = strand.color
+                    logging.info(f"New set {set_number}: Using strand's color {strand.color.red()},{strand.color.green()},{strand.color.blue()},{strand.color.alpha()}")
+                else:
+                    # Use canvas default strand color if available, otherwise fallback to purple
+                    default_color = QColor(200, 170, 230, 255)  # Fallback
+                    if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+                        default_color = self.canvas.default_strand_color
+                    self.set_colors[set_number] = default_color
+                    strand.color = default_color
+                    logging.info(f"New set {set_number}: Using default color {default_color.red()},{default_color.green()},{default_color.blue()},{default_color.alpha()}")
+            else:
+                # Set color already exists, update strand to match
+                strand.color = self.set_colors[set_number]
+                logging.info(f"Set {set_number} color already exists, updated strand to match")
         
         # Simulate clicking the refresh button for consistency in layer display
         self.simulate_refresh_button_click()

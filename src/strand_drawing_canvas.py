@@ -132,7 +132,6 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_width = 4  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
-        self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
         self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
         self.selected_strand_index = None  # Index of the currently selected strand
         self.layer_panel = None  # Reference to the layer panel
@@ -1172,7 +1171,6 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_width = 4  # Width of strand outlines
         self.highlight_color = Qt.red  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
-        self.is_first_strand = True  # Flag to indicate if it's the first strand being drawn
         self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
         self.selected_strand_index = None  # Index of the currently selected strand
         self.layer_panel = None  # Reference to the layer panel
@@ -2534,27 +2532,33 @@ class StrandDrawingCanvas(QWidget):
             return
 
         # Determine the set number for the new strand
-        if isinstance(strand, AttachedStrand):
-            set_number = strand.parent.set_number
-        elif self.selected_strand and not isinstance(self.selected_strand, MaskedStrand):
-            set_number = self.selected_strand.set_number
-        else:
-            # Use the current_set from LayerPanel
-            if self.layer_panel:
-                set_number = self.layer_panel.current_set
+        # Only set set_number if it hasn't been set already (e.g., by AttachMode)
+        if not hasattr(strand, 'set_number') or strand.set_number is None:
+            if isinstance(strand, AttachedStrand):
+                set_number = strand.parent.set_number
+            elif self.selected_strand and not isinstance(self.selected_strand, MaskedStrand):
+                set_number = self.selected_strand.set_number
             else:
-                # Fallback logic if layer_panel is not available
-                set_number = self.get_next_available_set_number()
+                # Use the current_set from LayerPanel
+                if self.layer_panel:
+                    set_number = self.layer_panel.current_set
+                else:
+                    # Fallback logic if layer_panel is not available
+                    set_number = self.get_next_available_set_number()
 
-        # Ensure set_number is an integer
-        if not isinstance(set_number, int):
-            try:
-                set_number = int(set_number)
-            except ValueError:
-                logging.warning(f"Invalid set_number '{set_number}' encountered. Using next available integer.")
-                set_number = self.get_next_available_set_number()
+            # Ensure set_number is an integer
+            if not isinstance(set_number, int):
+                try:
+                    set_number = int(set_number)
+                except ValueError:
+                    logging.warning(f"Invalid set_number '{set_number}' encountered. Using next available integer.")
+                    set_number = self.get_next_available_set_number()
 
-        strand.set_number = set_number
+            strand.set_number = set_number
+        else:
+            # Use the existing set_number
+            set_number = strand.set_number
+            logging.info(f"Canvas: Using existing set_number={set_number} from strand")
 
         # Assign color to the new strand
         if set_number not in self.strand_colors:
@@ -2572,16 +2576,21 @@ class StrandDrawingCanvas(QWidget):
 
         # Update layer panel
         if self.layer_panel:
-            # Count the number of strands in this set (excluding MaskedStrands)
-            count = len([
-                s for s in self.strands
-                if s.set_number == set_number and not isinstance(s, MaskedStrand)
-            ])
-            strand.layer_name = f"{set_number}_{count}"
+            # Only set layer_name if it hasn't been set already (e.g., by AttachMode)
+            if not hasattr(strand, 'layer_name') or not strand.layer_name:
+                # Count the number of strands in this set (excluding MaskedStrands)
+                count = len([
+                    s for s in self.strands
+                    if s.set_number == set_number and not isinstance(s, MaskedStrand)
+                ])
+                strand.layer_name = f"{set_number}_{count}"
+                logging.info(f"Canvas: Set layer_name to {strand.layer_name} (calculated count={count})")
+            else:
+                logging.info(f"Canvas: Using existing layer_name={strand.layer_name}")
 
             if not hasattr(strand, 'is_being_deleted'):
-                logging.info(f"Adding new layer button for set {set_number}, count {count}")
-                self.layer_panel.add_layer_button(set_number, count)
+                logging.info(f"Canvas: Calling layer_panel.on_strand_created for strand {strand.layer_name}")
+                self.layer_panel.on_strand_created(strand)
             else:
                 logging.info(f"Updating layer names for set {set_number}")
                 self.layer_panel.update_layer_names(set_number)
@@ -2708,7 +2717,6 @@ class StrandDrawingCanvas(QWidget):
             self.selected_strand.is_selected = True
             self.selected_strand_index = index
             self.last_selected_strand_index = index
-            self.is_first_strand = False
 
             if isinstance(self.selected_strand, AttachedStrand):
                 self.selected_attached_strand = self.selected_strand
@@ -3053,13 +3061,28 @@ class StrandDrawingCanvas(QWidget):
             new_strand.set_number = self.new_strand_set_number
             new_strand.set_color(self.strand_colors[self.new_strand_set_number])
             new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
-            new_strand.is_first_strand = True
             new_strand.is_start_side = True
             # Set the shadow color to the default shadow color
             new_strand.shadow_color = self.default_shadow_color
             
             self.add_strand(new_strand)
             new_strand_index = len(self.strands) - 1
+            
+            # Clear any previously selected attached strands before selecting the new strand
+            if self.selected_attached_strand:
+                self.selected_attached_strand.is_selected = False
+                self.selected_attached_strand = None
+            
+            # Also deselect all strands to ensure clean selection state
+            for strand in self.strands:
+                strand.is_selected = False
+                if hasattr(strand, 'attached_strands'):
+                    for attached in strand.attached_strands:
+                        attached.is_selected = False
+            
+            # Reset MoveMode selection state
+            if hasattr(self, 'move_mode') and self.move_mode:
+                self.move_mode.reset_selection()
             
             # Ensure the new strand is selected and highlighted
             new_strand.is_selected = True
@@ -3328,7 +3351,6 @@ class StrandDrawingCanvas(QWidget):
         """Clear all strands from the canvas."""
         self.strands.clear()
         self.current_strand = None
-        self.is_first_strand = True
         self.selected_strand_index = None
         self.update()
 

@@ -1466,9 +1466,33 @@ class WidthConfigDialog(QDialog):
         # Calculate grid unit (assuming 23 pixels per grid square)
         self.grid_unit = 23
         
-        # Current values
-        current_total_squares = round(strand.width / self.grid_unit)
-        current_stroke_pixels = strand.stroke_width
+        # Get default values from main window's settings
+        default_strand_width = 46
+        default_stroke_width = 4
+        if hasattr(layer_panel, 'parent_window') and layer_panel.parent_window:
+            main_window = layer_panel.parent_window
+            if hasattr(main_window, 'settings_dialog') and main_window.settings_dialog:
+                default_strand_width = main_window.settings_dialog.default_strand_width
+                default_stroke_width = main_window.settings_dialog.default_stroke_width
+        
+        # Current values - use defaults if strand has no width_in_grid_units
+        if hasattr(strand, 'width_in_grid_units') and strand.width_in_grid_units:
+            current_total_squares = strand.width_in_grid_units
+        else:
+            # Calculate from current widths or use defaults
+            if strand.width > 0:
+                current_total_squares = round((strand.width + 2 * strand.stroke_width) / self.grid_unit)
+            else:
+                # Use defaults
+                current_total_squares = round((default_strand_width + 2 * default_stroke_width) / self.grid_unit)
+        
+        # Ensure it's even and at least 2
+        if current_total_squares < 2:
+            current_total_squares = 2
+        elif current_total_squares % 2 != 0:
+            current_total_squares += 1
+            
+        current_stroke_pixels = strand.stroke_width if strand.stroke_width > 0 else default_stroke_width
         
         # Store original values so stroke width scales with total thickness changes
         self.original_grid_squares = current_total_squares if current_total_squares > 0 else 1  # Avoid division by zero
@@ -1496,8 +1520,13 @@ class WidthConfigDialog(QDialog):
         self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
         
         # Calculate current color percentage based on total width
-        current_total_width = strand.width + 2 * strand.stroke_width
-        current_percentage = int((strand.width / current_total_width) * 100) if current_total_width > 0 else 50
+        if strand.width > 0:
+            current_total_width = strand.width + 2 * strand.stroke_width
+            current_percentage = int((strand.width / current_total_width) * 100)
+        else:
+            # Use defaults
+            current_total_width = default_strand_width + 2 * default_stroke_width
+            current_percentage = int((default_strand_width / current_total_width) * 100) if current_total_width > 0 else 50
         self.color_slider.setValue(max(10, min(90, current_percentage)))
         
         color_layout.addWidget(self.color_slider)

@@ -226,6 +226,8 @@ translations = {
         'button_color': 'Choose a different button color (not default):',
         'default_strand_color': 'Default Strand Color:',
         'default_stroke_color': 'Stroke Color:',
+        'default_strand_width': 'Default Strand Width',
+        'default_strand_width_tooltip': 'Click to set the default width for new strands',
         # --- END NEW ---
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Show Full Arrow",
@@ -385,6 +387,8 @@ translations = {
         'button_color': 'Choisissez une couleur de bouton différente (pas par défaut):',
         'default_strand_color': 'Couleur de Brin par Défaut:',
         'default_stroke_color': 'Couleur de Contour:',
+        'default_strand_width': 'Largeur de Brin par Défaut',
+        'default_strand_width_tooltip': 'Cliquez pour définir la largeur par défaut des nouveaux brins',
         # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
@@ -650,6 +654,8 @@ translations = {
         'button_color': 'Scegli un colore di pulsante diverso (non predefinito):',
         'default_strand_color': 'Colore Trefolo Predefinito:',
         'default_stroke_color': 'Colore Contorno:',
+        'default_strand_width': 'Larghezza Trefolo Predefinita',
+        'default_strand_width_tooltip': 'Clicca per impostare la larghezza predefinita per i nuovi trefoli',
         # Additional texts
         'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
         'angle_label': 'Angolo:',
@@ -913,6 +919,8 @@ translations = {
         'button_color': 'Elija un color de botón diferente (no predeterminado):',
         'default_strand_color': 'Color de Cordón Predeterminado:',
         'default_stroke_color': 'Color de Contorno:',
+        'default_strand_width': 'Ancho de Cordón Predeterminado',
+        'default_strand_width_tooltip': 'Haga clic para establecer el ancho predeterminado para nuevos cordones',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
         'angle_label': 'Ángulo:',
@@ -1181,6 +1189,8 @@ translations = {
         'button_color': 'Escolha uma cor de botão diferente (não padrão):',
         'default_strand_color': 'Cor de Mecha Padrão:',
         'default_stroke_color': 'Cor de Contorno:',
+        'default_strand_width': 'Largura de Mecha Padrão',
+        'default_strand_width_tooltip': 'Clique para definir a largura padrão para novas mechas',
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
         'angle_label': 'Ângulo:',
@@ -1418,6 +1428,8 @@ translations = {
         'button_color': 'בחר צבע כפתור שונה (לא ברירת מחדל):',
         'default_strand_color': 'צבע חוט ברירת מחדל:',
         'default_stroke_color': 'צבע מתאר:',
+        'default_strand_width': 'רוחב חוט ברירת מחדל',
+        'default_strand_width_tooltip': 'לחץ כדי להגדיר את הרוחב ברירת המחדל עבור חוטים חדשים',
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',
         'angle_label': 'זווית:',

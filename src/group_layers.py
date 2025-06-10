@@ -2280,7 +2280,7 @@ class GroupLayerManager:
                     'stroke_width': strand.stroke_width,
                     'has_circles': strand.has_circles.copy(),
                     'attached_strands': strand.attached_strands.copy(),
-                    'is_first_strand': strand.is_first_strand,
+                    'is_first_strand': getattr(strand, 'is_first_strand', False),
                     'is_start_side': strand.is_start_side,
                     'set_number': strand.set_number
                 }

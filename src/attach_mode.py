@@ -433,9 +433,10 @@ class AttachMode(QObject):
             # Use full update on release to ensure everything is drawn correctly
             self.canvas.update()
 
-        if self.canvas.is_first_strand:
-            # If it's the first strand and it has a non-zero length, create it
-            if self.canvas.current_strand and self.canvas.current_strand.start != self.canvas.current_strand.end:
+        # Check if we're finishing a strand creation (have a current_strand being dragged)
+        if self.canvas.current_strand:
+            # If the strand has a non-zero length, create it
+            if self.canvas.current_strand.start != self.canvas.current_strand.end:
                 # --- ADD LOGGING FOR STRAND CREATION ---
                 strand_ref = self.canvas.current_strand
                 # Check *before* accessing attributes for logging
@@ -444,7 +445,6 @@ class AttachMode(QObject):
                 # --- END LOGGING ---
                 
                 self.strand_created.emit(self.canvas.current_strand)
-                self.canvas.is_first_strand = False
                 
                 # State saving will be handled by the enhanced mouseReleaseEvent in undo_redo_manager.py
         else:
@@ -485,32 +485,48 @@ class AttachMode(QObject):
         if self.canvas.current_mode == "move":
             return
 
-        if self.canvas.is_first_strand:
-            # Get current set from layer panel, ensuring we skip masked strands
-            current_set = 1
-            if hasattr(self.canvas, 'layer_panel'):
-                existing_sets = {int(s.layer_name.split('_')[0]) for s in self.canvas.strands 
-                            if not isinstance(s, MaskedStrand) and '_' in s.layer_name}
-                while current_set in existing_sets:
-                    current_set += 1
-                self.canvas.layer_panel.current_set = current_set
-            
-            # Use the already-converted coordinates from the event
-            # The main canvas has already converted from screen to canvas coordinates
+        # Check if we're in new strand creation mode (initiated by button)
+        logging.info(f"AttachMode.mousePressEvent: is_drawing_new_strand={getattr(self.canvas, 'is_drawing_new_strand', False)}")
+        if hasattr(self.canvas, 'is_drawing_new_strand') and self.canvas.is_drawing_new_strand:
+            # Handle new strand creation initiated by button
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
-            
-            # Constrain coordinates to stay within visible viewport when zoomed out
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
-            
             self.start_pos = self.canvas.snap_to_grid(constrained_pos)
             
-            # Use default_strand_color instead of strand_color to ensure correct user settings are applied
+            # Determine the current set based on existing strands (handles loaded JSON)
+            current_set = 1
+            if hasattr(self.canvas, 'layer_panel'):
+                # Find existing sets from current strands, skipping masked strands
+                existing_sets = set()
+                logging.info(f"AttachMode: Found {len(self.canvas.strands)} total strands")
+                for s in self.canvas.strands:
+                    if not isinstance(s, MaskedStrand) and hasattr(s, 'layer_name') and s.layer_name and '_' in s.layer_name:
+                        try:
+                            set_num = int(s.layer_name.split('_')[0])
+                            existing_sets.add(set_num)
+                            logging.info(f"AttachMode: Found strand {s.layer_name}, set_num={set_num}")
+                        except (ValueError, IndexError):
+                            # Skip strands with invalid layer names
+                            logging.info(f"AttachMode: Skipping strand with invalid layer_name: {s.layer_name}")
+                            continue
+                
+                logging.info(f"AttachMode: Existing sets: {existing_sets}")
+                
+                # Use the set number from the button click, or find next available
+                button_set = getattr(self.canvas, 'new_strand_set_number', None)
+                if button_set and button_set not in existing_sets:
+                    current_set = button_set
+                else:
+                    # Find the next available set number
+                    while current_set in existing_sets:
+                        current_set += 1
+                self.canvas.layer_panel.current_set = current_set
+            
             strand_color = getattr(self.canvas, 'default_strand_color', self.canvas.strand_color)
             
             new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width,
                             strand_color, self.canvas.default_stroke_color,
                             self.canvas.stroke_width)
-            new_strand.is_first_strand = True
             new_strand.set_number = current_set
             
             # Ensure the color is set in the canvas's color management system
@@ -519,19 +535,35 @@ class AttachMode(QObject):
                 logging.info(f"AttachMode: Set strand_colors[{current_set}] to {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
             
             if hasattr(self.canvas, 'layer_panel'):
-                count = 1  # First strand in the set
+                # Get the next count for this set based on existing strands
+                existing_counts_in_set = []
+                for s in self.canvas.strands:
+                    if not isinstance(s, MaskedStrand) and hasattr(s, 'layer_name') and s.layer_name and '_' in s.layer_name:
+                        try:
+                            parts = s.layer_name.split('_')
+                            if len(parts) >= 2 and int(parts[0]) == current_set:
+                                count_num = int(parts[1])
+                                existing_counts_in_set.append(count_num)
+                        except (ValueError, IndexError):
+                            # Skip strands with invalid layer names
+                            continue
+                
+                count = max(existing_counts_in_set, default=0) + 1
+                
                 new_strand.layer_name = f"{current_set}_{count}"
                 self.canvas.layer_panel.set_counts[current_set] = count
-                logging.info(f"Created first strand with set {current_set}, count {count}")
+                logging.info(f"Created new strand with set {current_set}, count {count}")
                 
             self.canvas.current_strand = new_strand
             self.current_end = self.start_pos
             self.last_snapped_pos = self.start_pos
-            self.last_update_rect = None  # Clear the update rect on new strand creation
+            self.last_update_rect = None
+            
+            # Clear the new strand creation flag
+            self.canvas.is_drawing_new_strand = False
             self.move_timer.start(16)
         elif not self.is_attaching:
-            # Remove the requirement for a selected strand
-            # Use the already-converted coordinates from the event
+            # Handle attachment to existing strands
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             self.handle_strand_attachment(canvas_pos)
 
@@ -586,7 +618,7 @@ class AttachMode(QObject):
 
     def update_strand_position(self, new_pos):
         """Update the position of the current strand."""
-        if self.canvas.is_first_strand:
+        if self.canvas.current_strand and not self.is_attaching:
             self.update_first_strand(new_pos)
         elif self.is_attaching:
             self.canvas.current_strand.update(new_pos)
@@ -781,7 +813,6 @@ class AttachMode(QObject):
         new_strand.color = parent_strand.color  # Directly set color property
         new_strand.stroke_color = parent_strand.stroke_color  # Copy stroke color from parent
         new_strand.set_number = parent_strand.set_number
-        new_strand.is_first_strand = False
         new_strand.is_start_side = False
         
         # Ensure the color is properly set in the canvas's color management system

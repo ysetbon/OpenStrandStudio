@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
-    QColorDialog, QCheckBox, QBoxLayout,
+    QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
     QSpinBox, QDoubleSpinBox # Add these
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF
@@ -74,6 +74,10 @@ class SettingsDialog(QDialog):
         # Default strand and stroke color parameters
         self.default_strand_color = getattr(canvas, 'default_strand_color', QColor(200, 170, 230, 255))
         self.default_stroke_color = getattr(canvas, 'default_stroke_color', QColor(0, 0, 0, 255))
+        # Default strand width parameters
+        self.default_strand_width = getattr(canvas, 'strand_width', 46)
+        self.default_stroke_width = getattr(canvas, 'stroke_width', 4)
+        self.default_width_grid_units = 2  # Default 2 grid squares
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
@@ -95,7 +99,11 @@ class SettingsDialog(QDialog):
             # Apply default strand and stroke color settings
             self.canvas.default_strand_color = self.default_strand_color
             self.canvas.default_stroke_color = self.default_stroke_color
+            # Apply default strand width settings
+            self.canvas.strand_width = self.default_strand_width
+            self.canvas.stroke_width = self.default_stroke_width
             logging.info(f"SettingsDialog: Applied default arrow color settings to canvas - use_default: {self.use_default_arrow_color}, color: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
+            logging.info(f"SettingsDialog: Applied default width settings to canvas - strand_width: {self.default_strand_width}, stroke_width: {self.default_stroke_width}")
         
         # Apply loaded extension line settings to canvas
         if self.canvas:
@@ -1129,6 +1137,24 @@ class SettingsDialog(QDialog):
                                 logging.info(f"SettingsDialog: Found DefaultStrokeColor: {r},{g},{b},{a}")
                             except Exception as e:
                                 logging.error(f"SettingsDialog: Error parsing DefaultStrokeColor: {e}. Using default {self.default_stroke_color}.")
+                        elif line.startswith('DefaultStrandWidth:'):
+                            try:
+                                self.default_strand_width = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found DefaultStrandWidth: {self.default_strand_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing DefaultStrandWidth value. Using default {self.default_strand_width}.")
+                        elif line.startswith('DefaultStrokeWidth:'):
+                            try:
+                                self.default_stroke_width = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found DefaultStrokeWidth: {self.default_stroke_width}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing DefaultStrokeWidth value. Using default {self.default_stroke_width}.")
+                        elif line.startswith('DefaultWidthGridUnits:'):
+                            try:
+                                self.default_width_grid_units = int(line.split(':', 1)[1].strip())
+                                logging.info(f"SettingsDialog: Found DefaultWidthGridUnits: {self.default_width_grid_units}")
+                            except ValueError:
+                                logging.error(f"SettingsDialog: Error parsing DefaultWidthGridUnits value. Using default {self.default_width_grid_units}.")
                 
                     logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
@@ -1762,6 +1788,31 @@ class SettingsDialog(QDialog):
         default_arrow_container_layout.addWidget(self.default_stroke_color_container)
         self.layer_panel_rows.append(self.default_stroke_color_container)
         
+        # Default Strand Width - Button only
+        self.default_strand_width_container = QWidget()
+        self.default_strand_width_layout = QHBoxLayout(self.default_strand_width_container)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_width_layout.setSpacing(20)
+        else:
+            self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_width_layout.setSpacing(15)
+
+        self.default_strand_width_button = QPushButton(_['default_strand_width'] if 'default_strand_width' in _ else 'Default Strand Width')
+        self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else 'Click to set the default width for new strands')
+        self.default_strand_width_button.clicked.connect(self.open_default_width_dialog)
+        
+        if self.is_rtl_language(self.current_language):
+            self.default_strand_width_layout.addStretch()
+            self.default_strand_width_layout.addWidget(self.default_strand_width_button)
+        else:
+            self.default_strand_width_layout.addWidget(self.default_strand_width_button)
+            self.default_strand_width_layout.addStretch()
+        
+        default_arrow_container_layout.addWidget(self.default_strand_width_container)
+        self.layer_panel_rows.append(self.default_strand_width_container)
+        
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
         # OK button for layer panel settings
@@ -2285,8 +2336,12 @@ class SettingsDialog(QDialog):
             self.canvas.arrow_line_length = self.arrow_line_length
             self.canvas.arrow_line_width = self.arrow_line_width
             # --- END NEW ---
+            # Apply default strand width settings
+            self.canvas.strand_width = self.default_strand_width
+            self.canvas.stroke_width = self.default_stroke_width
             logging.info(f"SettingsDialog: Set extension_length to {self.extension_length}, dash_count to {self.extension_dash_count}, dashed_width to {self.extension_dash_width} on canvas")
             logging.info(f"SettingsDialog: Set arrow_head_length to {self.arrow_head_length}, arrow_head_width to {self.arrow_head_width}")
+            logging.info(f"SettingsDialog: Set default strand_width to {self.default_strand_width}, stroke_width to {self.default_stroke_width}")
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
@@ -2622,6 +2677,9 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                 file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                 file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
+                file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
+                file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
+                file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
@@ -2652,6 +2710,9 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                     local_file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                     local_file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
+                    local_file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
+                    local_file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
+                    local_file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
                 print(f"Created copy of settings at: {local_file_path}")
             except Exception as e:
                 print(f"Could not create settings copy: {e}")
@@ -3051,6 +3112,25 @@ class SettingsDialog(QDialog):
                     self.canvas.force_redraw()
                 self.canvas.update()
 
+    def open_default_width_dialog(self):
+        """Open a dialog to configure default strand width."""
+        dialog = DefaultWidthConfigDialog(self, self.parent())
+        if dialog.exec_() == QDialog.Accepted:
+            # Get the new values
+            new_width, new_stroke_width = dialog.get_values()
+            self.default_strand_width = new_width
+            self.default_stroke_width = new_stroke_width
+            self.default_width_grid_units = dialog.thickness_spinbox.value()
+            
+            # Save settings immediately
+            self.save_settings_to_file()
+            
+            # Apply to canvas
+            if self.canvas:
+                self.canvas.strand_width = new_width
+                self.canvas.stroke_width = new_stroke_width
+                logging.info(f"Updated canvas default widths: strand_width={new_width}, stroke_width={new_stroke_width}")
+
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""
         self.history_list.clear()
@@ -3449,3 +3529,213 @@ class VideoPlayerDialog(QDialog):
         error_message = self.media_player.errorString()
         logging.error(f"Media player error: {error_message}")
         QMessageBox.critical(self, "Media Player Error", f"An error occurred: {error_message}")
+
+
+class DefaultWidthConfigDialog(QDialog):
+    """Dialog for configuring default strand width and stroke width."""
+    
+    def __init__(self, settings_dialog, parent=None):
+        super().__init__(parent)
+        self.settings_dialog = settings_dialog
+        
+        # Get translations
+        _ = translations.get(settings_dialog.current_language, translations['en'])
+        
+        self.setWindowTitle(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
+        self.setModal(True)
+        self.setMinimumSize(400, 220)
+        self.resize(450, 240)
+        
+        # Find the main window to inherit its theme
+        main_window = parent
+        while main_window and not hasattr(main_window, 'current_theme'):
+            main_window = main_window.parent()
+        
+        # Apply theme styling to dialog if main window found
+        if main_window and hasattr(main_window, 'current_theme'):
+            theme = main_window.current_theme
+            if theme == 'dark':
+                self.setStyleSheet("""
+                    QDialog {
+                        background-color: #2C2C2C;
+                        color: white;
+                    }
+                    QLabel {
+                        color: white;
+                    }
+                    QSpinBox, QSlider {
+                        background-color: #3D3D3D;
+                        color: white;
+                        border: 1px solid #555;
+                        border-radius: 3px;
+                        padding: 2px;
+                    }
+                    QSpinBox:hover, QSlider:hover {
+                        border: 1px solid #777;
+                    }
+                    QPushButton, QDialogButtonBox QPushButton {
+                        background-color: #252525;
+                        color: white;
+                        font-weight: bold;
+                        border: 2px solid #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                        background-color: #505050;
+                    }
+                    QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                        background-color: #151515;
+                        border: 2px solid #000000;
+                    }
+                    QDialogButtonBox {
+                        background-color: transparent;
+                    }
+                """)
+            elif theme == 'light':
+                self.setStyleSheet("""
+                    QDialog {
+                        background-color: #F5F5F5;
+                        color: black;
+                    }
+                    QLabel {
+                        color: black;
+                    }
+                    QSpinBox, QSlider {
+                        background-color: white;
+                        color: black;
+                        border: 1px solid #CCC;
+                        border-radius: 3px;
+                        padding: 2px;
+                    }
+                    QSpinBox:hover, QSlider:hover {
+                        border: 1px solid #999;
+                    }
+                    QPushButton, QDialogButtonBox QPushButton {
+                        background-color: #F0F0F0;
+                        color: #000000;
+                        border: 1px solid #BBBBBB;
+                        border-radius: 5px;
+                        padding: 10px;
+                        min-width: 80px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover, QDialogButtonBox QPushButton:hover {
+                        background-color: #E0E0E0;
+                    }
+                    QPushButton:pressed, QDialogButtonBox QPushButton:pressed {
+                        background-color: #D0D0D0;
+                    }
+                    QDialogButtonBox {
+                        background-color: transparent;
+                    }
+                """)
+        
+        # Calculate grid unit (assuming 23 pixels per grid square)
+        self.grid_unit = 23
+        
+        # Get current default values from settings dialog
+        current_total_width = settings_dialog.default_strand_width + 2 * settings_dialog.default_stroke_width
+        current_total_squares = round(current_total_width / self.grid_unit)
+        if current_total_squares < 2:
+            current_total_squares = 2
+        elif current_total_squares % 2 != 0:
+            current_total_squares += 1  # Make it even
+        
+        # Create layout
+        layout = QVBoxLayout(self)
+        
+        # Total thickness in grid squares
+        thickness_layout = QHBoxLayout()
+        thickness_layout.addWidget(QLabel("Total Thickness (grid squares):"))
+        self.thickness_spinbox = QSpinBox()
+        self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
+        self.thickness_spinbox.setSingleStep(2)  # Only even numbers
+        self.thickness_spinbox.setValue(current_total_squares)
+        thickness_layout.addWidget(self.thickness_spinbox)
+        thickness_layout.addWidget(QLabel("squares"))
+        layout.addLayout(thickness_layout)
+        
+        # Color width percentage (slider)
+        color_layout = QVBoxLayout()
+        color_layout.addWidget(QLabel("Color vs Stroke Distribution (total thickness fixed):"))
+        
+        self.color_slider = QSlider(Qt.Horizontal)
+        self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
+        
+        # Calculate current color percentage based on default values
+        current_percentage = int((settings_dialog.default_strand_width / current_total_width) * 100) if current_total_width > 0 else 50
+        self.color_slider.setValue(max(10, min(90, current_percentage)))
+        
+        color_layout.addWidget(self.color_slider)
+        
+        # Slider labels
+        slider_labels = QHBoxLayout()
+        slider_labels.addStretch()
+        self.percentage_label = QLabel(f"{self.color_slider.value()}% of Available Color Space")
+        slider_labels.addWidget(self.percentage_label)
+        slider_labels.addStretch()
+        color_layout.addLayout(slider_labels)
+        
+        layout.addLayout(color_layout)
+        
+        # Connect slider to update label
+        self.color_slider.valueChanged.connect(self.update_percentage_label)
+        
+        # Preview section
+        preview_layout = QVBoxLayout()
+        self.preview_label = QLabel()
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setMinimumHeight(40)
+        self.update_preview()
+        preview_layout.addWidget(self.preview_label)
+        layout.addLayout(preview_layout)
+        
+        # Connect changes to update preview
+        self.thickness_spinbox.valueChanged.connect(self.update_preview)
+        self.color_slider.valueChanged.connect(self.update_preview)
+        
+        # Buttons using QDialogButtonBox for consistent theme styling
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        layout.addWidget(self.button_box)
+    
+    def update_percentage_label(self):
+        """Update the percentage label when slider changes."""
+        slider_value = self.color_slider.value()
+        logging.info(f"[DefaultWidthConfigDialog] Color slider changed to {slider_value}%")
+        self.percentage_label.setText(f"{slider_value}% of Available Color Space")
+    
+    def update_preview(self):
+        """Update the preview display keeping total thickness fixed."""
+        total_grid_squares = self.thickness_spinbox.value()
+        total_grid_width = total_grid_squares * self.grid_unit
+        color_percentage = self.color_slider.value() / 100.0
+
+        logging.info(f"[DefaultWidthConfigDialog] Preview updated - Grid squares: {total_grid_squares}, Color percentage: {color_percentage*100:.0f}%")
+
+        # Compute widths
+        color_width = total_grid_width * color_percentage
+        stroke_width = (total_grid_width - color_width) / 2
+
+        logging.info(f"[DefaultWidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
+
+        self.preview_label.setText(
+            f"Total: {total_grid_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
+        )
+    
+    def get_values(self):
+        """Return new color and stroke width ensuring total thickness remains fixed."""
+        total_grid_width = self.thickness_spinbox.value() * self.grid_unit
+        color_percentage = self.color_slider.value() / 100.0
+
+        color_width = total_grid_width * color_percentage
+        stroke_width = (total_grid_width - color_width) / 2
+
+        logging.info(
+            f"DEFAULT WIDTH - Values: grid_total={total_grid_width}, color%={color_percentage*100:.0f}, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}"
+        )
+
+        return int(color_width), int(stroke_width)

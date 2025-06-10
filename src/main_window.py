@@ -1945,7 +1945,6 @@ class MainWindow(QMainWindow):
             if emit_signal:
                 self.layer_panel.select_layer(index, emit_signal=False)
         
-        self.canvas.is_first_strand = False
         # Don't call update_mode here to avoid recursion
 
     def handle_canvas_strand_selection(self, index):

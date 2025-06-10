@@ -262,7 +262,6 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
 
         # Set common properties
         strand.has_circles = data.get("has_circles", [False, False])
-        strand.is_first_strand = data.get("is_first_strand", False)
         strand.is_start_side = data.get("is_start_side", True)
         strand.start_line_visible = data.get("start_line_visible", True)
         strand.end_line_visible = data.get("end_line_visible", True)
@@ -415,7 +414,6 @@ def load_strands(filename, canvas):
             strand.layer_name = strand_data["layer_name"]
             strand.set_number = strand_data["set_number"]
             strand.has_circles = strand_data["has_circles"]
-            strand.is_first_strand = strand_data["is_first_strand"]
             strand.is_start_side = strand_data["is_start_side"]
             strand.is_hidden = strand_data.get("is_hidden", False)
 
@@ -494,7 +492,6 @@ def load_strands(filename, canvas):
                 strand.layer_name = masked_data["layer_name"]
                 strand.set_number = masked_data["set_number"]
                 strand.has_circles = masked_data["has_circles"]
-                strand.is_first_strand = masked_data["is_first_strand"]
                 strand.is_start_side = masked_data["is_start_side"]
                 strand.is_hidden = masked_data.get("is_hidden", False)
                 

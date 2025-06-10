@@ -2,8 +2,8 @@ import sys
 import os
 import logging
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QColor, QCursor
 from main_window import MainWindow
 from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode, connect_to_mask_mode
 
@@ -461,14 +461,175 @@ if __name__ == '__main__':
     
     window.set_language(language_code)
     
-    # Show and maximize window before applying theme to ensure all widgets exist
-    window.show()
-    window.setWindowState(Qt.WindowMaximized | window.windowState())
+    # Apply theme before window is shown
+    window.apply_theme(theme)
+    
+    # Get the screen where the cursor is currently located
+    cursor_pos = QCursor.pos()
+    logging.info(f"Cursor position: {cursor_pos.x()}, {cursor_pos.y()}")
+    
+    # Use QScreen API for better multi-monitor support
+    try:
+        from PyQt5.QtGui import QGuiApplication
+        from PyQt5.QtWidgets import QDesktopWidget
+        
+        # Get all screens
+        screens = QGuiApplication.screens()
+        logging.info(f"Number of screens (QScreen API): {len(screens)}")
+        
+        # Find which screen contains the cursor
+        target_screen = None
+        for i, screen in enumerate(screens):
+            screen_rect = screen.geometry()
+            logging.info(f"Screen {i} ({screen.name()}): geometry={screen_rect}, available={screen.availableGeometry()}")
+            if screen_rect.contains(cursor_pos):
+                target_screen = screen
+                logging.info(f"Cursor is on screen: {screen.name()}")
+                break
+        
+        if not target_screen:
+            # Fallback to primary screen if cursor position doesn't match any screen
+            target_screen = QGuiApplication.primaryScreen()
+            logging.info(f"Using primary screen as fallback: {target_screen.name()}")
+        
+        # Get the available geometry (excluding taskbar)
+        available_rect = target_screen.availableGeometry()
+        logging.info(f"Target screen available geometry: x={available_rect.x()}, y={available_rect.y()}, width={available_rect.width()}, height={available_rect.height()}")
+        
+        # First, show the window in normal state with a reasonable size
+        initial_width = min(1200, available_rect.width())
+        initial_height = min(800, available_rect.height())
+        initial_x = available_rect.x() + (available_rect.width() - initial_width) // 2
+        initial_y = available_rect.y() + (available_rect.height() - initial_height) // 2
+        
+        # Ensure the window has the minimum size set
+        window.setMinimumSize(677, 820)  # From the error message
+        
+        # Set initial geometry
+        window.setGeometry(initial_x, initial_y, initial_width, initial_height)
+        logging.info(f"Setting initial window geometry: x={initial_x}, y={initial_y}, width={initial_width}, height={initial_height}")
+        
+        # Show the window first in normal state
+        window.show()
+        
+        # Ensure window is on the correct screen
+        if window.windowHandle():
+            window.windowHandle().setScreen(target_screen)
+            logging.info(f"Window handle set to screen: {target_screen.name()}")
+        
+        # Let the window settle
+        app.processEvents()
+        
+        # Now we need to properly maximize the window on the target screen
+        # First, ensure we're in normal state
+        window.setWindowState(Qt.WindowNoState)
+        
+        # Set the geometry to match the available area of the target screen
+        window.setGeometry(available_rect)
+        logging.info(f"Set window to screen's available geometry: {available_rect}")
+        
+        # Process events to let the window update
+        app.processEvents()
+        
+        # Now show maximized
+        window.showMaximized()
+        
+        # Add a delayed adjustment to ensure proper maximization on the correct screen
+        def ensure_proper_screen():
+            # Check if window is on the right screen
+            current_geom = window.geometry()
+            logging.info(f"After maximize - window geometry: {current_geom}")
+            
+            # If the window width doesn't match the target screen, force it
+            if abs(current_geom.width() - available_rect.width()) > 50:  # Allow some tolerance
+                logging.info(f"Window width mismatch. Expected: {available_rect.width()}, Got: {current_geom.width()}")
+                # Try alternative maximization approach
+                window.setWindowState(Qt.WindowNoState)
+                window.setGeometry(available_rect)
+                window.setWindowState(Qt.WindowMaximized)
+                
+                # Force window to the correct position
+                if window.windowHandle():
+                    window.windowHandle().setScreen(target_screen)
+                
+                logging.info(f"Forced resize - new geometry: {window.geometry()}")
+        
+        # Schedule the check for after the window has settled
+        QTimer.singleShot(200, ensure_proper_screen)
+        
+        logging.info(f"Final window position after maximize: {window.pos()}")
+        logging.info(f"Final window geometry: {window.geometry()}")
+        
+    except Exception as e:
+        logging.error(f"Error with QScreen approach: {e}")
+        # Fallback to QDesktopWidget
+        try:
+            desktop = QDesktopWidget()
+            screen_num = desktop.screenNumber(cursor_pos)
+            screen_geometry = desktop.availableGeometry(screen_num)
+            
+            logging.info(f"Fallback: Using screen {screen_num} with geometry: {screen_geometry}")
+            
+            # Show window centered first
+            window.resize(1200, 800)
+            window.move(
+                screen_geometry.x() + (screen_geometry.width() - 1200) // 2,
+                screen_geometry.y() + (screen_geometry.height() - 800) // 2
+            )
+            window.show()
+            
+            # Then maximize
+            window.showMaximized()
+            
+        except Exception as e2:
+            logging.error(f"Fallback also failed: {e2}")
+            # Just show the window normally
+            window.show()
+            window.showMaximized()
+    
     window.raise_()
     window.activateWindow()
     
-    # Apply theme after window is shown to ensure all widgets are created
-    window.apply_theme(theme)
+    # Theme is applied before the window is shown.
+    
+    # Add another fallback to ensure window fills the screen
+    def final_screen_check():
+        try:
+            # Get current window geometry
+            current_geom = window.geometry()
+            cursor_pos = QCursor.pos()
+            
+            # Find which screen the cursor is on
+            from PyQt5.QtGui import QGuiApplication
+            screens = QGuiApplication.screens()
+            
+            for screen in screens:
+                if screen.geometry().contains(cursor_pos):
+                    available = screen.availableGeometry()
+                    # If window size doesn't match screen size, force it
+                    if abs(current_geom.width() - available.width()) > 50:
+                        logging.info(f"Final check: Window not properly sized. Forcing to fill screen.")
+                        logging.info(f"Current: {current_geom}, Target: {available}")
+                        
+                        # Try a different approach - set window flags to frameless then back
+                        old_flags = window.windowFlags()
+                        window.setWindowFlags(Qt.FramelessWindowHint)
+                        window.setGeometry(available)
+                        window.show()
+                        app.processEvents()
+                        
+                        # Restore normal window with decorations
+                        window.setWindowFlags(old_flags)
+                        window.show()
+                        window.setWindowState(Qt.WindowMaximized)
+                        
+                        logging.info(f"Final forced geometry: {window.geometry()}")
+                    break
+        except Exception as e:
+            logging.error(f"Error in final screen check: {e}")
+    
+    # Run final check after a longer delay
+    QTimer.singleShot(500, final_screen_check)
     
     # Set the initial splitter sizes to make the layer panel narrower
     window.set_initial_splitter_sizes()

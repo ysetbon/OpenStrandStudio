@@ -79,8 +79,8 @@ class MainWindow(QMainWindow):
         self.language_changed.connect(self.update_translations)
         self.theme_changed.connect(self.apply_theme_to_widgets)
 
-        # Show window maximized with standard window decorations
-        self.showMaximized()
+        # Window will be shown and maximized from main.py
+        # self.showMaximized()
 
         # Load user settings from file
         self.load_settings_from_file()

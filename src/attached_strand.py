@@ -330,12 +330,12 @@ class AttachedStrand(Strand):
         """Get proper drawing bounds that account for zoom and transformation."""
         # Get the current transformation matrix
         transform = painter.transform()
-        logging.info(f"[AttachedStrand.get_drawing_bounds] Called for strand {getattr(self, 'layer_name', 'unknown')}")
-        logging.info(f"  Transform: m11={transform.m11()}, m22={transform.m22()}, dx={transform.dx()}, dy={transform.dy()}")
+        #logging.info(f"[AttachedStrand.get_drawing_bounds] Called for strand {getattr(self, 'layer_name', 'unknown')}")
+        #logging.info(f"  Transform: m11={transform.m11()}, m22={transform.m22()}, dx={transform.dx()}, dy={transform.dy()}")
         
         # Get the bounding rect of this strand
         bounding_rect = self.boundingRect()
-        logging.info(f"  Original bounding rect: {bounding_rect}")
+        #logging.info(f"  Original bounding rect: {bounding_rect}")
         
         # If there's a transformation, expand bounds to accommodate it
         if not transform.isIdentity():

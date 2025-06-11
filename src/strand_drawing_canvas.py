@@ -66,19 +66,19 @@ class StrandDrawingCanvas(QWidget):
         # If we loaded a shadow color from settings, apply it now
         if shadow_color:
             self.default_shadow_color = shadow_color
-            logging.info(f"Applied shadow color from settings during canvas initialization: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
+            #logging.info(f"Applied shadow color from settings during canvas initialization: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}")
         
         # If we loaded a default strand color from settings, apply it now
         if default_strand_color_from_settings:
             self.default_strand_color = default_strand_color_from_settings
             self.strand_color = default_strand_color_from_settings  # Also update current strand color
-            logging.info(f"Applied default strand color from settings during canvas initialization: {default_strand_color_from_settings.red()},{default_strand_color_from_settings.green()},{default_strand_color_from_settings.blue()},{default_strand_color_from_settings.alpha()}")
+            #logging.info(f"Applied default strand color from settings during canvas initialization: {default_strand_color_from_settings.red()},{default_strand_color_from_settings.green()},{default_strand_color_from_settings.blue()},{default_strand_color_from_settings.alpha()}")
         
         # If we loaded a default stroke color from settings, apply it now
         if default_stroke_color_from_settings:
             self.default_stroke_color = default_stroke_color_from_settings
             self.stroke_color = default_stroke_color_from_settings  # Also update current stroke color
-            logging.info(f"Applied default stroke color from settings during canvas initialization: {default_stroke_color_from_settings.red()},{default_stroke_color_from_settings.green()},{default_stroke_color_from_settings.blue()},{default_stroke_color_from_settings.alpha()}")
+            #logging.info(f"Applied default stroke color from settings during canvas initialization: {default_stroke_color_from_settings.red()},{default_stroke_color_from_settings.green()},{default_stroke_color_from_settings.blue()},{default_stroke_color_from_settings.alpha()}")
         
         self.setup_modes()
         self.highlight_color = QColor(255, 0, 0, 0)  # Semi-transparent red
@@ -166,7 +166,7 @@ class StrandDrawingCanvas(QWidget):
         
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
-        logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
+        #logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = False
@@ -201,12 +201,12 @@ class StrandDrawingCanvas(QWidget):
             settings_dir = program_data_dir
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Canvas: Looking for settings file at: {file_path}")
+        #logging.info(f"Canvas: Looking for settings file at: {file_path}")
         
         if os.path.exists(file_path):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
-                    logging.info("Canvas: Reading settings from user_settings.txt")
+                    #logging.info("Canvas: Reading settings from user_settings.txt")
                     for line in file:
                         line = line.strip()
                         if line.startswith('ShadowColor:'):
@@ -214,10 +214,10 @@ class StrandDrawingCanvas(QWidget):
                             try:
                                 r, g, b, a = map(int, rgba_str.split(','))
                                 shadow_color = QColor(r, g, b, a)
-                                logging.info(f"Canvas: Loaded shadow color from settings: {r},{g},{b},{a}")
+                                #logging.info(f"Canvas: Loaded shadow color from settings: {r},{g},{b},{a}")
                                 break # Found the color, no need to read further
                             except Exception as e:
-                                logging.error(f"Canvas: Error parsing shadow color: {e}")
+                                #logging.error(f"Canvas: Error parsing shadow color: {e}")
                                 shadow_color = None # Reset on error
                                 break
             except Exception as e:
@@ -239,12 +239,12 @@ class StrandDrawingCanvas(QWidget):
             settings_dir = program_data_dir
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Canvas: Looking for default strand color settings at: {file_path}")
+        #logging.info(f"Canvas: Looking for default strand color settings at: {file_path}")
         
         if os.path.exists(file_path):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
-                    logging.info("Canvas: Reading default strand color from user_settings.txt")
+                    #logging.info("Canvas: Reading default strand color from user_settings.txt")
                     for line in file:
                         line = line.strip()
                         if line.startswith('DefaultStrandColor:'):
@@ -252,10 +252,10 @@ class StrandDrawingCanvas(QWidget):
                             try:
                                 r, g, b, a = map(int, rgba_str.split(','))
                                 default_strand_color = QColor(r, g, b, a)
-                                logging.info(f"Canvas: Loaded default strand color from settings: {r},{g},{b},{a}")
+                                #logging.info(f"Canvas: Loaded default strand color from settings: {r},{g},{b},{a}")
                                 break # Found the color, no need to read further
                             except Exception as e:
-                                logging.error(f"Canvas: Error parsing default strand color: {e}")
+                                #logging.error(f"Canvas: Error parsing default strand color: {e}")
                                 default_strand_color = None # Reset on error
                                 break
             except Exception as e:
@@ -277,12 +277,12 @@ class StrandDrawingCanvas(QWidget):
             settings_dir = program_data_dir
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Canvas: Looking for default stroke color settings at: {file_path}")
+        #logging.info(f"Canvas: Looking for default stroke color settings at: {file_path}")
         
         if os.path.exists(file_path):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
-                    logging.info("Canvas: Reading default stroke color from user_settings.txt")
+                    #logging.info("Canvas: Reading default stroke color from user_settings.txt")
                     for line in file:
                         line = line.strip()
                         if line.startswith('DefaultStrokeColor:'):
@@ -290,10 +290,10 @@ class StrandDrawingCanvas(QWidget):
                             try:
                                 r, g, b, a = map(int, rgba_str.split(','))
                                 default_stroke_color = QColor(r, g, b, a)
-                                logging.info(f"Canvas: Loaded default stroke color from settings: {r},{g},{b},{a}")
+                                #logging.info(f"Canvas: Loaded default stroke color from settings: {r},{g},{b},{a}")
                                 break # Found the color, no need to read further
                             except Exception as e:
-                                logging.error(f"Canvas: Error parsing default stroke color: {e}")
+                                #logging.error(f"Canvas: Error parsing default stroke color: {e}")
                                 default_stroke_color = None # Reset on error
                                 break
             except Exception as e:
@@ -323,13 +323,13 @@ class StrandDrawingCanvas(QWidget):
                         if line.startswith('NumSteps:'):
                             try:
                                 self.num_steps = int(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded NumSteps from settings: {self.num_steps}")
+                                #logging.info(f"Canvas: Loaded NumSteps from settings: {self.num_steps}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing NumSteps value. Using default {self.num_steps}.")
                         elif line.startswith('MaxBlurRadius:'):
                             try:
                                 self.max_blur_radius = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded MaxBlurRadius from settings: {self.max_blur_radius:.1f}")
+                                #logging.info(f"Canvas: Loaded MaxBlurRadius from settings: {self.max_blur_radius:.1f}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
             except Exception as e:
@@ -348,7 +348,7 @@ class StrandDrawingCanvas(QWidget):
             settings_dir = program_data_dir
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Canvas: Looking for extension line settings at: {file_path}")
+        #logging.info(f"Canvas: Looking for extension line settings at: {file_path}")
 
         if os.path.exists(file_path):
             try:
@@ -358,37 +358,37 @@ class StrandDrawingCanvas(QWidget):
                         if line.startswith('ExtensionLength:'):
                             try:
                                 self.extension_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ExtensionLength from settings: {self.extension_length}")
+                                #logging.info(f"Canvas: Loaded ExtensionLength from settings: {self.extension_length}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ExtensionLength. Using default {self.extension_length}")
                         elif line.startswith('ExtensionDashCount:'):
                             try:
                                 self.extension_dash_count = int(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ExtensionDashCount from settings: {self.extension_dash_count}")
+                                #logging.info(f"Canvas: Loaded ExtensionDashCount from settings: {self.extension_dash_count}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ExtensionDashCount. Using default {self.extension_dash_count}")
                         elif line.startswith('ExtensionDashWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ExtensionDashWidth from settings: {self.extension_dash_width}")
+                                #logging.info(f"Canvas: Loaded ExtensionDashWidth from settings: {self.extension_dash_width}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ExtensionDashWidth. Using default {self.extension_dash_width}")
                         elif line.startswith('ArrowHeadLength:'):
                             try:
                                 self.arrow_head_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ArrowHeadLength from settings: {self.arrow_head_length}")
+                                #logging.info(f"Canvas: Loaded ArrowHeadLength from settings: {self.arrow_head_length}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ArrowHeadLength. Using default {self.arrow_head_length}")
                         elif line.startswith('ArrowHeadWidth:'):
                             try:
                                 self.arrow_head_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ArrowHeadWidth from settings: {self.arrow_head_width}")
+                                #logging.info(f"Canvas: Loaded ArrowHeadWidth from settings: {self.arrow_head_width}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ArrowHeadWidth. Using default {self.arrow_head_width}")
                         elif line.startswith('ExtensionLineWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"Canvas: Loaded ExtensionLineWidth (legacy): {self.extension_dash_width}")
+                                #logging.info(f"Canvas: Loaded ExtensionLineWidth (legacy): {self.extension_dash_width}")
                             except ValueError:
                                 logging.error(f"Canvas: Error parsing ExtensionLineWidth. Using default {self.extension_dash_width}")
             except Exception as e:
@@ -410,7 +410,7 @@ class StrandDrawingCanvas(QWidget):
             draw_only_setting = self.load_draw_only_affected_strand_setting()
             if draw_only_setting is not None:
                 self.move_mode.draw_only_affected_strand = draw_only_setting
-                logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
+                #logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
         except Exception as e:
             logging.error(f"Error applying draw_only_affected_strand setting: {e}")
 
@@ -438,7 +438,7 @@ class StrandDrawingCanvas(QWidget):
         """Add a strand to the canvas and set its canvas reference."""
         strand.canvas = self
         self.strands.append(strand)
-        logging.info(f"Added strand to canvas. Show control points: {self.show_control_points}")
+        #logging.info(f"Added strand to canvas. Show control points: {self.show_control_points}")
         self.update()
 
     @property
@@ -448,9 +448,11 @@ class StrandDrawingCanvas(QWidget):
     @selected_strand.setter
     def selected_strand(self, strand):
         if strand is None:
-            logging.info(f"Selected strand set to None. Caller: {self.get_caller()}")
+            #logging.info(f"Selected strand set to None. Caller: {self.get_caller()}")
+            pass
         else:
-            logging.info(f"Selected strand set to {strand.layer_name}. Caller: {self.get_caller()}")
+            #logging.info(f"Selected strand set to {strand.layer_name}. Caller: {self.get_caller()}")
+            pass
         self._selected_strand = strand
 
     def get_caller(self):
@@ -527,24 +529,24 @@ class StrandDrawingCanvas(QWidget):
                     })
 
         # Done: now we have an unrotated "snapshot"
-        logging.info(f"start_group_rotation: stored pre-rotation state for group '{group_name}'")
+        #logging.info(f"start_group_rotation: stored pre-rotation state for group '{group_name}'")
 
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
             if group_data:
                 self.groups[group_name] = group_data
-            else:
-                logging.warning(f"Group '{group_name}' not found in GroupPanel")
+            #else:
+                #logging.warning(f"Group '{group_name}' not found in GroupPanel")
         else:
-            logging.error("GroupLayerManager or GroupPanel not properly connected to StrandDrawingCanvas")
+            #logging.error("GroupLayerManager or GroupPanel not properly connected to StrandDrawingCanvas")
             return
 
         if group_name in self.groups:
             group_data = self.groups[group_name]
             # Store the original main strands before rotation
             self.pre_rotation_main_strands = list(group_data.get('main_strands', []))
-            logging.info(f"Stored pre-rotation main strands for group {group_name}: {self.pre_rotation_main_strands}")
+            #logging.info(f"Stored pre-rotation main strands for group {group_name}: {self.pre_rotation_main_strands}")
             
             self.rotating_group_name = group_name
             self.original_strand_positions = {}
@@ -578,10 +580,11 @@ class StrandDrawingCanvas(QWidget):
                 self.original_strand_positions[strand] = state
             # Calculate center
             self.calculate_group_center(group_data['strands'])
-            logging.info(f"Started rotation for group '{group_name}'")
+            #logging.info(f"Started rotation for group '{group_name}'")
             self.update()
         else:
-            logging.warning(f"Attempted to start rotation for non-existent group: {group_name}")
+            #logging.warning(f"Attempted to start rotation for non-existent group: {group_name}")
+            pass
 
     def rotate_group(self, group_name, angle):
         """
@@ -732,14 +735,14 @@ class StrandDrawingCanvas(QWidget):
         self.current_rotation_angle = 0  # Initialize rotation angle
     def update_group_data(self, group_name, group_data):
         self.groups[group_name] = group_data.copy()
-        logging.info(f"Canvas group data updated for group '{group_name}'")
+        #logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         """Finish rotating a group of strands."""
-        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Starting for group '{group_name}'")
+        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Starting for group '{group_name}'")
 
         # Log initial state
-        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current rotating_group_name: {getattr(self, 'rotating_group_name', None)}")
-        logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Group exists in self.groups: {group_name in self.groups}")
+        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current rotating_group_name: {getattr(self, 'rotating_group_name', None)}")
+        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Group exists in self.groups: {group_name in self.groups}")
         
         if hasattr(self, 'pre_rotation_main_strands'):
             logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Found pre_rotation_main_strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
@@ -750,20 +753,22 @@ class StrandDrawingCanvas(QWidget):
             if group_name in self.groups:
                 # Log group data before restoration
                 current_main_strands = self.groups[group_name].get('main_strands', [])
-                logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current main strands before restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in current_main_strands]}")
+                #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current main strands before restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in current_main_strands]}")
                 
                 # Restore the original main strands
                 if hasattr(self, 'pre_rotation_main_strands'):
                     self.groups[group_name]['main_strands'] = self.pre_rotation_main_strands
-                    logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Restored main strands for group {group_name}: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
+                    #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Restored main strands for group {group_name}: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
                 else:
-                    logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands to restore for group {group_name}")
+                    #logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands to restore for group {group_name}")
+                    pass
                 
                 # Log final group data
                 final_main_strands = self.groups[group_name].get('main_strands', [])
-                logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Final main strands after restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in final_main_strands]}")
+                #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Final main strands after restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in final_main_strands]}")
             else:
-                logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
+                #logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
+                pass
                 
             # Cleanup
             self.is_rotating = False
@@ -771,9 +776,9 @@ class StrandDrawingCanvas(QWidget):
             self.rotation_center = None
             if hasattr(self, 'pre_rotation_main_strands'):
                 delattr(self, 'pre_rotation_main_strands')
-                logging.info("[StrandDrawingCanvas.finish_group_rotation] Cleaned up pre_rotation_main_strands")
+                #logging.info("[StrandDrawingCanvas.finish_group_rotation] Cleaned up pre_rotation_main_strands")
                 
-            logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Finished rotation cleanup for group '{group_name}'")
+            #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Finished rotation cleanup for group '{group_name}'")
             self.update()
         else:
             logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] Attempted to finish rotation for inactive group: {group_name}. Current rotating group: {getattr(self, 'rotating_group_name', None)}")
@@ -821,7 +826,8 @@ class StrandDrawingCanvas(QWidget):
             for strand in strands:
                 self.initialize_strand_original_positions_recursively(strand)
         else:
-            logging.warning(f"Group '{group_name}' not found in group panel")
+            #logging.warning(f"Group '{group_name}' not found in group panel")
+            pass
 
 
     def initialize_strand_original_positions_recursively(self, strand):

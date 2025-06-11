@@ -18,8 +18,6 @@ class MoveMode:
         Args:
             canvas (Canvas): The canvas this mode is attached to.
         """
-        logging.info("MoveMode: Initializing")
-        
         self.canvas = canvas
         self.is_moving = False
         self.moving_control_point = -1
@@ -283,9 +281,7 @@ class MoveMode:
             # Bind the method directly
             self.canvas.invalidate_background_cache = invalidate_cache
             
-            logging.info(f"Background cache initialized: {width}x{height} pixels (transparent)")
         except Exception as e:
-            logging.error(f"Error setting up background cache: {e}")
             # If we can't set up the cache, set a flag to disable it
             self.canvas.use_background_cache = False
 
@@ -1502,7 +1498,7 @@ class MoveMode:
         if self.lock_mode_active and strand in self.canvas.strands:
             strand_index = self.canvas.strands.index(strand)
             if strand_index in self.locked_layers:
-                logging.info(f"Skipping control point movement for locked strand {strand.layer_name}")
+                # logging.info(f"Skipping control point movement for locked strand {strand.layer_name}")
                 return False
 
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
@@ -1575,7 +1571,7 @@ class MoveMode:
             self.start_movement(strand, 0, start_area, pos)
             # Ensure the strand is selected when movement starts
             strand.is_selected = True
-            logging.info(f"Selected strand {strand.layer_name} for start movement")
+            # logging.info(f"Selected strand {strand.layer_name} for start movement")
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
             else:
@@ -1586,7 +1582,7 @@ class MoveMode:
             self.start_movement(strand, 1, end_area, pos)
             # Ensure the strand is selected when movement starts
             strand.is_selected = True
-            logging.info(f"Selected strand {strand.layer_name} for end movement")
+            # logging.info(f"Selected strand {strand.layer_name} for end movement")
             if isinstance(strand, AttachedStrand):
                 self.canvas.selected_attached_strand = strand
             else:
@@ -1934,12 +1930,12 @@ class MoveMode:
                 if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                     connections = self.canvas.layer_state_manager.getConnections()
                     connected_strand_names = set(connections.get(self.affected_strand.layer_name, []))
-                    logging.info(f"MoveMode: Direct connections for {self.affected_strand.layer_name}: {connected_strand_names}")
+                    # logging.info(f"MoveMode: Direct connections for {self.affected_strand.layer_name}: {connected_strand_names}")
                     # Also check the reverse connection
                     for name, connected_list in connections.items():
                          if self.affected_strand.layer_name in connected_list:
                               connected_strand_names.add(name)
-                    logging.info(f"MoveMode: All connections for {self.affected_strand.layer_name}: {connected_strand_names}")
+                    # logging.info(f"MoveMode: All connections for {self.affected_strand.layer_name}: {connected_strand_names}")
 
                 for other_strand in self.canvas.strands:
                     if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
@@ -1956,10 +1952,10 @@ class MoveMode:
                     if points_close and is_manager_connected:
                         connected_strands_at_moving_point.add(other_strand)
                         affected_strands.add(other_strand)
-                        logging.info(f"MoveMode (Update Pos): Adding {other_strand.layer_name} to affected (points close AND manager connected to {self.affected_strand.layer_name})")
-                    elif points_close:
+                        # logging.info(f"MoveMode (Update Pos): Adding {other_strand.layer_name} to affected (points close AND manager connected to {self.affected_strand.layer_name})")
+                    #elif points_close:
                          # Optional: Log when points are close but not connected
-                         logging.info(f"MoveMode (Update Pos): Points close for {other_strand.layer_name}, but not manager-connected to {self.affected_strand.layer_name}. Not adding to affected.")
+                         # logging.info(f"MoveMode (Update Pos): Points close for {other_strand.layer_name}, but not manager-connected to {self.affected_strand.layer_name}. Not adding to affected.")
         # --- End finding and including connected strands ---
 
         # --- NEW BLOCK: Explicitly include attached strands sharing the same starting point ---
@@ -1975,7 +1971,7 @@ class MoveMode:
                     
                     affected_strands.add(attached_strand) # Ensure it's also in affected
                     # Corrected Log Message:
-                    logging.info(f"MoveMode (Update Pos): Added attached strand {attached_strand.layer_name} sharing start point to affected_strands.")
+                    # logging.info(f"MoveMode (Update Pos): Added attached strand {attached_strand.layer_name} sharing start point to affected_strands.")
         # --- End NEW BLOCK ---
 
         # Special handling for MaskedStrand - add both selected strands to affected_strands (not truly_moving)
@@ -2193,14 +2189,14 @@ class MoveMode:
         # --- CORRECTED: Re-assert the read-only list from the start of the function --- 
         self.canvas.truly_moving_strands = truly_moving_strands_read_only
         # --- END CORRECTION ---
-        logging.info(f"MoveMode (Update Pos): Final truly_moving_strands: {[s.layer_name for s in self.canvas.truly_moving_strands]}, affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
+        # logging.info(f"MoveMode (Update Pos): Final truly_moving_strands: {[s.layer_name for s in self.canvas.truly_moving_strands]}, affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
         
         # --- NEW: Log positions of all affected strands AFTER updates in this step ---
-        if hasattr(self.canvas, 'affected_strands_for_drawing'):
-            logging.info("--- Positions after update_strand_position step ---")
-            for s in self.canvas.affected_strands_for_drawing:
-                logging.info(f"  Strand {s.layer_name}: Start={s.start}, End={s.end}")
-            logging.info("--------------------------------------------------")
+        #if hasattr(self.canvas, 'affected_strands_for_drawing'):
+            # logging.info("--- Positions after update_strand_position step ---")
+            # for s in self.canvas.affected_strands_for_drawing:
+            #     logging.info(f"  Strand {s.layer_name}: Start={s.start}, End={s.end}")
+            # logging.info("--------------------------------------------------")
         # --- END NEW LOGGING ---
 
         # Check for attached strands that share the same start/end point with the affected strand
@@ -2221,7 +2217,7 @@ class MoveMode:
                     # Ensure this attached strand is in truly_moving_strands
                     if attached not in self.canvas.truly_moving_strands:
                         self.canvas.truly_moving_strands.append(attached)
-                        logging.info(f"MoveMode: Added {attached.layer_name} to truly_moving_strands - shares point with {self.affected_strand.layer_name}")
+                        # logging.info(f"MoveMode: Added {attached.layer_name} to truly_moving_strands - shares point with {self.affected_strand.layer_name}")
 
         # For immediate visual feedback during dragging, invalidate the cache here too
         if hasattr(self.canvas, 'background_cache_valid'):
@@ -2385,8 +2381,8 @@ class MoveMode:
             Strand or None: The parent strand if one exists, otherwise None.
         """
         # --- ADD LOGGING: Before update ---
-        logging.info(f"MoveStrandUpdate: Moving strand {strand.layer_name}, side {moving_side} to {new_pos}")
-        logging.info(f"MoveStrandUpdate: BEFORE - Start: {strand.start}, End: {strand.end}")
+        # logging.info(f"MoveStrandUpdate: Moving strand {strand.layer_name}, side {moving_side} to {new_pos}")
+        # logging.info(f"MoveStrandUpdate: BEFORE - Start: {strand.start}, End: {strand.end}")
         # --- END LOGGING ---
         
         # Store original positions to preserve the non-moving endpoint
@@ -2498,7 +2494,7 @@ class MoveMode:
         # Find any connected strands using the OLD position before the move
         old_moving_point = old_start if moving_side == 0 else old_end
         connected_strand = self.find_connected_strand(strand, moving_side, old_moving_point)
-        logging.info(f"MoveStrandUpdate: find_connected_strand for {strand.layer_name} side {moving_side} at {old_moving_point} -> {connected_strand.layer_name if connected_strand else None}")
+        # logging.info(f"MoveStrandUpdate: find_connected_strand for {strand.layer_name} side {moving_side} at {old_moving_point} -> {connected_strand.layer_name if connected_strand else None}")
         
         if connected_strand:
             affected_strands.add(connected_strand)
@@ -2507,11 +2503,11 @@ class MoveMode:
             if moving_side == 0:
                 # Moving strand's start -> update connected strand's end
                 connected_strand.end = new_pos
-                logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} end to {new_pos}")
+                # logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} end to {new_pos}")
             else:
                 # Moving strand's end -> update connected strand's start
                 connected_strand.start = new_pos
-                logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} start to {new_pos}")
+                # logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} start to {new_pos}")
                 
             connected_strand.update_shape()
             connected_strand.update_side_line()
@@ -2520,7 +2516,7 @@ class MoveMode:
         self.canvas.affected_strands_for_drawing = list(affected_strands)
 
         # --- ADD LOGGING: After update ---
-        logging.info(f"MoveStrandUpdate: AFTER - Strand {strand.layer_name} - Start: {strand.start}, End: {strand.end}")
+        # logging.info(f"MoveStrandUpdate: AFTER - Strand {strand.layer_name} - Start: {strand.start}, End: {strand.end}")
         # --- END LOGGING ---
 
         return parent_strand
@@ -2549,12 +2545,12 @@ class MoveMode:
                     elif strand.attachment_side == 1:
                         # Child is attached to parent's end, update parent's end
                         parent.end = strand.start # AttachedStrand.start is always the connection point
-                    else:
-                        # Handle potential unexpected attachment_side value
-                        logging.warning(f"update_parent_strands: Invalid attachment_side {strand.attachment_side} for {strand.layer_name}")
+                    # else:
+                    #     # Handle potential unexpected attachment_side value
+                    #     # logging.warning(f"update_parent_strands: Invalid attachment_side {strand.attachment_side} for {strand.layer_name}")
                 else:
                     # Fallback or error if attachment_side is missing (shouldn't happen)
-                    logging.error(f"update_parent_strands: Missing attachment_side for {strand.layer_name}")
+                    # logging.error(f"update_parent_strands: Missing attachment_side for {strand.layer_name}")
                     # As a fallback, try the old (potentially problematic) logic
                     if strand.start == parent.start:
                         parent.start = strand.start
@@ -2792,22 +2788,22 @@ class MoveMode:
     def find_connected_strand(self, strand, side, moving_point):
         """Find a strand connected to the given strand at the specified side."""
         if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
-            logging.info(f"find_connected_strand: No layer_state_manager available")
+            # logging.info(f"find_connected_strand: No layer_state_manager available")
             return None
 
         connections = self.canvas.layer_state_manager.getConnections()
         strand_connections = connections.get(strand.layer_name, [])
-        logging.info(f"find_connected_strand: {strand.layer_name} has connections: {strand_connections}")
+        # logging.info(f"find_connected_strand: {strand.layer_name} has connections: {strand_connections}")
 
         # Get prefix of the current strand
         prefix = strand.layer_name.split('_')[0]
 
         # Check outgoing connections (strand connects TO other strands)
         for connected_layer_name in strand_connections:
-            logging.info(f"find_connected_strand: Checking outgoing connection {connected_layer_name}")
+            # logging.info(f"find_connected_strand: Checking outgoing connection {connected_layer_name}")
             # Only check strands with the same prefix
             if not connected_layer_name.startswith(f"{prefix}_"):
-                logging.info(f"find_connected_strand: Skipping {connected_layer_name} (different prefix)")
+                # logging.info(f"find_connected_strand: Skipping {connected_layer_name} (different prefix)")
                 continue
 
             # Find the connected strand

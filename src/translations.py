@@ -389,6 +389,10 @@ translations = {
         'default_stroke_color': 'Couleur de Contour:',
         'default_strand_width': 'Largeur de Brin par Défaut',
         'default_strand_width_tooltip': 'Cliquez pour définir la largeur par défaut des nouveaux brins',
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "Afficher la flèche complète",
+        'hide_full_arrow': "Masquer la flèche complète",
+        # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
         'angle_label': 'Angle :',
@@ -656,6 +660,10 @@ translations = {
         'default_stroke_color': 'Colore Contorno:',
         'default_strand_width': 'Larghezza Trefolo Predefinita',
         'default_strand_width_tooltip': 'Clicca per impostare la larghezza predefinita per i nuovi trefoli',
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "Mostra freccia completa",
+        'hide_full_arrow': "Nascondi freccia completa",
+        # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
         'angle_label': 'Angolo:',
@@ -921,6 +929,10 @@ translations = {
         'default_stroke_color': 'Color de Contorno:',
         'default_strand_width': 'Ancho de Cordón Predeterminado',
         'default_strand_width_tooltip': 'Haga clic para establecer el ancho predeterminado para nuevos cordones',
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "Mostrar flecha completa",
+        'hide_full_arrow': "Ocultar flecha completa",
+        # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
         'angle_label': 'Ángulo:',
@@ -1191,6 +1203,10 @@ translations = {
         'default_stroke_color': 'Cor de Contorno:',
         'default_strand_width': 'Largura de Mecha Padrão',
         'default_strand_width_tooltip': 'Clique para definir a largura padrão para novas mechas',
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "Mostrar seta completa",
+        'hide_full_arrow': "Ocultar seta completa",
+        # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
         'angle_label': 'Ângulo:',
@@ -1430,6 +1446,10 @@ translations = {
         'default_stroke_color': 'צבע מתאר:',
         'default_strand_width': 'רוחב חוט ברירת מחדל',
         'default_strand_width_tooltip': 'לחץ כדי להגדיר את הרוחב ברירת המחדל עבור חוטים חדשים',
+        # --- NEW: Full Arrow translations ---
+        'show_full_arrow': "הצג חץ מלא",
+        'hide_full_arrow': "הסתר חץ מלא",
+        # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',
         'angle_label': 'זווית:',
@@ -1567,7 +1587,13 @@ translations = {
         <p style="font-size:13px;">
             © 2025 OpenStrand Studio
         </p>
-        ''',            
+        ''',
+        # Width dialog translations
+        'total_thickness_label': 'עובי כולל (משבצות רשת):',
+        'grid_squares': 'משבצות',
+        'color_vs_stroke_label': 'חלוקת צבע מול קו (העובי הכולל קבוע):',
+        'percent_available_color': '% מהשטח הזמין לצבע',
+        'width_preview_label': 'סה"כ: {total}px | צבע: {color}px | קו: {stroke}px בכל צד',
     },
 
 }

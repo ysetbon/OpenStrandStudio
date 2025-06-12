@@ -775,6 +775,32 @@ class SettingsDialog(QDialog):
             self.default_stroke_color_label.repaint()
             logging.info(f"DEFAULT_STROKE_COLOR_LABEL after min width set: minWidth={self.default_stroke_color_label.minimumWidth()} size={self.default_stroke_color_label.size()} geom={self.default_stroke_color_label.geometry()} pos={self.default_stroke_color_label.pos()}")
 
+        # Default Strand Width button layout reorganization
+        if hasattr(self, 'default_strand_width_container') and hasattr(self, 'default_strand_width_button'):
+            # Clear the layout and set proper spacing
+            self.clear_layout(self.default_strand_width_layout)
+            self.default_strand_width_container.setContentsMargins(0, 0, 0, 0)
+            if is_rtl:
+                self.default_strand_width_layout.addStretch()
+                self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_strand_width_layout.addWidget(self.default_strand_width_button)
+                logging.info("RTL REORGANIZE: Added stretch then button for default strand width")
+            else:
+                self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
+                self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_strand_width_layout.addWidget(self.default_strand_width_button)
+                self.default_strand_width_layout.addStretch()
+                logging.info("LTR REORGANIZE: Added button then stretch for default strand width")
+            # Force immediate update
+            self.default_strand_width_layout.invalidate()
+            self.default_strand_width_layout.activate()
+            # Also update the container widget
+            if hasattr(self, 'default_strand_width_container'):
+                self.default_strand_width_container.updateGeometry()
+                self.default_strand_width_container.update()
+                logging.info(f"REORGANIZE: Updated default strand width container geometry")
+
         # Layer Panel layout reorganizations
         if hasattr(self, 'ext_length_layout') and hasattr(self, 'extension_length_label') and hasattr(self, 'extension_length_spinbox'):
             self.clear_layout(self.ext_length_layout)
@@ -1799,8 +1825,8 @@ class SettingsDialog(QDialog):
             self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
             self.default_strand_width_layout.setSpacing(15)
 
-        self.default_strand_width_button = QPushButton(_['default_strand_width'] if 'default_strand_width' in _ else 'Default Strand Width')
-        self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else 'Click to set the default width for new strands')
+        self.default_strand_width_button = QPushButton(_['default_strand_width'])
+        self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'])
         self.default_strand_width_button.clicked.connect(self.open_default_width_dialog)
         
         if self.is_rtl_language(self.current_language):
@@ -1989,6 +2015,7 @@ class SettingsDialog(QDialog):
         buttons = [
             self.apply_button,
             self.language_ok_button,
+            self.layer_panel_ok_button,  # Add the missing layer panel OK button
             *self.video_buttons,  # Unpack video buttons list
             self.load_history_button, # Style history buttons
             self.clear_history_button
@@ -1998,6 +2025,8 @@ class SettingsDialog(QDialog):
             button.setFixedHeight(32)  # Match MainWindow button height
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             button.setMinimumWidth(120)  # Set minimum width for buttons
+            # Don't override colors - let the theme stylesheet handle colors
+            # Only ensure consistent size and basic properties
 
     def apply_dialog_theme(self, theme_name):
         """Apply theme to dialog components"""
@@ -2472,6 +2501,11 @@ class SettingsDialog(QDialog):
         else:
             self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             self.default_stroke_color_label.setLayoutDirection(Qt.LeftToRight)
+        
+        # Update default strand width button
+        self.default_strand_width_button.setText(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
+        self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else "Configure default strand width")
+        
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
@@ -3648,18 +3682,18 @@ class DefaultWidthConfigDialog(QDialog):
         
         # Total thickness in grid squares
         thickness_layout = QHBoxLayout()
-        thickness_layout.addWidget(QLabel("Total Thickness (grid squares):"))
+        thickness_layout.addWidget(QLabel(_['total_thickness_label'] if 'total_thickness_label' in _ else "Total Thickness (grid squares):"))
         self.thickness_spinbox = QSpinBox()
         self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
         self.thickness_spinbox.setSingleStep(2)  # Only even numbers
         self.thickness_spinbox.setValue(current_total_squares)
         thickness_layout.addWidget(self.thickness_spinbox)
-        thickness_layout.addWidget(QLabel("squares"))
+        thickness_layout.addWidget(QLabel(_['grid_squares'] if 'grid_squares' in _ else "squares"))
         layout.addLayout(thickness_layout)
         
         # Color width percentage (slider)
         color_layout = QVBoxLayout()
-        color_layout.addWidget(QLabel("Color vs Stroke Distribution (total thickness fixed):"))
+        color_layout.addWidget(QLabel(_['color_vs_stroke_label'] if 'color_vs_stroke_label' in _ else "Color vs Stroke Distribution (total thickness fixed):"))
         
         self.color_slider = QSlider(Qt.Horizontal)
         self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
@@ -3673,7 +3707,8 @@ class DefaultWidthConfigDialog(QDialog):
         # Slider labels
         slider_labels = QHBoxLayout()
         slider_labels.addStretch()
-        self.percentage_label = QLabel(f"{self.color_slider.value()}% of Available Color Space")
+        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
+        self.percentage_label = QLabel(f"{self.color_slider.value()}{percent_text}")
         slider_labels.addWidget(self.percentage_label)
         slider_labels.addStretch()
         color_layout.addLayout(slider_labels)
@@ -3706,7 +3741,10 @@ class DefaultWidthConfigDialog(QDialog):
         """Update the percentage label when slider changes."""
         slider_value = self.color_slider.value()
         logging.info(f"[DefaultWidthConfigDialog] Color slider changed to {slider_value}%")
-        self.percentage_label.setText(f"{slider_value}% of Available Color Space")
+        # Get translations
+        _ = translations.get(self.settings_dialog.current_language, translations['en'])
+        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
+        self.percentage_label.setText(f"{slider_value}{percent_text}")
     
     def update_preview(self):
         """Update the preview display keeping total thickness fixed."""
@@ -3722,8 +3760,11 @@ class DefaultWidthConfigDialog(QDialog):
 
         logging.info(f"[DefaultWidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
 
+        # Get translations
+        _ = translations.get(self.settings_dialog.current_language, translations['en'])
+        preview_template = _['width_preview_label'] if 'width_preview_label' in _ else "Total: {total}px | Color: {color}px | Stroke: {stroke}px each side"
         self.preview_label.setText(
-            f"Total: {total_grid_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
+            preview_template.format(total=int(total_grid_width), color=int(color_width), stroke=int(stroke_width))
         )
     
     def get_values(self):

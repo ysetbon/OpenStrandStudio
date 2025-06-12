@@ -103,20 +103,31 @@ class MainWindow(QMainWindow):
 
         logging.info(f"Canvas set in MainWindow: {self.canvas}")
 
-        self.toggle_control_points_button.clicked.connect(self.on_toggle_control_points_button_clicked)
+        # Connection will be handled in setup_connections
 
     def showEvent(self, event):
         """Override showEvent to ensure proper window state"""
         super().showEvent(event)
-        # Get the screen size
-        screen = QApplication.primaryScreen()
-        screen_size = screen.availableGeometry()
         
-        # Set window to use almost all available space
-        self.setGeometry(screen_size)
-        
-        # Then maximize
-        self.setWindowState(Qt.WindowMaximized)
+        # Only do initial positioning if this is the first time the window is shown
+        # (not during restore from minimize)
+        if not hasattr(self, '_initial_show_completed'):
+            logging.info("MainWindow showEvent: Initial window setup")
+            # Get the screen size
+            screen = QApplication.primaryScreen()
+            screen_size = screen.availableGeometry()
+            
+            # Set window to use almost all available space
+            self.setGeometry(screen_size)
+            
+            # Then maximize
+            self.setWindowState(Qt.WindowMaximized)
+            
+            # Mark that initial show is complete
+            self._initial_show_completed = True
+            logging.info("MainWindow showEvent: Initial setup complete - window maximized")
+        else:
+            logging.info("MainWindow showEvent: Subsequent show (restore from minimize) - no geometry changes")
         
         # Ensure splitter sizes are properly set after the window is fully shown
         # Use QTimer to defer this slightly so all widgets are fully laid out
@@ -273,7 +284,7 @@ class MainWindow(QMainWindow):
         # Create the toggle control points button
         self.toggle_control_points_button = QPushButton("Toggle Control Points")
         self.toggle_control_points_button.setCheckable(True)
-        self.toggle_control_points_button.setChecked(False)
+        self.toggle_control_points_button.setChecked(True)  # Start with button pressed (points visible)
 
         # Create the toggle shadow button
         self.toggle_shadow_button = QPushButton("Toggle Shadow")
@@ -486,7 +497,7 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Connect the toggle control points button
-        self.toggle_control_points_button.clicked.connect(self.set_control_points_mode)
+        self.toggle_control_points_button.clicked.connect(self.on_toggle_control_points_button_clicked)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -516,9 +527,8 @@ class MainWindow(QMainWindow):
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
 
-        # Connect toggle control points button
-        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
-        self.toggle_control_points_button.setChecked(False)  # Start with control points visible
+        # Control points button already connected in setup_connections
+        self.toggle_control_points_button.setChecked(True)  # Start with button pressed (control points visible)
 
         # Connect the toggle shadow button
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
@@ -1315,7 +1325,7 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Connect the toggle control points button
-        self.toggle_control_points_button.clicked.connect(self.set_control_points_mode)
+        self.toggle_control_points_button.clicked.connect(self.on_toggle_control_points_button_clicked)
 
         # Canvas connections
         self.canvas.strand_selected.connect(self.handle_canvas_strand_selection)
@@ -1345,9 +1355,8 @@ class MainWindow(QMainWindow):
         for button in self.layer_panel.layer_buttons:
             button.attachable_changed.connect(self.update_strand_attachable)
 
-        # Connect toggle control points button
-        self.toggle_control_points_button.clicked.connect(self.canvas.toggle_control_points)
-        self.toggle_control_points_button.setChecked(False)  # Start with control points visible
+        # Control points button already connected in setup_connections
+        self.toggle_control_points_button.setChecked(True)  # Start with button pressed (control points visible)
 
         # Connect the toggle shadow button
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
@@ -2134,15 +2143,14 @@ class MainWindow(QMainWindow):
 
     def on_toggle_control_points_button_clicked(self, checked):
         """
-        The logic is inverted so that unchecking the button will show (paint) control points,
-        and checking it will hide them.
+        Normal logic: checking the button shows control points, unchecking hides them.
         """
         if checked:
-            # If button is checked => hide control points
-            self.canvas.show_control_points = False
-        else:
-            # If button is unchecked => show control points
+            # If button is checked => show control points
             self.canvas.show_control_points = True
+        else:
+            # If button is unchecked => hide control points
+            self.canvas.show_control_points = False
         
         self.canvas.update()
 

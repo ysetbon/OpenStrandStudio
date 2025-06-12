@@ -1503,18 +1503,18 @@ class WidthConfigDialog(QDialog):
         
         # Total thickness in grid squares
         thickness_layout = QHBoxLayout()
-        thickness_layout.addWidget(QLabel("Total Thickness (grid squares):"))
+        thickness_layout.addWidget(QLabel(_['total_thickness_label'] if 'total_thickness_label' in _ else "Total Thickness (grid squares):"))
         self.thickness_spinbox = QSpinBox()
         self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
         self.thickness_spinbox.setSingleStep(2)  # Only even numbers
         self.thickness_spinbox.setValue(current_total_squares if current_total_squares % 2 == 0 else current_total_squares + 1)
         thickness_layout.addWidget(self.thickness_spinbox)
-        thickness_layout.addWidget(QLabel("squares"))
+        thickness_layout.addWidget(QLabel(_['grid_squares'] if 'grid_squares' in _ else "squares"))
         layout.addLayout(thickness_layout)
         
         # Color width percentage (slider)
         color_layout = QVBoxLayout()
-        color_layout.addWidget(QLabel("Color vs Stroke Distribution (total thickness fixed):"))
+        color_layout.addWidget(QLabel(_['color_vs_stroke_label'] if 'color_vs_stroke_label' in _ else "Color vs Stroke Distribution (total thickness fixed):"))
         
         self.color_slider = QSlider(Qt.Horizontal)
         self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
@@ -1534,7 +1534,8 @@ class WidthConfigDialog(QDialog):
         # Slider labels
         slider_labels = QHBoxLayout()
         slider_labels.addStretch()
-        self.percentage_label = QLabel(f"{self.color_slider.value()}% of Available Color Space")
+        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
+        self.percentage_label = QLabel(f"{self.color_slider.value()}{percent_text}")
         slider_labels.addWidget(self.percentage_label)
         slider_labels.addStretch()
         color_layout.addLayout(slider_labels)
@@ -1567,7 +1568,10 @@ class WidthConfigDialog(QDialog):
         """Update the percentage label when slider changes."""
         slider_value = self.color_slider.value()
         logging.info(f"[WidthConfigDialog] Color slider changed to {slider_value}%")
-        self.percentage_label.setText(f"{slider_value}% of Available Color Space")
+        # Get translations
+        _ = translations.get(self.layer_panel.language_code, translations['en'])
+        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
+        self.percentage_label.setText(f"{slider_value}{percent_text}")
     
     def update_preview(self):
         """Update the preview display keeping total thickness fixed."""
@@ -1583,8 +1587,11 @@ class WidthConfigDialog(QDialog):
 
         logging.info(f"[WidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
 
+        # Get translations
+        _ = translations.get(self.layer_panel.language_code, translations['en'])
+        preview_template = _['width_preview_label'] if 'width_preview_label' in _ else "Total: {total}px | Color: {color}px | Stroke: {stroke}px each side"
         self.preview_label.setText(
-            f"Total: {total_grid_width}px | Color: {color_width:.0f}px | Stroke: {stroke_width:.0f}px each side"
+            preview_template.format(total=int(total_grid_width), color=int(color_width), stroke=int(stroke_width))
         )
     
     def get_values(self):

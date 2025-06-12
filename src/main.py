@@ -825,28 +825,54 @@ if __name__ == '__main__':
             self.target_screen = target_screen
             self.last_geometry = None
             self.was_maximized = False
+            self.repositioning_in_progress = False
             
         def eventFilter(self, obj, event):
             try:
                 # Window state is about to change
                 if event.type() == QEvent.WindowStateChange:
-                    old_state = self.window.windowState()
+                    current_state = self.window.windowState()
                     
-                    # Store state before minimizing
-                    if old_state & Qt.WindowMinimized == 0:  # Not minimized yet
-                        self.last_geometry = self.window.geometry()
-                        self.was_maximized = bool(old_state & Qt.WindowMaximized)
-                        if self.window.windowHandle():
-                            current_screen = self.window.windowHandle().screen()
-                            if current_screen:
-                                # Always update to the current screen - respect user's choice
-                                self.target_screen = current_screen
-                        logging.info(f"Storing window state before minimize: maximized={self.was_maximized}, screen={self.target_screen.name()}")
+                    # Log window state changes for debugging
+                    if current_state & Qt.WindowMinimized:
+                        logging.info(f"WINDOW MINIMIZE EVENT: Window being minimized")
+                        logging.info(f"  - Current screen: {self.window.windowHandle().screen().name() if self.window.windowHandle() and self.window.windowHandle().screen() else 'Unknown'}")
+                        logging.info(f"  - Was maximized: {bool(current_state & Qt.WindowMaximized)}")
+                        
+                        # Store state before minimizing
+                        if not hasattr(self, '_stored_state'):  # Only store once per minimize cycle
+                            self.last_geometry = self.window.geometry()
+                            # Store the actual maximized state to restore exactly like startup
+                            # The startup behavior shows the window maximized, so we should restore it maximized too
+                            self.was_maximized = bool(current_state & Qt.WindowMaximized)
+                            if self.window.windowHandle():
+                                current_screen = self.window.windowHandle().screen()
+                                if current_screen:
+                                    # Always update to the current screen - respect user's choice
+                                    self.target_screen = current_screen
+                            logging.info(f"Storing window state before minimize: was_maximized={self.was_maximized}, screen={self.target_screen.name()}")
+                            self._stored_state = True
+                    else:
+                        # Window is not minimized anymore - might be restoring
+                        if hasattr(self, '_stored_state'):
+                            logging.info(f"WINDOW RESTORE EVENT: Window being restored from minimize")
+                            logging.info(f"  - Current state: minimized={bool(current_state & Qt.WindowMinimized)}, maximized={bool(current_state & Qt.WindowMaximized)}")
+                            logging.info(f"  - Target screen: {self.target_screen.name() if self.target_screen else 'Unknown'}")
+                            del self._stored_state  # Clear the flag
                 
                 # Window is being shown/restored
-                elif event.type() == QEvent.Show or event.type() == QEvent.WindowActivate:
-                    # Check if we need to restore to correct screen
-                    QTimer.singleShot(100, self.check_and_restore_screen)
+                elif event.type() == QEvent.Show:
+                    logging.info(f"WINDOW SHOW EVENT: Window being shown")
+                    # Only check if we have stored state (i.e., this is a restore from minimize)
+                    if hasattr(self, '_stored_state'):
+                        logging.info(f"WINDOW SHOW: This is a restore from minimize - checking position")
+                        # Add a small delay to let the window settle before checking
+                        QTimer.singleShot(50, self.check_and_restore_screen)
+                    else:
+                        logging.info(f"WINDOW SHOW: This is normal show (not restore) - no checking needed")
+                elif event.type() == QEvent.WindowActivate:
+                    logging.info(f"WINDOW ACTIVATE EVENT: Window being activated")
+                    # Don't check on activate to avoid duplicate repositioning
                     
             except Exception as e:
                 logging.error(f"Error in ScreenKeeper event filter: {e}")
@@ -856,32 +882,126 @@ if __name__ == '__main__':
         def check_and_restore_screen(self):
             """Check if window is on correct screen after restore"""
             try:
+                # Prevent multiple repositioning calls during the same restore cycle
+                if self.repositioning_in_progress:
+                    logging.info(f"RESTORE CHECK: Repositioning already in progress, skipping")
+                    return
+                
                 if not self.window.isMinimized() and self.window.isVisible():
                     current_screen = self.window.windowHandle().screen() if self.window.windowHandle() else None
+                    current_maximized = self.window.isMaximized()
+                    logging.info(f"RESTORE CHECK: Current screen: {current_screen.name() if current_screen else 'Unknown'}")
+                    logging.info(f"RESTORE CHECK: Target screen: {self.target_screen.name() if self.target_screen else 'Unknown'}")
+                    logging.info(f"RESTORE CHECK: Was maximized before minimize: {self.was_maximized}")
+                    logging.info(f"RESTORE CHECK: Is currently maximized: {current_maximized}")
+                    logging.info(f"RESTORE CHECK: Initial startup behavior is: window gets maximized via showEvent in main_window.py")
                     
+                    # Determine if repositioning is needed to match startup behavior
+                    needs_repositioning = False
+                    
+                    # Check if screen is wrong
                     if current_screen and current_screen != self.target_screen:
                         logging.info(f"Window restored to wrong screen: {current_screen.name()}, moving to {self.target_screen.name()}")
+                        needs_repositioning = True
+                    
+                    # Check if maximization state doesn't match what was stored
+                    elif self.was_maximized and not current_maximized:
+                        logging.info(f"Window was maximized but restored as normal - need to maximize")
+                        needs_repositioning = True
+                    
+                    # For maximized windows, always ensure they're properly positioned like startup
+                    elif self.was_maximized and current_maximized:
+                        current_geometry = self.window.frameGeometry()
+                        available_rect = self.target_screen.availableGeometry()
+                        
+                        logging.info(f"Checking maximized window positioning:")
+                        logging.info(f"  - Current frame: {current_geometry}")
+                        logging.info(f"  - Expected available: {available_rect}")
+                        
+                        # Check if window is properly positioned and sized
+                        position_correct = (
+                            abs(current_geometry.x() - available_rect.x()) <= 10 and
+                            abs(current_geometry.y() - available_rect.y()) <= 50
+                        )
+                        size_correct = (
+                            abs(current_geometry.width() - available_rect.width()) <= 50 and
+                            abs(current_geometry.height() - available_rect.height()) <= 50
+                        )
+                        
+                        if not position_correct or not size_correct:
+                            logging.info(f"Maximized window geometry doesn't match startup - repositioning needed")
+                            logging.info(f"  - Position correct: {position_correct}, Size correct: {size_correct}")
+                            needs_repositioning = True
+                        else:
+                            logging.info(f"Maximized window geometry matches startup - no repositioning needed")
+                            # Even if geometry matches, ensure window is properly focused and visible
+                            self.window.raise_()
+                            self.window.activateWindow()
+                            self.window.setFocus(Qt.OtherFocusReason)
+                            logging.info(f"RESTORE CHECK: Window focus and raise completed")
+                    
+                    if needs_repositioning:
+                        # Set flag to prevent multiple repositioning calls
+                        self.repositioning_in_progress = True
+                        
+                        logging.info(f"REPOSITIONING WINDOW: Moving to {self.target_screen.name()}")
                         
                         # Get the target screen's available area
                         available_rect = self.target_screen.availableGeometry()
                         
-                        # Restore to correct screen
+                        # Restore to correct screen with proper positioning
                         if self.was_maximized:
-                            # For maximized windows
+                            # For maximized windows - restore exactly like startup
+                            logging.info(f"  - Restoring maximized window to match startup behavior")
+                            
+                            # Step 1: Hide window briefly to avoid visible repositioning
+                            self.window.setVisible(False)
+                            
+                            # Step 2: Ensure correct screen assignment
+                            if self.window.windowHandle():
+                                self.window.windowHandle().setScreen(self.target_screen)
+                                logging.info(f"  - Assigned to screen: {self.target_screen.name()}")
+                            
+                            # Step 3: Clear current state
                             self.window.setWindowState(Qt.WindowNoState)
-                            self.window.windowHandle().setScreen(self.target_screen)
+                            
+                            # Step 4: Process events to ensure state is cleared
+                            from PyQt5.QtWidgets import QApplication
+                            QApplication.processEvents()
+                            
+                            # Step 5: Set geometry to available area (like startup)
                             self.window.setGeometry(available_rect)
-                            self.window.showMaximized()
+                            
+                            # Step 6: Show and maximize (exactly like showEvent in main_window.py)
+                            self.window.setVisible(True)
+                            self.window.setWindowState(Qt.WindowMaximized)
+                            logging.info(f"  - Window restored with maximized state like startup")
+                            
+                            # Step 7: Ensure window is on top and focused
+                            self.window.raise_()
+                            self.window.activateWindow()
+                            self.window.setFocus(Qt.OtherFocusReason)
+                            logging.info(f"  - Window raised and activated")
+                            
                         else:
                             # For normal windows, restore last position
-                            self.window.windowHandle().setScreen(self.target_screen)
+                            logging.info(f"  - Restoring normal window")
+                            if self.window.windowHandle():
+                                self.window.windowHandle().setScreen(self.target_screen)
                             if self.last_geometry:
                                 # Adjust position to be within target screen bounds
                                 x = max(available_rect.x(), min(self.last_geometry.x(), available_rect.x() + available_rect.width() - self.last_geometry.width()))
                                 y = max(available_rect.y(), min(self.last_geometry.y(), available_rect.y() + available_rect.height() - self.last_geometry.height()))
                                 self.window.move(x, y)
+                                self.window.resize(self.last_geometry.size())
                         
-                        logging.info(f"Window restored to correct screen: {self.target_screen.name()}")
+                        logging.info(f"REPOSITIONING COMPLETE: Window positioned on {self.target_screen.name()}")
+                        
+                        # Clear flag after repositioning is complete
+                        QTimer.singleShot(100, lambda: setattr(self, 'repositioning_in_progress', False))
+                        
+                    else:
+                        logging.info(f"RESTORE CHECK: Window position OK, no repositioning needed")
                     
             except Exception as e:
                 logging.error(f"Error in check_and_restore_screen: {e}")

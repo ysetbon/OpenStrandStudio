@@ -390,6 +390,11 @@ class LayerPanel(QWidget):
             QPushButton:pressed {
                 background-color: #7BBF7B; /* darker on press */
             }
+            QPushButton:disabled {
+                background-color: #D3D3D3; /* Gray background when disabled */
+                color: #666666; /* Darker gray text when disabled */
+                border: 1px solid #CCCCCC; /* Light gray border when disabled */
+            }
         """)
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
@@ -409,6 +414,11 @@ class LayerPanel(QWidget):
             }
             QPushButton:pressed {
                 background-color: #FF0000; /* Darker red on click */
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3; /* Gray background when disabled */
+                color: #666666; /* Darker gray text when disabled */
+                border: 1px solid #CCCCCC; /* Light gray border when disabled */
             }
         """)
         self.delete_strand_button.setEnabled(False)
@@ -961,17 +971,27 @@ class LayerPanel(QWidget):
         logging.info(f"toggle_lock_mode() called - button isChecked: {self.lock_layers_button.isChecked()}")
         self.lock_mode = self.lock_layers_button.isChecked()
         logging.info(f"Set self.lock_mode to: {self.lock_mode}")
+        
+        _ = translations[self.language_code]
         if self.lock_mode:
-            self.lock_layers_button.setText("Exit Lock Mode")
-            self.notification_label.setText("Select layers to lock/unlock")
+            self.lock_layers_button.setText(_['exit_lock_mode'])
+            self.notification_label.setText(_['select_layers_to_lock'])
             self.locked_layers = self.previously_locked_layers.copy()
-            self.deselect_all_button.setText("Clear All Locks")
+            self.deselect_all_button.setText(_['clear_all_locks'])
+            # Disable new strand and delete strand buttons in lock mode
+            self.add_new_strand_button.setEnabled(False)
+            self.delete_strand_button.setEnabled(False)
         else:
-            self.lock_layers_button.setText("Lock Layers")
-            self.notification_label.setText("Exited lock mode")
+            self.lock_layers_button.setText(_['lock_layers'])
+            self.notification_label.setText(_['exited_lock_mode'])
             self.previously_locked_layers = self.locked_layers.copy()
             self.locked_layers.clear()
-            self.deselect_all_button.setText("Deselect All")
+            self.deselect_all_button.setText(_['deselect_all'])
+            # Re-enable new strand and delete strand buttons when exiting lock mode
+            self.add_new_strand_button.setEnabled(True)
+            # Only enable delete button if there's a selected strand
+            selected_button = next((button for button in self.layer_buttons if button.isChecked()), None)
+            self.delete_strand_button.setEnabled(selected_button is not None)
 
         self.update_layer_buttons_lock_state()
         self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)

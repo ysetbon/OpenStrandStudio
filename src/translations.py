@@ -70,7 +70,7 @@ translations = {
         'tutorial': 'Tutorial',
         'history': 'History',
         'whats_new': "What's New?",
-        'about': 'About OpenStrand Studio',
+        'about': 'About',
         'select_theme': 'Select Theme:',
         'select_language': 'Select Language:',
         'ok': 'OK',
@@ -79,31 +79,14 @@ translations = {
         'language_settings_info': 'Change the language of the application.',
         'tutorial_info': 'Press the "play video" button below each text to view the tutorial explaining:',
         'whats_new_info': '''
-        <h2>What's New in Version 1.092</h2>
+        <h2>What's New in Version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Persistent Undo/Redo History:</b> Your undo and redo actions are now saved with your project. When you reopen a saved file, you can continue using undo and redo as if you never closed the application.</li>
-            <li style="font-size:15px;"><b>Customizable Dashed Lines and Arrows:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Easily configure dash patterns at both ends of each strand, adjusting the number, length, and spacing of dashes for precise visual control.</li>
-                    <li style="font-size:15px;">Add dashed arrowheads to strand endpoints, with detailed settings for head length, width, gap, and shaft appearance.</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Improved Control Point Visuals:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Control points are now larger for easier selection and manipulation.</li>
-                    <li style="font-size:15px;">Each handle features a distinct border and a filled center that matches the strand's color for instant identification.</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Mask Extension Options:</b> A new setting allows you to choose whether masks end at strand endpoints or extend beyond, giving you greater control over visual effects.</li>
-            <li style="font-size:15px;"><b>Enhanced Shading Algorithm:</b> The shading engine now produces smoother, more natural shadows with multi-buffer soft-edge feathering. New controls for blur steps and maximum blur radius are available in the settings.</li>
-            <li style="font-size:15px;"><b>Upgraded Layer Panel Interactions:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Reorder layers intuitively with drag-and-drop, complete with clear visual indicators.</li>
-                    <li style="font-size:15px;">Access a new right-click menu to quickly toggle the visibility of strand lines, arrowheads, and control circles.</li>
-                </ul>
-            </li>
+            <li style="font-size:15px;"><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+            <li style="font-size:15px;"><b>Zoom In/Out Functionality:</b> Navigate your designs with ease using the new zoom controls to get detailed views or see the entire canvas at once.</li>
+            <li style="font-size:15px;"><b>Pan Tool:</b> Move around your canvas smoothly with the new pan functionality, making it easier to work on different parts of large designs.</li>
+            <li style="font-size:15px;"><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.092</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
 
 
@@ -118,6 +101,12 @@ translations = {
         'button_color': 'Choose a different button color (not default):',
         'extension_dash_gap_length': 'Gap length between strand end and start of dashes',
         'extension_dash_gap_length_tooltip': 'Gap between the strand end and the start of the dashes',
+        'exit_lock_mode': 'Exit Lock',
+        'clear_all_locks': 'Clear Locks', 
+        'select_layers_to_lock': 'Select layers to lock/unlock',
+        'exited_lock_mode': 'Exited lock mode',
+     
+   
         # Additional texts
         'adjust_angle_and_length': 'Adjust Angle and Length',
         'angle_label': 'Angle:',
@@ -248,7 +237,7 @@ translations = {
         'no_history_found': 'No past history sessions found.',
         'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
         # About translations
-        'about': 'About OpenStrand Studio',
+        'about': 'About',
         'about_info': '''
         <h2>About OpenStrand Studio</h2>
         <p style="font-size:15px;">
@@ -339,7 +328,7 @@ translations = {
         'tutorial': 'Tutoriel',
         'history': 'Historique',
         'whats_new': "Quoi de neuf ?",
-        'about': 'À propos d\'OpenStrand Studio',
+        'about': 'À propos',
         'select_theme': 'Sélectionner le thème :',
         'select_language': 'Sélectionner la langue :',
         'ok': 'OK',
@@ -348,31 +337,14 @@ translations = {
         'language_settings_info': 'Changer la langue de l\'application.',
         'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte pour voir le tutoriel explicatif :',
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.092</h2>
+        <h2>Nouveautés de la version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Persistance de l'historique Annuler/Rétablir :</b> L'historique de vos actions est désormais sauvegardé avec votre projet. Lorsque vous rechargez un fichier, vous pouvez continuer à utiliser Annuler/Rétablir comme si vous n'aviez jamais quitté l'application.</li>
-            <li style="font-size:15px;"><b>Lignes et flèches en pointillés :</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Personnalisez les motifs de tirets à chaque extrémité des brins, avec un contrôle précis sur le nombre, la longueur et l'espacement des segments.</li>
-                    <li style="font-size:15px;">Ajoutez des pointes de flèche en pointillés aux extrémités, avec des réglages détaillés pour la longueur, la largeur, l'espacement et la forme de la flèche.</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Points de contrôle améliorés :</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Les points de contrôle sont agrandis pour une manipulation plus aisée.</li>
-                    <li style="font-size:15px;">Chaque poignée possède désormais un contour distinct et un centre coloré correspondant à son brin, pour une identification immédiate.</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Extension des masques :</b> Un nouveau paramètre vous permet de choisir si les masques s'arrêtent aux extrémités des brins ou s'étendent au-delà, pour un contrôle visuel optimal.</li>
-            <li style="font-size:15px;"><b>Algorithme d'ombrage perfectionné :</b> Le moteur d'ombres a été repensé pour générer des tracés plus doux et précis, avec un adoucissement multi-tampons et un antialiasing de haute qualité. De nouveaux réglages pour le flou et le rayon maximal sont disponibles dans les paramètres.</li>
-            <li style="font-size:15px;"><b>Interactions enrichies du panneau de calques :</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Réorganisation intuitive par glisser-déposer, avec des indicateurs visuels clairs.</li>
-                    <li style="font-size:15px;">Nouveau menu contextuel (clic droit) pour afficher ou masquer rapidement les lignes, flèches et cercles de contrôle.</li>
-                </ul>
-            </li>
+            <li style="font-size:15px;"><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+            <li style="font-size:15px;"><b>Fonction de zoom avant/arrière :</b> Naviguez facilement dans vos créations avec les nouveaux contrôles de zoom pour obtenir des vues détaillées ou voir l'ensemble du canevas.</li>
+            <li style="font-size:15px;"><b>Outil de panoramique :</b> Déplacez-vous en douceur sur votre canevas avec la nouvelle fonctionnalité de panoramique, facilitant le travail sur différentes parties de grands designs.</li>
+            <li style="font-size:15px;"><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.092</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
 
 
@@ -485,6 +457,10 @@ translations = {
         'extension_dash_width_tooltip': "Largeur des tirets d'extension",
         'extension_dash_gap_length': "Longueur de l'espace entre l'extrémité du brin et le début des tirets",
         'extension_dash_gap_length_tooltip': "Espace entre l'extrémité du brin et le début des tirets",
+        'exit_lock_mode': 'Quitter',
+        'clear_all_locks': 'Effacer',
+        'select_layers_to_lock': 'Sélectionner les calques à verrouiller/déverrouiller',
+        'exited_lock_mode': 'Mode verrouillage quitté',
         'arrow_head_length': "Longueur de la Tête de Flèche",
         'arrow_head_length_tooltip': "Longueur de la tête de flèche en pixels",
         'arrow_head_width': "Largeur de la Tête de Flèche",
@@ -603,7 +579,7 @@ translations = {
         'tutorial': 'Tutorial',
         'history': 'Cronologia',
         'whats_new': "Novità?",
-        'about': 'Informazioni su OpenStrand Studio',
+        'about': 'Informazioni',
         'select_theme': 'Seleziona Tema:',
         'select_language': 'Seleziona Lingua:',
         'ok': 'OK',
@@ -612,38 +588,14 @@ translations = {
         'language_settings_info': 'Cambia la lingua dell\'applicazione.',
         'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo per visualizzare il tutorial che spiega:',
         'whats_new_info': '''
-        <h2>Novità della versione 1.092</h2>
+        <h2>Novità della versione 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-        <li style="font-size:15px;"><b>Persistenza di Annulla/Ripristina:</b> la cronologia delle azioni viene ora mantenuta anche dopo il salvataggio. Quando riapri un file salvato, puoi continuare a utilizzare Annulla/Ripristina come se l'app non fosse mai stata chiusa.</li>
-
-        <li style="font-size:15px;"><b>Linee e frecce tratteggiate:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">Tratteggi configurabili su entrambe le estremità di ogni filo, con controllo su numero, lunghezza e spaziatura per una migliore distinzione visiva.</li>
-            <li style="font-size:15px;">Punte di freccia tratteggiate alle estremità dei fili, con impostazioni dettagliate per lunghezza, larghezza, corpo e spaziatura, accessibili dalla finestra delle impostazioni.</li>
-            </ul>
-        </li>
-
-        <li style="font-size:15px;"><b>Visualizzazione ottimizzata dei punti di controllo:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">I punti di controllo sono ora più grandi per facilitare l'interazione.</li>
-            <li style="font-size:15px;">Ogni maniglia presenta un bordo netto e un centro colorato in base al filo corrispondente, per un'associazione visiva immediata.</li>
-            </ul>
-        </li>
-
-        <li style="font-size:15px;"><b>Estensione della maschera:</b> una nuova opzione nelle impostazioni consente di decidere se le maschere si fermano alle estremità del filo o si estendono oltre, offrendo maggiore controllo sul comportamento visivo.</li>
-
-        <li style="font-size:15px;"><b>Algoritmo di ombreggiatura migliorato:</b> il motore di rendering delle ombre ora genera percorsi più nitidi con sfumature multi-buffer e antialiasing avanzato. Sono stati aggiunti nuovi controlli per la sfocatura e il raggio massimo, accessibili dalla finestra delle impostazioni.</li>
-
-        <li style="font-size:15px;"><b>Interazioni avanzate nel pannello livelli:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">Riordinamento dei livelli tramite drag-and-drop, con indicatori visivi per il punto di rilascio.</li>
-            <li style="font-size:15px;">Menu contestuale (clic destro) con nuovi toggle per mostrare/nascondere linee, punte di freccia e cerchi dei punti di controllo.</li>
-            </ul>
-        </li>
+            <li style="font-size:15px;"><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+            <li style="font-size:15px;"><b>Funzionalità di zoom avanti/indietro:</b> Naviga facilmente nei tuoi design con i nuovi controlli di zoom per ottenere viste dettagliate o vedere l'intero canvas in una volta.</li>
+            <li style="font-size:15px;"><b>Strumento panoramica:</b> Muoviti fluidamente sul tuo canvas con la nuova funzionalità di panoramica, rendendo più facile lavorare su diverse parti di design grandi.</li>
+            <li style="font-size:15px;"><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.092</p>
-
-
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.100</p>
         ''',
 
 
@@ -756,6 +708,10 @@ translations = {
         'extension_dash_width_tooltip': 'Spessore del trattino di estensione',
         'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
         'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
+        'exit_lock_mode': 'Esci',
+        'clear_all_locks': 'Cancella',
+        'select_layers_to_lock': 'Seleziona livelli da bloccare/sbloccare',
+        'exited_lock_mode': 'Uscito dalla modalità blocco',
         'arrow_head_length': 'Lunghezza punta freccia',
         'arrow_head_length_tooltip': 'Lunghezza della punta della freccia in pixel',
         'arrow_head_width': 'Larghezza punta freccia',
@@ -878,7 +834,7 @@ translations = {
         'tutorial': 'Tutorial',
         'history': 'Historial',
         'whats_new': "¿Qué hay de nuevo?",
-        'about': 'Acerca de OpenStrand Studio',
+        'about': 'Acerca',
         'select_theme': 'Seleccionar Tema:',
         'select_language': 'Seleccionar Idioma:',
         'ok': 'OK',
@@ -887,31 +843,14 @@ translations = {
         'language_settings_info': 'Cambiar el idioma de la aplicación.',
         'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto para ver el tutorial que explica:',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.092</h2>
+        <h2>Novedades de la versión 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-        <li style="font-size:15px;"><b>Historial persistente de Deshacer/Rehacer:</b> ahora el historial de acciones permanece guardado con tu trabajo. Cuando vuelves a abrir un archivo guardado, puedes seguir utilizando las funciones de Deshacer y Rehacer exactamente donde lo dejaste.</li>
-        <li style="font-size:15px;"><b>Líneas y flechas punteadas avanzadas:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">Patrones de líneas punteadas personalizables en ambos extremos de cada hebra, con ajustes precisos en cantidad, longitud y espaciado para una visualización clara y efectiva.</li>
-            <li style="font-size:15px;">Flechas con puntas punteadas configurables en los extremos de las hebras, permitiendo un control exacto de longitud, ancho, separación y ángulo desde el panel de configuración.</li>
-            </ul>
-        </li>
-        <li style="font-size:15px;"><b>Mejoras visuales en puntos de control:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">Puntos de control ampliados para facilitar su selección y manipulación.</li>
-            <li style="font-size:15px;">Cada punto de control ahora tiene un borde distintivo y un relleno interior que coincide con el color de su hebra, proporcionando una identificación visual inmediata.</li>
-            </ul>
-        </li>
-        <li style="font-size:15px;"><b>Nuevo comportamiento de extensión para máscaras:</b> ahora puedes decidir desde la configuración si las máscaras se recortan exactamente en los extremos de las hebras o si se extienden más allá, otorgando mayor flexibilidad en el diseño.</li>
-        <li style="font-size:15px;"><b>Algoritmo mejorado de sombreado:</b> el motor gráfico ha sido optimizado para generar sombras más definidas, con suavizado multibuffer y antialiasing de alta calidad. Además, ahora puedes ajustar directamente desde la configuración los parámetros avanzados como las etapas de desenfoque y el radio máximo.</li>
-        <li style="font-size:15px;"><b>Mejoras en la interacción con el panel de capas:</b>
-            <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;">Reordena fácilmente capas mediante arrastrar y soltar, con indicadores visuales claros de la posición objetivo.</li>
-            <li style="font-size:15px;">Nuevo menú contextual con botón derecho para gestionar rápidamente la visibilidad de líneas, puntas de flecha y círculos de control.</li>
-            </ul>
-        </li>
+            <li style="font-size:15px;"><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+            <li style="font-size:15px;"><b>Funcionalidad de zoom acercar/alejar:</b> Navega por tus diseños con facilidad usando los nuevos controles de zoom para obtener vistas detalladas o ver todo el lienzo de una vez.</li>
+            <li style="font-size:15px;"><b>Herramienta de panorámica:</b> Muévete suavemente por tu lienzo con la nueva funcionalidad de panorámica, facilitando el trabajo en diferentes partes de diseños grandes.</li>
+            <li style="font-size:15px;"><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.092</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.100</p>
 
         ''',
  
@@ -1025,6 +964,10 @@ translations = {
         'extension_dash_width_tooltip': 'Grosor de los guiones de extensión',
         'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
         'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
+        'exit_lock_mode': 'Salir',
+        'clear_all_locks': 'Limpiar',
+        'select_layers_to_lock': 'Seleccionar capas para bloquear/desbloquear',
+        'exited_lock_mode': 'Salió del modo bloqueo',
         'arrow_head_length': 'Longitud de la punta de la flecha',
         'arrow_head_length_tooltip': 'Longitud de la punta de la flecha en píxeles',
         'arrow_head_width': 'Ancho de la punta de la flecha',
@@ -1147,7 +1090,7 @@ translations = {
         'tutorial': 'Tutorial',
         'history': 'Histórico',
         'whats_new': "O que há de novo?",
-        'about': 'Sobre OpenStrand Studio',
+        'about': 'Sobre',
         'select_theme': 'Selecionar Tema:',
         'select_language': 'Selecionar Idioma:',
         'ok': 'OK',
@@ -1156,37 +1099,14 @@ translations = {
         'language_settings_info': 'Mudar o idioma da aplicação.',
         'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto para visualizar o tutorial explicando:',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.092</h2>
+        <h2>Novidades da versão 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Persistência do histórico Desfazer/Refazer:</b> Agora o histórico das ações Desfazer e Refazer é salvo junto com o projeto. Ao abrir um arquivo salvo, você pode retomar o trabalho exatamente onde parou.</li>
-
-            <li style="font-size:15px;"><b>Linhas e setas tracejadas aprimoradas:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Configuração avançada dos traços: ajuste do número, comprimento e espaçamento dos traços.</li>
-                    <li style="font-size:15px;">Setas tracejadas com controle preciso do tamanho das pontas, largura, espaçamento e corpo das linhas.</li>
-                </ul>
-            </li>
-
-            <li style="font-size:15px;"><b>Pontos de controle melhorados:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Pontos maiores e mais fáceis de manipular.</li>
-                    <li style="font-size:15px;">Novo visual das alças, com bordas destacadas e centro preenchido com a cor da mecha.</li>
-                </ul>
-            </li>
-
-            <li style="font-size:15px;"><b>Extensão de máscaras:</b> Nova opção nas configurações para recortar ou expandir máscaras conforme necessário.</li>
-
-            <li style="font-size:15px;"><b>Algoritmo de sombreamento atualizado:</b> Melhoria significativa no cálculo de sombras usando múltiplos buffers, com novos controles de desfoque disponíveis.</li>
-
-            <li style="font-size:15px;"><b>Painel de camadas renovado:</b>
-                <ul style="margin-top: 5px; margin-bottom: 5px;">
-                    <li style="font-size:15px;">Reorganização intuitiva via arrastar e soltar com indicadores visuais.</li>
-                    <li style="font-size:15px;">Menus contextuais expandidos para linhas, setas e círculos.</li>
-                </ul>
-            </li>
+            <li style="font-size:15px;"><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+            <li style="font-size:15px;"><b>Funcionalidade de zoom ampliar/reduzir:</b> Navegue facilmente pelos seus designs com os novos controles de zoom para obter visualizações detalhadas ou ver todo o canvas de uma vez.</li>
+            <li style="font-size:15px;"><b>Ferramenta de panorâmica:</b> Mova-se suavemente pelo seu canvas com a nova funcionalidade de panorâmica, facilitando o trabalho em diferentes partes de designs grandes.</li>
+            <li style="font-size:15px;"><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         </ul>
-
-        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.092</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.100</p>
         ''',
 
 
@@ -1299,6 +1219,10 @@ translations = {
         'extension_dash_width_tooltip': 'Espessura dos traços de extensão',
         'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
         'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
+        'exit_lock_mode': 'Sair',
+        'clear_all_locks': 'Limpar',
+        'select_layers_to_lock': 'Selecionar camadas para bloquear/desbloquear',
+        'exited_lock_mode': 'Saiu do modo bloqueio',
         'arrow_head_length': 'Comprimento da ponta da flecha',
         'arrow_head_length_tooltip': 'Comprimento da ponta da flecha em pixels',
         'arrow_head_width': 'Largura da ponta da flecha',
@@ -1429,7 +1353,7 @@ translations = {
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
         'whats_new_info': '''
-        <h2 dir="rtl" style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.092</h2> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;"><b>שמירת היסטוריית פעולות ביטול ושחזור:</b> פעולות הביטול והשחזור נשמרות מעתה בקובץ הפרויקט. כשתפתחו קובץ שמור, תוכלו להמשיך ישירות מהמקום בו הפסקתם, כולל יכולת ביטול ושחזור רציצה.</li> <li style="font-size:15px;"><b>קווים וחצים מקווקווים:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות להגדרת דפוסים מקווקווים בהתאמה אישית בקצות החוטים, עם שליטה מלאה בכמות הקווים, אורכם והמרווח ביניהם.</li> <li style="font-size:15px;">תמיכה חדשה בהוספת ראשי חץ מקווקווים בקצוות החוטים, כולל שליטה מדויקת באורך, ברוחב, בריווח ובצורת החץ מחלון ההגדרות.</li> </ul> </li> <li style="font-size:15px;"><b>שיפורים בתצוגת נקודות הבקרה:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">נקודות הבקרה גדולות וברורות יותר, לשיפור האחיזה והדיוק.</li> <li style="font-size:15px;">ידיות הבקרה קיבלו מתאר מודגש ומילוי בצבע התואם לחוט, לזיהוי מיידי וברור.</li> </ul> </li> <li style="font-size:15px;"><b>הרחבת מסכות:</b> נוספה אפשרות בחלון ההגדרות לשליטה מדויקת בהתנהגות המסכות – חיתוך המסכה בדיוק בקצה החוט, או הארכתה מעבר לו.</li> <li style="font-size:15px;"><b>אלגוריתם צללים משופר:</b> מנוע הצללים שופר משמעותית ומספק צללים חלקים וברורים יותר, עם תמיכה מלאה בריבוי שכבות ובאנטיאלייסינג איכותי. נוספו הגדרות מתקדמות לשליטה בכמות צעדי הטשטוש וברדיוס הטשטוש המרבי.</li> <li style="font-size:15px;"><b>שיפור ממשק פאנל השכבות:</b> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;">אפשרות נוחה וברורה לגרירה ושחרור לשינוי סדר השכבות, כולל אינדיקטורים ויזואליים.</li> <li style="font-size:15px;">תפריט ימני חדש עם אפשרויות מתקדמות להצגה או להסתרה מהירה של קווים, חיצים ונקודות בקרה.</li> </ul> </li> </ul> <p style="font-size:13px; text-align: right;">© 2025 OpenStrand Studio - גרסה 1.092</p>
+        <h2 dir="rtl" style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.100</h2> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;"><b>שליטה ברוחב החוטים:</b> כעת ניתן להתאים באופן דינמי את רוחב החוטים הבודדים, מה שמעניק גמישות רבה יותר ביצירת עיצובי קשרים מגוונים.</li> <li style="font-size:15px;"><b>פונקציית זום פנימה/החוצה:</b> נווטו בעיצובים שלכם בקלות באמצעות בקרי הזום החדשים לקבלת תצוגות מפורטות או לראות את כל הקנבס בבת אחת.</li> <li style="font-size:15px;"><b>כלי פנורמה:</b> התנועו בצורה חלקה על הקנבס שלכם עם פונקציית הפנורמה החדשה, מה שמקל על העבודה על חלקים שונים של עיצובים גדולים.</li> <li style="font-size:15px;"><b>הגדרה ראשונית:</b> בהפעלה הראשונה של האפליקציה, תצטרכו ללחוץ על "חוט חדש" כדי להתחיל ליצור את החוט הראשון שלכם.</li> </ul> <p style="font-size:13px; text-align: right;">© 2025 OpenStrand Studio - גרסה 1.100</p>
         ''',
 
 
@@ -1519,6 +1443,10 @@ translations = {
         'extension_dash_width_tooltip': 'עובי קטעי קו ההרחבה',
         'extension_dash_gap_length': 'אורך הרווח בין קצה החוט לתחילת המקפים',
         'extension_dash_gap_length_tooltip': 'מרווח בין החוט לתחילת המקפים',
+        'exit_lock_mode': 'יציאה',
+        'clear_all_locks': 'נקה',
+        'select_layers_to_lock': 'בחר שכבות לנעילה/שחרור',
+        'exited_lock_mode': 'יצא ממצב נעילה',
         'arrow_head_length': 'אורך ראש החץ',
         'arrow_head_length_tooltip': 'אורך ראש החץ בפיקסלים',
         'arrow_head_width': 'רוחב ראש החץ',
@@ -1572,7 +1500,7 @@ translations = {
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
             'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
         # About translations
-        'about': 'אודות OpenStrand Studio',
+        'about': 'אודות',
         'about_info': '''
         <h2>אודות OpenStrand Studio</h2>
         <p style="font-size:15px;">

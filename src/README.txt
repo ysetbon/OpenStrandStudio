@@ -376,3 +376,21 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
+## Version 1.100 (Released: 6/12/2025)
+
+### Improvements and New Features:
+
+1.  **Strand Width Control:**
+    *   Dynamically adjust the width of individual strands for more design flexibility.
+
+2.  **Zoom In/Out Functionality:**
+    *   Navigate designs with new zoom controls for detailed views or full canvas overview.
+
+3.  **Pan Tool:**
+    *   Move smoothly around your canvas with the new pan functionality.
+
+4.  **Initial Setup:**
+    *   When first starting the application, click "New Strand" to begin creating your first strand.
+
+------
+

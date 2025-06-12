@@ -374,3 +374,21 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 6.  **Panneau des Calques Amélioré :**
     *   Ajout du réordonnancement par glisser-déposer des calques et de bascules rapides de visibilité dans le panneau.
+
+------
+
+## Version 1.100 (Sortie : 06/12/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1.  **Contrôle de la Largeur des Brins :**
+    *   Ajustez dynamiquement la largeur des brins individuels pour plus de flexibilité dans la conception.
+
+2.  **Fonction de Zoom Avant/Arrière :**
+    *   Naviguez dans vos créations avec les nouveaux contrôles de zoom pour des vues détaillées ou une vue d'ensemble complète du canevas.
+
+3.  **Outil de Panoramique :**
+    *   Déplacez-vous en douceur sur votre canevas avec la nouvelle fonction de panoramique.
+
+4.  **Configuration Initiale :**
+    *   Au premier démarrage de l'application, cliquez sur "Nouveau Brin" pour commencer à créer votre premier brin.

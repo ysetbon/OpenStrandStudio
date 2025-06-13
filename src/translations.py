@@ -265,7 +265,7 @@ translations = {
         'move_mode': 'Bouger',
         'rotate_mode': 'Pivoter',
         'toggle_grid': 'Grille',
-        'angle_adjust_mode': 'Angle/Longueur',
+        'angle_adjust_mode': 'Angle/Long.',
         'select_mode': 'Choisir',
         'mask_mode': 'Masque',
         'new_strand_mode': 'Nouveau',
@@ -353,7 +353,7 @@ translations = {
         'draw_names': 'Dessiner Noms',
         'lock_layers': 'Verr. Calques',
         'add_new_strand': 'Nouveau Brin',
-        'delete_strand': 'Supprimer Brin',
+        'delete_strand': 'Supprim. Brin',
         'deselect_all': 'Désélect. Tous',
         'notification_message': 'Notification',
         'button_color': 'Choisissez une couleur de bouton différente (pas par défaut):',
@@ -366,7 +366,7 @@ translations = {
         'hide_full_arrow': "Masquer la flèche complète",
         # --- END NEW ---
         # Additional texts
-        'adjust_angle_and_length': 'Ajuster l\'Angle et la Longueur',
+        'adjust_angle_and_length': 'Ajust. Angle',
         'angle_label': 'Angle :',
         'length_label': 'Longueur :',
         'create_group': 'Créer Groupe',
@@ -518,7 +518,7 @@ translations = {
         'move_mode': 'Sposta',
         'rotate_mode': 'Ruota',
         'toggle_grid': 'Griglia',
-        'angle_adjust_mode': 'Angolo/Lunghezza',
+        'angle_adjust_mode': 'Angolo/Lung.',
         'select_mode': 'Seleziona',
         'mask_mode': 'Maschera',
         'new_strand_mode': 'Nuovo',
@@ -602,10 +602,10 @@ translations = {
         # LayerPanel translations
         'layer_panel_title': 'Pannello Livelli',
         'draw_names': 'Disegna Nomi',
-        'lock_layers': 'Blocca Livelli',
+        'lock_layers': 'Blocca Liv.',
         'add_new_strand': 'Nuovo Trefolo',
-        'delete_strand': 'Elimina Trefolo',
-        'deselect_all': 'Deseleziona Tutto',
+        'delete_strand': 'Elim. Trefolo',
+        'deselect_all': 'Desel. Tutto',
         'notification_message': 'Notifica',
         'button_color': 'Scegli un colore di pulsante diverso (non predefinito):',
         'default_strand_color': 'Colore Trefolo Predefinito:',
@@ -617,7 +617,7 @@ translations = {
         'hide_full_arrow': "Nascondi freccia completa",
         # --- END NEW ---
         # Additional texts
-        'adjust_angle_and_length': 'Regola Angolo e Lunghezza',
+        'adjust_angle_and_length': 'Regola Ang.',
         'angle_label': 'Angolo:',
         'length_label': 'Lunghezza:',
         'create_group': 'Crea Gruppo',
@@ -771,7 +771,7 @@ translations = {
         'move_mode': 'Mover',
         'rotate_mode': 'Rotar',
         'toggle_grid': 'Cuadrícula',
-        'angle_adjust_mode': 'Ángulo/Longitud',
+        'angle_adjust_mode': 'Ángulo/Long.',
         'select_mode': 'Seleccionar',
         'mask_mode': 'Máscara',
         'new_strand_mode': 'Nuevo',
@@ -857,11 +857,11 @@ translations = {
 
         # LayerPanel translations
         'layer_panel_title': 'Panel de Capas',
-        'draw_names': 'Dibujar Nombres',
-        'lock_layers': 'Bloquear Capas',
+        'draw_names': 'Ver Nombres',
+        'lock_layers': 'Bloq. Capas',
         'add_new_strand': 'Nuevo Cordón',
-        'delete_strand': 'Eliminar Cordón',
-        'deselect_all': 'Deseleccionar Todo',
+        'delete_strand': 'Elim. Cordón',
+        'deselect_all': 'Deselec. Todo',
         'notification_message': 'Notificación',
         'button_color': 'Elija un color de botón diferente (no predeterminado):',
         'default_strand_color': 'Color de Cordón Predeterminado:',
@@ -873,7 +873,7 @@ translations = {
         'hide_full_arrow': "Ocultar flecha completa",
         # --- END NEW ---
         # Additional texts
-        'adjust_angle_and_length': 'Ajustar Ángulo y Longitud',
+        'adjust_angle_and_length': 'Ajust. Áng.',
         'angle_label': 'Ángulo:',
         'length_label': 'Longitud:',
         'create_group': 'Crear Grupo',
@@ -1027,7 +1027,7 @@ translations = {
         'move_mode': 'Mover',
         'rotate_mode': 'Rotacionar',
         'toggle_grid': 'Grade',
-        'angle_adjust_mode': 'Ângulo/Comprimento',
+        'angle_adjust_mode': 'Ângulo/Comp.',
         'select_mode': 'Selecionar',
         'mask_mode': 'Máscara',
         'new_strand_mode': 'Novo',
@@ -1112,11 +1112,11 @@ translations = {
 
         # LayerPanel translations
         'layer_panel_title': 'Painel de Camadas',
-        'draw_names': 'Desenhar Nomes',
-        'lock_layers': 'Bloquear Camadas',
+        'draw_names': 'Exib. Nomes',
+        'lock_layers': 'Bloq. Camad.',
         'add_new_strand': 'Nova Mecha',
-        'delete_strand': 'Excluir Mecha',
-        'deselect_all': 'Desmarcar Tudo',
+        'delete_strand': 'Excl. Mecha',
+        'deselect_all': 'Desmar. Tudo',
         'notification_message': 'Notificação',
         'button_color': 'Escolha uma cor de botão diferente (não padrão):',
         'default_strand_color': 'Cor de Mecha Padrão:',
@@ -1128,7 +1128,7 @@ translations = {
         'hide_full_arrow': "Ocultar seta completa",
         # --- END NEW ---
         # Additional texts
-        'adjust_angle_and_length': 'Ajustar Ângulo e Comprimento',
+        'adjust_angle_and_length': 'Ajust. Âng.',
         'angle_label': 'Ângulo:',
         'length_label': 'Comprimento:',
         'create_group': 'Criar Grupo',

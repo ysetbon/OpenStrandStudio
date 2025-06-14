@@ -973,7 +973,7 @@ class AttachedStrand(Strand):
         # Create a temporary image for masking
         # Get the bounds considering current transformation
         bounds = self.get_drawing_bounds(painter)
-        logging.info(f"[AttachedStrand.draw] Creating temp image with bounds: {bounds}, size: {bounds.size().toSize()}")
+        # logging.info(f"[AttachedStrand.draw] Creating temp image with bounds: {bounds}, size: {bounds.size().toSize()}")
         temp_image = QImage(
             bounds.size().toSize(),
             QImage.Format_ARGB32_Premultiplied
@@ -983,7 +983,7 @@ class AttachedStrand(Strand):
         temp_painter.setRenderHint(QPainter.Antialiasing)
         # Translate to account for bounds offset
         temp_painter.translate(-bounds.topLeft())
-        logging.info(f"[AttachedStrand.draw] Translated temp_painter by {-bounds.topLeft()}")
+        # logging.info(f"[AttachedStrand.draw] Translated temp_painter by {-bounds.topLeft()}")
 
         # Calculate the angle based on the tangent at the start point
         angle = self.calculate_start_tangent()
@@ -1053,7 +1053,7 @@ class AttachedStrand(Strand):
             g = self.circle_stroke_color.green()
             b = self.circle_stroke_color.blue()
             a = self.circle_stroke_color.alpha()
-            logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
+            # logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
             temp_painter.setPen(Qt.NoPen)
             temp_painter.setBrush(self.circle_stroke_color)
             temp_painter.drawPath(outer_mask)
@@ -1070,8 +1070,26 @@ class AttachedStrand(Strand):
             inner_circle = QPainterPath()
             inner_circle.addEllipse(self.start, self.width/2, self.width/2)
             temp_painter.drawPath(inner_circle)
+            
+            # Draw highlight for C-shape if selected
+            if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                # Draw a red highlight around the C-shape
+                # Calculate the highlight radius (outer edge of the highlight)
+                highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
+                
+                # Create the highlight path
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask_rect)
+                
+                # Create a ring path by subtracting the normal outer circle
+                ring_path = highlight_mask.subtracted(outer_circle)
+                
+                temp_painter.setPen(Qt.NoPen)
+                temp_painter.setBrush(QColor('red'))
+                temp_painter.drawPath(ring_path)
         # Regardless of whether we drew the start circle, flush the current temp_image to the main painter
-        logging.info(f"[AttachedStrand.draw] Drawing temp image at position: {bounds.topLeft()}")
+        # logging.info(f"[AttachedStrand.draw] Drawing temp image at position: {bounds.topLeft()}")
         painter.drawImage(bounds.topLeft(), temp_image)
         temp_painter.end()  # End the first temp_painter here
 
@@ -2488,6 +2506,24 @@ class AttachedStrand(Strand):
             inner_circle_full = QPainterPath()
             inner_circle_full.addEllipse(self.start, self.width/2, self.width/2)
             painter.drawPath(inner_circle_full)
+            
+            # Draw highlight for C-shape if selected
+            if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                # Draw a red highlight around the C-shape
+                # Calculate the highlight radius (outer edge of the highlight)
+                highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
+                
+                # Create the highlight path
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask_rect)
+                
+                # Create a ring path by subtracting the normal outer circle
+                ring_path = highlight_mask.subtracted(outer_circle)
+                
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
 
         # Draw ending circle if has_circles == [True, True]
         if self.has_circles == [True, True]:

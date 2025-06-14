@@ -871,8 +871,13 @@ if __name__ == '__main__':
                     else:
                         logging.info(f"WINDOW SHOW: This is normal show (not restore) - no checking needed")
                 elif event.type() == QEvent.WindowActivate:
-                    logging.info(f"WINDOW ACTIVATE EVENT: Window being activated")
-                    # Don't check on activate to avoid duplicate repositioning
+                    # Check if window activation events should be suppressed (during undo/redo)
+                    if hasattr(self.window, 'suppress_activation_events') and self.window.suppress_activation_events:
+                        # Skip logging and processing during undo/redo operations
+                        pass
+                    else:
+                        logging.info(f"WINDOW ACTIVATE EVENT: Window being activated")
+                        # Don't check on activate to avoid duplicate repositioning
                     
             except Exception as e:
                 logging.error(f"Error in ScreenKeeper event filter: {e}")

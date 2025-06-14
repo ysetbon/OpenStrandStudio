@@ -561,11 +561,48 @@ class LayerPanel(QWidget):
     
     def refresh_after_attachment(self):
         """Complete refresh after strand attachment without resetting zoom/pan.
-        This function does everything refresh_layers does except the zoom reset."""
-        logging.info("refresh_after_attachment called - refreshing without zoom reset")
-        self.refresh()
-        # Do NOT reset zoom - preserve user's current view after attachment
+        This function does everything refresh_layers does except the zoom reset and overlay."""
+        logging.info("refresh_after_attachment called - refreshing without zoom reset and overlay")
+        
+        # Get the main window reference
+        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
+        
+        # Disable updates to prevent window flash
+        if main_window:
+            main_window.setUpdatesEnabled(False)
+        self.scroll_area.setUpdatesEnabled(False)
+        # Also freeze the viewport
+        if hasattr(self.scroll_area, 'viewport'):
+            self.scroll_area.viewport().setUpdatesEnabled(False)
+        
+        # Simplified refresh without overlay for attach mode to prevent temporary window
+        # Just rebuild the layer buttons without visual effects
+        removed_count = 0
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                removed_count += 1
+            del item
+        
+        # Re-add buttons in reverse order
+        added_count = 0
+        valid_buttons = [btn for btn in self.layer_buttons if btn]
+        for button in reversed(valid_buttons):
+            self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
+            button.show()
+            added_count += 1
+        
+        # Update layout and canvas
+        self.scroll_layout.update()
         self.canvas.update()  # Just update the canvas without changing zoom/pan
+        
+        # Re-enable updates after refresh
+        if hasattr(self.scroll_area, 'viewport'):
+            self.scroll_area.viewport().setUpdatesEnabled(True)
+        self.scroll_area.setUpdatesEnabled(True)
+        if main_window:
+            main_window.setUpdatesEnabled(True)
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -1845,8 +1882,8 @@ class LayerPanel(QWidget):
         """Simulate clicking the refresh button without visual feedback"""
         if hasattr(self, 'refresh_button'):
             logging.info("Simulating refresh button click")
-            # Call the refresh_layers method directly instead of triggering the button click
-            self.refresh_layers()
+            # Call the refresh_layers_no_zoom method to preserve zoom level and prevent window flash during undo/redo
+            self.refresh_layers_no_zoom()
         else:
             logging.warning("Cannot simulate refresh button click - refresh_button not found")
             
@@ -1955,28 +1992,29 @@ class LayerPanel(QWidget):
         # Get the main window (either the direct parent or parent's parent)
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # --- Platform-specific overlay snapshot (avoids macOS CoreImage crash) ---
+        # --- DISABLED: Platform-specific overlay snapshot (avoids temporary window flash) ---
         overlay = None
-        if sys.platform != 'darwin':
-            # 1. Create a screenshot of the current scroll area viewport (safe on non-macOS)
-            viewport = self.scroll_area.viewport()
-            pixmap = viewport.grab()
+        # Commenting out overlay creation to prevent temporary window appearing
+        # if sys.platform != 'darwin':
+        #     # 1. Create a screenshot of the current scroll area viewport (safe on non-macOS)
+        #     viewport = self.scroll_area.viewport()
+        #     pixmap = viewport.grab()
 
-            # 2. Create a temporary overlay label with the screenshot
-            overlay = QLabel(self.scroll_area)
-            overlay.setPixmap(pixmap)
-            overlay.setGeometry(viewport.rect())
-            overlay.setStyleSheet("background-color: transparent;")
-            overlay.raise_()
-            overlay.show()
-        else:
-            logging.debug("[macOS] Skipping viewport grab overlay in refresh_layers() to prevent segfault")
+        #     # 2. Create a temporary overlay label with the screenshot
+        #     overlay = QLabel(self.scroll_area)
+        #     overlay.setPixmap(pixmap)
+        #     overlay.setGeometry(viewport.rect())
+        #     overlay.setStyleSheet("background-color: transparent;")
+        #     overlay.raise_()
+        #     overlay.show()
+        # else:
+        #     logging.debug("[macOS] Skipping viewport grab overlay in refresh_layers() to prevent segfault")
         
-        # 3. Disable updates on the ENTIRE application window
+        # 3. Disable updates on the ENTIRE application window (prevents window flash)
         if main_window:
             main_window.setUpdatesEnabled(False)
         
-        # 4. Also disable updates on scroll area for redundancy
+        # 4. Also disable updates on scroll area for redundancy (prevents window flash)
         self.scroll_area.setUpdatesEnabled(False)
         
         # 5. --- Remove widgets from layout ---
@@ -1999,7 +2037,7 @@ class LayerPanel(QWidget):
         # 7. Force layout update before re-enabling window updates
         self.scroll_layout.update()
         
-        # 8. Re-enable updates in reverse order
+        # 8. Re-enable updates in reverse order (prevents window flash)
         self.scroll_area.setUpdatesEnabled(True)
         if main_window:
             main_window.setUpdatesEnabled(True)
@@ -2019,26 +2057,27 @@ class LayerPanel(QWidget):
         # Get the main window (either the direct parent or parent's parent)
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # --- Platform-specific overlay snapshot (avoids macOS CoreImage crash) ---
+        # --- DISABLED: Platform-specific overlay snapshot (avoids temporary window flash) ---
         overlay = None
-        if sys.platform != 'darwin':
-            viewport = self.scroll_area.viewport()
-            pixmap = viewport.grab()
+        # Commenting out overlay creation to prevent temporary window appearing
+        # if sys.platform != 'darwin':
+        #     viewport = self.scroll_area.viewport()
+        #     pixmap = viewport.grab()
 
-            overlay = QLabel(self.scroll_area)
-            overlay.setPixmap(pixmap)
-            overlay.setGeometry(viewport.rect())
-            overlay.setStyleSheet("background-color: transparent;")
-            overlay.raise_()
-            overlay.show()
-        else:
-            logging.debug("[macOS] Skipping viewport grab overlay in refresh() to prevent segfault")
+        #     overlay = QLabel(self.scroll_area)
+        #     overlay.setPixmap(pixmap)
+        #     overlay.setGeometry(viewport.rect())
+        #     overlay.setStyleSheet("background-color: transparent;")
+        #     overlay.raise_()
+        #     overlay.show()
+        # else:
+        #     logging.debug("[macOS] Skipping viewport grab overlay in refresh() to prevent segfault")
         
-        # 3. Disable updates on the ENTIRE application window
+        # 3. Disable updates on the ENTIRE application window (prevents window flash)
         if main_window:
             main_window.setUpdatesEnabled(False)
         
-        # 4. Also disable updates on scroll area for redundancy
+        # 4. Also disable updates on scroll area for redundancy (prevents window flash)
         self.scroll_area.setUpdatesEnabled(False)
         
         # Remove all existing buttons
@@ -2127,7 +2166,9 @@ class LayerPanel(QWidget):
         # Force layout update before re-enabling window updates
         self.scroll_layout.update()
         
-        # Re-enable updates
+        # Re-enable updates (prevents window flash)
+        if hasattr(self.scroll_area, 'viewport'):
+            self.scroll_area.viewport().setUpdatesEnabled(True)
         self.scroll_area.setUpdatesEnabled(True)
         if main_window:
             main_window.setUpdatesEnabled(True)

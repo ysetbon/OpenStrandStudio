@@ -78,7 +78,8 @@ class AttachMode(QObject):
                 # Clear optimization flags
                 if hasattr(self.canvas, 'active_strand_for_drawing'):
                     self.canvas.active_strand_for_drawing = None
-            self.canvas.repaint()
+            # Use update() instead of repaint() to avoid synchronous painting
+            self.canvas.update()
             return
             
         # Frame limiting - don't update too frequently
@@ -88,12 +89,12 @@ class AttachMode(QObject):
             return
         self.last_update_time = current_time
         
-        # Process pending events to ensure UI responsiveness
-        QApplication.instance().processEvents()
+        # REMOVED: processEvents() call that was causing temporary windows
+        # QApplication.instance().processEvents()
         
         # Store the current strand and calculate minimal update region
         strand = self.canvas.current_strand
-        logging.info(f"[AttachMode.partial_update] Normal zoom partial update for strand {getattr(strand, 'layer_name', 'unknown')}")
+        # logging.info(f"[AttachMode.partial_update] Normal zoom partial update for strand {getattr(strand, 'layer_name', 'unknown')}")
         
         # Setup background caching if needed
         if not hasattr(self.canvas, 'background_cache'):
@@ -127,7 +128,7 @@ class AttachMode(QObject):
                 self._setup_optimized_paint_handler()
             
             # Only update the canvas - can't use update(rect) as it's not supported
-            logging.info(f"[AttachMode.partial_update] Calling canvas.update() with active_strand_update_rect: {update_rect}")
+            # logging.info(f"[AttachMode.partial_update] Calling canvas.update() with active_strand_update_rect: {update_rect}")
             self.canvas.update()
 
     def _get_strand_bounds(self):
@@ -175,7 +176,7 @@ class AttachMode(QObject):
             bounds = self.canvas.viewport().rect()
         else:
             bounds = self.canvas.rect()
-        logging.info(f"[AttachMode._get_strand_bounds] Normal zoom - returning widget bounds: {bounds}")
+        # logging.info(f"[AttachMode._get_strand_bounds] Normal zoom - returning widget bounds: {bounds}")
         return bounds
             
     def _setup_background_cache(self):

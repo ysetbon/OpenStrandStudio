@@ -756,6 +756,27 @@ class UndoRedoManager(QObject):
             
             self.current_step -= 1
             
+            # Suppress window activation events during entire undo operation
+            main_window = None
+            if hasattr(self.layer_panel, 'parent_window'):
+                main_window = self.layer_panel.parent_window
+            elif hasattr(self.layer_panel, 'parent'):
+                main_window = self.layer_panel.parent()
+            
+            if main_window and hasattr(main_window, 'suppress_activation_events'):
+                main_window.suppress_activation_events = True
+            
+            # Disable updates to prevent window flash
+            if main_window:
+                main_window.setUpdatesEnabled(False)
+            
+            # Suppress attachment status updates during undo to prevent window flash
+            self.canvas._suppress_attachment_updates = True
+            # Suppress repaint calls during undo to prevent window flash
+            self.canvas._suppress_repaint = True
+            # Suppress layer panel refresh during undo to prevent window flash
+            self.canvas._suppress_layer_panel_refresh = True
+            
             # Special case: If undoing to step 0 (empty state)
             if self.current_step == 0:
                 logging.info("Undoing to initial empty state")
@@ -764,14 +785,25 @@ class UndoRedoManager(QObject):
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = {}
                 
-                # Refresh the UI
-                if hasattr(self.layer_panel, 'refresh'):
-                    self.layer_panel.refresh()
-                if hasattr(self.layer_panel, 'refresh_layers'):
-                    self.layer_panel.refresh_layers()
-                if hasattr(self.canvas, 'group_layer_manager'):
-                    self._refresh_group_panel(False)  # No groups in empty state
+                # Skip explicit refresh calls to prevent window flash (they're redundant)
+                logging.info("Skipping explicit refresh calls in undo() step 0 - preventing window flash")
+                # Just update the canvas
                 self.canvas.update()
+                
+                # Re-enable updates after refresh
+                if main_window:
+                    main_window.setUpdatesEnabled(True)
+                
+                # Re-enable attachment status updates
+                self.canvas._suppress_attachment_updates = False
+                
+                # Re-enable window activation events after refresh
+                if main_window and hasattr(main_window, 'suppress_activation_events'):
+                    main_window.suppress_activation_events = False
+                
+                # Now that all suppression flags are cleared, do a single refresh to update the UI
+                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                    self.layer_panel.simulate_refresh_button_click()
             else:
                 # Normal undo to a saved state
                 self._load_state(self.current_step)
@@ -1131,6 +1163,25 @@ class UndoRedoManager(QObject):
                 
             # Final update of the canvas
             self.canvas.update()
+            
+            # Re-enable updates after all operations
+            if main_window:
+                main_window.setUpdatesEnabled(True)
+            
+            # Re-enable attachment status updates
+            self.canvas._suppress_attachment_updates = False
+            # Re-enable repaint calls
+            self.canvas._suppress_repaint = False
+            # Re-enable layer panel refresh
+            self.canvas._suppress_layer_panel_refresh = False
+            
+            # Re-enable window activation events
+            if main_window and hasattr(main_window, 'suppress_activation_events'):
+                main_window.suppress_activation_events = False
+            
+            # Now that all suppression flags are cleared, do a single refresh to update the UI
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                self.layer_panel.simulate_refresh_button_click()
         else:
             logging.info("Cannot undo: already at oldest state")
 
@@ -1172,11 +1223,33 @@ class UndoRedoManager(QObject):
             if self.current_step == 0:
                 logging.info("Redoing from initial empty state to step 1")
             
+            # Set up suppression flags BEFORE loading state to prevent window flash
+            main_window = None
+            if hasattr(self.layer_panel, 'parent_window'):
+                main_window = self.layer_panel.parent_window
+            elif hasattr(self.layer_panel, 'parent'):
+                main_window = self.layer_panel.parent()
+            
+            # Suppress window activation events during redo
+            if main_window and hasattr(main_window, 'suppress_activation_events'):
+                main_window.suppress_activation_events = True
+            
+            # Disable updates to prevent window flash
+            if main_window:
+                main_window.setUpdatesEnabled(False)
+            
+            # Suppress attachment status updates during redo to prevent window flash
+            self.canvas._suppress_attachment_updates = True
+            # Suppress repaint calls during redo to prevent window flash
+            self.canvas._suppress_repaint = True
+            # Suppress layer panel refresh during redo to prevent window flash
+            self.canvas._suppress_layer_panel_refresh = True
+            
             # Increment the step counter
             self.current_step += 1
             logging.info(f"REDO: Attempting to load step {self.current_step}")
             
-            # Load the state
+            # Load the state (with all suppression flags active)
             result = self._load_state(self.current_step)
 
             if result:
@@ -1514,17 +1587,27 @@ class UndoRedoManager(QObject):
             logging.info(f"REDO: Selected strand after redo: {selected_strand_after_redo.layer_name if selected_strand_after_redo else 'None'}")
             # --- END LOGGING ---
 
-            # Try to simulate a refresh button click (preferred method)
-            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                logging.info("Simulating refresh button click after redo")
-                self.layer_panel.simulate_refresh_button_click()
-            # Fallback to direct method call if simulate method not available
-            elif hasattr(self.layer_panel, 'refresh_layers'):
-                logging.info("Explicitly refreshing layer panel")
-                self.layer_panel.refresh_layers()
-
             # Ensure the canvas is fully refreshed after redo
             self.canvas.update()
+            
+            # Re-enable updates to prevent window flash
+            if main_window:
+                main_window.setUpdatesEnabled(True)
+            
+            # Re-enable attachment status updates
+            self.canvas._suppress_attachment_updates = False
+            # Re-enable repaint calls
+            self.canvas._suppress_repaint = False
+            # Re-enable layer panel refresh
+            self.canvas._suppress_layer_panel_refresh = False
+            
+            # Re-enable window activation events after refresh
+            if main_window and hasattr(main_window, 'suppress_activation_events'):
+                main_window.suppress_activation_events = False
+            
+            # Now that all suppression flags are cleared, do a single refresh to update the UI
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                self.layer_panel.simulate_refresh_button_click()
             
             logging.info("REDO: UI updated after redo operation")
             logging.info(f"---") # Separator for clarity
@@ -2036,23 +2119,30 @@ class UndoRedoManager(QObject):
                         move_mode.lock_mode_active = lock_mode
                         logging.info(f"Directly set MoveMode locked_layers to: {locked_layers}")
 
-            # --- Step 4: Refresh UI Panels AFTER lock state restoration --- 
-            # Refresh layer panel based on the new self.canvas.strands
-            logging.info("Refreshing Layer Panel UI...")
-            self._refresh_layer_panel() 
+            # --- Step 4: Refresh UI Panels AFTER lock state restoration (unless suppressed) --- 
+            # Check if we're in an undo/redo operation and skip refreshes to prevent window flash
+            if not (hasattr(self.canvas, '_suppress_layer_panel_refresh') and self.canvas._suppress_layer_panel_refresh):
+                # Refresh layer panel based on the new self.canvas.strands
+                logging.info("Refreshing Layer Panel UI...")
+                self._refresh_layer_panel() 
 
-            # Try to simulate a refresh button click (preferred method)
-            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                logging.info("Simulating refresh button click after loading state")
-                self.layer_panel.simulate_refresh_button_click()
-            # Fallback to direct method call if simulate method not available
-            elif hasattr(self.layer_panel, 'refresh_layers'):
-                logging.info("Explicitly refreshing layer panel UI...")
-                self.layer_panel.refresh_layers()
+                # Try to simulate a refresh button click (preferred method)
+                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                    logging.info("Simulating refresh button click after loading state")
+                    self.layer_panel.simulate_refresh_button_click()
+                # Fallback to direct method call if simulate method not available
+                elif hasattr(self.layer_panel, 'refresh_layers'):
+                    logging.info("Explicitly refreshing layer panel UI...")
+                    self.layer_panel.refresh_layers()
+            else:
+                logging.info("Layer panel refresh suppressed in _load_state during undo/redo operation")
             
-            # Apply lock state again after refresh since refresh recreates buttons
+            # Apply lock state after refresh since refresh recreates buttons (or apply to existing buttons if refresh was suppressed)
             if hasattr(self.layer_panel, 'locked_layers') and hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
-                logging.info("Reapplying lock state after refresh to newly created buttons")
+                if hasattr(self.canvas, '_suppress_layer_panel_refresh') and self.canvas._suppress_layer_panel_refresh:
+                    logging.info("Applying lock state to existing buttons (refresh was suppressed)")
+                else:
+                    logging.info("Reapplying lock state after refresh to newly created buttons")
                 self.layer_panel.update_layer_buttons_lock_state()
             
             # Log which buttons are now locked for verification after refresh

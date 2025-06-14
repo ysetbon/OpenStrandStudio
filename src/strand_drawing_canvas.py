@@ -3110,9 +3110,34 @@ class StrandDrawingCanvas(QWidget):
             # Emit signals and update UI
             self.strand_selected.emit(new_strand_index)
             if hasattr(self, 'layer_panel'):
+                # Get main window reference for update suppression
+                main_window = None
+                if hasattr(self.layer_panel, 'parent_window'):
+                    main_window = self.layer_panel.parent_window
+                elif hasattr(self.layer_panel, 'parent'):
+                    main_window = self.layer_panel.parent()
+                
+                # Temporarily suppress UI updates to prevent window flash during strand creation
+                if main_window:
+                    main_window.setUpdatesEnabled(False)
+                self._suppress_layer_panel_refresh = True
+                self._suppress_repaint = True
+                self._suppress_attachment_updates = True
+                
                 self.layer_panel.on_strand_created(new_strand)
                 # Ensure the layer panel selection is updated
                 self.layer_panel.select_layer(new_strand_index, emit_signal=False)
+                
+                # Re-enable UI updates
+                if main_window:
+                    main_window.setUpdatesEnabled(True)
+                self._suppress_layer_panel_refresh = False
+                self._suppress_repaint = False
+                self._suppress_attachment_updates = False
+                
+                # Now do a single refresh to update the UI properly
+                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                    self.layer_panel.simulate_refresh_button_click()
             
             # Force a canvas update to show the selection
             self.update()
@@ -4359,12 +4384,15 @@ class StrandDrawingCanvas(QWidget):
                 abs(point1.y() - point2.y()) <= tolerance)
 
     def update(self):
-        # Skip update_attachment_statuses if we're in the middle of attaching or moving
+        # Skip update_attachment_statuses if we're in the middle of attaching, moving, or during undo/redo
         if hasattr(self, 'current_mode') and (
             (hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching) or
             (hasattr(self.current_mode, 'is_moving') and self.current_mode.is_moving)
         ):
             # Don't update attachment statuses while attaching or moving
+            super().update()
+        elif hasattr(self, '_suppress_attachment_updates') and self._suppress_attachment_updates:
+            # Don't update attachment statuses during undo/redo operations
             super().update()
         else:
             self.update_attachment_statuses()

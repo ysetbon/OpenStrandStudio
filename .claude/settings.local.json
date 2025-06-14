@@ -34,7 +34,8 @@
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"def on_strand_created\" --context=30 /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 50 \"def on_strand_created\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
       "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 100 \"Update layer panel\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/strand_drawing_canvas.py)",
-      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 50 \"def on_strand_created\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/layer_panel.py)"
+      "Bash(/home/yonatanetbon/.claude/local/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 50 \"def on_strand_created\" /mnt/c/Users/YonatanSetbon/.vscode/OpenStrandStudio/src/layer_panel.py)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

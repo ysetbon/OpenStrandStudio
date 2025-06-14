@@ -607,9 +607,11 @@ def load_strands(filename, canvas):
             
         logging.info(f"Set canvas reference and shadow properties for strand {strand.layer_name}")
     
-    # Update UI
-    if hasattr(canvas, 'layer_panel'):
+    # Update UI (unless suppressed for undo/redo)
+    if hasattr(canvas, 'layer_panel') and not getattr(canvas, '_suppress_layer_panel_refresh', False):
         canvas.layer_panel.refresh()
+    elif getattr(canvas, '_suppress_layer_panel_refresh', False):
+        logging.info("Layer panel refresh suppressed during undo/redo")
     
     # Ensure shadows are enabled
     if hasattr(canvas, 'shadow_enabled'):
@@ -627,10 +629,12 @@ def load_strands(filename, canvas):
     
     # Force a complete redraw of the canvas to ensure shadows are rendered
     canvas.update()
-    # Also force a repaint which guarantees immediate visual update
-    if hasattr(canvas, 'repaint'):
+    # Also force a repaint which guarantees immediate visual update (unless suppressed for undo/redo)
+    if hasattr(canvas, 'repaint') and not getattr(canvas, '_suppress_repaint', False):
         canvas.repaint()
-    logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
+        logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
+    elif getattr(canvas, '_suppress_repaint', False):
+        logging.info("Canvas updated after loading strands - repaint suppressed during undo/redo")
 
     locked_layers = set(data.get("locked_layers", []))  # Get locked layers from saved data
     lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data
@@ -707,8 +711,11 @@ def apply_loaded_strands(canvas, strands, groups):
         logging.info(f"Updated set numbering - Next set: {canvas.layer_panel.current_set}, "
                     f"Current set counts: {set_counts} (Based on layer names)")
         
-        # Refresh the panel
-        canvas.layer_panel.refresh()
+        # Refresh the panel (unless suppressed for undo/redo)
+        if not getattr(canvas, '_suppress_layer_panel_refresh', False):
+            canvas.layer_panel.refresh()
+        else:
+            logging.info("Layer panel refresh suppressed during undo/redo")
         logging.info(f"LayerPanel refreshed with loaded strands. Set counts: {set_counts}")
 
     for group_name, group_info in groups.items():
@@ -755,10 +762,12 @@ def apply_loaded_strands(canvas, strands, groups):
         
     if hasattr(canvas, 'update'):
         canvas.update()
-        # Also force a repaint which guarantees immediate visual update
-        if hasattr(canvas, 'repaint'):
+        # Also force a repaint which guarantees immediate visual update (unless suppressed for undo/redo)
+        if hasattr(canvas, 'repaint') and not getattr(canvas, '_suppress_repaint', False):
             canvas.repaint()
-        logging.info("Canvas updated and repainted after applying groups - this should trigger shadow rendering")
+            logging.info("Canvas updated and repainted after applying groups - this should trigger shadow rendering")
+        elif getattr(canvas, '_suppress_repaint', False):
+            logging.info("Canvas updated after applying groups - repaint suppressed during undo/redo")
 
     logging.info("Finished applying group data.")
 def serialize_groups(groups):

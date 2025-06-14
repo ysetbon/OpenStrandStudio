@@ -548,6 +548,9 @@ class LayerPanel(QWidget):
 
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
+        logging.info("Starting refresh of layer panel")
+        overlay = None  # Snapshot overlay that masks flicker on Windows
+
         logging.info("refresh_layers called, redirecting to refresh()")
         self.refresh()
         # Reset canvas zoom and pan to original view
@@ -555,6 +558,7 @@ class LayerPanel(QWidget):
     
     def refresh_layers_no_zoom(self):
         """Refresh the drawing of the layers without resetting zoom/pan. Used for strand attachment."""
+        logging.info("[FLASH_DEBUG] refresh_layers_no_zoom: Begin")
         logging.info("refresh_layers_no_zoom called, redirecting to refresh()")
         self.refresh()
         # Intentionally not resetting zoom to preserve state during strand attachment
@@ -1881,7 +1885,7 @@ class LayerPanel(QWidget):
     def simulate_refresh_button_click(self):
         """Simulate clicking the refresh button without visual feedback"""
         if hasattr(self, 'refresh_button'):
-            logging.info("Simulating refresh button click")
+            logging.info("[FLASH_DEBUG] simulate_refresh_button_click: Simulating refresh button click")
             # Call the refresh_layers_no_zoom method to preserve zoom level and prevent window flash during undo/redo
             self.refresh_layers_no_zoom()
         else:
@@ -1959,13 +1963,25 @@ class LayerPanel(QWidget):
                 logging.info(f"Set {set_number} color already exists, updated strand to match")
         
         # Refresh the layer panel
-        # For attached strands, use special refresh that preserves zoom/pan
         if isinstance(strand, AttachedStrand):
             logging.info("Using refresh_after_attachment for attached strand")
+            # For attached strands we still need the specialized lightweight refresh that preserves zoom/pan
             self.refresh_after_attachment()
         else:
-            logging.info("Using normal refresh with zoom reset")
-            self.simulate_refresh_button_click()
+            # Avoid the full rebuild (which causes a white-flash) – instead perform a light update:
+            logging.info("Lightweight UI update – skipping costly refresh() to avoid flash")
+
+            # 1. Ensure the new button is visually present (add_layer_button already inserted it)
+            self.scroll_layout.update()
+
+            # 2. Update button states (delete-enabled flag, attachable icons, etc.)
+            self.update_layer_button_states()
+
+            # 3. Force a canvas repaint so the new strand appears immediately
+            if self.canvas:
+                self.canvas.update()
+
+            # NOTE: no call to refresh() or refresh_layers*(), so no overlay / flash occurs.
         
         logging.info("Finished on_strand_created")
 
@@ -1988,36 +2004,34 @@ class LayerPanel(QWidget):
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
         logging.info("Starting refresh of layer panel")
+        overlay = None  # Snapshot overlay that masks flicker on Windows
+
+        logging.info("refresh_layers called, redirecting to refresh()")
+        self.refresh()
+        # Reset canvas zoom and pan to original view
+        self.canvas.reset_zoom()
+    
+    # NOTE: refresh_layers_no_zoom method already defined earlier (line 559) - removed duplicate
+    
+    def refresh_after_attachment(self):
+        """Complete refresh after strand attachment without resetting zoom/pan.
+        This function does everything refresh_layers does except the zoom reset and overlay."""
+        logging.info("refresh_after_attachment called - refreshing without zoom reset and overlay")
         
-        # Get the main window (either the direct parent or parent's parent)
+        # Get the main window reference
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # --- DISABLED: Platform-specific overlay snapshot (avoids temporary window flash) ---
-        overlay = None
-        # Commenting out overlay creation to prevent temporary window appearing
-        # if sys.platform != 'darwin':
-        #     # 1. Create a screenshot of the current scroll area viewport (safe on non-macOS)
-        #     viewport = self.scroll_area.viewport()
-        #     pixmap = viewport.grab()
-
-        #     # 2. Create a temporary overlay label with the screenshot
-        #     overlay = QLabel(self.scroll_area)
-        #     overlay.setPixmap(pixmap)
-        #     overlay.setGeometry(viewport.rect())
-        #     overlay.setStyleSheet("background-color: transparent;")
-        #     overlay.raise_()
-        #     overlay.show()
-        # else:
-        #     logging.debug("[macOS] Skipping viewport grab overlay in refresh_layers() to prevent segfault")
-        
-        # 3. Disable updates on the ENTIRE application window (prevents window flash)
-        if main_window:
+        # Suppress full-window repaint only on macOS; on Windows/Linux it causes a white flash
+        if sys.platform == 'darwin' and main_window:
             main_window.setUpdatesEnabled(False)
+            # Suspend painting on the scroll area / its viewport only on macOS – doing this on
+            # Windows/Linux produces a short blank frame (the white-flash we are chasing).
+            self.scroll_area.setUpdatesEnabled(False)
+            if hasattr(self.scroll_area, 'viewport'):
+                self.scroll_area.viewport().setUpdatesEnabled(False)
         
-        # 4. Also disable updates on scroll area for redundancy (prevents window flash)
-        self.scroll_area.setUpdatesEnabled(False)
-        
-        # 5. --- Remove widgets from layout ---
+        # Simplified refresh without overlay for attach mode to prevent temporary window
+        # Just rebuild the layer buttons without visual effects
         removed_count = 0
         while self.scroll_layout.count():
             item = self.scroll_layout.takeAt(0)
@@ -2026,7 +2040,7 @@ class LayerPanel(QWidget):
                 removed_count += 1
             del item
         
-        # 6. --- Re-add buttons in reverse order ---
+        # Re-add buttons in reverse order
         added_count = 0
         valid_buttons = [btn for btn in self.layer_buttons if btn]
         for button in reversed(valid_buttons):
@@ -2034,22 +2048,17 @@ class LayerPanel(QWidget):
             button.show()
             added_count += 1
         
-        # 7. Force layout update before re-enabling window updates
+        # Update layout and canvas
         self.scroll_layout.update()
+        self.canvas.update()  # Just update the canvas without changing zoom/pan
         
-        # 8. Re-enable updates in reverse order (prevents window flash)
+        # Re-enable updates after refresh
+        if hasattr(self.scroll_area, 'viewport'):
+            self.scroll_area.viewport().setUpdatesEnabled(True)
         self.scroll_area.setUpdatesEnabled(True)
         if main_window:
             main_window.setUpdatesEnabled(True)
-            
-        # 9. Remove the overlay after everything is ready (if we actually created one)
-        if overlay is not None:
-            overlay.deleteLater()
-        
-        # Reset canvas zoom and pan to original view
-        self.canvas.reset_zoom()
-        
-        logging.info(f"Refreshed layer panel: removed {removed_count}, added {added_count} buttons")
+
     def refresh(self):
         """Comprehensive refresh of layer panel with zero visual flicker."""
         logging.info("Starting comprehensive refresh of layer panel")
@@ -2077,8 +2086,9 @@ class LayerPanel(QWidget):
         if main_window:
             main_window.setUpdatesEnabled(False)
         
-        # 4. Also disable updates on scroll area for redundancy (prevents window flash)
-        self.scroll_area.setUpdatesEnabled(False)
+        # 4. On macOS only: also disable updates on the scroll area. On Windows/Linux this causes a visible blank frame.
+        if sys.platform == 'darwin':
+            self.scroll_area.setUpdatesEnabled(False)
         
         # Remove all existing buttons
         for button in self.layer_buttons:
@@ -2170,12 +2180,16 @@ class LayerPanel(QWidget):
         if hasattr(self.scroll_area, 'viewport'):
             self.scroll_area.viewport().setUpdatesEnabled(True)
         self.scroll_area.setUpdatesEnabled(True)
-        if main_window:
-            main_window.setUpdatesEnabled(True)
+        if sys.platform == 'darwin' and self.parent_window:
+            self.parent_window.setUpdatesEnabled(True)
+        logging.info("[FLASH_DEBUG] refresh: Re-enabled main window updates")
         
         # Remove the overlay after everything is ready (if we actually created one)
         if overlay is not None:
-            overlay.deleteLater()
+            # Schedule the overlay to be deleted after a longer delay to ensure smooth transition
+            # and give time for all UI updates to complete
+            QTimer.singleShot(150, overlay.deleteLater)
+            logging.info("[FLASH_DEBUG] refresh: Overlay removal scheduled (150ms delay)")
         
         logging.info(f"Finished comprehensive refresh of layer panel. Total buttons: {len(self.layer_buttons)}")
 

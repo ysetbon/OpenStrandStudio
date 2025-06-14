@@ -3135,9 +3135,8 @@ class StrandDrawingCanvas(QWidget):
                 self._suppress_repaint = False
                 self._suppress_attachment_updates = False
                 
-                # Now do a single refresh to update the UI properly
-                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                    self.layer_panel.simulate_refresh_button_click()
+                # The layer panel already performed a lightweight update; avoid costly refresh() to prevent flash.
+                logging.info("[FLASH_DEBUG] finalize_new_strand: Skipping simulate_refresh_button_click() to avoid flash")
             
             # Force a canvas update to show the selection
             self.update()

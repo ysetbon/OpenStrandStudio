@@ -133,9 +133,8 @@ class RotateMode:
             ))
 
         if new_pos != self.rotating_point:
-            # Update the strand position and cursor
+            # Directly update the strand position without forcibly moving the system cursor
             self.update_strand_position(new_pos)
-            self.update_cursor_position(new_pos)
             self.rotating_point = new_pos
             self.canvas.update()
 
@@ -210,7 +209,6 @@ class RotateMode:
         self.is_rotating = True
         self.original_length = self.calculate_strand_length(strand)
         self.pivot_point = strand.end if side == 0 else strand.start
-        self.update_cursor_position(self.rotating_point)
         self.target_pos = self.rotating_point
 
     def get_end_rectangle(self, strand, side):

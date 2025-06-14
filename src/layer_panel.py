@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import (
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
     QSplitter, QSizePolicy
 )
+from PyQt5.QtCore import QEventLoop          #  ← add this import
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 import logging
@@ -571,13 +573,14 @@ class LayerPanel(QWidget):
         # Get the main window reference
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
         
-        # Disable updates to prevent window flash
-        if main_window:
+        # Suppress full-window repaint only on macOS; on Windows/Linux it causes a white flash
+        if sys.platform == 'darwin' and main_window:
             main_window.setUpdatesEnabled(False)
-        self.scroll_area.setUpdatesEnabled(False)
-        # Also freeze the viewport
-        if hasattr(self.scroll_area, 'viewport'):
-            self.scroll_area.viewport().setUpdatesEnabled(False)
+            # Suspend painting on the scroll area / its viewport only on macOS – doing this on
+            # Windows/Linux produces a short blank frame (the white-flash we are chasing).
+            self.scroll_area.setUpdatesEnabled(False)
+            if hasattr(self.scroll_area, 'viewport'):
+                self.scroll_area.viewport().setUpdatesEnabled(False)
         
         # Simplified refresh without overlay for attach mode to prevent temporary window
         # Just rebuild the layer buttons without visual effects
@@ -601,12 +604,13 @@ class LayerPanel(QWidget):
         self.scroll_layout.update()
         self.canvas.update()  # Just update the canvas without changing zoom/pan
         
-        # Re-enable updates after refresh
-        if hasattr(self.scroll_area, 'viewport'):
-            self.scroll_area.viewport().setUpdatesEnabled(True)
-        self.scroll_area.setUpdatesEnabled(True)
-        if main_window:
-            main_window.setUpdatesEnabled(True)
+        # Re-enable updates after refresh (only on macOS)
+        if sys.platform == 'darwin':
+            if hasattr(self.scroll_area, 'viewport'):
+                self.scroll_area.viewport().setUpdatesEnabled(True)
+            self.scroll_area.setUpdatesEnabled(True)
+            if main_window:
+                main_window.setUpdatesEnabled(True)
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
@@ -2052,146 +2056,138 @@ class LayerPanel(QWidget):
         self.scroll_layout.update()
         self.canvas.update()  # Just update the canvas without changing zoom/pan
         
-        # Re-enable updates after refresh
-        if hasattr(self.scroll_area, 'viewport'):
-            self.scroll_area.viewport().setUpdatesEnabled(True)
-        self.scroll_area.setUpdatesEnabled(True)
-        if main_window:
-            main_window.setUpdatesEnabled(True)
-
-    def refresh(self):
-        """Comprehensive refresh of layer panel with zero visual flicker."""
-        logging.info("Starting comprehensive refresh of layer panel")
-        
-        # Get the main window (either the direct parent or parent's parent)
-        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
-        
-        # --- DISABLED: Platform-specific overlay snapshot (avoids temporary window flash) ---
-        overlay = None
-        # Commenting out overlay creation to prevent temporary window appearing
-        # if sys.platform != 'darwin':
-        #     viewport = self.scroll_area.viewport()
-        #     pixmap = viewport.grab()
-
-        #     overlay = QLabel(self.scroll_area)
-        #     overlay.setPixmap(pixmap)
-        #     overlay.setGeometry(viewport.rect())
-        #     overlay.setStyleSheet("background-color: transparent;")
-        #     overlay.raise_()
-        #     overlay.show()
-        # else:
-        #     logging.debug("[macOS] Skipping viewport grab overlay in refresh() to prevent segfault")
-        
-        # 3. Disable updates on the ENTIRE application window (prevents window flash)
-        if main_window:
-            main_window.setUpdatesEnabled(False)
-        
-        # 4. On macOS only: also disable updates on the scroll area. On Windows/Linux this causes a visible blank frame.
+        # Re-enable updates after refresh (only on macOS)
         if sys.platform == 'darwin':
+            if hasattr(self.scroll_area, 'viewport'):
+                self.scroll_area.viewport().setUpdatesEnabled(True)
+            self.scroll_area.setUpdatesEnabled(True)
+            if main_window:
+                main_window.setUpdatesEnabled(True)
+
+    # ---------------------------------------------------------------------------
+    # LayerPanel.py
+    # ---------------------------------------------------------------------------
+    def refresh(self):
+        """
+        Rebuild the layer panel **without any visible flash**.
+
+        Strategy
+        --------
+        • Win / X‑based Linux …… freeze only the viewport (never the MainWindow).  
+        • macOS ………………… freeze the MainWindow *and* the viewport.
+
+        All heavy work happens while painting is disabled; we then re‑enable
+        widgets in the exact reverse order and force one final repaint.
+        """
+        from PyQt5.QtWidgets import QApplication
+
+        logging.info("LayerPanel.refresh – start (no‑flash)")
+
+        # ------------------------------------------------------------------ #
+        # 0. Decide which widgets to freeze
+        # ------------------------------------------------------------------ #
+        freeze_top  = sys.platform == "darwin"
+        main_window = getattr(self, "parent_window", None) or self.parent()
+        viewport    = self.scroll_area.viewport()
+
+        # ------------------------------------------------------------------ #
+        # 1. Freeze painting
+        # ------------------------------------------------------------------ #
+        if freeze_top and main_window:
+            main_window.setUpdatesEnabled(False)
+
+        viewport.setUpdatesEnabled(False)  # always safe (child only)
+
+        if freeze_top:                      # macOS needs both
             self.scroll_area.setUpdatesEnabled(False)
-        
-        # Remove all existing buttons
-        for button in self.layer_buttons:
-            button.setParent(None)
-            button.deleteLater()
-        self.layer_buttons.clear()
-        
-        # Reset set counts
-        self.set_counts = {}
-        
-        # Add buttons for all current strands
-        for i, strand in enumerate(self.canvas.strands):
-            set_number = strand.set_number
-            
-            if set_number not in self.set_counts:
-                self.set_counts[set_number] = 0
-            self.set_counts[set_number] += 1
-            
-            # Use the strand's actual color
-            strand_color = strand.color if hasattr(strand, 'color') else self.canvas.strand_colors.get(set_number, 
-                self.canvas.default_strand_color if hasattr(self.canvas, 'default_strand_color') else QColor(200, 170, 230, 255))
-            
-            # --- Store layer_name directly on button for easier lookup ---
-            button = NumberedLayerButton(strand.layer_name, self.set_counts[set_number], strand_color)
-            # Store the definitive layer name for matching later
-            button.layer_name = strand.layer_name
-            # --- End Store layer_name ---
 
-            button.clicked.connect(partial(self.select_layer, i))
-            print(f"button.clicked.connect(partial(self.select_layer, {i}))")
-            button.color_changed.connect(self.on_color_changed)
-            
-            if isinstance(strand, MaskedStrand):
-                button.set_border_color(strand.second_selected_strand.color)
-                # Ensure masked strand color is correct
-                if strand.first_selected_strand:
-                    button.set_color(strand.first_selected_strand.color)
+        # Flush pending paints so we start from a clean state
+        QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
 
-            # Set initial hidden state during refresh
-            button.set_hidden(strand.is_hidden)
 
-            self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter) # Align center added
-            self.layer_buttons.append(button)
-        
-        # Update button states
-        self.update_layer_button_states()
-        
-        # --- Modified Selection Logic ---
-        # Ensure the correct button is selected by matching the strand object
-        selected_strand_object = self.canvas.selected_strand
-        if selected_strand_object:
-            found_button = None
-            for button in self.layer_buttons:
-                # Use the stored layer_name for reliable matching
-                if hasattr(button, 'layer_name') and button.layer_name == selected_strand_object.layer_name:
-                    found_button = button
-                    break
-            if found_button:
-                found_button.setChecked(True)
-                # Ensure canvas index is also correct (should already be, but for safety)
-                try:
-                    self.canvas.selected_strand_index = self.canvas.strands.index(selected_strand_object)
-                except ValueError:
-                     logging.warning(f"Refresh: Selected strand {selected_strand_object.layer_name} not found in canvas.strands after refresh.")
-                     self.clear_selection() # Clear if inconsistent
-            else:
-                logging.warning(f"Refresh: Could not find button for selected strand {selected_strand_object.layer_name}")
-                self.clear_selection() # Clear selection if button not found
-        else:
-            # No strand object selected in canvas, clear visual selection
-            self.clear_selection()
-        # --- End Modified Selection Logic ---
+        try:
+            # ------------------------------------------------------------------
+            # 2. *** REBUILD THE PANEL ***
+            # ------------------------------------------------------------------
+            #
+            # 2‑a  Clear current buttons
+            #
+            for btn in self.layer_buttons:
+                btn.setParent(None)
+                btn.deleteLater()
+            self.layer_buttons.clear()
+            self.set_counts.clear()
 
-        # Update the current set
-        # --- Ensure current_set uses set_number attribute ---
-        existing_sets = set(
-            s.set_number for s in self.canvas.strands if hasattr(s, 'set_number') and not isinstance(s, MaskedStrand)
-        )
-        self.current_set = max(existing_sets, default=0)
-        # --- End Ensure current_set ---
-        
-        # Refresh the GroupLayerManager
-        self.group_layer_manager.refresh()
+            #
+            # 2‑b  Re‑create buttons for every strand
+            #
+            for i, strand in enumerate(self.canvas.strands):
+                set_no = strand.set_number
+                self.set_counts[set_no] = self.set_counts.get(set_no, 0) + 1
 
-        # Force layout update before re-enabling window updates
-        self.scroll_layout.update()
-        
-        # Re-enable updates (prevents window flash)
-        if hasattr(self.scroll_area, 'viewport'):
-            self.scroll_area.viewport().setUpdatesEnabled(True)
-        self.scroll_area.setUpdatesEnabled(True)
-        if sys.platform == 'darwin' and self.parent_window:
-            self.parent_window.setUpdatesEnabled(True)
-        logging.info("[FLASH_DEBUG] refresh: Re-enabled main window updates")
-        
-        # Remove the overlay after everything is ready (if we actually created one)
-        if overlay is not None:
-            # Schedule the overlay to be deleted after a longer delay to ensure smooth transition
-            # and give time for all UI updates to complete
-            QTimer.singleShot(150, overlay.deleteLater)
-            logging.info("[FLASH_DEBUG] refresh: Overlay removal scheduled (150ms delay)")
-        
-        logging.info(f"Finished comprehensive refresh of layer panel. Total buttons: {len(self.layer_buttons)}")
+                colour = getattr(strand, "color", None) \
+                        or self.canvas.strand_colors.get(set_no) \
+                        or getattr(self.canvas, "default_strand_color",
+                                    QColor(200, 170, 230, 255))
+
+                btn = NumberedLayerButton(strand.layer_name,
+                                        self.set_counts[set_no],
+                                        colour)
+                btn.layer_name = strand.layer_name          # reliable lookup
+                btn.clicked.connect(partial(self.select_layer, i))
+                btn.color_changed.connect(self.on_color_changed)
+
+                if isinstance(strand, MaskedStrand):
+                    btn.set_border_color(strand.second_selected_strand.color)
+                    if strand.first_selected_strand:
+                        btn.set_color(strand.first_selected_strand.color)
+
+                btn.set_hidden(strand.is_hidden)
+
+                self.scroll_layout.insertWidget(0, btn, 0, Qt.AlignHCenter)
+                self.layer_buttons.append(btn)
+
+            #
+            # 2‑c  Restore selection
+            #
+            sel = self.canvas.selected_strand
+            if sel:
+                for btn in self.layer_buttons:
+                    if getattr(btn, "layer_name", "") == sel.layer_name:
+                        btn.setChecked(True)
+                        break
+
+            #
+            # 2‑d  Misc. book‑keeping
+            #
+            self.update_layer_button_states()
+            self.current_set = max(
+                (s.set_number for s in self.canvas.strands
+                if not isinstance(s, MaskedStrand)),
+                default=0
+            )
+            self.group_layer_manager.refresh()
+            self.scroll_layout.update()
+
+        finally:
+            # ------------------------------------------------------------------
+            # 3. Re‑enable painting  (reverse order!)
+            # ------------------------------------------------------------------
+            if freeze_top:
+                self.scroll_area.setUpdatesEnabled(True)
+
+            viewport.setUpdatesEnabled(True)
+
+            if freeze_top and main_window:
+                main_window.setUpdatesEnabled(True)
+
+        # ------------------------------------------------------------------
+        # 4. One explicit repaint – a single, clean frame
+        # ------------------------------------------------------------------
+        viewport.update()
+
+        logging.info("LayerPanel.refresh – done (no‑flash)")
+
 
     def update_masked_strand_color(self, layer_name, color):
         for button in self.layer_buttons:
@@ -2204,6 +2200,27 @@ class LayerPanel(QWidget):
         if 0 <= index < len(self.layer_buttons):
             return self.layer_buttons[index]
         return None
+
+    def _sync_internal_lists_from_layout(self):
+        """
+        After a drag‑and‑drop we already moved the real widgets inside
+        self.scroll_layout.  This function rebuilds `self.layer_buttons`
+        (and optionally other parallel lists) so that index i in the list
+        once again corresponds to index i in `self.canvas.strands`.
+
+        The visual order in the layout is top→bottom, whereas the logical
+        order expected by the rest of the program is bottom→top, because new
+        buttons are always inserted at row 0.  Therefore we just walk the
+        layout, collect the buttons, then reverse the list.
+        """
+        ordered_buttons = []
+        for row in range(self.scroll_layout.count()):
+            w = self.scroll_layout.itemAt(row).widget()
+            if w is not None:                       # should always be true
+                ordered_buttons.append(w)
+
+        # layout: top‑to‑bottom  →   logical list: bottom‑to‑top
+        self.layer_buttons = list(reversed(ordered_buttons))
 
     def update_default_colors(self):
         """Update the set_colors dictionary to use the canvas default colors."""
@@ -2505,15 +2522,25 @@ class LayerPanel(QWidget):
 
             # --- THEN, refresh the UI. On macOS, defer to the next event-loop cycle to avoid crash; on other OS refresh immediately ---
             if sys.platform == 'darwin':
-                QTimer.singleShot(0, self.refresh)
+                QTimer.singleShot(0, lambda: (
+                    self._sync_internal_lists_from_layout(),
+                    self.update_layer_button_states(),
+                    self.group_layer_manager.refresh(),
+                    self.scroll_layout.update(),
+                    self.canvas.update(),
+                    self.undo_redo_manager.save_state() if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager else None
+                ))
             else:
-                self.refresh()
-            logging.info("UI refreshed after drop to show reordered layers (platform-specific logic applied).")
+                # non‑macOS path: execute immediately
+                self._sync_internal_lists_from_layout()
+                self.update_layer_button_states()
+                self.group_layer_manager.refresh()
+                self.scroll_layout.update()
+                self.canvas.update()
+                if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                    self.undo_redo_manager.save_state()
 
-            # --- FINALLY, save the state AFTER refreshing ---
-            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                logging.info("Saving state AFTER refreshing UI post-reorder")
-                self.undo_redo_manager.save_state()
+            logging.info("UI refreshed after drop to show reordered layers (platform-specific logic applied).")
 
         else:
             event.ignore()

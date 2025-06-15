@@ -233,6 +233,18 @@ class AttachMode(QObject):
             from PyQt5.QtCore import Qt, QPointF, QRectF
             import logging
             
+            # --------------------------------------------------
+            # Global operations such as undo\/redo temporarily set
+            # ``_suppress_repaint`` on the canvas so that *no* intermediate
+            # frames are rendered.  Because AttachMode replaces the canvas'
+            # paintEvent with this optimised handler, we replicate the same
+            # early-exit guard used in the standard paintEvent to prevent
+            # partial frames (e.g. circles without the corresponding strand)
+            # from flashing on screen.
+            # --------------------------------------------------
+            if getattr(self_canvas, "_suppress_repaint", False):
+                return
+
             # Regular paint if no active strand
             if not hasattr(self_canvas, 'active_strand_for_drawing') or self_canvas.active_strand_for_drawing is None:
                 self_canvas.original_paintEvent(event)

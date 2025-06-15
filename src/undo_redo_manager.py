@@ -1157,14 +1157,21 @@ class UndoRedoManager(QObject):
             # Additional logging to track what's being refreshed
             logging.info("Refreshing UI after undo operation")
             
-            # NOTE: Removed additional refresh calls here as they were overriding
-            # the lock state that was properly restored in _load_state()
-            # The _load_state() method already handles all necessary refreshing
-                
-            # Final update of the canvas
+            # --------------------------------------------------
+            # Re-enable all suppression flags *before* we trigger the first
+            # repaint so that the very first frame after an undo already
+            # contains the fully-restored geometry (circles, attachments …)
+            # --------------------------------------------------
+
+            # Re-enable attachment status updates and repaint calls
+            self.canvas._suppress_attachment_updates = False
+            self.canvas._suppress_repaint = False
+            self.canvas._suppress_layer_panel_refresh = False
+
+            # Now trigger the repaint
             self.canvas.update()
-            
-            # Re-enable updates after all operations
+
+            # Re-enable updates after all operations (Qt window flag)
             if main_window:
                 main_window.setUpdatesEnabled(True)
             
@@ -1413,7 +1420,7 @@ class UndoRedoManager(QObject):
                                 original_rects = getattr(original_strand, 'deletion_rectangles', [])
                                 
                                 if len(new_rects) != len(original_rects):
-                                    logging.info(f"Redo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
+                                    logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
                                     has_visual_difference = True
                                     break
                                 
@@ -1421,7 +1428,7 @@ class UndoRedoManager(QObject):
                                 if len(new_rects) > 0:
                                     # Simple content comparison (assuming order is consistent or not critical for this check)
                                     if new_rects != original_rects:
-                                        logging.info(f"Redo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
+                                        logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
                                         has_visual_difference = True
                                         break
                             elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):
@@ -1436,11 +1443,11 @@ class UndoRedoManager(QObject):
                                 orig_vis = original_strand.end_line_visible
                                 logging.info(f"Comparing end_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_line_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_line_visible') != hasattr(original_strand, 'end_line_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1451,11 +1458,11 @@ class UndoRedoManager(QObject):
                                 orig_vis = original_strand.start_line_visible
                                 logging.info(f"Comparing start_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_line_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_line_visible') != hasattr(original_strand, 'start_line_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1463,11 +1470,11 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check layer visibility (is_hidden) ---
                             if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
                                 if new_strand.is_hidden != original_strand.is_hidden:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} is_hidden differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1475,42 +1482,42 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check extension visibility ---
                             if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
                                 if new_strand.start_extension_visible != original_strand.start_extension_visible:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_extension_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_extension_visible') != hasattr(original_strand, 'start_extension_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_extension_visible') and hasattr(original_strand, 'end_extension_visible'):
                                 if new_strand.end_extension_visible != original_strand.end_extension_visible:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_extension_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_extension_visible') != hasattr(original_strand, 'end_extension_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             # --- NEW: Check arrow visibility ---
                             if hasattr(new_strand, 'start_arrow_visible') and hasattr(original_strand, 'start_arrow_visible'):
                                 if new_strand.start_arrow_visible != original_strand.start_arrow_visible:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_arrow_visible') != hasattr(original_strand, 'start_arrow_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_arrow_visible') and hasattr(original_strand, 'end_arrow_visible'):
                                 if new_strand.end_arrow_visible != original_strand.end_arrow_visible:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_arrow_visible') != hasattr(original_strand, 'end_arrow_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1587,27 +1594,26 @@ class UndoRedoManager(QObject):
             logging.info(f"REDO: Selected strand after redo: {selected_strand_after_redo.layer_name if selected_strand_after_redo else 'None'}")
             # --- END LOGGING ---
 
-            # Ensure the canvas is fully refreshed after redo
+            # --------------------------------------------------
+            # Re-enable suppression flags PRIOR to the first repaint so that
+            # the very first frame after a redo already shows the complete
+            # geometry (no late-appearing circles).
+            # --------------------------------------------------
+
+            self.canvas._suppress_attachment_updates = False
+            self.canvas._suppress_repaint = False
+            self.canvas._suppress_layer_panel_refresh = False
+
+            # Now refresh the canvas once
             self.canvas.update()
-            
+
             # Re-enable updates to prevent window flash
             if main_window:
                 main_window.setUpdatesEnabled(True)
-            
-            # Re-enable attachment status updates
-            self.canvas._suppress_attachment_updates = False
-            # Re-enable repaint calls
-            self.canvas._suppress_repaint = False
-            # Re-enable layer panel refresh
-            self.canvas._suppress_layer_panel_refresh = False
-            
+
             # Re-enable window activation events after refresh
             if main_window and hasattr(main_window, 'suppress_activation_events'):
                 main_window.suppress_activation_events = False
-            
-            # Now that all suppression flags are cleared, do a single refresh to update the UI
-            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                self.layer_panel.simulate_refresh_button_click()
             
             logging.info("REDO: UI updated after redo operation")
             logging.info(f"---") # Separator for clarity

@@ -1383,7 +1383,21 @@ class StrandDrawingCanvas(QWidget):
         """
         Handles the painting of the canvas.
         """
+        # Call base implementation first (background, styles etc.)
         super().paintEvent(event)
+
+        # --------------------------------------------------
+        # Early-exit guard: During certain operations (e.g. undo/redo) the
+        # application sets the internal `_suppress_repaint` flag to **True**
+        # so that intermediate, visually incorrect frames are not rendered.
+        # If the flag is active we skip the remainder of the drawing routine
+        # entirely – once the operation completes the flag is cleared and the
+        # next paint event will render the final, correct canvas in one go.
+        # --------------------------------------------------
+        if getattr(self, "_suppress_repaint", False):
+            return  # Skip custom painting while suppression is active
+
+        # Proceed with full painting when not suppressed
         painter = QPainter(self)
 
         painter.setRenderHint(QPainter.Antialiasing)

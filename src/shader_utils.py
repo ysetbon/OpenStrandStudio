@@ -186,97 +186,55 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     
     logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
-    # Normal strand handling - use helper function to get proper path for any type of strand
+    # Obtain the base path (without circles) for operations that still expect
+    # the raw strand outline, then build a geometry path that already contains the strand body **and** any
+    # visible end-circles.  This single path will be used for all subsequent
+    # shadow computations, eliminating the need for special-casing circles.
     path = get_proper_masked_strand_path(strand)
-    shadow_width = max_blur_radius
-    # Create base shadow path without circles first
-    shadow_stroker = QPainterPathStroker()
-    shadow_stroker.setWidth(strand.width + strand.stroke_width * 2)
-    shadow_stroker.setJoinStyle(Qt.MiterJoin)
-    shadow_stroker.setCapStyle(Qt.FlatCap)
-    shadow_path = shadow_stroker.createStroke(path)
+    shadow_path = build_rendered_geometry(strand)
         
-    # Check if this strand has transparent circles that should not get shadows
-    has_transparent_circles = False
-    if hasattr(strand, 'circle_stroke_color'):
-        circle_color = strand.circle_stroke_color
-        # Check if color exists and has zero alpha (fully transparent)
-        if circle_color and circle_color.alpha() == 0:
-            has_transparent_circles = True
-            
-    # If strand has circles at either end and they are transparent, 
-    # we need to exclude circle areas from the shadow
-    if has_transparent_circles and hasattr(strand, 'has_circles'):
-        # For each circle that's enabled, remove its area from shadow
-        for idx, has_circle in enumerate(strand.has_circles):
-            if has_circle:
-                # Determine which point (start or end) to exclude
-                point = strand.start if idx == 0 else strand.end
-                
-                # Create a circle path for exclusion - use larger diameter for complete exclusion
-                # Add extra pixels to the radius to ensure complete removal of the circle shadow
-                circle_radius = strand.width + strand.stroke_width * 2 + 10  # Increased from 10 to 15
-                exclude_circle = QPainterPath()
-                exclude_circle.addEllipse(point, circle_radius/2, circle_radius/2)
-                
-                # Subtract the circle area from the shadow path
-                shadow_path = shadow_path.subtracted(exclude_circle)
-                logging.info(f"Excluded transparent circle at {'start' if idx == 0 else 'end'} point for {strand.layer_name}: exclude path bounds={exclude_circle.boundingRect()}")
+    # --------------------------------------------------
+    # If this strand has a *transparent* circle at either end, the circle is
+    # NOT part of the rendered geometry, but the rectangular end-cap produced
+    # by the body stroke can still cast a little square shadow.  To guarantee
+    # that absolutely no shadow halo appears where the user explicitly asked
+    # for a fully-transparent cap, we subtract a slightly enlarged circle
+    # region from the shadow path.
+    # --------------------------------------------------
+    try:
+        if (
+            hasattr(strand, "circle_stroke_color")
+            and strand.circle_stroke_color
+            and strand.circle_stroke_color.alpha() == 0
+            and hasattr(strand, "has_circles")
+            and any(strand.has_circles)
+        ):
+            radius_base = (strand.width + strand.stroke_width * 2) / 1.5
+            adj_radius = radius_base   # ensure we cut beyond blur
 
-    # Only exclude hidden circle areas when the strand truly has circles
-    if hasattr(strand, 'has_circles') and any(strand.has_circles):
-        # Determine a reasonable radius for exclusion – use the same base radius that is
-        # employed when *adding* circle shadows below (width + stroke_width * 2).
-        hidden_circle_radius = strand.width + strand.stroke_width * 2 + 10  # +10 for safe margin
-        for idx, circle_visible in enumerate(strand.has_circles):
-            # Skip circles that are still visible – we only care about hidden ones here
-            if circle_visible:
-                continue
-            # Safety: also respect manual overrides if present (it should already be reflected
-            # in has_circles but we double-check for robustness).
-            if hasattr(strand, 'manual_circle_visibility') and isinstance(strand.manual_circle_visibility, (list, tuple)):
-                manual_override = strand.manual_circle_visibility[idx] if idx < len(strand.manual_circle_visibility) else None
-                # If the manual override explicitly keeps the circle visible, skip exclusion
-                if manual_override is True:
-                    continue
-            # Determine circle center (start or end point)
-            circle_center = strand.start if idx == 0 else strand.end
-            exclude_circle_path = QPainterPath()
-            exclude_circle_path.addEllipse(circle_center, hidden_circle_radius / 2, hidden_circle_radius / 2)
-            # Subtract the circle area from the shadow path if it intersects
-            if 'shadow_path' in locals() and not shadow_path.isEmpty():
-                shadow_path = shadow_path.subtracted(exclude_circle_path)
-                logging.info(f"Excluded hidden circle at {'start' if idx == 0 else 'end'} for {strand.layer_name}: exclude path bounds={exclude_circle_path.boundingRect()}")
-            try:
-                if 'shadow_path' in locals() and not shadow_path.isEmpty():
-                    shadow_path = shadow_path.subtracted(exclude_circle_path)
-                    logging.info(f"Excluded hidden circle at {'start' if idx == 0 else 'end'} for {strand.layer_name}: exclude path bounds={exclude_circle_path.boundingRect()}")
-            except Exception as e_ex:
-                logging.error(f"Error subtracting hidden circle (index {idx}) from shadow path of {strand.layer_name}: {e_ex}")
+            for idx, enabled in enumerate(strand.has_circles):
+                if not enabled:
+                    continue  # Circle already hidden by flag
 
-    # Special case for AttachedStrand
-    if strand.__class__.__name__ == 'AttachedStrand':
-        # Check for transparent circles at the start
-        has_transparent_start_circle = False
-        if hasattr(strand, 'circle_stroke_color'):
-            circle_color = strand.circle_stroke_color
-            if circle_color and circle_color.alpha() == 0:
-                has_transparent_start_circle = True
-        
-        # Special handling for end circle if strand has_circles[1] is True (has end circle)
-        if hasattr(strand, 'has_circles') and len(strand.has_circles) > 1 and strand.has_circles[1]:
-            # Check if end circle should be transparent too (use same transparency as start)
-            if has_transparent_start_circle:
-                # Exclude end circle from shadow with increased radius
-                circle_radius = strand.width + strand.stroke_width * 2 + 10  # Increased from 10 to 15
-                exclude_end_circle = QPainterPath()
-                exclude_end_circle.addEllipse(strand.end, circle_radius/2, circle_radius/2)
-                shadow_path = shadow_path.subtracted(exclude_end_circle)
-                logging.info(f"Excluded transparent end circle for AttachedStrand: {strand.layer_name}")
-            else:
-                # IMPORTANT: Do NOT add end circle to shadow - this will be handled by draw_circle_shadow
-                logging.info(f"End circle shadow for AttachedStrand will be handled by draw_circle_shadow")
-                
+                centre = strand.start if idx == 0 else strand.end
+                cut = QPainterPath()
+                cut.addEllipse(centre, adj_radius, adj_radius)
+                shadow_path = shadow_path.subtracted(cut)
+                logging.info(
+                    f"Transparent circle exclusion applied ({'start' if idx == 0 else 'end'}) on {strand.layer_name} – r={adj_radius:.1f}"
+                )
+    except Exception as exc:
+        logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
+
+    # ------------------------------------------------------------------
+    # Manual circle-exclusion logic removed – visible circles are already
+    # merged into `shadow_path` by `build_rendered_geometry`, while hidden or
+    # deliberately transparent circles are *not* included in that helper.
+    # Keeping extra subtraction here would create gaps and duplicated shadow
+    # edges.  All related logging and special-case handling was therefore
+    # deleted for clarity and correctness.
+    # ------------------------------------------------------------------
+
     # Create a combined shadow path that will hold all intersections
     combined_shadow_path = QPainterPath()
     has_shadow_content = False
@@ -404,6 +362,17 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     other_strand_rect = other_strand_rect.united(circle_rect_br)
                             except Exception as br_e:
                                 logging.error(f"Error extending bounding rect with circle geometry for {other_layer}: {br_e}")
+                        # Inflate the rectangles by half the rendered stroke width plus max blur so that
+                        # the quick bounding-box test does not miss near-tangent crossings.
+                        try:
+                            inflate_self = (strand.width + strand.stroke_width * 2 + max_blur_radius) / 2.0
+                            inflate_other = (other_strand.width + other_strand.stroke_width * 2 + max_blur_radius) / 2.0
+
+                            strand_rect.adjust(-inflate_self, -inflate_self, inflate_self, inflate_self)
+                            other_strand_rect.adjust(-inflate_other, -inflate_other, inflate_other, inflate_other)
+                        except Exception as inflate_err:
+                            # Should never happen, but be robust in case a strand misses width attributes.
+                            logging.error(f"Error inflating bounding rects for quick reject: {inflate_err}")
                         if not strand_rect.intersects(other_strand_rect):
                             logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
                             continue
@@ -412,13 +381,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # Optionally continue or handle error, continuing for now
                         
                     try:
-                        # Get other strand's path
-                        other_path = other_strand.get_path()
-                        other_stroker = QPainterPathStroker()
-                        other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
-                        other_stroker.setJoinStyle(Qt.MiterJoin)
-                        other_stroker.setCapStyle(Qt.FlatCap)
-                        other_stroke_path = other_stroker.createStroke(other_path)
+                        # Build the full rendered geometry (body + visible circles) of the
+                        # underlying strand in a single call.  This guarantees that any
+                        # end-circles are already part of the path we test against, avoiding
+                        # later ad-hoc unions.
+                        other_stroke_path = build_rendered_geometry(other_strand)
                         
                         # Special handling for masked strands
                         # If the other strand is a MaskedStrand, use its actual mask path
@@ -620,39 +587,14 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             # Initialize shadow_paths and add shadow_path to all_shadow_paths
             all_shadow_paths = [shadow_path]
             clip_path = shadow_path  # In fallback, clip to the simple shadow path
-    # ----------------------------------------------------------
-    #  Create circle shadow paths for start and end points if they have circles
-    # ----------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # Legacy circle-shadow branch disabled – visible circles are now part
+    # of the main `shadow_path` via `build_rendered_geometry`, so a
+    # separate pass would double-render. Retain the variable so that later
+    # logic still compiles but leave it empty so the subsequent blocks are
+    # skipped naturally.
+    # ------------------------------------------------------------------
     circle_shadow_paths = []  # List[Tuple[QPainterPath, QPointF]]
-    # Skip circle shadow generation if circle stroke is fully transparent
-    if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() == 0:
-        logging.info(f"Skipping circle shadow generation for transparent circle on strand {strand.layer_name}")
-    elif hasattr(strand, 'has_circles'):
-        # Base circle radius (do not add extra shadow width – fade loop will handle blur)
-        circle_radius = strand.width + strand.stroke_width * 2 
-        
-        # Check which points have circles and add their paths
-        for idx, has_circle in enumerate(strand.has_circles):
-            if has_circle:
-                # Skip drawing shadow for transparent circles
-                if hasattr(strand, 'circle_stroke_color'):
-                    circle_color = strand.circle_stroke_color
-                    if circle_color and circle_color.alpha() == 0:
-                        logging.info(f"Skipping shadow for transparent circle at {'start' if idx == 0 else 'end'} point")
-                        continue
-                
-                # ----------------------------------------------------------
-                #  Create the actual circle path now
-                # -----------------------------------
-                point = strand.start if idx == 0 else strand.end
-                circle_path = QPainterPath()
-                circle_path.addEllipse(point, (circle_radius/2)+1, (circle_radius/2)+1)
-
-                # Store path and center for later processing
-                circle_shadow_paths.append((circle_path, point))
-                logging.info(f"Prepared circle shadow at {'start' if idx == 0 else 'end'} for {strand.layer_name}")
-                # ----------------------------------------------------------
 
     # ----------------------------------------------------------
     # Prepare strand body stroke path once (needed for subtracting from circle shadows)
@@ -705,12 +647,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
             # Build other stroke path once per other_strand
             try:
-                other_path = other_strand.get_path()
-                other_stroker = QPainterPathStroker()
-                other_stroker.setWidth(other_strand.width + other_strand.stroke_width * 2)
-                other_stroker.setJoinStyle(Qt.MiterJoin)
-                other_stroker.setCapStyle(Qt.FlatCap)
-                other_stroke_path = other_stroker.createStroke(other_path)
+                other_stroke_path = build_rendered_geometry(other_strand)
 
                 if hasattr(other_strand, 'get_mask_path'):
                     try:
@@ -745,18 +682,47 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 continue
 
             for circle_path, center in circle_shadow_paths:
-                # Quick bounding check
+                # Improved quick bounding check: enlarge other_rect to include the rendered stroke,
+                # its blur and the lower-strand's own end-circle geometry so that grazing contacts
+                # are no longer missed.
                 if not other_rect.isNull():
-                    if (center.x() < other_rect.left() - circle_radius/2 or
-                        center.x() > other_rect.right() + circle_radius/2 or
-                        center.y() < other_rect.top() - circle_radius/2 or
-                        center.y() > other_rect.bottom() + circle_radius/2):
-                        continue
+                    try:
+                        # Inflate for stroke thickness + blur
+                        inflate_other = (other_strand.width + other_strand.stroke_width * 2 + max_blur_radius) / 2.0
+                        inflated_rect = QRectF(other_rect)
+                        inflated_rect.adjust(-inflate_other, -inflate_other, inflate_other, inflate_other)
 
-                # Subtract body path to avoid double shadow
+                        # Also merge the lower-strand's visible circle geometry (if any)
+                        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
+                            base_circle_radius_br = other_strand.width + other_strand.stroke_width * 2
+                            for oc_idx_br, oc_flag_br in enumerate(other_strand.has_circles):
+                                if not oc_flag_br:
+                                    continue
+                                if hasattr(other_strand, 'circle_stroke_color'):
+                                    oc_color_br = other_strand.circle_stroke_color
+                                    if oc_color_br and oc_color_br.alpha() == 0:
+                                        continue  # transparent, ignore
+                                oc_center_br = other_strand.start if oc_idx_br == 0 else other_strand.end
+                                circle_rect_br = QRectF(
+                                    oc_center_br.x() - base_circle_radius_br / 2,
+                                    oc_center_br.y() - base_circle_radius_br / 2,
+                                    base_circle_radius_br,
+                                    base_circle_radius_br,
+                                )
+                                inflated_rect = inflated_rect.united(circle_rect_br)
+
+                        # If the centre of the casting circle still lies outside the inflated area, skip.
+                        if not inflated_rect.contains(center):
+                            continue
+                    except Exception as bc_err:
+                        logging.error(f"Error during improved circle bounding check between {this_layer} and {other_layer}: {bc_err}")
+
+                # Subtract body path only if some area survives – otherwise the shadow would vanish when the strand leaves the joint
                 final_circle_path = QPainterPath(circle_path)
                 if not strand_body_path.isEmpty():
-                    final_circle_path = final_circle_path.subtracted(strand_body_path)
+                    candidate = final_circle_path.subtracted(strand_body_path)
+                    if not candidate.isEmpty():
+                        final_circle_path = candidate
 
                 # Intersect with other stroke
                 intersection = QPainterPath(final_circle_path).intersected(other_stroke_path)
@@ -856,7 +822,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         for circle_path, _ in circle_shadow_paths:
             final_circle_path = QPainterPath(circle_path)
             if not strand_body_path.isEmpty():
-                final_circle_path = final_circle_path.subtracted(strand_body_path)
+                candidate = final_circle_path.subtracted(strand_body_path)
+                if not candidate.isEmpty():
+                    final_circle_path = candidate
 
             all_shadow_paths.append(final_circle_path)
             if clip_path.isEmpty():
@@ -990,4 +958,77 @@ def get_proper_masked_strand_path(strand):
         path = QPainterPath()  # Empty path as last resort
         
     return path 
+
+# --------------------------------------------------
+# New helper: build_rendered_geometry
+# --------------------------------------------------
+def build_rendered_geometry(strand):
+    """
+    Returns the *visual* geometry of a strand as a single QPainterPath.
+
+    The path includes:
+      • The stroked body path (taking `width` & `stroke_width` into account)
+      • Every *visible* end-circle (if `has_circles` is set and the circle
+        stroke colour is not fully transparent).
+
+    Having one consistent geometry for both the casting and receiving side of
+    the shadow calculation removes the need for the separate
+    `circle_shadow_paths` branch and for the various ad-hoc "add circle"
+    unions that existed before.
+
+    NOTE: For a `MaskedStrand` the routine delegates to
+    `get_proper_masked_strand_path` so that we get the mask intersection path
+    (which deliberately *excludes* circles).
+    """
+
+    # For masked strands keep the specialised mask path – circles would leak
+    # shadow around the mask edges otherwise.
+    if hasattr(strand, 'get_mask_path'):
+        return get_proper_masked_strand_path(strand)
+
+    try:
+        # ------------------------------------------------------------------
+        # 1) Base body stroke
+        # ------------------------------------------------------------------
+        if hasattr(strand, 'get_shadow_path'):
+            body_source = strand.get_shadow_path()
+        elif hasattr(strand, 'get_path'):
+            body_source = strand.get_path()
+        else:
+            body_source = QPainterPath()
+
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width + strand.stroke_width * 2)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        result_path = stroker.createStroke(body_source)
+
+        # ------------------------------------------------------------------
+        # 2) Union with visible circles
+        # ------------------------------------------------------------------
+        if hasattr(strand, 'has_circles') and any(strand.has_circles):
+            # Check if the circle stroke is fully transparent – if so, we treat
+            # the circles as invisible and skip them entirely.
+            transparent_circles = (
+                hasattr(strand, 'circle_stroke_color') and
+                strand.circle_stroke_color and
+                strand.circle_stroke_color.alpha() == 0
+            )
+
+            if not transparent_circles:
+                radius = (strand.width + strand.stroke_width * 2) / 2.0
+                for idx, enabled in enumerate(strand.has_circles):
+                    if not enabled:
+                        continue
+                    centre = strand.start if idx == 0 else strand.end
+                    circle_path = QPainterPath()
+                    circle_path.addEllipse(centre, radius, radius)
+                    result_path = result_path.united(circle_path)
+
+        return result_path
+    except Exception as e:
+        logging.error(
+            f"build_rendered_geometry: failed for {getattr(strand, 'layer_name', 'unknown')} – {e}"
+        )
+        return QPainterPath()
 

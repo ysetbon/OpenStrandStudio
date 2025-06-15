@@ -1,11 +1,11 @@
-Theme: dark
+Theme: default
 Language: en
 ShadowColor: 0,0,0,150
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: true
 NumSteps: 3
 MaxBlurRadius: 30.0
-UseExtendedMask: false
+UseExtendedMask: true
 ExtensionLength: 100.0
 ExtensionDashCount: 10
 ExtensionDashWidth: 2.0

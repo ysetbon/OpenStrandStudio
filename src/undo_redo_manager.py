@@ -653,6 +653,21 @@ class UndoRedoManager(QObject):
                     logging.info(f"_would_be_identical_save: Lock mode differs. Current: {current_lock_mode}, Prev: {prev_lock_mode}")
                     return False
 
+                # Compare button states
+                current_shadow_enabled = getattr(self.canvas, 'shadow_enabled', True)
+                prev_shadow_enabled = prev_data.get('shadow_enabled', True)
+                
+                if current_shadow_enabled != prev_shadow_enabled:
+                    logging.info(f"_would_be_identical_save: Shadow enabled state differs. Current: {current_shadow_enabled}, Prev: {prev_shadow_enabled}")
+                    return False
+                
+                current_show_control_points = getattr(self.canvas, 'show_control_points', False)
+                prev_show_control_points = prev_data.get('show_control_points', False)
+                
+                if current_show_control_points != prev_show_control_points:
+                    logging.info(f"_would_be_identical_save: Show control points state differs. Current: {current_show_control_points}, Prev: {prev_show_control_points}")
+                    return False
+
                 # If we made it here, states are identical based on checked properties
                 logging.info("_would_be_identical_save: All checks passed - states are identical, will skip save")
                 return True
@@ -1615,6 +1630,11 @@ class UndoRedoManager(QObject):
             if main_window and hasattr(main_window, 'suppress_activation_events'):
                 main_window.suppress_activation_events = False
             
+            # Now that all suppression flags are cleared, do a single refresh to update the UI
+            # This is needed to refresh the layer panel after redo operation
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                self.layer_panel.simulate_refresh_button_click()
+            
             logging.info("REDO: UI updated after redo operation")
             logging.info(f"---") # Separator for clarity
             return result # Return the actual result of the load operation
@@ -2012,8 +2032,8 @@ class UndoRedoManager(QObject):
                 logging.info(f"Found {group_count} groups in file: {group_names}")
             
             # Load the data using the normal method
-            # --- MODIFIED: Receive selected_strand_name --- 
-            loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode = load_strands(filename, self.canvas)
+            # --- MODIFIED: Receive selected_strand_name and button states --- 
+            loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
             state_has_groups = bool(loaded_groups_data)
             logging.info(f"Loaded {len(loaded_strands)} strands and {len(loaded_groups_data)} groups")
@@ -2176,7 +2196,17 @@ class UndoRedoManager(QObject):
                     except Exception as e:
                         logging.error(f"Error during group recovery: {e}")
 
-            # --- Step 4: Final Canvas Update --- 
+            # --- Step 4: Restore button states ---
+            self._restore_button_states(shadow_enabled, show_control_points)
+                    
+            # Update all strands' control points visibility
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'show_control_points'):
+                    strand.show_control_points = show_control_points
+            
+            logging.info("Button state restoration completed")
+
+            # --- Step 5: Final Canvas Update --- 
             logging.info("Updating canvas display...")
             self.canvas.update()
             
@@ -2398,7 +2428,7 @@ class UndoRedoManager(QObject):
                     logging.error(f"Error cleaning up original session files: {e}")
                 
                 # Load strands and groups from the specified file
-                strands, groups, selected_strand_name, locked_layers, lock_mode = load_strands(filepath, self.canvas)
+                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filepath, self.canvas)
                 logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
                 
                 # First inspect the raw JSON directly to ensure we didn't miss anything
@@ -2500,6 +2530,40 @@ class UndoRedoManager(QObject):
                             group_panel.scroll_area.update()
                         
                         logging.info(f"Final group count in panel: {len(group_panel.groups) if hasattr(group_panel, 'groups') else 'Unknown'}")
+                
+                # --- Button state restoration for load_specific_state ---
+                logging.info(f"Restoring button states: shadow={shadow_enabled}, control_points={show_control_points}")
+                
+                # Restore shadow button state
+                self.canvas.shadow_enabled = shadow_enabled
+                logging.info(f"Set canvas.shadow_enabled = {shadow_enabled}")
+                
+                # Try to find the main window for button restoration
+                main_window = None
+                if hasattr(self.canvas, 'main_window') and self.canvas.main_window:
+                    main_window = self.canvas.main_window
+                    logging.info("Found main_window via canvas.main_window")
+                elif hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'main_window'):
+                    main_window = self.layer_panel.main_window
+                    logging.info("Found main_window via layer_panel.main_window")
+                else:
+                    logging.warning("Could not find main_window reference for button restoration")
+                
+                if main_window:
+                    # Restore shadow button
+                    if hasattr(main_window, 'toggle_shadow_button'):
+                        main_window.toggle_shadow_button.setChecked(shadow_enabled)
+                        logging.info(f"Restored shadow button state: {shadow_enabled}")
+                    else:
+                        logging.warning("toggle_shadow_button not found on main_window")
+                    
+                    # Restore control points button
+                    if hasattr(main_window, 'toggle_control_points_button'):
+                        main_window.toggle_control_points_button.setChecked(show_control_points)
+                        logging.info(f"Restored control points button state: {show_control_points}")
+                    else:
+                        logging.warning("toggle_control_points_button not found on main_window")
+                # --- End button state restoration ---
                 
                 self.canvas.update()
                 self.state_saved.emit(self.current_step) # Emit signal to update buttons
@@ -2930,6 +2994,57 @@ class UndoRedoManager(QObject):
         except Exception as e:
             logging.exception(f"import_history: Unexpected error: {e}")
             return False
+
+    def _restore_button_states(self, shadow_enabled, show_control_points):
+        """
+        Restore button visual states when loading state during undo/redo operations.
+        
+        Args:
+            shadow_enabled (bool): Whether shadow should be enabled
+            show_control_points (bool): Whether control points should be shown
+        """
+        logging.info(f"Starting button state restoration: shadow={shadow_enabled}, control_points={show_control_points}")
+        
+        # Restore canvas properties first
+        self.canvas.shadow_enabled = shadow_enabled
+        self.canvas.show_control_points = show_control_points
+        logging.info(f"Set canvas properties: shadow_enabled={shadow_enabled}, show_control_points={show_control_points}")
+        
+        # Try to find the main window through parent_window reference
+        main_window = None
+        if hasattr(self.canvas, 'parent_window') and self.canvas.parent_window:
+            main_window = self.canvas.parent_window
+            logging.info("Found main_window via canvas.parent_window")
+        elif hasattr(self.canvas, 'main_window') and self.canvas.main_window:
+            main_window = self.canvas.main_window
+            logging.info("Found main_window via canvas.main_window")
+        elif hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'main_window'):
+            main_window = self.layer_panel.main_window
+            logging.info("Found main_window via layer_panel.main_window")
+        else:
+            logging.warning("Could not find main_window reference for button restoration")
+        
+        if main_window:
+            # Restore shadow button visual state
+            if hasattr(main_window, 'toggle_shadow_button'):
+                main_window.toggle_shadow_button.setChecked(shadow_enabled)
+                logging.info(f"Restored shadow button visual state: {shadow_enabled}")
+            else:
+                logging.warning("toggle_shadow_button not found on main_window")
+            
+            # Restore control points button visual state
+            if hasattr(main_window, 'toggle_control_points_button'):
+                main_window.toggle_control_points_button.setChecked(show_control_points)
+                logging.info(f"Restored control points button visual state: {show_control_points}")
+            else:
+                logging.warning("toggle_control_points_button not found on main_window")
+        
+        # Update all strands' control points visibility
+        for strand in self.canvas.strands:
+            if hasattr(strand, 'show_control_points'):
+                strand.show_control_points = show_control_points
+        
+        logging.info("Button state restoration completed")
 
 def connect_to_move_mode(canvas, undo_redo_manager):
     """

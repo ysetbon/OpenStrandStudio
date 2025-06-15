@@ -1962,12 +1962,38 @@ class StrandDrawingCanvas(QWidget):
                 strand.show_control_points = self.show_control_points
                 
         self.update()  # Force a redraw of the canvas
+        
+        # Update the button state to match the canvas state
+        if hasattr(self, 'main_window') and self.main_window:
+            if hasattr(self.main_window, 'toggle_control_points_button'):
+                self.main_window.toggle_control_points_button.setChecked(self.show_control_points)
+                logging.info(f"Updated control points button checked state: {self.show_control_points}")
+        
+        # Persist in undo/redo history if available
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force immediate save to capture this state change
+            self.undo_redo_manager._last_save_time = 0
+            self.undo_redo_manager.save_state()
+            logging.info(f"Undo/redo state saved after toggling control points: {self.show_control_points}")
 
     def toggle_shadow(self):
         """Toggle shadow rendering on or off."""
         self.shadow_enabled = not self.shadow_enabled
         logging.info(f"Shadow rendering toggled: {self.shadow_enabled}")
         self.update()  # Force a redraw of the canvas to apply the change
+        
+        # Update the button state to match the canvas state
+        if hasattr(self, 'main_window') and self.main_window:
+            if hasattr(self.main_window, 'toggle_shadow_button'):
+                self.main_window.toggle_shadow_button.setChecked(self.shadow_enabled)
+                logging.info(f"Updated shadow button checked state: {self.shadow_enabled}")
+        
+        # Persist in undo/redo history if available
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force immediate save to capture this state change
+            self.undo_redo_manager._last_save_time = 0
+            self.undo_redo_manager.save_state()
+            logging.info(f"Undo/redo state saved after toggling shadow: {self.shadow_enabled}")
         
     def set_shadow_color(self, color):
         """Set the shadow color for all strands."""

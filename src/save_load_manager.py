@@ -148,6 +148,8 @@ def save_strands(strands, groups, filename, canvas):
         "selected_strand_name": selected_strand_name,  # Add selected strand name
         "locked_layers": list(locked_layers),  # Add locked layers information
         "lock_mode": lock_mode,  # Add lock mode state
+        "shadow_enabled": getattr(canvas, 'shadow_enabled', True),  # Add shadow button state
+        "show_control_points": getattr(canvas, 'show_control_points', False),  # Add control points button state
     }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
@@ -613,10 +615,11 @@ def load_strands(filename, canvas):
     elif getattr(canvas, '_suppress_layer_panel_refresh', False):
         logging.info("Layer panel refresh suppressed during undo/redo")
     
-    # Ensure shadows are enabled
+    # Restore shadow state from loaded data
+    shadow_enabled = data.get("shadow_enabled", True)  # Default to True if not in saved data
     if hasattr(canvas, 'shadow_enabled'):
-        canvas.shadow_enabled = True
-        logging.info("Shadows explicitly enabled on canvas")
+        canvas.shadow_enabled = shadow_enabled
+        logging.info(f"Shadow state restored from save data: {shadow_enabled}")
     
     # Make sure layer ordering is properly set for shadow calculations
     if hasattr(canvas, 'layer_state_manager'):
@@ -638,7 +641,9 @@ def load_strands(filename, canvas):
 
     locked_layers = set(data.get("locked_layers", []))  # Get locked layers from saved data
     lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data
-    return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode # Return selected strand name, locked layers, and lock mode
+    shadow_enabled = data.get("shadow_enabled", True)  # Get shadow button state from saved data
+    show_control_points = data.get("show_control_points", False)  # Get control points button state from saved data
+    return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points # Return selected strand name, locked layers, lock mode, and button states
 
 
 def apply_loaded_strands(canvas, strands, groups):
@@ -746,10 +751,7 @@ def apply_loaded_strands(canvas, strands, groups):
         else:
             logging.warning(f"Group '{group_name}' has no valid strands")
 
-    # Update the canvas to reflect changes
-    if hasattr(canvas, 'shadow_enabled'):
-        canvas.shadow_enabled = True
-        logging.info("Shadows explicitly enabled on canvas")
+    # Shadow state is handled by the caller (main_window.py) to respect loaded preferences
     
     # Make sure layer ordering is properly set for shadow calculations
     if hasattr(canvas, 'layer_state_manager'):

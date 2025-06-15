@@ -82,9 +82,10 @@ translations = {
         <h2>What's New in Version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-            <li style="font-size:15px;"><b>Zoom In/Out Functionality:</b> Navigate your designs with ease using the new zoom controls to get detailed views or see the entire canvas at once.</li>
-            <li style="font-size:15px;"><b>Pan Tool:</b> Move around your canvas smoothly with the new pan functionality, making it easier to work on different parts of large designs.</li>
+            <li style="font-size:15px;"><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+            <li style="font-size:15px;"><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
             <li style="font-size:15px;"><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+            <li style="font-size:15px;"><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
@@ -340,9 +341,10 @@ translations = {
         <h2>Nouveautés de la version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-            <li style="font-size:15px;"><b>Fonction de zoom avant/arrière :</b> Naviguez facilement dans vos créations avec les nouveaux contrôles de zoom pour obtenir des vues détaillées ou voir l'ensemble du canevas.</li>
-            <li style="font-size:15px;"><b>Outil de panoramique :</b> Déplacez-vous en douceur sur votre canevas avec la nouvelle fonctionnalité de panoramique, facilitant le travail sur différentes parties de grands designs.</li>
+            <li style="font-size:15px;"><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+            <li style="font-size:15px;"><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
             <li style="font-size:15px;"><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+            <li style="font-size:15px;"><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
@@ -591,9 +593,10 @@ translations = {
         <h2>Novità della versione 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-            <li style="font-size:15px;"><b>Funzionalità di zoom avanti/indietro:</b> Naviga facilmente nei tuoi design con i nuovi controlli di zoom per ottenere viste dettagliate o vedere l'intero canvas in una volta.</li>
-            <li style="font-size:15px;"><b>Strumento panoramica:</b> Muoviti fluidamente sul tuo canvas con la nuova funzionalità di panoramica, rendendo più facile lavorare su diverse parti di design grandi.</li>
+            <li style="font-size:15px;"><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+            <li style="font-size:15px;"><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
             <li style="font-size:15px;"><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+            <li style="font-size:15px;"><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.100</p>
         ''',
@@ -846,9 +849,10 @@ translations = {
         <h2>Novedades de la versión 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-            <li style="font-size:15px;"><b>Funcionalidad de zoom acercar/alejar:</b> Navega por tus diseños con facilidad usando los nuevos controles de zoom para obtener vistas detalladas o ver todo el lienzo de una vez.</li>
-            <li style="font-size:15px;"><b>Herramienta de panorámica:</b> Muévete suavemente por tu lienzo con la nueva funcionalidad de panorámica, facilitando el trabajo en diferentes partes de diseños grandes.</li>
+            <li style="font-size:15px;"><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+            <li style="font-size:15px;"><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
             <li style="font-size:15px;"><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+            <li style="font-size:15px;"><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.100</p>
 
@@ -1102,9 +1106,10 @@ translations = {
         <h2>Novidades da versão 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-            <li style="font-size:15px;"><b>Funcionalidade de zoom ampliar/reduzir:</b> Navegue facilmente pelos seus designs com os novos controles de zoom para obter visualizações detalhadas ou ver todo o canvas de uma vez.</li>
-            <li style="font-size:15px;"><b>Ferramenta de panorâmica:</b> Mova-se suavemente pelo seu canvas com a nova funcionalidade de panorâmica, facilitando o trabalho em diferentes partes de designs grandes.</li>
+            <li style="font-size:15px;"><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+            <li style="font-size:15px;"><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
             <li style="font-size:15px;"><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+            <li style="font-size:15px;"><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.100</p>
         ''',
@@ -1353,7 +1358,13 @@ translations = {
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
         'whats_new_info': '''
-        <h2 dir="rtl" style="margin-top: 5px; margin-bottom: 5px;">מה חדש בגרסה 1.100</h2> <ul dir="rtl" style="margin-top: 5px; margin-bottom: 5px;"> <li style="font-size:15px;"><b>שליטה ברוחב החוטים:</b> כעת ניתן להתאים באופן דינמי את רוחב החוטים הבודדים, מה שמעניק גמישות רבה יותר ביצירת עיצובי קשרים מגוונים.</li> <li style="font-size:15px;"><b>פונקציית זום פנימה/החוצה:</b> נווטו בעיצובים שלכם בקלות באמצעות בקרי הזום החדשים לקבלת תצוגות מפורטות או לראות את כל הקנבס בבת אחת.</li> <li style="font-size:15px;"><b>כלי פנורמה:</b> התנועו בצורה חלקה על הקנבס שלכם עם פונקציית הפנורמה החדשה, מה שמקל על העבודה על חלקים שונים של עיצובים גדולים.</li> <li style="font-size:15px;"><b>הגדרה ראשונית:</b> בהפעלה הראשונה של האפליקציה, תצטרכו ללחוץ על "חוט חדש" כדי להתחיל ליצור את החוט הראשון שלכם.</li> </ul> <p style="font-size:13px; text-align: right;">© 2025 OpenStrand Studio - גרסה 1.100</p>
+        <b>מה חדש בגרסה 1.100</b><br><br>
+        • <b>שינוי רוחב חוטים:</b> עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.<br>
+        • <b>הגדלה והקטנה:</b> אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.<br>
+        • <b>הזזת המסך:</b> אפשר להזיז את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.<br>
+        • <b>התחלת עבודה:</b> כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.<br><br>
+        • <b>תיקונים כלליים:</b>תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.<br><br>
+        © 2025 OpenStrand Studio - גרסה 1.100
         ''',
 
 

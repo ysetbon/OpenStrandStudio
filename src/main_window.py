@@ -1401,7 +1401,7 @@ class MainWindow(QMainWindow):
 
         # --- Fallback: load as simple snapshot (previous behaviour) ---
         try:
-            strands, groups, _ = load_strands(filename, self.canvas)
+            strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filename, self.canvas)
 
             # Clear existing canvas state
             self.canvas.strands = []
@@ -1410,9 +1410,14 @@ class MainWindow(QMainWindow):
             # Apply the loaded strands and groups
             apply_loaded_strands(self.canvas, strands, groups)
 
-            # Ensure control points are visible after loading
-            self.toggle_control_points_button.setChecked(True)
-            self.canvas.show_control_points = True
+            # Restore button states from loaded data
+            self.toggle_control_points_button.setChecked(show_control_points)
+            self.canvas.show_control_points = show_control_points
+            
+            self.toggle_shadow_button.setChecked(shadow_enabled)
+            self.canvas.shadow_enabled = shadow_enabled
+            
+            logging.info(f"Restored button states: control_points={show_control_points}, shadow={shadow_enabled}")
 
             # Update the layer panel
             if hasattr(self.canvas, 'layer_panel'):
@@ -2145,12 +2150,25 @@ class MainWindow(QMainWindow):
         """
         Normal logic: checking the button shows control points, unchecking hides them.
         """
-        if checked:
-            # If button is checked => show control points
-            self.canvas.show_control_points = True
-        else:
-            # If button is unchecked => hide control points
-            self.canvas.show_control_points = False
+        # Set the canvas state to match the button state
+        self.canvas.show_control_points = checked
+        
+        # Call the canvas toggle_control_points method to ensure undo/redo state is saved
+        # But avoid double-toggling by temporarily setting the state first
+        current_state = self.canvas.show_control_points
+        if hasattr(self.canvas, 'toggle_control_points'):
+            # Temporarily prevent the toggle from changing the state since we already set it
+            # We just want the undo/redo save functionality
+            if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+                # Force immediate save to capture this state change
+                self.canvas.undo_redo_manager._last_save_time = 0
+                self.canvas.undo_redo_manager.save_state()
+                logging.info(f"Undo/redo state saved after toggling control points via button: {current_state}")
+        
+        # Update all strands' control points visibility
+        for strand in self.canvas.strands:
+            if hasattr(strand, 'show_control_points'):
+                strand.show_control_points = current_state
         
         self.canvas.update()
 

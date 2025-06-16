@@ -802,8 +802,15 @@ class UndoRedoManager(QObject):
                 
                 # Skip explicit refresh calls to prevent window flash (they're redundant)
                 logging.info("Skipping explicit refresh calls in undo() step 0 - preventing window flash")
-                # Just update the canvas
-                self.canvas.update()
+                # Don't call update() here - the refresh will handle it
+                # self.canvas.update()  # Removed to prevent double painting
+                
+                # Do refresh while paint suppression is still active
+                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                    self.layer_panel.simulate_refresh_button_click()
+                
+                # Clear the repaint suppression flag after refresh is complete
+                self.canvas._suppress_repaint = False
                 
                 # Re-enable updates after refresh
                 if main_window:
@@ -816,9 +823,8 @@ class UndoRedoManager(QObject):
                 if main_window and hasattr(main_window, 'suppress_activation_events'):
                     main_window.suppress_activation_events = False
                 
-                # Now that all suppression flags are cleared, do a single refresh to update the UI
-                if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                    self.layer_panel.simulate_refresh_button_click()
+                # Force a single update now that everything is ready
+                self.canvas.update()
             else:
                 # Normal undo to a saved state
                 self._load_state(self.current_step)

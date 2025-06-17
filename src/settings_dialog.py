@@ -1832,8 +1832,8 @@ class SettingsDialog(QDialog):
         self.default_strand_width_button = QPushButton(_['default_strand_width'])
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'])
         self.default_strand_width_button.clicked.connect(self.open_default_width_dialog)
-        # Allow button to resize to fit text content instead of using fixed min-width
-        self.default_strand_width_button.setMinimumWidth(0)
+        # Set dynamic width based on translated text length
+        self.update_default_strand_width_button_size()
         
         if self.is_rtl_language(self.current_language):
             self.default_strand_width_layout.addStretch()
@@ -2032,11 +2032,22 @@ class SettingsDialog(QDialog):
             button.setFixedHeight(32)  # Match MainWindow button height
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             # Dynamically set minimum width based on the button text length
-            # Add some padding (20 px) to the calculated text width
+            # Use boundingRect for more accurate width and add generous padding (20 px each side)
             fm = button.fontMetrics()
-            calculated_width = fm.horizontalAdvance(button.text()) + 40
-            # Ensure a sensible lower bound (120) while allowing wider texts to fit
-            button.setMinimumWidth(max(120, calculated_width))
+            text_rect = fm.boundingRect(button.text())
+            calculated_width = text_rect.width() + 40  # 40 px total padding
+
+            # Special-case: "Default Strand Width" button uses dynamic sizing based on translated text
+            if button is self.default_strand_width_button:
+                # Use the dedicated dynamic sizing method for this button
+                self.update_default_strand_width_button_size()
+            else:
+                # Ensure a sensible lower bound (120) while allowing wider texts to fit
+                button.setMinimumWidth(max(120, calculated_width))
+
+            # Force Qt to recalculate the size hint after updating the minimum width
+            button.updateGeometry()
+            button.adjustSize()
             # Don't override colors - let the theme stylesheet handle colors
             # Only ensure consistent size and basic properties
 
@@ -2518,9 +2529,8 @@ class SettingsDialog(QDialog):
         self.default_strand_width_button.setText(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else "Configure default strand width")
         
-        # Remove minimum width constraint and allow button to resize to fit text
-        self.default_strand_width_button.setMinimumWidth(0)
-        self.default_strand_width_button.adjustSize()
+        # Update button size based on new translated text
+        self.update_default_strand_width_button_size()
         
         # Update the layout to ensure proper spacing
         if hasattr(self, 'default_strand_width_layout'):
@@ -3172,6 +3182,51 @@ class SettingsDialog(QDialog):
                     self.canvas.force_redraw()
                 self.canvas.update()
 
+    def update_default_strand_width_button_size(self):
+        """Calculate and set the optimal width for the default strand width button based on current language text."""
+        if not hasattr(self, 'default_strand_width_button'):
+            return
+            
+        # Get current translation
+        _ = translations[self.current_language]
+        button_text = _['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width"
+        
+        # Calculate required width using font metrics
+        fm = self.default_strand_width_button.fontMetrics()
+        text_rect = fm.boundingRect(button_text)
+        text_width = text_rect.width()
+        
+        # Add very generous padding to account for button styling, borders, and DPI variations
+        # Base padding increased significantly
+        padding = 80  # Increased from 40 to 80
+        if text_width > 120:  # For longer translations
+            padding += 40  # Increased from 20 to 40
+        if text_width > 150:  # For very long translations
+            padding += 60  # Increased from 30 to 60
+            
+        # Much larger buffer for high-DPI screens and button styling
+        dpi_buffer = 80  # Increased from 40 to 80
+        
+        calculated_width = text_width + padding + dpi_buffer
+        
+        # Set higher minimum to ensure button is never too small
+        final_width = max(260, calculated_width)  # Increased from 180 to 260
+        
+        self.default_strand_width_button.setMinimumWidth(final_width)
+        self.default_strand_width_button.setMaximumWidth(final_width)
+        self.default_strand_width_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        
+        # Get current screen DPI for logging
+        try:
+            current_screen = self.screen()
+            if current_screen:
+                logical_dpi = current_screen.logicalDotsPerInch()
+                logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}, screen_dpi={logical_dpi}")
+            else:
+                logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}")
+        except:
+            logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}")
+
     def open_default_width_dialog(self):
         """Open a dialog to configure default strand width."""
         dialog = DefaultWidthConfigDialog(self, self.parent())
@@ -3361,6 +3416,9 @@ class SettingsDialog(QDialog):
 
         super().showEvent(event) # Call parent method AFTER ensuring translations
 
+        # Recalculate button size for current DPI after dialog is shown
+        self.update_default_strand_width_button_size()
+
         # Refresh the history list (can happen after super)
         if hasattr(self, 'history_list') and hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             self.populate_history_list()
@@ -3377,6 +3435,31 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'default_arrow_color_checkbox') and hasattr(self, 'use_default_arrow_color'):
             self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
             logging.info(f"SettingsDialog showEvent: Updated default arrow color checkbox to {self.use_default_arrow_color}")
+
+    def moveEvent(self, event):
+        """Handle dialog movement between screens with different DPI."""
+        super().moveEvent(event)
+        # Recalculate button size when dialog moves (in case it moved to a different DPI screen)
+        if hasattr(self, 'default_strand_width_button'):
+            # Use a small delay to ensure the move is complete
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(100, self.update_default_strand_width_button_size)
+
+    def changeEvent(self, event):
+        """Handle DPI changes and other window state changes."""
+        super().changeEvent(event)
+        # Recalculate button size on DPI changes
+        if hasattr(self, 'default_strand_width_button'):
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(50, self.update_default_strand_width_button_size)
+
+    def resizeEvent(self, event):
+        """Handle resize events that might indicate DPI changes."""
+        super().resizeEvent(event)
+        # Recalculate button size on resize (might be due to DPI change)
+        if hasattr(self, 'default_strand_width_button'):
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(25, self.update_default_strand_width_button_size)
 
     def update_icon_widget(self, label_widget, character):
         """Helper function to draw the styled icon onto a QLabel's pixmap."""

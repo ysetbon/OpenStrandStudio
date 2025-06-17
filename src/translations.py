@@ -256,7 +256,11 @@ translations = {
             © 2025 OpenStrand Studio
         </p>
         ''',
-
+        'width_preview_label': 'Total: {total}px | Color: {color}px | Stroke: {stroke}px each side',
+        'percent_available_color': '% of Available Color Space',
+        'total_thickness_label': 'Total Thickness (grid squares):',
+        'grid_squares': 'squares',
+        'color_vs_stroke_label': 'Color vs Stroke Distribution (total thickness fixed):',
     },
     'fr': {
         # MainWindow translations
@@ -426,7 +430,7 @@ translations = {
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
         'change_color': 'Changer la couleur',
         'change_stroke_color': 'Changer la couleur du trait',
-        'change_width': 'Changer la largeur',
+        'change_width': 'Changer largeur',
         # --- NEW ---
         'hide_layer': 'Masquer Couche',
         'show_layer': 'Afficher Couche',
@@ -493,6 +497,11 @@ translations = {
         'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
         'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
         'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
+        'width_preview_label': 'Total : {total}px | Couleur : {color}px | Contour : {stroke}px de chaque côté',
+        'percent_available_color': '% de l\'espace couleur disponible',
+        'total_thickness_label': 'Épaisseur totale (cases de grille):',
+        'grid_squares': 'cases',
+        'color_vs_stroke_label': 'Répartition Couleur / Contour (épaisseur totale fixe):',
         # About translations
         'about_info': '''
         <h2>À propos d'OpenStrand Studio</h2>
@@ -744,8 +753,13 @@ translations = {
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
-        'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
-        'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
+        'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
+        'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
+        'width_preview_label': 'Totale: {total}px | Colore: {color}px | Contorno: {stroke}px per lato',
+        'percent_available_color': '% dello Spazio Colore Disponibile',
+        'total_thickness_label': 'Spessore Totale (quadrati griglia):',
+        'grid_squares': 'quadrati',
+        'color_vs_stroke_label': 'Distribuzione Colore vs Contorno (spessore totale fisso):',
         # About translations
         'about_info': '''
         <h2>Informazioni su OpenStrand Studio</h2>
@@ -1003,6 +1017,11 @@ translations = {
         'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
         'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
         'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
+        'width_preview_label': 'Total: {total}px | Color: {color}px | Contorno: {stroke}px cada lado',
+        'percent_available_color': '% del Espacio de Color Disponible',
+        'total_thickness_label': 'Grosor Total (cuadros de cuadrícula):',
+        'grid_squares': 'cuadros',
+        'color_vs_stroke_label': 'Distribución Color vs Contorno (grosor total fijo):',
         # About translations
         'about_info': '''
         <h2>Acerca de OpenStrand Studio</h2>
@@ -1276,6 +1295,11 @@ translations = {
             © 2025 OpenStrand Studio
         </p>
         ''' ,
+        'width_preview_label': 'Total : {total}px | Couleur : {color}px | Contour : {stroke}px de chaque côté',
+        'percent_available_color': '% de l\'espace couleur disponible',
+        'total_thickness_label': 'Épaisseur totale (cases de grille):',
+        'grid_squares': 'cases',
+        'color_vs_stroke_label': 'Répartition Couleur / Contour (épaisseur totale fixe):',
     },
     # New Hebrew Translations (RTL language)
     'he': {

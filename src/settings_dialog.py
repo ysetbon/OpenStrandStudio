@@ -1832,6 +1832,8 @@ class SettingsDialog(QDialog):
         self.default_strand_width_button = QPushButton(_['default_strand_width'])
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'])
         self.default_strand_width_button.clicked.connect(self.open_default_width_dialog)
+        # Allow button to resize to fit text content instead of using fixed min-width
+        self.default_strand_width_button.setMinimumWidth(0)
         
         if self.is_rtl_language(self.current_language):
             self.default_strand_width_layout.addStretch()
@@ -2516,6 +2518,17 @@ class SettingsDialog(QDialog):
         self.default_strand_width_button.setText(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else "Configure default strand width")
         
+        # Remove minimum width constraint and allow button to resize to fit text
+        self.default_strand_width_button.setMinimumWidth(0)
+        self.default_strand_width_button.adjustSize()
+        
+        # Update the layout to ensure proper spacing
+        if hasattr(self, 'default_strand_width_layout'):
+            self.default_strand_width_layout.update()
+        # Also update the parent container if it exists
+        if hasattr(self, 'default_strand_width_container'):
+            self.default_strand_width_container.updateGeometry()
+        
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
@@ -2606,6 +2619,9 @@ class SettingsDialog(QDialog):
         
         # Update text alignment for RTL languages
         self.update_text_alignment()
+
+        # Recompute button widths based on translated text to prevent truncation
+        self.style_dialog_buttons()
 
 
 
@@ -3743,6 +3759,15 @@ class DefaultWidthConfigDialog(QDialog):
         
         # Buttons using QDialogButtonBox for consistent theme styling
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        # Localize standard buttons according to current language
+        ok_btn = self.button_box.button(QDialogButtonBox.Ok)
+        cancel_btn = self.button_box.button(QDialogButtonBox.Cancel)
+        if ok_btn and 'ok' in _:
+            ok_btn.setText(_['ok'])
+        if cancel_btn and 'cancel' in _:
+            cancel_btn.setText(_['cancel'])
+
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)

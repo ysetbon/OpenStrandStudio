@@ -1,4 +1,4 @@
-Theme: dark
+Theme: default
 Language: fr
 ShadowColor: 0,0,0,250
 DrawOnlyAffectedStrand: true
@@ -21,6 +21,6 @@ UseDefaultArrowColor: true
 DefaultArrowColor: 255,170,127,255
 DefaultStrandColor: 198,68,230,255
 DefaultStrokeColor: 0,0,0,255
-DefaultStrandWidth: 36
-DefaultStrokeWidth: 4
+DefaultStrandWidth: 31
+DefaultStrokeWidth: 7
 DefaultWidthGridUnits: 2

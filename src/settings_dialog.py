@@ -623,6 +623,7 @@ class SettingsDialog(QDialog):
             else:
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
+                self.button_color_layout.setContentsMargins(0, 0, 0, 0)
                 self.button_color_layout.setSpacing(10)  # Small, constant gap
                 self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -691,7 +692,7 @@ class SettingsDialog(QDialog):
                 self.default_strand_color_layout.addStretch()
                 self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_strand_color_layout.setContentsMargins(105, 0, 0, 0)
+                self.default_strand_color_layout.setContentsMargins(258, 0, 0, 0)
                 self.default_strand_color_layout.setSpacing(10)  # Add some spacing between widgets
                 self.default_strand_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.default_strand_color_label.setLayoutDirection(Qt.RightToLeft)
@@ -738,7 +739,7 @@ class SettingsDialog(QDialog):
                 self.default_stroke_color_layout.addStretch()
                 self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_stroke_color_layout.setContentsMargins(260, 0, 0, 0) 
+                self.default_stroke_color_layout.setContentsMargins(308, 0, 0, 0) 
                 self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.default_stroke_color_label.setTextFormat(Qt.PlainText)
@@ -784,11 +785,14 @@ class SettingsDialog(QDialog):
                 self.default_strand_width_layout.addStretch()
                 self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
+                # Apply the same left margin as other RTL rows for alignment consistency
+                self.default_strand_width_layout.setContentsMargins(258, 0, 0, 0)
                 self.default_strand_width_layout.addWidget(self.default_strand_width_button)
                 logging.info("RTL REORGANIZE: Added stretch then button for default strand width")
             else:
                 self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
+                self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
                 self.default_strand_width_layout.addWidget(self.default_strand_width_button)
                 self.default_strand_width_layout.addStretch()
                 logging.info("LTR REORGANIZE: Added button then stretch for default strand width")
@@ -1731,9 +1735,9 @@ class SettingsDialog(QDialog):
         # Default Strand Color - Label and button
         self.default_strand_color_container = QWidget()
         self.default_strand_color_layout = QHBoxLayout(self.default_strand_color_container)
-        
+        self.default_strand_color_container.setContentsMargins(0, 0, 0, 0)
         if self.is_rtl_language(self.current_language):
-            self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_color_layout.setContentsMargins(278, 0, 0, 0)
             self.default_strand_color_layout.setSpacing(20)
         else:
             self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
@@ -1774,9 +1778,9 @@ class SettingsDialog(QDialog):
         # Default Stroke Color - Label and button
         self.default_stroke_color_container = QWidget()
         self.default_stroke_color_layout = QHBoxLayout(self.default_stroke_color_container)
-        
+        self.default_stroke_color_container.setContentsMargins(0, 0, 0, 0)
         if self.is_rtl_language(self.current_language):
-            self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_stroke_color_layout.setContentsMargins(308, 0, 0, 0)
             self.default_stroke_color_layout.setSpacing(20)
         else:
             self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
@@ -1817,9 +1821,9 @@ class SettingsDialog(QDialog):
         # Default Strand Width - Button only
         self.default_strand_width_container = QWidget()
         self.default_strand_width_layout = QHBoxLayout(self.default_strand_width_container)
-        
+        self.default_strand_width_container.setContentsMargins(0, 0, 0, 0)
         if self.is_rtl_language(self.current_language):
-            self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_width_layout.setContentsMargins(278, 0, 0, 0)
             self.default_strand_width_layout.setSpacing(20)
         else:
             self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
@@ -2018,13 +2022,19 @@ class SettingsDialog(QDialog):
             self.layer_panel_ok_button,  # Add the missing layer panel OK button
             *self.video_buttons,  # Unpack video buttons list
             self.load_history_button, # Style history buttons
-            self.clear_history_button
+            self.clear_history_button,
+            self.default_strand_width_button  # ensure this specific button is included
         ]
         
         for button in buttons:
             button.setFixedHeight(32)  # Match MainWindow button height
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-            button.setMinimumWidth(120)  # Set minimum width for buttons
+            # Dynamically set minimum width based on the button text length
+            # Add some padding (20 px) to the calculated text width
+            fm = button.fontMetrics()
+            calculated_width = fm.horizontalAdvance(button.text()) + 40
+            # Ensure a sensible lower bound (120) while allowing wider texts to fit
+            button.setMinimumWidth(max(120, calculated_width))
             # Don't override colors - let the theme stylesheet handle colors
             # Only ensure consistent size and basic properties
 

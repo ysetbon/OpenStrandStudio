@@ -24,6 +24,7 @@ class AttachMode(QObject):
         self.setup_timer()
         self.last_update_rect = None  # Track the last update region
         
+        
         # Store the canvas's control points visibility setting
         self.original_control_points_visible = False
         if hasattr(self.canvas, 'show_control_points'):
@@ -60,6 +61,7 @@ class AttachMode(QObject):
 
         if not self.canvas.current_strand:
             return
+            
             
         # When zoomed (either in or out) we need the entire widget repainted **immediately**
         # on every mouse-move; using ``update()`` often coalesces several
@@ -571,6 +573,7 @@ class AttachMode(QObject):
             self.current_end = self.start_pos
             self.last_snapped_pos = self.start_pos
             self.last_update_rect = None
+            
             
             # Clear the new strand creation flag
             self.canvas.is_drawing_new_strand = False

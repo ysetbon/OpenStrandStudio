@@ -410,10 +410,16 @@ if __name__ == '__main__':
             window.canvas.set_shadow_color(rgb_color)
             logging.info(f"Applied shadow color to canvas directly after initialization: {rgb_color.red()},{rgb_color.green()},{rgb_color.blue()},{rgb_color.alpha()}")
         
-        # Set draw only affected strand setting
+        # Set draw only affected strand setting for all modes
         if hasattr(window.canvas, 'move_mode'):
             window.canvas.move_mode.draw_only_affected_strand = draw_only_affected_strand
-            logging.info(f"Set draw_only_affected_strand to {draw_only_affected_strand}")
+            logging.info(f"Set move_mode.draw_only_affected_strand to {draw_only_affected_strand}")
+        if hasattr(window.canvas, 'rotate_mode'):
+            window.canvas.rotate_mode.draw_only_affected_strand = draw_only_affected_strand
+            logging.info(f"Set rotate_mode.draw_only_affected_strand to {draw_only_affected_strand}")
+        if hasattr(window.canvas, 'angle_adjust_mode'):
+            window.canvas.angle_adjust_mode.draw_only_affected_strand = draw_only_affected_strand
+            logging.info(f"Set angle_adjust_mode.draw_only_affected_strand to {draw_only_affected_strand}")
             
             # Connect the move_mode's mouseReleaseEvent to the undo/redo manager if layer_panel exists
             if hasattr(window, 'layer_panel') and window.layer_panel and hasattr(window.layer_panel, 'undo_redo_manager'):

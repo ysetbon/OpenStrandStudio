@@ -19,6 +19,9 @@ class RotateMode:
         self.canvas = canvas
         self.initialize_properties()
         self.setup_timer()
+        
+        # Add draw_only_affected_strand property
+        self.draw_only_affected_strand = False
 
     def initialize_properties(self):
         """Initialize all properties used in the RotateMode."""
@@ -308,6 +311,8 @@ class RotateMode:
         self.affected_strand.update_shape()
         self.affected_strand.update_side_line()
         self.selected_rectangle.moveCenter(new_pos)
+        
+        # Always update the canvas - paintEvent will handle selective drawing
         self.canvas.update()
 
     def update_control_points_proportionally(self, old_start, old_end, new_start, new_end):

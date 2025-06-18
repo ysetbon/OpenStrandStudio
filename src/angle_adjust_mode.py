@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtCore import Qt, QPointF, QRectF, QTimer
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel, QBoxLayout
 from PyQt5.QtGui import QPainter, QPen, QColor
 import math
@@ -30,6 +30,13 @@ class AngleAdjustMode:
         # Add these lines to store initial control point vectors
         self.initial_cp1_vector = None
         self.initial_cp2_vector = None
+        
+        # Add draw_only_affected_strand property
+        self.draw_only_affected_strand = False
+        
+        # Add flag to track when dialog is open
+        self.dialog_is_open = False
+
 
     def activate(self, strand):
         self.selected_strand = strand
@@ -94,7 +101,10 @@ class AngleAdjustMode:
             attached_strand.update_shape()
             attached_strand.update_side_line()
         
-        self.canvas.update()
+        # Only update the canvas if draw_only_affected_strand is disabled
+        if not self.draw_only_affected_strand:
+            # Always update the canvas - paintEvent will handle selective drawing
+            self.canvas.update()
 
     def mousePressEvent(self, event):
         # If you still want the mouse click to open the dialog, ensure active_strand is set
@@ -129,6 +139,10 @@ class AngleAdjustMode:
         dialog = QDialog(self.canvas.parent())  # Ensure proper parenting
         dialog.setWindowTitle(_['adjust_angle_and_length'])
         dialog.setObjectName("AngleAdjustDialog")  # Set object name for specificity if needed
+        
+        # Set flag to indicate dialog is open and trigger canvas update
+        self.dialog_is_open = True
+        self.canvas.update()  # Update canvas to hide other strands
 
         # Remove any conflicting stylesheets
         # dialog.setStyleSheet("")  # Commented out or removed
@@ -202,6 +216,7 @@ class AngleAdjustMode:
                 self.rotate_strand(angle)
             if length is not None:
                 self.set_strand_length(length)
+            # Always update the canvas - paintEvent will handle selective drawing
             self.canvas.update()
 
         def update_angle(value):
@@ -228,6 +243,11 @@ class AngleAdjustMode:
         length_spinbox.valueChanged.connect(update_length)
 
         result = dialog.exec_()
+        
+        # Reset dialog open flag when dialog closes
+        self.dialog_is_open = False
+        # Trigger canvas update to show all strands again
+        self.canvas.update()
         
         # Always re-enable saving when dialog closes, regardless of result
         if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
@@ -308,6 +328,7 @@ class AngleAdjustMode:
         new_length = round(new_length / 5) * 5  # Round to nearest multiple of 5
         
         self.set_strand_length(new_length)
+        # Always update the canvas - paintEvent will handle selective drawing
         self.canvas.update()
 
     def rotate_strand(self, new_angle):
@@ -509,7 +530,10 @@ class AngleAdjustMode:
         self.update_attached_strands(old_end, new_end)
         
         # Update the canvas
-        self.canvas.update()
+        # Only update the canvas if draw_only_affected_strand is disabled
+        if not self.draw_only_affected_strand:
+            # Always update the canvas - paintEvent will handle selective drawing
+            self.canvas.update()
 
     def update_control_points_for_length_change(self, new_length):
         """Adjust control points when the length is changed."""
@@ -583,6 +607,9 @@ class AngleAdjustMode:
             self.angle_adjustment = 0
 
             # Refresh the canvas
+            # Only update the canvas if draw_only_affected_strand is disabled
+        if not self.draw_only_affected_strand:
+            # Always update the canvas - paintEvent will handle selective drawing
             self.canvas.update()
 
     def cancel_adjustment(self):
@@ -604,6 +631,9 @@ class AngleAdjustMode:
             # Reset the angle adjustment
             self.angle_adjustment = 0
 
+            # Only update the canvas if draw_only_affected_strand is disabled
+        if not self.draw_only_affected_strand:
+            # Always update the canvas - paintEvent will handle selective drawing
             self.canvas.update()  # Refresh the canvas
 
     @staticmethod

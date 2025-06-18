@@ -1421,12 +1421,26 @@ class StrandDrawingCanvas(QWidget):
 
         logging.info(f"Painting {len(self.strands)} strands")
 
-        # Check if we're in move mode and should only draw the affected strand
+        # Check if we're in a mode that supports draw_only_affected_strand
         draw_all_strands = True
+        
+        # Check MoveMode
         if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
             draw_all_strands = False
-            # In this case, the background will be handled by the cached background
-            logging.info("Using optimized drawing mode - only drawing affected strands")
+            logging.info("Using optimized drawing mode in MoveMode - only drawing affected strands")
+        
+        
+        # Check RotateMode
+        elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode and hasattr(self.rotate_mode, 'draw_only_affected_strand'):
+            if self.rotate_mode.draw_only_affected_strand and self.rotate_mode.is_rotating:
+                draw_all_strands = False
+                logging.info("Using optimized drawing mode in RotateMode - only drawing affected strands")
+        
+        # Check AngleAdjustMode
+        elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting and hasattr(self.angle_adjust_mode, 'draw_only_affected_strand'):
+            if self.angle_adjust_mode.draw_only_affected_strand and self.angle_adjust_mode.active_strand and self.angle_adjust_mode.dialog_is_open:
+                draw_all_strands = False
+                logging.info("Using optimized drawing mode in AngleAdjustMode - only drawing affected strands")
 
         # Draw ALL existing strands first (background)
         if draw_all_strands:
@@ -1444,11 +1458,11 @@ class StrandDrawingCanvas(QWidget):
                     strand.draw(painter)
                     logging.info(f"Drawing strand: {strand.layer_name}")
         else:
-            # When optimizing, we only draw the moving strand and connected strands
-            # Get the affected strand from MoveMode (the one being moved)
+            # When optimizing, we only draw the affected strand and connected strands
             affected_strand = None
             connected_strands = []
             
+            # Handle different modes
             if isinstance(self.current_mode, MoveMode):
                 affected_strand = self.current_mode.affected_strand
                 
@@ -1480,6 +1494,21 @@ class StrandDrawingCanvas(QWidget):
                                 self.current_mode.points_are_close(strand.start, moving_point)):
                                 connected_strands.append(strand)
             
+            
+            # Handle RotateMode
+            elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode:
+                affected_strand = self.rotate_mode.affected_strand
+                # Get attached strands that are connected to the rotating point
+                if affected_strand and hasattr(affected_strand, 'attached_strands'):
+                    connected_strands.extend(affected_strand.attached_strands)
+            
+            # Handle AngleAdjustMode
+            elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting:
+                affected_strand = self.angle_adjust_mode.active_strand
+                # Get attached strands
+                if affected_strand and hasattr(affected_strand, 'attached_strands'):
+                    connected_strands.extend(affected_strand.attached_strands)
+            
             # Draw the affected strand if available
             if affected_strand:
                 logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
@@ -1498,7 +1527,9 @@ class StrandDrawingCanvas(QWidget):
                 # Draw any connected strands (typically without highlight during move)
                 for strand in connected_strands:
                     logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
-                    self.draw_moving_strand(painter, strand)
+                    # Check if strand is valid (not deleted)
+                    if strand in self.strands:
+                        self.draw_moving_strand(painter, strand)
 
         # Draw the temporary strand (whether it's a new strand or an attached strand)
         if self.current_strand:
@@ -3090,6 +3121,14 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
 
+    
+    def trigger_selective_update(self):
+        """
+        Trigger a selective update when draw_only_affected_strand is enabled.
+        This method should be called by modes instead of update() when the toggle is on.
+        """
+        # Force a repaint that will use the optimized drawing path
+        self.update()
     
     def wheelEvent(self, event):
         """Handle mouse wheel events for zooming."""

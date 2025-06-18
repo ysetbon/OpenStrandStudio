@@ -2316,9 +2316,17 @@ class SettingsDialog(QDialog):
 
         # Apply Performance Settings
         self.draw_only_affected_strand = self.affected_strand_checkbox.isChecked()
-        if self.canvas and hasattr(self.canvas, 'move_mode'):
-            self.canvas.move_mode.draw_only_affected_strand = self.draw_only_affected_strand
-            logging.info(f"SettingsDialog: Set draw_only_affected_strand to {self.draw_only_affected_strand}")
+        if self.canvas:
+            # Set for all modes that support draw_only_affected_strand
+            if hasattr(self.canvas, 'move_mode'):
+                self.canvas.move_mode.draw_only_affected_strand = self.draw_only_affected_strand
+                logging.info(f"SettingsDialog: Set move_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
+            if hasattr(self.canvas, 'rotate_mode'):
+                self.canvas.rotate_mode.draw_only_affected_strand = self.draw_only_affected_strand
+                logging.info(f"SettingsDialog: Set rotate_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
+            if hasattr(self.canvas, 'angle_adjust_mode'):
+                self.canvas.angle_adjust_mode.draw_only_affected_strand = self.draw_only_affected_strand
+                logging.info(f"SettingsDialog: Set angle_adjust_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
 
         # Apply Third Control Point Setting
         # Store previous setting to check if it changed

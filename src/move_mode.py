@@ -83,6 +83,10 @@ class MoveMode:
         self.is_moving_control_point = False  # Flag to indicate if we're moving a control point
         self.is_moving_strand_point = False  # Flag to indicate if we're moving a strand endpoint
         self.mouse_offset = QPointF(0, 0)  # Track mouse offset to prevent jumps when starting movement
+        
+        # Connection caching for performance optimization
+        self.connection_cache = {}  # Cache for connection relationships
+        self.cache_valid = False  # Flag to track if cache is valid
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -1217,6 +1221,9 @@ class MoveMode:
         self.accumulated_delta = QPointF(0, 0)
         self.last_snapped_pos = None
         self.target_pos = None
+        
+        # Invalidate connection cache when movement ends
+        self.invalidate_connection_cache()
         self.mouse_offset = QPointF(0, 0)
         if hasattr(self, 'move_timer'):
             self.move_timer.stop()
@@ -1704,6 +1711,9 @@ class MoveMode:
         # Store a reference to the undo_redo_manager if it exists
         if hasattr(self.canvas, 'undo_redo_manager') and not hasattr(self, 'undo_redo_manager'):
             self.undo_redo_manager = self.canvas.undo_redo_manager
+
+        # Build connection cache for performance optimization
+        self.build_connection_cache()
 
         # Rest of the existing function
         self.moving = True
@@ -2785,28 +2795,84 @@ class MoveMode:
         
         painter.restore()
 
+    def build_connection_cache(self):
+        """Build a cache of connection relationships for performance optimization."""
+        if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
+            return
+            
+        self.connection_cache.clear()
+        connections = self.canvas.layer_state_manager.getConnections()
+        
+        # Build a mapping of (strand_name, side) -> connected_strand_object
+        for strand in self.canvas.strands:
+            if isinstance(strand, MaskedStrand):
+                continue
+                
+            strand_connections = connections.get(strand.layer_name, [])
+            prefix = strand.layer_name.split('_')[0]
+            
+            for connected_layer_name in strand_connections:
+                if not connected_layer_name.startswith(f"{prefix}_"):
+                    continue
+                    
+                # Find the connected strand object
+                connected_strand = next(
+                    (s for s in self.canvas.strands 
+                     if s.layer_name == connected_layer_name 
+                     and not isinstance(s, MaskedStrand)), 
+                    None
+                )
+                
+                if connected_strand and connected_strand != strand:
+                    # Check which side this connection is on
+                    # Side 0 (start) connects to other strand's end
+                    if self.points_are_close(strand.start, connected_strand.end):
+                        cache_key = (strand.layer_name, 0)
+                        self.connection_cache[cache_key] = connected_strand
+                    # Side 1 (end) connects to other strand's start  
+                    elif self.points_are_close(strand.end, connected_strand.start):
+                        cache_key = (strand.layer_name, 1)
+                        self.connection_cache[cache_key] = connected_strand
+        
+        self.cache_valid = True
+
+    def invalidate_connection_cache(self):
+        """Invalidate the connection cache when strands are modified."""
+        self.cache_valid = False
+        self.connection_cache.clear()
+
+    def get_cached_connected_strand(self, strand, side):
+        """Get connected strand from cache if available."""
+        if not self.cache_valid:
+            self.build_connection_cache()
+            
+        cache_key = (strand.layer_name, side)
+        return self.connection_cache.get(cache_key, None)
+
     def find_connected_strand(self, strand, side, moving_point):
         """Find a strand connected to the given strand at the specified side."""
         if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
-            # logging.info(f"find_connected_strand: No layer_state_manager available")
             return None
 
+        # Use cached connection if available for better performance    
+        cached_strand = self.get_cached_connected_strand(strand, side)
+        if cached_strand:
+            # Verify the cached connection is still valid by checking the moving point
+            if side == 0 and self.points_are_close(cached_strand.end, moving_point):
+                return cached_strand
+            elif side == 1 and self.points_are_close(cached_strand.start, moving_point):
+                return cached_strand
+            # If cached connection is invalid, fall back to original search
+            
+        # Fallback to original search method if cache miss or invalid
         connections = self.canvas.layer_state_manager.getConnections()
         strand_connections = connections.get(strand.layer_name, [])
-        # logging.info(f"find_connected_strand: {strand.layer_name} has connections: {strand_connections}")
-
-        # Get prefix of the current strand
         prefix = strand.layer_name.split('_')[0]
 
-        # Check outgoing connections (strand connects TO other strands)
         for connected_layer_name in strand_connections:
-            # logging.info(f"find_connected_strand: Checking outgoing connection {connected_layer_name}")
-            # Only check strands with the same prefix
             if not connected_layer_name.startswith(f"{prefix}_"):
-                # logging.info(f"find_connected_strand: Skipping {connected_layer_name} (different prefix)")
                 continue
 
-            # Find the connected strand
             connected_strand = next(
                 (s for s in self.canvas.strands 
                 if s.layer_name == connected_layer_name 
@@ -2815,7 +2881,6 @@ class MoveMode:
             )
 
             if connected_strand and connected_strand != strand:             
-                # Check if the connection point matches the side we're moving
                 if (side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
                 (side == 1 and self.points_are_close(connected_strand.start, moving_point)):
                     return connected_strand

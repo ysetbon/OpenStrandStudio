@@ -1918,14 +1918,24 @@ class SettingsDialog(QDialog):
 
         self.video_buttons = []
 
-        for i in range(5):  # Changed from 7 to 5 tutorials
+        for i in range(4):  # Changed from 5 to 4 tutorials
             # Explanation Label
             explanation_label = QLabel(_[f'gif_explanation_{i+1}'])
             tutorial_layout.addWidget(explanation_label, 0, Qt.AlignLeft) # Default alignment, will be updated
 
             # Play Video Button
             play_button = QPushButton(_['play_video'])
-            tutorial_layout.addWidget(play_button) # Default alignment, will be updated
+            # Set fixed size based on longest translation and increased height
+            play_button.setFixedSize(180, 40)  # Width for "Reproducir Vídeo" + padding, height increased
+            play_button.setStyleSheet("QPushButton { padding: 5px; }")
+            
+            # Create a horizontal layout to center the button
+            button_container = QHBoxLayout()
+            button_container.addStretch()
+            button_container.addWidget(play_button)
+            button_container.addStretch()
+            tutorial_layout.addLayout(button_container)
+            
             play_button.clicked.connect(lambda checked, idx=i: self.play_video(idx))
             self.video_buttons.append(play_button)
 
@@ -2625,7 +2635,7 @@ class SettingsDialog(QDialog):
                     self.language_combobox.setItemText(lang_index, _[lang_key])
 
         # Update tutorial explanations and play buttons
-        for i in range(5):  # Changed from 7 to 5
+        for i in range(4):  # Changed from 5 to 4
             index = i * 2  # Since each explanation and button are added sequentially
             explanation_label = self.tutorial_widget.layout().itemAt(index + 1).widget()
             explanation_label.setText(_[f'gif_explanation_{i+1}'])
@@ -2821,7 +2831,6 @@ class SettingsDialog(QDialog):
             os.path.join(mp4_directory, 'tutorial_2.mp4'),
             os.path.join(mp4_directory, 'tutorial_3.mp4'),
             os.path.join(mp4_directory, 'tutorial_4.mp4'),  # Previously tutorial_6.mp4
-            os.path.join(mp4_directory, 'tutorial_5.mp4'),  # Previously tutorial_7.mp4
         ]
 
         # Optional: Log the video paths for debugging

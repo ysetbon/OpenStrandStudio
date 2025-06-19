@@ -1066,10 +1066,46 @@ class MainWindow(QMainWindow):
                 strand.set_attachable(attachable)
         self.canvas.update()  # Redraw the canvas to show the changes
 
+    def unpress_angle_adjust_button(self):
+        """Unpress the angle adjust button exactly like attach button - using standard mode switching"""
+        import logging
+        logging.info("unpress_angle_adjust_button called - using standard mode switching like attach button")
+        logging.info(f"Button state before: checked={self.angle_adjust_button.isChecked()}")
+        logging.info(f"Current mode: {self.current_mode}")
+        
+        # Always force the button to be unchecked first
+        self.angle_adjust_button.setChecked(False)
+        
+        # Use the standard mode switching system like attach button does
+        if self.current_mode == "angle_adjust":
+            previous_mode = getattr(self, 'previous_mode', 'select')
+            logging.info(f"Switching from angle_adjust to {previous_mode} using update_mode()")
+            # This will automatically unpress the angle adjust button via update_button_states()
+            self.update_mode(previous_mode)
+        else:
+            # If not in angle_adjust mode, ensure we're in a proper mode that won't recheck the button
+            if hasattr(self, 'previous_mode') and self.previous_mode != "angle_adjust":
+                logging.info(f"Ensuring mode is {self.previous_mode} instead of {self.current_mode}")
+                self.update_mode(self.previous_mode)
+            else:
+                logging.info(f"Ensuring mode is select instead of {self.current_mode}")
+                self.update_mode("select")
+            
+        # Force uncheck again after mode change as safety measure
+        self.angle_adjust_button.setChecked(False)
+        
+        logging.info(f"Button state after: checked={self.angle_adjust_button.isChecked()}")
+        logging.info(f"Final mode: {self.current_mode}")
+
     def handle_angle_adjust_click(self):
+        # First, ensure the button gets pressed visually
+        self.angle_adjust_button.setChecked(True)
+        
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
                 print("Angle adjustment is not available for masked layers.")
+                # Unpress the button since we can't use it for masked strands
+                self.unpress_angle_adjust_button()
                 return
             
             self.previous_mode = self.current_mode  # Store the current mode
@@ -1078,6 +1114,9 @@ class MainWindow(QMainWindow):
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
             logging.warning("Attempted to enter angle adjust mode with no strand selected.")
+            
+            # Unpress the button immediately since no strand is selected
+            self.unpress_angle_adjust_button()
 
     def setup_button_styles(self):
         button_style = """
@@ -1284,7 +1323,8 @@ class MainWindow(QMainWindow):
             "move": self.move_button,
             "rotate": self.rotate_button,
             "select": self.select_strand_button,
-            "mask": self.mask_button
+            "mask": self.mask_button,
+            "angle_adjust": self.angle_adjust_button
         }
 
         for mode, button in buttons.items():
@@ -1612,18 +1652,6 @@ class MainWindow(QMainWindow):
         self.canvas.update()  # Redraw the canvas to show the changes
 
     # Add this new method
-    def handle_angle_adjust_click(self):
-        if self.canvas.selected_strand:
-            if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
-                return
-            
-            self.previous_mode = self.current_mode  # Store the current mode
-            self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
-            self.update_mode("angle_adjust")
-        else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def set_angle_adjust_mode(self):
         if self.canvas.selected_strand:
@@ -1668,8 +1696,8 @@ class MainWindow(QMainWindow):
             logging.warning("Attempted to enter angle adjust mode with no strand selected.")
 
     def deselect_angle_adjust_button(self):
-        self.angle_adjust_button.setChecked(False)
-        self.update_mode(self.previous_mode)  # Return to the previous mode
+        # This method is no longer needed, but we'll keep it empty for compatibility
+        self.unpress_angle_adjust_button()
 
     def set_mask_mode(self):
         # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
@@ -1820,9 +1848,16 @@ class MainWindow(QMainWindow):
             self.layer_panel._suppress_lock_mode_temporarily = False
         
     def update_mode(self, mode):
-        if self.current_mode == "angle_adjust" and mode != "angle_adjust":
-            # If we're leaving angle adjust mode, confirm the adjustment
-            self.canvas.angle_adjust_mode.confirm_adjustment()
+        # Safety guard: if someone tries to switch back to "angle_adjust" after the mode
+        # has already been exited (canvas.is_angle_adjusting == False) we ignore it and
+        # fall back to the previous/attach mode. This prevents the Angle/Length button
+        # from getting re-checked visually after it has been deselected.
+        if mode == "angle_adjust" and not getattr(self.canvas, "is_angle_adjusting", False):
+            logging.warning("update_mode received 'angle_adjust' while not adjusting – reverting to previous_mode")
+            mode = getattr(self, "previous_mode", "attach")
+        
+        # Don't call confirm_adjustment here since it's handled by the angle adjustment dialog
+        # The angle_adjust_mode itself calls update_mode when it finishes
         
         self.current_mode = mode
         self.canvas.set_mode(mode)
@@ -1890,7 +1925,7 @@ class MainWindow(QMainWindow):
 
     def deselect_angle_adjust_button(self):
         # This method is no longer needed, but we'll keep it empty for compatibility
-        pass
+        self.unpress_angle_adjust_button()
 
 
     def keyPressEvent(self, event):

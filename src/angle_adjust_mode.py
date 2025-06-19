@@ -598,9 +598,13 @@ class AngleAdjustMode:
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False
 
-            # Deselect all layers and strands using the deselect_all method in LayerPanel
+            # First deselect all layers and strands using the deselect_all method in LayerPanel
             if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                 self.canvas.layer_panel.deselect_all()
+
+            # Unpress the angle adjust button using the dedicated method
+            if hasattr(self.canvas, 'parent_window') and self.canvas.parent_window:
+                self.canvas.parent_window.unpress_angle_adjust_button()
 
             # Reset the active strand and angle adjustment
             self.active_strand = None
@@ -608,9 +612,9 @@ class AngleAdjustMode:
 
             # Refresh the canvas
             # Only update the canvas if draw_only_affected_strand is disabled
-        if not self.draw_only_affected_strand:
-            # Always update the canvas - paintEvent will handle selective drawing
-            self.canvas.update()
+            if not self.draw_only_affected_strand:
+                # Always update the canvas - paintEvent will handle selective drawing
+                self.canvas.update()
 
     def cancel_adjustment(self):
         if self.active_strand:
@@ -623,18 +627,22 @@ class AngleAdjustMode:
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False
 
-            # Deselect the active strand
+            # First deselect the active strand
             self.active_strand = None
             self.canvas.selected_strand = None
             self.canvas.selected_strand_index = None
+
+            # Unpress the angle adjust button using the dedicated method
+            if hasattr(self.canvas, 'parent_window') and self.canvas.parent_window:
+                self.canvas.parent_window.unpress_angle_adjust_button()
 
             # Reset the angle adjustment
             self.angle_adjustment = 0
 
             # Only update the canvas if draw_only_affected_strand is disabled
-        if not self.draw_only_affected_strand:
-            # Always update the canvas - paintEvent will handle selective drawing
-            self.canvas.update()  # Refresh the canvas
+            if not self.draw_only_affected_strand:
+                # Always update the canvas - paintEvent will handle selective drawing
+                self.canvas.update()  # Refresh the canvas
 
     @staticmethod
     def calculate_angle(start, end):

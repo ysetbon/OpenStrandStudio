@@ -39,7 +39,7 @@ def draw_mask_strand_shadow(
         logging.info("draw_mask_strand_shadow: using first_path as fallback")
 
     else:
-        logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
+        # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
         return
 
     # Apply deletion rectangles to intersection_path if provided
@@ -66,7 +66,7 @@ def draw_mask_strand_shadow(
                     if all(k in rect for k in ("x", "y", "width", "height")):
                         rect_path.addRect(QRectF(rect["x"], rect["y"], rect["width"], rect["height"]))
             except Exception as de_err:
-                logging.error(f"draw_mask_strand_shadow: error constructing deletion rect path from {rect}: {de_err}")
+                # logging.error(f"draw_mask_strand_shadow: error constructing deletion rect path from {rect}: {de_err}")
                 continue
 
             if not rect_path.isEmpty():
@@ -184,7 +184,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # if color_to_use.alpha() > 150:
     #     color_to_use.setAlpha(150)
     
-    logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
+    # Reduced high-frequency logging for performance during moves
+    # logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
     
     # Obtain the base path (without circles) for operations that still expect
     # the raw strand outline, then build a geometry path that already contains the strand body **and** any
@@ -224,7 +225,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     f"Transparent circle exclusion applied ({'start' if idx == 0 else 'end'}) on {strand.layer_name} – r={adj_radius:.1f}"
                 )
     except Exception as exc:
-        logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
+        # logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
+        pass
 
     # ------------------------------------------------------------------
     # Manual circle-exclusion logic removed – visible circles are already
@@ -252,9 +254,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         this_layer = strand.layer_name
         
         # Log layer order for debugging
-        logging.info(f"Current layer order: {layer_order}")
-        logging.info(f"Current strand being processed: {this_layer}")
-        logging.info(f"Current connections: {connections}")
+        # logging.info(f"Current layer order: {layer_order}")
+        # logging.info(f"Current strand being processed: {this_layer}")
+        # logging.info(f"Current connections: {connections}")
         
         # Track masked strands and their components for special handling
         masked_strands_map = {}
@@ -274,10 +276,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             'components': [first_layer, second_layer]
                         }
                         logging.info(f"Identified masked strand {masked_name} with components {first_layer} and {second_layer}")
-        logging.info(f"Checking shadow for : {strand.layer_name}")
+        # logging.info(f"Checking shadow for : {strand.layer_name}")
         # Check against all other strands
         for other_strand in canvas.strands:
-            logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
+            # logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
             # Skip self or strands without layer names
             if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
                 continue
@@ -296,7 +298,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             # Skip if other strand isn't in layer order
             other_layer = other_strand.layer_name
             if other_layer not in layer_order:
-                logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
+                # logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
                 continue
             
             # Normal layer order rules apply
@@ -361,7 +363,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     )
                                     other_strand_rect = other_strand_rect.united(circle_rect_br)
                             except Exception as br_e:
-                                logging.error(f"Error extending bounding rect with circle geometry for {other_layer}: {br_e}")
+                                # logging.error(f"Error extending bounding rect with circle geometry for {other_layer}: {br_e}")
+                                pass
                         # Inflate the rectangles by half the rendered stroke width plus max blur so that
                         # the quick bounding-box test does not miss near-tangent crossings.
                         try:
@@ -372,13 +375,15 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             other_strand_rect.adjust(-inflate_other, -inflate_other, inflate_other, inflate_other)
                         except Exception as inflate_err:
                             # Should never happen, but be robust in case a strand misses width attributes.
-                            logging.error(f"Error inflating bounding rects for quick reject: {inflate_err}")
+                            # logging.error(f"Error inflating bounding rects for quick reject: {inflate_err}")
+                            pass
                         if not strand_rect.intersects(other_strand_rect):
                             logging.info(f"Bounding rectangles don't intersect, skipping shadow for {this_layer} on {other_layer}")
                             continue
                     except Exception as e:
-                        logging.warning(f"Could not get bounding rectangles for shadow check between {this_layer} and {other_layer}: {e}")
+                        # logging.warning(f"Could not get bounding rectangles for shadow check between {this_layer} and {other_layer}: {e}")
                         # Optionally continue or handle error, continuing for now
+                        pass
                         
                     try:
                         # Build the full rendered geometry (body + visible circles) of the
@@ -397,7 +402,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 other_stroke_path = get_proper_masked_strand_path(other_strand)
                                 logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
                             except Exception as e:
-                                logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
+                                # logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
+                                pass
                         
                         # ---------------------------------------------------------
                         # NEW LOGIC: Include visible circle geometry from the underlying
@@ -419,12 +425,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) + 1, (base_circle_radius_o / 2) + 1)
                                     other_stroke_path = other_stroke_path.united(oc_path_tmp)
                             except Exception as oc_e:
-                                logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
+                                # logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
+                                pass
                         
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
-                        logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
+                        # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
@@ -510,7 +517,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                             if not del_path.isEmpty():
                                                                 subtraction_path = subtraction_path.subtracted(del_path)
                                                     except Exception as del_ex:
-                                                        logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub}': {del_ex}")
+                                                        # logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub}': {del_ex}")
+                                                        pass
 
                                             if not subtraction_path.isEmpty():
                                                 original_rect_intersect = current_intersection_shadow.boundingRect()
@@ -524,11 +532,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                    (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
                                                     logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
                                             else:
-                                                 logging.warning(f"Could not calculate subtraction path for mask '{mask_layer_sub}', subtraction skipped for this intersection.")
+                                                 # logging.warning(f"Could not calculate subtraction path for mask '{mask_layer_sub}', subtraction skipped for this intersection.")
+                                                 pass
 
 
                                         except Exception as e:
-                                            logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
+                                            # logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
+                                            pass
                         # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
 
@@ -550,11 +560,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 combined_shadow_path = current_intersection_shadow
                                 has_shadow_content = True
                                 
-                            logging.info(f"Added shadow from {this_layer} onto {other_layer} to combined path")
+                            # logging.info(f"Added shadow from {this_layer} onto {other_layer} to combined path")
                         else:
                             logging.info(f"No intersection between {this_layer} and {other_layer} paths")
                     except Exception as e:
-                        logging.error(f"Error calculating strand shadow: {e}")
+                        # logging.error(f"Error calculating strand shadow: {e}")
+                        pass
                 else:
                     logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow calculated")
         
@@ -573,7 +584,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             # Initialize shadow_paths and all_shadow_paths
             all_shadow_paths = [combined_shadow_path]
             
-            logging.info(f"Drew unified shadow path for strand {this_layer}")
+            # logging.info(f"Drew unified shadow path for strand {this_layer}")
     else:
         # If no layer manager available, draw simple shadow
         # This is a fallback method
@@ -607,7 +618,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         body_stroker.setCapStyle(Qt.FlatCap)
         strand_body_path = body_stroker.createStroke(path)
     except Exception as e:
-        logging.error(f"Error computing strand body path for {strand.layer_name}: {e}")
+        # logging.error(f"Error computing strand body path for {strand.layer_name}: {e}")
+        pass
 
     # ----------------------------------------------------------
     # For each circle shadow path, calculate intersections with lower strands (layer ordering)
@@ -654,7 +666,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         other_stroke_path = get_proper_masked_strand_path(other_strand)
                         logging.info(f"Using mask path for interaction with MaskedStrand {other_layer}")
                     except Exception as ee:
-                        logging.error(f"Error getting mask path for {other_layer}: {ee}")
+                        # logging.error(f"Error getting mask path for {other_layer}: {ee}")
+                        pass
 
                 # ---------------------------------------------------------
                 # NEW LOGIC: Include visible circle geometry from the underlying
@@ -678,7 +691,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     except Exception as oc_e:
                         logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
             except Exception as e:
-                logging.error(f"Could not create stroke path for other strand {other_layer}: {e}")
+                # logging.error(f"Could not create stroke path for other strand {other_layer}: {e}")
+                pass
                 continue
 
             for circle_path, center in circle_shadow_paths:
@@ -715,7 +729,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         if not inflated_rect.contains(center):
                             continue
                     except Exception as bc_err:
-                        logging.error(f"Error during improved circle bounding check between {this_layer} and {other_layer}: {bc_err}")
+                        # logging.error(f"Error during improved circle bounding check between {this_layer} and {other_layer}: {bc_err}")
+                        pass
 
                 # Subtract body path only if some area survives – otherwise the shadow would vanish when the strand leaves the joint
                 final_circle_path = QPainterPath(circle_path)
@@ -796,7 +811,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                     if not del_path.isEmpty():
                                                         subtraction_path_c = subtraction_path_c.subtracted(del_path)
                                             except Exception as del_ex:
-                                                logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub_c}': {del_ex}")
+                                                # logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub_c}': {del_ex}")
+                                                pass
 
                                     if not subtraction_path_c.isEmpty():
                                         intersection = intersection.subtracted(subtraction_path_c)
@@ -805,7 +821,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                              logging.info(f"Subtracted mask '{mask_layer_sub_c}' completely removed circle shadow intersection of '{this_layer}' on '{other_layer}'")
 
                                 except Exception as e_c:
-                                    logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
+                                    # logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
+                                    pass
                 # --- End Mask Subtraction ---
 
                 if not intersection.isEmpty():
@@ -837,7 +854,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # Draw all shadow paths at once using the faded effect (existing logic below)
     # ----------------------------------------------------------
     # Draw all shadow paths at once using the faded effect
-    logging.info(f"Shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}: count={len(all_shadow_paths)}, empty_paths={sum(1 for p in all_shadow_paths if p.isEmpty())}, non_empty={sum(1 for p in all_shadow_paths if not p.isEmpty())}")
+    # logging.info(f"Shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}: count={len(all_shadow_paths)}, empty_paths={sum(1 for p in all_shadow_paths if p.isEmpty())}, non_empty={sum(1 for p in all_shadow_paths if not p.isEmpty())}")
+
     if all_shadow_paths and logging.getLogger().isEnabledFor(logging.DEBUG):
         for i, path in enumerate(all_shadow_paths):
             if not path.isEmpty():
@@ -850,7 +868,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         elif len(all_shadow_paths) > 1:
              # This case might happen if the layer manager logic failed but fallback succeeded partially
              # Let's unite them just in case, though ideally it should be one path.
-             logging.warning(f"Expected one shadow path but found {len(all_shadow_paths)}, uniting them.")
+             # logging.warning(f"Expected one shadow path but found {len(all_shadow_paths)}, uniting them.")
              total_shadow_path = QPainterPath()
              for p in all_shadow_paths:
                  if total_shadow_path.isEmpty():
@@ -859,11 +877,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                      total_shadow_path = total_shadow_path.united(p)
         else:
              # This means all_shadow_paths was empty, log and return
-             logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
+             # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
              return # Nothing to draw
 
 
-        logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
+        # Reduced high-frequency logging for performance during moves
+        # logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
         base_color = color_to_use
         base_alpha = base_color.alpha()
@@ -875,9 +894,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
         # --- Add Logging --- 
         current_comp_mode = painter.compositionMode()
-        logging.info(f"DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty={total_shadow_path.isEmpty()}, bounds={total_shadow_path.boundingRect()}")
-        logging.info(f"DrawMaskShadow - Before Clip/Stroke: clip_path empty={clip_path.isEmpty()}, bounds={clip_path.boundingRect()}")
-        logging.info(f"DrawMaskShadow - Before Clip/Stroke: Painter composition mode={current_comp_mode}")
+        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty={total_shadow_path.isEmpty()}, bounds={total_shadow_path.boundingRect()}")
+        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: clip_path empty={clip_path.isEmpty()}, bounds={clip_path.boundingRect()}")
+        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: Painter composition mode={current_comp_mode}")
         # --- End Logging ---
 
         # --- Explicitly set composition mode before stroking --- 
@@ -910,18 +929,20 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     painter.setPen(pen)
                     painter.strokePath(total_shadow_path, pen) # Stroke the path outline
             except Exception as stroke_error:
-                logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
+                # logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
+                pass
             # --- End try...except ---
 
-            logging.info(f"Drew faded shadow stroke path with {num_steps} steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
+            # logging.info(f"Drew faded shadow stroke path with {num_steps} steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
         else:
-             logging.warning(f"Total shadow path became empty unexpectedly for strand {strand.layer_name}, cannot draw faded shadow.")
+             # logging.warning(f"Total shadow path became empty unexpectedly for strand {strand.layer_name}, cannot draw faded shadow.")
+             pass
 
         painter.restore() # Restore painter state (render hints, brush, composition mode)
 
     else:
         # ADDED: Create a fallback shadow path when no paths are found
-        logging.warning(f"No shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}, creating fallback")
+        # logging.warning(f"No shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}, creating fallback")
         # Create a simple shadow based on the strand's own path
         fallback_path = get_proper_masked_strand_path(strand)
         if not fallback_path.isEmpty():
@@ -947,9 +968,11 @@ def get_proper_masked_strand_path(strand):
                 logging.info(f"Using mask path for MaskedStrand {strand.layer_name if hasattr(strand, 'layer_name') else 'unknown'}")
                 return mask_path
             else:
-                logging.warning(f"Empty mask path for MaskedStrand, falling back to standard path")
+                # logging.warning(f"Empty mask path for MaskedStrand, falling back to standard path")
+                pass
         except Exception as e:
-            logging.error(f"Error getting mask path: {e}, falling back to standard path")
+            # logging.error(f"Error getting mask path: {e}, falling back to standard path")
+            pass
     
     # For normal strands or fallback, use the regular path
     if hasattr(strand, 'get_shadow_path'):
@@ -1027,8 +1050,9 @@ def build_rendered_geometry(strand):
 
         return result_path
     except Exception as e:
-        logging.error(
-            f"build_rendered_geometry: failed for {getattr(strand, 'layer_name', 'unknown')} – {e}"
-        )
+        # logging.error(
+        #     f"build_rendered_geometry: failed for {getattr(strand, 'layer_name', 'unknown')} – {e}"
+        # )
+        pass
         return QPainterPath()
 

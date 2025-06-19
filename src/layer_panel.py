@@ -11,6 +11,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, Q
 from functools import partial
 import logging
 from masked_strand import MaskedStrand
+from safe_logging import safe_info, safe_warning, safe_error, safe_exception
 from attached_strand import AttachedStrand
 from translations import translations
 from PyQt5.QtWidgets import (
@@ -163,7 +164,7 @@ class LayerPanel(QWidget):
         else:
             program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
             self.base_path = program_data_dir # AppDataLocation already includes the app name
-        logging.info(f"LayerPanel: Base path for data determined as: {self.base_path}")
+        safe_info(f"LayerPanel: Base path for data determined as: {self.base_path}")
 
         self.group_layer_manager = GroupLayerManager(parent=parent, layer_panel=self, canvas=self.canvas)
 
@@ -546,29 +547,29 @@ class LayerPanel(QWidget):
         self.left_layout.addWidget(self.mask_edit_label)
         self.mask_edit_label.hide()
 
-        logging.info("LayerPanel initialized")
+        safe_info("LayerPanel initialized")
 
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
-        logging.info("Starting refresh of layer panel")
+        safe_info("Starting refresh of layer panel")
         overlay = None  # Snapshot overlay that masks flicker on Windows
 
-        logging.info("refresh_layers called, redirecting to refresh()")
+        safe_info("refresh_layers called, redirecting to refresh()")
         self.refresh()
         # Reset canvas zoom and pan to original view
         self.canvas.reset_zoom()
     
     def refresh_layers_no_zoom(self):
         """Refresh the drawing of the layers without resetting zoom/pan. Used for strand attachment."""
-        logging.info("[FLASH_DEBUG] refresh_layers_no_zoom: Begin")
-        logging.info("refresh_layers_no_zoom called, redirecting to refresh()")
+        safe_info("[FLASH_DEBUG] refresh_layers_no_zoom: Begin")
+        safe_info("refresh_layers_no_zoom called, redirecting to refresh()")
         self.refresh()
         # Intentionally not resetting zoom to preserve state during strand attachment
     
     def refresh_after_attachment(self):
         """Complete refresh after strand attachment without resetting zoom/pan.
         This function does everything refresh_layers does except the zoom reset and overlay."""
-        logging.info("refresh_after_attachment called - refreshing without zoom reset and overlay")
+        safe_info("refresh_after_attachment called - refreshing without zoom reset and overlay")
         
         # Get the main window reference
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
@@ -800,7 +801,7 @@ class LayerPanel(QWidget):
         Handles MaskedStrand specific actions and common actions like Hide/Show.
         """
         if strand_index < 0 or strand_index >= len(self.canvas.strands):
-            logging.warning(f"show_layer_context_menu called with invalid index: {strand_index}")
+            safe_warning(f"show_layer_context_menu called with invalid index: {strand_index}")
             return
 
         strand = self.canvas.strands[strand_index]
@@ -1013,9 +1014,9 @@ class LayerPanel(QWidget):
 
     def toggle_lock_mode(self):
         """Toggle lock mode on/off and update UI accordingly."""
-        logging.info(f"toggle_lock_mode() called - button isChecked: {self.lock_layers_button.isChecked()}")
+        safe_info(f"toggle_lock_mode() called - button isChecked: {self.lock_layers_button.isChecked()}")
         self.lock_mode = self.lock_layers_button.isChecked()
-        logging.info(f"Set self.lock_mode to: {self.lock_mode}")
+        safe_info(f"Set self.lock_mode to: {self.lock_mode}")
         
         _ = translations[self.language_code]
         if self.lock_mode:
@@ -1074,7 +1075,7 @@ class LayerPanel(QWidget):
         """
         # Block layer selection if we're in mask editing mode
         if self.mask_editing:
-            logging.info("Layer selection blocked: Currently in mask edit mode")
+            safe_info("Layer selection blocked: Currently in mask edit mode")
             # Optionally show a temporary notification
             self.show_notification("Please exit mask edit mode first (Press ESC)")
             return
@@ -1092,23 +1093,23 @@ class LayerPanel(QWidget):
         elif self.lock_mode:
             # In lock mode, always handle locking/unlocking regardless of current mode
             if index in self.locked_layers:
-                logging.info(f"Unlocking strand at index {index}")
+                safe_info(f"Unlocking strand at index {index}")
                 self.locked_layers.remove(index)
                 # When unlocking, also deselect and unhighlight the strand
                 if 0 <= index < len(self.canvas.strands):
                     strand = self.canvas.strands[index]
                     strand.is_selected = False
-                    logging.info(f"Set strand.is_selected = False for strand {strand.layer_name}")
+                    safe_info(f"Set strand.is_selected = False for strand {strand.layer_name}")
                 # Clear canvas selection if this was the selected strand
                 if self.canvas.selected_strand_index == index:
-                    logging.info(f"Clearing canvas selection for strand index {index}")
+                    safe_info(f"Clearing canvas selection for strand index {index}")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
                     self.canvas.selected_attached_strand = None
                 # Uncheck the layer button
                 if 0 <= index < len(self.layer_buttons):
                     self.layer_buttons[index].setChecked(False)
-                    logging.info(f"Unchecked layer button for index {index}")
+                    safe_info(f"Unchecked layer button for index {index}")
                 # Update canvas to reflect deselection and unhighlighting
                 self.canvas.update()
                 self.update_layer_buttons_lock_state()
@@ -1124,23 +1125,23 @@ class LayerPanel(QWidget):
                 # Don't re-select the strand after unlocking
                 return
             else:
-                logging.info(f"Locking strand at index {index}")
+                safe_info(f"Locking strand at index {index}")
                 self.locked_layers.add(index)
                 # When locking, also deselect and unhighlight the strand if it's currently selected
                 if 0 <= index < len(self.canvas.strands):
                     strand = self.canvas.strands[index]
                     strand.is_selected = False
-                    logging.info(f"Set strand.is_selected = False for locked strand {strand.layer_name}")
+                    safe_info(f"Set strand.is_selected = False for locked strand {strand.layer_name}")
                 # Clear canvas selection if this was the selected strand
                 if self.canvas.selected_strand_index == index:
-                    logging.info(f"Clearing canvas selection for locked strand index {index}")
+                    safe_info(f"Clearing canvas selection for locked strand index {index}")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
                     self.canvas.selected_attached_strand = None
                 # Uncheck the layer button
                 if 0 <= index < len(self.layer_buttons):
                     self.layer_buttons[index].setChecked(False)
-                    logging.info(f"Unchecked layer button for locked index {index}")
+                    safe_info(f"Unchecked layer button for locked index {index}")
                 # Update canvas to reflect deselection
                 self.canvas.update()
                 self.update_layer_buttons_lock_state()
@@ -1288,12 +1289,12 @@ class LayerPanel(QWidget):
         if self.canvas:
             # Make sure the index is within bounds.
             if strand_index < 0 or strand_index >= len(self.canvas.strands):
-                logging.warning(f"request_edit_mask called with invalid index {strand_index}.")
+                safe_warning(f"request_edit_mask called with invalid index {strand_index}.")
                 return
 
             # Ensure the strand is actually a MaskedStrand before editing.
             if not isinstance(self.canvas.strands[strand_index], MaskedStrand):
-                logging.warning(f"request_edit_mask called on a non-masked strand at index {strand_index}.")
+                safe_warning(f"request_edit_mask called on a non-masked strand at index {strand_index}.")
                 return
 
             self.mask_editing = True
@@ -1324,7 +1325,7 @@ class LayerPanel(QWidget):
             if self.parent_window:
                 self.parent_window.disable_all_mainwindow_buttons()
 
-            logging.info(f"Entered mask edit mode for strand {strand_index}")
+            safe_info(f"Entered mask edit mode for strand {strand_index}")
             self.canvas.enter_mask_edit_mode(strand_index)
             self.canvas.setFocus()
 
@@ -1358,7 +1359,7 @@ class LayerPanel(QWidget):
             self.parent_window.exit_mask_edit_mode()
         
         _ = translations[self.language_code]
-        logging.info("Exited mask edit mode")
+        safe_info("Exited mask edit mode")
         self.show_notification(_['mask_edit_mode_exited'])
         self.update()
 
@@ -1366,7 +1367,7 @@ class LayerPanel(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
             self.undo_redo_manager._last_save_time = 0
-            logging.info("Saving state after exiting mask edit mode")
+            safe_info("Saving state after exiting mask edit mode")
             self.undo_redo_manager.save_state()
         # --- END ADD ---
 

@@ -1119,7 +1119,8 @@ class Strand:
         stroke_path = stroke_stroker.createStroke(path)
 
         # Draw shadow for overlapping strands - using the utility function
-        logging.info(f"Strand {self.layer_name}: Before shadow save()")
+        # Reduced high-frequency logging for performance
+        # logging.info(f"Strand {self.layer_name}: Before shadow save()")
         painter.save() # SAVE 2
         try:
             # Import is inside try block to handle potential import errors
@@ -1146,7 +1147,8 @@ class Strand:
             logging.error(f"Error applying strand shadow: {e}")
         finally:
             painter.restore() # RESTORE 2
-            logging.info(f"Strand {self.layer_name}: After shadow restore()")
+            # Reduced high-frequency logging for performance
+        # logging.info(f"Strand {self.layer_name}: After shadow restore()")
             # Draw dashed extension lines under the strand (below base paths)
             painter.save()
             # Setup extension parameters from canvas or defaults
@@ -1262,13 +1264,15 @@ class Strand:
         fill_path = fill_stroker.createStroke(path)
 
         # Draw the stroke path with the stroke color
-        logging.info(f"Strand {self.layer_name}: Before drawing stroke_path")
+        # Reduced high-frequency logging for performance
+        # logging.info(f"Strand {self.layer_name}: Before drawing stroke_path")
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.stroke_color)
         painter.drawPath(stroke_path)
 
         # Draw the fill path with the strand's color
-        logging.info(f"Strand {self.layer_name}: Before drawing fill_path")
+        # Reduced high-frequency logging for performance
+        # logging.info(f"Strand {self.layer_name}: Before drawing fill_path")
         painter.setBrush(self.color)
         painter.drawPath(fill_path)
 

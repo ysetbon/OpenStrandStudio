@@ -1419,7 +1419,8 @@ class StrandDrawingCanvas(QWidget):
         if self.show_grid:
             self.draw_grid(painter)
 
-        logging.info(f"Painting {len(self.strands)} strands")
+        # Reduced high-frequency logging for performance
+        # logging.info(f"Painting {len(self.strands)} strands")
 
         # Check if we're in a mode that supports draw_only_affected_strand
         draw_all_strands = True
@@ -1445,18 +1446,21 @@ class StrandDrawingCanvas(QWidget):
         # Draw ALL existing strands first (background)
         if draw_all_strands:
             for strand in self.strands:
-                logging.info(f"Drawing strand '{strand.layer_name}'")
+                # Reduced high-frequency logging for performance
+            # logging.info(f"Drawing strand '{strand.layer_name}'")
                 if not hasattr(strand, 'canvas'):
                     strand.canvas = self  # Ensure all strands have canvas reference
                 # --- MODIFIED: Check both selected_strand and selected_attached_strand --- 
                 is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand)
                 # Only highlight selected strand if we're not in mask mode
                 if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode):
-                    logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
+                    # Reduced high-frequency logging for performance
+            # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)
                 else:
                     strand.draw(painter)
-                    logging.info(f"Drawing strand: {strand.layer_name}")
+                    # Reduced high-frequency logging for performance
+                # logging.info(f"Drawing strand: {strand.layer_name}")
         else:
             # When optimizing, we only draw the affected strand and connected strands
             affected_strand = None
@@ -1899,10 +1903,11 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(Qt.NoBrush)
                     painter.drawEllipse(eraser_rect)
 
-        logging.info(
-            f"Paint event completed. Selected strand: "
-            f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
-        )
+        # Reduced high-frequency logging for performance during moves
+        # logging.info(
+        #     f"Paint event completed. Selected strand: "
+        #     f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
+        # )
 
         # Restore painter state before ending (to undo zoom transformation)
         painter.restore()
@@ -2324,8 +2329,9 @@ class StrandDrawingCanvas(QWidget):
                     elif not has_circle:
                         logging.info(f"Skipping C-shape for {strand.layer_name} - no circle")
                     else:
-                        logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
-                        
+                        # Reduced high-frequency logging for performance during moves
+                        # logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
+                        pass
                 if has_circle and not is_moving_control_point and not is_strand_locked:
                     # Save painter state
                     painter.save()
@@ -2794,7 +2800,7 @@ class StrandDrawingCanvas(QWidget):
                 self.current_mode.user_deselected_all = False
 
         if index is not None and 0 <= index < len(self.strands):
-            print(f"selected_strand = {self.strands[index]}")
+            # print(f"selected_strand = {self.strands[index]}")
             self.selected_strand = self.strands[index]
             self.selected_strand.is_selected = True
             self.selected_strand_index = index
@@ -3240,7 +3246,8 @@ class StrandDrawingCanvas(QWidget):
         Args:
             mode (str): The mode to set. Can be "attach", "move", "select", "mask", "angle_adjust", "new_strand", "rotate", or "new_strand".
         """
-        logging.info(f"Setting mode to {mode}. Current selected strand: {self.selected_strand}")
+        # Reduced logging for performance during mode changes
+        # logging.info(f"Setting mode to {mode}. Current selected strand: {self.selected_strand}")
         # Deactivate the current mode if it has a deactivate method
         if hasattr(self.current_mode, 'deactivate'):
             self.current_mode.deactivate()
@@ -3293,7 +3300,8 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
         # Log the mode change
-        logging.info(f"Canvas mode changed to: {mode}")
+        # Reduced logging for performance during operations
+        # logging.info(f"Canvas mode changed to: {mode}")
         logging.info(f"Mode set to {mode}. Selected strand after mode change: {self.selected_strand}")
 
 
@@ -4117,10 +4125,10 @@ class StrandDrawingCanvas(QWidget):
             painter.setPen(control_line_pen)
             painter.drawLine(strand.start, strand.control_point1)
             if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                print("control_point2 is close to start") # Keep debug print?
+                # print("control_point2 is close to start") # Keep debug print?
                 painter.drawLine(strand.start, strand.control_point2)
             else:
-                print("control_point2 is not close to start") # Keep debug print?
+                # print("control_point2 is not close to start") # Keep debug print?
                 painter.drawLine(strand.end, strand.control_point2)
 
             # Draw center control point lines if enabled
@@ -4492,7 +4500,8 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(self, '_logging_attachment_status'):
                 return  # Prevent recursive logging
             self._logging_attachment_status = True
-            logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
+            # Reduced high-frequency logging for performance
+        # logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
             delattr(self, '_logging_attachment_status')
         except Exception as e:
             logging.error(f"Error getting connections: {e}")
@@ -4513,7 +4522,8 @@ class StrandDrawingCanvas(QWidget):
         # Skip detailed logging to prevent recursion
         if not hasattr(self, '_logging_attachment_status_detailed'):
             self._logging_attachment_status_detailed = True
-            logging.info(f"update_attachment_statuses: Current strands in groups: {[(prefix, [s.layer_name for s in strands]) for prefix, strands in strand_groups.items()]}")
+            # Reduced high-frequency logging for performance
+        # logging.info(f"update_attachment_statuses: Current strands in groups: {[(prefix, [s.layer_name for s in strands]) for prefix, strands in strand_groups.items()]}")
             delattr(self, '_logging_attachment_status_detailed')
 
         # Second pass: Update based on connections from layer_state_manager

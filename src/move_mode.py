@@ -10,6 +10,41 @@ from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 import os # Required for path normalization
 
+class PerformanceLogger:
+    """Logger that can suppress verbose logging during performance-critical operations."""
+    
+    def __init__(self):
+        self.suppress_move_logging = True  # Suppress verbose logging during moves by default
+        self.original_level = logging.getLogger().level
+        
+    def suppress_during_move(self, suppress=True):
+        """Temporarily change logging level to reduce performance impact during moves."""
+        if suppress and self.suppress_move_logging:
+            # Set to WARNING level to suppress INFO logs during movement
+            # Apply to root logger and all existing loggers
+            logging.getLogger().setLevel(logging.WARNING)
+            # Also suppress specific loggers that might have their own levels
+            for name in logging.Logger.manager.loggerDict:
+                logger = logging.getLogger(name)
+                if logger.level < logging.WARNING:
+                    logger.setLevel(logging.WARNING)
+        else:
+            # Restore original logging level
+            logging.getLogger().setLevel(self.original_level)
+            # Restore other loggers to INFO level
+            for name in logging.Logger.manager.loggerDict:
+                logger = logging.getLogger(name)
+                if logger.level == logging.WARNING:
+                    logger.setLevel(logging.INFO)
+            
+    def log_if_allowed(self, level, message):
+        """Log a message only if not suppressing move logging."""
+        if not self.suppress_move_logging or level >= logging.WARNING:
+            logging.log(level, message)
+
+# Global performance logger instance
+perf_logger = PerformanceLogger()
+
 class MoveMode:
     def __init__(self, canvas):
         """
@@ -369,7 +404,8 @@ class MoveMode:
             from PyQt5.QtCore import Qt
             import logging
             
-            logging.info("MoveMode: Optimized paint event triggered")
+            if not perf_logger.suppress_move_logging:
+                logging.info("MoveMode: Optimized paint event triggered")
             
             # Access the MoveMode instance through the stored reference
             move_mode = move_mode_ref
@@ -563,7 +599,8 @@ class MoveMode:
                     
                     # Draw the entire canvas without truly moving strands
                     # For edited masks, we need to ensure the original paintEvent is called with the right parameters
-                    logging.info("MoveMode: Drawing background with original_paintEvent")
+                    if not perf_logger.suppress_move_logging:
+                        logging.info("MoveMode: Drawing background with original_paintEvent")
                     self_canvas.original_paintEvent(event)
                     
                     # Mark the cache as valid
@@ -595,7 +632,8 @@ class MoveMode:
 
             try:
                 if hasattr(self_canvas, 'background_cache'):
-                    logging.info("MoveMode: Drawing background cache")
+                    if not perf_logger.suppress_move_logging:
+                        logging.info("MoveMode: Drawing background cache")
                     # Draw background cache without transformation since it was pre-rendered
                     painter.save()
                     painter.resetTransform()
@@ -608,21 +646,24 @@ class MoveMode:
                 truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
 
                 # --- ADD LOGGING HERE ---
-                logging.info(f"MoveMode (Optimized Paint): Drawing truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
+                if not perf_logger.suppress_move_logging:
+                    logging.info(f"MoveMode (Optimized Paint): Drawing truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
                 # --- END LOGGING ---
 
                 # --- DRAW C-SHAPE EARLY --- 
                 is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
                 affected_strand = getattr(move_mode, 'affected_strand', None)
                 if is_moving_strand_point and affected_strand and affected_strand.is_selected:
-                    logging.info(f"MoveMode: Drawing C-shape EARLY for affected: {affected_strand.layer_name}")
+                    if not perf_logger.suppress_move_logging:
+                        logging.info(f"MoveMode: Drawing C-shape EARLY for affected: {affected_strand.layer_name}")
                 # --- END DRAW C-SHAPE EARLY ---
 
                 # Now draw only the truly moving strands on top - maintain their original relative order
                 sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
 
                 # --- DRAW ALL MOVING STRAND BODIES (AFTER C-SHAPE) --- 
-                logging.info("MoveMode: Drawing moving strand bodies")
+                if not perf_logger.suppress_move_logging:
+                    logging.info("MoveMode: Drawing moving strand bodies")
                 for strand in sorted_moving_strands:
                     painter.save() # Ensure clean state for each strand
                     try:
@@ -634,7 +675,8 @@ class MoveMode:
                             # Check if this is the main affected strand and if it should be highlighted
                             is_affected_and_selected = (strand == move_mode.affected_strand and strand.is_selected)
                             if is_affected_and_selected:
-                                logging.info(f"MoveMode: Drawing C-shape highlight for affected strand: {strand.layer_name}")
+                                if not perf_logger.suppress_move_logging:
+                                    logging.info(f"MoveMode: Drawing C-shape highlight for affected strand: {strand.layer_name}")
                                 move_mode_ref.draw_c_shape_for_strand(painter, strand)
                             # --- END ADD C-SHAPE DRAW --- 
                     finally:
@@ -645,7 +687,8 @@ class MoveMode:
                 is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
                 affected_strand = getattr(move_mode, 'affected_strand', None)
                 if is_moving_strand_point and affected_strand and affected_strand.is_selected:
-                    logging.info(f"MoveMode: Drawing C-shape POST bodies for affected: {affected_strand.layer_name}")
+                    if not perf_logger.suppress_move_logging:
+                        logging.info(f"MoveMode: Drawing C-shape POST bodies for affected: {affected_strand.layer_name}")
                 # --- END POST-BODY C-SHAPE DRAW ---
                 
                 # Special handling for MaskedStrand (might be redundant if included in truly_moving_strands)
@@ -677,7 +720,8 @@ class MoveMode:
                 
                 # Draw the yellow selection rectangle on top of everything else
                 if move_mode.is_moving and move_mode.selected_rectangle and move_mode.affected_strand:
-                    logging.info("MoveMode: Drawing selection square")
+                    if not perf_logger.suppress_move_logging:
+                        logging.info("MoveMode: Drawing selection square")
                     move_mode.draw_selection_square(painter)
                 
                 # Draw any interaction elements
@@ -687,7 +731,8 @@ class MoveMode:
                 # Draw control points only for the moving strands
                 if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points:
                     if hasattr(self_canvas, 'draw_control_points'):
-                        logging.info("MoveMode: Drawing control points")
+                        if not perf_logger.suppress_move_logging:
+                            logging.info("MoveMode: Drawing control points")
                         # Save original strands
                         original_strands = list(self_canvas.strands)
                         
@@ -720,7 +765,8 @@ class MoveMode:
                     painter.end()
                 
             # Log completion
-            logging.info("MoveMode: Optimized paint event completed")
+            if not perf_logger.suppress_move_logging:
+                logging.info("MoveMode: Optimized paint event completed")
         
         # Replace with our optimized paint event
         self.canvas.paintEvent = optimized_paint_event.__get__(self.canvas, type(self.canvas))
@@ -1224,6 +1270,10 @@ class MoveMode:
         
         # Invalidate connection cache when movement ends
         self.invalidate_connection_cache()
+        
+        # Restore normal logging level when movement ends
+        perf_logger.suppress_during_move(False)
+        
         self.mouse_offset = QPointF(0, 0)
         if hasattr(self, 'move_timer'):
             self.move_timer.stop()
@@ -1714,6 +1764,9 @@ class MoveMode:
 
         # Build connection cache for performance optimization
         self.build_connection_cache()
+        
+        # Suppress verbose logging during movement for better performance
+        perf_logger.suppress_during_move(True)
 
         # Rest of the existing function
         self.moving = True
@@ -2952,9 +3005,9 @@ class MoveMode:
         Args:
             event (QMouseEvent): The mouse event.
         """
-        # --- ADDED: Log current state on move ---
+        # --- ADDED: Log current state on move (only if not suppressing) ---
         import logging
-        if self.is_moving:
+        if self.is_moving and not perf_logger.suppress_move_logging:
             logging.info(f"MouseMove Check: Affected={self.affected_strand.layer_name if self.affected_strand else 'None'}, Side={self.moving_side}")
         # --- END ADDED ---
 

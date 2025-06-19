@@ -384,7 +384,7 @@ class AttachedStrand(Strand):
             # No transformation, use device size as fallback
             if hasattr(painter.device(), 'width') and hasattr(painter.device(), 'height'):
                 fallback_rect = QRectF(0, 0, painter.device().width(), painter.device().height())
-                logging.info(f"  No transformation, using device size as bounds: {fallback_rect}")
+                # logging.info(f"  No transformation, using device size as bounds: {fallback_rect}")
                 return fallback_rect
             else:
                 # Final fallback
@@ -396,7 +396,8 @@ class AttachedStrand(Strand):
         """Return the bounding rectangle of the strand."""
         # Get the path representing the strand as a cubic Bézier curve
         path = self.get_path()
-        logging.info(f"[AttachedStrand.boundingRect] Called for strand {getattr(self, 'layer_name', 'unknown')}")
+        # Removed high-frequency logging for performance during moves
+        # logging.info(f"[AttachedStrand.boundingRect] Called for strand {getattr(self, 'layer_name', 'unknown')}")
 
         # Create a stroker for the stroke path with squared ends
         stroke_stroker = QPainterPathStroker()
@@ -407,10 +408,10 @@ class AttachedStrand(Strand):
 
         # Include side lines in the bounding rect
         bounding_rect = stroke_path.boundingRect()
-        logging.info(f"  Initial stroke path bounds: {bounding_rect}")
+        # logging.info(f"  Initial stroke path bounds: {bounding_rect}")
         bounding_rect = bounding_rect.united(QRectF(self.start_line_start, self.start_line_end))
         bounding_rect = bounding_rect.united(QRectF(self.end_line_start, self.end_line_end))
-        logging.info(f"  After including side lines: {bounding_rect}")
+        # logging.info(f"  After including side lines: {bounding_rect}")
 
         # Adjust for any pen widths or additional drawing elements if necessary
         # Make bounding rect slightly larger to accommodate hidden dashed line
@@ -419,7 +420,7 @@ class AttachedStrand(Strand):
             adjustment = max(5, self.stroke_width * 2)
             bounding_rect = bounding_rect.adjusted(-adjustment, -adjustment, adjustment, adjustment)
 
-        logging.info(f"  Final bounding rect: {bounding_rect}")
+        # logging.info(f"  Final bounding rect: {bounding_rect}")
         return bounding_rect
     # Calculate the angle based on the tangent at the start point
     def calculate_start_tangent(self):
@@ -454,15 +455,16 @@ class AttachedStrand(Strand):
         
         # Log drawing info
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0
-        logging.info(f"[AttachedStrand.draw] Drawing strand {getattr(self, 'layer_name', 'unknown')} at zoom {zoom_factor}")
-        logging.info(f"  Start: {self.start}, End: {self.end}")
-        logging.info(f"  Painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
-        logging.info(f"  Painter window: {painter.window() if hasattr(painter, 'window') else 'No window'}")
+        # Reduced high-frequency logging for performance during moves
+        # logging.info(f"[AttachedStrand.draw] Drawing strand {getattr(self, 'layer_name', 'unknown')} at zoom {zoom_factor}")
+        # logging.info(f"  Start: {self.start}, End: {self.end}")
+        # logging.info(f"  Painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
+        # logging.info(f"  Painter window: {painter.window() if hasattr(painter, 'window') else 'No window'}")
 
         # When zoomed (either in or out), use direct drawing without temporary image optimization
         # to avoid clipping issues that can occur with bounds calculations
         if zoom_factor != 1.0:
-            logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
+            # logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
             self._draw_direct(painter)
             painter.restore() # Top Level Restore
             return

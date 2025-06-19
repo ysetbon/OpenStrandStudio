@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
+from safe_logging import safe_info, safe_warning, safe_error, safe_exception
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
 from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
@@ -733,10 +734,10 @@ class UndoRedoManager(QObject):
                          filename,
                          self.canvas)
             self.state_saved.emit(step)
-            logging.info(f"State saved successfully to {filename}")
+            safe_info(f"State saved successfully to {filename}")
             return True
         except Exception as e:
-            logging.exception(f"Error saving state to {filename}: {str(e)}")
+            safe_exception(f"Error saving state to {filename}: {str(e)}")
             return False
 
     def undo(self):
@@ -3114,7 +3115,7 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
         def enhanced_mouse_release_suppression(event):
             # --- ADD: Set suppression flag ---
             setattr(undo_redo_manager, '_suppress_intermediate_saves', True)
-            logging.info("Attach Mode Start: Set _suppress_intermediate_saves = True")
+            # logging.info("Attach Mode Start: Set _suppress_intermediate_saves = True")
 
             try:
                 # Call the original function first to perform the attach/creation
@@ -3124,7 +3125,7 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                 # Use QTimer.singleShot to ensure flag is cleared *after* current event processing finishes
                 QTimer.singleShot(0, lambda: (
                     setattr(undo_redo_manager, '_suppress_intermediate_saves', False),
-                    logging.info("Attach Mode End (Delayed): Set _suppress_intermediate_saves = False")
+                    # logging.info("Attach Mode End (Delayed): Set _suppress_intermediate_saves = False")
                 ))
 
         # Replace the original function with our suppression-handling version

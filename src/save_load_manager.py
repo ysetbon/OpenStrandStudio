@@ -5,6 +5,52 @@ from PyQt5.QtGui import QColor
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
+import sys
+from safe_logging import safe_info, safe_warning, safe_error, safe_exception
+
+# Custom JSON encoder to handle circular references
+class SafeJSONEncoder(json.JSONEncoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._visited = set()
+        
+    def encode(self, o):
+        self._visited.clear()
+        return super().encode(o)
+        
+    def default(self, obj):
+        # Check if we've already visited this object
+        obj_id = id(obj)
+        if obj_id in self._visited:
+            # Return a placeholder for circular reference
+            return f"<circular reference to {type(obj).__name__}>"
+        self._visited.add(obj_id)
+        
+        # Handle QPointF
+        if hasattr(obj, 'x') and hasattr(obj, 'y') and callable(obj.x) and callable(obj.y):
+            return {"x": obj.x(), "y": obj.y()}
+        
+        # Handle QColor
+        if hasattr(obj, 'red') and hasattr(obj, 'green') and hasattr(obj, 'blue') and hasattr(obj, 'alpha'):
+            return {"r": obj.red(), "g": obj.green(), "b": obj.blue(), "a": obj.alpha()}
+            
+        # For other objects, try to return their dict representation
+        if hasattr(obj, '__dict__'):
+            # Filter out non-serializable attributes
+            filtered_dict = {}
+            excluded_attrs = {'parent', '_parent', 'canvas', 'layer_panel', 'undo_redo_manager'}
+            for key, value in obj.__dict__.items():
+                if key not in excluded_attrs:
+                    try:
+                        # Test if the value is JSON serializable
+                        json.dumps(value, cls=SafeJSONEncoder)
+                        filtered_dict[key] = value
+                    except:
+                        # Skip non-serializable values
+                        pass
+            return filtered_dict
+            
+        return super().default(obj)
 
 
 
@@ -47,6 +93,12 @@ def serialize_point(point):
     return {"x": point.x(), "y": point.y()}
 
 def serialize_strand(strand, canvas, index=None):
+    # Create a copy of the strand's __dict__ but exclude non-serializable attributes
+    excluded_attrs = {'parent', '_parent', 'canvas', 'layer_panel', 'undo_redo_manager'}
+    
+    # Debug logging
+    logging.info(f"Serializing strand {index}: type={type(strand).__name__}, layer_name={getattr(strand, 'layer_name', 'Unknown')}")
+    
     data = {
         "type": type(strand).__name__,
         "index": index,
@@ -101,6 +153,12 @@ def serialize_strand(strand, canvas, index=None):
             # Fallback or default if attribute doesn't exist (should exist based on constructor)
             data["attachment_side"] = 0 # Default to start side if missing, though this indicates an issue
             logging.warning(f"attachment_side attribute missing for AttachedStrand {strand.layer_name}, defaulting to 0")
+        
+        # Store angle and length for AttachedStrands
+        if hasattr(strand, 'angle'):
+            data["angle"] = strand.angle
+        if hasattr(strand, 'length'):
+            data["length"] = strand.length
 
     if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
         data["control_points"] = [
@@ -123,7 +181,9 @@ def serialize_strand(strand, canvas, index=None):
 
 def save_strands(strands, groups, filename, canvas):
     selected_strand_name = canvas.selected_strand.layer_name if canvas.selected_strand else None
-    logging.info(f"Saving state with selected strand: {selected_strand_name}")
+    
+    # FIXED: Use safe logging to prevent recursion
+    safe_info(f"Saving state with selected strand: {selected_strand_name}")
     
     # Get locked layers from layer panel if available
     locked_layers = set()
@@ -131,19 +191,30 @@ def save_strands(strands, groups, filename, canvas):
     if hasattr(canvas, 'layer_panel') and canvas.layer_panel:
         if hasattr(canvas.layer_panel, 'locked_layers'):
             locked_layers = canvas.layer_panel.locked_layers.copy()
-            logging.info(f"save_strands: Found locked_layers = {locked_layers}")
+            safe_info(f"save_strands: Found locked_layers = {locked_layers}")
         else:
-            logging.warning("save_strands: layer_panel has no locked_layers attribute")
+            safe_warning("save_strands: layer_panel has no locked_layers attribute")
         if hasattr(canvas.layer_panel, 'lock_mode'):
             lock_mode = canvas.layer_panel.lock_mode
-            logging.info(f"save_strands: Found lock_mode = {lock_mode}")
+            safe_info(f"save_strands: Found lock_mode = {lock_mode}")
         else:
-            logging.warning("save_strands: layer_panel has no lock_mode attribute")
+            safe_warning("save_strands: layer_panel has no lock_mode attribute")
     else:
-        logging.warning("save_strands: canvas has no layer_panel or layer_panel is None")
+        safe_warning("save_strands: canvas has no layer_panel or layer_panel is None")
+    
+    # Serialize strands with better error handling
+    serialized_strands = []
+    for i, strand in enumerate(strands):
+        try:
+            serialized = serialize_strand(strand, canvas, i)
+            serialized_strands.append(serialized)
+        except Exception as e:
+            logging.error(f"Error serializing strand {i} ({strand.layer_name}): {str(e)}")
+            # Skip this strand if it can't be serialized
+            continue
     
     data = {
-        "strands": [serialize_strand(strand, canvas, i) for i, strand in enumerate(strands)],
+        "strands": serialized_strands,
         "groups": serialize_groups(groups),
         "selected_strand_name": selected_strand_name,  # Add selected strand name
         "locked_layers": list(locked_layers),  # Add locked layers information
@@ -151,8 +222,19 @@ def save_strands(strands, groups, filename, canvas):
         "shadow_enabled": getattr(canvas, 'shadow_enabled', True),  # Add shadow button state
         "show_control_points": getattr(canvas, 'show_control_points', False),  # Add control points button state
     }
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=2)
+    
+    try:
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2, cls=SafeJSONEncoder)
+    except Exception as e:
+        logging.error(f"Error saving to JSON file {filename}: {str(e)}")
+        # Try to save with no indentation as a fallback
+        try:
+            with open(filename, 'w') as f:
+                json.dump(data, f, cls=SafeJSONEncoder)
+        except Exception as e2:
+            logging.error(f"Failed to save even without indentation: {str(e2)}")
+            raise
     logging.info(f"Saved strands and groups to {filename}")
 
 def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):

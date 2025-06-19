@@ -53,13 +53,48 @@ If you want to build the application from source code:
    - Install PyInstaller: `pip install pyinstaller`
    - Make sure you have the source files (main.py, box_stitch.ico, settings_icon.png)
 
-2. **Build Command**
+2. **IMPORTANT: Disable Logging for Production Build**
+   
+   **Before building the executable, you MUST disable all logging to prevent performance issues and log file creation:**
+   
+   - Open `src/main.py` in a text editor
+   - Find this line near the top (around line 12): 
+     ```python
+     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+     ```
+   - Replace it with:
+     ```python
+     logging.basicConfig(level=logging.CRITICAL + 1, format='%(asctime)s - %(levelname)s - %(message)s')
+     ```
+   
+   **OR for complete logging removal:**
+   - Comment out or delete ALL logging configuration sections (lines ~15-230) including:
+     - MoveModeFilter and move_mode logging setup
+     - UndoRedoFilter and undo_redo logging setup  
+     - StrandCreationFilter and strand_creation logging setup
+     - MaskedStrandFilter and masked_strand logging setup
+     - MaskShadowIssueFilter and mask_shadow_issues logging setup
+     - CanvasBoundsFilter and canvas_bounds logging setup
+   
+   **This prevents:**
+   - Creation of 6+ log files (move_mode.log, undo_redo.log, etc.)
+   - Performance degradation from file I/O operations
+   - Disk space usage from extensive logging
+   - Any logging output in the final executable
+
+3. **Build Command**
    - Open a command prompt in the source directory
    - Run the following command:
    ```
    pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." main.py
    ```
    - The executable will be created in the `dist` folder
+
+4. **Verify No Logging**
+   - Test the built executable to ensure:
+     - No .log files are created in the executable directory
+     - No console output appears
+     - Application runs smoothly without performance issues
 
 ## Support
 

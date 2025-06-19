@@ -402,15 +402,15 @@ class LayerPanel(QWidget):
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
         # Delete Strand button
-        self.delete_strand_button = QPushButton("Delete Strand (beta)")
+        self.delete_strand_button = QPushButton("Delete Strand")
         self.delete_strand_button.setStyleSheet("""
             QPushButton {
-                background-color: #FF6B6B;
                 font-weight: bold;
                 color: black;
+                background-color: #FF6B6B;
                 border: 1px solid #888;
+                padding: 5px 10px;
                 border-radius: 4px;
-                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #FF4C4C; /* Lighter red on hover */
@@ -425,7 +425,34 @@ class LayerPanel(QWidget):
             }
         """)
         self.delete_strand_button.setEnabled(False)
-        self.delete_strand_button.clicked.connect(self.request_delete_strand)
+        
+        # Add debugging for mouse events on the button
+        def debug_button_click():
+            logging.info("=== DELETE BUTTON CLICKED ===")
+            self.request_delete_strand()
+            
+        def debug_button_press(event):
+            logging.info(f"=== DELETE BUTTON PRESS EVENT === at {event.pos()}")
+            
+        def debug_button_release(event):
+            logging.info(f"=== DELETE BUTTON RELEASE EVENT === at {event.pos()}")
+            
+        # Override button events for debugging
+        original_mousePressEvent = self.delete_strand_button.mousePressEvent
+        original_mouseReleaseEvent = self.delete_strand_button.mouseReleaseEvent
+        
+        def new_mousePressEvent(event):
+            debug_button_press(event)
+            original_mousePressEvent(event)
+            
+        def new_mouseReleaseEvent(event):
+            debug_button_release(event)
+            original_mouseReleaseEvent(event)
+            
+        self.delete_strand_button.mousePressEvent = new_mousePressEvent
+        self.delete_strand_button.mouseReleaseEvent = new_mouseReleaseEvent
+        
+        self.delete_strand_button.clicked.connect(debug_button_click)
 
         # Deselect All button
         self.deselect_all_button = QPushButton("Deselect All")
@@ -677,13 +704,18 @@ class LayerPanel(QWidget):
                     background-color: #FF6B6B;
                     border: 1px solid #888;
                     padding: 5px 10px;
-                    border-radius: 5px;
+                    border-radius: 4px;
                 }
                 QPushButton:hover {
                     background-color: #FF4C4C; /* Lighter red on hover */
                 }
                 QPushButton:pressed {
                     background-color: #FF0000; /* Darker red on click */
+                }
+                QPushButton:disabled {
+                    background-color: #D3D3D3; /* Gray background when disabled */
+                    color: #666666; /* Darker gray text when disabled */
+                    border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
             # Apply theme to refresh button
@@ -707,13 +739,18 @@ class LayerPanel(QWidget):
                     background-color: #FF6B6B;
                     border: 1px solid #888;
                     padding: 5px 10px;
-                    border-radius: 5px;
+                    border-radius: 4px;
                 }
                 QPushButton:hover {
                     background-color: #FF4C4C; /* Lighter red on hover */
                 }
                 QPushButton:pressed {
                     background-color: #FF0000; /* Darker red on click */
+                }
+                QPushButton:disabled {
+                    background-color: #D3D3D3; /* Gray background when disabled */
+                    color: #666666; /* Darker gray text when disabled */
+                    border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
             # Apply theme to refresh button
@@ -735,13 +772,18 @@ class LayerPanel(QWidget):
                     background-color: #FF6B6B;
                     border: 1px solid #888;
                     padding: 5px 10px;
-                    border-radius: 5px;
+                    border-radius: 4px;
                 }
                 QPushButton:hover {
                     background-color: #FF4C4C; /* Lighter red on hover */
                 }
                 QPushButton:pressed {
                     background-color: #FF0000; /* Darker red on click */
+                }
+                QPushButton:disabled {
+                    background-color: #D3D3D3; /* Gray background when disabled */
+                    color: #666666; /* Darker gray text when disabled */
+                    border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
             # Apply theme to refresh button
@@ -763,13 +805,18 @@ class LayerPanel(QWidget):
                     background-color: #FF6B6B;
                     border: 1px solid #888;
                     padding: 5px 10px;
-                    border-radius: 5px;
+                    border-radius: 4px;
                 }
                 QPushButton:hover {
                     background-color: #FF4C4C; /* Lighter red on hover */
                 }
                 QPushButton:pressed {
                     background-color: #FF0000; /* Darker red on click */
+                }
+                QPushButton:disabled {
+                    background-color: #D3D3D3; /* Gray background when disabled */
+                    color: #666666; /* Darker gray text when disabled */
+                    border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
             # Apply theme to refresh button
@@ -1035,9 +1082,8 @@ class LayerPanel(QWidget):
             self.deselect_all_button.setText(_['deselect_all'])
             # Re-enable new strand and delete strand buttons when exiting lock mode
             self.add_new_strand_button.setEnabled(True)
-            # Only enable delete button if there's a selected strand
-            selected_button = next((button for button in self.layer_buttons if button.isChecked()), None)
-            self.delete_strand_button.setEnabled(selected_button is not None)
+            # Evaluate delete button state based on current selection
+            self.update_delete_button_state()
 
         self.update_layer_buttons_lock_state()
         self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
@@ -1407,12 +1453,35 @@ class LayerPanel(QWidget):
     def enable_controls(self):
         """Re-enable controls after mask editing."""
         self.add_new_strand_button.setEnabled(True)
-        self.delete_strand_button.setEnabled(True)
         self.draw_names_button.setEnabled(True)
         self.lock_layers_button.setEnabled(True)
         self.deselect_all_button.setEnabled(True)
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(True)
+
+    def update_delete_button_state(self):
+        """Update the delete button state based on the currently selected strand's deletability."""
+            
+        selected_index = self.get_selected_layer()
+        if (selected_index is not None and 
+            selected_index < len(self.layer_buttons) and 
+            selected_index < len(self.canvas.strands)):
+            
+            selected_strand = self.canvas.strands[selected_index]
+            # Use the same criteria as in update_layer_button_states
+            is_deletable = not all(selected_strand.has_circles)
+            
+            # Keep delete button disabled if in lock mode
+            if self.lock_mode:
+                self.delete_strand_button.setEnabled(False)
+            else:
+                self.delete_strand_button.setEnabled(is_deletable)
+            # Force visual update of the button
+            self.delete_strand_button.update()
+        else:
+            # No strand selected, disable delete button (also keep disabled in lock mode)
+            self.delete_strand_button.setEnabled(False)
+            self.delete_strand_button.update()
 
     def show_notification(self, message, duration=2000):
         """Show a temporary notification message."""
@@ -1441,7 +1510,6 @@ class LayerPanel(QWidget):
         selected_button = next((button for button in self.layer_buttons if button.isChecked()), None)
         if selected_button:
             strand_name = selected_button.text()
-            logging.info(f"Selected strand for deletion: {strand_name}")
             
             # Find the corresponding strand in the canvas
             strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
@@ -1513,7 +1581,6 @@ class LayerPanel(QWidget):
             logging.info(f"Removed layer button: {button.text()}")
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand, renumber=False):
-        logging.info(f"Starting update_after_deletion: deleted_set_number={deleted_set_number}, strands_removed={strands_removed}, is_main_strand={is_main_strand}, renumber={renumber}")
 
         # Clear selection first to avoid any index issues during deletion
         selected_layer = self.get_selected_layer()
@@ -1534,10 +1601,8 @@ class LayerPanel(QWidget):
             # Update set counts and colors
             if deleted_set_number in self.set_counts:
                 del self.set_counts[deleted_set_number]
-                logging.info(f"Deleted set count for set {deleted_set_number}")
             if deleted_set_number in self.set_colors:
                 del self.set_colors[deleted_set_number]
-                logging.info(f"Deleted set color for set {deleted_set_number}")
 
             # Update the current set to the highest remaining set number among main strands
             existing_sets = set(
@@ -1825,6 +1890,9 @@ class LayerPanel(QWidget):
             self.canvas.selected_strand_index = None
             self.canvas.selected_attached_strand = None  # Also clear selected_attached_strand
             self.canvas.update()
+            
+            # Update delete button state since nothing is selected
+            self.update_delete_button_state()
             
             # Emit the signal for other components to react to deselection
             self.deselect_all_requested.emit()
@@ -2389,11 +2457,20 @@ class LayerPanel(QWidget):
             # Use the same simple criteria for the delete button
             is_deletable = not all(selected_strand.has_circles)
             
-            self.delete_strand_button.setEnabled(is_deletable)
-            logging.info(f"Updated delete button state for selected strand {selected_strand.layer_name}: {is_deletable}")
+            # Keep delete button disabled if in lock mode
+            if self.lock_mode:
+                self.delete_strand_button.setEnabled(False)
+            else:
+                self.delete_strand_button.setEnabled(is_deletable)
+            # Force visual update of the button
+            self.delete_strand_button.update()
         else:
-            self.delete_strand_button.setEnabled(False)
-            logging.info("Disabled delete button - no valid selection")
+            # No valid strand selected – keep delete disabled in lock mode
+            if self.lock_mode:
+                self.delete_strand_button.setEnabled(False)
+            else:
+                self.delete_strand_button.setEnabled(False)
+            self.delete_strand_button.update()
         # Force canvas update instead of refresh
         self.canvas.update()
 

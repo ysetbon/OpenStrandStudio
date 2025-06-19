@@ -2819,12 +2819,13 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode.is_attaching = False
             self.current_strand = None
 
-            # Enable delete button for masked layers
-            if isinstance(self.selected_strand, MaskedStrand) and self.layer_panel:
-                self.layer_panel.delete_strand_button.setEnabled(True)
-            else:
-                if self.layer_panel:
-                    self.layer_panel.delete_strand_button.setEnabled(False)
+            # Update delete button state based on strand type and deletability
+            if self.layer_panel:
+                if isinstance(self.selected_strand, MaskedStrand):
+                    self.layer_panel.delete_strand_button.setEnabled(True)
+                else:
+                    # For regular strands, check if they can be deleted
+                    self.layer_panel.update_delete_button_state()
 
             self.strand_selected.emit(index)
         else:

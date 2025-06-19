@@ -1080,6 +1080,11 @@ class LayerPanel(QWidget):
             self.show_notification("Please exit mask edit mode first (Press ESC)")
             return
 
+        # In lock mode, preserve the currently selected strand before deselecting all
+        previously_selected_index = None
+        if self.lock_mode and self.canvas.selected_strand_index is not None:
+            previously_selected_index = self.canvas.selected_strand_index
+
         # Deselect all strands first
         for strand in self.canvas.strands:
             strand.is_selected = False
@@ -1122,6 +1127,15 @@ class LayerPanel(QWidget):
                     self.undo_redo_manager.save_state()
                     # Restore the last save time
                     self.undo_redo_manager._last_save_time = old_last_save_time
+                # Restore previous selection if it wasn't the unlocked strand
+                if previously_selected_index is not None and previously_selected_index != index:
+                    if 0 <= previously_selected_index < len(self.canvas.strands) and previously_selected_index not in self.locked_layers:
+                        self.canvas.strands[previously_selected_index].is_selected = True
+                        self.canvas.selected_strand = self.canvas.strands[previously_selected_index]
+                        self.canvas.selected_strand_index = previously_selected_index
+                        if 0 <= previously_selected_index < len(self.layer_buttons):
+                            self.layer_buttons[previously_selected_index].setChecked(True)
+                        safe_info(f"Restored selection to strand at index {previously_selected_index}")
                 # Don't re-select the strand after unlocking
                 return
             else:
@@ -1149,6 +1163,15 @@ class LayerPanel(QWidget):
                 # Save state for undo/redo
                 if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                     self.undo_redo_manager.save_state()
+                # Restore previous selection if it wasn't the locked strand
+                if previously_selected_index is not None and previously_selected_index != index:
+                    if 0 <= previously_selected_index < len(self.canvas.strands) and previously_selected_index not in self.locked_layers:
+                        self.canvas.strands[previously_selected_index].is_selected = True
+                        self.canvas.selected_strand = self.canvas.strands[previously_selected_index]
+                        self.canvas.selected_strand_index = previously_selected_index
+                        if 0 <= previously_selected_index < len(self.layer_buttons):
+                            self.layer_buttons[previously_selected_index].setChecked(True)
+                        safe_info(f"Restored selection to strand at index {previously_selected_index} after locking")
                 # Don't re-select the strand after locking
                 return
         else:
@@ -1768,23 +1791,43 @@ class LayerPanel(QWidget):
 
 
     def deselect_all(self):
-        """Deselect all layers and strands."""
-        # Deselect all layer buttons
-        for button in self.layer_buttons:
-            button.setChecked(False)
+        """Deselect all layers and strands, or clear all locks if in lock mode."""
+        if self.lock_mode:
+            # In lock mode, this button functions as "Clear Locks"
+            safe_info("Clearing all locked layers")
+            self.locked_layers.clear()
+            
+            # Update the visual state of all layer buttons
+            self.update_layer_buttons_lock_state()
+            
+            # Emit the signal to notify other components
+            self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+            
+            # Save state for undo/redo
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.save_state()
+            
+            # Update canvas to reflect changes
+            self.canvas.update()
+            safe_info("All locks cleared")
+        else:
+            # Normal mode: deselect all layers and strands
+            # Deselect all layer buttons
+            for button in self.layer_buttons:
+                button.setChecked(False)
 
-        # Deselect all strands in the canvas
-        for strand in self.canvas.strands:
-            strand.is_selected = False
+            # Deselect all strands in the canvas
+            for strand in self.canvas.strands:
+                strand.is_selected = False
 
-        # Update the canvas to reflect changes
-        self.canvas.selected_strand = None
-        self.canvas.selected_strand_index = None
-        self.canvas.selected_attached_strand = None  # Also clear selected_attached_strand
-        self.canvas.update()
-        
-        # Emit the signal for other components to react to deselection
-        self.deselect_all_requested.emit()
+            # Update the canvas to reflect changes
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+            self.canvas.selected_attached_strand = None  # Also clear selected_attached_strand
+            self.canvas.update()
+            
+            # Emit the signal for other components to react to deselection
+            self.deselect_all_requested.emit()
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""
@@ -1933,9 +1976,25 @@ class LayerPanel(QWidget):
         logging.info(f"DEBUG on_strand_created: strand.layer_name='{strand.layer_name}', extracted set_number={set_number}, count={count}")
         logging.info(f"DEBUG on_strand_created: self.set_counts={self.set_counts}")
         
+        # ------------------------------------------------------------------
+        # If Lock-Mode is currently active we do NOT want the programmatic
+        # selection that follows to be interpreted as a lock command.  We
+        # therefore raise the same suppression flag that the MainWindow uses
+        # during mode switches – the lock behaviour is skipped exactly once
+        # while we add/select the freshly created strand.
+        # ------------------------------------------------------------------
+        temp_suppress_lock = False
+        if self.lock_mode and not getattr(self, "_suppress_lock_mode_temporarily", False):
+            self._suppress_lock_mode_temporarily = True
+            temp_suppress_lock = True
+
         # Add the new layer button
         logging.info(f"Adding new layer button for set {set_number}, count {count}")
         self.add_layer_button(set_number, count)
+
+        # Lift suppression again so manual clicks behave normally
+        if temp_suppress_lock:
+            self._suppress_lock_mode_temporarily = False
         
         # Check if there are existing strands in this set with different colors
         existing_strands_in_set = [s for s in self.canvas.strands if hasattr(s, 'set_number') and s.set_number == set_number and s != strand]

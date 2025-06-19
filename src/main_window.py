@@ -1631,9 +1631,19 @@ class MainWindow(QMainWindow):
                 print("Angle adjustment is not available for masked layers.")
                 return
             
+            # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+            lock_mode_was_active = False
+            if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+                lock_mode_was_active = True
+                self.layer_panel._suppress_lock_mode_temporarily = True
+
             self.previous_mode = self.current_mode  # Store the current mode
             self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
             self.update_mode("angle_adjust")
+            
+            # Restore lock mode behavior if it was active
+            if lock_mode_was_active:
+                self.layer_panel._suppress_lock_mode_temporarily = False
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
             logging.warning("Attempted to enter angle adjust mode with no strand selected.")
@@ -1662,8 +1672,18 @@ class MainWindow(QMainWindow):
         self.update_mode(self.previous_mode)  # Return to the previous mode
 
     def set_mask_mode(self):
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
         self.update_mode("mask")
         self.canvas.set_mode("mask")
+        
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
 
     def handle_mask_created(self, strand1, strand2):
         logging.info(f"Received mask_created signal for {strand1.layer_name} and {strand2.layer_name}")
@@ -1786,8 +1806,18 @@ class MainWindow(QMainWindow):
             self.select_strand(self.layer_panel.last_selected_index)
 
     def set_select_mode(self):
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
         self.update_mode("select")
         self.canvas.set_mode("select")
+        
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
         
     def update_mode(self, mode):
         if self.current_mode == "angle_adjust" and mode != "angle_adjust":
@@ -1883,11 +1913,25 @@ class MainWindow(QMainWindow):
         self.layer_panel.keyReleaseEvent(event)
 
     def set_attach_mode(self):
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        # This prevents the programmatic selection from being interpreted as a lock/unlock action
+        # while preserving the lock mode state and locked layers
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            # Temporarily suppress lock mode behavior without changing UI state
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
+        # Now proceed with the normal Attach-Mode activation
         self.update_mode("attach")
         self.canvas.set_mode("attach")  # Explicitly set the canvas mode
         if self.canvas.last_selected_strand_index is not None:
             # Use emit_signal=False to prevent recursion back to layer_panel
             self.select_strand(self.canvas.last_selected_strand_index, emit_signal=False)
+        
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
         
         # Ensure the attach button is checked and others are unchecked
         self.attach_button.setChecked(True)
@@ -1898,6 +1942,12 @@ class MainWindow(QMainWindow):
         self.angle_adjust_button.setChecked(False)
 
     def set_move_mode(self):
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
         self.update_mode("move")
         self.canvas.last_selected_strand_index = self.canvas.selected_strand_index
         
@@ -1907,6 +1957,10 @@ class MainWindow(QMainWindow):
             self.canvas.selected_attached_strand.start_selected = True
         else:
             self.canvas.selected_attached_strand = None
+        
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
         
         self.canvas.update()  # Force an update of the canvas
 
@@ -2072,8 +2126,18 @@ class MainWindow(QMainWindow):
 
 
     def set_rotate_mode(self):
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
         self.update_mode("rotate")
         self.canvas.set_mode("rotate")
+        
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
 
     def exit_mask_edit_mode(self):
         """Handle exiting mask edit mode."""

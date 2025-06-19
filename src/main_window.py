@@ -1076,21 +1076,27 @@ class MainWindow(QMainWindow):
         # Always force the button to be unchecked first
         self.angle_adjust_button.setChecked(False)
         
+        # Helper to pick a safe fallback mode
+        def _safe(desired):
+            valid = {"attach", "move", "rotate", "select", "mask"}
+            return desired if desired in valid else "attach"
+
         # Use the standard mode switching system like attach button does
         if self.current_mode == "angle_adjust":
-            previous_mode = getattr(self, 'previous_mode', 'select')
+            previous_mode = _safe(getattr(self, 'previous_mode', 'attach'))
             logging.info(f"Switching from angle_adjust to {previous_mode} using update_mode()")
-            # This will automatically unpress the angle adjust button via update_button_states()
             self.update_mode(previous_mode)
         else:
             # If not in angle_adjust mode, ensure we're in a proper mode that won't recheck the button
-            if hasattr(self, 'previous_mode') and self.previous_mode != "angle_adjust":
-                logging.info(f"Ensuring mode is {self.previous_mode} instead of {self.current_mode}")
-                self.update_mode(self.previous_mode)
+            prev = getattr(self, 'previous_mode', None)
+            if prev and prev != "angle_adjust":
+                target = _safe(prev)
+                logging.info(f"Ensuring mode is {target} instead of {self.current_mode}")
+                self.update_mode(target)
             else:
-                logging.info(f"Ensuring mode is select instead of {self.current_mode}")
-                self.update_mode("select")
-            
+                logging.info(f"Ensuring mode is attach instead of {self.current_mode}")
+                self.update_mode("attach")
+        
         # Force uncheck again after mode change as safety measure
         self.angle_adjust_button.setChecked(False)
         

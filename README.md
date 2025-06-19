@@ -1,9 +1,22 @@
-# OpenStrand Studio
+# OpenStrand Studio - Version 1.100
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands, 
 making complex patterns clear and easy to understand.
 
+## What's New in Version 1.100
+
+### ✨ New Features
+
+- **Strand Width Control**: Dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.
+
+- **Zoom In/Out**: Zoom in and out of your design to see small details or the entire diagram.
+
+- **Pan Screen**: Move the canvas by clicking the hand button, which helps when working on larger diagrams.
+
+- **Initial Setup**: When first starting the application, you'll need to click "New Strand" to begin creating your first strand.
+
+- **General Fixes**: Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.
 
 ## Features
 
@@ -12,7 +25,7 @@ making complex patterns clear and easy to understand.
 - Group transformation tools
 - Precise angle/length controls
 - Grid snapping
-- Multilingual (EN/FR)
+- Multilingual (EN/FR/IT/ES/PT/HE)
 
 ## Screenshots
 
@@ -54,3 +67,9 @@ GNU General Public License v3.0
 Created by Yonatan Setbon
 - [LinkedIn](https://www.linkedin.com/in/yonatan-setbon-4a980986/)
 - [Instagram](https://www.instagram.com/ysetbon/)
+- [YouTube - LanYarD](https://www.youtube.com/@1anya7d)
+- Email: [ysetbon@gmail.com](mailto:ysetbon@gmail.com)
+
+---
+
+© 2025 OpenStrand Studio - Version 1.100

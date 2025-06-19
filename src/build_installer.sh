@@ -2,8 +2,8 @@
 
 # Set variables
 APP_NAME="OpenStrandStudio"
-VERSION="1_092"
-APP_DATE="3_May_2025"
+VERSION="1_100"
+APP_DATE="19_June_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatansetbon.openstrandstudio"
 
@@ -84,7 +84,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -97,7 +97,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -110,7 +110,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -123,7 +123,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -136,7 +136,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
@@ -150,7 +150,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -287,7 +287,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -300,7 +300,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -313,7 +313,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -326,7 +326,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -339,7 +339,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
@@ -353,7 +353,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -378,7 +378,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -391,7 +391,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -404,7 +404,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -417,7 +417,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -430,7 +430,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
@@ -444,7 +444,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -469,7 +469,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -482,7 +482,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -495,7 +495,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -508,7 +508,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -521,7 +521,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
@@ -535,7 +535,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -560,7 +560,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
@@ -573,7 +573,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -586,7 +586,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -599,7 +599,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -612,7 +612,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -626,7 +626,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -652,7 +652,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
 <body>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.092</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.100</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -666,7 +666,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </div>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.100</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
@@ -679,7 +679,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.100</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
@@ -692,7 +692,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.100</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
@@ -705,7 +705,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.100</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
@@ -718,7 +718,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.092</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.100</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>

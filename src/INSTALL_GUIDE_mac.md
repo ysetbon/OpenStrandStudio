@@ -47,7 +47,7 @@ This will create an installer package in the `installer_output` directory.
 
 ## Step 4: Distribute the Application
 
-You can distribute the installer package (`OpenStrand Studio_1_090.pkg`) to users. When they run it, it will:
+You can distribute the installer package (`OpenStrand Studio_1_100.pkg`) to users. When they run it, it will:
 
 1. Install the application to their Applications folder
 2. Create a desktop icon

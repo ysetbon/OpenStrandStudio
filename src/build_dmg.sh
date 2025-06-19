@@ -2,8 +2,8 @@
 
 # Set variables to match ISS configuration
 APP_NAME="OpenStrandStudio"
-VERSION="1.092"
-APP_DATE="3_May_2025"
+VERSION="1.100"
+APP_DATE="19_June_2025"
 PUBLISHER="Yonatan Setbon"
 DMG_NAME="OpenStrandStudioSetup_${APP_DATE}_${VERSION}"
 
@@ -36,52 +36,46 @@ By $PUBLISHER
 Contact: ysetbon@gmail.com
 
 New in this version (English):
-- Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.
-- Customizable Dashed Lines and Arrowheads for strands.
-- Improved Control Point Visuals with larger handles.
-- Mask Extension Options for better visual effects.
-- Enhanced Shading Algorithm for smoother shadows.
-- Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.
+• Strand Width Control: You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.
+• Zoom In/Out: You can zoom in and out of your design to see small details or the entire diagram.
+• Pan Screen: You can move the canvas by clicking the hand button, which helps when working on larger diagrams.
+• Initial Setup: When first starting the application, you'll need to click "New Strand" to begin creating your first strand.
+• General Fixes: Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.
 
 Nouveautés dans cette version (Français):
-- Historique Annuler/Rétablir persistant enregistré dans votre projet.
-- Lignes et flèches en pointillés personnalisables pour les brins.
-- Points de contrôle plus grands et plus visibles.
-- Options d'extension des masques pour un meilleur contrôle.
-- Algorithme d'ombrage amélioré pour des ombres plus douces.
-- Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.
+• Contrôle de la largeur des brins : Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.
+• Zoom avant/arrière : Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.
+• Déplacement de l'écran : Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.
+• Configuration initiale : Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.
+• Corrections générales : Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.
 
 Novità in questa versione (Italiano):
-- Cronologia Annulla/Ripristina persistente salvata con il progetto.
-- Linee tratteggiate e frecce personalizzabili per i fili.
-- Punti di controllo più grandi e visibili.
-- Opzioni di estensione delle maschere per maggior controllo.
-- Algoritmo di ombreggiatura migliorato con ombre più naturali.
-- Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.
+• Controllo della larghezza dei trefoli: Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.
+• Zoom avanti/indietro: Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.
+• Spostamento schermo: Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.
+• Configurazione iniziale: Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.
+• Correzioni generali: Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.
 
 Novedades en esta versión (Español):
-- Historial de Deshacer/Rehacer persistente guardado con el proyecto.
-- Líneas y flechas discontinuas personalizables para los hilos.
-- Puntos de control más grandes y visibles.
-- Opciones de extensión de máscaras para mayor control.
-- Algoritmo de sombreado mejorado con sombras más suaves.
-- Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.
+• Control del ancho de las hebras: Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.
+• Zoom acercar/alejar: Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.
+• Mover pantalla: Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.
+• Configuración inicial: Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.
+• Correcciones generales: Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.
 
 Novidades nesta versão (Português):
-- Histórico de Desfazer/Refazer persistente salvo com o projeto.
-- Linhas tracejadas e setas personalizáveis para os fios.
-- Pontos de controle maiores e mais visíveis.
-- Opções de extensão de máscara para maior controle.
-- Algoritmo de sombreamento aprimorado com sombras mais suaves.
-- Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.
+• Controle de largura dos fios: Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.
+• Zoom ampliar/reduzir: Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.
+• Mover tela: Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.
+• Configuração inicial: Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.
+• Correções gerais: Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.
 
 חדש בגרסה זו (עברית):
-- היסטוריית ביטול/חזרה נשמרת עם הפרויקט.
-- קווים וחיצים מקווקווים בהתאמה אישית.
-- נקודות בקרה גדולות וברורות יותר.
-- אפשרויות הארכת מסיכות לשליטה טובה יותר.
-- אלגוריתם הצללה משופר לצללים רכים יותר.
-- לוח שכבות משופר עם גרור-ושחרר ותפריט תצוגה מהירה.
+• שינוי רוחב חוטים: עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.
+• הגדלה והקטנה: אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.
+• הזזת המסך: אפשר להזיז את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.
+• התחלת עבודה: כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.
+• תיקונים כלליים: תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.
 
 Installation:
 1. Drag '$APP_NAME' to the Applications folder

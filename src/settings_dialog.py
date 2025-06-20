@@ -480,9 +480,9 @@ class SettingsDialog(QDialog):
                     checkbox_container.setLayoutDirection(Qt.RightToLeft)
                     break
         else:  # LTR
-            # In LTR mode, show the checkbox indicator AFTER the text by using RTL direction within the checkbox itself
+            # In LTR mode, show the text first then checkbox indicator by using RTL direction on the checkbox widget
             if hasattr(self, 'default_arrow_color_checkbox'):
-                # Setting RightToLeft for the checkbox widget itself places the indicator to the right of its label
+                # Setting RightToLeft for the checkbox widget itself places the text on the left, indicator on the right
                 self.default_arrow_color_checkbox.setLayoutDirection(Qt.RightToLeft)
                 
                 # Reset container to LTR as well

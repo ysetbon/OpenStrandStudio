@@ -3,7 +3,7 @@
 # Set variables
 APP_NAME="OpenStrandStudio"
 VERSION="1_100"
-APP_DATE="19_June_2025"
+APP_DATE="21_June_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 
@@ -88,12 +88,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -101,12 +100,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -114,12 +112,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -127,12 +124,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -140,12 +136,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -154,12 +149,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -291,12 +285,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -304,12 +297,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -317,12 +309,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -330,12 +321,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -343,12 +333,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -357,12 +346,11 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -382,12 +370,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -395,12 +382,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -408,12 +394,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -421,12 +406,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -434,12 +418,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -448,12 +431,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -473,12 +455,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -486,12 +467,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -499,12 +479,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -512,12 +491,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -525,12 +503,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -539,12 +516,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -564,12 +540,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -577,12 +552,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -590,12 +564,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -603,12 +576,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -616,12 +588,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -630,12 +601,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -656,12 +626,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li>&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05E7;&#x05D8;.</li>
-        <li>&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D5;&#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D5;&#x05D5;&#x05E7;&#x05D5;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA;.</li>
-        <li>&#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E8;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05D0;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05E1;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05D0;&#x05DC;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05EA;&#x05DD; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05DC;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E8;&#x05DB;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li>&#x05DC;&#x05D5;&#x05D7; &#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8; &#x05E2;&#x05DD; &#x05D2;&#x05E8;&#x05D5;&#x05E8;-&#x05D5;&#x05E9;&#x05D7;&#x05E8;&#x05E8; &#x05D5;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05DE;&#x05D4;&#x05D9;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
+        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
+        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
     </ul>
     </div>
     <hr>
@@ -670,12 +639,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>New features in this version:</p>
     <ul>
-        <li>Persistent Undo/Redo History: Your undo and redo actions are now saved with your project.</li>
-        <li>Customizable Dashed Lines and Arrowheads for strands.</li>
-        <li>Improved Control Point Visuals with larger handles.</li>
-        <li>Mask Extension Options for finer control.</li>
-        <li>Enhanced Shading Algorithm with smoother shadows.</li>
-        <li>Upgraded Layer Panel with drag-and-drop reordering and quick visibility toggles.</li>
+        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
+        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
+        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
+        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -683,12 +651,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li>Historique Annuler/Rétablir persistant enregistré dans votre projet.</li>
-        <li>Lignes et flèches en pointillés personnalisables pour les brins.</li>
-        <li>Points de contrôle plus grands et plus visibles.</li>
-        <li>Options d'extension des masques pour un meilleur contrôle.</li>
-        <li>Algorithme d'ombrage amélioré pour des ombres plus douces.</li>
-        <li>Panneau des calques amélioré avec réorganisation par glisser-déposer et bascule rapide de visibilité.</li>
+        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
+        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
+        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -696,12 +663,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li>Cronologia Annulla/Ripristina persistente salvata con il progetto.</li>
-        <li>Linee tratteggiate e frecce personalizzabili per i fili.</li>
-        <li>Punti di controllo più grandi e visibili.</li>
-        <li>Opzioni di estensione delle maschere per maggior controllo.</li>
-        <li>Algoritmo di ombreggiatura migliorato con ombre più naturali.</li>
-        <li>Pannello livelli potenziato con riordino drag-and-drop e visibilità rapida.</li>
+        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
+        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
+        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
+        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -709,12 +675,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li>Historial de Deshacer/Rehacer persistente guardado con el proyecto.</li>
-        <li>Líneas y flechas discontinuas personalizables para los hilos.</li>
-        <li>Puntos de control más grandes y visibles.</li>
-        <li>Opciones de extensión de máscaras para mayor control.</li>
-        <li>Algoritmo de sombreado mejorado con sombras más suaves.</li>
-        <li>Panel de capas mejorado con reordenamiento mediante arrastrar y soltar y visibilidad rápida.</li>
+        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
+        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
+        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
+        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -722,12 +687,11 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li>Histórico de Desfazer/Refazer persistente salvo com o projeto.</li>
-        <li>Linhas tracejadas e setas personalizáveis para os fios.</li>
-        <li>Pontos de controle maiores e mais visíveis.</li>
-        <li>Opções de extensão de máscara para maior controle.</li>
-        <li>Algoritmo de sombreamento aprimorado com sombras mais suaves.</li>
-        <li>Painel de camadas aprimorado com reordenação arrastar-e-soltar e visibilidade rápida.</li>
+        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
+        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
+        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
+        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
     </ul>
 </body>
 </html>

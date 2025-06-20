@@ -44,7 +44,9 @@ class SettingsDialog(QDialog):
         
         # Initialize with default values
         self.current_theme = getattr(parent, 'current_theme', 'default')
-        # self.current_language = self.parent_window.language_code # REMOVED - Handled by showEvent
+        # Ensure we always have a language code before any look-ups/translation calls
+        # Default to the parent window's language if available, otherwise fall back to English
+        self.current_language = getattr(parent, 'language_code', 'en')
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
@@ -478,9 +480,10 @@ class SettingsDialog(QDialog):
                     checkbox_container.setLayoutDirection(Qt.RightToLeft)
                     break
         else:  # LTR
-            # Reset checkbox to normal LTR
+            # In LTR mode, show the checkbox indicator AFTER the text by using RTL direction within the checkbox itself
             if hasattr(self, 'default_arrow_color_checkbox'):
-                self.default_arrow_color_checkbox.setLayoutDirection(Qt.LeftToRight)
+                # Setting RightToLeft for the checkbox widget itself places the indicator to the right of its label
+                self.default_arrow_color_checkbox.setLayoutDirection(Qt.RightToLeft)
                 
                 # Reset container to LTR as well
                 for checkbox_container in self.findChildren(QWidget):
@@ -664,16 +667,23 @@ class SettingsDialog(QDialog):
 
         # Checkbox layout reorganization (this was also missing!)
         if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_checkbox'):
-            self.clear_layout(self.checkbox_layout)
-            if is_rtl:
-                self.checkbox_layout.addStretch()
-                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-                logging.info("RTL: Reorganized checkbox layout - checkbox on right")
-            else:
-                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-                self.checkbox_layout.addStretch()
-                logging.info("LTR: Reorganized checkbox layout - checkbox on left")
             
+            if is_rtl:
+                # In RTL, place the checkbox first, then stretch so the control is not pushed too far right
+                self.clear_layout(self.checkbox_layout)
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                self.checkbox_layout.addStretch()
+            else:
+                # Ensure layout is cleared first, then add the checkbox followed by a stretch so the widget remains visible in LTR
+                self.clear_layout(self.checkbox_layout)
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                self.checkbox_layout.addStretch()
+            
+            # Ensure consistent margin so the text lines up with other rows
+            if is_rtl:
+                self.checkbox_layout.setContentsMargins(330, 0, 0, 0)
+            else:
+                self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
             # Force immediate update and repaint
             self.checkbox_layout.invalidate()
             self.checkbox_layout.activate()
@@ -1638,7 +1648,12 @@ class SettingsDialog(QDialog):
         # Ensure the container widget uses LTR so the indicator appears on the left of the text
         self.checkbox_container.setLayoutDirection(Qt.LeftToRight if self.is_rtl_language(self.current_language) else Qt.RightToLeft)
         self.checkbox_layout = QHBoxLayout(self.checkbox_container)  # Store as instance attribute
-        self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        # Ensure the checkbox row aligns with other rows when using RTL languages
+        if self.is_rtl_language(self.current_language):
+            # A left margin of 105px matches the offset applied to other rows such as the button color row
+            self.checkbox_layout.setContentsMargins(330, 0, 0, 0)
+        else:
+            self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
         self.checkbox_layout.setSpacing(5)
         
         self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")

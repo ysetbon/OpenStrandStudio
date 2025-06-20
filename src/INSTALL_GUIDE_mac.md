@@ -20,14 +20,14 @@ pip3 install PyQt5==5.15.4 Pillow numpy pyinstaller
 
 ## Step 2: Build the Application
 
-From the root directory of the project, run the following command to create the application bundle:
+From the src directory of the project, run the following command to create the application bundle:
 
 ```bash
 cd src
-pyinstaller --name="OpenStrandStudio" --windowed --icon=box_stitch.icns --add-data="box_stitch.icns:." --add-data="settings_icon.png:." --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=numpy --hidden-import=PIL main.py
+pyinstaller OpenStrandStudio_mac.spec
 ```
 
-This will create the application bundle in the `dist` directory.
+This will create the application bundle in the `dist` directory using the macOS-specific spec file that includes proper app bundle configuration.
 
 ## Step 3: Create the Installer Package
 

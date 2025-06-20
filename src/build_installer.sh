@@ -5,13 +5,13 @@ APP_NAME="OpenStrandStudio"
 VERSION="1_100"
 APP_DATE="19_June_2025"
 PUBLISHER="Yonatan Setbon"
-IDENTIFIER="com.yonatansetbon.openstrandstudio"
+IDENTIFIER="com.yonatan.openstrandstudio"
 
 # Create directories
 WORKING_DIR="$(mktemp -d)"
 SCRIPTS_DIR="$WORKING_DIR/scripts"
 RESOURCES_DIR="$WORKING_DIR/resources"
-PKG_PATH="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/installer_output/${APP_NAME}_${VERSION}.pkg"
+PKG_PATH="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/installer_output/${APP_NAME}_${VERSION}.pkg"
 
 mkdir -p "$SCRIPTS_DIR" "$RESOURCES_DIR"
 
@@ -64,14 +64,14 @@ cat > "$WORKING_DIR/Distribution.xml" << EOF
     <license file="license.html"/>
     <choices-outline>
         <line choice="default">
-            <line choice="com.yonatansetbon.openstrandstudio"/>
+            <line choice="com.yonatan.openstrandstudio"/>
         </line>
     </choices-outline>
     <choice id="default"/>
-    <choice id="com.yonatansetbon.openstrandstudio" visible="false">
-        <pkg-ref id="com.yonatansetbon.openstrandstudio"/>
+    <choice id="com.yonatan.openstrandstudio" visible="false">
+        <pkg-ref id="com.yonatan.openstrandstudio"/>
     </choice>
-    <pkg-ref id="com.yonatansetbon.openstrandstudio" version="$VERSION" onConclusion="none">OpenStrandStudio.pkg</pkg-ref>
+    <pkg-ref id="com.yonatan.openstrandstudio" version="$VERSION" onConclusion="none">OpenStrandStudio.pkg</pkg-ref>
 </installer-gui-script>
 EOF
 
@@ -735,7 +735,7 @@ EOF
 
 # Create component package
 pkgbuild \
-    --root "/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
+    --root "/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
     --install-location "/Applications/OpenStrandStudio.app" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "$IDENTIFIER" \

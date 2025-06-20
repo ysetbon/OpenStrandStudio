@@ -13,13 +13,14 @@ DMG_DIR="$TMP_DIR/$APP_NAME"
 mkdir -p "$DMG_DIR"
 
 # Create installer_output directory if it doesn't exist
-INSTALLER_OUTPUT="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/installer_output"
+INSTALLER_OUTPUT="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/installer_output"
 mkdir -p "$INSTALLER_OUTPUT"
 
 # Copy the .app bundle from the correct location
-APP_SOURCE="/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app"  # Updated path
+APP_SOURCE="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app"  # Updated path
 if [ ! -d "$APP_SOURCE" ]; then
     echo "Error: Could not find .app at: $APP_SOURCE"
+    echo "Please run 'pyinstaller OpenStrandStudio_mac.spec' first"
     exit 1
 fi
 
@@ -111,7 +112,7 @@ fi
 
 # Set the DMG icon
 echo "Setting DMG icon..."
-fileicon set "$FINAL_DMG" "/Users/yonatansetbon/Documents/GitHub/OpenStrandStudio/src/box_stitch.icns"
+fileicon set "$FINAL_DMG" "/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/box_stitch.icns"
 
 # Verify the DMG is mountable
 echo "Verifying DMG..."

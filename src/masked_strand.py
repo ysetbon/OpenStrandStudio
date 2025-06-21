@@ -328,6 +328,8 @@ class MaskedStrand(Strand):
                     shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
                     max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                    first_strand=self.first_selected_strand,
+                    second_strand=self.second_selected_strand,
                 )
 
  

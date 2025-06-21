@@ -2,7 +2,7 @@ import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from typing import List
-
+import math
 
 
 def draw_mask_strand_shadow(
@@ -12,7 +12,9 @@ def draw_mask_strand_shadow(
     deletion_rects: List[QRectF] = None,
     shadow_color: QColor = None,
     num_steps: int = 3,
-    max_blur_radius: float = 29.99,
+    max_blur_radius: float = None,
+    first_strand=None,
+    second_strand=None,
 ):
     """Draw a blurred shadow for the **intersection** between *first_path* and *second_path*.
 
@@ -72,6 +74,40 @@ def draw_mask_strand_shadow(
             if not rect_path.isEmpty():
                 intersection_path = intersection_path.subtracted(rect_path)
         logging.info(f"draw_mask_strand_shadow: applied {len(deletion_rects)} deletion rects; new bounds={intersection_path.boundingRect()}, empty={intersection_path.isEmpty()}")
+
+    # ------------------------------------------------------------------
+    # Auto-calculate blur radius based on strand thickness if not provided
+    # ------------------------------------------------------------------
+    if max_blur_radius is None:
+        # Use the first strand for blur calculation, fallback to second if first is None
+        reference_strand = first_strand if first_strand is not None else second_strand
+        if reference_strand is not None:
+            strand_width = getattr(reference_strand, 'width', 10)
+            # Use consistent shadow extension regardless of strand thickness
+            max_blur_radius = 30.0  # Fixed shadow extension for all strand thicknesses
+            logging.info(f"draw_mask_strand_shadow: Using consistent blur radius={max_blur_radius} for strand width={strand_width}")
+        else:
+            max_blur_radius = 30.0  # Consistent default
+    
+    # ------------------------------------------------------------------
+    # Apply side line exclusion for both component strands if provided
+    # ------------------------------------------------------------------
+    if first_strand is not None or second_strand is not None:
+        try:
+            if first_strand is not None:
+                first_exclusion = get_side_line_exclusion_path(first_strand)
+                if not first_exclusion.isEmpty():
+                    intersection_path = intersection_path.subtracted(first_exclusion)
+                    logging.info(f"draw_mask_strand_shadow: applied side line exclusion for first strand {getattr(first_strand, 'layer_name', 'unknown')}")
+            
+            if second_strand is not None:
+                second_exclusion = get_side_line_exclusion_path(second_strand)
+                if not second_exclusion.isEmpty():
+                    intersection_path = intersection_path.subtracted(second_exclusion)
+                    logging.info(f"draw_mask_strand_shadow: applied side line exclusion for second strand {getattr(second_strand, 'layer_name', 'unknown')}")
+                    
+        except Exception as exclusion_err:
+            logging.error(f"draw_mask_strand_shadow: error applying side line exclusions: {exclusion_err}")
 
     # ------------------------------------------------------------------
     # Resolve shadow colour.  If the caller did not provide one we default
@@ -139,7 +175,7 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     pass
 
-def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
+def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -153,6 +189,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     if hasattr(strand, 'is_hidden') and strand.is_hidden:
         logging.info(f"Skipping shadow for hidden strand {getattr(strand, 'layer_name', 'unknown')}")
         return
+    
+    # Auto-calculate blur radius based on strand thickness if not provided
+    if max_blur_radius is None:
+        strand_width = getattr(strand, 'width', 10)
+        # Use consistent shadow extension regardless of strand thickness
+        max_blur_radius = 30.0  # Fixed shadow extension for all strand thicknesses
+        logging.info(f"Using consistent blur radius={max_blur_radius} for strand width={strand_width}")
     
     # Early return for masked strands to avoid double shading
     # If this is a masked strand (has get_mask_path method), its shadow 
@@ -192,7 +235,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # visible end-circles.  This single path will be used for all subsequent
     # shadow computations, eliminating the need for special-casing circles.
     path = get_proper_masked_strand_path(strand)
-    shadow_path = build_rendered_geometry(strand)
+    shadow_path = build_shadow_geometry(strand, 0)
         
     # --------------------------------------------------
     # If this strand has a *transparent* circle at either end, the circle is
@@ -432,6 +475,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         intersection = QPainterPath(shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
+                        
+                        # Skip shadow if there's no actual intersection between the paths
+                        if intersection.isEmpty():
+                            logging.info(f"No actual path intersection between {this_layer} and {other_layer}, skipping shadow")
+                            continue
+                            
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
@@ -459,6 +508,14 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     if mask_index_sub > self_index:
 
                                         try:
+                                            # Early check: First verify if the mask even intersects with the underlying layer
+                                            # Get the mask's actual path to check intersection
+                                            if hasattr(mask_strand_sub, 'get_mask_path'):
+                                                mask_actual_path = mask_strand_sub.get_mask_path()
+                                                if mask_actual_path.isEmpty() or not mask_actual_path.intersects(other_stroke_path):
+                                                    logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction entirely")
+                                                    continue
+                                            
                                             # Calculate the path for subtraction by simulating the mask's "blurred" area.
                                             # We use the intersection of the mask's components, but stroked with max_blur_radius
                                             # added, similar to shadow clipping logic.
@@ -521,16 +578,23 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                         pass
 
                                             if not subtraction_path.isEmpty():
-                                                original_rect_intersect = current_intersection_shadow.boundingRect()
-                                                current_intersection_shadow = current_intersection_shadow.subtracted(subtraction_path) # Apply to current intersection
-                                                new_rect_intersect = current_intersection_shadow.boundingRect()
+                                                # Check if the mask actually intersects with the underlying layer Y
+                                                # Only subtract if there's an actual intersection
+                                                mask_intersects_underlying = subtraction_path.intersects(other_stroke_path)
+                                                
+                                                if mask_intersects_underlying:
+                                                    original_rect_intersect = current_intersection_shadow.boundingRect()
+                                                    current_intersection_shadow = current_intersection_shadow.subtracted(subtraction_path) # Apply to current intersection
+                                                    new_rect_intersect = current_intersection_shadow.boundingRect()
 
-                                                original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
-                                                new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
+                                                    original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
+                                                    new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
 
-                                                if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
-                                                   (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
-                                                    logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
+                                                    if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
+                                                       (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
+                                                        logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
+                                                else:
+                                                    logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction")
                                             else:
                                                  # logging.warning(f"Could not calculate subtraction path for mask '{mask_layer_sub}', subtraction skipped for this intersection.")
                                                  pass
@@ -542,6 +606,25 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
 
+                        # Apply side line exclusion for both casting and receiving strands
+                        if not current_intersection_shadow.isEmpty():
+                            # Get side line exclusion paths for both strands
+                            try:
+                                # Exclusion for the casting strand (this strand) - auto-calculate multiplier
+                                casting_exclusion = get_side_line_exclusion_path(strand)
+                                if not casting_exclusion.isEmpty():
+                                    current_intersection_shadow = current_intersection_shadow.subtracted(casting_exclusion)
+                                    logging.info(f"Applied side line exclusion for casting strand {this_layer}")
+                                
+                                # Exclusion for the receiving strand (other strand) - auto-calculate multiplier
+                                receiving_exclusion = get_side_line_exclusion_path(other_strand)
+                                if not receiving_exclusion.isEmpty():
+                                    current_intersection_shadow = current_intersection_shadow.subtracted(receiving_exclusion)
+                                    logging.info(f"Applied side line exclusion for receiving strand {other_layer}")
+                                    
+                            except Exception as exclusion_err:
+                                logging.error(f"Error applying side line exclusions: {exclusion_err}")
+                        
                         # Only add the (potentially modified) intersection if it's still not empty
                         if not current_intersection_shadow.isEmpty():
                             # Add the calculated intersection area to the path that will be drawn
@@ -757,6 +840,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             # Check if mask is above the *casting strand* (this_layer)
                             if mask_index_sub_c > self_index:
                                 try:
+                                    # Early check: First verify if the mask even intersects with the underlying layer
+                                    if hasattr(mask_strand_sub_c, 'get_mask_path'):
+                                        mask_actual_path_c = mask_strand_sub_c.get_mask_path()
+                                        if mask_actual_path_c.isEmpty() or not mask_actual_path_c.intersects(other_stroke_path):
+                                            logging.info(f"Mask '{mask_layer_sub_c}' does not intersect with underlying layer '{other_layer}', skipping circle shadow subtraction entirely")
+                                            continue
+                                    
                                     # Calculate the mask's subtraction path (blurred)
                                     subtraction_path_c = QPainterPath()
                                     if hasattr(mask_strand_sub_c, 'first_selected_strand') and mask_strand_sub_c.first_selected_strand and \
@@ -815,10 +905,16 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                 pass
 
                                     if not subtraction_path_c.isEmpty():
-                                        intersection = intersection.subtracted(subtraction_path_c)
-                                        # Basic logging for circle shadow subtraction
-                                        if intersection.isEmpty(): # Check if subtraction removed everything
-                                             logging.info(f"Subtracted mask '{mask_layer_sub_c}' completely removed circle shadow intersection of '{this_layer}' on '{other_layer}'")
+                                        # Check if the mask actually intersects with the underlying layer
+                                        mask_intersects_underlying_c = subtraction_path_c.intersects(other_stroke_path)
+                                        
+                                        if mask_intersects_underlying_c:
+                                            intersection = intersection.subtracted(subtraction_path_c)
+                                            # Basic logging for circle shadow subtraction
+                                            if intersection.isEmpty(): # Check if subtraction removed everything
+                                                 logging.info(f"Subtracted mask '{mask_layer_sub_c}' completely removed circle shadow intersection of '{this_layer}' on '{other_layer}'")
+                                        else:
+                                            logging.info(f"Mask '{mask_layer_sub_c}' does not intersect with underlying layer '{other_layer}', skipping circle shadow subtraction")
 
                                 except Exception as e_c:
                                     # logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
@@ -985,6 +1081,159 @@ def get_proper_masked_strand_path(strand):
 # --------------------------------------------------
 # New helper: build_rendered_geometry
 # --------------------------------------------------
+def get_side_line_exclusion_path(strand, shadow_width_multiplier=None):
+    """
+    Creates exclusion paths exactly at strand starting and ending points to prevent shadows 
+    from being rendered there.
+    
+    Args:
+        strand: The strand to create exclusion paths for
+        shadow_width_multiplier: Multiplier for the exclusion width. If None, automatically 
+                                calculates based on strand width (width/2 for grid units)
+        
+    Returns:
+        QPainterPath: Combined exclusion path for both start and end points
+    """
+    exclusion_path = QPainterPath()
+    
+    try:
+        # Ensure side lines are calculated
+        if hasattr(strand, 'update_side_line'):
+            strand.update_side_line()
+        elif not (hasattr(strand, 'start_line_start') and hasattr(strand, 'start_line_end') and 
+                  hasattr(strand, 'end_line_start') and hasattr(strand, 'end_line_end')):
+            return exclusion_path  # Return empty path if no side line support
+        
+        # Auto-calculate exclusion width based on strand thickness
+        if shadow_width_multiplier is None:
+            strand_width = getattr(strand, 'width', 10)
+            # Use a simple proportional scaling: thicker strands need wider exclusion zones
+            # Base exclusion should be at least max_blur_radius (~30px) plus proportional to strand width
+            shadow_width = max(35.0, strand_width * 1.5)  # Minimum 35px, or 1.5x strand width, whichever is larger
+            logging.info(f"Auto-calculated exclusion width={shadow_width} for strand width={strand_width}")
+        else:
+            # Calculate exclusion width based on provided multiplier
+            shadow_width = getattr(strand, 'width', 10) * shadow_width_multiplier
+        
+        # Create exclusion area exactly at the start point
+        if hasattr(strand, 'start') and hasattr(strand, 'start_line_start') and hasattr(strand, 'start_line_end'):
+            # Use the actual side line positions to create a precise exclusion zone
+            start_exclusion = QPainterPath()
+            start_exclusion.moveTo(strand.start_line_start)
+            start_exclusion.lineTo(strand.start_line_end)
+            
+            # Extend the exclusion area perpendicular to the side line by shadow_width
+            line_vec = strand.start_line_end - strand.start_line_start
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0:
+                # Normalize line vector
+                norm_line = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
+                # Perpendicular vector pointing away from strand
+                perp_vec = QPointF(-norm_line.y(), norm_line.x())
+                
+                # Determine which direction extends BEYOND the strand endpoint
+                # Calculate direction from strand end toward strand start to find the "forward" direction
+                strand_direction = strand.end - strand.start
+                strand_length = math.sqrt(strand_direction.x()**2 + strand_direction.y()**2)
+                
+                if strand_length > 0:
+                    # Normalize strand direction vector
+                    norm_strand_dir = QPointF(strand_direction.x() / strand_length, strand_direction.y() / strand_length)
+                    
+                    # At the start point, we want to extend in the OPPOSITE direction (beyond the start)
+                    beyond_start_vec = QPointF(-norm_strand_dir.x(), -norm_strand_dir.y())
+                else:
+                    # Fallback: extend perpendicular to side line
+                    beyond_start_vec = perp_vec
+                
+                # Create wider rectangle extending BEYOND the start point to cover all shadow width
+                # Scale the extended width based on strand thickness
+                stroke_width = getattr(strand, 'stroke_width', 2)
+                total_strand_width = strand.width + stroke_width * 2
+                # Simple scaling: wider strands need proportionally wider exclusion zones
+                extended_width = total_strand_width + shadow_width
+                half_extended_width = extended_width / 2.0
+                
+                # Create corners that extend both along the strand direction AND perpendicular to cover full shadow
+                corner3 = QPointF(
+                    strand.start_line_end.x() + beyond_start_vec.x() * shadow_width + norm_line.x() * half_extended_width,
+                    strand.start_line_end.y() + beyond_start_vec.y() * shadow_width + norm_line.y() * half_extended_width
+                )
+                corner4 = QPointF(
+                    strand.start_line_start.x() + beyond_start_vec.x() * shadow_width - norm_line.x() * half_extended_width,
+                    strand.start_line_start.y() + beyond_start_vec.y() * shadow_width - norm_line.y() * half_extended_width
+                )
+                
+                start_exclusion.lineTo(corner3)
+                start_exclusion.lineTo(corner4)
+                start_exclusion.closeSubpath()
+                
+                exclusion_path = exclusion_path.united(start_exclusion)
+        
+        # Create exclusion area exactly at the end point
+        if hasattr(strand, 'end') and hasattr(strand, 'end_line_start') and hasattr(strand, 'end_line_end'):
+            # Use the actual side line positions to create a precise exclusion zone
+            end_exclusion = QPainterPath()
+            end_exclusion.moveTo(strand.end_line_start)
+            end_exclusion.lineTo(strand.end_line_end)
+            
+            # Extend the exclusion area perpendicular to the side line by shadow_width
+            line_vec = strand.end_line_end - strand.end_line_start
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0:
+                # Normalize line vector
+                norm_line = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
+                # Perpendicular vector pointing away from strand
+                perp_vec = QPointF(-norm_line.y(), norm_line.x())
+                
+                # Determine which direction extends BEYOND the strand endpoint
+                # Calculate direction from strand start toward strand end to find the "forward" direction
+                strand_direction = strand.end - strand.start
+                strand_length = math.sqrt(strand_direction.x()**2 + strand_direction.y()**2)
+                
+                if strand_length > 0:
+                    # Normalize strand direction vector
+                    norm_strand_dir = QPointF(strand_direction.x() / strand_length, strand_direction.y() / strand_length)
+                    
+                    # At the end point, we want to extend in the SAME direction (beyond the end)
+                    beyond_end_vec = norm_strand_dir
+                else:
+                    # Fallback: extend perpendicular to side line
+                    beyond_end_vec = perp_vec
+                
+                # Create wider rectangle extending BEYOND the end point to cover all shadow width
+                # Scale the extended width based on strand thickness
+                stroke_width = getattr(strand, 'stroke_width', 2)
+                total_strand_width = strand.width + stroke_width * 2
+                # Simple scaling: wider strands need proportionally wider exclusion zones
+                extended_width = total_strand_width + shadow_width
+                half_extended_width = extended_width / 2.0
+                
+                # Create corners that extend both along the strand direction AND perpendicular to cover full shadow
+                corner3 = QPointF(
+                    strand.end_line_end.x() + beyond_end_vec.x() * shadow_width + norm_line.x() * half_extended_width,
+                    strand.end_line_end.y() + beyond_end_vec.y() * shadow_width + norm_line.y() * half_extended_width
+                )
+                corner4 = QPointF(
+                    strand.end_line_start.x() + beyond_end_vec.x() * shadow_width - norm_line.x() * half_extended_width,
+                    strand.end_line_start.y() + beyond_end_vec.y() * shadow_width - norm_line.y() * half_extended_width
+                )
+                
+                end_exclusion.lineTo(corner3)
+                end_exclusion.lineTo(corner4)
+                end_exclusion.closeSubpath()
+                
+                exclusion_path = exclusion_path.united(end_exclusion)
+        
+        logging.info(f"Created end-point exclusion path for strand {getattr(strand, 'layer_name', 'unknown')} with bounds={exclusion_path.boundingRect()}")
+        
+    except Exception as e:
+        logging.error(f"Error creating end-point exclusion path for strand {getattr(strand, 'layer_name', 'unknown')}: {e}")
+    
+    return exclusion_path
+
 def build_rendered_geometry(strand):
     """
     Returns the *visual* geometry of a strand as a single QPainterPath.
@@ -1054,5 +1303,62 @@ def build_rendered_geometry(strand):
         #     f"build_rendered_geometry: failed for {getattr(strand, 'layer_name', 'unknown')} – {e}"
         # )
         pass
+        return QPainterPath()
+
+def build_shadow_geometry(strand, fixed_shadow_extension=30.0):
+    """
+    Returns shadow geometry that extends a fixed distance beyond the strand edge,
+    ensuring consistent shadow length regardless of strand thickness.
+    
+    Args:
+        strand: The strand to create shadow geometry for
+        fixed_shadow_extension: Fixed distance (in pixels) to extend shadow beyond strand edge
+        
+    Returns:
+        QPainterPath: Shadow geometry with consistent extension
+    """
+    # For masked strands keep the specialised mask path
+    if hasattr(strand, 'get_mask_path'):
+        return get_proper_masked_strand_path(strand)
+
+    try:
+        # Get the base strand path
+        if hasattr(strand, 'get_shadow_path'):
+            body_source = strand.get_shadow_path()
+        elif hasattr(strand, 'get_path'):
+            body_source = strand.get_path()
+        else:
+            body_source = QPainterPath()
+
+        # Create shadow geometry that extends fixed distance beyond strand edge
+        stroker = QPainterPathStroker()
+        # Use actual strand width plus fixed shadow extension
+        shadow_width = strand.width + strand.stroke_width * 2 + (fixed_shadow_extension * 2)
+        stroker.setWidth(shadow_width)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        result_path = stroker.createStroke(body_source)
+
+        # Add visible circles with same fixed extension
+        if hasattr(strand, 'has_circles') and any(strand.has_circles):
+            transparent_circles = (
+                hasattr(strand, 'circle_stroke_color') and
+                strand.circle_stroke_color and
+                strand.circle_stroke_color.alpha() == 0
+            )
+
+            if not transparent_circles:
+                # Circle radius includes the fixed shadow extension
+                radius = (strand.width + strand.stroke_width * 2) / 2.0 + fixed_shadow_extension
+                for idx, enabled in enumerate(strand.has_circles):
+                    if not enabled:
+                        continue
+                    centre = strand.start if idx == 0 else strand.end
+                    circle_path = QPainterPath()
+                    circle_path.addEllipse(centre, radius, radius)
+                    result_path = result_path.united(circle_path)
+
+        return result_path
+    except Exception as e:
         return QPainterPath()
 

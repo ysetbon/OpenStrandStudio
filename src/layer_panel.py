@@ -915,6 +915,13 @@ class LayerPanel(QWidget):
                 self.refresh_layers() # Refresh might be easier to restore styles correctly
             button.set_hidden(strand.is_hidden) # Call the button's method
 
+            # Save the current state to persist visibility changes
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info(f"Updated LayerStateManager state after visibility toggle.")
+            else:
+                logging.warning("LayerStateManager not found on canvas, cannot update state after visibility toggle.")
+
             self.canvas.update() # Redraw canvas to reflect the change
 
         else:

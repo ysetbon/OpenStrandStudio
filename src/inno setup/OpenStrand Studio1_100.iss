@@ -2,7 +2,7 @@
 #define MyAppVersion "1.100"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "21_June_2025"
+#define MyAppDate "22_June_2025"
 #define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src"
 #define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
 

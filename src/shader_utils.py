@@ -3,6 +3,7 @@ from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor,
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from typing import List
 import math
+from functools import lru_cache
 
 
 def draw_mask_strand_shadow(
@@ -502,107 +503,122 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
                                     mask_index_sub = layer_order.index(mask_layer_sub)
 
-                                    # Only subtract the mask if it is physically above the casting strand.
-                                    # We removed the check `and (other_layer in mask_info_sub['components'] or this_layer in mask_info_sub['components'])`
-                                    # so that *any* mask above blocks the shadow in its area.
-                                    if mask_index_sub > self_index:
-
-                                        try:
-                                            # Early check: First verify if the mask even intersects with the underlying layer
-                                            # Get the mask's actual path to check intersection
-                                            if hasattr(mask_strand_sub, 'get_mask_path'):
-                                                mask_actual_path = mask_strand_sub.get_mask_path()
-                                                if mask_actual_path.isEmpty() or not mask_actual_path.intersects(other_stroke_path):
-                                                    logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction entirely")
-                                                    continue
-                                            
-                                            # Calculate the path for subtraction by simulating the mask's "blurred" area.
-                                            # We use the intersection of the mask's components, but stroked with max_blur_radius
-                                            # added, similar to shadow clipping logic.
-                                            subtraction_path = QPainterPath()
+                                    # --------------------------------------------------
+                                    # Fast-path: use (and cache) the mask's pre-computed
+                                    # shadow-blocking geometry.  If we can subtract the
+                                    # blocker right away we can skip all of the legacy
+                                    # QPainterPath maths below.
+                                    # --------------------------------------------------
+                                    fast_blocker = get_shadow_blocker_path(mask_strand_sub, max_blur_radius)
+                                    if not fast_blocker.isEmpty():
+                                        current_intersection_shadow = current_intersection_shadow.subtracted(fast_blocker)
+                                        # Nothing left to do for this mask in the current
+                                        # intersection – jump to the next mask.
+                                        continue
+                                    
+                                    try:
+                                        # Early check: First verify if the mask even intersects with the underlying layer
+                                        # Get the mask's actual path to check intersection
+                                        if hasattr(mask_strand_sub, 'get_mask_path'):
+                                            mask_actual_path = mask_strand_sub.get_mask_path()
+                                            if mask_actual_path.isEmpty() or not mask_actual_path.intersects(other_stroke_path):
+                                                logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction entirely")
+                                                continue
+                                        
+                                        # IMPROVED: Use the mask's actual rendered path (which already respects deletions)
+                                        # and extend it by the shadow blur radius for accurate shadow blocking.
+                                        # This approach is simpler and more accurate than manually calculating intersections.
+                                        subtraction_path = QPainterPath()
+                                        
+                                        # Get the mask's actual path that already includes all deletions
+                                        if hasattr(mask_strand_sub, 'get_mask_path'):
+                                            try:
+                                                # Get the base mask path which already respects deletion rectangles
+                                                base_mask_path = mask_strand_sub.get_mask_path()
+                                                
+                                                if not base_mask_path.isEmpty():
+                                                    # Extend the mask path by the shadow blur radius to create
+                                                    # the shadow blocking area. This simulates how the shadow
+                                                    # would be blocked by the mask's blur effect.
+                                                    stroker = QPainterPathStroker()
+                                                    # Extend by blur radius to match shadow rendering
+                                                    stroker.setWidth(max_blur_radius)
+                                                    stroker.setJoinStyle(Qt.RoundJoin)  # Smoother joins for blur simulation
+                                                    stroker.setCapStyle(Qt.RoundCap)   # Smoother caps for blur simulation
+                                                    
+                                                    # Create the extended path for shadow blocking
+                                                    extended_mask = stroker.createStroke(base_mask_path)
+                                                    
+                                                    # Unite the original mask with its extended border to create
+                                                    # the complete shadow blocking area
+                                                    subtraction_path = base_mask_path.united(extended_mask)
+                                                    
+                                                    logging.info(f"Created improved subtraction path using mask's actual geometry for '{mask_layer_sub}'")
+                                                else:
+                                                    logging.info(f"Empty mask path for '{mask_layer_sub}', skipping shadow subtraction")
+                                                    
+                                            except Exception as mask_path_err:
+                                                logging.error(f"Error getting mask path for '{mask_layer_sub}': {mask_path_err}")
+                                                # Fallback to original approach if mask path fails
+                                                subtraction_path = QPainterPath()
+                                        else:
+                                            # Fallback: if no get_mask_path method, use the original intersection approach
+                                            # but without separate deletion rectangle handling since they should already be in the mask
                                             if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand and \
                                                hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
 
                                                 s1 = mask_strand_sub.first_selected_strand
                                                 s2 = mask_strand_sub.second_selected_strand
 
-                                                # Calculate widened strokes for both components
+                                                # Calculate base component paths
                                                 stroker1 = QPainterPathStroker()
-                                                # Add max_blur_radius to simulate the blurred area
-                                                stroker1.setWidth(s1.width + s1.stroke_width * 2 +max_blur_radius)
+                                                stroker1.setWidth(s1.width + s1.stroke_width * 2)
                                                 stroker1.setJoinStyle(Qt.MiterJoin)
                                                 stroker1.setCapStyle(Qt.FlatCap)
                                                 path1 = stroker1.createStroke(s1.get_path())
 
                                                 stroker2 = QPainterPathStroker()
-                                                # Add max_blur_radius to simulate the blurred area
-                                                stroker2.setWidth(s2.width + s2.stroke_width * 2 +max_blur_radius)
+                                                stroker2.setWidth(s2.width + s2.stroke_width * 2)
                                                 stroker2.setJoinStyle(Qt.MiterJoin)
                                                 stroker2.setCapStyle(Qt.FlatCap)
                                                 path2 = stroker2.createStroke(s2.get_path())
 
-                                                # Use the intersection of these widened paths as the subtraction area
-                                                subtraction_path = path1.intersected(path2)
+                                                # Get intersection and extend by blur radius
+                                                base_intersection = path1.intersected(path2)
+                                                if not base_intersection.isEmpty():
+                                                    stroker = QPainterPathStroker()
+                                                    stroker.setWidth(max_blur_radius * 2)
+                                                    stroker.setJoinStyle(Qt.RoundJoin)
+                                                    stroker.setCapStyle(Qt.RoundCap)
+                                                    extended_intersection = stroker.createStroke(base_intersection)
+                                                    subtraction_path = base_intersection.united(extended_intersection)
+                                                    
+                                                logging.info(f"Used fallback intersection approach for '{mask_layer_sub}'")
 
-                                                # --------------------------------------------------
-                                                # NEW: Respect deletion rectangles on the mask so
-                                                #      that shadows can appear in regions where the
-                                                #      mask has been manually deleted.
-                                                # --------------------------------------------------
-                                                if hasattr(mask_strand_sub, 'deletion_rectangles') and mask_strand_sub.deletion_rectangles:
-                                                    try:
-                                                        for del_rect in mask_strand_sub.deletion_rectangles:
-                                                            del_path = QPainterPath()
-                                                            # Support QRectF directly
-                                                            if isinstance(del_rect, QRectF):
-                                                                del_path.addRect(del_rect)
-                                                            # Support dict with corner coordinates
-                                                            elif isinstance(del_rect, dict) and all(k in del_rect for k in ("top_left", "top_right", "bottom_left", "bottom_right")):
-                                                                tl = QPointF(*del_rect["top_left"])
-                                                                tr = QPointF(*del_rect["top_right"])
-                                                                br = QPointF(*del_rect["bottom_right"])
-                                                                bl = QPointF(*del_rect["bottom_left"])
-                                                                del_path.moveTo(tl)
-                                                                del_path.lineTo(tr)
-                                                                del_path.lineTo(br)
-                                                                del_path.lineTo(bl)
-                                                                del_path.closeSubpath()
-                                                            # Support axis-aligned rectangle dict
-                                                            elif all(k in del_rect for k in ("x", "y", "width", "height")):
-                                                                del_path.addRect(QRectF(del_rect["x"], del_rect["y"], del_rect["width"], del_rect["height"]))
+                                        if not subtraction_path.isEmpty():
+                                            # Check if the mask actually intersects with the underlying layer Y
+                                            # Only subtract if there's an actual intersection
+                                            mask_intersects_underlying = subtraction_path.intersects(other_stroke_path)
+                                            
+                                            if mask_intersects_underlying:
+                                                original_rect_intersect = current_intersection_shadow.boundingRect()
+                                                current_intersection_shadow = current_intersection_shadow.subtracted(subtraction_path) # Apply to current intersection
+                                                new_rect_intersect = current_intersection_shadow.boundingRect()
 
-                                                            if not del_path.isEmpty():
-                                                                subtraction_path = subtraction_path.subtracted(del_path)
-                                                    except Exception as del_ex:
-                                                        # logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub}': {del_ex}")
-                                                        pass
+                                                original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
+                                                new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
 
-                                            if not subtraction_path.isEmpty():
-                                                # Check if the mask actually intersects with the underlying layer Y
-                                                # Only subtract if there's an actual intersection
-                                                mask_intersects_underlying = subtraction_path.intersects(other_stroke_path)
-                                                
-                                                if mask_intersects_underlying:
-                                                    original_rect_intersect = current_intersection_shadow.boundingRect()
-                                                    current_intersection_shadow = current_intersection_shadow.subtracted(subtraction_path) # Apply to current intersection
-                                                    new_rect_intersect = current_intersection_shadow.boundingRect()
-
-                                                    original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
-                                                    new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
-
-                                                    if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
-                                                       (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
-                                                        logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
-                                                else:
-                                                    logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction")
+                                                if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
+                                                   (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
+                                                    logging.info(f"Subtracted overlying mask '{mask_layer_sub}' (using its area) from shadow intersection of '{this_layer}' on '{other_layer}'")
                                             else:
-                                                 # logging.warning(f"Could not calculate subtraction path for mask '{mask_layer_sub}', subtraction skipped for this intersection.")
-                                                 pass
+                                                logging.info(f"Mask '{mask_layer_sub}' does not intersect with underlying layer '{other_layer}', skipping shadow subtraction")
+                                            # (duplicate else branch removed)
 
 
-                                        except Exception as e:
-                                            # logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
-                                            pass
+                                    except Exception as e:
+                                        # logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
+                                        pass
                         # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
 
@@ -1360,5 +1376,57 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0):
 
         return result_path
     except Exception as e:
+        return QPainterPath()
+
+# --------------------------------------------------
+# Helper: shadow-blocker path (cached)
+# --------------------------------------------------
+
+def get_shadow_blocker_path(mask_strand, blur_px):
+    """
+    Return a path that blocks shadows beneath *mask_strand*.
+
+    It is the union of the mask's actual geometry (already respecting
+    deletion rectangles) and a stroked outline that extends by the full
+    blur radius so that the soft edge is also blocked.
+
+    The result is cached on the *mask_strand* instance so that we only
+    run the heavy QPainterPath maths when the mask (or the blur amount)
+    really changes.  Any method that mutates the mask should simply
+    delete the attribute ``_shadow_blocker_cache`` so a fresh one is
+    generated automatically next time.
+    """
+    from PyQt5.QtGui import QPainterPathStroker  # local import → avoids Qt costs when not needed
+
+    if mask_strand is None:
+        return QPainterPath()
+
+    # --- Per-instance cache (dict blur_px -> path) --------------------
+    cache = getattr(mask_strand, "_shadow_blocker_cache", None)
+    if cache is None:
+        cache = {}
+        setattr(mask_strand, "_shadow_blocker_cache", cache)
+
+    key = float(blur_px)
+    if key in cache:
+        return cache[key]
+
+    try:
+        base_path = mask_strand.get_mask_path() if hasattr(mask_strand, "get_mask_path") else QPainterPath()
+        if base_path.isEmpty():
+            cache[key] = QPainterPath()
+            return cache[key]
+
+        stroker = QPainterPathStroker()
+        stroker.setWidth(blur_px)
+        stroker.setJoinStyle(Qt.RoundJoin)
+        stroker.setCapStyle(Qt.RoundCap)
+        extended = stroker.createStroke(base_path)
+        blocker = base_path.united(extended)
+
+        cache[key] = blocker
+        return blocker
+    except Exception:
+        # On any error just return an empty path so we never block painting.
         return QPainterPath()
 

@@ -284,7 +284,7 @@ class MaskedStrand(Strand):
         temp_painter.setRenderHint(QPainter.Antialiasing, True)
         temp_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
         temp_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-        
+        temp_painter.setRenderHint(QPainter.Antialiasing)        
         # do not Draw the strands FIRST
 
             
@@ -335,10 +335,12 @@ class MaskedStrand(Strand):
                         logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
                 else:
                     logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
+                painter.save()
                 # Draw shadow and apply deletion rectangles at intersection stage
                 draw_mask_strand_shadow(
-                    temp_painter,
+                    painter,
                     strand1_shadow_path,
+                    strand1_path,
                     strand2_path,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,
@@ -348,7 +350,7 @@ class MaskedStrand(Strand):
                     second_strand=self.second_selected_strand,
                 )
 
- 
+                painter.restore()
         except Exception as e:
             logging.error(f"Error applying masked strand shadow: {e}")
             # Attempt to refresh even if there was an error

@@ -9,7 +9,9 @@ from functools import lru_cache
 def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
+    first_strand_path: QPainterPath,
     second_path: QPainterPath,
+
     deletion_rects: List[QRectF] = None,
     shadow_color: QColor = None,
     num_steps: int = 3,
@@ -41,6 +43,18 @@ def draw_mask_strand_shadow(
     # Early out if still empty
     if intersection_path.isEmpty():
         return
+
+    # --------------------------------------------------
+    # Safeguard the caller's QPainter state.  We push a
+    # fresh state frame so that every change we make to
+    # clip paths, composition modes, pens, brushes, etc.
+    # is fully undone by the matching ``painter.restore``
+    # near the end of this routine.  The caller therefore
+    # only needs ONE save/restore pair at most – and can
+    # even omit it entirely when they pass the main canvas
+    # painter.
+    # --------------------------------------------------
+    painter.save()
 
     # Apply deletion rectangles to intersection_path if provided
     if deletion_rects:
@@ -125,9 +139,8 @@ def draw_mask_strand_shadow(
     # ------------------------------------------------------------------
     # Prepare painter state.
     # ------------------------------------------------------------------
-    painter.save()
-    painter.setRenderHint(QPainter.Antialiasing)
-    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+
     
     # ------------------------------------------------------------------
     # 1) Fill the solid shadow core.
@@ -152,24 +165,23 @@ def draw_mask_strand_shadow(
     #painter.setClipPath(second_path)
     # Enable the highest quality rasterisation for the blur passes.
     for i in range(num_steps):
-        progress = (num_steps - i) / num_steps  # 1 → 0
-        current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
-        current_width = max_blur_radius * ((i + 1) / num_steps)
+        # Alpha fades from base_alpha down towards zero
+        # Distribute alpha across steps for smoother look
+        # Adjusted alpha calculation slightly for potentially better distribution
+        progress = (float(num_steps - i) / num_steps)
+        current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
 
-        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
-                           max(0, min(255, int(current_alpha))))
+        # Width increases
+        current_width = max_blur_radius * (float(i + 1) / num_steps)
+
+        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
-        pen.setCosmetic(True)
-        print(f"current_width of mask shadow: {current_width}")
-        current_width = round(current_width)
-        print(f"current_width of mask shadow: {current_width}")
         pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.RoundCap)
+        pen.setCapStyle(Qt.RoundCap) # Use RoundCap/Join for softer edges
         pen.setJoinStyle(Qt.RoundJoin)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+
         painter.setPen(pen)
-        painter.strokePath(intersection_path, pen)
+        painter.strokePath(first_strand_path, pen) # Stroke the path outline
 
     painter.restore()
     logging.info(

@@ -30,6 +30,7 @@ class Strand:
         self.is_start_side = True
         self.is_selected = False  # Indicates if the strand is selected
         self.is_hidden = False # Indicates if the strand is hidden
+        self.shadow_only = False # Indicates if the strand is in shadow-only mode
 
         # Initialize attachment statuses
         self.start_attached = False
@@ -1012,7 +1013,7 @@ class Strand:
             if getattr(self, 'start_extension_visible', False) or getattr(self, 'end_extension_visible', False):
                 painter.save()
                 painter.setPen(dash_pen_hidden_ext)
-                if getattr(self, 'start_extension_visible', False):
+                if getattr(self, 'start_extension_visible', False) and not shadow_only_mode:
                     tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0)
                     length_hidden_start_ext = math.hypot(tangent_hidden_start_ext.x(), tangent_hidden_start_ext.y())
                     if length_hidden_start_ext:
@@ -1021,7 +1022,7 @@ class Strand:
                         start_pt_hidden_start_ext = QPointF(self.start.x() + unit_hidden_start_ext.x()*dash_gap_hidden, self.start.y() + unit_hidden_start_ext.y()*dash_gap_hidden)
                         end_pt_hidden_start_ext = QPointF(raw_end_hidden_start_ext.x() + unit_hidden_start_ext.x()*dash_gap_hidden, raw_end_hidden_start_ext.y() + unit_hidden_start_ext.y()*dash_gap_hidden)
                         painter.drawLine(start_pt_hidden_start_ext, end_pt_hidden_start_ext)
-                if getattr(self, 'end_extension_visible', False):
+                if getattr(self, 'end_extension_visible', False) and not shadow_only_mode:
                     tangent_hidden_end_ext = self.calculate_cubic_tangent(1.0)
                     length_hidden_end_ext = math.hypot(tangent_hidden_end_ext.x(), tangent_hidden_end_ext.y())
                     if length_hidden_end_ext:
@@ -1103,6 +1104,8 @@ class Strand:
             painter.restore() # RESTORE 1 (Top Level)
             return # Arrow and extensions drawn (if requested); skip drawing strand body
         # --- END: Handle hidden state ---
+
+        # Note: Shadow-only mode handled later - need to cast shadows first
 
         # Import necessary classes locally to avoid potential circular imports
         from masked_strand import MaskedStrand
@@ -1263,54 +1266,66 @@ class Strand:
         fill_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         fill_path = fill_stroker.createStroke(path)
 
-        # Draw the stroke path with the stroke color
-        # Reduced high-frequency logging for performance
-        # logging.info(f"Strand {self.layer_name}: Before drawing stroke_path")
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self.stroke_color)
-        painter.drawPath(stroke_path)
+        # --- START: Skip strand body drawing in shadow-only mode ---
+        if not getattr(self, 'shadow_only', False):
+            # Draw the stroke path with the stroke color
+            # Reduced high-frequency logging for performance
+            # logging.info(f"Strand {self.layer_name}: Before drawing stroke_path")
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(stroke_path)
 
-        # Draw the fill path with the strand's color
-        # Reduced high-frequency logging for performance
-        # logging.info(f"Strand {self.layer_name}: Before drawing fill_path")
-        painter.setBrush(self.color)
-        painter.drawPath(fill_path)
+            # Draw the fill path with the strand's color
+            # Reduced high-frequency logging for performance
+            # logging.info(f"Strand {self.layer_name}: Before drawing fill_path")
+            painter.setBrush(self.color)
+            painter.drawPath(fill_path)
 
-        # Draw the end line
-        side_pen = QPen(self.stroke_color, self.stroke_width)
-        side_pen.setCapStyle(Qt.FlatCap)
+            # Draw the side lines
+            side_pen = QPen(self.stroke_color, self.stroke_width)
+            side_pen.setCapStyle(Qt.FlatCap)
 
-        # Create a new color with the same alpha as the strand's color
+            # Create a new color with the same alpha as the strand's color
+            side_color = QColor(self.stroke_color)
+            side_color.setAlpha(self.color.alpha())
+            side_pen.setColor(side_color)
+
+            painter.setPen(side_pen)
+            # Conditionally draw start line
+            if self.start_line_visible:
+                painter.drawLine(self.start_line_start, self.start_line_end)
+            # Conditionally draw end line
+            if self.end_line_visible:
+                painter.drawLine(self.end_line_start, self.end_line_end)
+        # --- END: Skip strand body drawing in shadow-only mode ---
+
+        # Check shadow-only mode for remaining visual elements
+        shadow_only_mode = getattr(self, 'shadow_only', False)
+        
+        # Define side_color for extension lines (needed even in shadow-only mode for pen setup)
         side_color = QColor(self.stroke_color)
         side_color.setAlpha(self.color.alpha())
-        side_pen.setColor(side_color)
-
-        painter.setPen(side_pen)
-        # Conditionally draw start line
-        if self.start_line_visible:
-            painter.drawLine(self.start_line_start, self.start_line_end)
-        # Conditionally draw end line
-        if self.end_line_visible:
-            painter.drawLine(self.end_line_start, self.end_line_end)
-        # Draw dashed extension lines with configured dash count and width
-        ext_len = getattr(self.canvas, 'extension_length', 100)
-        dash_count = getattr(self.canvas, 'extension_dash_count', 10)
-        # Determine dash width (thickness)
-        dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
-        # Compute segment length so that there are dash_count dashes over ext_len
-        dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
-        # Get configured gap length between dashes or default to dash segment, invert for offset
-        dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
-        dash_gap = -dash_gap
-        # Setup pen for dashed line
-        dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
-        # Uniform dash pattern: equal on/off lengths based on dash_seg
-        pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
-        dash_pen.setDashPattern([pattern_len, pattern_len])
-        dash_pen.setCapStyle(Qt.FlatCap)
-        painter.setPen(dash_pen)
+        
+        # Draw dashed extension lines with configured dash count and width (skip in shadow-only)
+        if not shadow_only_mode:
+            ext_len = getattr(self.canvas, 'extension_length', 100)
+            dash_count = getattr(self.canvas, 'extension_dash_count', 10)
+            # Determine dash width (thickness)
+            dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+            # Compute segment length so that there are dash_count dashes over ext_len
+            dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
+            # Get configured gap length between dashes or default to dash segment, invert for offset
+            dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
+            dash_gap = -dash_gap
+            # Setup pen for dashed line
+            dash_pen = QPen(side_color, dash_width, Qt.CustomDashLine)
+            # Uniform dash pattern: equal on/off lengths based on dash_seg
+            pattern_len = dash_seg / dash_width if dash_width > 0 else dash_seg
+            dash_pen.setDashPattern([pattern_len, pattern_len])
+            dash_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(dash_pen)
         # Start extension with gap offset at both ends
-        if getattr(self, 'start_extension_visible', False):
+        if getattr(self, 'start_extension_visible', False) and not shadow_only_mode:
             tangent = self.calculate_cubic_tangent(0.0)
             length = math.hypot(tangent.x(), tangent.y())
             if length:
@@ -1320,7 +1335,7 @@ class Strand:
                 end_pt = QPointF(raw_end.x() + unit.x()*dash_gap, raw_end.y() + unit.y()*dash_gap)
                 painter.drawLine(start_pt, end_pt)
         # End extension with gap offset at both ends
-        if getattr(self, 'end_extension_visible', False):
+        if getattr(self, 'end_extension_visible', False) and not shadow_only_mode:
             tangent_end = self.calculate_cubic_tangent(1.0)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
@@ -1347,8 +1362,8 @@ class Strand:
         border_pen.setJoinStyle(Qt.MiterJoin)
         border_pen.setCapStyle(Qt.FlatCap)
 
-        # Draw start arrow if visible (gap → shaft → head)
-        if getattr(self, 'start_arrow_visible', False):
+        # Draw start arrow if visible (gap → shaft → head) - skip in shadow-only mode
+        if getattr(self, 'start_arrow_visible', False) and not shadow_only_mode:
             tangent_start = self.calculate_cubic_tangent(0.0)
             len_start = math.hypot(tangent_start.x(), tangent_start.y())
             if len_start:
@@ -1391,8 +1406,8 @@ class Strand:
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_poly)
 
-        # Draw end arrow if visible (gap → shaft → head)
-        if getattr(self, 'end_arrow_visible', False):
+        # Draw end arrow if visible (gap → shaft → head) - skip in shadow-only mode
+        if getattr(self, 'end_arrow_visible', False) and not shadow_only_mode:
             tangent_end = self.calculate_cubic_tangent(1.0)
             len_end = math.hypot(tangent_end.x(), tangent_end.y())
             if len_end:
@@ -1811,7 +1826,7 @@ class Strand:
             painter.restore() # RESTORE 7
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
-        if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
+        if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
             
             # --- Draw Arrowhead first to calculate base position ---

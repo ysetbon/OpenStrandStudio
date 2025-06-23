@@ -927,6 +927,40 @@ class LayerPanel(QWidget):
         else:
             logging.warning(f"toggle_layer_visibility called with invalid index: {strand_index}")
     # --- END NEW ---
+
+    def toggle_layer_shadow_only(self, strand_index):
+        """Toggles the shadow-only mode of the strand at the given index."""
+        if 0 <= strand_index < len(self.canvas.strands):
+            strand = self.canvas.strands[strand_index]
+            # Toggle shadow-only mode
+            strand.shadow_only = not getattr(strand, 'shadow_only', False)
+            logging.info(f"Toggled shadow-only for strand {strand.layer_name} to shadow_only={strand.shadow_only}")
+            
+            # Update button appearance to reflect shadow-only state
+            button = self.layer_buttons[strand_index]
+            button.set_shadow_only(strand.shadow_only)
+            
+            # Redraw canvas to reflect the change
+            self.canvas.update()
+
+            # Save the current state to persist shadow-only changes
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info(f"Updated LayerStateManager state after shadow-only toggle.")
+            else:
+                logging.warning("LayerStateManager not found on canvas, cannot update state after shadow-only toggle.")
+
+            # Save state for undo/redo functionality
+            if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+                # Force save by resetting timing check to ensure shadow-only changes are captured
+                self.canvas.undo_redo_manager._last_save_time = 0
+                self.canvas.undo_redo_manager.save_state()
+                logging.info(f"Saved undo/redo state after shadow-only toggle for strand {strand.layer_name}")
+            else:
+                logging.warning("UndoRedoManager not found on canvas, cannot save undo/redo state for shadow-only toggle.")
+
+        else:
+            logging.warning(f"toggle_layer_shadow_only called with invalid index: {strand_index}")
     
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
@@ -2445,6 +2479,10 @@ class LayerPanel(QWidget):
                     logging.info(f"  Connected to: {[ast.layer_name for ast in strand.attached_strands]}")
                 
                 button.set_attachable(is_deletable)
+                
+                # Restore hidden and shadow-only states from strand data
+                button.set_hidden(getattr(strand, 'is_hidden', False))
+                button.set_shadow_only(getattr(strand, 'shadow_only', False))
                 
                 # Add visual indication for non-deletable strands
                 if not is_deletable:

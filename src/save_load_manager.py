@@ -122,6 +122,7 @@ def serialize_strand(strand, canvas, index=None):
         "start_arrow_visible": getattr(strand, 'start_arrow_visible', False),
         "end_arrow_visible": getattr(strand, 'end_arrow_visible', False),
         "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
+        "shadow_only": getattr(strand, 'shadow_only', False),
     }
 
     # Only save circle_stroke_color if it exists
@@ -350,6 +351,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.start_line_visible = data.get("start_line_visible", True)
         strand.end_line_visible = data.get("end_line_visible", True)
         strand.is_hidden = data.get("is_hidden", False)
+        strand.shadow_only = data.get("shadow_only", False)
 
         # NEW: Extension & Arrow visibility flags
         strand.start_extension_visible = data.get("start_extension_visible", False)
@@ -500,6 +502,7 @@ def load_strands(filename, canvas):
             strand.has_circles = strand_data["has_circles"]
             strand.is_start_side = strand_data["is_start_side"]
             strand.is_hidden = strand_data.get("is_hidden", False)
+            strand.shadow_only = strand_data.get("shadow_only", False)
 
             # Visibility flags
             strand.start_line_visible = strand_data.get("start_line_visible", True)
@@ -578,6 +581,7 @@ def load_strands(filename, canvas):
                 strand.has_circles = masked_data["has_circles"]
                 strand.is_start_side = masked_data["is_start_side"]
                 strand.is_hidden = masked_data.get("is_hidden", False)
+                strand.shadow_only = masked_data.get("shadow_only", False)
                 
                 # Load visibility flags
                 strand.start_line_visible = masked_data.get("start_line_visible", True)

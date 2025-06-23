@@ -188,6 +188,7 @@ translations = {
         'arrow': 'Arrow',
         'extension': 'Dash',
         'circle': 'Circle',
+        'shadow_only': 'Shadow Only',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Extension Length',
         'extension_length_tooltip': 'Length of extension lines',
@@ -448,6 +449,7 @@ translations = {
         'arrow': 'Flèche',
         'extension': 'Tiret',
         'circle': 'Cercle',
+        'shadow_only': 'Ombre Seulement',
         # Layer panel extension and arrow settings translations
         'extension_length': "Longueur de l'Extension",
         'extension_length_tooltip': "Longueur des lignes d'extension",
@@ -702,6 +704,7 @@ translations = {
         'arrow': 'Freccia',
         'extension': 'Trattino',
         'circle': 'Cerchio',
+        'shadow_only': 'Solo Ombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Lunghezza estensione',
         'extension_length_tooltip': 'Lunghezza della linea di estensione',
@@ -961,6 +964,7 @@ translations = {
         'arrow': 'Flecha',
         'extension': 'Guión',
         'circle': 'Círculo',
+        'shadow_only': 'Solo Sombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Longitud de la extensión',
         'extension_length_tooltip': 'Longitud de la línea de extensión',
@@ -1219,6 +1223,7 @@ translations = {
         'arrow': 'Flecha',
         'extension': 'Travessão',
         'circle': 'Círculo',
+        'shadow_only': 'Apenas Sombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Comprimento da extensão',
         'extension_length_tooltip': 'Comprimento da linha de extensão',
@@ -1497,6 +1502,7 @@ translations = {
         'show_start_extension': 'הצג מקף התחלתי',
         'hide_end_extension': 'הסתר מקף סופי',
         'show_end_extension': 'הצג מקף סופי',
+        'shadow_only': 'צל בלבד',
         'line': 'קו',
         'arrow': 'חץ',
         'extension': 'מקף',

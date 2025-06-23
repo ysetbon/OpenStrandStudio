@@ -1068,6 +1068,18 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- NEW: Check shadow-only mode ---
+                            if hasattr(new_strand, 'shadow_only') and hasattr(original_strand, 'shadow_only'):
+                                if new_strand.shadow_only != original_strand.shadow_only:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'shadow_only') != hasattr(original_strand, 'shadow_only'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
                             # --- NEW: Check extension visibility ---
                             if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
                                 if new_strand.start_extension_visible != original_strand.start_extension_visible:
@@ -1497,6 +1509,18 @@ class UndoRedoManager(QObject):
                                     break
                             elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
                                 logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
+                            # --- NEW: Check shadow-only mode ---
+                            if hasattr(new_strand, 'shadow_only') and hasattr(original_strand, 'shadow_only'):
+                                if new_strand.shadow_only != original_strand.shadow_only:
+                                    logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only differs.")
+                                    has_visual_difference = True
+                                    break
+                            elif hasattr(new_strand, 'shadow_only') != hasattr(original_strand, 'shadow_only'):
+                                logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---

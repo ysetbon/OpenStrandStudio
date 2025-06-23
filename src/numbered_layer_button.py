@@ -65,6 +65,7 @@ class NumberedLayerButton(QPushButton):
         self.attachable = False  # Property to indicate if strand can be attached
         self.layer_context = layer_context
         self.is_hidden = False # New state for visibility
+        self.shadow_only = False # New state for shadow-only mode
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
         self._drag_start_position = None # To store mouse press position
@@ -186,6 +187,21 @@ class NumberedLayerButton(QPushButton):
         change_hide_action.setDefaultWidget(change_hide)
         change_hide_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
         context_menu.addAction(change_hide_action)
+
+        # Add Shadow Only option
+        shadow_only_text = _['shadow_only']
+        shadow_only_label = HoverLabel(shadow_only_text, self, theme)
+        if is_hebrew:
+            shadow_only_label.setLayoutDirection(Qt.RightToLeft)
+            shadow_only_label.setAlignment(Qt.AlignLeft)
+        shadow_only_action = QWidgetAction(self)
+        shadow_only_action.setDefaultWidget(shadow_only_label)
+        shadow_only_action.triggered.connect(lambda: layer_panel.toggle_layer_shadow_only(index))
+        # Add checkmark if shadow_only is enabled
+        if getattr(strand, 'shadow_only', False):
+            shadow_only_text = f"✓ {shadow_only_text}"
+            shadow_only_label.setText(shadow_only_text)
+        context_menu.addAction(shadow_only_action)
 
         if is_masked_layer:
             context_menu.addSeparator()
@@ -694,6 +710,19 @@ class NumberedLayerButton(QPushButton):
                 logging.error(f"Error finding UndoRedoManager in NumberedLayerButton.set_hidden: {e}")
             # --- END ADD ---
 
+    def set_shadow_only(self, shadow_only):
+        """
+        Set the shadow-only state of the button and update its appearance.
+
+        Args:
+            shadow_only (bool): Whether the button should be in shadow-only mode.
+        """
+        if self.shadow_only != shadow_only:
+            logging.info(f"[BUTTON_DEBUG] Button {self.text()} shadow_only changing from {self.shadow_only} to {shadow_only}")
+            self.shadow_only = shadow_only
+            self.update_style()
+            self.update() # Trigger repaint
+
     def update_style(self):
         """Update the button's style based on its current state."""
         # Use "rgba(...)" so that alpha is respected
@@ -701,7 +730,7 @@ class NumberedLayerButton(QPushButton):
         hovered_rgba = f"rgba({self.color.lighter().red()}, {self.color.lighter().green()}, {self.color.lighter().blue()}, {self.color.lighter().alpha()/255})"
         checked_rgba = f"rgba({self.color.darker().red()}, {self.color.darker().green()}, {self.color.darker().blue()}, {self.color.darker().alpha()/255})"
 
-        # NEW: Override background if hidden
+        # NEW: Override background if hidden or shadow-only
         if self.is_hidden:
             style = """
                 QPushButton {
@@ -715,6 +744,22 @@ class NumberedLayerButton(QPushButton):
                 QPushButton:checked {
                     background-color: dimgray; /* Darker gray when checked */
                 }
+            """
+        elif self.shadow_only:
+            style = f"""
+                QPushButton {{
+                    background-color: {normal_rgba};
+                    border: 2px dashed rgba(128, 128, 128, 0.8);
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    background-color: {hovered_rgba};
+                    border: 2px dashed rgba(160, 160, 160, 1.0);
+                }}
+                QPushButton:checked {{
+                    background-color: {checked_rgba};
+                    border: 2px dashed rgba(96, 96, 96, 1.0);
+                }}
             """
         else:
             style = f"""
@@ -730,13 +775,13 @@ class NumberedLayerButton(QPushButton):
                     background-color: {checked_rgba};
                 }}
             """
-        if self.border_color and not self.is_hidden: # Don't show border when hidden
+        if self.border_color and not self.is_hidden and not self.shadow_only: # Don't show border when hidden or shadow-only (has its own border)
             style += f"""
                 QPushButton {{
                     border: 2px solid {self.border_color.name()};
                 }}
             """
-        if self.selectable and not self.is_hidden: # Don't show selection border when hidden
+        if self.selectable and not self.is_hidden and not self.shadow_only: # Don't show selection border when hidden or shadow-only
             style += """
                 QPushButton {
                     border: 2px solid blue;

@@ -183,8 +183,8 @@ class MaskedStrand(Strand):
             return QPainterPath()
 
         # Get the base paths for both strands
-        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
-        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
+        path1 = self.get_path_for_strand(self.first_selected_strand)
+        path2 = self.get_stroked_path_for_strand_extended(self.second_selected_strand)
 
         # Create the mask by intersecting the paths - Always start fresh
         result_path = path1.intersected(path2)
@@ -220,7 +220,14 @@ class MaskedStrand(Strand):
                 logging.info(f"Applied deletion rect to mask_path: new bounds={mask_path.boundingRect()}, empty={mask_path.isEmpty()}")
         # Return fresh mask including deletions
         return mask_path
-
+    def get_path_for_strand(self, strand):
+        """Helper method to get the stroked path for a strand."""
+        path = strand.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(path)
     def get_stroked_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -229,6 +236,14 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)
+    def get_stroked_path_for_strand_extended(self, strand):
+        """Helper method to get the stroked path for a strand."""
+        path = strand.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width + strand.stroke_width * 2  +2)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(path)    
     def get_stroked_path_for_strand_with_shadow(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -395,7 +410,7 @@ class MaskedStrand(Strand):
             temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             temp_painter.setPen(Qt.NoPen)
             temp_painter.setBrush(Qt.black)
-            temp_painter.drawPath(mask_path)
+            #temp_painter.drawPath(mask_path)
         else:
             # Get the base intersection mask
             logging.info("Using default intersection mask")
@@ -407,7 +422,7 @@ class MaskedStrand(Strand):
             temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             temp_painter.setPen(Qt.NoPen)
             temp_painter.setBrush(Qt.black)
-            temp_painter.drawPath(mask_path)
+            #temp_painter.drawPath(mask_path)
 
         # End painting on the temporary image
         temp_painter.end()
@@ -569,16 +584,12 @@ class MaskedStrand(Strand):
                         strand_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
                         strand_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
                         
-                        # Completely disable any stroke drawing
-                        strand_painter.setPen(Qt.NoPen)
-                        
-                        # Draw the strand without stroke
+                        # Draw the strand with its normal appearance (fill + stroke)
                         self.first_selected_strand.draw(strand_painter)
                         strand_painter.end()
                         
                         # Now draw the clipped strand to the final painter
                         final_painter.save()
-                        final_painter.setClipPath(shadow_inset_path)
                         final_painter.setCompositionMode(QPainter.CompositionMode_Source)
                         final_painter.drawImage(0, 0, strand_buffer)
                         final_painter.restore()
@@ -602,7 +613,7 @@ class MaskedStrand(Strand):
                     # Draw the core mask with solid opacity
                     mask_painter.setPen(Qt.NoPen)
                     mask_painter.setBrush(QBrush(Qt.black))
-                    mask_painter.drawPath(path_shadow)
+                    #mask_painter.drawPath(path_shadow)
                     
                     # Create and draw the feathered edge for smooth transitions
                     feather_width = 4.0  # Use a wider feather for smoother edges
@@ -617,7 +628,7 @@ class MaskedStrand(Strand):
                     feather_path = feather_path.subtracted(path_shadow)
                     if not feather_path.isEmpty():
                         mask_painter.setBrush(QBrush(QColor(0, 0, 0, 128)))  # Half-transparent for feathering
-                        mask_painter.drawPath(feather_path)
+                        #mask_painter.drawPath(feather_path)
                     
                     mask_painter.end()
                     
@@ -632,6 +643,28 @@ class MaskedStrand(Strand):
                     painter.drawImage(0, 0, final_buffer)                        
                     # Skip drawing additional shadows for nested masked strands to prevent double-shadowing
                     logging.info(f"Skipping additional shadow for nested masked strand {self.layer_name}")
+                    
+                    # --- NEW: paint the intersection area again as a solid path to guarantee
+                    # perfect antialiasing.  We simply fill the same mask_path that we used
+                    # for clipping with the first strand's colour and with NoPen, exactly the
+                    # way an ordinary strand is painted in strand.py.  This covers any residual
+                    # hard-edge artefacts left by the image-masking step without changing the
+                    # visual result.
+                    painter.save()
+                    painter.setRenderHint(QPainter.Antialiasing, True)
+                    painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    painter.setPen(Qt.NoPen)
+
+                    try:
+                        # Recreate the intersection mask (including deletion rects if present)
+                        fresh_mask_path = self.get_mask_path()
+                        if not fresh_mask_path.isEmpty():
+                            painter.setBrush(self.first_selected_strand.color)
+                            painter.drawPath(fresh_mask_path)
+                    except Exception as _e:
+                        logging.error(f"Could not draw antialiased mask fill: {_e}")
+
+                    painter.restore()
   
         except Exception as e:
             logging.error(f"Error drawing first strand on top: {str(e)}")
@@ -651,12 +684,12 @@ class MaskedStrand(Strand):
             painter.setBrush(QBrush(QColor(255, 0, 0, 128)))
 
             # Acquire the mask path and set a winding fill rule so the region gets filled.
-            mask_path = self.get_mask_path()
+            #mask_path = self.get_mask_path()
             
             # Only draw if the mask path is not empty (strands actually intersect)
             if not mask_path.isEmpty():
-                mask_path.setFillRule(Qt.WindingFill)
-                painter.drawPath(mask_path)
+                #mask_path.setFillRule(Qt.WindingFill)
+                #painter.drawPath(mask_path)
 
                 # Always recalculate and draw center points based on current masks
                 self.calculate_center_point()
@@ -1180,6 +1213,7 @@ class MaskedStrand(Strand):
             mask_path = self.get_mask_path()
             # Only draw if the path is not empty (strands actually intersect)
             if not mask_path.isEmpty():
+                
                 painter.drawPath(mask_path)
 
         painter.restore()

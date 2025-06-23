@@ -32,17 +32,14 @@ def draw_mask_strand_shadow(
     # ------------------------------------------------------------------
     # Log geometry of input paths
     logging.info(f"draw_mask_strand_shadow: first_path bounds={first_path.boundingRect()}, elements={first_path.elementCount()} | second_path bounds={second_path.boundingRect()}, elements={second_path.elementCount()}")
-    # Compute intersection of component paths
+  
     intersection_path = QPainterPath(first_path).intersected(second_path)
-    # Log intersection geometry
-    logging.info(f"draw_mask_strand_shadow: intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
 
-    if not first_path.isEmpty() and not second_path.isEmpty():
-        intersection_path = QPainterPath(first_path).intersected(second_path)
-        logging.info("draw_mask_strand_shadow: using first_path as fallback")
+    # Log final intersection geometry (after possible replacement)
+    logging.info(f"draw_mask_strand_shadow: final intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
 
-    else:
-        # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
+    # Early out if still empty
+    if intersection_path.isEmpty():
         return
 
     # Apply deletion rectangles to intersection_path if provided
@@ -129,16 +126,13 @@ def draw_mask_strand_shadow(
     # Prepare painter state.
     # ------------------------------------------------------------------
     painter.save()
-    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setRenderHint(QPainter.Antialiasing)
     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     # ------------------------------------------------------------------
     # 1) Fill the solid shadow core.
     # ------------------------------------------------------------------
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(QBrush(base_color))
-    painter.drawPath(intersection_path)
-    painter.setBrush(Qt.NoBrush)
+    #painter.setPen(Qt.NoPen)
 
     # ------------------------------------------------------------------
     # 2) Add a blurred / faded edge by repeatedly stroking the path with
@@ -146,10 +140,14 @@ def draw_mask_strand_shadow(
     # ------------------------------------------------------------------
     # We allow the blurred edge to extend anywhere the ORIGINAL component
     # paths exist (their union) so that the blur is not clipped too early.
-    union_path = QPainterPath(first_path)
-    union_path.addPath(second_path)
+    union_path = first_path.united(second_path)
+    #union_path.addPath(second_path)
+    # Clip once to the *union* of both stroked component paths so that the
+    # blurred edge can extend fully inside either strand without being chopped
+    # off by an accidental clip-replacement.
     painter.setClipPath(union_path)
-    painter.setClipPath(second_path)
+    #painter.setClipPath(second_path)
+    # Enable the highest quality rasterisation for the blur passes.
     for i in range(num_steps):
         progress = (num_steps - i) / num_steps  # 1 → 0
         current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
@@ -158,10 +156,15 @@ def draw_mask_strand_shadow(
         pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
                            max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
+        pen.setCosmetic(True)
+        print(f"current_width of mask shadow: {current_width}")
+        current_width = round(current_width)
+        print(f"current_width of mask shadow: {current_width}")
         pen.setWidthF(current_width)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
-
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
         painter.setPen(pen)
         painter.strokePath(intersection_path, pen)
 

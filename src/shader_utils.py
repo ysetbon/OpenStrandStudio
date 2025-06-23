@@ -141,11 +141,14 @@ def draw_mask_strand_shadow(
     # We allow the blurred edge to extend anywhere the ORIGINAL component
     # paths exist (their union) so that the blur is not clipped too early.
     union_path = first_path.united(second_path)
+    
     #union_path.addPath(second_path)
     # Clip once to the *union* of both stroked component paths so that the
     # blurred edge can extend fully inside either strand without being chopped
     # off by an accidental clip-replacement.
     painter.setClipPath(union_path)
+    inverse_second_path = union_path.subtracted(second_path)
+    painter.setClipPath(union_path.subtracted(inverse_second_path))    # union − second
     #painter.setClipPath(second_path)
     # Enable the highest quality rasterisation for the blur passes.
     for i in range(num_steps):

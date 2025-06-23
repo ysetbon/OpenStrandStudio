@@ -22,6 +22,7 @@ class MaskedStrand(Strand):
         self._has_circles = [False, False]
         self.is_selected = False
         self.is_hidden = False # Indicates if the masked strand is hidden
+        self.shadow_only = False # Indicates if the masked strand is in shadow-only mode
         self.custom_mask_path = None
         self.deletion_rectangles = []
         self.base_center_point = None
@@ -279,8 +280,8 @@ class MaskedStrand(Strand):
             except ImportError:
                 from src.shader_utils import draw_mask_strand_shadow
             
-            # Only draw shadows if shadow rendering is enabled in the canvas
-            if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'shadow_enabled') and self.canvas.shadow_enabled:
+            # Only draw shadows if this strand should draw its own shadow
+            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
                 # Get the shadow color directly from the canvas if available
@@ -340,6 +341,16 @@ class MaskedStrand(Strand):
                 self.force_shadow_refresh()
             except Exception as refresh_error:
                 logging.error(f"Error during error recovery refresh: {refresh_error}")
+
+        # --- START: Skip visual rendering in shadow-only mode ---
+        if getattr(self, 'shadow_only', False):
+            # In shadow-only mode, skip all visual drawing but preserve shadows
+            # First, transfer the temp_image (with shadows) to the main painter
+            temp_painter.end()
+            painter.drawImage(0, 0, temp_image)
+            painter.restore()
+            return
+        # --- END: Skip visual rendering in shadow-only mode ---
 
         # Get the mask path - use edited mask if it exists, otherwise use base mask
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:

@@ -35,6 +35,8 @@ class AttachedStrand(Strand):
         self.has_circles = [True, False]
         # Inherit shadow color from parent
         self.shadow_color = parent.shadow_color
+        # Initialize shadow_only property
+        self.shadow_only = False
         self.update_end()
 
         # Initialize control points at 1/3 and 2/3 along the strand
@@ -766,6 +768,82 @@ class AttachedStrand(Strand):
         except Exception as e:
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
+        
+        # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
+        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            # We need stroke_path for highlighting, so calculate it here
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)
+            path = QPainterPath()
+            path.moveTo(self.start)
+            path.cubicTo(
+                self.control_point1,
+                self.control_point2,
+                self.end
+            )
+            stroke_path = stroke_stroker.createStroke(path)
+            
+            highlight_pen = QPen(QColor('red'), 10)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+            
+            # Draw highlight for AttachedStrand's side line
+            painter.save()
+            
+            highlight_pen_thickness = 10
+            black_half_width = (self.width + self.stroke_width * 2) / 2
+            highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
+
+            # Calculate angles of tangents
+            tangent_start = self.calculate_cubic_tangent(0.0)
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            
+            # Handle zero-length tangent vectors
+            if tangent_start.manhattanLength() == 0:
+                tangent_start = self.end - self.start
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.start - self.end
+
+            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            
+            # Perpendicular angles at start and end
+            perp_angle_start = angle_start + math.pi / 2
+            perp_angle_end = angle_end + math.pi / 2
+            
+            # Calculate extended positions for end line
+            dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
+            dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
+            end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
+            end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+            
+            # Create a pen for the red sideline highlight
+            highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            
+            # Only draw end line if there's no attached strand on the end
+            if self.end_line_visible and not self.has_circles[1]:
+                painter.drawLine(end_line_start_extended, end_line_end_extended)
+            
+            painter.restore()
+        
+        # --- START: Skip visual rendering in shadow-only mode ---
+        if getattr(self, 'shadow_only', False):
+            # In shadow-only mode, skip all visual drawing but preserve shadows and highlights
+            painter.restore()  # Top Level Restore 
+            return
+        # --- END: Skip visual rendering in shadow-only mode ---
+        
         # NEW: Draw dashed extension lines for attached strands
         ext_len = getattr(self.canvas, 'extension_length', 100)
         dash_count = getattr(self.canvas, 'extension_dash_count', 10)
@@ -898,78 +976,6 @@ class AttachedStrand(Strand):
                 painter.drawPolygon(arrow_poly)
         # --- END NEW ---
 
-        # Draw highlight if selected (only when directly selected)
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            # --- FIX: Use stroke_path for highlight --- 
-            painter.drawPath(stroke_path)
-            # --- END FIX ---
-            # --- NEW: Draw highlight for AttachedStrand's side line ---
-            if isinstance(self, AttachedStrand):
-                painter.save()
-                
-                # To make the side-line highlight match the main body's 10px highlight,
-                # we will draw it with a 10px pen. The line's length must be extended
-                # by 5px on each side to align with the outer edge of the body highlight.
-                highlight_pen_thickness = 10
-                
-                # Calculate the half-width of the black part of the strand
-                black_half_width = (self.width + self.stroke_width * 2) / 2
-                
-                # The red highlight line's half-length needs to extend beyond the black part.
-                highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
-
-                # Calculate angles of tangents
-                tangent_start = self.calculate_cubic_tangent(0.0)
-                tangent_end = self.calculate_cubic_tangent(1.0)
-                
-                # Handle zero-length tangent vectors
-                if tangent_start.manhattanLength() == 0:
-                    tangent_start = self.end - self.start
-                if tangent_end.manhattanLength() == 0:
-                    tangent_end = self.start - self.end
-                
-                # Calculate angles of tangents
-                angle_start = math.atan2(tangent_start.y(), tangent_start.x())
-                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-                
-                # Perpendicular angles at start and end
-                perp_angle_start = angle_start + math.pi / 2
-                perp_angle_end = angle_end + math.pi / 2
-                
-                # Calculate extended positions for start line
-                dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
-                dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
-                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
-                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
-                
-                # Calculate extended positions for end line
-                dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
-                dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
-                
-                # Create a pen for the red sideline highlight
-                # Use the same thickness that we use for the main highlight so that they match exactly.
-                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
-                highlight_pen.setCapStyle(Qt.FlatCap)
-                highlight_pen.setJoinStyle(Qt.MiterJoin)
-                
-                painter.setPen(highlight_pen)
-                painter.setBrush(Qt.NoBrush)
-                
-        
-                # Only draw end line if there's no attached strand on the end
-                if self.end_line_visible and not self.has_circles[1]:
-                    painter.drawLine(end_line_start_extended, end_line_end_extended)
-                
-                painter.restore()
-            # --- END NEW ---
 
 
         # Create a temporary image for masking
@@ -2236,6 +2242,66 @@ class AttachedStrand(Strand):
             # Log the error but continue with the rendering
             logging.error(f"Error applying strand shadow: {e}")
 
+        # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
+        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            highlight_pen = QPen(QColor('red'), 10)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(stroke_path)
+            
+            # Draw highlight for AttachedStrand's side line
+            painter.save()
+            
+            highlight_pen_thickness = 10
+            black_half_width = (self.width + self.stroke_width * 2) / 2
+            highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
+
+            # Calculate angles of tangents
+            tangent_start = self.calculate_cubic_tangent(0.0)
+            tangent_end = self.calculate_cubic_tangent(1.0)
+            
+            # Handle zero-length tangent vectors
+            if tangent_start.manhattanLength() == 0:
+                tangent_start = self.end - self.start
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.start - self.end
+
+            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            
+            # Perpendicular angles at start and end
+            perp_angle_start = angle_start + math.pi / 2
+            perp_angle_end = angle_end + math.pi / 2
+            
+            # Calculate extended positions for end line
+            dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
+            dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
+            end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
+            end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+            
+            # Create a pen for the red sideline highlight
+            highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
+            highlight_pen.setCapStyle(Qt.FlatCap)
+            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            
+            painter.setPen(highlight_pen)
+            painter.setBrush(Qt.NoBrush)
+            
+            # Only draw end line if there's no attached strand on the end
+            if self.end_line_visible and not self.has_circles[1]:
+                painter.drawLine(end_line_start_extended, end_line_end_extended)
+            
+            painter.restore()
+
+        # --- START: Skip visual rendering in shadow-only mode ---
+        if getattr(self, 'shadow_only', False):
+            # In shadow-only mode, skip all visual drawing but preserve shadows and highlights
+            return
+        # --- END: Skip visual rendering in shadow-only mode ---
+
         # Draw dashed extension lines
         ext_len = getattr(self.canvas, 'extension_length', 100)
         dash_count = getattr(self.canvas, 'extension_dash_count', 10)
@@ -2367,76 +2433,6 @@ class AttachedStrand(Strand):
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_poly)
 
-        # Draw highlight if selected (only when directly selected)
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), 10 )  # Fixed width instead of self.stroke_width + 8
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(stroke_path)
-            
-            # --- NEW: Draw highlight for AttachedStrand's side line ---
-            if isinstance(self, AttachedStrand):
-                painter.save()
-                
-                # To make the side-line highlight match the main body's 10px highlight,
-                # we will draw it with a 10px pen. The line's length must be extended
-                # by 5px on each side to align with the outer edge of the body highlight.
-                highlight_pen_thickness = 10
-                
-                # Calculate the half-width of the black part of the strand
-                black_half_width = (self.width + self.stroke_width * 2) / 2
-                
-                # The red highlight line's half-length needs to extend beyond the black part.
-                highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
-
-                # Calculate angles of tangents
-                tangent_start = self.calculate_cubic_tangent(0.0)
-                tangent_end = self.calculate_cubic_tangent(1.0)
-                
-                # Handle zero-length tangent vectors
-                if tangent_start.manhattanLength() == 0:
-                    tangent_start = self.end - self.start
-                if tangent_end.manhattanLength() == 0:
-                    tangent_end = self.start - self.end
-                
-                # Calculate angles of tangents
-                angle_start = math.atan2(tangent_start.y(), tangent_start.x())
-                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-                
-                # Perpendicular angles at start and end
-                perp_angle_start = angle_start + math.pi / 2
-                perp_angle_end = angle_end + math.pi / 2
-                
-                # Calculate extended positions for start line
-                dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
-                dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
-                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
-                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
-                
-                # Calculate extended positions for end line
-                dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
-                dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
-                
-                # Create a pen for the red sideline highlight
-                # Use the same thickness that we use for the main highlight so that they match exactly.
-                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
-                highlight_pen.setCapStyle(Qt.FlatCap)
-                highlight_pen.setJoinStyle(Qt.MiterJoin)
-                
-                painter.setPen(highlight_pen)
-                painter.setBrush(Qt.NoBrush)
-                
-                # Only draw end line if there's no attached strand on the end
-                if self.end_line_visible and not self.has_circles[1]:
-                    painter.drawLine(end_line_start_extended, end_line_end_extended)
-                
-                painter.restore()
-            # --- END NEW ---
 
         # Draw the main strand directly to the painter
         painter.setPen(Qt.NoPen)

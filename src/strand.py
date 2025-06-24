@@ -1579,11 +1579,9 @@ class Strand:
             )
 
             if not skip_end_circle: # Only draw if no child is attached here
-                # Re-create a temp image so we can blend a half-circle on the end
-                temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
-                temp_image.fill(Qt.transparent)
-                temp_painter = QPainter(temp_image)
-                temp_painter.setRenderHint(QPainter.Antialiasing)
+                # Draw directly on the painter
+                painter.save()
+                painter.setRenderHint(QPainter.Antialiasing)
 
                 # Compute tangent & angle at the end (t=1.0)
                 tangent_end = self.calculate_cubic_tangent(1.0)
@@ -1611,25 +1609,21 @@ class Strand:
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
                 # Draw the outer circle stroke with self.circle_stroke_color or self.stroke_color (your preference)
-                temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                temp_painter.setPen(Qt.NoPen)
-                temp_painter.setBrush(self.stroke_color) # Changed from self.circle_stroke_color
-                temp_painter.drawPath(outer_mask_end)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.stroke_color) # Changed from self.circle_stroke_color
+                painter.drawPath(outer_mask_end)
 
                 # Then draw the fill for the inner circle
                 inner_circle_end = QPainterPath()
                 inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
                 inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
-                temp_painter.setBrush(self.color)
-                temp_painter.drawPath(inner_mask_end)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_end)
 
                 # Draw a small inner circle again (no mask) so it doesn't look clipped
-                just_inner_end = QPainterPath()
-                just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
-                temp_painter.drawPath(just_inner_end)
+                painter.drawEllipse(self.end, self.width / 2, self.width / 2)
 
-                painter.drawImage(0, 0, temp_image)
-                temp_painter.end()
+                painter.restore()
         # ----------------------------------------------------------------
 
         # NEW CODE: Also draw an ending circle if has_circles == [True, True]
@@ -1645,17 +1639,14 @@ class Strand:
                 for child in self.attached_strands
             )
 
-            # Re-create a temp image for drawing the circles
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
+            # Draw directly on the painter
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
 
             # Common drawing setup
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
+            painter.setPen(Qt.NoPen)
 
             # --- Draw Start Circle (if not skipped) ---
             if not skip_start_circle:
@@ -1680,20 +1671,18 @@ class Strand:
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
 
                 # Draw stroke
-                temp_painter.setBrush(self.stroke_color)
-                temp_painter.drawPath(outer_mask_start)
+                painter.setBrush(self.stroke_color)
+                painter.drawPath(outer_mask_start)
 
                 # Draw fill
                 inner_circle_start = QPainterPath()
                 inner_circle_start.addEllipse(self.start, self.width / 2, self.width / 2)
                 inner_mask_start = inner_circle_start.subtracted(mask_rect_start)
-                temp_painter.setBrush(self.color)
-                temp_painter.drawPath(inner_mask_start)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_start)
 
                 # Avoid clipping look
-                just_inner_start = QPainterPath()
-                just_inner_start.addEllipse(self.start, self.width / 2, self.width / 2)
-                temp_painter.drawPath(just_inner_start)
+                painter.drawEllipse(self.start, self.width / 2, self.width / 2)
 
             # --- Draw End Circle (if not skipped) ---
             if not skip_end_circle:
@@ -1718,34 +1707,28 @@ class Strand:
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
                 # Draw stroke
-                temp_painter.setBrush(self.stroke_color)
-                temp_painter.drawPath(outer_mask_end)
+                painter.setBrush(self.stroke_color)
+                painter.drawPath(outer_mask_end)
 
                 # Draw fill
                 inner_circle_end = QPainterPath()
                 inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
                 inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
-                temp_painter.setBrush(self.color)
-                temp_painter.drawPath(inner_mask_end)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_end)
 
                 # Avoid clipping look
-                just_inner_end = QPainterPath()
-                just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
-                temp_painter.drawPath(just_inner_end)
+                painter.drawEllipse(self.end, self.width / 2, self.width / 2)
 
             # --- Finalize drawing for this case ---
-            painter.drawImage(0, 0, temp_image)
-            temp_painter.end()
+            painter.restore()
 
         # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
         from attached_strand import AttachedStrand
         # Start endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start and not getattr(child, 'shadow_only', False) for child in self.attached_strands):
             painter.save() # SAVE 6
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
+            painter.setRenderHint(QPainter.Antialiasing)
 
             tangent = self.calculate_cubic_tangent(0.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -1765,30 +1748,23 @@ class Strand:
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
             clip = outer.subtracted(mask)
 
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.stroke_color)
-            temp_painter.drawPath(clip)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(clip)
 
             inner = QPainterPath(); inner.addEllipse(self.start, self.width/2, self.width/2)
             clip_in = inner.subtracted(mask)
-            temp_painter.setBrush(self.color)
-            temp_painter.drawPath(clip_in)
+            painter.setBrush(self.color)
+            painter.drawPath(clip_in)
 
-            just_inner = QPainterPath(); just_inner.addEllipse(self.start, self.width/2, self.width/2)
-            temp_painter.drawPath(just_inner)
+            painter.drawEllipse(self.start, self.width/2, self.width/2)
 
-            painter.drawImage(0, 0, temp_image)
-            temp_painter.end()
             painter.restore() # RESTORE 6
 
         # End endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end and not getattr(child, 'shadow_only', False) for child in self.attached_strands):
             painter.save() # SAVE 7
-            temp_image = QImage(painter.device().size(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
+            painter.setRenderHint(QPainter.Antialiasing)
 
             tangent = self.calculate_cubic_tangent(1.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -1808,21 +1784,17 @@ class Strand:
             outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
 
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.stroke_color)
-            temp_painter.drawPath(clip)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(clip)
 
             inner = QPainterPath(); inner.addEllipse(self.end, self.width/2, self.width/2)
             clip_in = inner.subtracted(mask)
-            temp_painter.setBrush(self.color)
-            temp_painter.drawPath(clip_in)
+            painter.setBrush(self.color)
+            painter.drawPath(clip_in)
 
-            just_inner = QPainterPath(); just_inner.addEllipse(self.end, self.width/2, self.width/2)
-            temp_painter.drawPath(just_inner)
+            painter.drawEllipse(self.end, self.width/2, self.width/2)
 
-            painter.drawImage(0, 0, temp_image)
-            temp_painter.end()
             painter.restore() # RESTORE 7
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---

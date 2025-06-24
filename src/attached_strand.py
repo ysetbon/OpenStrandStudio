@@ -978,29 +978,18 @@ class AttachedStrand(Strand):
 
 
 
-        # Create a temporary image for masking
-        # Get the bounds considering current transformation
-        bounds = self.get_drawing_bounds(painter)
-        # logging.info(f"[AttachedStrand.draw] Creating temp image with bounds: {bounds}, size: {bounds.size().toSize()}")
-        temp_image = QImage(
-            bounds.size().toSize(),
-            QImage.Format_ARGB32_Premultiplied
-        )
-        temp_image.fill(Qt.transparent)
-        temp_painter = QPainter(temp_image)
-        temp_painter.setRenderHint(QPainter.Antialiasing)
-        # Translate to account for bounds offset
-        temp_painter.translate(-bounds.topLeft())
-        # logging.info(f"[AttachedStrand.draw] Translated temp_painter by {-bounds.topLeft()}")
+        # Draw directly on the painter
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
 
         # Calculate the angle based on the tangent at the start point
         angle = self.calculate_start_tangent()
 
         # Draw the main strand
-        temp_painter.setPen(Qt.NoPen)
-        temp_painter.setBrush(self.stroke_color)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
         # --- FIX: Use stroke_path for main stroke drawing --- 
-        temp_painter.drawPath(stroke_path)
+        painter.drawPath(stroke_path)
         # --- END FIX ---
 
         # Draw the fill
@@ -1009,8 +998,8 @@ class AttachedStrand(Strand):
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
-        temp_painter.setBrush(self.color)
-        temp_painter.drawPath(fill_path)
+        painter.setBrush(self.color)
+        painter.drawPath(fill_path)
 
         # Draw the end line conditionally
         side_pen = QPen(self.stroke_color, self.stroke_width)
@@ -1023,9 +1012,8 @@ class AttachedStrand(Strand):
         side_pen.setColor(side_color)
         painter.setPen(side_pen)
 
-        temp_painter.setPen(side_pen)
         if self.end_line_visible: # Only draw end line if visible
-            temp_painter.drawLine(self.end_line_start, self.end_line_end)
+            painter.drawLine(self.end_line_start, self.end_line_end)
 
         # Create a mask for the circle
         # Only draw the start circle if explicitly enabled (has_circles[0] == True)
@@ -1056,28 +1044,28 @@ class AttachedStrand(Strand):
             outer_mask = outer_circle.subtracted(mask_rect)
 
             # -- ADD THIS COMPOSITION MODE SETUP --
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             r = self.circle_stroke_color.red()
             g = self.circle_stroke_color.green()
             b = self.circle_stroke_color.blue()
             a = self.circle_stroke_color.alpha()
             # logging.info(f"circle_stroke_color: (r={r}, g={g}, b={b}, a={a})")
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.circle_stroke_color)
-            temp_painter.drawPath(outer_mask)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.circle_stroke_color)
+            painter.drawPath(outer_mask)
 
             # Then draw the fill for the inner circle:
             inner_circle = QPainterPath()
             inner_circle.addEllipse(self.start, self.width / 2, self.width / 2)
             inner_mask = inner_circle.subtracted(mask_rect)
-            temp_painter.setBrush(self.color)
-            temp_painter.drawPath(inner_mask)
+            painter.setBrush(self.color)
+            painter.drawPath(inner_mask)
 
             # Draw the final image
             # Then draw the inner circle (fill)
             inner_circle = QPainterPath()
             inner_circle.addEllipse(self.start, self.width/2, self.width/2)
-            temp_painter.drawPath(inner_circle)
+            painter.drawPath(inner_circle)
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -1093,13 +1081,11 @@ class AttachedStrand(Strand):
                 # Create a ring path by subtracting the normal outer circle
                 ring_path = highlight_mask.subtracted(outer_circle)
                 
-                temp_painter.setPen(Qt.NoPen)
-                temp_painter.setBrush(QColor('red'))
-                temp_painter.drawPath(ring_path)
-        # Regardless of whether we drew the start circle, flush the current temp_image to the main painter
-        # logging.info(f"[AttachedStrand.draw] Drawing temp image at position: {bounds.topLeft()}")
-        painter.drawImage(bounds.topLeft(), temp_image)
-        temp_painter.end()  # End the first temp_painter here
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
+        # Restore painter state
+        painter.restore()
 
         # ----------------------------------------------------------------
         # NEW CODE: Also draw an ending circle if has_circles == [True, True]
@@ -1124,20 +1110,14 @@ class AttachedStrand(Strand):
             )
 
             # --- START: MIRROR STRAND.PY LOGIC ---
-            # Re-create a temp image for drawing the circles
-            bounds = self.get_drawing_bounds(painter)
-            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
-            # Translate to account for bounds offset
-            temp_painter.translate(-bounds.topLeft())
+            # Draw directly on the painter
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
 
             # Common drawing setup
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
+            painter.setPen(Qt.NoPen)
 
             # --- Draw Start Circle (if not skipped) ---
             # NOTE: AttachedStrand *always* has a start circle (has_circles[0] is True)
@@ -1165,20 +1145,18 @@ class AttachedStrand(Strand):
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
 
                 # Draw stroke using circle_stroke_color
-                temp_painter.setBrush(self.circle_stroke_color)
-                temp_painter.drawPath(outer_mask_start)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
                 inner_circle_start = QPainterPath()
                 inner_circle_start.addEllipse(self.start, self.width / 2, self.width / 2)
                 inner_mask_start = inner_circle_start.subtracted(mask_rect_start)
-                temp_painter.setBrush(self.color)
-                temp_painter.drawPath(inner_mask_start)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_start)
 
                 # Avoid clipping look by drawing full inner circle fill
-                just_inner_start = QPainterPath()
-                just_inner_start.addEllipse(self.start, self.width / 2, self.width / 2)
-                temp_painter.drawPath(just_inner_start)
+                painter.drawEllipse(self.start, self.width / 2, self.width / 2)
 
 
             # --- Draw End Circle (if not skipped) ---
@@ -1207,24 +1185,21 @@ class AttachedStrand(Strand):
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
                 # Draw the outer circle stroke (using stroke_color for consistency, or circle_stroke_color if desired)
-                temp_painter.setBrush(self.stroke_color) # Or self.circle_stroke_color
-                temp_painter.drawPath(outer_mask_end)
+                painter.setBrush(self.stroke_color) # Or self.circle_stroke_color
+                painter.drawPath(outer_mask_end)
 
                 # Then draw the fill for the inner circle at the end
                 inner_circle_end = QPainterPath()
                 inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
                 inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
-                temp_painter.setBrush(self.color)
-                temp_painter.drawPath(inner_mask_end)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_end)
 
                 # Draw a small inner circle fill so it doesn't look clipped
-                just_inner_end = QPainterPath()
-                just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
-                temp_painter.drawPath(just_inner_end)
+                painter.drawEllipse(self.end, self.width / 2, self.width / 2)
 
             # --- Finalize drawing for this case ---
-            painter.drawImage(bounds.topLeft(), temp_image)
-            temp_painter.end()
+            painter.restore()
             # --- END: MIRROR STRAND.PY LOGIC ---
         # ----------------------------------------------------------------
 
@@ -1232,13 +1207,7 @@ class AttachedStrand(Strand):
         # Start endpoint half-circle (only if circle is enabled)
         if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
             painter.save()
-            bounds = self.get_drawing_bounds(painter)
-            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
-            # Translate to account for bounds offset
-            temp_painter.translate(-bounds.topLeft())
+            painter.setRenderHint(QPainter.Antialiasing)
 
             tangent = self.calculate_cubic_tangent(0.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -1258,33 +1227,23 @@ class AttachedStrand(Strand):
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
             clip = outer.subtracted(mask)
 
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.stroke_color)
-            temp_painter.drawPath(clip)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(clip)
 
             inner = QPainterPath(); inner.addEllipse(self.start, self.width/2, self.width/2)
             clip_in = inner.subtracted(mask)
-            temp_painter.setBrush(self.color)
-            temp_painter.drawPath(clip_in)
+            painter.setBrush(self.color)
+            painter.drawPath(clip_in)
 
-            just_inner = QPainterPath(); just_inner.addEllipse(self.start, self.width/2, self.width/2)
-            temp_painter.drawPath(just_inner)
+            painter.drawEllipse(self.start, self.width/2, self.width/2)
 
-            painter.drawImage(bounds.topLeft(), temp_image)
-            temp_painter.end()
             painter.restore()
 
         # End endpoint half-circle (only if circle is enabled)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
             painter.save()
-            bounds = self.get_drawing_bounds(painter)
-            temp_image = QImage(bounds.size().toSize(), QImage.Format_ARGB32_Premultiplied)
-            temp_image.fill(Qt.transparent)
-            temp_painter = QPainter(temp_image)
-            temp_painter.setRenderHint(QPainter.Antialiasing)
-            # Translate to account for bounds offset
-            temp_painter.translate(-bounds.topLeft())
+            painter.setRenderHint(QPainter.Antialiasing)
 
             tangent = self.calculate_cubic_tangent(1.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -1304,21 +1263,17 @@ class AttachedStrand(Strand):
             outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
 
-            temp_painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(self.stroke_color)
-            temp_painter.drawPath(clip)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(clip)
 
             inner = QPainterPath(); inner.addEllipse(self.end, self.width/2, self.width/2)
             clip_in = inner.subtracted(mask)
-            temp_painter.setBrush(self.color)
-            temp_painter.drawPath(clip_in)
+            painter.setBrush(self.color)
+            painter.drawPath(clip_in)
 
-            just_inner = QPainterPath(); just_inner.addEllipse(self.end, self.width/2, self.width/2)
-            temp_painter.drawPath(just_inner)
+            painter.drawEllipse(self.end, self.width/2, self.width/2)
 
-            painter.drawImage(bounds.topLeft(), temp_image)
-            temp_painter.end()
             painter.restore()
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---

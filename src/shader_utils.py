@@ -9,15 +9,11 @@ from functools import lru_cache
 def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
-    first_strand_path: QPainterPath,
     second_path: QPainterPath,
-
     deletion_rects: List[QRectF] = None,
     shadow_color: QColor = None,
     num_steps: int = 3,
-    max_blur_radius: float = None,
-    first_strand=None,
-    second_strand=None,
+    max_blur_radius: float = 29.99,
 ):
     """Draw a blurred shadow for the **intersection** between *first_path* and *second_path*.
 
@@ -27,34 +23,25 @@ def draw_mask_strand_shadow(
     and removes a large amount of canvas / layer specific logic that is not
     required for the basic visual effect.
     """
-
+    painter.save()
     # ------------------------------------------------------------------
     # Determine the region that should receive the shadow – this is the
     # intersection of the two supplied paths.
     # ------------------------------------------------------------------
     # Log geometry of input paths
     logging.info(f"draw_mask_strand_shadow: first_path bounds={first_path.boundingRect()}, elements={first_path.elementCount()} | second_path bounds={second_path.boundingRect()}, elements={second_path.elementCount()}")
-  
+    # Compute intersection of component paths
     intersection_path = QPainterPath(first_path).intersected(second_path)
+    # Log intersection geometry
+    logging.info(f"draw_mask_strand_shadow: intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
 
-    # Log final intersection geometry (after possible replacement)
-    logging.info(f"draw_mask_strand_shadow: final intersection_path bounds={intersection_path.boundingRect()}, elements={intersection_path.elementCount()}")
+    if not first_path.isEmpty() and not second_path.isEmpty():
+        intersection_path = QPainterPath(first_path).intersected(second_path)
+        logging.info("draw_mask_strand_shadow: using first_path as fallback")
 
-    # Early out if still empty
-    if intersection_path.isEmpty():
+    else:
+        # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
         return
-
-    # --------------------------------------------------
-    # Safeguard the caller's QPainter state.  We push a
-    # fresh state frame so that every change we make to
-    # clip paths, composition modes, pens, brushes, etc.
-    # is fully undone by the matching ``painter.restore``
-    # near the end of this routine.  The caller therefore
-    # only needs ONE save/restore pair at most – and can
-    # even omit it entirely when they pass the main canvas
-    # painter.
-    # --------------------------------------------------
-    painter.save()
 
     # Apply deletion rectangles to intersection_path if provided
     if deletion_rects:
@@ -88,40 +75,6 @@ def draw_mask_strand_shadow(
         logging.info(f"draw_mask_strand_shadow: applied {len(deletion_rects)} deletion rects; new bounds={intersection_path.boundingRect()}, empty={intersection_path.isEmpty()}")
 
     # ------------------------------------------------------------------
-    # Auto-calculate blur radius based on strand thickness if not provided
-    # ------------------------------------------------------------------
-    if max_blur_radius is None:
-        # Use the first strand for blur calculation, fallback to second if first is None
-        reference_strand = first_strand if first_strand is not None else second_strand
-        if reference_strand is not None:
-            strand_width = getattr(reference_strand, 'width', 10)
-            # Use consistent shadow extension regardless of strand thickness
-            max_blur_radius = 30.0  # Fixed shadow extension for all strand thicknesses
-            logging.info(f"draw_mask_strand_shadow: Using consistent blur radius={max_blur_radius} for strand width={strand_width}")
-        else:
-            max_blur_radius = 30.0  # Consistent default
-    
-    # ------------------------------------------------------------------
-    # Apply side line exclusion for both component strands if provided
-    # ------------------------------------------------------------------
-    if first_strand is not None or second_strand is not None:
-        try:
-            if first_strand is not None:
-                first_exclusion = get_side_line_exclusion_path(first_strand)
-                if not first_exclusion.isEmpty():
-                    intersection_path = intersection_path.subtracted(first_exclusion)
-                    logging.info(f"draw_mask_strand_shadow: applied side line exclusion for first strand {getattr(first_strand, 'layer_name', 'unknown')}")
-            
-            if second_strand is not None:
-                second_exclusion = get_side_line_exclusion_path(second_strand)
-                if not second_exclusion.isEmpty():
-                    intersection_path = intersection_path.subtracted(second_exclusion)
-                    logging.info(f"draw_mask_strand_shadow: applied side line exclusion for second strand {getattr(second_strand, 'layer_name', 'unknown')}")
-                    
-        except Exception as exclusion_err:
-            logging.error(f"draw_mask_strand_shadow: error applying side line exclusions: {exclusion_err}")
-
-    # ------------------------------------------------------------------
     # Resolve shadow colour.  If the caller did not provide one we default
     # to a semi-transparent black (matching the normal strand shadow).
     # ------------------------------------------------------------------
@@ -140,12 +93,14 @@ def draw_mask_strand_shadow(
     # Prepare painter state.
     # ------------------------------------------------------------------
 
-
     
     # ------------------------------------------------------------------
     # 1) Fill the solid shadow core.
     # ------------------------------------------------------------------
-    #painter.setPen(Qt.NoPen)
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QBrush(base_color))
+    painter.drawPath(intersection_path)  # <-- actual drawing: solid core of the mask shadow
+    painter.setBrush(Qt.NoBrush)
 
     # ------------------------------------------------------------------
     # 2) Add a blurred / faded edge by repeatedly stroking the path with
@@ -153,35 +108,39 @@ def draw_mask_strand_shadow(
     # ------------------------------------------------------------------
     # We allow the blurred edge to extend anywhere the ORIGINAL component
     # paths exist (their union) so that the blur is not clipped too early.
-    union_path = first_path.united(second_path)
-    
-    #union_path.addPath(second_path)
-    # Clip once to the *union* of both stroked component paths so that the
-    # blurred edge can extend fully inside either strand without being chopped
-    # off by an accidental clip-replacement.
-    painter.setClipPath(union_path)
-    inverse_second_path = union_path.subtracted(second_path)
-    painter.setClipPath(union_path.subtracted(inverse_second_path))    # union − second
-    #painter.setClipPath(second_path)
-    # Enable the highest quality rasterisation for the blur passes.
+ 
+
+    # ------------------------------------------------------------------
+    # Restrict the blurred stroke so that it can expand inside the
+    # *receiving* strand (``second_path``) but never draws over the
+    # *casting* strand (``first_strand``).
+    #
+    # We therefore construct a clipping path that equals the second
+    # strand **minus** the first strand and apply that as the painter's
+    # clipping region.  QPainter::setClipPath replaces the previous
+    # clip region by default, so we build the final region explicitly
+    # and set it only once.
+    # ------------------------------------------------------------------
+
+    clip_path = QPainterPath(second_path)            # Start with the full receiver geometry
+       # Remove the area covered by the caster
+    clip_path.intersected(intersection_path)
+    painter.setClipPath(clip_path)
+
     for i in range(num_steps):
-        # Alpha fades from base_alpha down towards zero
-        # Distribute alpha across steps for smoother look
-        # Adjusted alpha calculation slightly for potentially better distribution
-        progress = (float(num_steps - i) / num_steps)
-        current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
+        progress = (num_steps - i) / num_steps  # 1 → 0
+        current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
+        current_width = max_blur_radius * ((i + 1) / num_steps)
 
-        # Width increases
-        current_width = max_blur_radius * (float(i + 1) / num_steps)
-
-        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
+        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
+                           max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
         pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.RoundCap) # Use RoundCap/Join for softer edges
+        pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
 
         painter.setPen(pen)
-        painter.strokePath(first_strand_path, pen) # Stroke the path outline
+        painter.strokePath(intersection_path, pen)  # <-- actual drawing: blurred/faded shadow strokes
 
     painter.restore()
     logging.info(
@@ -1057,7 +1016,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     pen.setJoinStyle(Qt.RoundJoin)
 
                     painter.setPen(pen)
-                    painter.strokePath(total_shadow_path, pen) # Stroke the path outline
+                    painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands
             except Exception as stroke_error:
                 # logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
                 pass

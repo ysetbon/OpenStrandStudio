@@ -172,7 +172,54 @@ class MaskedStrand(Strand):
         # Moved logging after potential deletions
         logging.info(f"MaskedStrand - Final masked shadow path (path_shadow) bounds after deletions: {path_shadow.boundingRect()}, empty={path_shadow.isEmpty()}")
         return path_shadow
-        
+    def get_mask_path_stroke(self):
+        """
+        Get the path representing the masked area.
+        This includes base intersection and also subtracts any deletion rectangles.
+        ALWAYS recalculates based on current component strands and deletion rectangles.
+        """
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return QPainterPath()
+
+        # Get the base paths for both strands
+        path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
+        path2 = self.get_path_for_strand(self.second_selected_strand)
+
+        # Create the mask by intersecting the paths - Always start fresh
+        result_path = path1.intersected(path2)
+
+        # Initialize mask_path with the base intersection
+        mask_path = result_path
+        # Apply any saved deletion rectangles
+        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
+            for rect in self.deletion_rectangles:
+                deletion_path = QPainterPath()
+                try:
+                    # Corner-based rectangle
+                    if 'top_left' in rect and 'bottom_right' in rect:
+                        tl = QPointF(*rect['top_left'])
+                        tr = QPointF(*rect.get('top_right', rect['bottom_right']))
+                        br = QPointF(*rect['bottom_right'])
+                        bl = QPointF(*rect.get('bottom_left', rect['top_left']))
+                        deletion_path.moveTo(tl)
+                        deletion_path.lineTo(tr)
+                        deletion_path.lineTo(br)
+                        deletion_path.lineTo(bl)
+                        deletion_path.closeSubpath()
+                    # Simple axis-aligned rectangle
+                    elif all(k in rect for k in ('x', 'y', 'width', 'height')):
+                        deletion_path.addRect(QRectF(rect['x'], rect['y'], rect['width'], rect['height']))
+                    else:
+                        logging.warning(f"Invalid deletion rect format for mask cropping: {rect}")
+                        continue
+                except Exception as e:
+                    logging.error(f"Error constructing deletion rect for mask cropping: {e}")
+                    continue
+                mask_path = mask_path.subtracted(deletion_path)
+                logging.info(f"Applied deletion rect to mask_path: new bounds={mask_path.boundingRect()}, empty={mask_path.isEmpty()}")
+        # Return fresh mask including deletions
+        return mask_path
+            
     def get_mask_path(self):
         """
         Get the path representing the masked area.
@@ -307,7 +354,9 @@ class MaskedStrand(Strand):
                     self.shadow_color = QColor(shadow_color)
                     
                 # Always get fresh paths for both strands to ensure consistent refresh
+                # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
+                strand1_path_no_stroke = self.get_path_for_strand(self.first_selected_strand)
                 strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
                 strand1_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.first_selected_strand)
                 strand2_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.second_selected_strand)
@@ -340,14 +389,11 @@ class MaskedStrand(Strand):
                 draw_mask_strand_shadow(
                     painter,
                     strand1_shadow_path,
-                    strand1_path,
                     strand2_path,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
                     max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
-                    first_strand=self.first_selected_strand,
-                    second_strand=self.second_selected_strand,
                 )
 
                 painter.restore()
@@ -656,7 +702,13 @@ class MaskedStrand(Strand):
                     painter.setRenderHint(QPainter.Antialiasing, True)
                     painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
                     painter.setPen(Qt.NoPen)
-
+                    try:
+                        fresh_mask_path = self.get_mask_path_stroke()
+                        if not fresh_mask_path.isEmpty():
+                            painter.setBrush(self.first_selected_strand.stroke_color)
+                            painter.drawPath(fresh_mask_path)
+                    except Exception as _e:
+                        logging.error(f"Could not draw antialiased mask fill: {_e}")
                     try:
                         # Recreate the intersection mask (including deletion rects if present)
                         fresh_mask_path = self.get_mask_path()

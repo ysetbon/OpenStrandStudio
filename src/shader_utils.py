@@ -343,13 +343,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 # Mask exists and is VISIBLE, set flag and break
                                 part_of_same_visible_mask = True
                                 logging.info(f"Skipping shadow between components {this_layer} and {other_layer} of the same VISIBLE masked strand {masked_name}")
-                                # Only skip if the mask has NO deletion rectangles (i.e. the mask fully occludes)
-                                if not hasattr(masked_strand_obj, 'deletion_rectangles') or not masked_strand_obj.deletion_rectangles:
-                                    continue  # Mask is solid, so no shadow needed
-                                else:
-                                    # Mask has holes; allow shadow calculation so it can appear through them.
-                                    part_of_same_visible_mask = False  # Treat as if not masked for this purpose
-                                break
+
                             else:
                                 # Mask exists but is HIDDEN, do not skip shadow based on this mask
                                 logging.info(f"Components {this_layer} and {other_layer} belong to HIDDEN masked strand {masked_name}, shadow will NOT be skipped for this reason.")
@@ -869,33 +863,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                         #      that shadows can appear in regions where the
                                         #      mask has been manually deleted.
                                         # --------------------------------------------------
-                                        if hasattr(mask_strand_sub_c, 'deletion_rectangles') and mask_strand_sub_c.deletion_rectangles:
-                                            try:
-                                                for del_rect in mask_strand_sub_c.deletion_rectangles:
-                                                    del_path = QPainterPath()
-                                                    # Support QRectF directly
-                                                    if isinstance(del_rect, QRectF):
-                                                        del_path.addRect(del_rect)
-                                                    # Support dict with corner coordinates
-                                                    elif isinstance(del_rect, dict) and all(k in del_rect for k in ("top_left", "top_right", "bottom_left", "bottom_right")):
-                                                        tl = QPointF(*del_rect["top_left"])
-                                                        tr = QPointF(*del_rect["top_right"])
-                                                        br = QPointF(*del_rect["bottom_right"])
-                                                        bl = QPointF(*del_rect["bottom_left"])
-                                                        del_path.moveTo(tl)
-                                                        del_path.lineTo(tr)
-                                                        del_path.lineTo(br)
-                                                        del_path.lineTo(bl)
-                                                        del_path.closeSubpath()
-                                                    # Support axis-aligned rectangle dict
-                                                    elif all(k in del_rect for k in ("x", "y", "width", "height")):
-                                                        del_path.addRect(QRectF(del_rect["x"], del_rect["y"], del_rect["width"], del_rect["height"]))
 
-                                                    if not del_path.isEmpty():
-                                                        subtraction_path_c = subtraction_path_c.subtracted(del_path)
-                                            except Exception as del_ex:
-                                                # logging.error(f"Error applying deletion rectangles to mask subtraction path for '{mask_layer_sub_c}': {del_ex}")
-                                                pass
 
                                     if not subtraction_path_c.isEmpty():
                                         # Check if the mask actually intersects with the underlying layer

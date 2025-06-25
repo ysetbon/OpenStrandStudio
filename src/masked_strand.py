@@ -424,12 +424,12 @@ class MaskedStrand(Strand):
             path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
             mask_path = path1.intersected(path2)
             
-            # Calculate new center point and update if needed
+            # Calculate new center point and update if needed (but not during loading with absolute coords)
             new_center = self._calculate_center_from_path(mask_path)
-            if new_center and self.base_center_point and (
+            if (new_center and self.base_center_point and (
                 abs(new_center.x() - self.base_center_point.x()) > 0.01 or 
                 abs(new_center.y() - self.base_center_point.y()) > 0.01
-            ):
+            ) and not (hasattr(self, 'using_absolute_coords') and self.using_absolute_coords)):
                 logging.info(f"Detected center point movement from ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}) to ({new_center.x():.2f}, {new_center.y():.2f})")
                 self.update(new_center)
             
@@ -450,7 +450,7 @@ class MaskedStrand(Strand):
 
                 mask_path = mask_path.subtracted(deletion_path)
                 logging.info(
-                    f"✂️ Applied corner-based deletion rect with corners: "
+                    f" Applied corner-based deletion rect with corners: "
                     f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
                 )
             
@@ -1021,7 +1021,7 @@ class MaskedStrand(Strand):
                     deletion_path.addRect(QRectF(min_x, min_y, width, height))
                     self.custom_mask_path = self.custom_mask_path.subtracted(deletion_path)
                     logging.info(
-                        f"✂️ Applied corner-based deletion rect with corners: "
+                        f" Applied corner-based deletion rect with corners: "
                         f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
                     )
             

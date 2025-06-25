@@ -480,7 +480,7 @@ class MaskedStrand(Strand):
         painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         
         # Draw the temp image onto the main painter
-        painter.drawImage(0, 0, temp_image)
+        #painter.drawImage(0, 0, temp_image)
         
         # FINAL LAYER: Only draw the first strand on top if it should be above according to layer order
         try:
@@ -491,8 +491,8 @@ class MaskedStrand(Strand):
                     path1 = self.first_selected_strand.get_path()  # Get actual path instead of the strand object
                     shadow_stroker = QPainterPathStroker()
                     width_offset = 3
-                    if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
-                        width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                    # if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                    #     width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
                     shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + width_offset)
                     shadow_stroker.setJoinStyle(Qt.MiterJoin)
                     shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
@@ -502,8 +502,8 @@ class MaskedStrand(Strand):
                     path2 = self.second_selected_strand.get_path()
                     shadow_stroker = QPainterPathStroker()
                     width_offset = 3
-                    if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
-                        width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                    # if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                    #     width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
                     shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + width_offset)
                     shadow_stroker.setJoinStyle(Qt.MiterJoin)
                     shadow_stroker.setCapStyle(Qt.RoundCap)
@@ -565,8 +565,8 @@ class MaskedStrand(Strand):
                         
                         shadow_stroker = QPainterPathStroker()
                         width_offset = 3
-                        if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
-                            width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                        # if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                        #     width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
                         shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + width_offset)
                         shadow_stroker.setJoinStyle(Qt.MiterJoin)
                         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother edges
@@ -577,8 +577,8 @@ class MaskedStrand(Strand):
                         shadow_stroker = QPainterPathStroker()
                         shadow_stroker = QPainterPathStroker()
                         width_offset = 3
-                        if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
-                            width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
+                        # if hasattr(self, 'canvas') and getattr(self.canvas, 'use_extended_mask', False):
+                        #     width_offset = self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 20
                         shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + width_offset)
                         shadow_stroker.setJoinStyle(Qt.MiterJoin)
                         shadow_stroker.setCapStyle(Qt.RoundCap)
@@ -639,7 +639,7 @@ class MaskedStrand(Strand):
                         # Now draw the clipped strand to the final painter
                         final_painter.save()
                         final_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                        final_painter.drawImage(0, 0, strand_buffer)
+                        #final_painter.drawImage(0, 0, strand_buffer)
                         final_painter.restore()
                     else:
                         # When mask is empty, don't draw the first strand at all
@@ -682,13 +682,13 @@ class MaskedStrand(Strand):
                     
                     # Apply the soft mask to the final buffer
                     final_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-                    final_painter.drawImage(0, 0, mask_buffer)
+                    #final_painter.drawImage(0, 0, mask_buffer)
                     final_painter.end()
                     
 
                     # Draw the result with perfect antialiasing to the main painter
                     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    painter.drawImage(0, 0, final_buffer)                        
+                    #painter.drawImage(0, 0, final_buffer)                        
                     # Skip drawing additional shadows for nested masked strands to prevent double-shadowing
                     logging.info(f"Skipping additional shadow for nested masked strand {self.layer_name}")
                     

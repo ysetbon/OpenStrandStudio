@@ -51,7 +51,7 @@ class SettingsDialog(QDialog):
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
         # NEW: Use extended mask option (controls extra expansion of masked areas)
-        self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
+        # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
         self.extension_length = getattr(canvas, 'extension_length', 100)
         self.extension_dash_count = getattr(canvas, 'extension_dash_count', 10)
@@ -267,7 +267,7 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
-                'third_control_layout', 'extended_mask_layout', 
+                'third_control_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout'
             ]
             for layout_name in general_setting_layouts:
@@ -560,19 +560,19 @@ class SettingsDialog(QDialog):
             self.third_control_layout.activate()
                 
         # Extended mask layout reorganization
-        if hasattr(self, 'extended_mask_layout') and hasattr(self, 'extended_mask_label') and hasattr(self, 'extended_mask_checkbox'):
-            self.clear_layout(self.extended_mask_layout)
-            if is_rtl:
-                self.extended_mask_layout.addStretch()
-                self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
-                self.extended_mask_layout.addWidget(self.extended_mask_label)
-            else:
-                self.extended_mask_layout.addWidget(self.extended_mask_label)
-                self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
-                self.extended_mask_layout.addStretch()
-            # Force immediate update
-            self.extended_mask_layout.invalidate()
-            self.extended_mask_layout.activate()
+        # if hasattr(self, 'extended_mask_layout') and hasattr(self, 'extended_mask_label') and hasattr(self, 'extended_mask_checkbox'):
+        #     self.clear_layout(self.extended_mask_layout)
+        #     if is_rtl:
+        #         self.extended_mask_layout.addStretch()
+        #         self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+        #         self.extended_mask_layout.addWidget(self.extended_mask_label)
+        #     else:
+        #         self.extended_mask_layout.addWidget(self.extended_mask_label)
+        #         self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+        #         self.extended_mask_layout.addStretch()
+        #     # Force immediate update
+        #     self.extended_mask_layout.invalidate()
+        #     self.extended_mask_layout.activate()
                 
         # Num steps layout reorganization
         if hasattr(self, 'num_steps_layout') and hasattr(self, 'num_steps_label') and hasattr(self, 'num_steps_spinbox'):
@@ -1071,10 +1071,10 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
                             logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
-                        elif line.startswith('UseExtendedMask:'):
-                            value = line.split(':', 1)[1].strip().lower()
-                            self.use_extended_mask = (value == 'true')
-                            logging.info(f"SettingsDialog: Found UseExtendedMask: {self.use_extended_mask}")
+                        # elif line.startswith('UseExtendedMask:'):
+                        #     value = line.split(':', 1)[1].strip().lower()
+                        #     self.use_extended_mask = (value == 'true')
+                        #     logging.info(f"SettingsDialog: Found UseExtendedMask: {self.use_extended_mask}")
                         elif line.startswith('NumSteps:'):
                             try:
                                 self.num_steps = int(line.split(':', 1)[1].strip())
@@ -1196,7 +1196,7 @@ class SettingsDialog(QDialog):
                             except ValueError:
                                 logging.error(f"SettingsDialog: Error parsing DefaultWidthGridUnits value. Using default {self.default_width_grid_units}.")
                 
-                    logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
+                    # logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
                 logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
         else:
@@ -1357,23 +1357,23 @@ class SettingsDialog(QDialog):
             self.third_control_layout.addStretch()
 
         # NEW: Use Extended Mask Option
-        self.extended_mask_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
-        self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
-        self.extended_mask_checkbox = QCheckBox()
-        self.extended_mask_checkbox.setChecked(self.use_extended_mask)
-        
-        # Add widgets in proper order for current language
-        if self.is_rtl_language(self.current_language):
-            self.extended_mask_layout.addStretch()
-            self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
-            self.extended_mask_layout.addWidget(self.extended_mask_label)
-        else:
-            self.extended_mask_layout.addWidget(self.extended_mask_label)
-            self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
-            self.extended_mask_layout.addStretch()
-        # Add tooltip explaining usage
-        self.extended_mask_label.setToolTip(_['use_extended_mask_tooltip'])
-        self.extended_mask_checkbox.setToolTip(_['use_extended_mask_tooltip'])
+        # self.extended_mask_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
+        # self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
+        # self.extended_mask_checkbox = QCheckBox()
+        # self.extended_mask_checkbox.setChecked(self.use_extended_mask)
+        # 
+        # # Add widgets in proper order for current language
+        # if self.is_rtl_language(self.current_language):
+        #     self.extended_mask_layout.addStretch()
+        #     self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+        #     self.extended_mask_layout.addWidget(self.extended_mask_label)
+        # else:
+        #     self.extended_mask_layout.addWidget(self.extended_mask_label)
+        #     self.extended_mask_layout.addWidget(self.extended_mask_checkbox)
+        #     self.extended_mask_layout.addStretch()
+        # # Add tooltip explaining usage
+        # self.extended_mask_label.setToolTip(_['use_extended_mask_tooltip'])
+        # self.extended_mask_checkbox.setToolTip(_['use_extended_mask_tooltip'])
 
         # Apply Button
         self.apply_button = QPushButton(_['ok'])
@@ -1387,7 +1387,7 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(self.shadow_layout)
         general_layout.addLayout(self.performance_layout)
         general_layout.addLayout(self.third_control_layout)
-        general_layout.addLayout(self.extended_mask_layout)
+        # general_layout.addLayout(self.extended_mask_layout)
 
         # Add Shadow Blur Steps
         self.num_steps_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
@@ -2317,7 +2317,7 @@ class SettingsDialog(QDialog):
 
     def apply_all_settings(self):
         # Capture previous extended mask setting to detect changes
-        previous_use_extended_mask = self.use_extended_mask
+        # previous_use_extended_mask = self.use_extended_mask
         # Apply Theme Settings
         selected_theme = self.theme_combobox.currentData()
         if selected_theme and self.canvas:
@@ -2470,9 +2470,9 @@ class SettingsDialog(QDialog):
             self.canvas.update()
 
         # Apply Extended Mask Setting before saving
-        self.use_extended_mask = self.extended_mask_checkbox.isChecked()
-        if self.canvas:
-            self.canvas.use_extended_mask = self.use_extended_mask
+        # self.use_extended_mask = self.extended_mask_checkbox.isChecked()
+        # if self.canvas:
+        #     self.canvas.use_extended_mask = self.use_extended_mask
 
         # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
@@ -2482,16 +2482,16 @@ class SettingsDialog(QDialog):
         self.hide()
 
         # If extended mask setting changed, force redraw of masked strands
-        if previous_use_extended_mask != self.use_extended_mask:
-            logging.info(f"SettingsDialog: Use extended mask changed to {self.use_extended_mask}. Forcing redraw of masked strands")
-            if self.canvas and hasattr(self.canvas, 'strands'):
-                for strand in self.canvas.strands:
-                    if getattr(strand, '__class__', None) and strand.__class__.__name__ == 'MaskedStrand':
+        # if previous_use_extended_mask != self.use_extended_mask:
+        #     logging.info(f"SettingsDialog: Use extended mask changed to {self.use_extended_mask}. Forcing redraw of masked strands")
+        #     if self.canvas and hasattr(self.canvas, 'strands'):
+        #         for strand in self.canvas.strands:
+        #             if getattr(strand, '__class__', None) and strand.__class__.__name__ == 'MaskedStrand':
                         # No need to reset mask, just force shadow update to refresh +3 offset
-                        if hasattr(strand, 'force_shadow_update'):
-                            strand.force_shadow_update()
-            if self.canvas:
-                self.canvas.update()
+                        #if hasattr(strand, 'force_shadow_update'):
+                            #strand.force_shadow_update()
+        if self.canvas:
+            self.canvas.update()
 
     def change_category(self, item):
         index = self.categories_list.row(item)
@@ -2513,7 +2513,7 @@ class SettingsDialog(QDialog):
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
-        self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
+        # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
         self.apply_button.setText(_['ok'])
@@ -2764,7 +2764,7 @@ class SettingsDialog(QDialog):
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
-                file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
+                # file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
                 file.write(f"ExtensionLength: {self.extension_length}\n")
                 file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                 file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")
@@ -2797,7 +2797,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
-                    local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
+                    # local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
                     local_file.write(f"ExtensionLength: {self.extension_length}\n")
                     local_file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
                     local_file.write(f"ExtensionDashWidth: {self.extension_dash_width:.1f}\n")

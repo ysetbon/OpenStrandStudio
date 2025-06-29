@@ -183,7 +183,7 @@ class MaskedStrand(Strand):
 
         # Get the base paths for both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
-        path2 = self.get_path_for_strand(self.second_selected_strand)
+        path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
 
         # Create the mask by intersecting the paths - Always start fresh
         result_path = path1.intersected(path2)
@@ -287,7 +287,7 @@ class MaskedStrand(Strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2  +2)
+        stroker.setWidth(strand.width + strand.stroke_width * 2  +4)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)    
@@ -299,6 +299,15 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)
+    
+    def get_stroked_path_for_strand_with_shadow_extended(self, strand):
+        """Helper method to get the stroked path for a strand."""
+        path = strand.get_path()
+        stroker = QPainterPathStroker()
+        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
+        return stroker.createStroke(path)    
     def draw(self, painter):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         logging.info(f"Drawing MaskedStrand - Has deletion rectangles: {hasattr(self, 'deletion_rectangles')}")
@@ -342,8 +351,11 @@ class MaskedStrand(Strand):
             except ImportError:
                 from src.shader_utils import draw_mask_strand_shadow
             
+            # Check if shadowing is disabled in the canvas (same as regular strands)
+            if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
+                logging.info(f"Skipping shadow for MaskedStrand {self.layer_name} - shadows disabled")
             # Only draw shadows if this strand should draw its own shadow
-            if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+            elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
                 # Get the shadow color directly from the canvas if available

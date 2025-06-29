@@ -213,7 +213,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # visible end-circles.  This single path will be used for all subsequent
     # shadow computations, eliminating the need for special-casing circles.
     path = get_proper_masked_strand_path(strand)
-    shadow_path = build_shadow_geometry(strand, 0)
+    shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
         
     # --------------------------------------------------
     # If this strand has a *transparent* circle at either end, the circle is
@@ -445,6 +445,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
+                        circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
+                        intersection = intersection.united(circle_shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         
@@ -937,7 +939,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
              # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
              return # Nothing to draw
 
-
+        circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
+        total_shadow_path = total_shadow_path.united(circle_shadow_path)
         # Reduced high-frequency logging for performance during moves
         # logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
@@ -1003,7 +1006,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # Create a simple shadow based on the strand's own path
         fallback_path = get_proper_masked_strand_path(strand)
         if not fallback_path.isEmpty():
-            all_shadow_paths = [fallback_path]
+            all_shadow_paths = [fallback_path]    
 
 def get_proper_masked_strand_path(strand):
     """
@@ -1076,61 +1079,7 @@ def get_side_line_exclusion_path(strand, shadow_width_multiplier=None):
             # Calculate exclusion width based on provided multiplier
             shadow_width = getattr(strand, 'width', 10) * shadow_width_multiplier
         
-        # Create exclusion area exactly at the start point
-        if hasattr(strand, 'start') and hasattr(strand, 'start_line_start') and hasattr(strand, 'start_line_end'):
-            # Use the actual side line positions to create a precise exclusion zone
-            start_exclusion = QPainterPath()
-            start_exclusion.moveTo(strand.start_line_start)
-            start_exclusion.lineTo(strand.start_line_end)
-            
-            # Extend the exclusion area perpendicular to the side line by shadow_width
-            line_vec = strand.start_line_end - strand.start_line_start
-            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
-            
-            if line_length > 0:
-                # Normalize line vector
-                norm_line = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
-                # Perpendicular vector pointing away from strand
-                perp_vec = QPointF(-norm_line.y(), norm_line.x())
-                
-                # Determine which direction extends BEYOND the strand endpoint
-                # Calculate direction from strand end toward strand start to find the "forward" direction
-                strand_direction = strand.end - strand.start
-                strand_length = math.sqrt(strand_direction.x()**2 + strand_direction.y()**2)
-                
-                if strand_length > 0:
-                    # Normalize strand direction vector
-                    norm_strand_dir = QPointF(strand_direction.x() / strand_length, strand_direction.y() / strand_length)
-                    
-                    # At the start point, we want to extend in the OPPOSITE direction (beyond the start)
-                    beyond_start_vec = QPointF(-norm_strand_dir.x(), -norm_strand_dir.y())
-                else:
-                    # Fallback: extend perpendicular to side line
-                    beyond_start_vec = perp_vec
-                
-                # Create wider rectangle extending BEYOND the start point to cover all shadow width
-                # Scale the extended width based on strand thickness
-                stroke_width = getattr(strand, 'stroke_width', 2)
-                total_strand_width = strand.width + stroke_width * 2
-                # Simple scaling: wider strands need proportionally wider exclusion zones
-                extended_width = total_strand_width + shadow_width
-                half_extended_width = extended_width / 2.0
-                
-                # Create corners that extend both along the strand direction AND perpendicular to cover full shadow
-                corner3 = QPointF(
-                    strand.start_line_end.x() + beyond_start_vec.x() * shadow_width + norm_line.x() * half_extended_width,
-                    strand.start_line_end.y() + beyond_start_vec.y() * shadow_width + norm_line.y() * half_extended_width
-                )
-                corner4 = QPointF(
-                    strand.start_line_start.x() + beyond_start_vec.x() * shadow_width - norm_line.x() * half_extended_width,
-                    strand.start_line_start.y() + beyond_start_vec.y() * shadow_width - norm_line.y() * half_extended_width
-                )
-                
-                start_exclusion.lineTo(corner3)
-                start_exclusion.lineTo(corner4)
-                start_exclusion.closeSubpath()
-                
-                exclusion_path = exclusion_path.united(start_exclusion)
+
         
         # Create exclusion area exactly at the end point
         if hasattr(strand, 'end') and hasattr(strand, 'end_line_start') and hasattr(strand, 'end_line_end'):
@@ -1266,7 +1215,51 @@ def build_rendered_geometry(strand):
         pass
         return QPainterPath()
 
-def build_shadow_geometry(strand, fixed_shadow_extension=30.0):
+def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
+    """
+    Returns shadow geometry for strand circles only.
+    
+    Args:
+        strand: The strand to create circle shadow geometry for
+        fixed_shadow_extension: Fixed distance (in pixels) to extend shadow beyond circle edge
+        
+    Returns:
+        QPainterPath: Circle shadow geometry with consistent extension
+    """
+    circle_path = QPainterPath()
+    
+    try:
+        # Check if strand has visible circles
+        if not hasattr(strand, 'has_circles') or not any(strand.has_circles):
+            return circle_path
+            
+        # Check if circles are transparent
+        transparent_circles = (
+            hasattr(strand, 'circle_stroke_color') and
+            strand.circle_stroke_color and
+            strand.circle_stroke_color.alpha() == 0
+        )
+        
+        if transparent_circles:
+            return circle_path
+            
+        # Circle radius includes the fixed shadow extension
+        radius = (strand.width + strand.stroke_width * 2) / 2.0 + 2
+        
+        for idx, enabled in enumerate(strand.has_circles):
+            if not enabled:
+                continue
+            centre = strand.start if idx == 0 else strand.end
+            single_circle = QPainterPath()
+            single_circle.addEllipse(centre, radius, radius)
+            circle_path = circle_path.united(single_circle)
+            
+        return circle_path
+    except Exception as e:
+        logging.error(f"Error building circle shadow geometry: {e}")
+        return QPainterPath()
+
+def build_shadow_geometry(strand, fixed_shadow_extension=30.0, include_circles=True):
     """
     Returns shadow geometry that extends a fixed distance beyond the strand edge,
     ensuring consistent shadow length regardless of strand thickness.
@@ -1274,6 +1267,7 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0):
     Args:
         strand: The strand to create shadow geometry for
         fixed_shadow_extension: Fixed distance (in pixels) to extend shadow beyond strand edge
+        include_circles: Whether to include circle geometry in the shadow path
         
     Returns:
         QPainterPath: Shadow geometry with consistent extension
@@ -1300,8 +1294,8 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0):
         stroker.setCapStyle(Qt.FlatCap)
         result_path = stroker.createStroke(body_source)
 
-        # Add visible circles with same fixed extension
-        if hasattr(strand, 'has_circles') and any(strand.has_circles):
+        # Add visible circles with same fixed extension if requested
+        if include_circles and hasattr(strand, 'has_circles') and any(strand.has_circles):
             transparent_circles = (
                 hasattr(strand, 'circle_stroke_color') and
                 strand.circle_stroke_color and

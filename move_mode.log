@@ -1,4 +1,3 @@
 MoveMode: Preparing optimized drawing - caching background
 MoveMode: Background cache is now valid
 MoveMode: Set originally_selected_strand from selected_strand
-MoveMode: Control point moved: False

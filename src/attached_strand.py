@@ -776,13 +776,8 @@ class AttachedStrand(Strand):
             stroke_stroker.setWidth(self.width + self.stroke_width * 2)
             stroke_stroker.setJoinStyle(Qt.MiterJoin)
             stroke_stroker.setCapStyle(Qt.FlatCap)
-            path = QPainterPath()
-            path.moveTo(self.start)
-            path.cubicTo(
-                self.control_point1,
-                self.control_point2,
-                self.end
-            )
+            # Get the path representing the strand as a cubic Bézier curve
+            path = self.get_path()
             stroke_path = stroke_stroker.createStroke(path)
             
             highlight_pen = QPen(QColor('red'), 10)

@@ -364,7 +364,7 @@ class Strand:
                     normalized_start_vector = start_vector / start_vector_length
                     extended_start = self.start - (normalized_start_vector * 10)
                 else:
-                    extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
+                    extended_start = QPointF(self.start.x() - 0, self.start.y()) # Default horizontal
             else:
                 # Fallback if control point is at same position as start
                 # Use direction from start to end instead
@@ -376,10 +376,10 @@ class Strand:
                         normalized_fallback = fallback_vector / fallback_length
                         extended_start = self.start - (normalized_fallback * 10)
                     else:
-                         extended_start = QPointF(self.start.x() - 10, self.start.y()) # Default horizontal
+                         extended_start = QPointF(self.start.x() - 0, self.start.y()) # Default horizontal
                 else:
                     # If start and end are the same, use a default horizontal direction
-                    extended_start = QPointF(self.start.x() - 10, self.start.y())
+                    extended_start = QPointF(self.start.x() - 0, self.start.y())
 
         # For end point, use the tangent direction from control_point2 towards the end
         end_vector = self.end - self.control_point2
@@ -398,10 +398,10 @@ class Strand:
                 extended_end = self.end + (normalized_fallback * 10)
             else:
                 # If start and end are the same, use a default horizontal direction
-                extended_end = QPointF(self.end.x() + 10, self.end.y())
+                extended_end = QPointF(self.end.x() + 0, self.end.y())
             
         # Create the path with the extended points
-        path.moveTo(extended_start)
+        path.moveTo(self.start)
         path.lineTo(self.start)
 
         # Only use the third control point if:
@@ -484,7 +484,7 @@ class Strand:
             path.cubicTo(self.control_point1, self.control_point2, self.end)
         
         # Add a line to the extended end point
-        path.lineTo(extended_end)
+        path.lineTo(self.end)
             
         return path
 

@@ -1681,8 +1681,8 @@ class AttachedStrand(Strand):
                 extended_end = QPointF(self.end.x() + 10, self.end.y())
             
         # Create the path with the extended points
-        path.moveTo(extended_start)
-        path.lineTo(self.start)
+        path.moveTo(self.start)
+        #path.lineTo(self.start)
 
         # Only use the third control point if:
         # 1. The feature is enabled AND
@@ -1764,7 +1764,7 @@ class AttachedStrand(Strand):
             path.cubicTo(self.control_point1, self.control_point2, self.end)
         
         # Add a line to the extended end point
-        path.lineTo(extended_end)
+        path.lineTo(self.end)
             
         return path
 

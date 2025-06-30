@@ -758,7 +758,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     continue  # Transparent circle, ignore
                             oc_center = other_strand.start if oc_idx == 0 else other_strand.end
                             oc_path_tmp = QPainterPath()
-                            oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) + 1, (base_circle_radius_o / 2) + 1)
+                            oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) - 1, (base_circle_radius_o / 2) - 1)
                             other_stroke_path = other_stroke_path.united(oc_path_tmp)
                     except Exception as oc_e:
                         logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
@@ -1260,47 +1260,7 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
                 # Get the angle of the attached strand
                 angle = strand.angle if hasattr(strand, 'angle') else 0
                 
-                # Create a full circle first
-                single_circle = QPainterPath()
-                single_circle.addEllipse(centre, radius, radius)
-                
-                # ------------------------------------------------------------------
-                # Crop *slightly more* than a perfect half-circle so that we never
-                # cast shadow into empty space next to an attached strand.  We simply
-                # move the rectangular trimming mask a small amount (10 % of the
-                # circle radius) towards the "cropped" side before rotating it into
-                # place.  Doing this in the mask's local coordinate system keeps the
-                # maths trivial and produces the desired result for every strand
-                # orientation once the rectangle is rotated.
-                # ------------------------------------------------------------------
 
-                mask_rect = QPainterPath()
-
-                rect_width  = radius * 4.0
-                rect_height = radius * 4.0
-
-                # Shift the rectangle *upwards* (relative to the un-rotated circle)
-                # so that it clips ~60 % of the circle instead of exactly 50 %.  The
-                # amount of extra cropping can be fine-tuned by changing the factor
-                # below.  A value of 0.10 means 10 % of the radius.
-                extra_crop   = radius * 0.30  # 10 % of the radius
-
-                rect_x = centre.x() - rect_width / 2.0
-                rect_y = centre.y() - extra_crop  # move mask slightly over the centre
-
-                mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
-                
-                # Rotate the mask based on the strand angle
-                transform = QTransform()
-                transform.translate(centre.x(), centre.y())
-                transform.rotate(math.degrees(angle - math.pi/2))
-                transform.translate(-centre.x(), -centre.y())
-                mask_rect = transform.map(mask_rect)
-                
-                # Subtract the mask to get half circle
-                half_circle = single_circle.subtracted(mask_rect)
-                circle_path = circle_path.united(half_circle)
-            else:
                 # Regular full circle for other cases
                 single_circle = QPainterPath()
                 single_circle.addEllipse(centre, radius, radius)

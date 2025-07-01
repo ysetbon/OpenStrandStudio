@@ -2397,21 +2397,24 @@ class StrandDrawingCanvas(QWidget):
                             angle = math.atan2(tangent.y(), tangent.x())
 
                     # Create a masking rectangle to create a C-shape
+                    # Create a masking rectangle to create a C-shape
                     mask_rect = QPainterPath()
-                    rect_width = (outer_radius + 5) * 2
-                    rect_height = (outer_radius + 5) * 2
-                    rect_x = center.x() - rect_width / 2
-                    rect_y = center.y()
-                    mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+                    rect_width = (outer_radius) * 2  # Make it slightly larger to ensure clean cut
+                    rect_height = (outer_radius) * 2
+                    # Place the masking rectangle in local (0,0) space; it will be positioned via the
+                    # transform.  This keeps the rectangle logic consistent with the working addRect(0 …)
+                    # approach you provided.
+                    mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
                     
-                    # Apply rotation transform
+                    # Apply rotation transform to the masking rectangle
                     transform = QTransform()
                     transform.translate(center.x(), center.y())
+                    # Adjust angle based on whether it's start or end point
                     if i == 0:
-                        transform.rotate(math.degrees(angle - math.pi / 2))
+                        transform.rotate(math.degrees(angle))
                     else:
-                        transform.rotate(math.degrees(angle - math.pi / 2) + 180)
-                    transform.translate(-center.x(), -center.y())
+                        transform.rotate(math.degrees(angle - math.pi))
+                    
                     mask_rect = transform.map(mask_rect)
                     
                     # Create the C-shaped highlight

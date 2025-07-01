@@ -1024,14 +1024,12 @@ class AttachedStrand(Strand):
             mask_rect = QPainterPath()
             rect_width = total_diameter * 2
             rect_height = total_diameter * 2
-            rect_x = self.start.x() - rect_width/2
-            rect_y = self.start.y()
-            mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+
+            mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
 
             transform = QTransform()
             transform.translate(self.start.x(), self.start.y())
-            transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
-            transform.translate(-self.start.x(), -self.start.y())
+            transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
             mask_rect = transform.map(mask_rect)
 
             outer_circle = QPainterPath()
@@ -1081,7 +1079,71 @@ class AttachedStrand(Strand):
                 painter.drawPath(ring_path)
         # Restore painter state
         painter.restore()
+        # Draw ending circle if has_circles == [True, True]
+        if (self.has_circles == [False, True]):
+            # Check for attached children that would skip circle drawing
+            # Only check parent's attached strands if this strand has a parent (i.e., it's an AttachedStrand)
+            parent_children = getattr(self, 'parent', None)
+            parent_attached_strands = getattr(parent_children, 'attached_strands', []) if parent_children else []
+            
 
+
+            skip_start_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.start
+                for child in getattr(self.parent, 'attached_strands', []) # Check parent's children
+            ) or any( # Also check this strand's own children if it can have them
+                isinstance(child, AttachedStrand) and child.start == self.start
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', []) # Check parent's children
+            ) or any( # Also check this strand's own children
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            total_diameter = self.width + self.stroke_width * 2
+            circle_radius = total_diameter / 2
+
+
+
+            # Draw End Circle (if not skipped)
+            if not skip_end_circle:
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+                mask_rect_end = QPainterPath()
+                rect_width_end = total_diameter * 2
+                rect_height_end = total_diameter * 2
+                mask_rect_end.addRect(0, -rect_height_end / 2, rect_width_end, rect_height_end)
+
+                transform_end = QTransform()
+                transform_end.translate(self.end.x(), self.end.y())
+                transform_end.rotate(math.degrees(angle_end - math.pi))
+                mask_rect_end = transform_end.map(mask_rect_end)
+
+                outer_circle_end = QPainterPath()
+                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+                # Draw the outer circle stroke
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.stroke_color)
+                painter.drawPath(outer_mask_end)
+
+                # Draw the inner circle fill
+                inner_circle_end = QPainterPath()
+                inner_circle_end.addEllipse(self.end, self.width / 2, self.width / 2)
+                inner_mask_end = inner_circle_end.subtracted(mask_rect_end)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask_end)
+
+                # Draw full inner circle
+                just_inner_end = QPainterPath()
+                just_inner_end.addEllipse(self.end, self.width / 2, self.width / 2)
+                painter.drawPath(just_inner_end)
         # ----------------------------------------------------------------
         # NEW CODE: Also draw an ending circle if has_circles == [True, True]
         if self.has_circles == [True, True]:
@@ -1125,14 +1187,12 @@ class AttachedStrand(Strand):
                 mask_rect_start = QPainterPath()
                 rect_width_start = total_diameter * 2
                 rect_height_start = total_diameter * 2
-                rect_x_start = self.start.x() - rect_width_start / 2
-                rect_y_start = self.start.y()
-                mask_rect_start.addRect(rect_x_start + 1, rect_y_start + 1, rect_width_start + 1, rect_height_start + 1)
+                mask_rect_start.addRect(0, -rect_height_start/2, rect_width_start, rect_height_start)
 
                 transform_start = QTransform()
                 transform_start.translate(self.start.x(), self.start.y())
-                transform_start.rotate(math.degrees(angle_start - math.pi / 2))
-                transform_start.translate(-self.start.x(), -self.start.y())
+                transform_start.rotate(math.degrees(angle_start))
+                
                 mask_rect_start = transform_start.map(mask_rect_start)
 
                 outer_circle_start = QPainterPath()
@@ -1164,15 +1224,13 @@ class AttachedStrand(Strand):
                 mask_rect_end = QPainterPath()
                 rect_width_end = total_diameter * 2
                 rect_height_end = total_diameter * 2
-                rect_x_end = self.end.x() - rect_width_end / 2
-                rect_y_end = self.end.y()
-                mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+
+                mask_rect_end.addRect(0, -rect_height_end/2, rect_width_end, rect_height_end)
 
                 transform_end = QTransform()
                 transform_end.translate(self.end.x(), self.end.y())
                 # Rotate 180 deg more for the end circle mask
-                transform_end.rotate(math.degrees(angle_end - math.pi / 2) + 180)
-                transform_end.translate(-self.end.x(), -self.end.y())
+                transform_end.rotate(math.degrees(angle_end))
                 mask_rect_end = transform_end.map(mask_rect_end)
 
                 outer_circle_end = QPainterPath()
@@ -1210,13 +1268,12 @@ class AttachedStrand(Strand):
             radius = total_d / 2
 
             mask = QPainterPath()
-            w = total_d * 2; h = total_d * 2
-            x = self.start.x() - w/2; y = self.start.y()
-            mask.addRect(x+1, y+1, w+1, h+1)
+            rect_width = total_diameter * 2
+            rect_height = total_diameter * 2
+            mask.addRect(0, -rect_height/2, rect_width, rect_height)
 
             tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle - math.pi/2))
-            tr.translate(-self.start.x(), -self.start.y())
+            tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
@@ -1246,13 +1303,12 @@ class AttachedStrand(Strand):
             radius = total_d / 2
 
             mask = QPainterPath()
-            w = total_d * 2; h = total_d * 2
-            x = self.end.x() - w/2; y = self.end.y()
-            mask.addRect(x+1, y+1, w+1, h+1)
+            rect_width = total_diameter * 2
+            rect_height = total_diameter * 2
+            mask.addRect(0, -rect_height/2, rect_width, rect_height)
 
             tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle - math.pi/2) + 180)
-            tr.translate(-self.end.x(), -self.end.y())
+            tr.rotate(math.degrees(angle - math.pi))
             mask = tr.map(mask)
 
             outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
@@ -2424,14 +2480,11 @@ class AttachedStrand(Strand):
             mask_rect = QPainterPath()
             rect_width = total_diameter * 2
             rect_height = total_diameter * 2
-            rect_x = self.start.x() - rect_width/2
-            rect_y = self.start.y()
-            mask_rect.addRect(rect_x+1, rect_y+1, rect_width+1, rect_height+1)
+            mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
 
             transform = QTransform()
             transform.translate(self.start.x(), self.start.y())
-            transform.rotate(math.degrees(angle - math.pi/2))  # Rotate based on tangent angle
-            transform.translate(-self.start.x(), -self.start.y())
+            transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
             mask_rect = transform.map(mask_rect)
 
             outer_circle = QPainterPath()
@@ -2502,14 +2555,11 @@ class AttachedStrand(Strand):
                 mask_rect_start = QPainterPath()
                 rect_width_start = total_diameter * 2
                 rect_height_start = total_diameter * 2
-                rect_x_start = self.start.x() - rect_width_start / 2
-                rect_y_start = self.start.y()
-                mask_rect_start.addRect(rect_x_start + 1, rect_y_start + 1, rect_width_start + 1, rect_height_start + 1)
+                mask_rect_start.addRect(0, -rect_height_start / 2, rect_width_start, rect_height_start)
 
                 transform_start = QTransform()
                 transform_start.translate(self.start.x(), self.start.y())
-                transform_start.rotate(math.degrees(angle_start - math.pi / 2))
-                transform_start.translate(-self.start.x(), -self.start.y())
+                transform_start.rotate(math.degrees(angle_start))
                 mask_rect_start = transform_start.map(mask_rect_start)
 
                 outer_circle_start = QPainterPath()
@@ -2541,14 +2591,11 @@ class AttachedStrand(Strand):
                 mask_rect_end = QPainterPath()
                 rect_width_end = total_diameter * 2
                 rect_height_end = total_diameter * 2
-                rect_x_end = self.end.x() - rect_width_end / 2
-                rect_y_end = self.end.y()
-                mask_rect_end.addRect(rect_x_end + 1, rect_y_end + 1, rect_width_end + 1, rect_height_end + 1)
+                mask_rect_end.addRect(0, -rect_height_end / 2, rect_width_end, rect_height_end)
 
                 transform_end = QTransform()
                 transform_end.translate(self.end.x(), self.end.y())
-                transform_end.rotate(math.degrees(angle_end - math.pi / 2) + 180)
-                transform_end.translate(-self.end.x(), -self.end.y())
+                transform_end.rotate(math.degrees(angle_end - math.pi))
                 mask_rect_end = transform_end.map(mask_rect_end)
 
                 outer_circle_end = QPainterPath()
@@ -2582,13 +2629,11 @@ class AttachedStrand(Strand):
             radius = total_d / 2
 
             mask = QPainterPath()
-            w = total_d * 2; h = total_d * 2
-            x = self.start.x() - w/2; y = self.start.y()
-            mask.addRect(x+1, y+1, w+1, h+1)
-
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
             tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle - math.pi/2))
-            tr.translate(-self.start.x(), -self.start.y())
+            tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
@@ -2605,8 +2650,7 @@ class AttachedStrand(Strand):
 
             just_inner = QPainterPath(); just_inner.addEllipse(self.start, self.width/2, self.width/2)
             painter.drawPath(just_inner)
-
-        # End endpoint half-circle
+        # End endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
             tangent = self.calculate_cubic_tangent(1.0)
             angle = math.atan2(tangent.y(), tangent.x())
@@ -2614,13 +2658,24 @@ class AttachedStrand(Strand):
             radius = total_d / 2
 
             mask = QPainterPath()
-            w = total_d * 2; h = total_d * 2
-            x = self.end.x() - w/2; y = self.end.y()
-            mask.addRect(x+1, y+1, w+1, h+1)
-
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
             tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle - math.pi/2) + 180)
-            tr.translate(-self.end.x(), -self.end.y())
+            tr.rotate(math.degrees(angle - math.pi))
             mask = tr.map(mask)
 
             outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(clip)
+
+            inner = QPainterPath(); inner.addEllipse(self.end, self.width/2, self.width/2)
+            clip_in = inner.subtracted(mask)
+            painter.setBrush(self.color)
+            painter.drawPath(clip_in)
+
+            just_inner = QPainterPath(); just_inner.addEllipse(self.end, self.width/2, self.width/2)
+            painter.drawPath(just_inner)

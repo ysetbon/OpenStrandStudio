@@ -1762,13 +1762,25 @@ class MainWindow(QMainWindow):
                 # Get the size of the canvas
                 canvas_size = self.canvas.size()
                 
-                # Create a transparent image of the canvas size
-                image = QImage(canvas_size, QImage.Format_ARGB32)
+                # Create image 4x larger for maximum quality/crispness
+                scale_factor = 4.0
+                high_res_size = canvas_size * scale_factor
+                
+                # Create a transparent image at 4x resolution
+                image = QImage(high_res_size, QImage.Format_ARGB32_Premultiplied)
                 image.fill(Qt.transparent)
                 
                 # Create a painter for the image
                 painter = QPainter(image)
-                painter.setRenderHint(QPainter.Antialiasing)
+                
+                # Import RenderUtils for high-quality painter setup
+                from render_utils import RenderUtils
+                
+                # Use the same high-quality settings as the canvas display
+                RenderUtils.setup_painter(painter, enable_high_quality=True)
+                
+                # Scale everything up by 4x for high-resolution rendering
+                painter.scale(scale_factor, scale_factor)
                 
                 # Apply zoom transformation if zoom is not 1.0
                 if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor != 1.0:

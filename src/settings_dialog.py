@@ -1017,17 +1017,20 @@ class SettingsDialog(QDialog):
         for i in range(combobox.count()):
             combobox.setItemData(i, alignment, Qt.TextAlignmentRole)
     
-    def load_settings_from_file(self):
-        """Load user settings from file to initialize dialog with saved settings."""
-        # Use the appropriate directory for each OS
+    def get_settings_directory(self):
+        """Get the settings directory path consistently across platforms."""
         app_name = "OpenStrand Studio"
-        if sys.platform == 'darwin':  # macOS
+        if sys.platform.startswith('darwin'):  # macOS
             program_data_dir = os.path.expanduser('~/Library/Application Support')
             settings_dir = os.path.join(program_data_dir, app_name)
         else:
             program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
             settings_dir = program_data_dir  # AppDataLocation already includes the app name
+        return settings_dir
 
+    def load_settings_from_file(self):
+        """Load user settings from file to initialize dialog with saved settings."""
+        settings_dir = self.get_settings_directory()
         file_path = os.path.join(settings_dir, 'user_settings.txt')
         logging.info(f"SettingsDialog: Looking for settings file at: {file_path}")
         
@@ -2714,14 +2717,8 @@ class SettingsDialog(QDialog):
             else:
                 self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
 
-        # Use the appropriate directory for each OS
-        app_name = "OpenStrand Studio"
-        if sys.platform == 'darwin':  # macOS
-            program_data_dir = os.path.expanduser('~/Library/Application Support')
-            settings_dir = os.path.join(program_data_dir, app_name)
-        else:
-            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-            settings_dir = program_data_dir  # AppDataLocation already includes the app name
+        # Use consistent settings directory path
+        settings_dir = self.get_settings_directory()
         
         # Print the settings directory to help with troubleshooting
         print(f"Saving settings to directory: {settings_dir}")
@@ -2821,7 +2818,7 @@ class SettingsDialog(QDialog):
 
     def load_video_paths(self):
         if getattr(sys, 'frozen', False):
-            if sys.platform == 'darwin':
+            if sys.platform.startswith('darwin'):
                 # For macOS .app bundles, resources are in a different location
                 base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
             else:

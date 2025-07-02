@@ -229,18 +229,21 @@ except Exception as e:
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
-def load_user_settings():
+def get_settings_directory():
+    """Get the settings directory path consistently across platforms."""
     from PyQt5.QtCore import QStandardPaths
-
-    # Use the appropriate directory for each OS
+    
     app_name = "OpenStrand Studio"
-    if sys.platform == 'darwin':  # macOS
+    if sys.platform.startswith('darwin'):  # macOS
         program_data_dir = os.path.expanduser('~/Library/Application Support')
         settings_dir = os.path.join(program_data_dir, app_name)
     else:
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         settings_dir = program_data_dir  # AppDataLocation already includes the app name
+    return settings_dir
 
+def load_user_settings():
+    settings_dir = get_settings_directory()
     file_path = os.path.join(settings_dir, 'user_settings.txt')
     logging.info(f"Looking for settings file at: {file_path}")
 

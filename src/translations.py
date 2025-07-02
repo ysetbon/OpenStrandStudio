@@ -86,6 +86,8 @@ translations = {
             <li style="font-size:15px;"><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
             <li style="font-size:15px;"><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
             <li style="font-size:15px;"><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+            <li style="font-size:15px;"><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+            <li style="font-size:15px;"><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
@@ -347,6 +349,8 @@ translations = {
             <li style="font-size:15px;"><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
             <li style="font-size:15px;"><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
             <li style="font-size:15px;"><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+            <li style="font-size:15px;"><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+            <li style="font-size:15px;"><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
         ''',
@@ -602,6 +606,8 @@ translations = {
             <li style="font-size:15px;"><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
             <li style="font-size:15px;"><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
             <li style="font-size:15px;"><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+            <li style="font-size:15px;"><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+            <li style="font-size:15px;"><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.100</p>
         ''',
@@ -861,6 +867,8 @@ translations = {
             <li style="font-size:15px;"><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
             <li style="font-size:15px;"><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
             <li style="font-size:15px;"><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+            <li style="font-size:15px;"><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+            <li style="font-size:15px;"><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.100</p>
 
@@ -1121,6 +1129,8 @@ translations = {
             <li style="font-size:15px;"><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
             <li style="font-size:15px;"><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
             <li style="font-size:15px;"><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+            <li style="font-size:15px;"><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+            <li style="font-size:15px;"><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.100</p>
         ''',
@@ -1362,7 +1372,7 @@ translations = {
         'change_language': 'שינוי שפה',
         'tutorial': 'מדריך',
         'history': 'היסטוריה',
-        'whats_new': "מה חדש?",
+        'whats_new': "?מה חדש",
         'about': ' אודות OpenStrand Studio',
         'select_theme': 'בחר ערכת נושא:    ',
         'select_language': 'בחר שפה:',
@@ -1372,13 +1382,17 @@ translations = {
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
         'whats_new_info': '''
+        <div dir="rtl" style="text-align: right;">
         <b>מה חדש בגרסה 1.100</b><br><br>
         • <b>שינוי רוחב חוטים:</b> עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.<br>
         • <b>הגדלה והקטנה:</b> אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.<br>
         • <b>הזזת המסך:</b> אפשר להזיז את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.<br>
-        • <b>התחלת עבודה:</b> כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.<br><br>
-        • <b>תיקונים כלליים:</b>תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.<br><br>
+        • <b>התחלת עבודה:</b> כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.<br>
+        • <b>תיקונים כלליים:</b>תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.<br>
+        • <b>איכות תצוגה משופרת:</b> שיפור באיכות תצוגת הקנבס ויצוא תמונות ברזולוציה גבוהה פי 4 לתוצאות חדות ומקצועיות.<br>
+        • <b>הסרת אפשרות מסכה מורחבת:</b> האפשרות למסכה מורחבת בשכבה הכללית הוסרה מכיוון שהיא הייתה נחוצה רק כגיבוי לבעיות shader בגרסאות קודמות (1.09x). עם שיפור ההצללה באופן משמעותי, אפשרות זו אינה נחוצה עוד.<br><br>
         © 2025 OpenStrand Studio - גרסה 1.100
+        </div>
         ''',
 
 

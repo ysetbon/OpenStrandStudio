@@ -239,6 +239,8 @@ class SettingsDialog(QDialog):
                     self.affected_strand_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
                     self.third_control_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'default_arrow_color_label'):
+                    self.default_arrow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
                     self.extended_mask_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'num_steps_label'):
@@ -257,6 +259,8 @@ class SettingsDialog(QDialog):
                     self.affected_strand_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
                     self.third_control_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'default_arrow_color_label'):
+                    self.default_arrow_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
                     self.extended_mask_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'num_steps_label'):
@@ -559,6 +563,21 @@ class SettingsDialog(QDialog):
             self.third_control_layout.invalidate()
             self.third_control_layout.activate()
                 
+        # Default arrow color checkbox layout reorganization
+        if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_label') and hasattr(self, 'default_arrow_color_checkbox'):
+            self.clear_layout(self.checkbox_layout)
+            if is_rtl:
+                self.checkbox_layout.addStretch()
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                self.checkbox_layout.addWidget(self.default_arrow_color_label)
+            else:
+                self.checkbox_layout.addWidget(self.default_arrow_color_label)
+                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+                self.checkbox_layout.addStretch()
+            # Force immediate update
+            self.checkbox_layout.invalidate()
+            self.checkbox_layout.activate()
+                
         # Extended mask layout reorganization
         # if hasattr(self, 'extended_mask_layout') and hasattr(self, 'extended_mask_label') and hasattr(self, 'extended_mask_checkbox'):
         #     self.clear_layout(self.extended_mask_layout)
@@ -665,33 +684,6 @@ class SettingsDialog(QDialog):
             self.button_color_label.repaint()
             logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
 
-        # Checkbox layout reorganization (this was also missing!)
-        if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_checkbox'):
-            
-            if is_rtl:
-                # In RTL, place the checkbox first, then stretch so the control is not pushed too far right
-                self.clear_layout(self.checkbox_layout)
-                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-                self.checkbox_layout.addStretch()
-            else:
-                # Ensure layout is cleared first, then add the checkbox followed by a stretch so the widget remains visible in LTR
-                self.clear_layout(self.checkbox_layout)
-                self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
-                self.checkbox_layout.addStretch()
-            
-            # Ensure consistent margin so the text lines up with other rows
-            if is_rtl:
-                self.checkbox_layout.setContentsMargins(330, 0, 0, 0)
-            else:
-                self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
-            # Force immediate update and repaint
-            self.checkbox_layout.invalidate()
-            self.checkbox_layout.activate()
-            self.default_arrow_color_checkbox.update()
-            if hasattr(self, 'checkbox_container'):
-                self.checkbox_container.updateGeometry()
-                self.checkbox_container.update()
-                self.checkbox_container.repaint()
 
         # Default Strand Color layout reorganization
         if hasattr(self, 'default_strand_color_container') and hasattr(self, 'default_strand_color_label') and hasattr(self, 'default_strand_color_button'):
@@ -1645,18 +1637,13 @@ class SettingsDialog(QDialog):
 
         # --- Checkbox Container ---
         self.checkbox_container = QWidget()  # Store as instance attribute
-        # Ensure the container widget uses LTR so the indicator appears on the left of the text
-        self.checkbox_container.setLayoutDirection(Qt.LeftToRight if self.is_rtl_language(self.current_language) else Qt.RightToLeft)
         self.checkbox_layout = QHBoxLayout(self.checkbox_container)  # Store as instance attribute
-        # Ensure the checkbox row aligns with other rows when using RTL languages
-        if self.is_rtl_language(self.current_language):
-            # A left margin of 105px matches the offset applied to other rows such as the button color row
-            self.checkbox_layout.setContentsMargins(330, 0, 0, 0)
-        else:
-            self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
-        self.checkbox_layout.setSpacing(5)
+        self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        self.checkbox_layout.setSpacing(15)  # Match spacing from general settings
         
-        self.default_arrow_color_checkbox = QCheckBox(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
+        # Create separate label and checkbox (like in general settings)
+        self.default_arrow_color_label = QLabel(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
+        self.default_arrow_color_checkbox = QCheckBox()  # No text on checkbox itself
         self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
         self.default_arrow_color_checkbox.stateChanged.connect(self.on_default_arrow_color_changed)
 
@@ -1664,7 +1651,9 @@ class SettingsDialog(QDialog):
         if self.is_rtl_language(self.current_language):
             self.checkbox_layout.addStretch()
             self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
+            self.checkbox_layout.addWidget(self.default_arrow_color_label)
         else:
+            self.checkbox_layout.addWidget(self.default_arrow_color_label)
             self.checkbox_layout.addWidget(self.default_arrow_color_checkbox)
             self.checkbox_layout.addStretch()
         # Add the checkbox container widget to the default arrow container layout
@@ -2532,8 +2521,9 @@ class SettingsDialog(QDialog):
         self.arrow_gap_length_label.setText(_['arrow_gap_length'] if 'arrow_gap_length' in _ else "Arrow Gap Length")
         self.arrow_line_length_label.setText(_['arrow_line_length'] if 'arrow_line_length' in _ else "Arrow Line Length")
         self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
-        # Update default arrow color checkbox text
-        self.default_arrow_color_checkbox.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
+        # Update default arrow color label text
+        if hasattr(self, 'default_arrow_color_label'):
+            self.default_arrow_color_label.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
         self.button_color_label.setText(_['button_color'] if 'button_color' in _ else "Button Color:")
         if self.is_rtl_language(self.current_language):
             self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)

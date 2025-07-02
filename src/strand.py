@@ -1515,78 +1515,79 @@ class Strand:
         from attached_strand import AttachedStrand
         # Start endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start and not getattr(child, 'shadow_only', False) for child in self.attached_strands):
-            painter.save() # SAVE 6
-            painter.setRenderHint(QPainter.Antialiasing)
-
             tangent = self.calculate_cubic_tangent(0.0)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
+            # Creating Outer Circle Half-Circle
             mask = QPainterPath()
-            rect_width = total_d * 2; rect_height = total_d * 2
-            
-            mask.addRect(0, -rect_height/2, rect_width, rect_height)
-
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
             tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle ))
-      
+            tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-
             outer = QPainterPath()
             outer.addEllipse(self.start, radius, radius)
             clip = outer.subtracted(mask)
-
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
+            # Draw the inner circle (fill)
             inner = QPainterPath()
-            inner.addEllipse(self.start, self.width/2, self.width/2)
-            clip_in = inner.subtracted(mask)
+            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
-            painter.drawPath(clip_in)
+            painter.drawPath(inner)
 
-            painter.drawEllipse(self.start, self.width/2, self.width/2)
-
-            painter.restore() # RESTORE 6
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color)
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
+            tr_inner = QTransform().translate(self.start.x(), self.start.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
 
         # End endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end and not getattr(child, 'shadow_only', False) for child in self.attached_strands):
-            painter.save() # SAVE 7
-            painter.setRenderHint(QPainter.Antialiasing)
-
             tangent = self.calculate_cubic_tangent(1.0)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
+            # Creating Outer Circle Half-Circle
             mask = QPainterPath()
-            rect_width = total_d * 2; rect_height = total_d * 2
-            
+            rect_width = total_d * 2
+            rect_height = total_d * 2
             mask.addRect(-rect_width, -rect_height/2, rect_width, rect_height)
-
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle))
-        
             mask = tr.map(mask)
-
             outer = QPainterPath()
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
-
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
-            inner = QPainterPath(); inner.addEllipse(self.end, self.width/2, self.width/2)
-            clip_in = inner.subtracted(mask)
+            # Draw the inner circle (fill)
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
-            painter.drawPath(clip_in)
+            painter.drawPath(inner)
 
-            painter.drawEllipse(self.end, self.width/2, self.width/2)
-
-            painter.restore() # RESTORE 7
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color) 
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.end.x(), self.end.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return
@@ -2227,12 +2228,10 @@ class Strand:
             rect_width = total_diameter * 2
             rect_height = total_diameter * 2
             mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-
             transform = QTransform()
             transform.translate(self.start.x(), self.start.y())
             transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
             mask_rect = transform.map(mask_rect)
-
             outer_circle = QPainterPath()
             outer_circle.addEllipse(self.start, circle_radius, circle_radius)
             outer_mask = outer_circle.subtracted(mask_rect)
@@ -2247,6 +2246,7 @@ class Strand:
             inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
+            
             # Draw side line that covers the inner circle
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.color)
@@ -2302,16 +2302,15 @@ class Strand:
                 tangent_end = self.calculate_cubic_tangent(1.0)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
+                # Creating Outer Circle Half-Circle
                 mask_rect_end = QPainterPath()
                 rect_width_end = total_diameter * 2
                 rect_height_end = total_diameter * 2
                 mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-
                 transform_end = QTransform()
                 transform_end.translate(self.end.x(), self.end.y())
                 transform_end.rotate(math.degrees(angle_end))
                 mask_rect_end = transform_end.map(mask_rect_end)
-
                 outer_circle_end = QPainterPath()
                 outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
@@ -2326,6 +2325,7 @@ class Strand:
                 inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
+
                 # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
@@ -2365,6 +2365,7 @@ class Strand:
             if not skip_start_circle:
                 angle_start = self.calculate_start_tangent()
 
+                # Creating Outer Circle Half-Circle
                 mask_rect_start = QPainterPath()
                 rect_width_start = total_diameter * 2
                 rect_height_start = total_diameter * 2
@@ -2373,7 +2374,6 @@ class Strand:
                 transform_start.translate(self.start.x(), self.start.y())
                 transform_start.rotate(math.degrees(angle_start))
                 mask_rect_start = transform_start.map(mask_rect_start)
-
                 outer_circle_start = QPainterPath()
                 outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
@@ -2388,6 +2388,7 @@ class Strand:
                 inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
+
                 # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
@@ -2403,17 +2404,15 @@ class Strand:
                 tangent_end = self.calculate_cubic_tangent(1.0)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
+                # Creating Outer Circle Half-Circle
                 mask_rect_end = QPainterPath()
                 rect_width_end = total_diameter * 2
                 rect_height_end = total_diameter * 2
                 mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-
                 transform_end = QTransform()
                 transform_end.translate(self.end.x(), self.end.y())
                 transform_end.rotate(math.degrees(angle_end))
-
                 mask_rect_end = transform_end.map(mask_rect_end)
-
                 outer_circle_end = QPainterPath()
                 outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
@@ -2428,6 +2427,7 @@ class Strand:
                 inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
+
                 # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
@@ -2447,6 +2447,7 @@ class Strand:
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
+            # Creating Outer Circle Half-Circle
             mask = QPainterPath()
             rect_width = total_d * 2
             rect_height = total_d * 2
@@ -2454,18 +2455,19 @@ class Strand:
             tr = QTransform().translate(self.start.x(), self.start.y())
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-
-            outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
+            outer = QPainterPath()
+            outer.addEllipse(self.start, radius, radius)
             clip = outer.subtracted(mask)
-
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
+
             # Draw the inner circle (fill)
             inner = QPainterPath()
             inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
+
             # Draw side line that covers the inner circle
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.color)
@@ -2483,6 +2485,7 @@ class Strand:
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
+            # Creating Outer Circle Half-Circle
             mask = QPainterPath()
             rect_width = total_d * 2
             rect_height = total_d * 2
@@ -2493,7 +2496,6 @@ class Strand:
             outer = QPainterPath()
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
-
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)

@@ -2247,7 +2247,7 @@ class Strand:
             inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
-
+            # Draw side line that covers the inner circle
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.color)
             just_inner = QPainterPath()
@@ -2326,7 +2326,7 @@ class Strand:
                 inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
-
+                # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
                 just_inner = QPainterPath()
@@ -2388,7 +2388,7 @@ class Strand:
                 inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
-
+                # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
                 just_inner = QPainterPath()
@@ -2428,7 +2428,7 @@ class Strand:
                 inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
                 painter.drawPath(inner)
-
+                # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.color)
                 just_inner = QPainterPath()
@@ -2461,12 +2461,12 @@ class Strand:
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
-
+            # Draw the inner circle (fill)
             inner = QPainterPath()
             inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
-
+            # Draw side line that covers the inner circle
             painter.setPen(Qt.NoPen)
             painter.setBrush(self.color)
             just_inner = QPainterPath()

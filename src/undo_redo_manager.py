@@ -8,6 +8,7 @@ from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
+from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from safe_logging import safe_info, safe_warning, safe_error, safe_exception
 # Import QTimer here to avoid UnboundLocalError
@@ -122,7 +123,7 @@ class StrokeTextButton(QPushButton):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # Draw the background (if not handled by stylesheet)
         option = QStyleOption()

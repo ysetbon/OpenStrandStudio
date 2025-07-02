@@ -384,6 +384,10 @@ def load_user_settings():
 if __name__ == '__main__':
     logging.info("Starting the application...")
 
+    # Enable high-DPI support for crisp rendering
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    
     app = QApplication(sys.argv)
 
     # Load user settings

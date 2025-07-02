@@ -5,6 +5,7 @@ from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt, QTime, QEventLoop
 from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush, QPolygonF, QPainterPath, QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QWidget
 import PyQt5.QtGui as QtGui
+from render_utils import RenderUtils
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
@@ -590,7 +591,7 @@ class MoveMode:
                     
                     # Draw the entire canvas (background, grid, static strands) to the cache
                     painter = QtGui.QPainter(self_canvas.background_cache)
-                    painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                    RenderUtils.setup_painter(painter, enable_high_quality=True)
                     
                     # First clear the cache
                     painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
@@ -620,7 +621,7 @@ class MoveMode:
             
             # Draw the cached background first (has everything except truly moving strands)
             painter = QtGui.QPainter(self_canvas)
-            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
             
             # Apply the same zoom transformation as regular paintEvent
             painter.save()

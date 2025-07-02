@@ -4,6 +4,7 @@ from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
 )
+from render_utils import RenderUtils
 import math
 import logging
 from PyQt5.QtGui import QPolygonF  # Ensure this is included among your imports
@@ -905,7 +906,7 @@ class Strand:
     
     def draw(self, painter):
         painter.save() # <<<< SAVE 1 (Top Level)
-        painter.setRenderHint(QPainter.Antialiasing)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # Check zoom factor and use direct drawing when zoomed
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0
@@ -1702,6 +1703,10 @@ class Strand:
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
         from attached_strand import AttachedStrand
         from masked_strand import MaskedStrand          
+        
+        # Ensure high-quality rendering for direct drawing
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        
         # --- Handle hidden state comprehensively ---
         if self.is_hidden:
             # Draw full arrow if requested

@@ -2,6 +2,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPath
 from PyQt5.QtWidgets import QApplication
 from masked_strand import MaskedStrand
+from render_utils import RenderUtils
 import logging
 
 class MaskMode(QObject):
@@ -236,7 +237,7 @@ class MaskMode(QObject):
         """Draw highlights for selected strands using their paths."""
         for strand in self.selected_strands:
             painter.save()
-            painter.setRenderHint(QPainter.Antialiasing)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
 
             # Get the path representing the strand
             path = strand.get_path()

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
+from render_utils import RenderUtils
 import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
@@ -50,6 +51,11 @@ class StrandDrawingCanvas(QWidget):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
+        
+        # High-DPI rendering settings
+        self.use_supersampling = False  # Start with supersampling disabled for testing
+        self.supersampling_factor = 4.0  # 4x more pixels
+        self.render_buffer = None  # Will be created when needed
         
         # Load shadow color from user settings if available
         shadow_color = self.load_shadow_color_from_settings()
@@ -1398,9 +1404,36 @@ class StrandDrawingCanvas(QWidget):
             return  # Skip custom painting while suppression is active
 
         # Proceed with full painting when not suppressed
-        painter = QPainter(self)
-
-        painter.setRenderHint(QPainter.Antialiasing)
+        if self.use_supersampling:
+            # Create high-resolution buffer for 4x pixel density
+            widget_size = self.size()
+            buffer_size = widget_size * self.supersampling_factor
+            logging.info(f"[Canvas] Using supersampling: widget_size={widget_size}, buffer_size={buffer_size}")
+            
+            if (self.render_buffer is None or 
+                self.render_buffer.size() != buffer_size):
+                # Create high-res buffer with proper format for smooth antialiasing
+                self.render_buffer = QImage(buffer_size, QImage.Format_ARGB32_Premultiplied)
+                # Fill with transparent background to start clean
+                self.render_buffer.fill(Qt.transparent)
+                logging.info(f"[Canvas] Created new supersampling buffer: {buffer_size}")
+            else:
+                # Clear the existing buffer
+                self.render_buffer.fill(Qt.transparent)
+            
+            # Paint everything to the high-resolution buffer at NORMAL coordinates
+            painter = QPainter(self.render_buffer)
+            
+            # Set device pixel ratio for proper high-DPI handling
+            # This tells Qt that this painter is working on a high-DPI surface
+            if hasattr(painter.device(), 'setDevicePixelRatio'):
+                painter.device().setDevicePixelRatio(self.supersampling_factor)
+            
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
+        else:
+            # Standard painting directly to widget
+            painter = QPainter(self)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
         
         # Apply zoom and pan transformation
         painter.save()
@@ -1911,29 +1944,44 @@ class StrandDrawingCanvas(QWidget):
 
         # Restore painter state before ending (to undo zoom transformation)
         painter.restore()
-        painter.end()
-
-        # ADD new painter to draw on top of everything:
-        # ---------------------------------------------------------
-        overlay_painter = QPainter(self)
-        overlay_painter.setRenderHint(QPainter.Antialiasing)
         
-        # Apply zoom transformation to overlay painter as well
-        overlay_painter.save()
+        # Handle overlay painting (attach mode circles, etc.)
+        self._draw_overlays(painter)
+        
+        painter.end()
+        
+        # If using supersampling, now draw the high-res buffer to the widget
+        if self.use_supersampling:
+            widget_painter = QPainter(self)
+            RenderUtils.setup_painter(widget_painter, enable_high_quality=True)
+            
+            # Use the highest quality scaling for the final blit
+            widget_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            
+            # Draw the high-res buffer scaled down with high-quality filtering
+            widget_painter.drawImage(self.rect(), self.render_buffer, self.render_buffer.rect())
+            widget_painter.end()
+    
+    def _draw_overlays(self, painter):
+        """Draw overlay elements like attach mode circles."""
+        # Note: painter is already set up with transformations when this is called
+        
+        # Apply zoom transformation for overlays
+        painter.save()
         canvas_center = QPointF(self.width() / 2, self.height() / 2)
-        overlay_painter.translate(canvas_center)
-        overlay_painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
-        overlay_painter.scale(self.zoom_factor, self.zoom_factor)
-        overlay_painter.translate(-canvas_center)
+        painter.translate(canvas_center)
+        painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
+        painter.scale(self.zoom_factor, self.zoom_factor)
+        painter.translate(-canvas_center)
         
         # When zoomed out or panning, disable clipping for overlay painter
         if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
            (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
-            overlay_painter.setClipping(False)
+            painter.setClipping(False)
 
         # Draw attach-mode circles on top
         if isinstance(self.current_mode, AttachMode):
-            overlay_painter.save()
+            painter.save()
             for strand in self.strands:
                 if isinstance(strand, MaskedStrand):
                     continue
@@ -1948,8 +1996,8 @@ class StrandDrawingCanvas(QWidget):
                     else:
                         circle_color = QColor(255, 0, 0, 60)  # Default red
 
-                    overlay_painter.setBrush(QBrush(circle_color))
-                    overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+                    painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                    painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
                     circle_size = 120
                     radius = circle_size / 2
                     start_ellipse = QRectF(
@@ -1958,7 +2006,7 @@ class StrandDrawingCanvas(QWidget):
                         circle_size,
                         circle_size
                     )
-                    overlay_painter.drawEllipse(start_ellipse)
+                    painter.drawEllipse(start_ellipse)
 
                 # End circle - check has_circles[1] instead of end_attached
                 if not strand.has_circles[1]:  # Show circle if no attachment at end
@@ -1969,8 +2017,8 @@ class StrandDrawingCanvas(QWidget):
                     else:
                         circle_color = QColor(0, 0, 255, 60)  # Default blue
 
-                    overlay_painter.setBrush(QBrush(circle_color))
-                    overlay_painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+                    painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                    painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
                     circle_size = 120
                     radius = circle_size / 2
                     end_ellipse = QRectF(
@@ -1979,13 +2027,35 @@ class StrandDrawingCanvas(QWidget):
                         circle_size,
                         circle_size
                     )
-                    overlay_painter.drawEllipse(end_ellipse)
+                    painter.drawEllipse(end_ellipse)
 
-            overlay_painter.restore()
+            painter.restore()
         # ---------------------------------------------------------
-        overlay_painter.restore()  # Restore zoom transformation
-        overlay_painter.end()
+        painter.restore()  # Restore zoom transformation
         # ---------------------------------------------------------
+    
+    def toggle_supersampling(self):
+        """Toggle 4x supersampling for crisp rendering."""
+        self.use_supersampling = not self.use_supersampling
+        # Clear the render buffer when toggling to force recreation
+        self.render_buffer = None
+        self.update()  # Trigger repaint
+        logging.info(f"Supersampling {'enabled' if self.use_supersampling else 'disabled'}")
+        
+        # Also log which rendering path is being used
+        if hasattr(self, 'strands'):
+            for strand in self.strands[:1]:  # Just check first strand
+                zoom_factor = getattr(self, 'zoom_factor', 1.0)
+                logging.info(f"Sample strand will use {'_draw_direct' if zoom_factor != 1.0 else 'normal draw'} (zoom: {zoom_factor})")
+    
+    def set_supersampling_factor(self, factor):
+        """Set the supersampling factor (default 4.0 for 4x crispness)."""
+        self.supersampling_factor = float(factor)
+        # Clear the render buffer to force recreation with new factor
+        self.render_buffer = None
+        if self.use_supersampling:
+            self.update()  # Trigger repaint if currently using supersampling
+        logging.info(f"Supersampling factor set to {self.supersampling_factor}x")
 
     def toggle_control_points(self):
         """Toggle the visibility of control points."""

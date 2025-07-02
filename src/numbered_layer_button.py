@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
+from render_utils import RenderUtils
 import logging
 from translations import translations
 from masked_strand import MaskedStrand
@@ -798,7 +799,7 @@ class NumberedLayerButton(QPushButton):
         """
         super().paintEvent(event)
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # Set up the font
         font = QFont(painter.font())

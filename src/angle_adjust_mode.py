@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt, QPointF, QRectF, QTimer
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel, QBoxLayout
 from PyQt5.QtGui import QPainter, QPen, QColor
+from render_utils import RenderUtils
 import math
 import logging
 

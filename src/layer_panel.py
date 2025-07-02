@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeDa
 from PyQt5.QtGui import QColor, QPalette, QDrag # Added QDrag
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
+from render_utils import RenderUtils
 # --- End Import ---
 from functools import partial
 import logging
@@ -126,6 +127,7 @@ class DropTargetWidget(QWidget):
         super().paintEvent(event)
         if self._drag_indicator_y is not None:
             painter = QPainter(self)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
             pen = QPen(QColor(0, 120, 215), 2, Qt.SolidLine) # Blue indicator line
             painter.setPen(pen)
             painter.drawLine(0, self._drag_indicator_y, self.width(), self._drag_indicator_y)

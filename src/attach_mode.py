@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
 from PyQt5.QtGui import QCursor, QPainter, QPixmap
 from PyQt5.QtWidgets import QApplication
+from render_utils import RenderUtils
 import math
 import logging
 import time
@@ -271,7 +272,7 @@ class AttachMode(QObject):
 
             # Start the painter
             painter = QPainter(self_canvas)
-            painter.setRenderHint(QPainter.Antialiasing)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
             
             # Apply zoom transformation
             painter.save()
@@ -311,7 +312,7 @@ class AttachMode(QObject):
                         try:
                             # Draw everything except the active strand to the cache
                             cache_painter = QPainter(self_canvas.background_cache)
-                            cache_painter.setRenderHint(QPainter.Antialiasing)
+                            RenderUtils.setup_painter(cache_painter, enable_high_quality=True)
                             
                             # Clear the cache
                             cache_painter.setCompositionMode(QPainter.CompositionMode_Clear)

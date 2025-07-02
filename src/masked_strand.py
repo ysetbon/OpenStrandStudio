@@ -3,6 +3,7 @@ from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
 )
+from render_utils import RenderUtils
 import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import QPointF, Qt
@@ -319,9 +320,7 @@ class MaskedStrand(Strand):
 
         painter.save()
         # Enable high-quality antialiasing for the entire drawing process
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # NEW: Check if hidden
         if self.is_hidden:
@@ -337,10 +336,7 @@ class MaskedStrand(Strand):
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
         # Enable high-quality antialiasing for the temporary painter too
-        temp_painter.setRenderHint(QPainter.Antialiasing, True)
-        temp_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        temp_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-        temp_painter.setRenderHint(QPainter.Antialiasing)        
+        RenderUtils.setup_painter(temp_painter, enable_high_quality=True)        
         # do not Draw the strands FIRST
 
             
@@ -1261,7 +1257,7 @@ class MaskedStrand(Strand):
         to highlight it similarly to other strands.
         """
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # Use a semi-transparent highlight color
         if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color'):

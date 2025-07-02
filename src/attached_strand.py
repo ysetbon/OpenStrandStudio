@@ -4,6 +4,7 @@ from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
 )
+from render_utils import RenderUtils
 import math
 import logging
 from PyQt5.QtGui import QPolygonF  # Ensure this is included among your imports
@@ -453,7 +454,7 @@ class AttachedStrand(Strand):
     def draw(self, painter):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save() # Top Level Save
-        painter.setRenderHint(QPainter.Antialiasing)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
         
         # Log drawing info
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0
@@ -1783,6 +1784,9 @@ class AttachedStrand(Strand):
     def _draw_direct(self, painter):
         """Draw the attached strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
+        
+        # Ensure high-quality rendering for direct drawing
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
         
         # --- Handle hidden state comprehensively ---
         if self.is_hidden:

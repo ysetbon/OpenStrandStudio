@@ -799,7 +799,8 @@ class NumberedLayerButton(QPushButton):
         """
         super().paintEvent(event)
         painter = QPainter(self)
-        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        logging.info(f"[NumberedLayerButton.paintEvent] Setting up UI painter for button: {getattr(self, 'layer_name', 'unknown')}")
+        RenderUtils.setup_ui_painter(painter)
 
         # Set up the font
         font = QFont(painter.font())
@@ -869,6 +870,9 @@ class NumberedLayerButton(QPushButton):
             for i in range(-rect.height(), rect.width(), 10):
                  painter.drawLine(i, rect.height(), i + rect.height(), 0)
             painter.restore()
+        
+        # Ensure painter is properly ended
+        painter.end()
 
     def set_transparent_circle_stroke(self):
         """

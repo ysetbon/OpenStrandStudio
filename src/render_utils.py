@@ -5,6 +5,7 @@ Provides consistent crisp rendering for all QPainter instances.
 
 from PyQt5.QtGui import QPainter, QImage, QPen, QBrush
 from PyQt5.QtCore import Qt, QRect, QPoint
+import logging
 
 
 class RenderUtils:
@@ -14,33 +15,68 @@ class RenderUtils:
     QUALITY_FACTOR = 4.0
     
     @staticmethod
-    def setup_painter(painter, enable_high_quality=True):
+    def setup_painter(painter, enable_high_quality=True, ui_element=False):
         """
         Set up a QPainter with optimal render hints for crisp drawing.
         
         Args:
             painter (QPainter): The painter to configure
             enable_high_quality (bool): Whether to enable high-quality rendering
+            ui_element (bool): Whether this is for UI elements (buttons, panels, etc.)
         """
+        # Check if this painter has already been configured by us
+        # to avoid double setup that can cause QBackingStore warnings
+        if hasattr(painter, '_renderutils_configured'):
+            logging.info(f"[RenderUtils.setup_painter] Painter already configured, skipping setup")
+            return
+        
+        # Log the painter setup call
+        caller_info = "Unknown"
+        try:
+            import inspect
+            frame = inspect.currentframe()
+            if frame and frame.f_back and frame.f_back.f_back:
+                caller_frame = frame.f_back.f_back
+                caller_info = f"{caller_frame.f_code.co_filename}:{caller_frame.f_lineno}"
+        except:
+            pass
+        
+        logging.info(f"[RenderUtils.setup_painter] Called from: {caller_info}")
+        logging.info(f"[RenderUtils.setup_painter] enable_high_quality={enable_high_quality}, ui_element={ui_element}")
+        
         if enable_high_quality:
             # Enable all antialiasing and high-quality rendering
             painter.setRenderHint(QPainter.Antialiasing, True)
             painter.setRenderHint(QPainter.TextAntialiasing, True)
             painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
             
-            # Enable high-quality antialiasing if available
-            if hasattr(QPainter, 'HighQualityAntialiasing'):
-                painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+            logging.info(f"[RenderUtils.setup_painter] Basic render hints enabled")
             
-            # Additional render hints for better quality
-            if hasattr(QPainter, 'LosslessImageRendering'):
-                painter.setRenderHint(QPainter.LosslessImageRendering, True)
+            # Only enable high-DPI features for canvas elements, not UI elements
+            if not ui_element:
+                logging.info(f"[RenderUtils.setup_painter] Enabling HIGH-DPI features for canvas element")
+                # Enable high-quality antialiasing if available
+                if hasattr(QPainter, 'HighQualityAntialiasing'):
+                    painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    logging.info(f"[RenderUtils.setup_painter] HighQualityAntialiasing enabled")
+                
+                # Additional render hints for better quality
+                if hasattr(QPainter, 'LosslessImageRendering'):
+                    painter.setRenderHint(QPainter.LosslessImageRendering, True)
+                    logging.info(f"[RenderUtils.setup_painter] LosslessImageRendering enabled")
+            else:
+                logging.info(f"[RenderUtils.setup_painter] SKIPPING HIGH-DPI features for UI element")
             
             # Set composition mode for better blending
             painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            logging.info(f"[RenderUtils.setup_painter] CompositionMode_SourceOver set")
         else:
             # Standard rendering for performance-critical scenarios
             painter.setRenderHint(QPainter.Antialiasing, True)
+            logging.info(f"[RenderUtils.setup_painter] Standard rendering mode enabled")
+        
+        # Mark this painter as configured to prevent double setup
+        painter._renderutils_configured = True
     
     @staticmethod
     def create_smooth_pen(color, width, style=Qt.SolidLine):
@@ -73,6 +109,18 @@ class RenderUtils:
             QBrush: Optimized brush for smooth drawing
         """
         return QBrush(color, Qt.SolidPattern)
+    
+    @staticmethod
+    def setup_ui_painter(painter):
+        """
+        Set up a QPainter specifically for UI elements (buttons, panels, etc.)
+        This ensures UI elements don't get affected by high-DPI scaling.
+        
+        Args:
+            painter (QPainter): The painter to configure for UI rendering
+        """
+        logging.info(f"[RenderUtils.setup_ui_painter] Setting up painter for UI element")
+        RenderUtils.setup_painter(painter, enable_high_quality=True, ui_element=True)
     
     @staticmethod
     def enhance_pen_for_antialiasing(pen):
@@ -132,7 +180,9 @@ class RenderUtils:
         """
         if scale_factor is None:
             scale_factor = RenderUtils.QUALITY_FACTOR
-        return value * scale_factor
+        scaled_result = value * scale_factor
+        logging.info(f"[RenderUtils.scale_value] Scaling {value} by {scale_factor} = {scaled_result}")
+        return scaled_result
     
     @staticmethod
     def get_device_pixel_ratio(widget):

@@ -387,9 +387,13 @@ def load_user_settings():
 if __name__ == '__main__':
     logging.info("Starting the application...")
 
-    # Enable high-DPI support for crisp rendering
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    # Disable automatic high-DPI scaling to prevent UI elements from being scaled
+    # We'll handle high-DPI rendering manually only for canvas elements
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  # Keep high-DPI pixmaps for better image quality
+    
+    logging.info("High-DPI automatic scaling DISABLED - UI elements will render at 1x scale")
+    logging.info("High-DPI pixmaps ENABLED - images will use high-DPI versions when available")
     
     app = QApplication(sys.argv)
 

@@ -123,7 +123,8 @@ class StrokeTextButton(QPushButton):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        logging.info(f"[StrokeTextButton.paintEvent] Setting up UI painter for button text: {getattr(self, 'text', 'unknown')}")
+        RenderUtils.setup_ui_painter(painter)
 
         # Draw the background (if not handled by stylesheet)
         option = QStyleOption()
@@ -183,6 +184,9 @@ class StrokeTextButton(QPushButton):
         
         # Fill with color based on button state
         painter.fillPath(path, fill_color)
+        
+        # Ensure painter is properly ended
+        painter.end()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

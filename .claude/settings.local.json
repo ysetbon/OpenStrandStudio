@@ -41,7 +41,9 @@
       "Bash(mkdir:*)",
       "Bash(../src/build_env/Scripts/python.exe test_strand_components.py)",
       "Bash(../src/build_env/Scripts/python.exe test_strand_components_exact.py)",
-      "Bash(../src/build_env/Scripts/python.exe test_individual_components.py)"
+      "Bash(../src/build_env/Scripts/python.exe test_individual_components.py)",
+      "Bash(C:/ProgramData/Anaconda3/python.exe:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }

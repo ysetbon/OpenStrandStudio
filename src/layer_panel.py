@@ -127,10 +127,12 @@ class DropTargetWidget(QWidget):
         super().paintEvent(event)
         if self._drag_indicator_y is not None:
             painter = QPainter(self)
-            RenderUtils.setup_painter(painter, enable_high_quality=True)
+            safe_info(f"[LayerPanel.paintEvent] Setting up UI painter for drag indicator")
+            RenderUtils.setup_ui_painter(painter)
             pen = QPen(QColor(0, 120, 215), 2, Qt.SolidLine) # Blue indicator line
             painter.setPen(pen)
             painter.drawLine(0, self._drag_indicator_y, self.width(), self._drag_indicator_y)
+            painter.end()
 # --- End Custom Widget ---
 
 

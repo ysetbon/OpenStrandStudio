@@ -783,21 +783,14 @@ class SettingsDialog(QDialog):
             # Clear the layout and set proper spacing
             self.clear_layout(self.default_strand_width_layout)
             self.default_strand_width_container.setContentsMargins(0, 0, 0, 0)
-            if is_rtl:
-                self.default_strand_width_layout.addStretch()
-                self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
-                self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
-                # Apply the same left margin as other RTL rows for alignment consistency
-                self.default_strand_width_layout.setContentsMargins(258, 0, 0, 0)
-                self.default_strand_width_layout.addWidget(self.default_strand_width_button)
-                logging.info("RTL REORGANIZE: Added stretch then button for default strand width")
-            else:
-                self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
-                self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
-                self.default_strand_width_layout.addWidget(self.default_strand_width_button)
-                self.default_strand_width_layout.addStretch()
-                logging.info("LTR REORGANIZE: Added button then stretch for default strand width")
+            # Center the button for both LTR and RTL languages
+            self.default_strand_width_container.setLayoutDirection(Qt.LeftToRight)
+            self.default_strand_width_layout.setDirection(QBoxLayout.LeftToRight)
+            self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
+            self.default_strand_width_layout.addStretch()
+            self.default_strand_width_layout.addWidget(self.default_strand_width_button, 0, Qt.AlignCenter)
+            self.default_strand_width_layout.addStretch()
+            logging.info("REORGANIZE: Centered default strand width button for both RTL and LTR")
             # Force immediate update
             self.default_strand_width_layout.invalidate()
             self.default_strand_width_layout.activate()
@@ -1829,12 +1822,9 @@ class SettingsDialog(QDialog):
         self.default_strand_width_container = QWidget()
         self.default_strand_width_layout = QHBoxLayout(self.default_strand_width_container)
         self.default_strand_width_container.setContentsMargins(0, 0, 0, 0)
-        if self.is_rtl_language(self.current_language):
-            self.default_strand_width_layout.setContentsMargins(278, 0, 0, 0)
-            self.default_strand_width_layout.setSpacing(20)
-        else:
-            self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
-            self.default_strand_width_layout.setSpacing(15)
+        # Use consistent margins and spacing for centered button
+        self.default_strand_width_layout.setContentsMargins(0, 0, 0, 0)
+        self.default_strand_width_layout.setSpacing(15)
 
         self.default_strand_width_button = QPushButton(_['default_strand_width'])
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'])
@@ -1842,12 +1832,10 @@ class SettingsDialog(QDialog):
         # Set dynamic width based on translated text length
         self.update_default_strand_width_button_size()
         
-        if self.is_rtl_language(self.current_language):
-            self.default_strand_width_layout.addStretch()
-            self.default_strand_width_layout.addWidget(self.default_strand_width_button)
-        else:
-            self.default_strand_width_layout.addWidget(self.default_strand_width_button)
-            self.default_strand_width_layout.addStretch()
+        # Center the button for both LTR and RTL languages
+        self.default_strand_width_layout.addStretch()
+        self.default_strand_width_layout.addWidget(self.default_strand_width_button, 0, Qt.AlignCenter)
+        self.default_strand_width_layout.addStretch()
         
         default_arrow_container_layout.addWidget(self.default_strand_width_container)
         self.layer_panel_rows.append(self.default_strand_width_container)

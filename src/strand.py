@@ -904,9 +904,10 @@ class Strand:
         
         return math.atan2(tangent.y(), tangent.x())
     
-    def draw(self, painter):
+    def draw(self, painter, skip_painter_setup=False):
         painter.save() # <<<< SAVE 1 (Top Level)
-        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        if not skip_painter_setup:
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # Check zoom factor and use direct drawing when zoomed
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0

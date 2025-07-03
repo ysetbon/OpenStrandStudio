@@ -1491,7 +1491,8 @@ class StrandDrawingCanvas(QWidget):
             # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)
                 else:
-                    strand.draw(painter)
+                    # Skip painter setup since it's already configured for the main canvas drawing
+                    strand.draw(painter, skip_painter_setup=True)
                     # Reduced high-frequency logging for performance
                 # logging.info(f"Drawing strand: {strand.layer_name}")
         else:
@@ -1578,7 +1579,8 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"[Canvas.paintEvent] Drawing current_strand with painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
             logging.info(f"[Canvas.paintEvent] Painter device size: {painter.device().size() if hasattr(painter.device(), 'size') else 'No size'}")
             logging.info(f"[Canvas.paintEvent] Painter clipping enabled: {painter.hasClipping()}, clipRegion: {painter.clipRegion().boundingRect() if painter.hasClipping() else 'No clipping'}")
-            self.current_strand.draw(painter)
+            # Skip painter setup since it's already configured in the main painting loop
+            self.current_strand.draw(painter, skip_painter_setup=True)
         elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             if self.new_strand_set_number in self.strand_colors:
                 strand_color = self.strand_colors[self.new_strand_set_number]
@@ -1595,7 +1597,7 @@ class StrandDrawingCanvas(QWidget):
                 stroke_width=self.stroke_width
             )
             temp_strand.canvas = self
-            temp_strand.draw(painter)
+            temp_strand.draw(painter, skip_painter_setup=True)
 
         # Draw the connection circle last (always on top)
         if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
@@ -2361,7 +2363,8 @@ class StrandDrawingCanvas(QWidget):
         else:
             # Check if the strand is hidden - if so, just draw it normally without C-shapes
             if hasattr(strand, 'is_hidden') and strand.is_hidden:
-                strand.draw(painter)
+                # Skip painter setup since it's already configured in the main drawing loop
+                strand.draw(painter, skip_painter_setup=True)
                 return
                 
             # Check if we're moving a control point and get lock mode info
@@ -2384,7 +2387,7 @@ class StrandDrawingCanvas(QWidget):
                     logging.info(f"Strand {strand.layer_name} at index {strand_index} is locked in layer panel")
 
             # Draw the regular strand first (including shadow)
-            strand.draw(painter)
+            strand.draw(painter, skip_painter_setup=True)
             
 
 
@@ -2537,7 +2540,8 @@ class StrandDrawingCanvas(QWidget):
             painter.setRenderHint(QPainter.Antialiasing)
             
             # Draw the regular masked strand
-            masked_strand.draw(painter)
+            # Skip painter setup since it's already configured in the main painting loop
+            masked_strand.draw(painter, skip_painter_setup=True)
             
             painter.restore()
         else:
@@ -2545,7 +2549,8 @@ class StrandDrawingCanvas(QWidget):
             painter.save()
             
             # Draw the strand without changing its selection state to prevent flickering
-            strand.draw(painter)
+            # Skip painter setup since it's already configured in the main painting loop
+            strand.draw(painter, skip_painter_setup=True)
             
             painter.restore()
 
@@ -2571,7 +2576,8 @@ class StrandDrawingCanvas(QWidget):
         # Only proceed with drawing if there's an actual intersection
         if not intersection_path.isEmpty():
             # Always draw the masked strand normally first
-            masked_strand.draw(painter)
+            # Skip painter setup since it's already configured in the main drawing loop
+            masked_strand.draw(painter, skip_painter_setup=True)
             
             # Determine if we should draw highlight
             should_draw_highlight = masked_strand.is_selected

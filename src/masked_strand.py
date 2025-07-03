@@ -309,7 +309,7 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         return stroker.createStroke(path)    
-    def draw(self, painter):
+    def draw(self, painter, skip_painter_setup=False):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         logging.info(f"Drawing MaskedStrand - Has deletion rectangles: {hasattr(self, 'deletion_rectangles')}")
         if hasattr(self, 'deletion_rectangles'):
@@ -320,7 +320,8 @@ class MaskedStrand(Strand):
 
         painter.save()
         # Enable high-quality antialiasing for the entire drawing process
-        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        if not skip_painter_setup:
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
 
         # NEW: Check if hidden
         if self.is_hidden:
@@ -335,8 +336,8 @@ class MaskedStrand(Strand):
         )
         temp_image.fill(Qt.transparent)
         temp_painter = QPainter(temp_image)
-        # Enable high-quality antialiasing for the temporary painter too
-        RenderUtils.setup_painter(temp_painter, enable_high_quality=True)        
+        # Copy render hints from main painter instead of full setup
+        temp_painter.setRenderHints(painter.renderHints())        
         # do not Draw the strands FIRST
 
             
@@ -558,10 +559,8 @@ class MaskedStrand(Strand):
                     final_buffer.fill(Qt.transparent)
                     final_painter = QPainter(final_buffer)
                     
-                    # Enable maximum quality rendering
-                    final_painter.setRenderHint(QPainter.Antialiasing, True)
-                    final_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                    final_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    # Copy render hints from main painter to avoid redundant setup
+                    final_painter.setRenderHints(painter.renderHints())
                     
                     if not path_shadow.isEmpty():
                             # Get the base paths for both strands
@@ -636,12 +635,12 @@ class MaskedStrand(Strand):
                         
                         # Draw strand to buffer first
                         strand_painter = QPainter(strand_buffer)
-                        strand_painter.setRenderHint(QPainter.Antialiasing, True)
-                        strand_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                        strand_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                        # Copy render hints from main painter to avoid redundant setup
+                        strand_painter.setRenderHints(painter.renderHints())
                         
                         # Draw the strand with its normal appearance (fill + stroke)
-                        self.first_selected_strand.draw(strand_painter)
+                        # Skip painter setup since we already configured strand_painter
+                        self.first_selected_strand.draw(strand_painter, skip_painter_setup=True)
                         strand_painter.end()
                         
                         # Now draw the clipped strand to the final painter
@@ -659,9 +658,8 @@ class MaskedStrand(Strand):
                     )
                     mask_buffer.fill(Qt.transparent)
                     mask_painter = QPainter(mask_buffer)
-                    mask_painter.setRenderHint(QPainter.Antialiasing, True)
-                    mask_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                    mask_painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+                    # Copy render hints from main painter to avoid redundant setup
+                    mask_painter.setRenderHints(painter.renderHints())
                     
 
                     

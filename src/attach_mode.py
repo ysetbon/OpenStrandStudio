@@ -367,7 +367,7 @@ class AttachMode(QObject):
                         # Then draw all strands except active one
                         for strand in self.canvas.strands:
                             if strand != active_strand and hasattr(strand, 'draw'):
-                                strand.draw(painter)
+                                strand.draw(painter, skip_painter_setup=True)
                 else:
                     # Fallback: Use transparent background
                     painter.fillRect(update_rect, Qt.transparent)
@@ -380,7 +380,7 @@ class AttachMode(QObject):
                     # Then draw all strands except active one
                     for strand in self.canvas.strands:
                         if strand != active_strand and hasattr(strand, 'draw'):
-                            strand.draw(painter)
+                            strand.draw(painter, skip_painter_setup=True)
                 
                 # Draw the active strand last (on top of everything)
                 if not hasattr(active_strand, 'canvas'):

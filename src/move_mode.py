@@ -669,7 +669,7 @@ class MoveMode:
                     painter.save() # Ensure clean state for each strand
                     try:
                         if hasattr(strand, 'draw'):
-                            strand.draw(painter)
+                            strand.draw(painter, skip_painter_setup=True)
                             logging.info(f"MoveMode: Drew strand body for {strand.layer_name}")
 
                             # --- ADD C-SHAPE DRAW HERE ---

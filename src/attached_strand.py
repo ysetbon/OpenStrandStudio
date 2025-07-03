@@ -451,10 +451,11 @@ class AttachedStrand(Strand):
         return math.atan2(tangent.y(), tangent.x())
     
 
-    def draw(self, painter):
+    def draw(self, painter, skip_painter_setup=False):
         """Draw the attached strand with a rounded start and squared end."""
         painter.save() # Top Level Save
-        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        if not skip_painter_setup:
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
         
         # Log drawing info
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0

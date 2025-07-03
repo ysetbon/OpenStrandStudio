@@ -1818,11 +1818,11 @@ class MainWindow(QMainWindow):
                         if strand == self.canvas.selected_strand:
                             self.canvas.draw_highlighted_strand(painter, strand)
                         else:
-                            strand.draw(painter)
+                            strand.draw(painter, skip_painter_setup=True)
                     
                     # Draw the current strand if it exists
                     if self.canvas.current_strand:
-                        self.canvas.current_strand.draw(painter)
+                        self.canvas.current_strand.draw(painter, skip_painter_setup=True)
                     
                     # Draw strand names if enabled
                     if self.canvas.should_draw_names:

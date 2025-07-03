@@ -2,11 +2,19 @@ import json
 import logging
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 import sys
 from safe_logging import safe_info, safe_warning, safe_error, safe_exception
+
+# Import CollapsibleGroupWidget for group recreation
+try:
+    from group_layers import CollapsibleGroupWidget
+except ImportError:
+    CollapsibleGroupWidget = None
+    logging.warning("Could not import CollapsibleGroupWidget - group recreation may fail")
 
 # Custom JSON encoder to handle circular references
 class SafeJSONEncoder(json.JSONEncoder):
@@ -869,18 +877,47 @@ def apply_loaded_strands(canvas, strands, groups):
                 logging.warning(f"Strand with layer_name '{layer_name}' not found in strand_dict")
 
         if group_strands:
+            # Convert main_strands from layer names back to strand objects
+            main_strands_objects = set()
+            main_strands_data = group_info.get("main_strands", [])
+            for main_strand_name in main_strands_data:
+                strand_obj = strand_dict.get(main_strand_name)
+                if strand_obj:
+                    main_strands_objects.add(strand_obj)
+                    logging.info(f"Converted main strand '{main_strand_name}' to object for group '{group_name}'")
+                else:
+                    logging.warning(f"Main strand '{main_strand_name}' not found in strand_dict for group '{group_name}'")
+            
+            # Create the group using the standard method (this preserves existing groups)
             canvas.group_layer_manager.group_panel.create_group(group_name, group_strands)
             logging.info(f"Group '{group_name}' created in group panel with {len(group_strands)} strands")
+            
+            # Deserialize control_points properly
+            deserialized_control_points = {}
+            for layer_name, points in group_info.get("control_points", {}).items():
+                deserialized_control_points[layer_name] = {
+                    "control_point1": deserialize_point(points.get("control_point1")),
+                    "control_point2": deserialize_point(points.get("control_point2")),
+                    "control_point_center": deserialize_point(points.get("control_point_center")),
+                    "control_point_center_locked": points.get("control_point_center_locked", False)
+                }
             
             canvas.groups[group_name] = {
                 "layers": group_info["layers"],
                 "strands": group_strands,
-                "main_strands": group_info.get("main_strands", set()),
-                "control_points": group_info.get("control_points", {})
+                "main_strands": main_strands_objects,
+                "control_points": deserialized_control_points
             }
-            logging.info(f"Group '{group_name}' applied with {len(group_strands)} strands")
+            logging.info(f"Group '{group_name}' applied with {len(group_strands)} strands and {len(main_strands_objects)} main strands")
         else:
             logging.warning(f"Group '{group_name}' has no valid strands")
+
+    # After all groups are loaded, refresh the group alignment to match button-created behavior
+    if hasattr(canvas, 'group_layer_manager') and hasattr(canvas.group_layer_manager, 'group_panel'):
+        # Set a flag to indicate that groups were loaded from JSON
+        canvas.group_layer_manager.group_panel.groups_loaded_from_json = True
+        canvas.group_layer_manager.group_panel.refresh_group_alignment()
+        logging.info("Refreshed group alignment after loading all groups from JSON")
 
     # Shadow state is handled by the caller (main_window.py) to respect loaded preferences
     

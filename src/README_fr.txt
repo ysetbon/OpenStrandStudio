@@ -377,7 +377,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.100 (Sortie : 22/06/2025)
+## Version 1.100 (Sortie : 03/07/2025)
 
 ### Améliorations et Nouvelles Fonctionnalités :
 
@@ -388,7 +388,19 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
     *   Naviguez dans vos créations avec les nouveaux contrôles de zoom pour des vues détaillées ou une vue d'ensemble complète du canevas.
 
 3.  **Outil de Panoramique :**
-    *   Déplacez-vous en douceur sur votre canevas avec la nouvelle fonction de panoramique.
+    *   Faites glisser en douceur sur votre canevas avec la nouvelle fonction de panoramique.
 
-4.  **Configuration Initiale :**
+4.  **Mode ombre uniquement :**
+    *   Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.
+
+5.  **Configuration Initiale :**
     *   Au premier démarrage de l'application, cliquez sur "Nouveau Brin" pour commencer à créer votre premier brin.
+
+6.  **Corrections générales :**
+    *   Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.
+
+7.  **Rendu de qualité supérieure :**
+    *   Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.
+
+8.  **Suppression de l'option masque étendu :**
+    *   L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.

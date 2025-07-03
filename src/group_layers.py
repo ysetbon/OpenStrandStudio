@@ -406,6 +406,8 @@ class GroupPanel(QWidget):
         self.groups = {}  # Initialize groups dictionary
         # Initialize group_widgets as an empty dictionary
         self.group_widgets = {}
+        # Flag to track if groups were loaded from JSON
+        self.groups_loaded_from_json = False
           # Initialize the layout
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
@@ -446,7 +448,8 @@ class GroupPanel(QWidget):
     
     def refresh_group_alignment(self):
         """Refresh the alignment of all groups in the panel."""
-        logging.info("Refreshing group alignment...")
+        logging.info(f"Refreshing group alignment... Current groups count: {len(self.groups)}")
+        logging.info(f"Groups loaded from JSON flag: {getattr(self, 'groups_loaded_from_json', False)}")
         
         # Store references to group widgets before removing containers
         group_widgets = {}
@@ -473,6 +476,7 @@ class GroupPanel(QWidget):
                 child.widget().deleteLater()  # Only delete the container, not the group widget
         
         # Re-add all group widgets with proper alignment containers
+        successfully_added = 0
         for group_name, group_info in self.groups.items():
             group_widget = group_widgets.get(group_name) or group_info.get('widget')
             if group_widget:
@@ -485,11 +489,15 @@ class GroupPanel(QWidget):
                 group_container_layout.addStretch()
                 
                 self.scroll_layout.addWidget(group_container)
+                successfully_added += 1
+                logging.info(f"Re-added group widget for '{group_name}' to scroll layout")
+            else:
+                logging.warning(f"No widget found for group '{group_name}' during alignment refresh")
         
         # Force update of the scroll area
         self.scroll_area.update()
         self.update()
-        logging.info(f"Group alignment refreshed with {len(self.groups)} groups")
+        logging.info(f"Group alignment refreshed with {successfully_added}/{len(self.groups)} groups successfully added")
     
     def create_group_widget(self, group_name, group_layers):
         pass
@@ -763,6 +771,15 @@ class GroupPanel(QWidget):
         
         # Ensure alignment is proper after adding new group
         self.refresh_group_alignment()
+        
+        # If groups were loaded from JSON, ensure they're all visible after adding a new one
+        if getattr(self, 'groups_loaded_from_json', False):
+            logging.info("New group created after JSON loading - ensuring all groups are properly displayed")
+            # Force a comprehensive UI update
+            self.scroll_area.update()
+            self.update()
+            # Reset the flag since we've now handled the post-loading state
+            self.groups_loaded_from_json = False
 
     def start_group_rotation(self, group_name):
         # Fetch group data reliably from canvas.groups

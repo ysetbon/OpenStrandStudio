@@ -1871,9 +1871,19 @@ class UndoRedoManager(QObject):
                     logging.warning(f"No strands were added to group '{group_name}' - skipping widget")
                     continue
                 
-                # Add the widget to the scroll layout
+                # Add the widget to the scroll layout with proper alignment container
                 logging.info(f"Adding group widget to scroll layout with {strand_count} layers")
-                scroll_layout.addWidget(group_widget)
+                
+                # Create a horizontal layout container for proper alignment (matching button-created groups)
+                from PyQt5.QtWidgets import QWidget, QHBoxLayout
+                group_container = QWidget()
+                group_container_layout = QHBoxLayout(group_container)
+                group_container_layout.setContentsMargins(5, 2, 5, 2)
+                group_container_layout.setSpacing(0)
+                group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)
+                group_container_layout.addStretch()
+                
+                scroll_layout.addWidget(group_container)
                 
                 # Store the group data in the panel's groups dictionary
                 try:
@@ -2088,6 +2098,17 @@ class UndoRedoManager(QObject):
             # Ensure self.canvas.groups exists
             if not hasattr(self.canvas, 'groups'):
                 self.canvas.groups = {}
+            
+            # Clear the group panel's internal state before loading new groups
+            if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
+                self.canvas.group_layer_manager.group_panel.groups = {}
+                # Clear the group panel's visual elements
+                if hasattr(self.canvas.group_layer_manager.group_panel, 'scroll_layout'):
+                    while self.canvas.group_layer_manager.group_panel.scroll_layout.count():
+                        child = self.canvas.group_layer_manager.group_panel.scroll_layout.takeAt(0)
+                        if child.widget():
+                            child.widget().deleteLater()
+                logging.info("Cleared group panel state during undo/redo load")
                 
             # Set the groups data on the canvas
             if state_has_groups:

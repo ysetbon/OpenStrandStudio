@@ -1452,6 +1452,24 @@ class MainWindow(QMainWindow):
             # Clear existing canvas state
             self.canvas.strands = []
             self.canvas.groups = {}
+            
+            # Clear the group panel's visual elements and internal state for a clean reload
+            if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
+                group_panel = self.canvas.group_layer_manager.group_panel
+                
+                # Clear visual elements
+                if hasattr(group_panel, 'scroll_layout'):
+                    while group_panel.scroll_layout.count():
+                        child = group_panel.scroll_layout.takeAt(0)
+                        if child.widget():
+                            child.widget().deleteLater()
+                
+                # Clear internal groups dictionary
+                group_panel.groups = {}
+                
+                # Reset the JSON loading flag
+                group_panel.groups_loaded_from_json = False
+                logging.info("Cleared group panel state before loading")
 
             # Apply the loaded strands and groups
             apply_loaded_strands(self.canvas, strands, groups)

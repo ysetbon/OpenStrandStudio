@@ -376,7 +376,7 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
-## Version 1.100 (Released: 6/22/2025)
+## Version 1.100 (Released: 7/3/2025)
 
 ### Improvements and New Features:
 
@@ -387,10 +387,22 @@ These updates focus on performance improvements and visual enhancements to provi
     *   Navigate designs with new zoom controls for detailed views or full canvas overview.
 
 3.  **Pan Tool:**
-    *   Move smoothly around your canvas with the new pan functionality.
+    *   Drag smoothly around your canvas with the new pan functionality.
 
-4.  **Initial Setup:**
+4.  **Shadow-Only Mode:**
+    *   You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.
+
+5.  **Initial Setup:**
     *   When first starting the application, click "New Strand" to begin creating your first strand.
+
+6.  **General Fixes:**
+    *   Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.
+
+7.  **Higher Quality Rendering:**
+    *   Improved canvas display quality and 4x higher resolution image export for crisp, professional results.
+
+8.  **Removed Extended Mask Option:**
+    *   The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.
 
 ------
 

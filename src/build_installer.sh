@@ -3,7 +3,7 @@
 # Set variables
 APP_NAME="OpenStrandStudio"
 VERSION="1_100"
-APP_DATE="22_June_2025"
+APP_DATE="3_July_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 
@@ -90,9 +90,12 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -102,9 +105,12 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -114,9 +120,12 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -126,9 +135,12 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -138,9 +150,12 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -287,9 +302,12 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -299,9 +317,12 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -311,9 +332,12 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -323,9 +347,12 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -335,9 +362,12 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -372,9 +402,12 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -384,9 +417,12 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -396,9 +432,12 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -408,9 +447,12 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -420,9 +462,12 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -457,9 +502,12 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -469,9 +517,12 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -481,9 +532,12 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -493,9 +547,12 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -505,9 +562,12 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -542,9 +602,12 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -554,9 +617,12 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -566,9 +632,12 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -578,9 +647,12 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -590,9 +662,12 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -641,9 +716,12 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
         <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
         <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
         <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
+        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
+        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -653,9 +731,12 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
         <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
         <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
         <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
+        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
+        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -665,9 +746,12 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
         <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
         <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
         <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
+        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
+        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -677,9 +761,12 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
         <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
         <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
         <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
+        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
+        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -689,9 +776,12 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
         <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
         <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
         <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
+        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
+        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
     </ul>
 </body>
 </html>

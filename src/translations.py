@@ -83,7 +83,8 @@ translations = {
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
             <li style="font-size:15px;"><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-            <li style="font-size:15px;"><b>Pan Screen:</b> You can move the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+            <li style="font-size:15px;"><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
+            <li style="font-size:15px;"><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
             <li style="font-size:15px;"><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
             <li style="font-size:15px;"><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
             <li style="font-size:15px;"><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
@@ -346,7 +347,8 @@ translations = {
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
             <li style="font-size:15px;"><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-            <li style="font-size:15px;"><b>Déplacement de l'écran :</b> Vous pouvez déplacer le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+            <li style="font-size:15px;"><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
+            <li style="font-size:15px;"><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
             <li style="font-size:15px;"><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
             <li style="font-size:15px;"><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
             <li style="font-size:15px;"><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
@@ -603,7 +605,8 @@ translations = {
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
             <li style="font-size:15px;"><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-            <li style="font-size:15px;"><b>Spostamento schermo:</b> Puoi spostare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+            <li style="font-size:15px;"><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
+            <li style="font-size:15px;"><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
             <li style="font-size:15px;"><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
             <li style="font-size:15px;"><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
             <li style="font-size:15px;"><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
@@ -864,7 +867,8 @@ translations = {
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
             <li style="font-size:15px;"><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-            <li style="font-size:15px;"><b>Mover pantalla:</b> Puedes mover el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+            <li style="font-size:15px;"><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
+            <li style="font-size:15px;"><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
             <li style="font-size:15px;"><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
             <li style="font-size:15px;"><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
             <li style="font-size:15px;"><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
@@ -1126,7 +1130,8 @@ translations = {
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
             <li style="font-size:15px;"><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-            <li style="font-size:15px;"><b>Mover tela:</b> Você pode mover o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+            <li style="font-size:15px;"><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
+            <li style="font-size:15px;"><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
             <li style="font-size:15px;"><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
             <li style="font-size:15px;"><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
             <li style="font-size:15px;"><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
@@ -1386,7 +1391,8 @@ translations = {
         <b>מה חדש בגרסה 1.100</b><br><br>
         • <b>שינוי רוחב חוטים:</b> עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.<br>
         • <b>הגדלה והקטנה:</b> אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.<br>
-        • <b>הזזת המסך:</b> אפשר להזיז את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.<br>
+        • <b>הזזת המסך:</b> אפשר לגרור את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.<br>
+        • <b>מצב צל בלבד:</b> עכשיו אפשר להסתיר שכבה תוך הצגת הצללים וההדגשות שלה על ידי לחיצה ימנית על כפתור שכבה ובחירת "צל בלבד". זה עוזר להמחיש אפקטי צל ללא העומס החזותי.<br>
         • <b>התחלת עבודה:</b> כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.<br>
         • <b>תיקונים כלליים:</b>תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.<br>
         • <b>איכות תצוגה משופרת:</b> שיפור באיכות תצוגת הקנבס ויצוא תמונות ברזולוציה גבוהה פי 4 לתוצאות חדות ומקצועיות.<br>

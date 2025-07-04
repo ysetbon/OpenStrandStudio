@@ -1800,12 +1800,19 @@ class MainWindow(QMainWindow):
                 # Scale everything up by 4x for high-resolution rendering
                 painter.scale(scale_factor, scale_factor)
                 
-                # Apply zoom transformation if zoom is not 1.0
+                # Apply zoom and pan transformation to match current canvas view
+                canvas_center = QPointF(canvas_size.width() / 2, canvas_size.height() / 2)
+                painter.translate(canvas_center)
+                
+                # Apply pan offset if it exists
+                if hasattr(self.canvas, 'pan_offset_x') and hasattr(self.canvas, 'pan_offset_y'):
+                    painter.translate(self.canvas.pan_offset_x, self.canvas.pan_offset_y)
+                
+                # Apply zoom if it's not 1.0
                 if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor != 1.0:
-                    canvas_center = QPointF(canvas_size.width() / 2, canvas_size.height() / 2)
-                    painter.translate(canvas_center)
                     painter.scale(self.canvas.zoom_factor, self.canvas.zoom_factor)
-                    painter.translate(-canvas_center)
+                
+                painter.translate(-canvas_center)
                 
                 # Custom painting method to draw all strands and masks
                 def paint_canvas(painter):

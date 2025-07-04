@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
-from PyQt5.QtGui import QCursor, QPainter, QPixmap
+from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath
 from PyQt5.QtWidgets import QApplication
 from render_utils import RenderUtils
 import math
@@ -409,8 +409,7 @@ class AttachMode(QObject):
     def mouseReleaseEvent(self, event):
         """Handle mouse release events."""
         if self.canvas.current_strand:
-            # Use the already-converted coordinates from the event
-            # The main canvas has already converted from screen to canvas coordinates
+            # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             
             # Constrain coordinates to stay within visible viewport when zoomed out
@@ -505,6 +504,7 @@ class AttachMode(QObject):
         logging.info(f"AttachMode.mousePressEvent: is_drawing_new_strand={getattr(self.canvas, 'is_drawing_new_strand', False)}")
         if hasattr(self.canvas, 'is_drawing_new_strand') and self.canvas.is_drawing_new_strand:
             # Handle new strand creation initiated by button
+            # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             self.start_pos = self.canvas.snap_to_grid(constrained_pos)
@@ -581,14 +581,14 @@ class AttachMode(QObject):
             self.move_timer.start(16)
         elif not self.is_attaching:
             # Handle attachment to existing strands
+            # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             self.handle_strand_attachment(canvas_pos)
 
     def mouseMoveEvent(self, event):
         """Handle mouse move events."""
         if self.canvas.current_strand:
-            # Use the already-converted coordinates from the event
-            # The main canvas has already converted from screen to canvas coordinates
+            # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             
             # Constrain coordinates to stay within visible viewport when zoomed out
@@ -674,9 +674,17 @@ class AttachMode(QObject):
 
     def update_cursor_position(self, pos):
         """Update the cursor position to match the strand end point."""
-        if isinstance(pos, QPointF):
-            pos = pos.toPoint()
-        global_pos = self.canvas.mapToGlobal(pos)
+        # Convert canvas coordinates to screen coordinates first
+        if hasattr(self.canvas, 'canvas_to_screen'):
+            screen_pos = self.canvas.canvas_to_screen(pos)
+            if isinstance(screen_pos, QPointF):
+                screen_pos = screen_pos.toPoint()
+            global_pos = self.canvas.mapToGlobal(screen_pos)
+        else:
+            # Fallback if canvas_to_screen is not available
+            if isinstance(pos, QPointF):
+                pos = pos.toPoint()
+            global_pos = self.canvas.mapToGlobal(pos)
         QCursor.setPos(global_pos)
 
     def constrain_coordinates_to_visible_viewport(self, pos):
@@ -705,8 +713,6 @@ class AttachMode(QObject):
             constrained_x = max(min_x, min(pos.x(), max_x))
             constrained_y = max(min_y, min(pos.y(), max_y))
             
-            logging.info(f"[AttachMode.constrain_coordinates] Zoomed out - bounds: x=[{min_x}, {max_x}], y=[{min_y}, {max_y}]")
-            logging.info(f"[AttachMode.constrain_coordinates] Constrained pos: ({constrained_x}, {constrained_y})")
             return QPointF(constrained_x, constrained_y)
         else:
             # Normal zoom or zoomed in - apply tighter constraints
@@ -721,19 +727,17 @@ class AttachMode(QObject):
     def handle_strand_attachment(self, pos):
         """Handle the attachment of a new strand to an existing one."""
         # Constrain coordinates to stay within visible viewport when zoomed out
-        pos = self.constrain_coordinates_to_visible_viewport(pos)
-        
-        circle_radius = self.canvas.strand_width * 1.1
+        constrained_pos = self.constrain_coordinates_to_visible_viewport(pos)
 
         for strand in self.canvas.strands:
             if not isinstance(strand, MaskedStrand) and strand in self.canvas.strands:
                 # Check if the strand has any free sides
                 if self.has_free_side(strand):
                     # Try to attach to the strand
-                    if self.try_attach_to_strand(strand, pos, circle_radius):
+                    if self.try_attach_to_strand(strand, constrained_pos, None):
                         return
                     # If that fails, try to attach to any of its attached strands
-                    if self.try_attach_to_attached_strands(strand.attached_strands, pos, circle_radius):
+                    if self.try_attach_to_attached_strands(strand.attached_strands, constrained_pos, None):
                         return
             elif isinstance(strand, MaskedStrand):
                 print("Cannot attach to a masked strand layer.")
@@ -763,10 +767,37 @@ class AttachMode(QObject):
         # attachable.  Only report free if the *end* side (index 1) is free.
         return not strand.has_circles[1]
 
+    def get_attachment_area(self, strand, side):
+        """Get the attachment area for a strand endpoint, similar to move mode."""
+        # Use same size as move mode for consistency
+        area_size = 120
+        half_size = area_size / 2
+        
+        if side == 0:  # start point
+            point = strand.start
+        else:  # end point
+            point = strand.end
+            
+        area_rect = QRectF(
+            point.x() - half_size,
+            point.y() - half_size,
+            area_size,
+            area_size
+        )
+        
+        path = QPainterPath()
+        path.addRect(area_rect)
+        return path
+
     def try_attach_to_strand(self, strand, pos, circle_radius):
         """Try to attach a new strand to either end of an existing strand."""
-        distance_to_start = (pos - strand.start).manhattanLength()
-        distance_to_end = (pos - strand.end).manhattanLength()
+        # Get attachment areas for both ends
+        start_area = self.get_attachment_area(strand, 0)
+        end_area = self.get_attachment_area(strand, 1)
+        
+        # Check if position is within attachment areas
+        start_hit = start_area.contains(pos)
+        end_hit = end_area.contains(pos)
 
         # ------------------------------------------------------------
         # START-SIDE ATTACHMENT RULES
@@ -780,8 +811,8 @@ class AttachMode(QObject):
         if isinstance(strand, AttachedStrand):
             start_attachable = False
         else:
-            start_attachable = distance_to_start <= circle_radius and not strand.has_circles[0]
-        end_attachable = distance_to_end <= circle_radius and not strand.has_circles[1]
+            start_attachable = start_hit and not strand.has_circles[0]
+        end_attachable = end_hit and not strand.has_circles[1]
 
         if start_attachable:
             self.start_attachment(strand, strand.start, 0)
@@ -879,19 +910,16 @@ class AttachMode(QObject):
             new_strand.layer_name = f"{set_number}_{count}"
             logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
 
-        # If parent was in a group, update group data
-        if parent_group and parent_group_name:
-            if parent_group_name not in self.canvas.groups:
-                logging.warning(f"Group {parent_group_name} not found in canvas.groups")
-                logging.info(f"Recreating group with data: {parent_group}")
-                self.canvas.groups[parent_group_name] = parent_group
-                
+        # If parent was in a group and the group still exists, update group data
+        if parent_group and parent_group_name and parent_group_name in self.canvas.groups:
             logging.info(f"Group {parent_group_name} main_strands before adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
             # Add new strand to group
             self.canvas.groups[parent_group_name]['layers'].append(new_strand.layer_name)
             self.canvas.groups[parent_group_name]['strands'].append(new_strand)
             logging.info(f"Added new strand {new_strand.layer_name} to group {parent_group_name}")
             logging.info(f"Group {parent_group_name} main_strands after adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
+        elif parent_group and parent_group_name:
+            logging.info(f"Group {parent_group_name} was deleted - not adding new strand to group")
 
         # Call canvas's attach_strand method
         self.canvas.attach_strand(parent_strand, new_strand)
@@ -918,9 +946,9 @@ class AttachMode(QObject):
         """Recursively try to attach to any of the attached strands."""
         for attached_strand in attached_strands:
             if attached_strand in self.canvas.strands and self.has_free_side(attached_strand):
-                if self.try_attach_to_strand(attached_strand, pos, circle_radius):
+                if self.try_attach_to_strand(attached_strand, pos, None):
                     return True
-                if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, circle_radius):
+                if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, None):
                     return True
         return False
 

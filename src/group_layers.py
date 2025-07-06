@@ -145,7 +145,7 @@ class CollapsibleGroupWidget(QWidget):
         # Group button (collapsible header) with dynamic width and left alignment
         self.group_button = QPushButton()
         self.group_button.setMinimumWidth(100)  # Set reasonable minimum
-        self.group_button.setMaximumWidth(200)  # Increase max width to accommodate longer text
+        self.group_button.setMaximumWidth(120)  # Increase max width to accommodate longer text
         self.group_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Allow horizontal expansion
         self.layout.addWidget(self.group_button, 0, Qt.AlignLeft)  # Keep left alignment
         self.group_button.clicked.connect(self.toggle_collapse)
@@ -271,6 +271,7 @@ class CollapsibleGroupWidget(QWidget):
         return language_code == 'he'
         
     def show_context_menu(self, position):
+        import sys
         from PyQt5.QtCore import Qt
         from PyQt5.QtWidgets import QMenu, QAction
         _ = translations[self.language_code]
@@ -289,23 +290,13 @@ class CollapsibleGroupWidget(QWidget):
             _['delete_group']
         ]
         
-        # Center all items to the same width
+        # Center all items to the same width - platform-specific padding
+        # Use minimal padding for macOS, original padding for other platforms
+        padding_amount = 2 if sys.platform == 'darwin' else 5
+        padding_amount_ltf = 4 
+        padding_amount_rtf = 1 
+
         if is_rtl:
-            # Find the longest item
-            max_len = max(len(item) for item in menu_items)
-            # Add padding to make total width even wider for better centering
-            target_width = max_len +10
-            
-            # Center each item within the target width
-            centered_items = []
-            for item in menu_items:
-                total_padding = target_width - len(item)
-                left_padding = total_padding // 2
-                right_padding = total_padding - left_padding
-                centered_item = ' ' * left_padding + item + ' ' * right_padding
-                centered_items.append(centered_item)
-        else:
-            # Center all items to the same width for LTR languages too
             # Find the longest item
             max_len = max(len(item) for item in menu_items)
             # Add padding to make total width even wider for better centering
@@ -315,66 +306,96 @@ class CollapsibleGroupWidget(QWidget):
             centered_items = []
             for item in menu_items:
                 total_padding = target_width - len(item)
-                right_padding = total_padding // 2
-                left_padding = total_padding - right_padding
-                centered_item = ' ' * right_padding + item + ' ' * right_padding
+                left_padding = total_padding // 2
+                right_padding = total_padding - left_padding
+                if sys.platform == 'darwin':
+                    right_padding = total_padding - left_padding -10
+                    centered_item = ' ' * left_padding + item + ' ' * right_padding
+                else:
+                    centered_item = ' ' * left_padding + item + ' ' * right_padding + ' ' * padding_amount_rtf
+                centered_items.append(centered_item)
+        else:
+            # For LTR languages, use platform-specific padding
+            # Find the longest item
+            max_len = max(len(item) for item in menu_items)
+            # Add minimal padding for better centering
+            target_width = max_len + padding_amount
+            
+            # Center each item within the target width
+            centered_items = []
+            for item in menu_items:
+                total_padding = target_width - len(item)
+                left_padding = total_padding // 2 + padding_amount
+                # Limit right padding to avoid excessive spacing
+                centered_item = ' ' * 4 + item + ' ' * padding_amount_ltf
                 centered_items.append(centered_item)
         
-        # Apply theme-based styling
+        # Apply theme-based styling with platform-specific dimensions
+        # Use compact styling for macOS, original styling for other platforms
+        if sys.platform == 'darwin':  # macOS
+            item_padding = "8px 0px"
+            min_width = "auto"
+        else:  # Windows and other platforms
+            if is_rtl:
+                item_padding = "8px 0px"
+                min_width = "auto"
+            else:
+                item_padding = "8px 0px"
+                min_width = "auto"
+        
         if self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode:
-            context_menu.setStyleSheet("""
-                QMenu {
+            context_menu.setStyleSheet(f"""
+                QMenu {{
                     background-color: #2C2C2C;
                     border: 1px solid #555;
                     padding: 2px;
-                }
+                }}
 
                 /* menu entries */
-                QMenu::item {
+                QMenu::item {{
                     color: #FFFFFF;
                     background-color: transparent;
                     font-family: monospace;
-                    padding: 8px 0px;     /* vertical only */
-                    min-width: 180px;      /* uniform width, tweak as needed */
-                    text-align: center;    /* centre the text */
-                }
+                    padding: {item_padding};
+                    min-width: {min_width};
+                    text-align: center;
+                }}
 
-                QMenu::item:selected {
+                QMenu::item:selected {{
                     background-color: #505050;
-                }
+                }}
 
-                QMenu::separator {
+                QMenu::separator {{
                     height: 1px;
                     background-color: #555;
                     margin: 4px 10px;
-                }
+                }}
             """)
         else:
-            context_menu.setStyleSheet("""
-                QMenu {
+            context_menu.setStyleSheet(f"""
+                QMenu {{
                     background-color: #FFFFFF;
                     border: 1px solid #CCC;
-                    padding: 2px;
-                }
+                }}
 
-                QMenu::item {
+                QMenu::item {{
                     color: #000000;
                     background-color: transparent;
                     font-family: monospace;
-                    padding: 8px 0px;     /* vertical only */
-                    min-width: 180px;      /* uniform width, tweak as needed */
-                    text-align: center;    /* centre the text */
-                }
+                    padding: {item_padding};
+                    min-width: {min_width};
+                    text-align: center;
+                }}
 
-                QMenu::item:selected {
+                QMenu::item:selected {{
                     background-color: #D3D3D3;
-                }
+                }}
 
-                QMenu::separator {
+                QMenu::separator {{
                     height: 1px;
                     background-color: #CCC;
                     margin: 4px 10px;
-                }
+                }}
             """)
 
         # Create actions with centered text
@@ -391,7 +412,18 @@ class CollapsibleGroupWidget(QWidget):
         context_menu.addAction(delete_group_action)
         
         # Show menu and get selected action
-        action = context_menu.exec_(self.group_button.mapToGlobal(position))
+        # Platform-specific positioning adjustments
+        global_pos = self.group_button.mapToGlobal(position)
+        if sys.platform == 'darwin':  # macOS
+            # Adjust for macOS menu positioning differences
+            if is_rtl:
+                # For RTL on macOS, reduce right-side spacing
+                global_pos.setX(global_pos.x() - 5)
+            else:
+                # For LTR on macOS, standard positioning
+                global_pos.setX(global_pos.x() + 2)
+        
+        action = context_menu.exec_(global_pos)
         
         # Handle the selected action
         if action == move_strands_action:

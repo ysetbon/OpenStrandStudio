@@ -218,6 +218,10 @@ class CollapsibleGroupWidget(QWidget):
         if self.canvas and hasattr(self.canvas, 'theme_changed'):
             self.canvas.theme_changed.connect(self.on_theme_changed)
 
+        # Connect to language changed signal if available
+        if self.canvas and hasattr(self.canvas, 'language_changed'):
+            self.canvas.language_changed.connect(self.update_translations)
+
         self.update_translations()
     def update_group_button_style(self):
         self.layers_list.setStyleSheet("""
@@ -290,7 +294,7 @@ class CollapsibleGroupWidget(QWidget):
             # Find the longest item
             max_len = max(len(item) for item in menu_items)
             # Add padding to make total width even wider for better centering
-            target_width = max_len + 10
+            target_width = max_len +10
             
             # Center each item within the target width
             centered_items = []
@@ -301,7 +305,20 @@ class CollapsibleGroupWidget(QWidget):
                 centered_item = ' ' * left_padding + item + ' ' * right_padding
                 centered_items.append(centered_item)
         else:
-            centered_items = menu_items
+            # Center all items to the same width for LTR languages too
+            # Find the longest item
+            max_len = max(len(item) for item in menu_items)
+            # Add padding to make total width even wider for better centering
+            target_width = max_len + 10
+            
+            # Center each item within the target width
+            centered_items = []
+            for item in menu_items:
+                total_padding = target_width - len(item)
+                right_padding = total_padding // 2
+                left_padding = total_padding - right_padding
+                centered_item = ' ' * right_padding + item + ' ' * right_padding
+                centered_items.append(centered_item)
         
         # Apply theme-based styling
         if self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode:
@@ -311,15 +328,21 @@ class CollapsibleGroupWidget(QWidget):
                     border: 1px solid #555;
                     padding: 2px;
                 }
+
+                /* menu entries */
                 QMenu::item {
-                    color: white;
+                    color: #FFFFFF;
                     background-color: transparent;
-                    padding: 8px 15px;
                     font-family: monospace;
+                    padding: 8px 0px;     /* vertical only */
+                    min-width: 180px;      /* uniform width, tweak as needed */
+                    text-align: center;    /* centre the text */
                 }
+
                 QMenu::item:selected {
                     background-color: #505050;
                 }
+
                 QMenu::separator {
                     height: 1px;
                     background-color: #555;
@@ -333,22 +356,27 @@ class CollapsibleGroupWidget(QWidget):
                     border: 1px solid #CCC;
                     padding: 2px;
                 }
+
                 QMenu::item {
-                    color: black;
+                    color: #000000;
                     background-color: transparent;
-                    padding: 8px 15px;
                     font-family: monospace;
+                    padding: 8px 0px;     /* vertical only */
+                    min-width: 180px;      /* uniform width, tweak as needed */
+                    text-align: center;    /* centre the text */
                 }
+
                 QMenu::item:selected {
                     background-color: #D3D3D3;
                 }
+
                 QMenu::separator {
                     height: 1px;
                     background-color: #CCC;
                     margin: 4px 10px;
                 }
             """)
-        
+
         # Create actions with centered text
         move_strands_action = QAction(centered_items[0], context_menu)
         rotate_strands_action = QAction(centered_items[1], context_menu)

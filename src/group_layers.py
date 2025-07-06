@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDi
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon,QIntValidator
 import logging
-from math import atan2, degrees
+from math import atan2, degrees, isqrt
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtCore import Qt
@@ -261,22 +261,69 @@ class CollapsibleGroupWidget(QWidget):
                 color: white;
             }
         """)
+        
+    def is_rtl_language(self, language_code):
+        """Check if a language is RTL (Right-to-Left)"""
+        return language_code == 'he'
+        
     def show_context_menu(self, position):
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtWidgets import QMenu, QAction
         _ = translations[self.language_code]
-        context_menu = QMenu(self)
-        # NEW: Set context menu stylesheet to style hover/selected items for both dark and light themes
+        
+        # Create menu without parent to avoid inheriting layout
+        context_menu = QMenu()
+        
+        # Check if RTL language
+        is_rtl = self.is_rtl_language(self.language_code)
+        
+        # Get all menu items
+        menu_items = [
+            _['move_group_strands'],
+            _['rotate_group_strands'], 
+            _['edit_strand_angles'],
+            _['delete_group']
+        ]
+        
+        # Center all items to the same width
+        if is_rtl:
+            # Find the longest item
+            max_len = max(len(item) for item in menu_items)
+            # Add padding to make total width even wider for better centering
+            target_width = max_len + 10
+            
+            # Center each item within the target width
+            centered_items = []
+            for item in menu_items:
+                total_padding = target_width - len(item)
+                left_padding = total_padding // 2
+                right_padding = total_padding - left_padding
+                centered_item = ' ' * left_padding + item + ' ' * right_padding
+                centered_items.append(centered_item)
+        else:
+            centered_items = menu_items
+        
+        # Apply theme-based styling
         if self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode:
             context_menu.setStyleSheet("""
                 QMenu {
                     background-color: #2C2C2C;
                     border: 1px solid #555;
+                    padding: 2px;
                 }
                 QMenu::item {
-                    padding: 5px 25px;
                     color: white;
+                    background-color: transparent;
+                    padding: 8px 15px;
+                    font-family: monospace;
                 }
                 QMenu::item:selected {
                     background-color: #505050;
+                }
+                QMenu::separator {
+                    height: 1px;
+                    background-color: #555;
+                    margin: 4px 10px;
                 }
             """)
         else:
@@ -284,23 +331,41 @@ class CollapsibleGroupWidget(QWidget):
                 QMenu {
                     background-color: #FFFFFF;
                     border: 1px solid #CCC;
+                    padding: 2px;
                 }
                 QMenu::item {
-                    padding: 5px 25px;
                     color: black;
+                    background-color: transparent;
+                    padding: 8px 15px;
+                    font-family: monospace;
                 }
                 QMenu::item:selected {
                     background-color: #D3D3D3;
                 }
+                QMenu::separator {
+                    height: 1px;
+                    background-color: #CCC;
+                    margin: 4px 10px;
+                }
             """)
-            
-        move_strands_action = context_menu.addAction(_['move_group_strands'])
-        rotate_strands_action = context_menu.addAction(_['rotate_group_strands'])
-        edit_angles_action = context_menu.addAction(_['edit_strand_angles'])
-        delete_group_action = context_menu.addAction(_['delete_group'])
         
+        # Create actions with centered text
+        move_strands_action = QAction(centered_items[0], context_menu)
+        rotate_strands_action = QAction(centered_items[1], context_menu)
+        edit_angles_action = QAction(centered_items[2], context_menu)
+        delete_group_action = QAction(centered_items[3], context_menu)
+        
+        # Add actions to menu
+        context_menu.addAction(move_strands_action)
+        context_menu.addAction(rotate_strands_action)
+        context_menu.addAction(edit_angles_action)
+        context_menu.addSeparator()
+        context_menu.addAction(delete_group_action)
+        
+        # Show menu and get selected action
         action = context_menu.exec_(self.group_button.mapToGlobal(position))
         
+        # Handle the selected action
         if action == move_strands_action:
             self.group_panel.start_group_move(self.group_name)
         elif action == rotate_strands_action:
@@ -324,14 +389,14 @@ class CollapsibleGroupWidget(QWidget):
         else:
             self.language_code = 'en'
         _ = translations[self.language_code]
-        # Update UI elements specific to CollapsibleGroupWidget
-        # If there are any labels or buttons that need to be translated, update them here
-
-        # For demonstration, suppose we have a label that says "Group: [group_name]"
-        # And we have a translation key 'group_label' in our translations:
-        # _['group_label'] = 'Group: {group_name}' (in both English and French)
-
-        logging.info(f"CollapsibleGroupWidget updated to language {self.language_code}")
+        
+        # Keep group widget layout as LTR for all languages to maintain consistent appearance
+        self.setLayoutDirection(Qt.LeftToRight)
+        
+        # Update any UI elements with translated text
+        # The context menu will use updated translations when next opened
+        
+        logging.info(f"CollapsibleGroupWidget updated to language {self.language_code} (keeping LTR layout)")
     def add_layer(self, layer_name, color=None, is_masked=False):
         if layer_name not in self.layers:
             self.layers.append(layer_name)
@@ -1473,6 +1538,10 @@ class GroupMoveDialog(QDialog):
     def setup_ui(self):
         _ = translations[self.language_code]
         layout = QVBoxLayout(self)
+        
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
 
         # X movement controls
         x_layout = QHBoxLayout()
@@ -1512,9 +1581,22 @@ class GroupMoveDialog(QDialog):
         cancel_button = QPushButton(_['cancel'])
         snap_button = QPushButton(_['snap_to_grid'])
         
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        button_layout.addWidget(snap_button)
+        # Get language code for RTL layout
+        language_code = 'en'
+        if self.canvas and hasattr(self.canvas, 'language_code'):
+            language_code = self.canvas.language_code
+        
+        # Set proper button order for RTL languages
+        if language_code == 'he':
+            # For Hebrew RTL: OK (אישור) on right, Cancel (ביטול) in middle, Snap on left
+            button_layout.addWidget(snap_button)
+            button_layout.addWidget(cancel_button)   # Cancel second = appears in middle
+            button_layout.addWidget(ok_button)       # OK third = appears on right
+        else:
+            # For LTR: OK on left, Cancel in middle, Snap on right
+            button_layout.addWidget(ok_button)
+            button_layout.addWidget(cancel_button)
+            button_layout.addWidget(snap_button)
 
         # Add all layouts to main layout
         layout.addLayout(x_layout)
@@ -1696,7 +1778,17 @@ class GroupMoveDialog(QDialog):
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Select Layers for Group (Sélectionner les calques pour le groupe)")
+        
+        # Get language code from parent if available
+        language_code = 'en'
+        if parent and hasattr(parent, 'language_code'):
+            language_code = parent.language_code
+        elif parent and hasattr(parent, 'canvas') and hasattr(parent.canvas, 'language_code'):
+            language_code = parent.canvas.language_code
+        
+        _ = translations[language_code]
+        self.setWindowTitle("Select Layers for Group")
+        
         self.layout = QVBoxLayout(self)
         
         self.layer_list = QListWidget()
@@ -2162,19 +2254,36 @@ class GroupLayerManager:
 
         # Create the info label
         info_label = QLabel(_['select_main_strands_to_include_in_the_group'])
+        # Set proper alignment for Hebrew RTL
+        if self.language_code == 'he':
+            info_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        else:
+            info_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(info_label)
 
         checkboxes = []
         for main_strand in main_strands:
             checkbox = QCheckBox(str(main_strand))
+            # Set proper alignment for Hebrew RTL
+            if self.language_code == 'he':
+                checkbox.setLayoutDirection(Qt.RightToLeft)
             layout.addWidget(checkbox)
             checkboxes.append((main_strand, checkbox))
 
         buttons_layout = QHBoxLayout()
-        ok_button = QPushButton("OK")
+        ok_button = QPushButton(_['ok'])
         cancel_button = QPushButton(_['cancel'])
-        buttons_layout.addWidget(ok_button)
-        buttons_layout.addWidget(cancel_button)
+        
+        # Set proper button order and layout direction for RTL languages
+        if self.language_code == 'he':
+            # For Hebrew RTL: OK (אישור) on right, Cancel (ביטול) on left
+            buttons_layout.addWidget(ok_button)      # OK first = appears on right
+            buttons_layout.addWidget(cancel_button)  # Cancel second = appears on left
+        else:
+            # For LTR: OK on left, Cancel on right
+            buttons_layout.addWidget(ok_button)
+            buttons_layout.addWidget(cancel_button)
+            
         layout.addLayout(buttons_layout)
 
         dialog.setLayout(layout)
@@ -2208,6 +2317,119 @@ class GroupLayerManager:
 
         return main_layers    
 
+    def create_custom_input_dialog(self, parent, title, label, translations):
+        """Create a custom input dialog with properly translated OK/Cancel buttons"""
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setModal(True)
+        
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            dialog.setLayoutDirection(Qt.RightToLeft)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Label
+        label_widget = QLabel(label)
+        layout.addWidget(label_widget)
+        
+        # Input field
+        input_field = QLineEdit()
+        layout.addWidget(input_field)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_button = QPushButton(translations['ok'])
+        cancel_button = QPushButton(translations['cancel'])
+        
+        # Set proper button order for RTL languages
+        if self.language_code == 'he':
+            # For Hebrew RTL: OK (אישור) on right, Cancel (ביטול) on left
+            button_layout.addWidget(cancel_button)  # Cancel second = appears on left
+            button_layout.addWidget(ok_button)      # OK first = appears on right
+        else:
+            # For LTR: OK on left, Cancel on right
+            button_layout.addWidget(ok_button)
+            button_layout.addWidget(cancel_button)
+            
+        layout.addLayout(button_layout)
+        
+        # Connect buttons
+        result_text = ""
+        result_ok = False
+        
+        def on_ok():
+            nonlocal result_text, result_ok
+            result_text = input_field.text()
+            result_ok = True
+            dialog.accept()
+        
+        def on_cancel():
+            nonlocal result_ok
+            result_ok = False
+            dialog.reject()
+        
+        ok_button.clicked.connect(on_ok)
+        cancel_button.clicked.connect(on_cancel)
+        input_field.returnPressed.connect(on_ok)  # Allow Enter key to submit
+        
+        # Execute dialog
+        dialog.exec_()
+        return result_text, result_ok
+
+    def create_custom_question_dialog(self, parent, title, message, translations):
+        """Create a custom question dialog with properly translated Yes/No buttons"""
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setModal(True)
+        
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            dialog.setLayoutDirection(Qt.RightToLeft)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Message
+        message_label = QLabel(message)
+        message_label.setWordWrap(True)
+        layout.addWidget(message_label)
+        
+        # Buttons - Use 'ok' for Yes and 'cancel' for No since we don't have specific yes/no translations
+        button_layout = QHBoxLayout()
+        yes_button = QPushButton(translations['ok'])  # Use OK as Yes
+        no_button = QPushButton(translations['cancel'])  # Use Cancel as No
+        
+        # Set proper button order for RTL languages
+        if self.language_code == 'he':
+            # For Hebrew RTL: Yes/OK (אישור) on right, No/Cancel (ביטול) on left
+            button_layout.addWidget(yes_button)      # Yes first = appears on right
+            button_layout.addWidget(no_button)       # No second = appears on left
+        else:
+            # For LTR: Yes/OK on left, No/Cancel on right
+            button_layout.addWidget(yes_button)
+            button_layout.addWidget(no_button)
+            
+        layout.addLayout(button_layout)
+        
+        # Connect buttons
+        result = False
+        
+        def on_yes():
+            nonlocal result
+            result = True
+            dialog.accept()
+        
+        def on_no():
+            nonlocal result
+            result = False
+            dialog.reject()
+        
+        yes_button.clicked.connect(on_yes)
+        no_button.clicked.connect(on_no)
+        
+        # Execute dialog
+        dialog.exec_()
+        return result
 
     # In GroupLayerManager
     # In GroupLayerManager
@@ -2217,9 +2439,9 @@ class GroupLayerManager:
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
 
-        # Prompt the user to enter a group name with translated text
-        group_name, ok = QInputDialog.getText(
-            self.layer_panel, _['create_group'], _['enter_group_name']
+        # Prompt the user to enter a group name with translated text using custom dialog
+        group_name, ok = self.create_custom_input_dialog(
+            self.layer_panel, _['create_group'], _['enter_group_name'], _
         )
         
         if not ok or not group_name:
@@ -2228,14 +2450,13 @@ class GroupLayerManager:
 
         # Check if group already exists and confirm if user wants to replace it
         if group_name in self.canvas.groups and hasattr(self, 'group_panel'):
-            confirm = QMessageBox.question(
+            confirm = self.create_custom_question_dialog(
                 self.layer_panel,
                 _['group_exists'],
                 _['group_replace_confirm'].format(group_name),
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                _
             )
-            if confirm != QMessageBox.Yes:
+            if not confirm:
                 logging.info(f"User cancelled replacing existing group '{group_name}'")
                 return
             
@@ -2777,6 +2998,11 @@ class GroupRotateDialog(QDialog):
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
+        
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+        
         self.setup_ui()
 
     def setup_ui(self):
@@ -2806,7 +3032,7 @@ class GroupRotateDialog(QDialog):
         layout.addLayout(precise_angle_layout)
 
         # OK button
-        ok_button = QPushButton("OK")
+        ok_button = QPushButton(_['ok'])
         ok_button.clicked.connect(self.on_ok_clicked)
         layout.addWidget(ok_button)
 
@@ -3038,6 +3264,10 @@ class StrandAngleEditDialog(QDialog):
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
         self.setWindowTitle(f"{_['edit_strand_angles']} {group_name}")
+        
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
 
         self.updating = False
         self.initializing = True
@@ -3376,7 +3606,7 @@ class StrandAngleEditDialog(QDialog):
         self.minus_button = QPushButton("-")
         self.plus_button = QPushButton("+")
         self.plus_plus_button = QPushButton("++")
-        ok_btn = QPushButton("OK")
+        ok_btn = QPushButton(_['ok'])
 
         # Use size policy instead of fixed size for better adaptability
         for btn in [self.minus_minus_button, self.minus_button, self.plus_button, self.plus_plus_button]:
@@ -3451,11 +3681,22 @@ class StrandAngleEditDialog(QDialog):
 
         ok_btn.clicked.connect(self.accept)
 
-        button_layout.addWidget(self.minus_minus_button)
-        button_layout.addWidget(self.minus_button)
-        button_layout.addWidget(self.plus_button)
-        button_layout.addWidget(self.plus_plus_button)
-        button_layout.addWidget(ok_btn)
+        # Add buttons with proper RTL support
+        if self.language_code == 'he':
+            # For Hebrew RTL: OK on right, then ++, +, -, -- on left
+            button_layout.addWidget(self.minus_minus_button)
+            button_layout.addWidget(self.minus_button)
+            button_layout.addWidget(self.plus_button)
+            button_layout.addWidget(self.plus_plus_button)
+            button_layout.addWidget(ok_btn)
+            button_layout.setDirection(QHBoxLayout.RightToLeft)
+        else:
+            # For LTR: standard order --, -, +, ++, OK
+            button_layout.addWidget(self.minus_minus_button)
+            button_layout.addWidget(self.minus_button)
+            button_layout.addWidget(self.plus_button)
+            button_layout.addWidget(self.plus_plus_button)
+            button_layout.addWidget(ok_btn)
 
         # Combine x_angle_widget and buttons into one layout
         bottom_layout = QHBoxLayout()

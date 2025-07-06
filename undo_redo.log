@@ -1,8 +1,0 @@
-UNDO: Selected strand after undo: 1_2
-UNDO: Selected strand after undo: 1_2
-UNDO: Selected strand after undo: None
-REDO: State BEFORE loading - Strands: 1, Order: ['1_1']
-REDO: Attempting to load step 4
-REDO: State AFTER loading step 4 - Strands: 2, Order: ['1_1', '1_2']
-REDO: Selected strand after redo: 1_2
-REDO: UI updated after redo operation

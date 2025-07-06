@@ -1,4 +1,4 @@
-# src/strand.py
+# src/attached_strand.py
 
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
@@ -465,9 +465,13 @@ class AttachedStrand(Strand):
         # logging.info(f"  Painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
         # logging.info(f"  Painter window: {painter.window() if hasattr(painter, 'window') else 'No window'}")
 
-        # When zoomed (either in or out), use direct drawing without temporary image optimization
+        # When zoomed (either in or out) OR panned, use direct drawing without temporary image optimization
         # to avoid clipping issues that can occur with bounds calculations
-        if zoom_factor != 1.0:
+        pan_offset_x = getattr(painter.device(), 'pan_offset_x', 0) if hasattr(painter.device(), 'pan_offset_x') else 0
+        pan_offset_y = getattr(painter.device(), 'pan_offset_y', 0) if hasattr(painter.device(), 'pan_offset_y') else 0
+        is_panned = (pan_offset_x != 0 or pan_offset_y != 0)
+        
+        if zoom_factor != 1.0 or is_panned:
             # logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
             self._draw_direct(painter)
             painter.restore() # Top Level Restore

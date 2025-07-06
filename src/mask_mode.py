@@ -193,10 +193,10 @@ class MaskMode(QObject):
                             else:
                                 logging.warning("No method found to update layer_state_manager order. Shadows may not render correctly.")
                     
-                    # Clear selection and refresh
+                    # Clear selection and refresh (preserve zoom/pan view)
                     self.canvas.clear_selection()
                     if self.canvas.layer_panel:
-                        self.canvas.layer_panel.refresh_layers()
+                        self.canvas.layer_panel.refresh_layers_no_zoom()
                         # Select the masked strand in the layer panel
                         masked_strand_index = self.canvas.strands.index(masked_strand)
                         self.canvas.layer_panel.select_layer(masked_strand_index)

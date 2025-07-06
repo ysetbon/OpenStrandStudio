@@ -2958,13 +2958,20 @@ class StrandDrawingCanvas(QWidget):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
         
+        # Handle direct panning with middle mouse button (like zoom)
+        if event.button() == Qt.MiddleButton:
+            self.pan_start_pos = event.pos()
+            self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
+            self.setCursor(Qt.ClosedHandCursor)
+            event.accept()
+            return
+        
         # Handle pan mode
         if self.pan_mode and event.button() == Qt.LeftButton:
-            # Only allow panning if we're not at the maximum zoom out view
-            if self.zoom_factor > self.min_zoom_achieved:
-                self.pan_start_pos = event.pos()
-                self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
-                self.setCursor(Qt.ClosedHandCursor)
+            # Allow panning at any zoom level
+            self.pan_start_pos = event.pos()
+            self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
+            self.setCursor(Qt.ClosedHandCursor)
             event.accept()
             return
         
@@ -3022,74 +3029,141 @@ class StrandDrawingCanvas(QWidget):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
         
+        # Handle direct panning with middle mouse button (like zoom)
+        if event.buttons() & Qt.MiddleButton and self.pan_start_pos:
+            # Allow unlimited panning at any zoom level (like when zoomed in)
+            # Calculate the drag distance
+            delta = event.pos() - self.pan_start_pos
+            
+            # Update pan offset
+            new_offset_x = self.pan_start_offset.x() + delta.x()
+            new_offset_y = self.pan_start_offset.y() + delta.y()
+            
+            # Apply pan limits based on content bounding box
+            content_rect = self.get_bounding_rect()
+
+            # Always allow unlimited panning within an 8000x8000 area (like when zoomed in)
+            view_center_in_canvas = self.screen_to_canvas(QPointF(self.width() / 2, self.height() / 2))
+            fixed_size = 8000
+            fixed_rect = QRectF(
+                view_center_in_canvas.x() - fixed_size / 2,
+                view_center_in_canvas.y() - fixed_size / 2,
+                fixed_size,
+                fixed_size
+            )
+            if content_rect.isEmpty():
+                content_rect = fixed_rect
+            else:
+                content_rect = content_rect.united(fixed_rect)
+
+            if not content_rect.isEmpty():
+                canvas_center = QPointF(self.width() / 2, self.height() / 2)
+
+                # Calculate screen coordinates of the content box without panning
+                unpanned_screen_left = (content_rect.left() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                unpanned_screen_right = (content_rect.right() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                unpanned_screen_top = (content_rect.top() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+                unpanned_screen_bottom = (content_rect.bottom() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+
+                content_screen_width = unpanned_screen_right - unpanned_screen_left
+                content_screen_height = unpanned_screen_bottom - unpanned_screen_top
+
+                # Horizontal panning limits
+                if content_screen_width > self.width():
+                    # Content is wider than view, so we pan to see the overflowing parts
+                    min_pan_x = self.width() - unpanned_screen_right
+                    max_pan_x = -unpanned_screen_left
+                else:
+                    # Content is narrower than view, we can pan it from edge to edge
+                    min_pan_x = -unpanned_screen_left
+                    max_pan_x = self.width() - unpanned_screen_right
+                    
+                # Vertical panning limits
+                if content_screen_height > self.height():
+                    # Content is taller than view
+                    min_pan_y = self.height() - unpanned_screen_bottom
+                    max_pan_y = -unpanned_screen_top
+                else:
+                    # Content is shorter than view
+                    min_pan_y = -unpanned_screen_top
+                    max_pan_y = self.height() - unpanned_screen_bottom
+
+                # Clamp the new pan offset
+                new_offset_x = max(min_pan_x, min(max_pan_x, new_offset_x))
+                new_offset_y = max(min_pan_y, min(max_pan_y, new_offset_y))
+
+            self.pan_offset_x = new_offset_x
+            self.pan_offset_y = new_offset_y
+            self.update()
+            event.accept()
+            return
+        
         # Handle pan mode dragging
         if self.pan_mode and event.buttons() & Qt.LeftButton and self.pan_start_pos:
-            # Only allow panning if we're not at the maximum zoom out view
-            if self.zoom_factor > self.min_zoom_achieved:
-                # Calculate the drag distance
-                delta = event.pos() - self.pan_start_pos
-                
-                # Update pan offset
-                new_offset_x = self.pan_start_offset.x() + delta.x()
-                new_offset_y = self.pan_start_offset.y() + delta.y()
-                
-                # Apply pan limits based on content bounding box
-                content_rect = self.get_bounding_rect()
+            # Allow panning at any zoom level
+            # Calculate the drag distance
+            delta = event.pos() - self.pan_start_pos
+            
+            # Update pan offset
+            new_offset_x = self.pan_start_offset.x() + delta.x()
+            new_offset_y = self.pan_start_offset.y() + delta.y()
+            
+            # Apply pan limits based on content bounding box
+            content_rect = self.get_bounding_rect()
 
-                if hasattr(self, 'zoom_factor') and self.zoom_factor > 1.0:
-                    # When zoomed in, ensure panning is possible within an 8000x8000 area
-                    view_center_in_canvas = self.screen_to_canvas(QPointF(self.width() / 2, self.height() / 2))
-                    fixed_size = 8000
-                    fixed_rect = QRectF(
-                        view_center_in_canvas.x() - fixed_size / 2,
-                        view_center_in_canvas.y() - fixed_size / 2,
-                        fixed_size,
-                        fixed_size
-                    )
-                    if content_rect.isEmpty():
-                        content_rect = fixed_rect
-                    else:
-                        content_rect = content_rect.united(fixed_rect)
+            # Always allow unlimited panning within an 8000x8000 area (like when zoomed in)
+            view_center_in_canvas = self.screen_to_canvas(QPointF(self.width() / 2, self.height() / 2))
+            fixed_size = 8000
+            fixed_rect = QRectF(
+                view_center_in_canvas.x() - fixed_size / 2,
+                view_center_in_canvas.y() - fixed_size / 2,
+                fixed_size,
+                fixed_size
+            )
+            if content_rect.isEmpty():
+                content_rect = fixed_rect
+            else:
+                content_rect = content_rect.united(fixed_rect)
 
-                if not content_rect.isEmpty():
-                    canvas_center = QPointF(self.width() / 2, self.height() / 2)
+            if not content_rect.isEmpty():
+                canvas_center = QPointF(self.width() / 2, self.height() / 2)
 
-                    # Calculate screen coordinates of the content box without panning
-                    unpanned_screen_left = (content_rect.left() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
-                    unpanned_screen_right = (content_rect.right() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
-                    unpanned_screen_top = (content_rect.top() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
-                    unpanned_screen_bottom = (content_rect.bottom() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+                # Calculate screen coordinates of the content box without panning
+                unpanned_screen_left = (content_rect.left() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                unpanned_screen_right = (content_rect.right() - canvas_center.x()) * self.zoom_factor + canvas_center.x()
+                unpanned_screen_top = (content_rect.top() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
+                unpanned_screen_bottom = (content_rect.bottom() - canvas_center.y()) * self.zoom_factor + canvas_center.y()
 
-                    content_screen_width = unpanned_screen_right - unpanned_screen_left
-                    content_screen_height = unpanned_screen_bottom - unpanned_screen_top
+                content_screen_width = unpanned_screen_right - unpanned_screen_left
+                content_screen_height = unpanned_screen_bottom - unpanned_screen_top
 
-                    # Horizontal panning limits
-                    if content_screen_width > self.width():
-                        # Content is wider than view, so we pan to see the overflowing parts
-                        min_pan_x = self.width() - unpanned_screen_right
-                        max_pan_x = -unpanned_screen_left
-                    else:
-                        # Content is narrower than view, we can pan it from edge to edge
-                        min_pan_x = -unpanned_screen_left
-                        max_pan_x = self.width() - unpanned_screen_right
-                        
-                    # Vertical panning limits
-                    if content_screen_height > self.height():
-                        # Content is taller than view
-                        min_pan_y = self.height() - unpanned_screen_bottom
-                        max_pan_y = -unpanned_screen_top
-                    else:
-                        # Content is shorter than view
-                        min_pan_y = -unpanned_screen_top
-                        max_pan_y = self.height() - unpanned_screen_bottom
+                # Horizontal panning limits
+                if content_screen_width > self.width():
+                    # Content is wider than view, so we pan to see the overflowing parts
+                    min_pan_x = self.width() - unpanned_screen_right
+                    max_pan_x = -unpanned_screen_left
+                else:
+                    # Content is narrower than view, we can pan it from edge to edge
+                    min_pan_x = -unpanned_screen_left
+                    max_pan_x = self.width() - unpanned_screen_right
+                    
+                # Vertical panning limits
+                if content_screen_height > self.height():
+                    # Content is taller than view
+                    min_pan_y = self.height() - unpanned_screen_bottom
+                    max_pan_y = -unpanned_screen_top
+                else:
+                    # Content is shorter than view
+                    min_pan_y = -unpanned_screen_top
+                    max_pan_y = self.height() - unpanned_screen_bottom
 
-                    # Clamp the new pan offset
-                    new_offset_x = max(min_pan_x, min(max_pan_x, new_offset_x))
-                    new_offset_y = max(min_pan_y, min(max_pan_y, new_offset_y))
+                # Clamp the new pan offset
+                new_offset_x = max(min_pan_x, min(max_pan_x, new_offset_x))
+                new_offset_y = max(min_pan_y, min(max_pan_y, new_offset_y))
 
-                self.pan_offset_x = new_offset_x
-                self.pan_offset_y = new_offset_y
-                self.update()
+            self.pan_offset_x = new_offset_x
+            self.pan_offset_y = new_offset_y
+            self.update()
             event.accept()
             return
         
@@ -3134,6 +3208,14 @@ class StrandDrawingCanvas(QWidget):
     def mouseReleaseEvent(self, event):
         # Convert screen coordinates to canvas coordinates for zoom
         canvas_pos = self.screen_to_canvas(event.pos())
+        
+        # Handle direct panning with middle mouse button release
+        if event.button() == Qt.MiddleButton:
+            self.pan_start_pos = None
+            self.pan_start_offset = None
+            self.setCursor(Qt.ArrowCursor)
+            event.accept()
+            return
         
         # Handle pan mode release
         if self.pan_mode and event.button() == Qt.LeftButton:

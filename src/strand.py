@@ -2008,8 +2008,7 @@ class Strand:
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(stroke_path)
-            
-            # Draw highlight for AttachedStrand's side line
+            # Draw highlight for Strand's side line
             painter.save()
             
             highlight_pen_thickness = 10
@@ -2036,9 +2035,12 @@ class Strand:
             # Calculate extended positions for end line
             dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
             dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
+            dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
+            dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
             end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
             end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
-            
+            start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
+            start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
             # Create a pen for the red sideline highlight
             highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
             highlight_pen.setCapStyle(Qt.FlatCap)
@@ -2046,12 +2048,14 @@ class Strand:
             
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
-            
+            if self.start_line_visible and not self.has_circles[0]:
+                painter.drawLine(start_line_start_extended, start_line_end_extended)
             # Only draw end line if there's no attached strand on the end
             if self.end_line_visible and not self.has_circles[1]:
                 painter.drawLine(end_line_start_extended, end_line_end_extended)
             
-            painter.restore()
+            painter.restore()            
+
 
         # --- START: Skip visual rendering in shadow-only mode ---
         if getattr(self, 'shadow_only', False):

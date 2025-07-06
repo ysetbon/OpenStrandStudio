@@ -377,7 +377,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.100 (Sortie : 03/07/2025)
+## Version 1.100 (Sortie : 06/07/2025)
 
 ### Améliorations et Nouvelles Fonctionnalités :
 

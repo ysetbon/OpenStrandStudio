@@ -376,7 +376,7 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
-## Version 1.100 (Released: 7/3/2025)
+## Version 1.100 (Released: 7/6/2025)
 
 ### Improvements and New Features:
 

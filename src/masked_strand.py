@@ -1119,8 +1119,17 @@ class MaskedStrand(Strand):
     def get_end_selection_path(self):
         """Override to create a simpler selection path for masked strands."""
         end_path = QPainterPath()
-        # Use the width of the strand for the selection circle
-        radius = self.width / 2
+        
+        # Base radius using strand width, but adjust for zoom to maintain consistent click targets
+        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
+        
+        # Adjust radius based on zoom level to maintain consistent screen-space click targets
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
+            zoom_factor = self.canvas.zoom_factor
+            radius = base_radius / zoom_factor
+        else:
+            radius = base_radius
+            
         end_path.addEllipse(self.end, radius, radius)
         return end_path
 

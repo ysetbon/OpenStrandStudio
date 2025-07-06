@@ -2819,15 +2819,28 @@ class StrandDrawingCanvas(QWidget):
         """Handle group cleanup when a new strand is attached."""
         try:
             logging.info(f"\n=== ATTACH_STRAND PROCESSING ===")
+            logging.info(f"Parent strand: {parent_strand.layer_name}")
+            logging.info(f"Current groups in canvas: {list(self.groups.keys())}")
             
             if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
                 return True
                 
             group_panel = self.group_layer_manager.group_panel
+            logging.info(f"Groups in group_panel: {list(group_panel.groups.keys())}")
             
-            # Store affected groups and their main strands before deletion
+            # Only process groups if the parent strand is actually in an existing group
+            # This prevents recreation of manually deleted groups
             affected_groups = {}
             for group_name, group_data in list(self.groups.items()):  # Use self.groups instead of group_panel.groups
+                strand_names_in_group = [strand.layer_name for strand in group_data['strands']]
+                logging.info(f"Checking group '{group_name}' with strands: {strand_names_in_group}")
+                
+                # Also check if the group still exists in the group panel
+                if group_name not in group_panel.groups:
+                    logging.info(f"Group '{group_name}' was deleted from panel but still in canvas.groups - removing from canvas")
+                    del self.groups[group_name]
+                    continue
+                
                 if any(strand.layer_name == parent_strand.layer_name for strand in group_data['strands']):
                     logging.info(f"Found group '{group_name}' containing parent strand")
                     # Store the original main strands from the canvas groups
@@ -2839,18 +2852,22 @@ class StrandDrawingCanvas(QWidget):
                         del self.groups[group_name]
                     group_panel.delete_group(group_name)
             
-            # Connect to the strand_created signal to recreate groups after new strand is initialized
-            def recreate_groups(new_strand):
-                for group_name, original_main_strands in affected_groups.items():
-                    logging.info(f"Recreating group '{group_name}' with original main strands: {original_main_strands}")
-                    # Pass the original main strands to recreate_group
-                    self.group_layer_manager.recreate_group(group_name, new_strand, original_main_strands)
+            # Only set up group recreation if there were actually groups to affect
+            if affected_groups:
+                # Connect to the strand_created signal to recreate groups after new strand is initialized
+                def recreate_groups(new_strand):
+                    for group_name, original_main_strands in affected_groups.items():
+                        logging.info(f"Recreating group '{group_name}' with original main strands: {original_main_strands}")
+                        # Pass the original main strands to recreate_group
+                        self.group_layer_manager.recreate_group(group_name, new_strand, original_main_strands)
+                    
+                    # Disconnect after handling
+                    self.strand_created.disconnect(recreate_groups)
                 
-                # Disconnect after handling
-                self.strand_created.disconnect(recreate_groups)
-            
-            # Connect the handler
-            self.strand_created.connect(recreate_groups)
+                # Connect the handler
+                self.strand_created.connect(recreate_groups)
+            else:
+                logging.info(f"No groups found containing parent strand {parent_strand.layer_name} - no group recreation needed")
             
             return True
 

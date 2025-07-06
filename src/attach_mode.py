@@ -64,14 +64,17 @@ class AttachMode(QObject):
             return
             
             
-        # When zoomed (either in or out) we need the entire widget repainted **immediately**
+        # When zoomed OR panned we need the entire widget repainted **immediately**
         # on every mouse-move; using ``update()`` often coalesces several
         # requests and the intermediate frames never appear, which looks
         # like the strand is being cropped.  ``repaint()`` forces an
         # immediate full paint of the widget (synchronous) so the whole
         # strand is always visible.
-        if hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor != 1.0:
-            logging.info(f"[AttachMode.partial_update] Zoomed (zoom={self.canvas.zoom_factor}), using full repaint for attached strand")
+        zoom_active = hasattr(self.canvas, "zoom_factor") and self.canvas.zoom_factor != 1.0
+        pan_active = hasattr(self.canvas, "pan_offset_x") and (self.canvas.pan_offset_x != 0 or self.canvas.pan_offset_y != 0)
+        
+        if zoom_active or pan_active:
+            logging.info(f"[AttachMode.partial_update] Zoomed (zoom={self.canvas.zoom_factor}) or panned (pan={getattr(self.canvas, 'pan_offset_x', 0)},{getattr(self.canvas, 'pan_offset_y', 0)}), using full repaint for attached strand")
             logging.info(f"  Current strand type: {type(self.canvas.current_strand).__name__}")
             logging.info(f"  Current strand pos: start={self.canvas.current_strand.start}, end={self.canvas.current_strand.end}")
             # Don't use optimized paint handler when zoomed
@@ -274,18 +277,12 @@ class AttachMode(QObject):
             painter = QPainter(self_canvas)
             RenderUtils.setup_painter(painter, enable_high_quality=True)
             
-            # Apply zoom transformation
+            # Apply zoom and pan transformation to match main canvas
             painter.save()
             canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
             painter.translate(canvas_center)
-            # ------------------------------------------------------------
-            # Apply pan translation BEFORE scaling so that logical
-            # coordinates match the main canvas paintEvent transformation.
-            # This keeps the active strand aligned correctly when the
-            # user has panned the view.
-            # ------------------------------------------------------------
-            if hasattr(self_canvas, 'pan_offset_x') and (
-                self_canvas.pan_offset_x != 0 or self_canvas.pan_offset_y != 0):
+            # Apply pan offset before scaling to match main canvas behavior
+            if hasattr(self_canvas, 'pan_offset_x'):
                 painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
             painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
             painter.translate(-canvas_center)
@@ -412,7 +409,8 @@ class AttachMode(QObject):
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             
-            # Constrain coordinates to stay within visible viewport when zoomed out
+            # No need for coordinate conversion - canvas_pos is already in canvas coordinates
+            # Just constrain and snap
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             
             final_snapped_pos = self.canvas.snap_to_grid(constrained_pos)
@@ -506,6 +504,7 @@ class AttachMode(QObject):
             # Handle new strand creation initiated by button
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            # No need for coordinate conversion - canvas_pos is already in canvas coordinates
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             self.start_pos = self.canvas.snap_to_grid(constrained_pos)
             
@@ -583,6 +582,7 @@ class AttachMode(QObject):
             # Handle attachment to existing strands
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+            # No need for coordinate conversion - canvas_pos is already in canvas coordinates
             self.handle_strand_attachment(canvas_pos)
 
     def mouseMoveEvent(self, event):
@@ -591,7 +591,8 @@ class AttachMode(QObject):
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             
-            # Constrain coordinates to stay within visible viewport when zoomed out
+            # No need for coordinate conversion - canvas_pos is already in canvas coordinates
+            # Just constrain coordinates to stay within visible viewport when zoomed out
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             
             self.canvas.current_strand.end = constrained_pos
@@ -674,40 +675,42 @@ class AttachMode(QObject):
 
     def update_cursor_position(self, pos):
         """Update the cursor position to match the strand end point."""
-        # Convert canvas coordinates to screen coordinates first
+        # Convert canvas coordinates to screen coordinates accounting for zoom/pan
         if hasattr(self.canvas, 'canvas_to_screen'):
             screen_pos = self.canvas.canvas_to_screen(pos)
             if isinstance(screen_pos, QPointF):
                 screen_pos = screen_pos.toPoint()
             global_pos = self.canvas.mapToGlobal(screen_pos)
+            QCursor.setPos(global_pos)
         else:
-            # Fallback if canvas_to_screen is not available
-            if isinstance(pos, QPointF):
-                pos = pos.toPoint()
-            global_pos = self.canvas.mapToGlobal(pos)
-        QCursor.setPos(global_pos)
+            # Fallback: don't move cursor if transformation not available
+            # This prevents incorrect cursor positioning
+            pass
 
     def constrain_coordinates_to_visible_viewport(self, pos):
-        """Constrain coordinates to reasonable bounds based on zoom level."""
+        """Constrain coordinates to reasonable bounds based on zoom level and pan offset."""
         if not hasattr(self.canvas, 'zoom_factor'):
             return pos
             
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0)
         
-        # Get canvas dimensions
-        canvas_width = self.canvas.width()
-        canvas_height = self.canvas.height()
+        # Get the actual visible area in canvas coordinates accounting for pan
+        top_left_canvas = self.canvas.screen_to_canvas(QPointF(0, 0))
+        bottom_right_canvas = self.canvas.screen_to_canvas(QPointF(self.canvas.width(), self.canvas.height()))
         
         if zoom_factor < 1.0:
             # When zoomed out, allow larger bounds but not extreme negatives
-            # Calculate reasonable bounds based on zoom level
-            extra_factor = (1.0 / zoom_factor) * 0.8  # 80% of theoretical max to be safe
+            # Calculate reasonable bounds based on the visible area
+            visible_width = bottom_right_canvas.x() - top_left_canvas.x()
+            visible_height = bottom_right_canvas.y() - top_left_canvas.y()
             
-            # Define expanded bounds
-            min_x = -canvas_width * extra_factor * 0.3  # Allow some negative space but not too much
-            max_x = canvas_width * (1 + extra_factor * 0.3)
-            min_y = -canvas_height * extra_factor * 0.3
-            max_y = canvas_height * (1 + extra_factor * 0.3)
+            extra_factor = 0.5  # Allow some extension beyond visible area
+            
+            # Define expanded bounds based on actual visible area
+            min_x = top_left_canvas.x() - visible_width * extra_factor
+            max_x = bottom_right_canvas.x() + visible_width * extra_factor
+            min_y = top_left_canvas.y() - visible_height * extra_factor
+            max_y = bottom_right_canvas.y() + visible_height * extra_factor
             
             # Apply bounds
             constrained_x = max(min_x, min(pos.x(), max_x))
@@ -715,18 +718,32 @@ class AttachMode(QObject):
             
             return QPointF(constrained_x, constrained_y)
         else:
-            # Normal zoom or zoomed in - apply tighter constraints
-            margin = 50
-            
-            # Constrain position to canvas bounds with margin
-            constrained_x = max(margin, min(pos.x(), canvas_width - margin))
-            constrained_y = max(margin, min(pos.y(), canvas_height - margin))
+            # Normal zoom or zoomed in - allow more freedom when panning is active
+            if hasattr(self.canvas, 'pan_offset_x') and (self.canvas.pan_offset_x != 0 or self.canvas.pan_offset_y != 0):
+                # When panning, be more permissive - allow drawing outside visible area
+                visible_width = bottom_right_canvas.x() - top_left_canvas.x()
+                visible_height = bottom_right_canvas.y() - top_left_canvas.y()
+                
+                # Allow drawing up to 2x the visible area outside the current view
+                extension = 2.0
+                min_x = top_left_canvas.x() - visible_width * extension
+                max_x = bottom_right_canvas.x() + visible_width * extension
+                min_y = top_left_canvas.y() - visible_height * extension
+                max_y = bottom_right_canvas.y() + visible_height * extension
+                
+                constrained_x = max(min_x, min(pos.x(), max_x))
+                constrained_y = max(min_y, min(pos.y(), max_y))
+            else:
+                # Not panning - use tighter constraints
+                margin = 50 / zoom_factor  # Adjust margin for zoom level
+                constrained_x = max(top_left_canvas.x() + margin, min(pos.x(), bottom_right_canvas.x() - margin))
+                constrained_y = max(top_left_canvas.y() + margin, min(pos.y(), bottom_right_canvas.y() - margin))
             
             return QPointF(constrained_x, constrained_y)
 
     def handle_strand_attachment(self, pos):
         """Handle the attachment of a new strand to an existing one."""
-        # Constrain coordinates to stay within visible viewport when zoomed out
+        # pos is already in canvas coordinates, just constrain if needed
         constrained_pos = self.constrain_coordinates_to_visible_viewport(pos)
 
         for strand in self.canvas.strands:
@@ -768,9 +785,18 @@ class AttachMode(QObject):
         return not strand.has_circles[1]
 
     def get_attachment_area(self, strand, side):
-        """Get the attachment area for a strand endpoint, similar to move mode."""
-        # Use same size as move mode for consistency
-        area_size = 120
+        """Get the attachment area for a strand endpoint, accounting for zoom level."""
+        # Use same base size as move mode for consistency, but adjust for zoom
+        base_area_size = 120
+        
+        # Adjust attachment area size based on zoom level to maintain consistent click targets
+        if hasattr(self.canvas, 'zoom_factor'):
+            # When zoomed out, make area larger in canvas coordinates to maintain consistent screen size
+            # When zoomed in, make area smaller in canvas coordinates to maintain consistent screen size
+            area_size = base_area_size / self.canvas.zoom_factor
+        else:
+            area_size = base_area_size
+            
         half_size = area_size / 2
         
         if side == 0:  # start point
@@ -843,13 +869,16 @@ class AttachMode(QObject):
         # Find the parent strand's group before creating new strand
         parent_group = None
         parent_group_name = None
-        if hasattr(self.canvas, 'groups'):
+        if hasattr(self.canvas, 'groups') and self.canvas.groups:
             for group_name, group_data in self.canvas.groups.items():
                 if parent_strand.layer_name in group_data.get('layers', []):
                     parent_group = group_data
                     parent_group_name = group_name
                     logging.info(f"[AttachMode.start_attachment] Found parent strand in group: {group_name}")
                     break
+            
+            if not parent_group:
+                logging.info(f"[AttachMode.start_attachment] Parent strand {parent_strand.layer_name} not found in any existing group")
         
         self.affected_strand = parent_strand
         self.affected_point = side
@@ -910,7 +939,10 @@ class AttachMode(QObject):
             new_strand.layer_name = f"{set_number}_{count}"
             logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
 
-        # If parent was in a group and the group still exists, update group data
+        # Call canvas's attach_strand method FIRST to handle any group cleanup
+        self.canvas.attach_strand(parent_strand, new_strand)
+
+        # If parent was in a group and the group still exists after attach_strand processing, update group data
         if parent_group and parent_group_name and parent_group_name in self.canvas.groups:
             logging.info(f"Group {parent_group_name} main_strands before adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
             # Add new strand to group
@@ -919,10 +951,7 @@ class AttachMode(QObject):
             logging.info(f"Added new strand {new_strand.layer_name} to group {parent_group_name}")
             logging.info(f"Group {parent_group_name} main_strands after adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
         elif parent_group and parent_group_name:
-            logging.info(f"Group {parent_group_name} was deleted - not adding new strand to group")
-
-        # Call canvas's attach_strand method
-        self.canvas.attach_strand(parent_strand, new_strand)
+            logging.info(f"Group {parent_group_name} was deleted or not found after attach_strand processing - not adding new strand to group")
         
         # Update connections in layer state manager
         if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:

@@ -171,8 +171,20 @@ class Strand:
         """Get a selection path for the exact start point of the strand."""
         # Create a small circle at the start point that matches the strand's start
         start_path = QPainterPath()
-        # Use the width of the strand for the selection circle
-        radius = self.width / 2
+        
+        # Base radius using strand width, but adjust for zoom to maintain consistent click targets
+        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
+        
+        # Adjust radius based on zoom level to maintain consistent screen-space click targets
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
+            # When zoomed out, make radius larger in canvas coordinates
+            # When zoomed in, make radius smaller in canvas coordinates  
+            # This maintains consistent screen-space click target size
+            zoom_factor = self.canvas.zoom_factor
+            radius = base_radius / zoom_factor
+        else:
+            radius = base_radius
+            
         start_path.addEllipse(self.start, radius, radius)
         return start_path
     def draw_path(self, painter):
@@ -181,12 +193,22 @@ class Strand:
         painter.drawPath(path)
     def get_end_selection_path(self):
         """Get a selection path for the exact end point of the strand."""
-        # Get the path of the strand
-        path = self.get_path()
         # Create a small circle at the end point that matches the strand's end
         end_path = QPainterPath()
-        # Use the width of the strand for the selection circle
-        radius = self.width / 2
+        
+        # Base radius using strand width, but adjust for zoom to maintain consistent click targets
+        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
+        
+        # Adjust radius based on zoom level to maintain consistent screen-space click targets
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
+            # When zoomed out, make radius larger in canvas coordinates
+            # When zoomed in, make radius smaller in canvas coordinates  
+            # This maintains consistent screen-space click target size
+            zoom_factor = self.canvas.zoom_factor
+            radius = base_radius / zoom_factor
+        else:
+            radius = base_radius
+            
         end_path.addEllipse(self.end, radius, radius)
         return end_path
  
@@ -578,9 +600,18 @@ class Strand:
         return path
 
     def get_selection_path(self):
-        """Combine the start and end selection paths."""
-        # Use the exact visual path for selection
-        return self.get_stroked_path(self.width)
+        """Get the selection path for the entire strand body."""
+        # Use a wider path for easier selection, adjusted for zoom level
+        base_width = max(self.width, 20)  # Minimum width for clickability
+        
+        # Adjust selection width based on zoom level to maintain consistent click targets
+        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
+            zoom_factor = self.canvas.zoom_factor
+            selection_width = base_width / zoom_factor
+        else:
+            selection_width = base_width
+            
+        return self.get_stroked_path(selection_width)
 
     def get_stroked_path(self, width: float) -> QPainterPath:
         """

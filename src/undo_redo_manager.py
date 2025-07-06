@@ -711,21 +711,16 @@ class UndoRedoManager(QObject):
         if not hasattr(self.canvas, 'groups'):
             self.canvas.groups = {}
             
-        # Make sure all groups in the panel are in canvas.groups
-        if hasattr(group_manager, 'group_panel') and hasattr(group_manager.group_panel, 'groups'):
-            panel_groups = group_manager.group_panel.groups
-            
-            # Loop through panel groups and ensure they're in canvas.groups
-            for group_name, strand_ids in panel_groups.items():
-                if group_name not in self.canvas.groups:
-                    logging.info(f"Adding missing group {group_name} to canvas.groups for saving")
-                    self.canvas.groups[group_name] = strand_ids
+        # IMPORTANT: Do NOT restore groups from panel to canvas.groups
+        # The canvas.groups is the authoritative source for what groups exist
+        # If a group was deleted from canvas.groups, it should stay deleted
+        # The panel will be updated to match canvas.groups, not the other way around
                     
-            # Log the groups that will be saved
-            if self.canvas.groups:
-                logging.info(f"Canvas has {len(self.canvas.groups)} groups to save: {list(self.canvas.groups.keys())}")
-            else:
-                logging.info("No groups to save")
+        # Log the groups that will be saved
+        if self.canvas.groups:
+            logging.info(f"Canvas has {len(self.canvas.groups)} groups to save: {list(self.canvas.groups.keys())}")
+        else:
+            logging.info("No groups to save")
 
     def _save_state_file(self, step):
         """Save the current state of the canvas to a file."""

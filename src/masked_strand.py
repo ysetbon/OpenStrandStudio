@@ -319,6 +319,15 @@ class MaskedStrand(Strand):
             return
 
         painter.save()
+        
+        # When zoomed (either in or out), use direct drawing without temporary image optimization
+        # to avoid clipping issues that can occur with bounds calculations
+        zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') and self.canvas else 1.0
+        if zoom_factor != 1.0:
+            # logging.info(f"[MaskedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
+            self._draw_direct(painter)
+            painter.restore()
+            return
         # Enable high-quality antialiasing for the entire drawing process
         if not skip_painter_setup:
             RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -803,6 +812,141 @@ class MaskedStrand(Strand):
                 logging.info("Skipping highlight drawing: no intersection between strands")
 
         logging.info("Completed drawing masked strand")
+
+    def _draw_direct(self, painter):
+        """Draw the masked strand directly to the painter without temporary image optimization.
+        This method is used when zoomed to avoid clipping issues with bounds calculations."""
+        
+        # Ensure high-quality rendering for direct drawing
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        
+        # Check if hidden
+        if self.is_hidden:
+            return
+        
+        # Skip visual rendering in shadow-only mode but still draw shadows
+        skip_visual = getattr(self, 'shadow_only', False)
+            
+        try:
+            # Draw shadows directly if enabled
+            try:
+                from shader_utils import draw_mask_strand_shadow
+            except ImportError:
+                from src.shader_utils import draw_mask_strand_shadow
+            
+            # Check if shadowing is disabled in the canvas
+            if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
+                logging.info(f"Skipping shadow for MaskedStrand {self.layer_name} - shadows disabled")
+            elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+                logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
+                
+                # Get the shadow color directly from the canvas if available
+                shadow_color = None
+                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                    shadow_color = self.canvas.default_shadow_color
+                    self.shadow_color = QColor(shadow_color)
+                    
+                # Always get fresh paths for both strands to ensure consistent refresh
+                strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
+                strand1_path_no_stroke = self.get_path_for_strand(self.first_selected_strand)
+                strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
+                strand1_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.first_selected_strand)
+                strand2_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.second_selected_strand)
+
+                # Check if strand2_shadow_path is valid before attempting to constrain it (deletions handled in draw_mask_strand_shadow)
+                if not strand2_shadow_path.isEmpty():
+                    # Create a slightly expanded boundary to ensure we don't lose the shadow
+                    stroker = QPainterPathStroker()
+                    stroker.setWidth(0)  # Use a more substantial width to avoid losing the path
+                    strand1_shadow_path = stroker.createStroke(strand1_path)
+                    
+                    # Only apply the intersection if both paths are valid
+                    if not strand1_shadow_path.isEmpty():
+                        # Create a union with the original path to ensure we don't lose anything
+                        strand1_shadow_path = strand1_shadow_path.united(strand1_shadow_path)
+                        # Now constrain the shadow path
+                        constrained_path = strand1_shadow_path.intersected(strand1_shadow_path)
+                        # Only use the constrained path if it's not empty
+                        if not constrained_path.isEmpty():
+                            strand1_shadow_path = constrained_path
+                            logging.info(f"Successfully constrained shadow path for {self.layer_name}")
+                        else:
+                            logging.warning(f"Constrained shadow path became empty, keeping original for {self.layer_name}")
+                    else:
+                        logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
+                else:
+                    logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
+
+                # Save painter state before shadow drawing
+                painter.save()
+                # Draw shadow and apply deletion rectangles at intersection stage
+                draw_mask_strand_shadow(
+                    painter,
+                    strand1_shadow_path,
+                    strand2_path,
+                    deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
+                    shadow_color=shadow_color,
+                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                )
+                painter.restore()
+
+        except Exception as e:
+            logging.error(f"Error applying masked strand shadow: {e}")
+            # Attempt to refresh even if there was an error
+            try:
+                self.force_shadow_refresh()
+            except Exception as refresh_error:
+                logging.error(f"Error during error recovery refresh: {refresh_error}")
+
+        # Return early if we're in shadow-only mode (after drawing shadows)
+        if skip_visual:
+            return
+
+        # Draw the masked area directly using the same approach as the regular draw method
+        try:
+            # Use the same final rendering approach as the regular draw method
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
+            painter.setPen(Qt.NoPen)
+            
+            # Draw stroke layer first
+            try:
+                fresh_mask_path_stroke = self.get_mask_path_stroke()
+                if not fresh_mask_path_stroke.isEmpty():
+                    painter.setBrush(self.first_selected_strand.stroke_color)
+                    painter.drawPath(fresh_mask_path_stroke)
+            except Exception as _e:
+                logging.error(f"Could not draw antialiased mask stroke: {_e}")
+                
+            # Draw fill layer
+            try:
+                fresh_mask_path = self.get_mask_path()
+                if not fresh_mask_path.isEmpty():
+                    painter.setBrush(self.first_selected_strand.color)
+                    painter.drawPath(fresh_mask_path)
+            except Exception as _e:
+                logging.error(f"Could not draw antialiased mask fill: {_e}")
+
+            painter.restore()
+            
+        except Exception as e:
+            logging.error(f"Error drawing masked strand directly: {str(e)}")
+
+        # Handle selection highlights
+        if self.is_selected:
+            try:
+                mask_path = self.get_mask_path()
+                if not mask_path.isEmpty():
+                    highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                    painter.setPen(highlight_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPath(mask_path)
+            except Exception as e:
+                logging.error(f"Error drawing selection highlight: {str(e)}")
+
+        logging.info(f"Completed direct drawing for masked strand {self.layer_name}")
 
     def update(self, new_position):
         """Update deletion rectangles position while maintaining strand positions."""

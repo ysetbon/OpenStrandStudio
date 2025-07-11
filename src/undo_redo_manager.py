@@ -237,7 +237,7 @@ class UndoRedoManager(QObject):
         """Generate a filename for the specified step."""
         return os.path.join(self.temp_dir, f"{self.session_id}_{step}.json")
 
-    def save_state(self):
+    def save_state(self, allow_empty=False):
         """Save the current state of strands and groups for undo/redo."""
         # Skip save if flagged to avoid saving states
         if getattr(self, '_skip_save', False):
@@ -249,15 +249,16 @@ class UndoRedoManager(QObject):
             logging.warning("Cannot save state: Canvas is not available")
             return
             
-        # Check if there is content to save
-        if not self.canvas.strands and not hasattr(self.canvas, 'groups'):
-            logging.info("No content (strands or groups) to save, skipping state save")
-            return
-            
-        # Only save if content actually exists
-        if not self.canvas.strands and not (hasattr(self.canvas, 'groups') and self.canvas.groups):
-            logging.info("Empty canvas (no strands or groups), skipping state save")
-            return
+        # Check if there is content to save (unless explicitly allowing empty states)
+        if not allow_empty:
+            if not self.canvas.strands and not hasattr(self.canvas, 'groups'):
+                logging.info("No content (strands or groups) to save, skipping state save")
+                return
+                
+            # Only save if content actually exists
+            if not self.canvas.strands and not (hasattr(self.canvas, 'groups') and self.canvas.groups):
+                logging.info("Empty canvas (no strands or groups), skipping state save")
+                return
             
         # Record the timestamp of this save
         current_time = time.time()
@@ -2211,7 +2212,7 @@ class UndoRedoManager(QObject):
                 # Fallback to direct method call if simulate method not available
                 elif hasattr(self.layer_panel, 'refresh_layers'):
                     logging.info("Explicitly refreshing layer panel UI...")
-                    self.layer_panel.refresh_layers()
+                    self.layer_panel.refresh_layers_no_zoom()
             else:
                 logging.info("Layer panel refresh suppressed in _load_state during undo/redo operation")
             
@@ -2655,8 +2656,8 @@ class UndoRedoManager(QObject):
     def setup_buttons(self, top_layout):
         """Create and add undo/redo buttons to the specified layout."""
         # Create buttons using StrokeTextButton for consistent styling
-        self.undo_button = StrokeTextButton("↶")  # Unicode left arrow for undo
-        self.redo_button = StrokeTextButton("↷")  # Unicode right arrow for redo
+        self.undo_button = StrokeTextButton("↩️")  # Undo emoji
+        self.redo_button = StrokeTextButton("↪️")  # Redo emoji
         
         # Get current theme from parent window if available
         current_theme = "default"

@@ -187,12 +187,40 @@ class LayerPanel(QWidget):
         top_layout.setContentsMargins(5, 5, 5, 5)
         top_layout.setAlignment(Qt.AlignLeft)
 
-        # Create the refresh button
-        self.refresh_button = StrokeTextButton("↻")
-        self.refresh_button.clicked.connect(self.refresh_layers)
+        # Create the home/reset button (moved from 3rd row)
+        self.reset_states_button = QPushButton("🏠")
+        self.reset_states_button.setFixedSize(40, 40)
+        self.reset_states_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8A2BE2;  /* BlueViolet color */
+                color: white;
+                font-weight: bold;
+                font-size: 20px;
+                border: 1px solid #6A1B9A;
+                border-radius: 20px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover {
+                background-color: #DA70D6;  /* Orchid - brighter, more vibrant purple */
+                border: 2px solid #8A2BE2;
+                transform: scale(1.05);  /* Slight scale effect */
+            }
+            QPushButton:pressed {
+                background-color: #663399;  /* Darker purple on press */
+                border: 2px solid #6A1B9A;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.reset_states_button.clicked.connect(self.reset_to_current_state)
+        self.reset_states_button.setToolTip("Reset: Keep only current state as first state")
 
-        # Add the refresh button to the top layout
-        top_layout.addWidget(self.refresh_button)
+        # Add the home/reset button to the top layout
+        top_layout.addWidget(self.reset_states_button)
         
         # Add top_panel to left_layout below the splitter handle
         self.left_layout.addWidget(self.top_panel)
@@ -208,17 +236,18 @@ class LayerPanel(QWidget):
         zoom_layout.setAlignment(Qt.AlignLeft)
         
         # Create zoom in button
-        self.zoom_in_button = QPushButton("+")
+        self.zoom_in_button = QPushButton("🔍")
         self.zoom_in_button.setFixedSize(40, 40)
         self.zoom_in_button.setStyleSheet("""
             QPushButton {
                 background-color: #FFD700;  /* Yellowish color */
                 color: black;
                 font-weight: bold;
-                font-size: 24px;
+                font-size: 20px;
                 border: 1px solid #B8860B;
                 border-radius: 20px;
                 padding: 0px;
+                text-align: center;
             }
             QPushButton:hover {
                 background-color: #FFA500;  /* Darker yellow/orange on hover */
@@ -237,17 +266,18 @@ class LayerPanel(QWidget):
         self.zoom_in_button.clicked.connect(self.canvas.zoom_in)
         
         # Create zoom out button
-        self.zoom_out_button = QPushButton("-")
+        self.zoom_out_button = QPushButton("🔎")
         self.zoom_out_button.setFixedSize(40, 40)
         self.zoom_out_button.setStyleSheet("""
             QPushButton {
                 background-color: #FFD700;  /* Yellowish color */
                 color: black;
                 font-weight: bold;
-                font-size: 24px;
+                font-size: 20px;
                 border: 1px solid #B8860B;
                 border-radius: 20px;
                 padding: 0px;
+                text-align: center;
             }
             QPushButton:hover {
                 background-color: #FFA500;  /* Darker yellow/orange on hover */
@@ -285,8 +315,8 @@ class LayerPanel(QWidget):
                 text-align: center;
             }
             QPushButton:hover {
-                background-color: #A52A2A;  /* Slightly lighter red on hover */
-                border: 2px solid #4B0000;
+                background-color: #DC143C;  /* Crimson - brighter, more vibrant red */
+                border: 2px solid #8B0000;
             }
             QPushButton:pressed {
                 background-color: #400000;  /* Much darker red when pressed */
@@ -310,6 +340,83 @@ class LayerPanel(QWidget):
         
         # Add zoom panel to left layout below the top panel
         self.left_layout.addWidget(self.zoom_panel)
+
+        # Create a third row for refresh button (moved from 1st row)
+        self.refresh_panel = QWidget()
+        refresh_layout = QHBoxLayout(self.refresh_panel)
+        refresh_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the second row
+        refresh_layout.setAlignment(Qt.AlignLeft)
+        
+        # Create the refresh button (moved from 1st row)
+        self.refresh_button = QPushButton("🔄")
+        self.refresh_button.setFixedSize(40, 40)
+        self.refresh_button.setStyleSheet("""
+            QPushButton {
+                background-color: #32CD32;  /* Lime Green color */
+                color: white;
+                font-weight: bold;
+                font-size: 20px;
+                border: 1px solid #228B22;
+                border-radius: 20px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover {
+                background-color: #00FF00;  /* Bright Green on hover */
+                border: 2px solid #228B22;
+            }
+            QPushButton:pressed {
+                background-color: #228B22;  /* Forest Green on press */
+                border: 2px solid #228B22;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.refresh_button.clicked.connect(self.refresh_layers)
+        self.refresh_button.setToolTip("Refresh: Reload layers")
+        
+        # Create the center/pan button
+        self.center_strands_button = QPushButton("🎯")
+        self.center_strands_button.setFixedSize(40, 40)
+        self.center_strands_button.setStyleSheet("""
+            QPushButton {
+                background-color: #D2B48C;  /* Tan/Light brown color */
+                color: black;
+                font-weight: bold;
+                font-size: 20px;
+                border: 1px solid #BC9A6A;
+                border-radius: 20px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover {
+                background-color: #CD853F;  /* Peru - medium brown, not too dark */
+                color: black;  /* Keep black text for better readability */
+                border: 2px solid #A0522D;
+            }
+            QPushButton:pressed {
+                background-color: #654321;  /* Dark Brown - even darker on press */
+                color: white;
+                border: 2px solid #A0522D;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.center_strands_button.clicked.connect(self.center_all_strands)
+        self.center_strands_button.setToolTip("Center: Pan to center all strands in canvas")
+
+        # Add buttons to refresh layout
+        refresh_layout.addWidget(self.refresh_button)
+        refresh_layout.addWidget(self.center_strands_button)
+        
+        # Add refresh panel to left layout below the zoom panel
+        self.left_layout.addWidget(self.refresh_panel)
 
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
@@ -722,8 +829,8 @@ class LayerPanel(QWidget):
                     border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
-            # Apply theme to refresh button
-            self.refresh_button.set_theme(theme_name)
+            # Apply theme to refresh button (now QPushButton, no set_theme method needed)
+            # self.refresh_button.set_theme(theme_name)  # Commented out - QPushButton doesn't have set_theme
             # Apply theme to undo/redo buttons
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme(theme_name)
@@ -757,8 +864,8 @@ class LayerPanel(QWidget):
                     border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
-            # Apply theme to refresh button
-            self.refresh_button.set_theme(theme_name)
+            # Apply theme to refresh button (now QPushButton, no set_theme method needed)
+            # self.refresh_button.set_theme(theme_name)  # Commented out - QPushButton doesn't have set_theme
             # Apply theme to undo/redo buttons
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme(theme_name)
@@ -790,8 +897,8 @@ class LayerPanel(QWidget):
                     border: 1px solid #CCCCCC; /* Light gray border when disabled */
                 }
             """)
-            # Apply theme to refresh button
-            self.refresh_button.set_theme(theme_name)
+            # Apply theme to refresh button (now QPushButton, no set_theme method needed)
+            # self.refresh_button.set_theme(theme_name)  # Commented out - QPushButton doesn't have set_theme
             # Apply theme to undo/redo buttons
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme(theme_name)
@@ -916,7 +1023,7 @@ class LayerPanel(QWidget):
                 new_style = current_style.replace(" QPushButton { color: gray; font-style: italic; }", "")
                 button.setStyleSheet(new_style)
                 # A better approach would be to fully reconstruct the style based on theme/state
-                self.refresh_layers() # Refresh might be easier to restore styles correctly
+                self.refresh_layers_no_zoom() # Preserve zoom/pan when toggling layer visibility
             button.set_hidden(strand.is_hidden) # Call the button's method
 
             # Save the current state to persist visibility changes
@@ -1062,6 +1169,21 @@ class LayerPanel(QWidget):
         """Toggle the drawing of strand names and emit the corresponding signal."""
         self.should_draw_names = not self.should_draw_names
         self.draw_names_requested.emit(self.should_draw_names)
+
+    def reset_to_current_state(self):
+        """Reset the undo/redo history, keeping only the current state as the first state."""
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            logging.info("Resetting states: keeping only current state as first state")
+            self.undo_redo_manager.clear_history(save_current=True)
+            logging.info("Reset completed: Current state is now the only state in history")
+
+    def center_all_strands(self):
+        """Center all strands in the canvas by calculating their bounding box and adjusting pan offset."""
+        if hasattr(self.canvas, 'center_all_strands'):
+            logging.info("Centering all strands in canvas")
+            self.canvas.center_all_strands()
+        else:
+            logging.warning("Canvas does not have center_all_strands method")
 
     def keyPressEvent(self, event):
         """Handle key press events, specifically for entering masked mode."""
@@ -1358,7 +1480,7 @@ class LayerPanel(QWidget):
                         masked_strand_index = self.canvas.strands.index(masked_strand)
                         
                         # Do a single refresh
-                        self.refresh_layers()
+                        self.refresh_layers_no_zoom()
                         
                         # Select the masked layer
                         self.select_layer(masked_strand_index)
@@ -1562,30 +1684,40 @@ class LayerPanel(QWidget):
             if strand_index is not None:
                 strand = self.canvas.strands[strand_index]
                 if isinstance(strand, MaskedStrand):
+                    # Save state BEFORE deletion for proper undo/redo
+                    if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                        self.undo_redo_manager.save_state()
+                        logging.info("Saved state before masked layer deletion")
+                    
                     # Delete only this specific masked layer
                     if self.canvas.delete_masked_layer(strand):
                         self.remove_layer_button(strand_index)
                         # Update the layer panel without affecting other masked layers
                         self.refresh()
-                        self.refresh_layers()  # Add this line to refresh after masked strand deletion
+                        self.refresh_layers_no_zoom()  # Preserve zoom/pan after masked strand deletion
                         
-                        # Save state for undo/redo after masked layer deletion
+                        # Save state AFTER deletion to capture the "deleted" state
                         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                            self.undo_redo_manager.save_state()
+                            self.undo_redo_manager.save_state(allow_empty=True)
                             logging.info("Saved state after masked layer deletion")
 
                     logging.info(f"Masked layer {strand_name} deleted successfully")
                 else:
+                    # Save state BEFORE deletion for proper undo/redo
+                    if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                        self.undo_redo_manager.save_state()
+                        logging.info("Saved state before strand deletion")
+                    
                     # Handle regular strand deletion
                     self.strand_deleted.emit(strand_index)
                     # Force a complete refresh after deletion
                     self.refresh()
-                    self.refresh_layers()
+                    self.refresh_layers_no_zoom()
                     self.update_layer_button_states()
                     
-                    # Save state for undo/redo after regular strand deletion
+                    # Save state AFTER deletion to capture the "deleted" state
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                        self.undo_redo_manager.save_state()
+                        self.undo_redo_manager.save_state(allow_empty=True)
                         logging.info("Saved state after strand deletion")
             else:
                 logging.warning(f"Strand {strand_name} not found in canvas strands")
@@ -1880,7 +2012,7 @@ class LayerPanel(QWidget):
             logging.info(f"Updated current_set to {self.current_set}")
             self.refresh()
             # Do a single refresh
-            self.refresh_layers()
+            self.refresh_layers_no_zoom()
             # Update layer button states
             self.update_layer_button_states()
 

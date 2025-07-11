@@ -157,7 +157,8 @@ class StrandDrawingCanvas(QWidget):
         self.zoom_factor = 1.0  # Current zoom level (1.0 = 100%)
         self.min_zoom = 0.1  # Minimum zoom level (10%)
         self.max_zoom = 5.0  # Maximum zoom level (500%)
-        self.zoom_step = 0.1  # Zoom increment/decrement step
+        self.zoom_step = 0.1  # Zoom increment/decrement step (for linear zooming)
+        self.zoom_percentage = 0.1  # 10% zoom increment/decrement for percentage-based zooming
         
         # Pan mode variables
         self.pan_mode = False  # Whether pan mode is active
@@ -1291,39 +1292,82 @@ class StrandDrawingCanvas(QWidget):
         self.update()  # Redraw the canvas to reflect changes
     
     def zoom_in(self):
-        """Increase the zoom level."""
-        new_zoom = self.zoom_factor + self.zoom_step
+        """Increase the zoom level by 10% of current zoom."""
+        # Calculate 10% increase of current zoom factor
+        zoom_increment = self.zoom_factor * self.zoom_percentage
+        new_zoom = self.zoom_factor + zoom_increment
         if new_zoom <= self.max_zoom:
             self.zoom_factor = new_zoom
             self.update_canvas_bounds()
             self.update()
-            logging.info(f"Zoomed in to {self.zoom_factor:.1f}x")
+            logging.info(f"Zoomed in to {self.zoom_factor:.2f}x (increment: {zoom_increment:.2f})")
     
     def zoom_out(self):
-        """Decrease the zoom level and progressively re-center when zooming out."""
-        new_zoom = self.zoom_factor - self.zoom_step
+        """Decrease the zoom level by 10% of current zoom."""
+        # Calculate 10% decrease of current zoom factor
+        zoom_decrement = self.zoom_factor * self.zoom_percentage
+        new_zoom = self.zoom_factor - zoom_decrement
         if new_zoom >= self.min_zoom:
             old_zoom = self.zoom_factor
             self.zoom_factor = new_zoom
             
-            # Progressive re-centering: as we zoom out, gradually reduce pan offset
-            # The closer we get to 1.0x zoom, the more centered we become
-            if self.zoom_factor <= 1.0:
-                # When at or below 100% zoom, progressively center based on how close to 1.0 we are
-                center_factor = max(0.0, 1.0 - self.zoom_factor) / (1.0 - self.min_zoom)
-                # Reduce pan offset gradually - the lower the zoom, the more centered
-                self.pan_offset_x *= (1.0 - center_factor * 0.3)  # Reduce by up to 30% each zoom step
-                self.pan_offset_y *= (1.0 - center_factor * 0.3)
-                
-                # When very close to 1.0x, snap to center
-                if abs(self.zoom_factor - 1.0) < self.zoom_step * 0.5:
-                    self.pan_offset_x = 0
-                    self.pan_offset_y = 0
+            # No automatic pan adjustment - let user control centering with target button
             
             self.update_canvas_bounds()
             self.update()
-            logging.info(f"Zoomed out to {self.zoom_factor:.1f}x, pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
+            logging.info(f"Zoomed out to {self.zoom_factor:.2f}x (decrement: {zoom_decrement:.2f}), pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
     
+    def center_all_strands(self):
+        """Center all strands in the canvas by calculating their bounding box and adjusting pan offset."""
+        if not self.strands:
+            logging.info("No strands to center")
+            return
+            
+        # Calculate bounding box of all strands
+        min_x = min_y = float('inf')
+        max_x = max_y = float('-inf')
+        
+        for strand in self.strands:
+            # Include start and end points
+            points = [strand.start, strand.end]
+            
+            # Include control points if they exist
+            if hasattr(strand, 'control_point1') and strand.control_point1:
+                points.append(strand.control_point1)
+            if hasattr(strand, 'control_point2') and strand.control_point2:
+                points.append(strand.control_point2)
+                
+            # Update bounding box
+            for point in points:
+                min_x = min(min_x, point.x())
+                max_x = max(max_x, point.x())
+                min_y = min(min_y, point.y())
+                max_y = max(max_y, point.y())
+        
+        # Calculate center of all strands
+        strands_center_x = (min_x + max_x) / 2
+        strands_center_y = (min_y + max_y) / 2
+        
+        # Calculate canvas center
+        canvas_center_x = self.width() / 2
+        canvas_center_y = self.height() / 2
+        
+        # Calculate required pan offset to center strands
+        # Based on coordinate transformation: screen = (canvas - canvas_center) * zoom + canvas_center + pan_offset
+        # For centering: canvas_center = (strands_center - canvas_center) * zoom + canvas_center + pan_offset
+        # Solving for pan_offset: pan_offset = (canvas_center - strands_center) * zoom_factor
+        self.pan_offset_x = (canvas_center_x - strands_center_x) * self.zoom_factor
+        self.pan_offset_y = (canvas_center_y - strands_center_y) * self.zoom_factor
+        
+        # Update canvas
+        self.update_canvas_bounds()
+        self.update()
+        
+        logging.info(f"Centered strands: bounding box ({min_x:.1f}, {min_y:.1f}) to ({max_x:.1f}, {max_y:.1f})")
+        logging.info(f"Strands center: ({strands_center_x:.1f}, {strands_center_y:.1f})")
+        logging.info(f"Canvas center: ({canvas_center_x:.1f}, {canvas_center_y:.1f})")
+        logging.info(f"New pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
+
     def reset_zoom(self):
         """Reset zoom to 100% and center the view."""
         import traceback
@@ -1345,6 +1389,49 @@ class StrandDrawingCanvas(QWidget):
         self.setCursor(Qt.OpenHandCursor if self.pan_mode else Qt.ArrowCursor)
         self.update()
         logging.info(f"Pan mode {'enabled' if self.pan_mode else 'disabled'}")
+
+    def exit_pan_mode(self):
+        """Exit pan mode (used for right-click exit)"""
+        if self.pan_mode:
+            self.pan_mode = False
+            self.pan_start_pos = None
+            self.pan_start_offset = None
+            self.setCursor(Qt.ArrowCursor)
+            self.update()
+            logging.info("Pan mode disabled via right-click")
+            
+            # Notify layer panel to update pan button state
+            # Try multiple ways to access the layer panel
+            layer_panel = None
+            
+            # Method 1: Through parent
+            if hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'layer_panel'):
+                layer_panel = self.parent().layer_panel
+                logging.info("Found layer panel via parent")
+            
+            # Method 2: Through main window
+            elif hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'main_window'):
+                main_window = self.parent().main_window
+                if hasattr(main_window, 'layer_panel'):
+                    layer_panel = main_window.layer_panel
+                    logging.info("Found layer panel via main window")
+            
+            # Method 3: Search through QApplication
+            if not layer_panel:
+                from PyQt5.QtWidgets import QApplication
+                for widget in QApplication.allWidgets():
+                    if hasattr(widget, 'pan_button') and hasattr(widget, 'canvas') and widget.canvas == self:
+                        layer_panel = widget
+                        logging.info("Found layer panel via QApplication search")
+                        break
+            
+            # Update the pan button if we found the layer panel
+            if layer_panel and hasattr(layer_panel, 'pan_button'):
+                layer_panel.pan_button.setChecked(False)
+                layer_panel.pan_button.setText("🖐")  # Open hand emoji when inactive
+                logging.info("Updated layer panel pan button to open hand")
+            else:
+                logging.warning("Could not find layer panel to update pan button")
     
     def update_canvas_bounds(self):
         """Update the maximum canvas bounds based on current zoom level"""
@@ -2992,6 +3079,12 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
         
+        # Exit pan mode on right-click when pan mode is active
+        if self.pan_mode and event.button() == Qt.RightButton:
+            self.exit_pan_mode()
+            event.accept()
+            return
+        
         if self.mask_edit_mode and event.button() == Qt.LeftButton:
             self.erase_start_pos = canvas_pos
             logging.info(f"Started mask deletion at position: ({self.erase_start_pos.x()}, {self.erase_start_pos.y()})")
@@ -3239,6 +3332,12 @@ class StrandDrawingCanvas(QWidget):
             self.pan_start_pos = None
             self.pan_start_offset = None
             self.setCursor(Qt.OpenHandCursor)
+            event.accept()
+            return
+        
+        # Exit pan mode on right-click release when pan mode is active
+        if self.pan_mode and event.button() == Qt.RightButton:
+            self.exit_pan_mode()
             event.accept()
             return
         

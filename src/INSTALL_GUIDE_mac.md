@@ -27,7 +27,7 @@ cd src
 pyinstaller OpenStrandStudio_mac.spec
 ```
 
-This will create the application bundle in the `dist` directory using the macOS-specific spec file that includes proper app bundle configuration.
+This will create the application bundle in the `dist` directory using the macOS-specific spec file that includes proper app bundle configuration and flag images.
 
 ## Step 3: Create the Installer Package
 
@@ -63,6 +63,10 @@ If you encounter issues with missing dependencies:
    ```bash
    /Applications/OpenStrand\ Studio.app/Contents/MacOS/OpenStrandStudio
    ```
+
+### Missing Flag Images
+
+If language selection doesn't show flag images, ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png) is in the src directory before building
 
 ## Optional: Updating the Application
 

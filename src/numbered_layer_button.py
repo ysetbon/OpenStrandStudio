@@ -1614,11 +1614,47 @@ class WidthConfigDialog(QDialog):
         self.thickness_spinbox.valueChanged.connect(self.update_preview)
         self.color_slider.valueChanged.connect(self.update_preview)
         
-        # Buttons using QDialogButtonBox for consistent theme styling
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        layout.addWidget(self.button_box)
+        # Buttons using custom translated buttons instead of QDialogButtonBox
+        button_layout = QHBoxLayout()
+        
+        # Create OK button with translation
+        ok_text = _['ok'] if 'ok' in _ else "OK"
+        self.ok_button = QPushButton(ok_text)
+        self.ok_button.clicked.connect(self.accept)
+        
+        # Create Cancel button with translation
+        cancel_text = _['cancel'] if 'cancel' in _ else "Cancel"
+        self.cancel_button = QPushButton(cancel_text)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        # Add buttons to layout with stretch to push them to the right
+        button_layout.addStretch()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        
+        layout.addLayout(button_layout)
+        
+        # Connect to language change signal if available
+        if hasattr(layer_panel, 'canvas') and hasattr(layer_panel.canvas, 'language_changed'):
+            layer_panel.canvas.language_changed.connect(self.update_translations)
+    
+    def update_translations(self):
+        """Update all text elements when language changes."""
+        # Get new translations
+        _ = translations.get(self.layer_panel.language_code, translations['en'])
+        
+        # Update window title
+        self.setWindowTitle(_['change_width'] if 'change_width' in _ else "Change Width")
+        
+        # Update button texts
+        ok_text = _['ok'] if 'ok' in _ else "OK"
+        cancel_text = _['cancel'] if 'cancel' in _ else "Cancel"
+        self.ok_button.setText(ok_text)
+        self.cancel_button.setText(cancel_text)
+        
+        # Update other labels if needed
+        self.update_percentage_label()
+        self.update_preview()
     
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""

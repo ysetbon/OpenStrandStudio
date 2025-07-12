@@ -67,6 +67,9 @@ class MainWindow(QMainWindow):
         undo_manager = self.layer_panel.undo_redo_manager if hasattr(self.layer_panel, 'undo_redo_manager') else None
         self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager)
 
+        # Initialize translations for all widgets
+        self.layer_panel.update_translations()
+
         # Proceed with the rest of your setup
         self.setup_ui()
         self.setup_connections()

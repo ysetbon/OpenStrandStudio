@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('box_stitch.ico', '.'), ('settings_icon.png', '.')],
+    datas=[('box_stitch.ico', '.'), ('settings_icon.png', '.'), ('flags', 'flags')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

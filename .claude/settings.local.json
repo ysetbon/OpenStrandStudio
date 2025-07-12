@@ -43,7 +43,14 @@
       "Bash(../src/build_env/Scripts/python.exe test_strand_components_exact.py)",
       "Bash(../src/build_env/Scripts/python.exe test_individual_components.py)",
       "Bash(C:/ProgramData/Anaconda3/python.exe:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(./build_env/Scripts/python.exe create_flags.py)",
+      "Bash(./python.exe:*)",
+      "Bash(./python create_israeli_flag.py)",
+      "Bash(./build_env/Scripts/python.exe create_israeli_flag.py)",
+      "Bash(build_env/Scripts/python.exe -c \"from PIL import Image, ImageDraw; print(''PIL is available'')\")",
+      "Bash(build_env/Scripts/python.exe create_israeli_flag.py)",
+      "Bash(build_env/Scripts/python.exe final_israeli_flag.py)"
     ],
     "deny": []
   }

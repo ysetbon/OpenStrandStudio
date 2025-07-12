@@ -7,7 +7,8 @@ a = Analysis(
     datas=[
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
-        ('mp4/*.mp4', 'mp4/')  # Include tutorial videos
+        ('mp4/*.mp4', 'mp4/'),  # Include tutorial videos
+        ('flags/*.png', 'flags/')  # Include flag images
     ],
     hiddenimports=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.QtMultimedia', 'PyQt5.QtMultimediaWidgets', 'numpy', 'PIL', 'Pillow'],
     hookspath=[],

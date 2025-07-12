@@ -116,7 +116,7 @@
 
 3. Build the executable:
    ```bash
-   pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." main.py
+   pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-data "flags;flags" main.py
    ```
 
 ## Troubleshooting
@@ -141,6 +141,10 @@ pip install --upgrade PyQt5 pillow
 ### Icon Not Showing
 
 Ensure `box_stitch.ico` and `settings_icon.png` are in the same directory as `main.py`
+
+### Missing Flag Images
+
+Ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png) is in the same directory as `main.py`
 
 ## Creating an Installer
 

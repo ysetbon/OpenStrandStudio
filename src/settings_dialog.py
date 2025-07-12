@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
     QSpinBox, QDoubleSpinBox # Add these
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -2892,185 +2892,109 @@ class SettingsDialog(QDialog):
         icon = QIcon(pixmap)
         self.theme_combobox.addItem(icon, text, data)
 
+    def get_flag_path(self, flag_filename):
+        """Get the path to a flag image file."""
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            if sys.platform.startswith('darwin'):
+                # For macOS .app bundles
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                # For Windows/Linux executables
+                base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        flag_path = os.path.join(base_path, 'flags', flag_filename)
+        return flag_path
+    
+    def create_flag_icon(self, flag_filename):
+        """Create a flag icon from an image file."""
+        flag_path = self.get_flag_path(flag_filename)
+        if flag_path and os.path.exists(flag_path):
+            # Load the flag image
+            flag_pixmap = QPixmap(flag_path)
+            
+            # Create a larger canvas with border
+            icon_size = 32
+            pixmap = QPixmap(icon_size, int(icon_size * 0.75))  # 4:3 ratio for flag
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            
+            # Scale flag to fit with small border
+            border_width = 2
+            flag_rect = QRect(border_width, border_width, 
+                            pixmap.width() - 2*border_width, 
+                            pixmap.height() - 2*border_width)
+            scaled_flag = flag_pixmap.scaled(flag_rect.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            
+            # Draw the flag
+            painter.drawPixmap(flag_rect.topLeft(), scaled_flag)
+            
+            # Add border based on theme
+            border_color = QColor("#000000")
+            if self.current_theme == "dark":
+                border_color = QColor("#ffffff")
+            painter.setPen(QPen(border_color, 1))
+            painter.drawRect(border_width-1, border_width-1, 
+                           pixmap.width() - border_width, 
+                           pixmap.height() - border_width)
+            
+            painter.end()
+            return QIcon(pixmap), pixmap.size()
+        else:
+            return None, None
+    
     def add_lang_item_en(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the US flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇺🇸")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('us.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            # Fallback to text-only if flag image not found
+            self.language_combobox.addItem(text, data)
 
     def add_lang_item_fr(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the French flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇫🇷")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('fr.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data)
 
     def add_lang_item_it(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the Italian flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇹")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('it.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
 
     def add_lang_item_es(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the Spanish flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇪🇸")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('es.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
 
     def add_lang_item_pt(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the Portuguese flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇵🇹")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('pt.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
 
     def add_lang_item_he(self, text, data):
-        # Get the border color for the current theme
-        icon_size = 32 # Increased icon size
-        pixmap = QPixmap(icon_size, icon_size)
-        pixmap.fill(Qt.transparent)  # Start with transparent background
-        painter = QPainter(pixmap)
-
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # Determine border color based on theme
-        border_color = QColor("#000000")
-        if self.current_theme == "dark":
-            border_color = QColor("#ffffff")
-
-        # Surround emoji with theme-dependent border
-        painter.setPen(QPen(border_color, 2))
-        painter.setBrush(Qt.transparent)
-        # Adjust border rect for new size
-        painter.drawRoundedRect(2, 2, icon_size - 4, icon_size - 4, 4, 4)
-
-        # Draw the Israeli flag emoji - adjust font size if needed
-        font = painter.font()
-        font.setPointSize(font.pointSize() + 2) # Slightly larger emoji
-        painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "🇮🇱")
-
-        painter.end()
-        self.language_combobox.addItem(QIcon(pixmap), text, data)
-        self.language_combobox.setIconSize(pixmap.size()) # Ensure combobox uses the new size
+        icon, icon_size = self.create_flag_icon('il.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
 
     def update_shadow_color_button(self):
         """Update the shadow color button appearance to reflect the current shadow color."""
@@ -3847,20 +3771,47 @@ class DefaultWidthConfigDialog(QDialog):
         self.thickness_spinbox.valueChanged.connect(self.update_preview)
         self.color_slider.valueChanged.connect(self.update_preview)
         
-        # Buttons using QDialogButtonBox for consistent theme styling
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-
-        # Localize standard buttons according to current language
-        ok_btn = self.button_box.button(QDialogButtonBox.Ok)
-        cancel_btn = self.button_box.button(QDialogButtonBox.Cancel)
-        if ok_btn and 'ok' in _:
-            ok_btn.setText(_['ok'])
-        if cancel_btn and 'cancel' in _:
-            cancel_btn.setText(_['cancel'])
-
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        layout.addWidget(self.button_box)
+        # Buttons using custom translated buttons instead of QDialogButtonBox
+        button_layout = QHBoxLayout()
+        
+        # Create OK button with translation
+        ok_text = _['ok'] if 'ok' in _ else "OK"
+        self.ok_button = QPushButton(ok_text)
+        self.ok_button.clicked.connect(self.accept)
+        
+        # Create Cancel button with translation
+        cancel_text = _['cancel'] if 'cancel' in _ else "Cancel"
+        self.cancel_button = QPushButton(cancel_text)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        # Add buttons to layout with stretch to push them to the right
+        button_layout.addStretch()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        
+        layout.addLayout(button_layout)
+        
+        # Connect to language change signal if available
+        if hasattr(settings_dialog, 'parent_window') and hasattr(settings_dialog.parent_window, 'language_changed'):
+            settings_dialog.parent_window.language_changed.connect(self.update_translations)
+    
+    def update_translations(self):
+        """Update all text elements when language changes."""
+        # Get new translations
+        _ = translations.get(self.settings_dialog.current_language, translations['en'])
+        
+        # Update window title
+        self.setWindowTitle(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
+        
+        # Update button texts
+        ok_text = _['ok'] if 'ok' in _ else "OK"
+        cancel_text = _['cancel'] if 'cancel' in _ else "Cancel"
+        self.ok_button.setText(ok_text)
+        self.cancel_button.setText(cancel_text)
+        
+        # Update other labels if needed
+        self.update_percentage_label()
+        self.update_preview()
     
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""

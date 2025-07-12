@@ -18,6 +18,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPointF
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator
 from strand import Strand
 from masked_strand import MaskedStrand  # Add this import
+from numbered_layer_button import HoverLabel
 import logging
 from math import atan2, degrees
 import json
@@ -273,7 +274,7 @@ class CollapsibleGroupWidget(QWidget):
     def show_context_menu(self, position):
         import sys
         from PyQt5.QtCore import Qt
-        from PyQt5.QtWidgets import QMenu, QAction
+        from PyQt5.QtWidgets import QMenu, QAction, QWidgetAction
         _ = translations[self.language_code]
         
         # Create menu without parent to avoid inheriting layout
@@ -281,6 +282,10 @@ class CollapsibleGroupWidget(QWidget):
         
         # Check if RTL language
         is_rtl = self.is_rtl_language(self.language_code)
+        
+        # Apply RTL layout direction for Hebrew
+        if is_rtl:
+            context_menu.setLayoutDirection(Qt.RightToLeft)
         
         # Get all menu items
         menu_items = [
@@ -290,81 +295,28 @@ class CollapsibleGroupWidget(QWidget):
             _['delete_group']
         ]
         
-        # Center all items to the same width - platform-specific padding
-        # Use minimal padding for macOS, original padding for other platforms
-        padding_amount = 2 if sys.platform == 'darwin' else 5
-        padding_amount_ltf = 4 
-        padding_amount_rtf = 1 
-
-        if is_rtl:
-            # Find the longest item
-            max_len = max(len(item) for item in menu_items)
-            # Add padding to make total width even wider for better centering
-            target_width = max_len + 10
-            
-            # Center each item within the target width
-            centered_items = []
-            for item in menu_items:
-                total_padding = target_width - len(item)
-                left_padding = total_padding // 2
-                right_padding = total_padding - left_padding
-                if sys.platform == 'darwin':
-                    right_padding = total_padding - left_padding -10
-                    centered_item = ' ' * left_padding + item + ' ' * right_padding
-                else:
-                    centered_item = ' ' * left_padding + item + ' ' * right_padding + ' ' * padding_amount_rtf
-                centered_items.append(centered_item)
-        else:
-            # For LTR languages, use platform-specific padding
-            # Find the longest item
-            max_len = max(len(item) for item in menu_items)
-            # Add minimal padding for better centering
-            target_width = max_len + padding_amount
-            
-            # Center each item within the target width
-            centered_items = []
-            for item in menu_items:
-                total_padding = target_width - len(item)
-                left_padding = total_padding // 2 + padding_amount
-                # Limit right padding to avoid excessive spacing
-                centered_item = ' ' * 4 + item + ' ' * padding_amount_ltf
-                centered_items.append(centered_item)
+        # Get theme for HoverLabel
+        theme = 'dark' if (self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode) else 'light'
         
-        # Apply theme-based styling with platform-specific dimensions
-        # Use compact styling for macOS, original styling for other platforms
-        if sys.platform == 'darwin':  # macOS
-            item_padding = "8px 0px"
-            min_width = "auto"
-        else:  # Windows and other platforms
-            if is_rtl:
-                item_padding = "8px 0px"
-                min_width = "auto"
-            else:
-                item_padding = "8px 0px"
-                min_width = "auto"
+        # Apply theme-based styling
+        # Determine if we're using RTL for Hebrew
+        item_padding = "padding: 6px 20px 6px 6px;" if is_rtl else "padding: 6px 20px;"
         
-        if self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode:
+        if theme == 'dark':
             context_menu.setStyleSheet(f"""
                 QMenu {{
                     background-color: #2C2C2C;
                     border: 1px solid #555;
                     padding: 2px;
                 }}
-
-                /* menu entries */
                 QMenu::item {{
                     color: #FFFFFF;
                     background-color: transparent;
-                    font-family: monospace;
-                    padding: {item_padding};
-                    min-width: {min_width};
-                    text-align: center;
+                    {item_padding}
                 }}
-
                 QMenu::item:selected {{
                     background-color: #505050;
                 }}
-
                 QMenu::separator {{
                     height: 1px;
                     background-color: #555;
@@ -377,20 +329,14 @@ class CollapsibleGroupWidget(QWidget):
                     background-color: #FFFFFF;
                     border: 1px solid #CCC;
                 }}
-
                 QMenu::item {{
                     color: #000000;
                     background-color: transparent;
-                    font-family: monospace;
-                    padding: {item_padding};
-                    min-width: {min_width};
-                    text-align: center;
+                    {item_padding}
                 }}
-
                 QMenu::item:selected {{
                     background-color: #D3D3D3;
                 }}
-
                 QMenu::separator {{
                     height: 1px;
                     background-color: #CCC;
@@ -398,42 +344,52 @@ class CollapsibleGroupWidget(QWidget):
                 }}
             """)
 
-        # Create actions with centered text
-        move_strands_action = QAction(centered_items[0], context_menu)
-        rotate_strands_action = QAction(centered_items[1], context_menu)
-        edit_angles_action = QAction(centered_items[2], context_menu)
-        delete_group_action = QAction(centered_items[3], context_menu)
+        # Create actions using HoverLabel widgets for proper RTL support
+        # Move strands action
+        move_label = HoverLabel(menu_items[0], self, theme)
+        if is_rtl:
+            move_label.setLayoutDirection(Qt.RightToLeft)
+            move_label.setAlignment(Qt.AlignLeft)
+        move_action = QWidgetAction(self)
+        move_action.setDefaultWidget(move_label)
+        move_action.triggered.connect(lambda: self.group_panel.start_group_move(self.group_name))
+        context_menu.addAction(move_action)
         
-        # Add actions to menu
-        context_menu.addAction(move_strands_action)
-        context_menu.addAction(rotate_strands_action)
-        context_menu.addAction(edit_angles_action)
+        # Rotate strands action
+        rotate_label = HoverLabel(menu_items[1], self, theme)
+        if is_rtl:
+            rotate_label.setLayoutDirection(Qt.RightToLeft)
+            rotate_label.setAlignment(Qt.AlignLeft)
+        rotate_action = QWidgetAction(self)
+        rotate_action.setDefaultWidget(rotate_label)
+        rotate_action.triggered.connect(lambda: self.group_panel.start_group_rotation(self.group_name))
+        context_menu.addAction(rotate_action)
+        
+        # Edit angles action
+        edit_label = HoverLabel(menu_items[2], self, theme)
+        if is_rtl:
+            edit_label.setLayoutDirection(Qt.RightToLeft)
+            edit_label.setAlignment(Qt.AlignLeft)
+        edit_action = QWidgetAction(self)
+        edit_action.setDefaultWidget(edit_label)
+        edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
+        context_menu.addAction(edit_action)
+        
         context_menu.addSeparator()
-        context_menu.addAction(delete_group_action)
         
-        # Show menu and get selected action
-        # Platform-specific positioning adjustments
+        # Delete group action
+        delete_label = HoverLabel(menu_items[3], self, theme)
+        if is_rtl:
+            delete_label.setLayoutDirection(Qt.RightToLeft)
+            delete_label.setAlignment(Qt.AlignLeft)
+        delete_action = QWidgetAction(self)
+        delete_action.setDefaultWidget(delete_label)
+        delete_action.triggered.connect(lambda: self.group_panel.delete_group(self.group_name))
+        context_menu.addAction(delete_action)
+        
+        # Show menu at the cursor position
         global_pos = self.group_button.mapToGlobal(position)
-        if sys.platform == 'darwin':  # macOS
-            # Adjust for macOS menu positioning differences
-            if is_rtl:
-                # For RTL on macOS, reduce right-side spacing
-                global_pos.setX(global_pos.x() - 5)
-            else:
-                # For LTR on macOS, standard positioning
-                global_pos.setX(global_pos.x() + 2)
-        
-        action = context_menu.exec_(global_pos)
-        
-        # Handle the selected action
-        if action == move_strands_action:
-            self.group_panel.start_group_move(self.group_name)
-        elif action == rotate_strands_action:
-            self.group_panel.start_group_rotation(self.group_name)
-        elif action == edit_angles_action:
-            self.group_panel.edit_strand_angles(self.group_name)
-        elif action == delete_group_action:
-            self.group_panel.delete_group(self.group_name)
+        context_menu.exec_(global_pos)
 
 
     def toggle_collapse(self):

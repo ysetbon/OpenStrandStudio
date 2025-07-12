@@ -487,7 +487,8 @@ class LayerPanel(QWidget):
         bottom_layout.setSpacing(2)
         
         # Draw Names button
-        self.draw_names_button = QPushButton("Draw Names")
+        _ = translations[self.language_code]
+        self.draw_names_button = QPushButton(_['draw_names'])
         self.draw_names_button.setStyleSheet("""
             QPushButton {
                 background-color: #e07bdb;
@@ -507,7 +508,7 @@ class LayerPanel(QWidget):
         self.draw_names_button.clicked.connect(self.request_draw_names)
 
         # Lock Layers button
-        self.lock_layers_button = QPushButton("Lock Layers")
+        self.lock_layers_button = QPushButton(_['lock_layers'])
         self.lock_layers_button.setStyleSheet("""
             QPushButton {
                 background-color: orange;
@@ -528,7 +529,7 @@ class LayerPanel(QWidget):
         self.lock_layers_button.clicked.connect(self.toggle_lock_mode)
 
         # Add New Strand button
-        self.add_new_strand_button = QPushButton("Add New Strand")
+        self.add_new_strand_button = QPushButton(_['add_new_strand'])
         self.add_new_strand_button.setStyleSheet("""
             QPushButton {
                 background-color: lightgreen;
@@ -553,7 +554,7 @@ class LayerPanel(QWidget):
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
         # Delete Strand button
-        self.delete_strand_button = QPushButton("Delete Strand")
+        self.delete_strand_button = QPushButton(_['delete_strand'])
         self.delete_strand_button.setStyleSheet("""
             QPushButton {
                 font-weight: bold;
@@ -606,7 +607,7 @@ class LayerPanel(QWidget):
         self.delete_strand_button.clicked.connect(debug_button_click)
 
         # Deselect All button
-        self.deselect_all_button = QPushButton("Deselect All")
+        self.deselect_all_button = QPushButton(_['deselect_all'])
         self.deselect_all_button.setStyleSheet("""
             QPushButton {
                 background-color: #76acdc;

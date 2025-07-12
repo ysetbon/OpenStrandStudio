@@ -1,7 +1,7 @@
 # src/layer_panel.py
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-    QScrollArea, QLabel, QSplitter, QInputDialog, QMenu  # Add QMenu here
+    QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction  # Add QMenu, QAction and QWidgetAction here
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect# Added QMimeData
 from PyQt5.QtGui import QColor, QPalette, QDrag # Added QDrag
@@ -27,7 +27,7 @@ from PyQt5.QtGui import QColor
 import logging
 from functools import partial
 from splitter_handle import SplitterHandle
-from numbered_layer_button import NumberedLayerButton
+from numbered_layer_button import NumberedLayerButton, HoverLabel
 from group_layers import GroupPanel, GroupLayerManager
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
@@ -411,9 +411,49 @@ class LayerPanel(QWidget):
         self.center_strands_button.clicked.connect(self.center_all_strands)
         self.center_strands_button.setToolTip("Center: Pan to center all strands in canvas")
 
+        # Create the multi-select button
+        self.multi_select_button = QPushButton("🙉")
+        self.multi_select_button.setFixedSize(40, 40)
+        self.multi_select_button.setCheckable(True)  # Make it toggleable
+        self.multi_select_button.setStyleSheet("""
+            QPushButton {
+                background-color: #D2B48C;  /* Tan/Light brown color - same as target */
+                color: black;
+                font-weight: bold;
+                font-size: 20px;
+                border: 1px solid #BC9A6A;
+                border-radius: 20px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover {
+                background-color: #CD853F;  /* Peru - medium brown, same as target */
+                color: black;
+                border: 2px solid #A0522D;
+            }
+            QPushButton:pressed {
+                background-color: #654321;  /* Dark Brown - same as target */
+                color: white;
+                border: 2px solid #A0522D;
+            }
+            QPushButton:checked {
+                background-color: #654321;  /* Dark Brown when active - same as target */
+                color: white;
+                border: 2px solid #A0522D;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #808080;
+                border: 1px solid #A9A9A9;
+            }
+        """)
+        self.multi_select_button.clicked.connect(self.toggle_multi_select_mode)
+        self.multi_select_button.setToolTip("Hide Mode: Click to enable layer selection, then right-click for batch hide/show operations")
+
         # Add buttons to refresh layout
         refresh_layout.addWidget(self.refresh_button)
         refresh_layout.addWidget(self.center_strands_button)
+        refresh_layout.addWidget(self.multi_select_button)
         
         # Add refresh panel to left layout below the zoom panel
         self.left_layout.addWidget(self.refresh_panel)
@@ -649,6 +689,10 @@ class LayerPanel(QWidget):
         self.layer_buttons = []  # List to store layer buttons
         self.current_set = 1  # Current set number
         self.set_counts = {}
+        
+        # Multi-selection state
+        self.multi_select_mode = False  # Whether multi-select mode is active
+        self.multi_selected_layers = set()  # Set of selected layer indices
         # Use canvas default strand color if available, otherwise fallback to purple
         default_color = QColor(200, 170, 230, 255)  # Fallback
         if canvas and hasattr(canvas, 'default_strand_color'):
@@ -684,6 +728,9 @@ class LayerPanel(QWidget):
         self.mask_edit_label.setStyleSheet("color: red; font-weight: bold;")
         self.left_layout.addWidget(self.mask_edit_label)
         self.mask_edit_label.hide()
+
+        # Initialize button texts with the correct language
+        self.update_translations()
 
         safe_info("LayerPanel initialized")
 
@@ -756,6 +803,10 @@ class LayerPanel(QWidget):
         button = NumberedLayerButton(strand.layer_name, count, strand.color)
         button.clicked.connect(partial(self.select_layer, index))
         button.color_changed.connect(self.on_color_changed)
+        
+        # Add right-click context menu for multi-selection
+        button.setContextMenuPolicy(Qt.CustomContextMenu)
+        button.customContextMenuRequested.connect(partial(self.show_multi_select_context_menu, index))
 
         # -------------------------------------------------------------------------
         # Keep the stylesheet application
@@ -943,6 +994,17 @@ class LayerPanel(QWidget):
         # self.layer_selection_dialog.edit_mask_requested.connect(self.request_edit_mask) # Moved from dialog init
 
     # NEW: helper method to provide a context menu style sheet based on the current theme
+    def set_language(self, language_code):
+        """Update the layer panel's language and refresh any UI elements that need translation updates"""
+        self.language_code = language_code
+        # Update button texts with the new language
+        self.update_translations()
+        # Update group layer manager language if it exists
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            self.group_layer_manager.language_code = language_code
+            if hasattr(self.group_layer_manager, 'update_translations'):
+                self.group_layer_manager.update_translations()
+
     def get_context_menu_stylesheet(self):
         if hasattr(self, "current_theme") and self.current_theme == "dark":
             # For dark theme: normal state is dark background with white text,
@@ -1092,7 +1154,7 @@ class LayerPanel(QWidget):
             logging.info(f"Resetting mask for strand {strand_index}")
             self.canvas.reset_mask(strand_index)
 
-    def translate_ui(self):
+    def update_translations(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
         # Update any UI elements with new translations
@@ -1107,6 +1169,10 @@ class LayerPanel(QWidget):
         if self.group_layer_manager:
             self.group_layer_manager.language_code = self.language_code
             self.group_layer_manager.update_translations()
+
+    def translate_ui(self):
+        """Alias for update_translations to maintain compatibility with main window calls"""
+        self.update_translations()
 
     def request_draw_names(self):
         self.should_draw_names = not self.should_draw_names
@@ -1184,6 +1250,347 @@ class LayerPanel(QWidget):
             self.canvas.center_all_strands()
         else:
             logging.warning("Canvas does not have center_all_strands method")
+
+    def toggle_multi_select_mode(self):
+        """Toggle multi-selection mode on/off"""
+        self.multi_select_mode = not self.multi_select_mode
+        
+        if self.multi_select_mode:
+            logging.info("Multi-select mode enabled")
+            # Change to hide mode emoji when active
+            self.multi_select_button.setText("🙈")
+            # Clear any existing selections when entering multi-select mode
+            self.multi_selected_layers.clear()
+            self.update_layer_button_multi_select_display()
+        else:
+            logging.info("Multi-select mode disabled")
+            # Change back to hear-no-evil emoji when inactive
+            self.multi_select_button.setText("🙉")
+            # Clear selections and reset display when exiting multi-select mode
+            self.multi_selected_layers.clear()
+            self.update_layer_button_multi_select_display()
+            
+        # Update button state
+        self.multi_select_button.setChecked(self.multi_select_mode)
+
+    def update_layer_button_multi_select_display(self):
+        """Update the visual display of layer buttons to show multi-selection state"""
+        # Find the currently selected strand
+        selected_index = None
+        if hasattr(self.canvas, 'selected_strand_index') and self.canvas.selected_strand_index is not None:
+            selected_index = self.canvas.selected_strand_index
+        elif hasattr(self.canvas, 'selected_strand') and self.canvas.selected_strand is not None:
+            for i, strand in enumerate(self.canvas.strands):
+                if strand == self.canvas.selected_strand:
+                    selected_index = i
+                    break
+        if selected_index is None:
+            for i, strand in enumerate(self.canvas.strands):
+                if getattr(strand, 'is_selected', False):
+                    selected_index = i
+                    break
+        
+        for i, button in enumerate(self.layer_buttons):
+            if i in self.multi_selected_layers:
+                # Add visual indicator for multi-selected layers
+                button.setProperty("multi_selected", True)
+                button.style().unpolish(button)
+                button.style().polish(button)
+                # Add gold border styling
+                current_style = button.styleSheet()
+                button.setStyleSheet(current_style + """
+                    QPushButton[multi_selected="true"] {
+                        border: 3px solid #FFD700 !important;
+                        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                    }
+                    QPushButton[multi_selected="true"]:checked {
+                        border: 3px solid #0066FF !important;
+                        box-shadow: 0 0 10px rgba(0, 102, 255, 0.8) !important;
+                    }
+                """)
+            else:
+                # Remove multi-selection styling and let button use its own style
+                button.setProperty("multi_selected", False)
+                # Let the button handle its own styling by calling update_style()
+                if hasattr(button, 'update_style'):
+                    button.update_style()
+            
+            # Maintain selected strand appearance even in hide mode
+            if i == selected_index:
+                button.setChecked(True)
+            else:
+                button.setChecked(False)
+
+
+    def show_multi_select_context_menu(self, index, position):
+        """Show context menu for multi-selected layers"""
+        # Only show context menu if we're in multi-select mode
+        if not self.multi_select_mode:
+            return
+            
+        # If the clicked layer is not in the selection, add it
+        if index not in self.multi_selected_layers:
+            self.multi_selected_layers.add(index)
+            self.update_layer_button_multi_select_display()
+        
+        # Get translations for current language
+        _ = translations[self.language_code]
+        
+        # Create context menu with proper theming
+        context_menu = QMenu(self)
+        
+        # Apply RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            context_menu.setLayoutDirection(Qt.RightToLeft)
+        
+        self._apply_menu_theme(context_menu)
+        
+        # Get theme for HoverLabel
+        theme = self.current_theme if hasattr(self, 'current_theme') else 'light'
+        
+        # Check if any selected layers are hidden to determine button text
+        any_hidden = any(self.canvas.strands[i].is_hidden for i in self.multi_selected_layers 
+                        if i < len(self.canvas.strands))
+        
+        # Add single hide/show toggle action with translations using HoverLabel
+        if any_hidden:
+            toggle_text = _['show_selected_layers']
+            toggle_callback = self.show_selected_layers
+        else:
+            toggle_text = _['hide_selected_layers']
+            toggle_callback = self.hide_selected_layers
+            
+        toggle_label = HoverLabel(toggle_text, self, theme)
+        if self.language_code == 'he':
+            toggle_label.setLayoutDirection(Qt.RightToLeft)
+            toggle_label.setAlignment(Qt.AlignLeft)
+        toggle_action = QWidgetAction(self)
+        toggle_action.setDefaultWidget(toggle_label)
+        toggle_action.triggered.connect(toggle_callback)
+        context_menu.addAction(toggle_action)
+        
+        context_menu.addSeparator()
+        
+        # Check if any selected layers are in shadow-only mode to determine button text
+        any_shadow_only = any(getattr(self.canvas.strands[i], 'shadow_only', False) 
+                             for i in self.multi_selected_layers 
+                             if i < len(self.canvas.strands))
+        
+        # Add shadow-only toggle action with translations using HoverLabel
+        if any_shadow_only:
+            shadow_text = _['disable_shadow_only_selected']
+            shadow_callback = self.disable_shadow_only_selected_layers
+        else:
+            shadow_text = _['enable_shadow_only_selected']
+            shadow_callback = self.enable_shadow_only_selected_layers
+            
+        shadow_label = HoverLabel(shadow_text, self, theme)
+        if self.language_code == 'he':
+            shadow_label.setLayoutDirection(Qt.RightToLeft)
+            shadow_label.setAlignment(Qt.AlignLeft)
+        shadow_action = QWidgetAction(self)
+        shadow_action.setDefaultWidget(shadow_label)
+        shadow_action.triggered.connect(shadow_callback)
+        context_menu.addAction(shadow_action)
+        
+        # Show the menu at the cursor position
+        button = self.layer_buttons[index]
+        context_menu.exec_(button.mapToGlobal(position))
+
+    def _apply_menu_theme(self, menu):
+        """Apply the current theme to a context menu"""
+        # Determine if we're using RTL for Hebrew
+        is_hebrew = self.language_code == 'he'
+        # Use different padding for RTL vs LTR
+        item_padding = "padding: 6px 20px 6px 6px;" if is_hebrew else "padding: 6px 20px;"
+        
+        if hasattr(self, 'current_theme') and self.current_theme == 'dark':
+            # Dark theme styling for menu
+            menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: #3C3C3C;
+                    color: white;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    background-color: transparent;
+                    {item_padding}
+                    border-radius: 3px;
+                }}
+                QMenu::item:selected {{
+                    background-color: #555555;
+                    color: white;
+                }}
+                QMenu::item:pressed {{
+                    background-color: #666666;
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background-color: #555555;
+                    margin: 4px 0px;
+                }}
+            """)
+        else:
+            # Light theme styling for menu
+            menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: white;
+                    color: black;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 4px;
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    background-color: transparent;
+                    {item_padding}
+                    border-radius: 3px;
+                }}
+                QMenu::item:selected {{
+                    background-color: #E0E0E0;
+                    color: black;
+                }}
+                QMenu::item:pressed {{
+                    background-color: #D0D0D0;
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background-color: #CCCCCC;
+                    margin: 4px 0px;
+                }}
+            """)
+
+    def hide_selected_layers(self):
+        """Hide all selected layers in multi-select mode"""
+        if not self.multi_selected_layers:
+            return
+            
+        logging.info(f"Hiding layers: {list(self.multi_selected_layers)}")
+        for layer_index in self.multi_selected_layers:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+                strand.is_hidden = True
+                # Update button appearance to show hidden state
+                if layer_index < len(self.layer_buttons):
+                    button = self.layer_buttons[layer_index]
+                    button.set_hidden(True)
+        
+        # Update canvas
+        self.canvas.update()
+        
+        # Save undo/redo state after hiding layers
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            # Force save by resetting last save time to ensure this is captured as a new state
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+            logging.info(f"Saved undo/redo state after hiding {len(self.multi_selected_layers)} selected layers")
+        else:
+            logging.warning("Could not find undo_redo_manager to save state after hiding layers")
+        
+        # Clear selections after operation
+        self.multi_selected_layers.clear()
+        self.update_layer_button_multi_select_display()
+
+    def show_selected_layers(self):
+        """Show all selected layers in multi-select mode"""
+        if not self.multi_selected_layers:
+            return
+            
+        logging.info(f"Showing layers: {list(self.multi_selected_layers)}")
+        for layer_index in self.multi_selected_layers:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+                strand.is_hidden = False
+                # Update button appearance to show visible state
+                if layer_index < len(self.layer_buttons):
+                    button = self.layer_buttons[layer_index]
+                    button.set_hidden(False)
+        
+        # Update canvas
+        self.canvas.update()
+        
+        # Save undo/redo state after showing layers
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            # Force save by resetting last save time to ensure this is captured as a new state
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+            logging.info(f"Saved undo/redo state after showing {len(self.multi_selected_layers)} selected layers")
+        else:
+            logging.warning("Could not find undo_redo_manager to save state after showing layers")
+        
+        # Clear selections after operation
+        self.multi_selected_layers.clear()
+        self.update_layer_button_multi_select_display()
+
+    def enable_shadow_only_selected_layers(self):
+        """Enable shadow-only mode for selected layers"""
+        if not self.multi_selected_layers:
+            return
+            
+        logging.info(f"Enabling shadow only for layers: {list(self.multi_selected_layers)}")
+        for layer_index in self.multi_selected_layers:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+                # Set shadow_only property
+                strand.shadow_only = True
+                # Ensure shadow is enabled when setting shadow_only
+                if hasattr(strand, 'has_shadow'):
+                    strand.has_shadow = True
+                else:
+                    strand.has_shadow = True
+                # Update button appearance to reflect shadow-only state
+                if layer_index < len(self.layer_buttons):
+                    button = self.layer_buttons[layer_index]
+                    button.set_shadow_only(True)
+        
+        # Update canvas
+        self.canvas.update()
+        
+        # Save undo/redo state after enabling shadow-only mode
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            # Force save by resetting last save time to ensure this is captured as a new state
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+            logging.info(f"Saved undo/redo state after enabling shadow-only for {len(self.multi_selected_layers)} selected layers")
+        else:
+            logging.warning("Could not find undo_redo_manager to save state after enabling shadow-only")
+        
+        # Clear selections after operation
+        self.multi_selected_layers.clear()
+        self.update_layer_button_multi_select_display()
+
+    def disable_shadow_only_selected_layers(self):
+        """Disable shadow-only mode for selected layers (show full layers)"""
+        if not self.multi_selected_layers:
+            return
+            
+        logging.info(f"Disabling shadow only for layers: {list(self.multi_selected_layers)}")
+        for layer_index in self.multi_selected_layers:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+                # Disable shadow_only property
+                strand.shadow_only = False
+                # Update button appearance to reflect normal state
+                if layer_index < len(self.layer_buttons):
+                    button = self.layer_buttons[layer_index]
+                    button.set_shadow_only(False)
+        
+        # Update canvas
+        self.canvas.update()
+        
+        # Save undo/redo state after disabling shadow-only mode
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            # Force save by resetting last save time to ensure this is captured as a new state
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+            logging.info(f"Saved undo/redo state after disabling shadow-only for {len(self.multi_selected_layers)} selected layers")
+        else:
+            logging.warning("Could not find undo_redo_manager to save state after disabling shadow-only")
+        
+        # Clear selections after operation
+        self.multi_selected_layers.clear()
+        self.update_layer_button_multi_select_display()
 
     def keyPressEvent(self, event):
         """Handle key press events, specifically for entering masked mode."""
@@ -1280,12 +1687,28 @@ class LayerPanel(QWidget):
 
     def select_layer(self, index, emit_signal=True):
         """
-        Handle layer selection based on current mode (normal, masked, or lock).
+        Handle layer selection based on current mode (normal, masked, multi-select, or lock).
         
         Args:
             index (int): The index of the layer to select.
             emit_signal (bool): Whether to emit the selection signal.
         """
+        # Handle multi-selection mode
+        if self.multi_select_mode:
+            if index in self.multi_selected_layers:
+                # Deselect if already selected
+                self.multi_selected_layers.remove(index)
+                logging.info(f"Removed layer {index} from multi-selection")
+            else:
+                # Add to selection
+                self.multi_selected_layers.add(index)
+                logging.info(f"Added layer {index} to multi-selection")
+            
+            # Update visual display
+            self.update_layer_button_multi_select_display()
+            # Don't change the main selected strand in multi-select mode
+            return
+        
         # Block layer selection if we're in mask editing mode
         if self.mask_editing:
             safe_info("Layer selection blocked: Currently in mask edit mode")
@@ -1913,6 +2336,15 @@ class LayerPanel(QWidget):
 
         logging.info(f"Added new button directly to layout at top (index 0)")
         logging.info("Finished add_layer_button")
+
+        # Reset monkey button to non-hide mode when creating new layer
+        if hasattr(self, 'multi_select_button') and self.multi_select_mode:
+            self.multi_select_mode = False
+            self.multi_select_button.setChecked(False)
+            self.multi_select_button.setText("🙉")
+            self.multi_selected_layers.clear()
+            self.update_layer_button_multi_select_display()
+            logging.info("Reset monkey button to non-hide mode after creating new layer")
 
         # Select the newly created strand
         self.select_layer(strand_index)

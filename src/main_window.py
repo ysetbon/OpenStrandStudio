@@ -2233,12 +2233,7 @@ class MainWindow(QMainWindow):
 
         # Update the language code in all components
         self.canvas.language_code = language_code
-        self.layer_panel.language_code = language_code
-        
-        # Update GroupLayerManager's language code and translations
-        if self.layer_panel.group_layer_manager:
-            self.layer_panel.group_layer_manager.language_code = language_code
-            self.layer_panel.group_layer_manager.update_translations()
+        self.layer_panel.set_language(language_code)
 
         if self.settings_dialog:
             self.settings_dialog.language_code = language_code

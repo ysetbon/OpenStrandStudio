@@ -99,6 +99,11 @@ class NumberedLayerButton(QPushButton):
         if not layer_panel:
             logging.error("Could not find LayerPanel parent for context menu.")
             return
+        
+        # Check if we're in multi-select/hide mode - if so, don't show the usual context menu
+        if hasattr(layer_panel, 'multi_select_mode') and layer_panel.multi_select_mode:
+            logging.info("Skipping usual context menu - in multi-select/hide mode")
+            return
             
         try:
             index = layer_panel.layer_buttons.index(self)
@@ -733,18 +738,19 @@ class NumberedLayerButton(QPushButton):
 
         # NEW: Override background if hidden or shadow-only
         if self.is_hidden:
-            style = """
-                QPushButton {
+            style = f"""
+                QPushButton {{
                     background-color: gray;
                     border: none;
                     font-weight: bold;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton:hover {{
                     background-color: lightgray; /* Slightly lighter gray on hover */
-                }
-                QPushButton:checked {
-                    background-color: dimgray; /* Darker gray when checked */
-                }
+                }}
+                QPushButton:checked {{
+                    background-color: {checked_rgba}; /* Use proper selection color when checked */
+                    border: 2px solid #0066CC; /* Add blue border to make selection more visible */
+                }}
             """
         elif self.shadow_only:
             style = f"""

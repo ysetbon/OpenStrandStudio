@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction  # Add QMenu, QAction and QWidgetAction here
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect# Added QMimeData
-from PyQt5.QtGui import QColor, QPalette, QDrag # Added QDrag
+from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication # Added QDrag and QGuiApplication
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
 from render_utils import RenderUtils
@@ -1006,6 +1006,25 @@ class LayerPanel(QWidget):
             if hasattr(self.group_layer_manager, 'update_translations'):
                 self.group_layer_manager.update_translations()
 
+    def calculate_menu_width(self, menu_texts):
+        """Calculate optimal menu width based on text content"""
+        from PyQt5.QtGui import QFontMetrics, QFont
+        
+        # Create font to measure text
+        font = QFont()
+        font.setPointSize(8)  # Match menu font size
+        metrics = QFontMetrics(font)
+        
+        max_width = 150  # Minimum width
+        padding = 20  # Account for padding, margins, and potential icons
+        
+        for text in menu_texts:
+            text_width = metrics.horizontalAdvance(text) + padding
+            max_width = max(max_width, text_width)
+        
+        # Cap maximum width to prevent extremely wide menus
+        return min(max_width, 350)
+
     def get_context_menu_stylesheet(self):
         if hasattr(self, "current_theme") and self.current_theme == "dark":
             # For dark theme: normal state is dark background with white text,
@@ -1044,9 +1063,66 @@ class LayerPanel(QWidget):
         # --- End MaskedStrand specific actions ---
 
         button = self.layer_buttons[strand_index]
-        # Use button's mapToGlobal to get correct position
-        global_pos = button.mapToGlobal(position)
+        # Use screen-aware positioning for multi-monitor support
+        global_pos = self.get_screen_aware_global_pos(button, position)
         menu.exec_(global_pos)
+        
+    def get_screen_aware_global_pos(self, widget, pos):
+        """
+        Get global position accounting for multi-monitor DPI differences.
+        
+        Args:
+            widget: The widget to get position relative to
+            pos (QPoint): Local position relative to the widget
+            
+        Returns:
+            QPoint: Screen-aware global position
+        """
+        try:
+            # Get basic global position
+            basic_global = widget.mapToGlobal(pos)
+            
+            # Find which screen this widget is on
+            widget_screen = None
+            widget_global_rect = widget.geometry()
+            widget_global_rect.moveTopLeft(widget.mapToGlobal(QPoint(0, 0)))
+            
+            screens = QGuiApplication.screens()
+            for screen in screens:
+                if screen.geometry().intersects(widget_global_rect):
+                    widget_screen = screen
+                    break
+            
+            if not widget_screen:
+                widget_screen = QGuiApplication.primaryScreen()
+            
+            # For multi-monitor setups with different DPI, ensure proper positioning
+            screen_rect = widget_screen.availableGeometry()
+            
+            # Adjust position if it would place menu outside screen bounds
+            adjusted_pos = QPoint(basic_global)
+            
+            # If menu would go off right edge of screen, move it left
+            menu_width = 250  # Estimated menu width - increased to accommodate longer text
+            if adjusted_pos.x() + menu_width > screen_rect.right():
+                adjusted_pos.setX(screen_rect.right() - menu_width)
+            
+            # If menu would go off bottom edge of screen, move it up  
+            menu_height = 200  # Estimated menu height - increased for better spacing
+            if adjusted_pos.y() + menu_height > screen_rect.bottom():
+                adjusted_pos.setY(screen_rect.bottom() - menu_height)
+                
+            # Ensure position is at least within screen bounds
+            if adjusted_pos.x() < screen_rect.left():
+                adjusted_pos.setX(screen_rect.left())
+            if adjusted_pos.y() < screen_rect.top():
+                adjusted_pos.setY(screen_rect.top())
+                
+            return adjusted_pos
+            
+        except Exception as e:
+            logging.warning(f"Error in screen-aware positioning: {e}, falling back to basic mapToGlobal")
+            return widget.mapToGlobal(pos)
 
     def on_edit_mask_click(self, menu, strand_index):
         """
@@ -1337,23 +1413,16 @@ class LayerPanel(QWidget):
         # Get translations for current language
         _ = translations[self.language_code]
         
-        # Create context menu with proper theming
-        context_menu = QMenu(self)
-        
-        # Apply RTL layout direction for Hebrew
-        if self.language_code == 'he':
-            context_menu.setLayoutDirection(Qt.RightToLeft)
-        
-        self._apply_menu_theme(context_menu)
-        
-        # Get theme for HoverLabel
-        theme = self.current_theme if hasattr(self, 'current_theme') else 'light'
-        
         # Check if any selected layers are hidden to determine button text
         any_hidden = any(self.canvas.strands[i].is_hidden for i in self.multi_selected_layers 
                         if i < len(self.canvas.strands))
         
-        # Add single hide/show toggle action with translations using HoverLabel
+        # Check if any selected layers are in shadow-only mode to determine button text
+        any_shadow_only = any(getattr(self.canvas.strands[i], 'shadow_only', False) 
+                             for i in self.multi_selected_layers 
+                             if i < len(self.canvas.strands))
+        
+        # Determine menu text items for width calculation
         if any_hidden:
             toggle_text = _['show_selected_layers']
             toggle_callback = self.show_selected_layers
@@ -1361,6 +1430,29 @@ class LayerPanel(QWidget):
             toggle_text = _['hide_selected_layers']
             toggle_callback = self.hide_selected_layers
             
+        if any_shadow_only:
+            shadow_text = _['disable_shadow_only_selected']
+            shadow_callback = self.disable_shadow_only_selected_layers
+        else:
+            shadow_text = _['enable_shadow_only_selected']
+            shadow_callback = self.enable_shadow_only_selected_layers
+        
+        # Collect all menu texts for width calculation
+        menu_texts = [toggle_text, shadow_text]
+        
+        # Create context menu with proper theming
+        context_menu = QMenu(self)
+        
+        # Apply RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            context_menu.setLayoutDirection(Qt.RightToLeft)
+        
+        self._apply_menu_theme(context_menu, menu_texts)
+        
+        # Get theme for HoverLabel
+        theme = self.current_theme if hasattr(self, 'current_theme') else 'light'
+        
+        # Add single hide/show toggle action with translations using HoverLabel
         toggle_label = HoverLabel(toggle_text, self, theme)
         if self.language_code == 'he':
             toggle_label.setLayoutDirection(Qt.RightToLeft)
@@ -1372,18 +1464,7 @@ class LayerPanel(QWidget):
         
         context_menu.addSeparator()
         
-        # Check if any selected layers are in shadow-only mode to determine button text
-        any_shadow_only = any(getattr(self.canvas.strands[i], 'shadow_only', False) 
-                             for i in self.multi_selected_layers 
-                             if i < len(self.canvas.strands))
-        
         # Add shadow-only toggle action with translations using HoverLabel
-        if any_shadow_only:
-            shadow_text = _['disable_shadow_only_selected']
-            shadow_callback = self.disable_shadow_only_selected_layers
-        else:
-            shadow_text = _['enable_shadow_only_selected']
-            shadow_callback = self.enable_shadow_only_selected_layers
             
         shadow_label = HoverLabel(shadow_text, self, theme)
         if self.language_code == 'he':
@@ -1398,8 +1479,14 @@ class LayerPanel(QWidget):
         button = self.layer_buttons[index]
         context_menu.exec_(button.mapToGlobal(position))
 
-    def _apply_menu_theme(self, menu):
+    def _apply_menu_theme(self, menu, menu_texts=None):
         """Apply the current theme to a context menu"""
+        # Calculate dynamic width if menu texts are provided
+        dynamic_width = ""
+        if menu_texts:
+            width = self.calculate_menu_width(menu_texts)
+            dynamic_width = f"min-width: {width}px;"
+            
         # Determine if we're using RTL for Hebrew
         is_hebrew = self.language_code == 'he'
         # Use different padding for RTL vs LTR
@@ -1414,6 +1501,7 @@ class LayerPanel(QWidget):
                     border: 1px solid #555555;
                     border-radius: 4px;
                     padding: 4px;
+                    {dynamic_width}
                 }}
                 QMenu::item {{
                     background-color: transparent;
@@ -1442,6 +1530,7 @@ class LayerPanel(QWidget):
                     border: 1px solid #CCCCCC;
                     border-radius: 4px;
                     padding: 4px;
+                    {dynamic_width}
                 }}
                 QMenu::item {{
                     background-color: transparent;

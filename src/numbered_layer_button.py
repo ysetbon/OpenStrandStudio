@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer
-from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint
+from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
 import logging
 from translations import translations
@@ -14,6 +14,7 @@ class HoverLabel(QLabel):
         super().__init__(text, parent)
         self.theme = theme
         self.setMouseTracking(True)
+        self.setMinimumHeight(35)
         self.normal_style()
         
     def enterEvent(self, event):
@@ -27,14 +28,14 @@ class HoverLabel(QLabel):
     def normal_style(self):
         bg_color = '#333333' if self.theme == 'dark' else '#F0F0F0'
         fg_color = '#ffffff' if self.theme == 'dark' else '#000000'
-        # Use original vertical padding (1px) and user's horizontal padding (5px)
-        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 1px 5px 1px;") 
+        # Use 20px extra padding on right side only, minimal left padding
+        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 25px 5px 5px;") 
 
     def hover_style(self):
         bg_color = '#F0F0F0' if self.theme == 'dark' else '#333333'
         fg_color = '#000000' if self.theme == 'dark' else '#ffffff'
-        # Use original vertical padding (1px) and user's horizontal padding (5px)
-        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 1px 5px 1px;")
+        # Use 20px extra padding on right side only, minimal left padding
+        self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 25px 5px 5px;")
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -71,6 +72,82 @@ class NumberedLayerButton(QPushButton):
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
         self._drag_start_position = None # To store mouse press position
         self._resetting_mask = False # Flag to prevent menu re-opening during reset
+        
+    def calculate_menu_width(self, menu_texts):
+        """Calculate optimal menu width based on text content"""
+        from PyQt5.QtGui import QFontMetrics, QFont
+        
+        # Create font to measure text
+        font = QFont()
+        font.setPointSize(8)  # Match menu font size
+        metrics = QFontMetrics(font)
+        
+        max_width = 150  # Minimum width
+        padding = 20  # Account for padding, margins, and potential icons
+        
+        for text in menu_texts:
+            text_width = metrics.horizontalAdvance(text) + padding
+            max_width = max(max_width, text_width)
+        
+        # Cap maximum width to prevent extremely wide menus
+        return min(max_width, 350)
+        
+    def get_screen_aware_global_pos(self, pos):
+        """
+        Get global position accounting for multi-monitor DPI differences.
+        
+        Args:
+            pos (QPoint): Local position relative to this widget
+            
+        Returns:
+            QPoint: Screen-aware global position
+        """
+        try:
+            # Get basic global position
+            basic_global = self.mapToGlobal(pos)
+            
+            # Find which screen this widget is on
+            widget_screen = None
+            widget_global_rect = self.geometry()
+            widget_global_rect.moveTopLeft(self.mapToGlobal(QPoint(0, 0)))
+            
+            screens = QGuiApplication.screens()
+            for screen in screens:
+                if screen.geometry().intersects(widget_global_rect):
+                    widget_screen = screen
+                    break
+            
+            if not widget_screen:
+                widget_screen = QGuiApplication.primaryScreen()
+            
+            # For multi-monitor setups with different DPI, ensure proper positioning
+            # The issue occurs when mapToGlobal doesn't account for screen transitions
+            screen_rect = widget_screen.availableGeometry()
+            
+            # Adjust position if it would place menu outside screen bounds
+            adjusted_pos = QPoint(basic_global)
+            
+            # If menu would go off right edge of screen, move it left
+            menu_width = 250  # Estimated menu width - increased to accommodate longer text
+            if adjusted_pos.x() + menu_width > screen_rect.right():
+                adjusted_pos.setX(screen_rect.right() - menu_width)
+            
+            # If menu would go off bottom edge of screen, move it up  
+            menu_height = 200  # Estimated menu height - increased for better spacing
+            if adjusted_pos.y() + menu_height > screen_rect.bottom():
+                adjusted_pos.setY(screen_rect.bottom() - menu_height)
+                
+            # Ensure position is at least within screen bounds
+            if adjusted_pos.x() < screen_rect.left():
+                adjusted_pos.setX(screen_rect.left())
+            if adjusted_pos.y() < screen_rect.top():
+                adjusted_pos.setY(screen_rect.top())
+                
+            return adjusted_pos
+            
+        except Exception as e:
+            logging.warning(f"Error in screen-aware positioning: {e}, falling back to basic mapToGlobal")
+            return self.mapToGlobal(pos)
     def show_context_menu(self, pos):
         """
         Show a context menu when the button is right-clicked.
@@ -167,9 +244,9 @@ class NumberedLayerButton(QPushButton):
 
         if is_hebrew:
             context_menu.setLayoutDirection(Qt.RightToLeft)
-            base_style += "QMenu::item { padding:3px 30px 3px 3px; }"        
+            base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"        
         else:
-            base_style += "QMenu::item { padding:3px 30px 3px 3px; }"
+            base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"
 
 
 
@@ -185,7 +262,7 @@ class NumberedLayerButton(QPushButton):
 
         # Use HoverLabel instead of QLabel
         change_hide = HoverLabel(hide_show_text, self, theme)
-        # change_hide.setContentsMargins(5, 1, 5, 1) # Removed, handled by HoverLabel style
+        change_hide.setMinimumHeight(35)
         if is_hebrew:
             change_hide.setLayoutDirection(Qt.RightToLeft)
             change_hide.setAlignment(Qt.AlignLeft)
@@ -197,6 +274,7 @@ class NumberedLayerButton(QPushButton):
         # Add Shadow Only option
         shadow_only_text = _['shadow_only']
         shadow_only_label = HoverLabel(shadow_only_text, self, theme)
+        shadow_only_label.setMinimumHeight(35)
         if is_hebrew:
             shadow_only_label.setLayoutDirection(Qt.RightToLeft)
             shadow_only_label.setAlignment(Qt.AlignLeft)
@@ -617,7 +695,33 @@ class NumberedLayerButton(QPushButton):
         # --- END NEW Logic ---
 
         logging.info(f"[NumberedLayerButton] Executing context menu for button {self.text()}")
-        context_menu.exec_(self.mapToGlobal(pos))
+        
+        # Collect menu texts for dynamic width calculation
+        menu_texts = []
+        for action in context_menu.actions():
+            if hasattr(action, 'defaultWidget') and action.defaultWidget():
+                widget = action.defaultWidget()
+                if hasattr(widget, 'text'):
+                    menu_texts.append(widget.text())
+                elif hasattr(widget, 'layout') and widget.layout():
+                    # Handle compound widgets like button groups
+                    for i in range(widget.layout().count()):
+                        child = widget.layout().itemAt(i).widget()
+                        if child and hasattr(child, 'text'):
+                            menu_texts.append(child.text())
+            elif action.text():
+                menu_texts.append(action.text())
+        
+        # Apply dynamic width to context menu
+        if menu_texts:
+            width = self.calculate_menu_width(menu_texts)
+            current_style = context_menu.styleSheet()
+            dynamic_style = current_style + f" QMenu {{ min-width: {width}px; }}"
+            context_menu.setStyleSheet(dynamic_style)
+        
+        # Fix multi-monitor positioning by getting screen-aware global position
+        global_pos = self.get_screen_aware_global_pos(pos)
+        context_menu.exec_(global_pos)
     def setText(self, text):
         """
         Set the text of the button and trigger a repaint.

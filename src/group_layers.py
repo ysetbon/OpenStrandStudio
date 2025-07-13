@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF
-from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon,QIntValidator
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint
+from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication
 import logging
 from math import atan2, degrees, isqrt
 from translations import translations
@@ -292,6 +292,7 @@ class CollapsibleGroupWidget(QWidget):
             _['move_group_strands'],
             _['rotate_group_strands'], 
             _['edit_strand_angles'],
+            _['duplicate_group'],
             _['delete_group']
         ]
         
@@ -299,8 +300,8 @@ class CollapsibleGroupWidget(QWidget):
         theme = 'dark' if (self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode) else 'light'
         
         # Apply theme-based styling
-        # Determine if we're using RTL for Hebrew
-        item_padding = "padding: 6px 20px 6px 6px;" if is_rtl else "padding: 6px 20px;"
+        # Determine if we're using RTL for Hebrew - adding 20px extra padding on right side only
+        item_padding = "padding: 6px 40px 6px 6px;" if is_rtl else "padding: 6px 40px 6px 6px;"
         
         if theme == 'dark':
             context_menu.setStyleSheet(f"""
@@ -308,6 +309,7 @@ class CollapsibleGroupWidget(QWidget):
                     background-color: #2C2C2C;
                     border: 1px solid #555;
                     padding: 2px;
+                    min-width: 120px;
                 }}
                 QMenu::item {{
                     color: #FFFFFF;
@@ -328,6 +330,7 @@ class CollapsibleGroupWidget(QWidget):
                 QMenu {{
                     background-color: #FFFFFF;
                     border: 1px solid #CCC;
+                    min-width: 120px;
                 }}
                 QMenu::item {{
                     color: #000000;
@@ -375,10 +378,20 @@ class CollapsibleGroupWidget(QWidget):
         edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
         context_menu.addAction(edit_action)
         
+        # Duplicate group action
+        duplicate_label = HoverLabel(menu_items[3], self, theme)
+        if is_rtl:
+            duplicate_label.setLayoutDirection(Qt.RightToLeft)
+            duplicate_label.setAlignment(Qt.AlignLeft)
+        duplicate_action = QWidgetAction(self)
+        duplicate_action.setDefaultWidget(duplicate_label)
+        duplicate_action.triggered.connect(lambda: self.group_panel.duplicate_group(self.group_name))
+        context_menu.addAction(duplicate_action)
+        
         context_menu.addSeparator()
         
         # Delete group action
-        delete_label = HoverLabel(menu_items[3], self, theme)
+        delete_label = HoverLabel(menu_items[4], self, theme)
         if is_rtl:
             delete_label.setLayoutDirection(Qt.RightToLeft)
             delete_label.setAlignment(Qt.AlignLeft)
@@ -387,9 +400,65 @@ class CollapsibleGroupWidget(QWidget):
         delete_action.triggered.connect(lambda: self.group_panel.delete_group(self.group_name))
         context_menu.addAction(delete_action)
         
-        # Show menu at the cursor position
-        global_pos = self.group_button.mapToGlobal(position)
+        # Show menu at the cursor position with screen-aware positioning
+        global_pos = self.get_screen_aware_global_pos(position)
         context_menu.exec_(global_pos)
+        
+    def get_screen_aware_global_pos(self, pos):
+        """
+        Get global position accounting for multi-monitor DPI differences.
+        
+        Args:
+            pos (QPoint): Local position relative to group button
+            
+        Returns:
+            QPoint: Screen-aware global position
+        """
+        try:
+            # Get basic global position
+            basic_global = self.group_button.mapToGlobal(pos)
+            
+            # Find which screen this widget is on
+            widget_screen = None
+            widget_global_rect = self.group_button.geometry()
+            widget_global_rect.moveTopLeft(self.group_button.mapToGlobal(QPoint(0, 0)))
+            
+            screens = QGuiApplication.screens()
+            for screen in screens:
+                if screen.geometry().intersects(widget_global_rect):
+                    widget_screen = screen
+                    break
+            
+            if not widget_screen:
+                widget_screen = QGuiApplication.primaryScreen()
+            
+            # For multi-monitor setups with different DPI, ensure proper positioning
+            screen_rect = widget_screen.availableGeometry()
+            
+            # Adjust position if it would place menu outside screen bounds
+            adjusted_pos = QPoint(basic_global)
+            
+            # If menu would go off right edge of screen, move it left
+            menu_width = 200  # Estimated menu width
+            if adjusted_pos.x() + menu_width > screen_rect.right():
+                adjusted_pos.setX(screen_rect.right() - menu_width)
+            
+            # If menu would go off bottom edge of screen, move it up  
+            menu_height = 200  # Estimated menu height (groups have more items)
+            if adjusted_pos.y() + menu_height > screen_rect.bottom():
+                adjusted_pos.setY(screen_rect.bottom() - menu_height)
+                
+            # Ensure position is at least within screen bounds
+            if adjusted_pos.x() < screen_rect.left():
+                adjusted_pos.setX(screen_rect.left())
+            if adjusted_pos.y() < screen_rect.top():
+                adjusted_pos.setY(screen_rect.top())
+                
+            return adjusted_pos
+            
+        except Exception as e:
+            logging.warning(f"Error in screen-aware positioning: {e}, falling back to basic mapToGlobal")
+            return self.group_button.mapToGlobal(pos)
 
 
     def toggle_collapse(self):
@@ -1258,6 +1327,330 @@ class GroupPanel(QWidget):
             logging.info(f"Group '{group_name}' deleted and alignment refreshed.")
         else:
             logging.warning(f"Group '{group_name}' not found in GroupPanel.")
+
+    def duplicate_group(self, group_name):
+        """Duplicate a group with all its strands, creating new unique names."""
+        if group_name not in self.groups:
+            logging.warning(f"Group '{group_name}' not found in GroupPanel.")
+            return
+            
+        try:
+            import copy
+            from strand import Strand
+            from masked_strand import MaskedStrand
+            from attached_strand import AttachedStrand
+            
+            # Get the original group data
+            original_group = self.groups[group_name]
+            original_strands = original_group['strands']
+            
+            # Generate new group name
+            new_group_name = self.generate_unique_group_name(group_name)
+            
+            # Get the highest set number to increment from
+            highest_set_number = self.get_highest_set_number()
+            
+            # Create mapping from old set numbers to new set numbers
+            old_to_new_set_mapping = {}
+            new_set_counter = highest_set_number + 1
+            
+            # Build mapping of all unique set numbers in the group
+            unique_set_numbers = set()
+            for strand in original_strands:
+                if hasattr(strand, 'set_number'):
+                    unique_set_numbers.add(strand.set_number)
+            
+            # Create mapping from old to new set numbers
+            for old_set_num in sorted(unique_set_numbers):
+                old_to_new_set_mapping[old_set_num] = new_set_counter
+                new_set_counter += 1
+            
+            # Duplicate all strands with new names
+            duplicated_strands = []
+            new_main_strands = set()
+            
+            for original_strand in original_strands:
+                # Create deep copy of the strand
+                if hasattr(original_strand, '__class__'):
+                    if original_strand.__class__.__name__ == 'MaskedStrand':
+                        new_strand = self.duplicate_masked_strand(original_strand, old_to_new_set_mapping)
+                    elif original_strand.__class__.__name__ == 'AttachedStrand':
+                        new_strand = self.duplicate_attached_strand(original_strand, old_to_new_set_mapping)
+                    else:
+                        new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+                else:
+                    new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+                
+                duplicated_strands.append(new_strand)
+                
+                # Check if this is a main strand (ends with _1)
+                if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
+                    new_main_strands.add(new_strand)
+                
+                # Add to canvas strands
+                if self.canvas:
+                    self.canvas.strands.append(new_strand)
+                    
+                    # Update canvas color mapping
+                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
+                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
+            
+            # Add strands to layer panel first
+            if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
+                for new_strand in duplicated_strands:
+                    self.canvas.layer_panel.on_strand_created(new_strand)
+            
+            # Create group in canvas.groups first (required for move/rotate operations)
+            if self.canvas and hasattr(self.canvas, 'groups'):
+                self.canvas.groups[new_group_name] = {
+                    'strands': duplicated_strands,
+                    'layers': [strand.layer_name for strand in duplicated_strands if hasattr(strand, 'layer_name')],
+                    'main_strands': new_main_strands,
+                    'control_points': {},
+                    'data': []
+                }
+                logging.info(f"Added duplicated group '{new_group_name}' to canvas.groups")
+            
+            # Use the existing group creation mechanism for UI
+            self.create_group(new_group_name, duplicated_strands)
+            
+            # Emit group operation signal for the new group
+            layer_names = [strand.layer_name for strand in duplicated_strands if hasattr(strand, 'layer_name')]
+            self.group_operation.emit("create", new_group_name, layer_names)
+            
+            # Update canvas if available
+            if self.canvas:
+                self.canvas.update()
+            
+            logging.info(f"Group '{group_name}' successfully duplicated as '{new_group_name}' with {len(duplicated_strands)} strands.")
+            
+        except Exception as e:
+            logging.error(f"Error duplicating group '{group_name}': {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+
+    def generate_unique_group_name(self, base_name):
+        """Generate a unique group name by appending (1), (2), etc."""
+        counter = 1
+        new_name = f"{base_name}({counter})"
+        
+        while new_name in self.groups:
+            counter += 1
+            new_name = f"{base_name}({counter})"
+        
+        return new_name
+
+    def get_highest_set_number(self):
+        """Get the highest set number across all strands."""
+        highest = 0
+        
+        # Check all strands in canvas
+        if self.canvas and hasattr(self.canvas, 'strands'):
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'set_number') and strand.set_number:
+                    highest = max(highest, strand.set_number)
+        
+        # Also check strand_colors mapping
+        if self.canvas and hasattr(self.canvas, 'strand_colors'):
+            for set_num in self.canvas.strand_colors.keys():
+                highest = max(highest, set_num)
+        
+        return highest
+
+    def duplicate_regular_strand(self, original_strand, set_mapping):
+        """Duplicate a regular Strand object."""
+        from strand import Strand
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+        
+        # Get new set number
+        old_set = original_strand.set_number if hasattr(original_strand, 'set_number') else 1
+        new_set = set_mapping.get(old_set, old_set)
+        
+        # Generate new layer name
+        new_layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        
+        # Create new strand with copied properties (avoid deepcopy for Qt objects)
+        new_strand = Strand(
+            start=QPointF(original_strand.start.x(), original_strand.start.y()),
+            end=QPointF(original_strand.end.x(), original_strand.end.y()),
+            width=original_strand.width,
+            color=QColor(original_strand.color),
+            stroke_color=QColor(original_strand.stroke_color),
+            stroke_width=original_strand.stroke_width,
+            set_number=new_set,
+            layer_name=new_layer_name
+        )
+        
+        # Copy all other properties
+        self.copy_strand_properties(original_strand, new_strand)
+        
+        return new_strand
+
+    def duplicate_masked_strand(self, original_strand, set_mapping):
+        """Duplicate a MaskedStrand object."""
+        from masked_strand import MaskedStrand
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+        
+        # Get new set number
+        old_set = original_strand.set_number if hasattr(original_strand, 'set_number') else 1
+        new_set = set_mapping.get(old_set, old_set)
+        
+        # Generate new layer name
+        new_layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        
+        # Create new masked strand (avoid deepcopy for Qt objects)
+        new_strand = MaskedStrand(
+            start=QPointF(original_strand.start.x(), original_strand.start.y()),
+            end=QPointF(original_strand.end.x(), original_strand.end.y()),
+            width=original_strand.width,
+            color=QColor(original_strand.color),
+            stroke_color=QColor(original_strand.stroke_color),
+            stroke_width=original_strand.stroke_width,
+            set_number=new_set,
+            layer_name=new_layer_name
+        )
+        
+        # Copy MaskedStrand specific properties
+        if hasattr(original_strand, 'type'):
+            new_strand.type = original_strand.type
+        if hasattr(original_strand, 'index'):
+            new_strand.index = getattr(original_strand, 'index', 0)
+        
+        # Copy all other properties
+        self.copy_strand_properties(original_strand, new_strand)
+        
+        return new_strand
+
+    def duplicate_attached_strand(self, original_strand, set_mapping):
+        """Duplicate an AttachedStrand object."""
+        from attached_strand import AttachedStrand
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+        
+        # Get new set number
+        old_set = original_strand.set_number if hasattr(original_strand, 'set_number') else 1
+        new_set = set_mapping.get(old_set, old_set)
+        
+        # Generate new layer name
+        new_layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        
+        # Create new attached strand (avoid deepcopy for Qt objects)
+        new_strand = AttachedStrand(
+            start=QPointF(original_strand.start.x(), original_strand.start.y()),
+            end=QPointF(original_strand.end.x(), original_strand.end.y()),
+            width=original_strand.width,
+            color=QColor(original_strand.color),
+            stroke_color=QColor(original_strand.stroke_color),
+            stroke_width=original_strand.stroke_width,
+            set_number=new_set,
+            layer_name=new_layer_name
+        )
+        
+        # Copy AttachedStrand specific properties
+        if hasattr(original_strand, 'parent_strand'):
+            # Note: We don't copy the parent_strand reference as it would point to old strand
+            # This will need to be resolved separately if needed
+            pass
+        
+        # Copy all other properties
+        self.copy_strand_properties(original_strand, new_strand)
+        
+        return new_strand
+
+    def copy_strand_properties(self, original, new_strand):
+        """Copy common strand properties from original to new strand."""
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+        
+        # Copy control points (create new QPointF objects)
+        if hasattr(original, 'control_point1'):
+            new_strand.control_point1 = QPointF(original.control_point1.x(), original.control_point1.y())
+        if hasattr(original, 'control_point2'):
+            new_strand.control_point2 = QPointF(original.control_point2.x(), original.control_point2.y())
+        if hasattr(original, 'control_point_center'):
+            new_strand.control_point_center = QPointF(original.control_point_center.x(), original.control_point_center.y())
+        
+        # Copy visibility and state flags
+        if hasattr(original, 'is_hidden'):
+            new_strand.is_hidden = original.is_hidden
+        if hasattr(original, 'shadow_only'):
+            new_strand.shadow_only = original.shadow_only
+        if hasattr(original, 'start_line_visible'):
+            new_strand.start_line_visible = original.start_line_visible
+        if hasattr(original, 'end_line_visible'):
+            new_strand.end_line_visible = original.end_line_visible
+        if hasattr(original, 'control_point_center_locked'):
+            new_strand.control_point_center_locked = original.control_point_center_locked
+        
+        # Copy attachment status
+        if hasattr(original, 'start_attached'):
+            new_strand.start_attached = original.start_attached
+        if hasattr(original, 'end_attached'):
+            new_strand.end_attached = original.end_attached
+        
+        # Copy other properties
+        if hasattr(original, 'has_circles'):
+            new_strand.has_circles = list(original.has_circles)  # Copy list without deepcopy
+        if hasattr(original, 'is_start_side'):
+            new_strand.is_start_side = original.is_start_side
+        if hasattr(original, 'side_line_color'):
+            new_strand.side_line_color = QColor(original.side_line_color)  # Create new QColor
+        if hasattr(original, 'shadow_color'):
+            new_strand.shadow_color = QColor(original.shadow_color)  # Create new QColor
+
+    def generate_new_layer_name(self, original_layer_name, set_mapping):
+        """Generate new layer name based on set number mapping."""
+        if not original_layer_name:
+            return ""
+        
+        parts = original_layer_name.split('_')
+        if not parts:
+            return original_layer_name
+        
+        # The first part should be the set number
+        if parts[0].isdigit():
+            old_set_num = int(parts[0])
+            if old_set_num in set_mapping:
+                new_set_num = set_mapping[old_set_num]
+                parts[0] = str(new_set_num)
+                return '_'.join(parts)
+        
+        return original_layer_name
+
+    def create_group_widget(self, group_name, strands, main_strands):
+        """Create UI widget for the duplicated group."""
+        try:
+            # Create the container widget to hold the group
+            container_widget = QWidget()
+            container_layout = QVBoxLayout(container_widget)
+            container_layout.setContentsMargins(0, 0, 0, 0)
+            container_layout.setSpacing(0)
+            
+            # Create the CollapsibleGroupWidget
+            group_widget = CollapsibleGroupWidget(group_name, self, self.canvas)
+            
+            # Set up the layers in the group widget
+            group_widget.update_layers([strand.layer_name for strand in strands if hasattr(strand, 'layer_name')])
+            
+            # Add to container
+            container_layout.addWidget(group_widget)
+            
+            # Add to scroll layout
+            self.scroll_layout.addWidget(container_widget)
+            
+            # Update the group data with widget reference
+            self.groups[group_name]['widget'] = group_widget
+            
+            # Refresh alignment
+            self.refresh_group_alignment()
+            
+            logging.info(f"Created UI widget for duplicated group '{group_name}'")
+            
+        except Exception as e:
+            logging.error(f"Error creating widget for group '{group_name}': {str(e)}")
+
     def update_layer(self, index, layer_name, color):
         # Update the layer information in the groups
         for group_name, group_info in self.groups.items():

@@ -2159,18 +2159,22 @@ class UndoRedoManager(QObject):
                 self.layer_panel.lock_mode = lock_mode
                 if hasattr(self.layer_panel, 'lock_layers_button'):
                     self.layer_panel.lock_layers_button.setChecked(lock_mode)
+                    # Get current language translations
+                    from translations import translations
+                    language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
+                    _ = translations[language_code]
                     if lock_mode:
-                        self.layer_panel.lock_layers_button.setText("Exit Lock Mode")
+                        self.layer_panel.lock_layers_button.setText(_['exit_lock_mode'])
                         if hasattr(self.layer_panel, 'notification_label'):
-                            self.layer_panel.notification_label.setText("Select layers to lock/unlock")
+                            self.layer_panel.notification_label.setText(_['select_layers_to_lock'] if 'select_layers_to_lock' in _ else "")
                         if hasattr(self.layer_panel, 'deselect_all_button'):
-                            self.layer_panel.deselect_all_button.setText("Clear All Locks")
+                            self.layer_panel.deselect_all_button.setText(_['clear_all_locks'])
                     else:
-                        self.layer_panel.lock_layers_button.setText("Lock Layers")
+                        self.layer_panel.lock_layers_button.setText(_['lock_layers'])
                         if hasattr(self.layer_panel, 'notification_label'):
                             self.layer_panel.notification_label.setText("")
                         if hasattr(self.layer_panel, 'deselect_all_button'):
-                            self.layer_panel.deselect_all_button.setText("Deselect All")
+                            self.layer_panel.deselect_all_button.setText(_['deselect_all'])
             
             # Restore locked layers state after lock mode is set
             if hasattr(self.layer_panel, 'locked_layers'):
@@ -2530,18 +2534,22 @@ class UndoRedoManager(QObject):
                     self.layer_panel.lock_mode = lock_mode
                     if hasattr(self.layer_panel, 'lock_layers_button'):
                         self.layer_panel.lock_layers_button.setChecked(lock_mode)
+                        # Get current language translations
+                        from translations import translations
+                        language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
+                        _ = translations[language_code]
                         if lock_mode:
-                            self.layer_panel.lock_layers_button.setText("Exit Lock Mode")
+                            self.layer_panel.lock_layers_button.setText(_['exit_lock_mode'])
                             if hasattr(self.layer_panel, 'notification_label'):
-                                self.layer_panel.notification_label.setText("Select layers to lock/unlock")
+                                self.layer_panel.notification_label.setText(_['select_layers_to_lock'] if 'select_layers_to_lock' in _ else "")
                             if hasattr(self.layer_panel, 'deselect_all_button'):
-                                self.layer_panel.deselect_all_button.setText("Clear All Locks")
+                                self.layer_panel.deselect_all_button.setText(_['clear_all_locks'])
                         else:
-                            self.layer_panel.lock_layers_button.setText("Lock Layers")
+                            self.layer_panel.lock_layers_button.setText(_['lock_layers'])
                             if hasattr(self.layer_panel, 'notification_label'):
                                 self.layer_panel.notification_label.setText("")
                             if hasattr(self.layer_panel, 'deselect_all_button'):
-                                self.layer_panel.deselect_all_button.setText("Deselect All")
+                                self.layer_panel.deselect_all_button.setText(_['deselect_all'])
                 
                 # Now handle the group panel update
                 state_has_groups = bool(self.canvas.groups)

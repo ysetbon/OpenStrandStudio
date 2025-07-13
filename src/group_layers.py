@@ -293,6 +293,7 @@ class CollapsibleGroupWidget(QWidget):
             _['rotate_group_strands'], 
             _['edit_strand_angles'],
             _['duplicate_group'],
+            _['rename_group'],
             _['delete_group']
         ]
         
@@ -388,10 +389,20 @@ class CollapsibleGroupWidget(QWidget):
         duplicate_action.triggered.connect(lambda: self.group_panel.duplicate_group(self.group_name))
         context_menu.addAction(duplicate_action)
         
+        # Rename group action
+        rename_label = HoverLabel(menu_items[4], self, theme)
+        if is_rtl:
+            rename_label.setLayoutDirection(Qt.RightToLeft)
+            rename_label.setAlignment(Qt.AlignLeft)
+        rename_action = QWidgetAction(self)
+        rename_action.setDefaultWidget(rename_label)
+        rename_action.triggered.connect(lambda: self.group_panel.rename_group(self.group_name))
+        context_menu.addAction(rename_action)
+        
         context_menu.addSeparator()
         
         # Delete group action
-        delete_label = HoverLabel(menu_items[4], self, theme)
+        delete_label = HoverLabel(menu_items[5], self, theme)
         if is_rtl:
             delete_label.setLayoutDirection(Qt.RightToLeft)
             delete_label.setAlignment(Qt.AlignLeft)
@@ -1337,6 +1348,65 @@ class GroupPanel(QWidget):
             logging.info(f"Group '{group_name}' deleted and alignment refreshed.")
         else:
             logging.warning(f"Group '{group_name}' not found in GroupPanel.")
+    
+    def rename_group(self, old_group_name):
+        """Rename an existing group."""
+        if old_group_name not in self.groups:
+            logging.warning(f"Group '{old_group_name}' not found in GroupPanel.")
+            return
+        
+        # Access the current translation dictionary
+        self.language_code = self.canvas.language_code if self.canvas else 'en'
+        _ = translations[self.language_code]
+        
+        # Prompt the user to enter a new group name
+        new_group_name, ok = QInputDialog.getText(
+            self, _['rename_group'], _['enter_group_name']
+        )
+        
+        if not ok or not new_group_name:
+            logging.info("Group rename cancelled - no name provided")
+            return
+        
+        # Check if the new name is the same as the old name
+        if new_group_name == old_group_name:
+            logging.info(f"Group rename cancelled - same name provided")
+            return
+        
+        # Check if the new group name already exists
+        if new_group_name in self.groups:
+            # Show error message using QMessageBox for simplicity
+            from PyQt5.QtWidgets import QMessageBox
+            msg = QMessageBox(self)
+            msg.setWindowTitle(_['error'] if 'error' in _ else 'Error')
+            msg.setText(_['group_exists'] if 'group_exists' in _ else 'Group already exists')
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+            return
+        
+        # Rename the group in self.groups
+        group_data = self.groups[old_group_name]
+        self.groups[new_group_name] = group_data
+        del self.groups[old_group_name]
+        
+        # Rename the group in canvas.groups if it exists
+        if self.canvas and old_group_name in self.canvas.groups:
+            self.canvas.groups[new_group_name] = self.canvas.groups[old_group_name]
+            del self.canvas.groups[old_group_name]
+            logging.info(f"Group renamed from '{old_group_name}' to '{new_group_name}' in canvas.")
+        
+        # Update the widget
+        group_widget = group_data.get('widget')
+        if group_widget and hasattr(group_widget, 'group_name'):
+            group_widget.group_name = new_group_name
+            # Update the group button text
+            if hasattr(group_widget, 'group_button'):
+                group_widget.group_button.setText(new_group_name)
+        
+        # Emit signal for group rename operation
+        self.group_operation.emit("rename", old_group_name, group_data['layers'])
+        
+        logging.info(f"Group '{old_group_name}' renamed to '{new_group_name}'")
 
     def duplicate_group(self, group_name):
         """Duplicate a group with all its strands, creating new unique names."""

@@ -1,3 +1,6 @@
 Canvas: Using existing set_number=1 from strand
 Canvas: Using existing layer_name=1_1
 Canvas: Calling layer_panel.on_strand_created for strand 1_1
+Canvas: Using existing set_number=2 from strand
+Canvas: Using existing layer_name=2_1
+Canvas: Calling layer_panel.on_strand_created for strand 2_1

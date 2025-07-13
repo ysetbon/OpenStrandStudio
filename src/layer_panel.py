@@ -1236,10 +1236,21 @@ class LayerPanel(QWidget):
         _ = translations[self.language_code]
         # Update any UI elements with new translations
         self.draw_names_button.setText(_['draw_names'])
-        self.lock_layers_button.setText(_['lock_layers'])
+        
+        # Handle lock button text based on current lock mode state
+        if hasattr(self, 'lock_mode') and self.lock_mode:
+            self.lock_layers_button.setText(_['exit_lock_mode'])
+        else:
+            self.lock_layers_button.setText(_['lock_layers'])
+            
         self.add_new_strand_button.setText(_['add_new_strand'])
         self.delete_strand_button.setText(_['delete_strand'])
-        self.deselect_all_button.setText(_['deselect_all'])
+        
+        # Handle deselect button text based on current lock mode state
+        if hasattr(self, 'lock_mode') and self.lock_mode:
+            self.deselect_all_button.setText(_['clear_all_locks'])
+        else:
+            self.deselect_all_button.setText(_['deselect_all'])
         # Update other text elements as needed
 
         # Update the GroupLayerManager

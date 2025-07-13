@@ -467,13 +467,23 @@ class CollapsibleGroupWidget(QWidget):
         self.update_size()
 
     def update_translations(self):
-        if self.canvas and hasattr(self.canvas, 'language_code'):
-            self.language_code = self.canvas.language_code
+        # Try to get language_code from the most reliable sources first
+        if hasattr(self.group_panel, 'layer_panel') and hasattr(self.group_panel.layer_panel, 'language_code'):
+            self.language_code = self.group_panel.layer_panel.language_code
         elif hasattr(self.group_panel, 'language_code'):
             self.language_code = self.group_panel.language_code
+        elif self.canvas and hasattr(self.canvas, 'language_code'):
+            self.language_code = self.canvas.language_code
         else:
             self.language_code = 'en'
-        _ = translations[self.language_code]
+        
+        # Safely get translations with fallback
+        if self.language_code in translations:
+            _ = translations[self.language_code]
+        else:
+            logging.warning(f"Language code '{self.language_code}' not found in translations. Using English.")
+            _ = translations['en']
+            self.language_code = 'en'
         
         # Keep group widget layout as LTR for all languages to maintain consistent appearance
         self.setLayoutDirection(Qt.LeftToRight)
@@ -2430,6 +2440,16 @@ class GroupLayerManager:
         else:
             logging.warning("No preserved group data to restore.")
     def update_translations(self):
+        # Always get the latest language_code from the layer_panel or canvas
+        if hasattr(self.layer_panel, 'language_code'):
+            self.language_code = self.layer_panel.language_code
+        elif self.canvas and hasattr(self.canvas, 'language_code'):
+            self.language_code = self.canvas.language_code
+        elif hasattr(self.parent, 'language_code'):
+            self.language_code = self.parent.language_code
+        else:
+            self.language_code = 'en'  # Final fallback
+
         # Fetch the translations for the current language code
         if self.language_code in translations:
             _ = translations[self.language_code]
@@ -2442,6 +2462,12 @@ class GroupLayerManager:
 
         # Update button texts and any other UI elements
         self.create_group_button.setText(_['create_group'])
+        
+        # Update translations for all existing group widgets
+        for group_widget in self.group_panel.groups.values():
+            if hasattr(group_widget, 'update_translations'):
+                group_widget.language_code = self.language_code
+                group_widget.update_translations()
         # Update other UI elements as needed
 
     def set_canvas(self, canvas):

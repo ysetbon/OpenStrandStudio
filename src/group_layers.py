@@ -80,7 +80,7 @@ class GroupedLayerTree(QTreeWidget):
 
             # Update group item's text to include main strands
             main_strands_text = ", ".join(sorted(main_strands))
-            group_item.setText(0, f"{group_name}: {main_strands_text}")
+            group_item.setText(0, group_name)
             logging.info(f"Group '{group_name}' updated with main strands: {main_strands_text}")
 
             # Optionally, add child items for each main strand
@@ -535,7 +535,7 @@ class CollapsibleGroupWidget(QWidget):
             main_strands_text = ", ".join(main_strands_list[:max_strands_to_show]) + "..."
         else:
             main_strands_text = ", ".join(main_strands_list)
-        self.group_button.setText(f"{self.group_name}: {main_strands_text}")
+        self.group_button.setText(self.group_name)
 
     def extract_main_strand(self, layer_name):
         parts = layer_name.split('_')
@@ -676,7 +676,7 @@ class GroupPanel(QWidget):
             if hasattr(self, 'group_tree'):
                 group_item = self.group_tree.groups.get(group_name)
                 if group_item:
-                    group_item.setText(0, f"{group_name}: {main_strands_text}")
+                    group_item.setText(0, group_name)
             logging.info(f"Updated display for group {group_name}")
 
 

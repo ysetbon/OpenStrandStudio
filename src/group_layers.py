@@ -1357,33 +1357,35 @@ class GroupPanel(QWidget):
             # Generate new group name
             new_group_name = self.generate_unique_group_name(group_name)
             
-            # Get the highest set number to increment from
-            highest_set_number = self.get_highest_set_number()
-            
-            # Create mapping from old set numbers to new set numbers
-            old_to_new_set_mapping = {}
-            new_set_counter = highest_set_number + 1
-            
             # Build mapping of all unique set numbers in the group
             unique_set_numbers = set()
             for strand in original_strands:
                 if hasattr(strand, 'set_number'):
                     unique_set_numbers.add(strand.set_number)
             
-            # Create mapping from old to new set numbers
-            for old_set_num in sorted(unique_set_numbers):
-                old_to_new_set_mapping[old_set_num] = new_set_counter
-                new_set_counter += 1
+            # Get consecutive available set numbers for the new strands
+            consecutive_set_numbers = self.get_next_consecutive_set_numbers(len(unique_set_numbers))
+            
+            # Create mapping from old set numbers to new consecutive set numbers
+            old_to_new_set_mapping = {}
+            for i, old_set_num in enumerate(sorted(unique_set_numbers)):
+                old_to_new_set_mapping[old_set_num] = consecutive_set_numbers[i]
+            
+            logging.info(f"Duplicating group '{group_name}': Set number mapping: {old_to_new_set_mapping}")
             
             # Duplicate all strands with new names
             duplicated_strands = []
             new_main_strands = set()
+            strand_mapping = {}  # Maps original strands to duplicated strands
+            masked_strands_to_process = []  # MaskedStrands to process after component strands
             
+            # First pass: duplicate regular strands and AttachedStrands
             for original_strand in original_strands:
-                # Create deep copy of the strand
                 if hasattr(original_strand, '__class__'):
                     if original_strand.__class__.__name__ == 'MaskedStrand':
-                        new_strand = self.duplicate_masked_strand(original_strand, old_to_new_set_mapping)
+                        # Store MaskedStrands for second pass
+                        masked_strands_to_process.append(original_strand)
+                        continue
                     elif original_strand.__class__.__name__ == 'AttachedStrand':
                         new_strand = self.duplicate_attached_strand(original_strand, old_to_new_set_mapping)
                     else:
@@ -1392,14 +1394,33 @@ class GroupPanel(QWidget):
                     new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
                 
                 duplicated_strands.append(new_strand)
+                strand_mapping[original_strand] = new_strand
                 
                 # Check if this is a main strand (ends with _1)
                 if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
                     new_main_strands.add(new_strand)
                 
-                # Add to canvas strands
+                # Add to canvas strands using proper method to set canvas reference
                 if self.canvas:
-                    self.canvas.strands.append(new_strand)
+                    self.canvas.add_strand(new_strand)
+                    
+                    # Update canvas color mapping
+                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
+                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
+            
+            # Second pass: duplicate MaskedStrands with references to duplicated component strands
+            for original_masked_strand in masked_strands_to_process:
+                new_strand = self.duplicate_masked_strand(original_masked_strand, old_to_new_set_mapping, strand_mapping)
+                duplicated_strands.append(new_strand)
+                strand_mapping[original_masked_strand] = new_strand
+                
+                # Check if this is a main strand (ends with _1)
+                if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
+                    new_main_strands.add(new_strand)
+                
+                # Add to canvas strands using proper method to set canvas reference
+                if self.canvas:
+                    self.canvas.add_strand(new_strand)
                     
                     # Update canvas color mapping
                     if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
@@ -1467,6 +1488,36 @@ class GroupPanel(QWidget):
         
         return highest
 
+    def get_next_consecutive_set_numbers(self, count):
+        """Get the next consecutive available set numbers."""
+        from masked_strand import MaskedStrand
+        
+        # Get all existing set numbers (excluding MaskedStrands)
+        existing_set_numbers = set()
+        
+        if self.canvas and hasattr(self.canvas, 'strands'):
+            for strand in self.canvas.strands:
+                if (hasattr(strand, 'set_number') and 
+                    strand.set_number and 
+                    not isinstance(strand, MaskedStrand)):
+                    existing_set_numbers.add(strand.set_number)
+        
+        # Also check strand_colors mapping
+        if self.canvas and hasattr(self.canvas, 'strand_colors'):
+            for set_num in self.canvas.strand_colors.keys():
+                existing_set_numbers.add(set_num)
+        
+        # Find consecutive available numbers starting from 1
+        consecutive_numbers = []
+        current_num = 1
+        
+        while len(consecutive_numbers) < count:
+            if current_num not in existing_set_numbers:
+                consecutive_numbers.append(current_num)
+            current_num += 1
+        
+        return consecutive_numbers
+
     def duplicate_regular_strand(self, original_strand, set_mapping):
         """Duplicate a regular Strand object."""
         from strand import Strand
@@ -1497,39 +1548,80 @@ class GroupPanel(QWidget):
         
         return new_strand
 
-    def duplicate_masked_strand(self, original_strand, set_mapping):
-        """Duplicate a MaskedStrand object."""
+    def duplicate_masked_strand(self, original_strand, set_mapping, strand_mapping):
+        """Duplicate a MaskedStrand object with proper component strand references."""
         from masked_strand import MaskedStrand
         from PyQt5.QtCore import QPointF
         from PyQt5.QtGui import QColor
+        import copy
         
-        # Get new set number
-        old_set = original_strand.set_number if hasattr(original_strand, 'set_number') else 1
-        new_set = set_mapping.get(old_set, old_set)
+        # Find the duplicated component strands
+        first_duplicated = None
+        second_duplicated = None
         
-        # Generate new layer name
-        new_layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        # Look up the duplicated versions of the component strands
+        if hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
+            first_duplicated = strand_mapping.get(original_strand.first_selected_strand)
         
-        # Create new masked strand (avoid deepcopy for Qt objects)
+        if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
+            second_duplicated = strand_mapping.get(original_strand.second_selected_strand)
+        
+        # If we can't find the component strands, log warning but try to continue
+        if not first_duplicated or not second_duplicated:
+            logging.warning(f"Could not find duplicated component strands for MaskedStrand {original_strand.layer_name}")
+            # Fall back to creating a basic strand if component strands aren't available
+            return self.duplicate_regular_strand(original_strand, set_mapping)
+        
+        # Get new set number - for MaskedStrand, use the concatenation of component set numbers
+        # This matches the original MaskedStrand constructor logic
+        first_new_set = first_duplicated.set_number if hasattr(first_duplicated, 'set_number') else 1
+        second_new_set = second_duplicated.set_number if hasattr(second_duplicated, 'set_number') else 1
+        new_set = int(f"{first_new_set}{second_new_set}")
+        
+        # Create new masked strand with proper component strand references
         new_strand = MaskedStrand(
-            start=QPointF(original_strand.start.x(), original_strand.start.y()),
-            end=QPointF(original_strand.end.x(), original_strand.end.y()),
-            width=original_strand.width,
-            color=QColor(original_strand.color),
-            stroke_color=QColor(original_strand.stroke_color),
-            stroke_width=original_strand.stroke_width,
-            set_number=new_set,
-            layer_name=new_layer_name
+            first_selected_strand=first_duplicated,
+            second_selected_strand=second_duplicated,
+            set_number=new_set
         )
         
         # Copy MaskedStrand specific properties
+        if hasattr(original_strand, 'is_hidden'):
+            new_strand.is_hidden = original_strand.is_hidden
+        if hasattr(original_strand, 'shadow_only'):
+            new_strand.shadow_only = original_strand.shadow_only
+        if hasattr(original_strand, 'shadow_color'):
+            new_strand.shadow_color = QColor(original_strand.shadow_color)
+        
+        # Copy deletion rectangles if they exist
+        if hasattr(original_strand, 'deletion_rectangles') and original_strand.deletion_rectangles:
+            new_strand.deletion_rectangles = copy.deepcopy(original_strand.deletion_rectangles)
+        
+        # Copy center points if they exist
+        if hasattr(original_strand, 'base_center_point') and original_strand.base_center_point:
+            new_strand.base_center_point = QPointF(original_strand.base_center_point.x(), original_strand.base_center_point.y())
+        
+        if hasattr(original_strand, 'edited_center_point') and original_strand.edited_center_point:
+            new_strand.edited_center_point = QPointF(original_strand.edited_center_point.x(), original_strand.edited_center_point.y())
+        
+        # Copy custom mask path if it exists
+        if hasattr(original_strand, 'custom_mask_path') and original_strand.custom_mask_path:
+            new_strand.custom_mask_path = copy.deepcopy(original_strand.custom_mask_path)
+        
+        # Copy other common properties
         if hasattr(original_strand, 'type'):
             new_strand.type = original_strand.type
         if hasattr(original_strand, 'index'):
             new_strand.index = getattr(original_strand, 'index', 0)
         
-        # Copy all other properties
+        # Copy attached strands list (just for MaskedStrand, not component strands)
+        if hasattr(original_strand, '_attached_strands'):
+            new_strand._attached_strands = []  # Will be populated separately if needed
+        
+        # Copy selection state and other visual properties
         self.copy_strand_properties(original_strand, new_strand)
+        
+        logging.info(f"Successfully duplicated MaskedStrand {original_strand.layer_name} -> {new_strand.layer_name}")
         
         return new_strand
 
@@ -1574,13 +1666,21 @@ class GroupPanel(QWidget):
         from PyQt5.QtCore import QPointF
         from PyQt5.QtGui import QColor
         
-        # Copy control points (create new QPointF objects)
-        if hasattr(original, 'control_point1'):
+        # Copy control points (create new QPointF objects, but check for None values)
+        if hasattr(original, 'control_point1') and original.control_point1 is not None:
             new_strand.control_point1 = QPointF(original.control_point1.x(), original.control_point1.y())
-        if hasattr(original, 'control_point2'):
+        elif hasattr(original, 'control_point1'):
+            new_strand.control_point1 = None
+            
+        if hasattr(original, 'control_point2') and original.control_point2 is not None:
             new_strand.control_point2 = QPointF(original.control_point2.x(), original.control_point2.y())
-        if hasattr(original, 'control_point_center'):
+        elif hasattr(original, 'control_point2'):
+            new_strand.control_point2 = None
+            
+        if hasattr(original, 'control_point_center') and original.control_point_center is not None:
             new_strand.control_point_center = QPointF(original.control_point_center.x(), original.control_point_center.y())
+        elif hasattr(original, 'control_point_center'):
+            new_strand.control_point_center = None
         
         # Copy visibility and state flags
         if hasattr(original, 'is_hidden'):
@@ -2287,11 +2387,32 @@ class GroupLayerManager:
         
         # Collect all strands that match the main_strands
         selected_strands = []
+        additional_strands_to_add = []  # Strands to add due to mask dependencies
+        
+        # First pass: collect strands that match the selected main strands
         for strand in self.canvas.strands:
             main_layer = self.extract_main_layer(strand.layer_name)
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)
                 logging.info(f"Added strand {strand.layer_name} to group {group_name}")
+                
+                # If this is a MaskedStrand, ensure its component strands are also included
+                if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
+                    logging.info(f"Found MaskedStrand {strand.layer_name} in group, checking components")
+                    if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
+                        if strand.first_selected_strand not in selected_strands:
+                            additional_strands_to_add.append(strand.first_selected_strand)
+                            logging.info(f"Adding component strand {strand.first_selected_strand.layer_name} from mask")
+                    if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
+                        if strand.second_selected_strand not in selected_strands:
+                            additional_strands_to_add.append(strand.second_selected_strand)
+                            logging.info(f"Adding component strand {strand.second_selected_strand.layer_name} from mask")
+        
+        # Second pass: process additional strands from mask dependencies
+        for strand in additional_strands_to_add:
+            if strand not in selected_strands:  # Avoid duplicates
+                selected_strands.append(strand)
+                logging.info(f"Added mask component strand {strand.layer_name} to group {group_name}")
         
         if not selected_strands:
             logging.warning(f"No strands found for main strands: {selected_main_strands}")
@@ -2930,11 +3051,25 @@ class GroupLayerManager:
         # Collect strands that match the selected main strands
         selected_strands = []
         layers_data = []
+        additional_strands_to_add = []  # Strands to add due to mask dependencies
         
+        # First pass: collect strands that match the selected main strands
         for strand in self.canvas.strands:
             main_layer = self.extract_main_layer(strand.layer_name)
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)  # Keep original strands for group panel
+                
+                # If this is a MaskedStrand, ensure its component strands are also included
+                if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
+                    logging.info(f"Found MaskedStrand {strand.layer_name} in group, checking components")
+                    if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
+                        if strand.first_selected_strand not in selected_strands:
+                            additional_strands_to_add.append(strand.first_selected_strand)
+                            logging.info(f"Adding component strand {strand.first_selected_strand.layer_name} from mask")
+                    if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
+                        if strand.second_selected_strand not in selected_strands:
+                            additional_strands_to_add.append(strand.second_selected_strand)
+                            logging.info(f"Adding component strand {strand.second_selected_strand.layer_name} from mask")
                 
                 # Safely handle control points
                 cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
@@ -2967,6 +3102,44 @@ class GroupLayerManager:
                         'control_point1': cp1,
                         'control_point2': cp2
                     }
+        
+        # Second pass: process additional strands from mask dependencies
+        for strand in additional_strands_to_add:
+            if strand not in selected_strands:  # Avoid duplicates
+                selected_strands.append(strand)
+                
+                # Process this strand the same way as in the first pass
+                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                
+                strand_data = {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'control_point1': cp1,
+                    'control_point2': cp2,
+                    'width': strand.width,
+                    'color': QColor(strand.color),
+                    'stroke_color': QColor(strand.stroke_color),
+                    'stroke_width': strand.stroke_width,
+                    'has_circles': strand.has_circles.copy(),
+                    'attached_strands': strand.attached_strands.copy(),
+                    'is_first_strand': getattr(strand, 'is_first_strand', False),
+                    'is_start_side': strand.is_start_side,
+                    'set_number': strand.set_number
+                }
+                layers_data.append(strand_data)
+                
+                # Add to canvas groups
+                if self.canvas and group_name in self.canvas.groups:
+                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                    self.canvas.groups[group_name]['strands'].append(strand)
+                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                        'control_point1': cp1,
+                        'control_point2': cp2
+                    }
+                    
+                logging.info(f"Added mask component strand {strand.layer_name} to group {group_name}")
 
         if not selected_strands:
             logging.warning(f"No strands found for selected main strands: {selected_main_strands}")

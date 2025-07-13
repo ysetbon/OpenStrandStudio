@@ -55,6 +55,7 @@ class NumberedLayerButton(QPushButton):
         """
         super().__init__(parent)
         self._text = text  # Store the text privately
+        self.layer_name = text  # Store layer name for access by paintEvent
         self.count = count
         self.setFixedSize(130, 30)  # Set fixed size for the button - increased width from 100 to 130
         self.setCheckable(True)  # Make the button checkable (can be toggled)

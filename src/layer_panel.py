@@ -2342,13 +2342,20 @@ class LayerPanel(QWidget):
     def renumber_sets(self):
         new_set_numbers = {}
         new_count = 1
-        for button in self.layer_buttons:
-            old_set_number = int(button.text().split('_')[0])
-            if old_set_number not in new_set_numbers:
-                new_set_numbers[old_set_number] = new_count
-                new_count += 1
-            new_set_number = new_set_numbers[old_set_number]
-            button.setText(f"{new_set_number}_{button.text().split('_')[1]}")
+        for i, button in enumerate(self.layer_buttons):
+            if i < len(self.canvas.strands):
+                strand = self.canvas.strands[i]
+                old_set_number = strand.set_number
+                if old_set_number not in new_set_numbers:
+                    new_set_numbers[old_set_number] = new_count
+                    new_count += 1
+                new_set_number = new_set_numbers[old_set_number]
+                
+                # Update strand's set_number
+                strand.set_number = new_set_number
+                
+                # Use strand's actual layer_name instead of constructing text
+                button.setText(strand.layer_name)
         
         # Update set_counts and set_colors
         self.set_counts = {new_set_numbers[k]: v for k, v in self.set_counts.items() if k in new_set_numbers}
@@ -2383,24 +2390,24 @@ class LayerPanel(QWidget):
 
         # Update remaining buttons
         for i, button in enumerate(self.layer_buttons):
-            parts = button.text().split('_')
-            set_number = int(parts[0])
-            
-            if set_number == deleted_set_number:
-                # Update the numbering for the affected set
-                new_number = i + 1 - sum(1 for b in self.layer_buttons[:i] if int(b.text().split('_')[0]) != deleted_set_number)
-                new_text = f"{set_number}_{new_number}"
-                button.setText(new_text)
-            elif set_number > deleted_set_number:
-                # Decrement set numbers greater than the deleted set
-                new_set_number = set_number - 1
-                new_text = f"{new_set_number}_{parts[1]}"
-                button.setText(new_text)
-                # Use canvas default strand color if available, otherwise fallback to purple
-                default_color = QColor(200, 170, 230, 255)  # Fallback
-                if self.canvas and hasattr(self.canvas, 'default_strand_color'):
-                    default_color = self.canvas.default_strand_color
-                button.set_color(self.set_colors.get(new_set_number, default_color))
+            if i < len(self.canvas.strands):
+                strand = self.canvas.strands[i]
+                set_number = strand.set_number
+                
+                if set_number == deleted_set_number:
+                    # For affected set, just use the strand's actual layer_name
+                    button.setText(strand.layer_name)
+                elif set_number > deleted_set_number:
+                    # Decrement set numbers greater than the deleted set
+                    new_set_number = set_number - 1
+                    strand.set_number = new_set_number
+                    # Use strand's actual layer_name instead of constructing text
+                    button.setText(strand.layer_name)
+                    # Use canvas default strand color if available, otherwise fallback to purple
+                    default_color = QColor(200, 170, 230, 255)  # Fallback
+                    if self.canvas and hasattr(self.canvas, 'default_strand_color'):
+                        default_color = self.canvas.default_strand_color
+                    button.set_color(self.set_colors.get(new_set_number, default_color))
 
         self.update_layer_button_states()
 
@@ -2425,8 +2432,17 @@ class LayerPanel(QWidget):
         button_name = f"{set_number}_{count}"
         logging.info(f"Created new button: {button_name}")
 
-        # Get the strand index
-        strand_index = len(self.canvas.strands) - 1
+        # Find the strand with the matching set_number (most recently added)
+        strand_index = None
+        for i in range(len(self.canvas.strands) - 1, -1, -1):  # Search backwards for most recent
+            strand = self.canvas.strands[i]
+            if hasattr(strand, 'set_number') and strand.set_number == set_number:
+                strand_index = i
+                break
+        
+        if strand_index is None:
+            logging.error(f"Could not find strand with set_number {set_number}")
+            return
 
         # Create and add the button
         button = self.create_layer_button(strand_index, self.canvas.strands[strand_index], count)
@@ -2435,7 +2451,12 @@ class LayerPanel(QWidget):
         # Add button directly to layout at the top, aligned center
         self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter)
 
+        # Debug logging to trace button text issues
         logging.info(f"Added new button directly to layout at top (index 0)")
+        logging.info(f"Button created with text: '{button.text()}' for strand: '{self.canvas.strands[strand_index].layer_name}'")
+        logging.info(f"Total layer_buttons count: {len(self.layer_buttons)}")
+        for i, btn in enumerate(self.layer_buttons):
+            logging.info(f"  layer_buttons[{i}]: text='{btn.text()}'")
         logging.info("Finished add_layer_button")
 
         # Reset monkey button to non-hide mode when creating new layer
@@ -2731,13 +2752,26 @@ class LayerPanel(QWidget):
                 parts = strand.layer_name.split('_')
                 logging.info(f"STRAND_DEBUG: parts from split = {parts}")
         
-        # Extract set number and count from the strand's layer_name
-        if hasattr(strand, 'layer_name') and strand.layer_name and '_' in strand.layer_name:
+        # Check if this is a MaskedStrand - they have composite names and should use strand.set_number
+        if isinstance(strand, MaskedStrand):
+            # For masked strands, always use strand.set_number and don't parse layer_name
+            set_number = strand.set_number
+            count = self.set_counts.get(set_number, 0) + 1
+            logging.info(f"STRAND_DEBUG: MaskedStrand detected, using set_number={set_number}, count={count}")
+        # Extract set number and count from the strand's layer_name for regular strands
+        elif hasattr(strand, 'layer_name') and strand.layer_name and '_' in strand.layer_name:
             try:
                 parts = strand.layer_name.split('_')
-                set_number = int(parts[0])
-                count = int(parts[1])
-                logging.info(f"STRAND_DEBUG: Successfully extracted set_number={set_number}, count={count}")
+                # Only parse if we have exactly 2 parts (set_count format)
+                if len(parts) == 2:
+                    set_number = int(parts[0])
+                    count = int(parts[1])
+                    logging.info(f"STRAND_DEBUG: Successfully extracted set_number={set_number}, count={count}")
+                else:
+                    # Layer name has multiple underscores, use fallback
+                    set_number = strand.set_number
+                    count = self.set_counts.get(set_number, 0) + 1
+                    logging.info(f"STRAND_DEBUG: Layer name has {len(parts)} parts, using fallback set_number={set_number}, count={count}")
             except (ValueError, IndexError) as e:
                 logging.info(f"STRAND_DEBUG: Exception during parsing: {e}")
                 # Fallback to using strand.set_number if layer_name parsing fails

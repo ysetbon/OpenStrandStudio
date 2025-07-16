@@ -704,8 +704,16 @@ class GroupPanel(QWidget):
                         # Store original positions for the new strand
                         strand.original_start = QPointF(strand.start)
                         strand.original_end = QPointF(strand.end)
-                        strand.original_control_point1 = QPointF(strand.control_point1)
-                        strand.original_control_point2 = QPointF(strand.control_point2)
+                        # Check for None control points (MaskedStrands have None control points)
+                        if strand.control_point1 is not None:
+                            strand.original_control_point1 = QPointF(strand.control_point1)
+                        else:
+                            strand.original_control_point1 = QPointF(strand.start)
+                        
+                        if strand.control_point2 is not None:
+                            strand.original_control_point2 = QPointF(strand.control_point2)
+                        else:
+                            strand.original_control_point2 = QPointF(strand.end)
                         logging.info(f"Stored original positions for new strand in group: {layer_name}")
                 
                 # Update the group's visual representation
@@ -1531,15 +1539,24 @@ class GroupPanel(QWidget):
             logging.error(traceback.format_exc())
 
     def generate_unique_group_name(self, base_name):
-        """Generate a unique group name by appending (1), (2), etc."""
+        """Generate a unique group name by finding the smallest unused number (1), (2), etc."""
+        import re
+        
+        # Find all existing group names that match the pattern base_name(number)
+        used_numbers = set()
+        pattern = re.compile(rf"^{re.escape(base_name)}\((\d+)\)$")
+        
+        for group_name in self.groups.keys():
+            match = pattern.match(group_name)
+            if match:
+                used_numbers.add(int(match.group(1)))
+        
+        # Find the smallest unused number starting from 1
         counter = 1
-        new_name = f"{base_name}({counter})"
-        
-        while new_name in self.groups:
+        while counter in used_numbers:
             counter += 1
-            new_name = f"{base_name}({counter})"
         
-        return new_name
+        return f"{base_name}({counter})"
 
     def get_highest_set_number(self):
         """Get the highest set number across all strands."""
@@ -1964,11 +1981,20 @@ class GroupPanel(QWidget):
             # Update control points
             for strand in group_strands:
                 if hasattr(strand, 'layer_name'):
-                    updated_group_data['control_points'][strand.layer_name] = {
-                        'control_point1': QPointF(strand.control_point1),
-                        'control_point2': QPointF(strand.control_point2)
-                    }
-                    logging.info(f"Added control points for strand {strand.layer_name}")
+                    # Check if control points exist (they don't for MaskedStrand)
+                    control_data = {}
+                    if strand.control_point1 is not None:
+                        control_data['control_point1'] = QPointF(strand.control_point1)
+                    else:
+                        control_data['control_point1'] = None
+                    
+                    if strand.control_point2 is not None:
+                        control_data['control_point2'] = QPointF(strand.control_point2)
+                    else:
+                        control_data['control_point2'] = None
+                    
+                    updated_group_data['control_points'][strand.layer_name] = control_data
+                    logging.info(f"Added control points for strand {strand.layer_name}: {control_data}")
             
             # Update the canvas groups
             self.canvas.groups[group_name] = updated_group_data
@@ -3433,8 +3459,8 @@ class GroupLayerManager:
             
             for strand in group_data['strands']:
                 # Store original control points before moving
-                original_cp1 = QPointF(strand.control_point1)
-                original_cp2 = QPointF(strand.control_point2)
+                original_cp1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
+                original_cp2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
                 
                 # Move all points including control points
                 strand.start += delta
@@ -3469,8 +3495,8 @@ class GroupLayerManager:
             if existing_strand:
                 existing_strand.start = QPointF(strand.start)
                 existing_strand.end = QPointF(strand.end)
-                existing_strand.control_point1 = QPointF(strand.control_point1)
-                existing_strand.control_point2 = QPointF(strand.control_point2)
+                existing_strand.control_point1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
+                existing_strand.control_point2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
                 existing_strand.update_shape()
                 if hasattr(existing_strand, 'update_side_line'):
                     existing_strand.update_side_line()

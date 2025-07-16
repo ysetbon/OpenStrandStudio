@@ -377,8 +377,19 @@ class SettingsDialog(QDialog):
                 }}
                 {dropdown_arrow_css}
                 QComboBox QAbstractItemView {{
-                    padding: 8px;
+                    padding: 4px;
                     selection-background-color: {selection_color};
+                }}
+                QComboBox QAbstractItemView::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    border: none;
+                    text-align: left;
+                }}
+                QComboBox::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    text-align: left;
                 }}
             """
             self.theme_combobox.setStyleSheet(updated_theme_style)
@@ -405,13 +416,24 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                     min-width: 150px;
                     font-size: 14px;
-                    {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                    padding-left: 8px; padding-right: 24px;
                 }}
                 {dropdown_arrow_css}
                 QComboBox QAbstractItemView {{
-                    padding: 8px;
+                    padding: 4px;
                     min-width: 150px;
                     selection-background-color: {selection_color};
+                }}
+                QComboBox QAbstractItemView::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    border: none;
+                    text-align: left;
+                }}
+                QComboBox::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    text-align: left;
                 }}
             """
             self.language_combobox.setStyleSheet(updated_lang_style)
@@ -1003,12 +1025,28 @@ class SettingsDialog(QDialog):
             # Make the line edit read-only to prevent user typing
             combobox.lineEdit().setReadOnly(True)
             
-        # Set the alignment on the line edit - this actually works!
-        combobox.lineEdit().setAlignment(alignment)
+        # For RTL languages, we want the text to start right next to the flag (like LTR)
+        # So we use left alignment but with RTL layout direction
+        if alignment & Qt.AlignRight:
+            # Use left alignment so text starts right next to the flag
+            combobox.lineEdit().setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            # But set RTL layout direction for proper Hebrew text rendering
+            combobox.lineEdit().setLayoutDirection(Qt.RightToLeft)
+            # Force update the display
+            combobox.lineEdit().update()
+        else:
+            # For LTR languages, use standard left alignment
+            combobox.lineEdit().setAlignment(alignment)
+            combobox.lineEdit().setLayoutDirection(Qt.LeftToRight)
         
         # Also apply to dropdown items for consistency
         for i in range(combobox.count()):
-            combobox.setItemData(i, alignment, Qt.TextAlignmentRole)
+            # For RTL languages, use left alignment in dropdown items too
+            # so text starts next to the flag (not pushed to far right)
+            if alignment & Qt.AlignRight:
+                combobox.setItemData(i, Qt.AlignLeft | Qt.AlignVCenter, Qt.TextAlignmentRole)
+            else:
+                combobox.setItemData(i, alignment, Qt.TextAlignmentRole)
     
     def get_settings_directory(self):
         """Get the settings directory path consistently across platforms."""
@@ -1250,8 +1288,19 @@ class SettingsDialog(QDialog):
             }}
             {dropdown_arrow_css}
             QComboBox QAbstractItemView {{
-                padding: 8px;
+                padding: 4px;
                 selection-background-color: {selection_color};
+            }}
+            QComboBox QAbstractItemView::item {{
+                padding: 4px 8px;
+                min-height: 48px;
+                border: none;
+                text-align: left;
+            }}
+            QComboBox::item {{
+                padding: 4px 8px;
+                min-height: 48px;
+                text-align: left;
             }}
         """
         self.theme_combobox.setStyleSheet(self.theme_combobox_base_style)
@@ -1865,13 +1914,24 @@ class SettingsDialog(QDialog):
                 border-radius: 4px;
                 min-width: 150px;
                 font-size: 14px;
-                {"padding-left: 24px; padding-right: 8px;" if is_rtl else "padding-left: 8px; padding-right: 24px;"}
+                padding-left: 8px; padding-right: 24px;
             }}
             {dropdown_arrow_css}
             QComboBox QAbstractItemView {{
-                padding: 8px;
+                padding: 4px;
                 min-width: 150px;
                 selection-background-color: {selection_color};
+            }}
+            QComboBox QAbstractItemView::item {{
+                padding: 4px 8px;
+                min-height: 48px;
+                border: none;
+                text-align: left;
+            }}
+            QComboBox::item {{
+                padding: 4px 8px;
+                min-height: 48px;
+                text-align: left;
             }}
         """
         self.language_combobox.setStyleSheet(self.lang_combobox_base_style)
@@ -1889,6 +1949,14 @@ class SettingsDialog(QDialog):
         index = self.language_combobox.findData(current_language)
         if index >= 0:
             self.language_combobox.setCurrentIndex(index)
+            
+        # Apply text alignment based on current language
+        if self.is_rtl_language(current_language):
+            self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
+            logging.info(f"RTL: Applied right alignment for language {current_language}")
+        else:
+            self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
+            logging.info(f"LTR: Applied left alignment for language {current_language}")
 
         self.language_info_label = QLabel(_['language_settings_info'])
         # Add widgets to language layout with logical leading alignment
@@ -2109,6 +2177,18 @@ class SettingsDialog(QDialog):
                     selection-background-color: #505050;
                     selection-color: white;
                     border: 1px solid #505050;
+                    padding: 4px;
+                }}
+                QComboBox QAbstractItemView::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    border: none;
+                    text-align: left;
+                }}
+                QComboBox::item {{
+                    padding: 4px 8px;
+                    min-height: 48px;
+                    text-align: left;
                 }}
                 
                 /* List Widget */
@@ -2910,37 +2990,61 @@ class SettingsDialog(QDialog):
         return flag_path
     
     def create_flag_icon(self, flag_filename):
-        """Create a flag icon from an image file."""
+        """Create a flag icon from high-resolution flag images, scaled appropriately for dropdown."""
         flag_path = self.get_flag_path(flag_filename)
         if flag_path and os.path.exists(flag_path):
-            # Load the flag image
-            flag_pixmap = QPixmap(flag_path)
+            # Load the original high-resolution flag image
+            original_flag = QPixmap(flag_path)
             
-            # Create a larger canvas with border
-            icon_size = 32
-            pixmap = QPixmap(icon_size, int(icon_size * 0.75))  # 4:3 ratio for flag
+            # Calculate optimal size for dropdown display
+            # Target height around 40px for good visibility in dropdown
+            target_height = 40
+            original_width = original_flag.width()
+            original_height = original_flag.height()
+            
+            # Calculate width maintaining aspect ratio
+            aspect_ratio = original_width / original_height
+            target_width = int(target_height * aspect_ratio)
+            
+            # Create high-quality scaled flag
+            scaled_flag = original_flag.scaled(
+                target_width, target_height,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            
+            # Add small border around the flag
+            border_width = 2
+            canvas_width = scaled_flag.width() + 2 * border_width
+            canvas_height = scaled_flag.height() + 2 * border_width
+            
+            # Create canvas for the final icon
+            pixmap = QPixmap(canvas_width, canvas_height)
             pixmap.fill(Qt.transparent)
             painter = QPainter(pixmap)
+            
+            # Enable all quality rendering hints for crisp display
             painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
             
-            # Scale flag to fit with small border
-            border_width = 2
-            flag_rect = QRect(border_width, border_width, 
-                            pixmap.width() - 2*border_width, 
-                            pixmap.height() - 2*border_width)
-            scaled_flag = flag_pixmap.scaled(flag_rect.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            
-            # Draw the flag
+            # Draw the scaled flag
+            flag_rect = QRect(border_width, border_width, scaled_flag.width(), scaled_flag.height())
             painter.drawPixmap(flag_rect.topLeft(), scaled_flag)
             
-            # Add border based on theme
+            # Add crisp border based on theme
             border_color = QColor("#000000")
             if self.current_theme == "dark":
                 border_color = QColor("#ffffff")
-            painter.setPen(QPen(border_color, 1))
-            painter.drawRect(border_width-1, border_width-1, 
-                           pixmap.width() - border_width, 
-                           pixmap.height() - border_width)
+            
+            # Use precise pen for crisp border lines
+            pen = QPen(border_color, 1)
+            pen.setStyle(Qt.SolidLine)
+            painter.setPen(pen)
+            
+            # Draw crisp border rectangle
+            painter.drawRect(border_width - 1, border_width - 1, 
+                           scaled_flag.width() + 1, scaled_flag.height() + 1)
             
             painter.end()
             return QIcon(pixmap), pixmap.size()
@@ -2995,6 +3099,16 @@ class SettingsDialog(QDialog):
             self.language_combobox.setIconSize(icon_size)
         else:
             self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
+            
+        # For Hebrew item, explicitly set left alignment so text starts next to flag
+        item_index = self.language_combobox.count() - 1
+        self.language_combobox.setItemData(item_index, Qt.AlignLeft | Qt.AlignVCenter, Qt.TextAlignmentRole)
+        
+        # Also set layout direction for the dropdown view to handle Hebrew properly
+        if hasattr(self.language_combobox, 'view'):
+            view = self.language_combobox.view()
+            if view:
+                view.setLayoutDirection(Qt.RightToLeft)
 
     def update_shadow_color_button(self):
         """Update the shadow color button appearance to reflect the current shadow color."""

@@ -2708,15 +2708,23 @@ class GroupLayerManager:
 
         # Check if this is a masked strand
         if isinstance(new_strand, MaskedStrand):
-            # For masked strands, get the original layer names being masked
-            original_layer_names = new_strand.layer_name.split('_')[:2]  # Gets ['1', '2'] from '1_2_2_2'
+            # For masked strands, properly extract the original layer names being masked
+            # Format: "2_1_3_1" should give us ['2_1', '3_1']
+            layer_parts = new_strand.layer_name.split('_')
+            if len(layer_parts) >= 4:
+                # Reconstruct the original layer names
+                original_layer_names = [f"{layer_parts[0]}_{layer_parts[1]}", f"{layer_parts[2]}_{layer_parts[3]}"]
+            else:
+                # Fallback for unexpected format
+                original_layer_names = layer_parts[:2]
+            
             logging.info(f"Checking groups for masked strand with original layers: {original_layer_names}")
             
             # Find any groups containing any of the masked layers
             for group_name, group_data in list(self.group_panel.groups.items()):
                 for layer in group_data['layers']:
-                    main_layer = self.extract_main_layer(layer)
-                    if main_layer in original_layer_names:
+                    # Check if the full layer name matches any of the original masked layers
+                    if layer in original_layer_names:
                         logging.info(f"Group '{group_name}' will be deleted because it contains layer '{layer}' that was masked")
                         groups_to_delete.append(group_name)
                         break

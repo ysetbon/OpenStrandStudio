@@ -33,7 +33,8 @@ class SplitterHandle(QWidget):
         painter = QPainter(self)
         logging.info(f"[SplitterHandle.paintEvent] Setting up UI painter for splitter handle")
         RenderUtils.setup_ui_painter(painter)
-        painter.fillRect(self.rect(), QColor(200, 200, 200, 100))  # Fill with light gray color
+        # Make the handle fully transparent - no visual rectangle
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 0))  # Fully transparent
         painter.end()
 
     def updateSize(self):

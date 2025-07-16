@@ -453,13 +453,13 @@ class NumberedLayerButton(QPushButton):
                     line_style = """
                         QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
                         QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
+                        QLabel { color: white; background-color: transparent; padding: 2px; }
                     """
                 else:
                     line_style = """
                         QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
                         QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
+                        QLabel { color: black; background-color: transparent; padding: 2px; }
                     """
                 # Apply style to all children widgets that were possibly created
                 for child in line_widget.findChildren(QWidget):
@@ -522,13 +522,13 @@ class NumberedLayerButton(QPushButton):
                     arrow_style = """
                         QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
                         QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
+                        QLabel { color: white; background-color: transparent; padding: 2px; }
                     """
                 else:
                     arrow_style = """
                         QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
                         QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
+                        QLabel { color: black; background-color: transparent; padding: 2px; }
                     """
                 for child in arrow_widget.findChildren(QWidget):
                     child.setStyleSheet(arrow_style)
@@ -592,13 +592,13 @@ class NumberedLayerButton(QPushButton):
                     widget_style = """
                         QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
                         QPushButton:hover { background-color: #F0F0F0; color: black; }
-                        QLabel { color: white; background-color: transparent; }
+                        QLabel { color: white; background-color: transparent; padding: 2px; }
                     """
                 else:
                     widget_style = """
                         QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
                         QPushButton:hover { background-color: #333333; color: white; }
-                        QLabel { color: black; background-color: transparent; }
+                        QLabel { color: black; background-color: transparent; padding: 2px; }
                     """
 
                 for child in ext_widget.findChildren(QWidget):

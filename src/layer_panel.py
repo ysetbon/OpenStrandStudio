@@ -3008,6 +3008,10 @@ class LayerPanel(QWidget):
                 btn.layer_name = strand.layer_name          # reliable lookup
                 btn.clicked.connect(partial(self.select_layer, i))
                 btn.color_changed.connect(self.on_color_changed)
+                
+                # Add right-click context menu for multi-selection
+                btn.setContextMenuPolicy(Qt.CustomContextMenu)
+                btn.customContextMenuRequested.connect(partial(self.show_multi_select_context_menu, i))
 
                 if isinstance(strand, MaskedStrand):
                     btn.set_border_color(strand.second_selected_strand.color)

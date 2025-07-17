@@ -116,9 +116,18 @@ class MainWindow(QMainWindow):
         # (not during restore from minimize)
         if not hasattr(self, '_initial_show_completed'):
             logging.info("MainWindow showEvent: Initial window setup")
-            # Get the screen size
-            screen = QApplication.primaryScreen()
-            screen_size = screen.availableGeometry()
+            
+            # Check if window has already been assigned to a specific screen by main.py
+            if hasattr(self, 'windowHandle') and self.windowHandle() and self.windowHandle().screen():
+                # Window already has a screen assignment - respect it
+                current_screen = self.windowHandle().screen()
+                screen_size = current_screen.availableGeometry()
+                logging.info(f"MainWindow showEvent: Using assigned screen: {current_screen.name()}")
+            else:
+                # Fallback to primary screen if no assignment
+                screen = QApplication.primaryScreen()
+                screen_size = screen.availableGeometry()
+                logging.info(f"MainWindow showEvent: Using primary screen: {screen.name()}")
             
             # Set window to use almost all available space
             self.setGeometry(screen_size)

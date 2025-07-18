@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import (
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
-    QSpinBox, QDoubleSpinBox # Add these
+    QSpinBox, QDoubleSpinBox, QStyleOptionButton # Add these
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -348,21 +348,8 @@ class SettingsDialog(QDialog):
                 }
             """
             
-        # Apply checkbox style to all checkboxes
-        checkbox_style = """
-            QCheckBox {
-                spacing: 5px;
-            }
-            QCheckBox::indicator {
-                width: 13px;
-                height: 13px;
-            }
-        """
-        
-        for checkbox in self.findChildren(QCheckBox):
-            checkbox.setStyleSheet(checkbox_style)
-            # Use appropriate direction for checkbox
-            checkbox.setLayoutDirection(Qt.LeftToRight if not self.is_rtl_language(self.current_language) else Qt.LeftToRight)
+        # Apply checkbox style to all checkboxes with theme support
+        self.apply_checkbox_style()
 
         if hasattr(self, 'theme_combobox'):
             self.theme_combobox.setLayoutDirection(direction)
@@ -490,10 +477,15 @@ class SettingsDialog(QDialog):
                         if row == getattr(self, 'button_color_container', None):
                             if is_rtl:
                                 inner_layout.setContentsMargins(0, 0, 0, 0)  # Use spacers instead of margins
-                                inner_layout.setSpacing(20)
+                                inner_layout.setSpacing(10)
                             else:
                                 inner_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins
-                                inner_layout.setSpacing(15)
+                                inner_layout.setSpacing(10)
+                        
+                        # Special handling for checkbox_container to maintain consistent 10px spacing
+                        elif row == getattr(self, 'checkbox_container', None):
+                            inner_layout.setContentsMargins(0, 0, 0, 0)  # No margins
+                            inner_layout.setSpacing(4)  # Consistent 10px spacing for both RTL and LTR
 
                     # Ensure any labels inside are aligned properly in RTL
                     if is_rtl:
@@ -677,7 +669,7 @@ class SettingsDialog(QDialog):
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
                 self.button_color_layout.setContentsMargins(105, 0, 0, 0)
-                self.button_color_layout.setSpacing(10)  # Add some spacing between widgets
+                self.button_color_layout.setSpacing(5)  # Add some spacing between widgets
                 self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.button_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.button_color_label.setTextFormat(Qt.PlainText)
@@ -690,7 +682,7 @@ class SettingsDialog(QDialog):
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
                 self.button_color_layout.setContentsMargins(0, 0, 0, 0)
-                self.button_color_layout.setSpacing(10)  # Small, constant gap
+                self.button_color_layout.setSpacing(5)  # Small, constant gap
                 self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.button_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
@@ -1728,7 +1720,7 @@ class SettingsDialog(QDialog):
         self.checkbox_container = QWidget()  # Store as instance attribute
         self.checkbox_layout = QHBoxLayout(self.checkbox_container)  # Store as instance attribute
         self.checkbox_layout.setContentsMargins(0, 0, 0, 0)
-        self.checkbox_layout.setSpacing(15)  # Match spacing from general settings
+        #self.checkbox_layout.setSpacing(0)  # Match spacing from general settings
         
         # Create separate label and checkbox (like in general settings)
         self.default_arrow_color_label = QLabel(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
@@ -1759,10 +1751,10 @@ class SettingsDialog(QDialog):
         # Set initial margins and spacing for the button_color_layout (QHBoxLayout)
         if self.is_rtl_language(self.current_language):
             self.button_color_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins, use spacer instead
-            self.button_color_layout.setSpacing(20) 
+            self.button_color_layout.setSpacing(10) 
         else:
             self.button_color_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins for LTR
-            self.button_color_layout.setSpacing(15)
+            self.button_color_layout.setSpacing(10)
 
         self.button_color_label = QLabel(_['button_color'] if 'button_color' in _ else 'Button Color:')
         # Add these lines right after creating the label:
@@ -2168,12 +2160,174 @@ class SettingsDialog(QDialog):
             # Don't override colors - let the theme stylesheet handle colors
             # Only ensure consistent size and basic properties
 
+    def setup_custom_checkmark(self, checkbox):
+        """Setup custom checkmark for the checkbox using Qt's native indicator"""
+        # Create a custom paintEvent for the checkbox to draw checkmark
+        original_paintEvent = checkbox.paintEvent
+        
+        def custom_paintEvent(event):
+            # Call the original paint event first
+            original_paintEvent(event)
+            
+            # If checked, draw a custom checkmark
+            if checkbox.isChecked():
+                painter = QPainter(checkbox)
+                painter.setRenderHint(QPainter.Antialiasing)
+                
+                # Calculate the exact position of the checkbox indicator
+                # Get the checkbox style option to find the actual indicator position
+                checkbox_rect = checkbox.rect()
+                is_rtl = self.is_rtl_language(self.current_language)
+                
+                # Use Qt's style system to get the ACTUAL indicator position
+                # This will work regardless of the checkbox's specific layout direction settings
+                style_option = QStyleOptionButton()
+                checkbox.initStyleOption(style_option)
+                
+                # Get the actual indicator rectangle from Qt's style system
+                style = checkbox.style()
+                indicator_rect_from_style = style.subElementRect(
+                    style.SE_CheckBoxIndicator, style_option, checkbox
+                )
+                
+                # Use the actual indicator position and size from Qt's calculations
+                indicator_x = indicator_rect_from_style.x()
+                indicator_y = indicator_rect_from_style.y()
+                indicator_width = indicator_rect_from_style.width()
+                indicator_height = indicator_rect_from_style.height()
+                
+                logging.info(f"Checkbox ({checkbox.text() if checkbox.text() else 'no text'}): "
+                           f"layout_direction={checkbox.layoutDirection()}, "
+                           f"is_rtl={is_rtl}, "
+                           f"actual_indicator=({indicator_x},{indicator_y},{indicator_width}x{indicator_height}), "
+                           f"checkbox_size=({checkbox_rect.width()}x{checkbox_rect.height()})")
+                
+                # Use the actual indicator rectangle from Qt
+                indicator_rect = QRect(indicator_x, indicator_y, indicator_width, indicator_height)
+                
+                # Set pen for white checkmark with proper thickness
+                pen = QPen(QColor(255, 255, 255), 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                painter.setPen(pen)
+                
+                # Calculate perfectly centered checkmark coordinates using actual indicator size
+                center_x = indicator_rect.x() + indicator_rect.width() // 2
+                center_y = indicator_rect.y() + indicator_rect.height() // 2
+                
+                # Make checkmark proportional to actual indicator size (40% of size - 20% smaller than before)
+                checkmark_size = min(indicator_rect.width(), indicator_rect.height()) * 0.24  # 24% radius = 48% total (20% smaller than 60%)
+                checkmark_size = int(checkmark_size)
+                
+                # Left stroke of the checkmark (shorter diagonal line)
+                x1, y1 = center_x - checkmark_size + 1, center_y - 1
+                x2, y2 = center_x - 1, center_y + checkmark_size - 1
+                
+                # Right stroke of the checkmark (longer diagonal line)  
+                x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+                
+                logging.info(f"Checkmark center: ({center_x},{center_y}), size: {checkmark_size}, "
+                           f"lines: ({x1},{y1})-({x2},{y2}) and ({x2},{y2})-({x3},{y3})")
+                
+                # Draw the checkmark lines with precise positioning
+                painter.drawLine(x1, y1, x2, y2)
+                painter.drawLine(x2, y2, x3, y3)
+                
+                painter.end()
+        
+        # Replace the paintEvent method
+        checkbox.paintEvent = custom_paintEvent
+
+    def apply_checkbox_style(self):
+        """Apply checkbox styling based on current theme with improved checkmark visibility"""
+        
+        if self.current_theme == 'dark':
+            checkbox_style = """
+                QCheckBox {
+                    spacing: 5px;
+                    font-size: 14px;
+                    color: #ffffff;
+                }
+                QCheckBox::indicator {
+                    width: 22px;
+                    height: 22px;
+                    border: 2px solid #666666;
+                    border-radius: 3px;
+                    background-color: #2d2d2d;
+                }
+                QCheckBox::indicator:hover {
+                    border-color: #888888;
+                    background-color: #3d3d3d;
+                }
+                QCheckBox::indicator:checked {
+                    border-color: #28a745;
+                    background-color: #28a745;
+                }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #218838;
+                }
+            """
+        else:
+            checkbox_style = """
+                QCheckBox {
+                    spacing: 5px;
+                    font-size: 14px;
+                    color: #000000;
+                }
+                QCheckBox::indicator {
+                    width: 22px;
+                    height: 22px;
+                    border: 2px solid #cccccc;
+                    border-radius: 3px;
+                    background-color: white;
+                }
+                QCheckBox::indicator:hover {
+                    border-color: #999999;
+                    background-color: #f5f5f5;
+                }
+                QCheckBox::indicator:checked {
+                    border-color: #28a745;
+                    background-color: #28a745;
+                }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #218838;
+                }
+            """
+        
+        # Find and style all checkboxes in the dialog (including layer panel section)
+        all_checkboxes = self.findChildren(QCheckBox)
+        logging.info(f"Applying checkbox styling to {len(all_checkboxes)} checkboxes")
+        
+        for checkbox in all_checkboxes:
+            checkbox.setStyleSheet(checkbox_style)
+            # Setup custom checkmark for each checkbox
+            self.setup_custom_checkmark(checkbox)
+            
+            # Set proper layout direction for checkbox based on language
+            # Special handling for default_arrow_color_checkbox which has its own layout logic
+            if hasattr(self, 'default_arrow_color_checkbox') and checkbox == self.default_arrow_color_checkbox:
+                # This checkbox has special RTL handling elsewhere - don't override it here
+                logging.info(f"Skipping layout direction override for default_arrow_color_checkbox")
+            else:
+                # Apply standard RTL/LTR layout for other checkboxes
+                if self.is_rtl_language(self.current_language):
+                    checkbox.setLayoutDirection(Qt.RightToLeft)
+                else:
+                    checkbox.setLayoutDirection(Qt.LeftToRight)
+            
+            # Force update to ensure styling is applied
+            checkbox.update()
+
     def apply_dialog_theme(self, theme_name):
         """Apply theme to dialog components"""
         # Update current theme for dropdown arrow colors
         self.current_theme = theme_name
         is_rtl = self.is_rtl_language(self.current_language)
         dropdown_arrow_css = self.get_dropdown_arrow_css(is_rtl)
+        
+        # Apply checkbox styling for current theme
+        self.apply_checkbox_style()
+        
+        # Schedule a delayed checkbox styling to catch any dynamically created checkboxes
+        QTimer.singleShot(100, self.apply_checkbox_style)
         
         if theme_name == "dark":
             button_style = f"""

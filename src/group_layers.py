@@ -2072,8 +2072,9 @@ class GroupPanel(QWidget):
         layer_button = next((button for button in self.layer_panel.layer_buttons if button.text() == layer_name), None)
         return layer_button is not None and layer_button.isEnabled()
 
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton, QLineEdit, QGroupBox
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QIntValidator
 
 class GroupMoveDialog(QDialog):
     move_updated = pyqtSignal(str, float, float)  # group_name, dx, dy
@@ -2158,37 +2159,93 @@ class GroupMoveDialog(QDialog):
         if self.language_code == 'he':
             self.setLayoutDirection(Qt.RightToLeft)
 
-        # X movement controls
+        # Line 1: X movement controls (original slider)
         x_layout = QHBoxLayout()
         x_label = QLabel(_['x_movement'])
+        x_label.setMinimumWidth(100)  # Ensure consistent alignment
         self.dx_slider = QSlider(Qt.Horizontal)
         self.dx_slider.setRange(-600, 600)
         self.dx_slider.setValue(0)
+        # Invert slider appearance for RTL languages (Hebrew)
+        if self.language_code == 'he':
+            self.dx_slider.setInvertedAppearance(True)
         self.dx_value = QLabel("0")
+        self.dx_value.setMinimumWidth(30)
         self.dx_input = QLineEdit()
         self.dx_input.setValidator(QIntValidator(-600, 600))
         self.dx_input.setText("0")
+        self.dx_input.setMaximumWidth(60)
         
         x_layout.addWidget(x_label)
         x_layout.addWidget(self.dx_slider)
         x_layout.addWidget(self.dx_value)
         x_layout.addWidget(self.dx_input)
 
-        # Y movement controls
+        # Line 2: Y movement controls (original slider)
         y_layout = QHBoxLayout()
         y_label = QLabel(_['y_movement'])
+        y_label.setMinimumWidth(100)  # Ensure consistent alignment
         self.dy_slider = QSlider(Qt.Horizontal)
         self.dy_slider.setRange(-600, 600)
         self.dy_slider.setValue(0)
+        # Invert slider appearance for RTL languages (Hebrew)
+        if self.language_code == 'he':
+            self.dy_slider.setInvertedAppearance(True)
         self.dy_value = QLabel("0")
+        self.dy_value.setMinimumWidth(30)
         self.dy_input = QLineEdit()
         self.dy_input.setValidator(QIntValidator(-600, 600))
         self.dy_input.setText("0")
+        self.dy_input.setMaximumWidth(60)
         
         y_layout.addWidget(y_label)
         y_layout.addWidget(self.dy_slider)
         y_layout.addWidget(self.dy_value)
         y_layout.addWidget(self.dy_input)
+
+        # Line 3: X grid movement controls
+        x_grid_layout = QHBoxLayout()
+        x_grid_label = QLabel(_['x_grid_steps'])
+        x_grid_label.setMinimumWidth(100)  # Ensure consistent alignment
+        self.x_grid_input = QLineEdit()
+        self.x_grid_input.setValidator(QIntValidator(-50, 50))
+        self.x_grid_input.setText("0")
+        self.x_grid_input.setMaximumWidth(60)
+        self.x_grid_minus_button = QPushButton("-")
+        self.x_grid_minus_button.setMinimumSize(50, 35)  # Bigger button size
+        self.x_grid_plus_button = QPushButton("+")
+        self.x_grid_plus_button.setMinimumSize(50, 35)  # Bigger button size
+        self.x_grid_apply_button = QPushButton(_['apply'])
+        self.x_grid_apply_button.setMinimumSize(80, 35)  # Bigger button size
+        
+        x_grid_layout.addWidget(x_grid_label)
+        x_grid_layout.addStretch()  # Add stretch to align with sliders
+        x_grid_layout.addWidget(self.x_grid_input)
+        x_grid_layout.addWidget(self.x_grid_minus_button)
+        x_grid_layout.addWidget(self.x_grid_plus_button)
+        x_grid_layout.addWidget(self.x_grid_apply_button)
+
+        # Line 4: Y grid movement controls
+        y_grid_layout = QHBoxLayout()
+        y_grid_label = QLabel(_['y_grid_steps'])
+        y_grid_label.setMinimumWidth(100)  # Ensure consistent alignment
+        self.y_grid_input = QLineEdit()
+        self.y_grid_input.setValidator(QIntValidator(-50, 50))
+        self.y_grid_input.setText("0")
+        self.y_grid_input.setMaximumWidth(60)
+        self.y_grid_minus_button = QPushButton("-")
+        self.y_grid_minus_button.setMinimumSize(50, 35)  # Bigger button size
+        self.y_grid_plus_button = QPushButton("+")
+        self.y_grid_plus_button.setMinimumSize(50, 35)  # Bigger button size
+        self.y_grid_apply_button = QPushButton(_['apply'])
+        self.y_grid_apply_button.setMinimumSize(80, 35)  # Bigger button size
+        
+        y_grid_layout.addWidget(y_grid_label)
+        y_grid_layout.addStretch()  # Add stretch to align with sliders
+        y_grid_layout.addWidget(self.y_grid_input)
+        y_grid_layout.addWidget(self.y_grid_minus_button)
+        y_grid_layout.addWidget(self.y_grid_plus_button)
+        y_grid_layout.addWidget(self.y_grid_apply_button)
 
         # Buttons
         button_layout = QHBoxLayout()
@@ -2216,6 +2273,8 @@ class GroupMoveDialog(QDialog):
         # Add all layouts to main layout
         layout.addLayout(x_layout)
         layout.addLayout(y_layout)
+        layout.addLayout(x_grid_layout)
+        layout.addLayout(y_grid_layout)
         layout.addLayout(button_layout)
 
         # Connect signals
@@ -2223,6 +2282,12 @@ class GroupMoveDialog(QDialog):
         self.dy_slider.valueChanged.connect(self.update_dy_from_slider)
         self.dx_input.textChanged.connect(self.update_dx_from_input)
         self.dy_input.textChanged.connect(self.update_dy_from_input)
+        self.x_grid_minus_button.clicked.connect(self.decrement_x_grid)
+        self.x_grid_plus_button.clicked.connect(self.increment_x_grid)
+        self.y_grid_minus_button.clicked.connect(self.decrement_y_grid)
+        self.y_grid_plus_button.clicked.connect(self.increment_y_grid)
+        self.x_grid_apply_button.clicked.connect(self.apply_x_grid_movement)
+        self.y_grid_apply_button.clicked.connect(self.apply_y_grid_movement)
         ok_button.clicked.connect(self.on_ok_clicked)
         cancel_button.clicked.connect(self.reject)
         snap_button.clicked.connect(self.snap_to_grid)
@@ -2329,6 +2394,90 @@ class GroupMoveDialog(QDialog):
             self.update_positions()
         except ValueError:
             pass
+
+    def apply_x_grid_movement(self):
+        """Apply X grid movement based on grid steps"""
+        try:
+            grid_steps = int(self.x_grid_input.text())
+            if grid_steps == 0:
+                return
+            
+            grid_pixels = grid_steps * self.canvas.grid_size
+            self.total_dx += grid_pixels
+            
+            # Update the pixel movement controls to show the new total
+            self.dx_slider.setValue(max(min(self.total_dx, 600), -600))
+            self.dx_value.setText(str(self.total_dx))
+            self.dx_input.setText(str(self.total_dx))
+            
+            # Reset the grid input
+            self.x_grid_input.setText("0")
+            
+            # Update positions
+            self.update_positions()
+            
+        except ValueError:
+            pass
+
+    def apply_y_grid_movement(self):
+        """Apply Y grid movement based on grid steps"""
+        try:
+            grid_steps = int(self.y_grid_input.text())
+            if grid_steps == 0:
+                return
+            
+            grid_pixels = grid_steps * self.canvas.grid_size
+            self.total_dy += grid_pixels
+            
+            # Update the pixel movement controls to show the new total
+            self.dy_slider.setValue(max(min(self.total_dy, 600), -600))
+            self.dy_value.setText(str(self.total_dy))
+            self.dy_input.setText(str(self.total_dy))
+            
+            # Reset the grid input
+            self.y_grid_input.setText("0")
+            
+            # Update positions
+            self.update_positions()
+            
+        except ValueError:
+            pass
+
+    def increment_x_grid(self):
+        """Increment X grid step value by 1"""
+        try:
+            current_value = int(self.x_grid_input.text())
+            new_value = min(current_value + 1, 50)  # Cap at 50
+            self.x_grid_input.setText(str(new_value))
+        except ValueError:
+            self.x_grid_input.setText("1")
+
+    def decrement_x_grid(self):
+        """Decrement X grid step value by 1"""
+        try:
+            current_value = int(self.x_grid_input.text())
+            new_value = max(current_value - 1, -50)  # Cap at -50
+            self.x_grid_input.setText(str(new_value))
+        except ValueError:
+            self.x_grid_input.setText("-1")
+
+    def increment_y_grid(self):
+        """Increment Y grid step value by 1"""
+        try:
+            current_value = int(self.y_grid_input.text())
+            new_value = min(current_value + 1, 50)  # Cap at 50
+            self.y_grid_input.setText(str(new_value))
+        except ValueError:
+            self.y_grid_input.setText("1")
+
+    def decrement_y_grid(self):
+        """Decrement Y grid step value by 1"""
+        try:
+            current_value = int(self.y_grid_input.text())
+            new_value = max(current_value - 1, -50)  # Cap at -50
+            self.y_grid_input.setText(str(new_value))
+        except ValueError:
+            self.y_grid_input.setText("-1")
 
     def on_ok_clicked(self):
         """Finalize the movement by storing current positions as new originals"""

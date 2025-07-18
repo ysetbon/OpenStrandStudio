@@ -77,7 +77,7 @@ translations = {
         'cancel': 'Cancel',
         'apply': 'Apply',
         'language_settings_info': 'Change the language of the application.',
-        'tutorial_info': 'Press the "play video" button below each text to view the tutorial explaining:',
+        'tutorial_info': 'Press the "play video" button below each text\nto view the tutorial explaining:',
         'whats_new_info': '''
         <h2>What's New in Version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -160,6 +160,10 @@ translations = {
         'x_movement': 'X Movement',
         'y_movement': 'Y Movement',
         'move_group': 'Move Group',
+        'grid_movement': 'Grid Movement',
+        'x_grid_steps': 'X Grid Steps',
+        'y_grid_steps': 'Y Grid Steps',
+        'apply': 'Apply',
         'toggle_shadow': 'Shadow',
         'mask_edit_mode_message': '             MASK EDIT MODE -\n              Press ESC to exit',
         'mask_edit_mode_exited': 'Mask edit mode exited',
@@ -347,7 +351,7 @@ translations = {
         'cancel': 'Annuler',
         'apply': 'Appliquer',
         'language_settings_info': 'Changer la langue de l\'application.',
-        'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte pour voir le tutoriel explicatif :',
+        'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte\npour voir le tutoriel explicatif :',
         'whats_new_info': '''
         <h2>Nouveautés de la version 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -430,6 +434,10 @@ translations = {
         'x_movement': 'Mouvement X',
         'y_movement': 'Mouvement Y',
         'move_group': 'Déplacer le Groupe',
+        'grid_movement': 'Mouvement Grille',
+        'x_grid_steps': 'Pas Grille X',
+        'y_grid_steps': 'Pas Grille Y',
+        'apply': 'Appliquer',
         'toggle_shadow': 'Ombres',
         'mask_edit_mode_message': '             MODE ÉDITION MASQUE -\n                 ÉCHAP pour quitter',
         'mask_edit_mode_exited': 'Mode édition masque terminé',
@@ -611,7 +619,7 @@ translations = {
         'cancel': 'Annulla',
         'apply': 'Applica',
         'language_settings_info': 'Cambia la lingua dell\'applicazione.',
-        'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo per visualizzare il tutorial che spiega:',
+        'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo\nper visualizzare il tutorial che spiega:',
         'whats_new_info': '''
         <h2>Novità della versione 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -694,6 +702,10 @@ translations = {
         'x_movement': 'Movimento X',
         'y_movement': 'Movimento Y',
         'move_group': 'Sposta Gruppo',
+        'grid_movement': 'Movimento Griglia',
+        'x_grid_steps': 'Passi Griglia X',
+        'y_grid_steps': 'Passi Griglia Y',
+        'apply': 'Applica',
         'toggle_shadow': 'Ombra',
         'mask_edit_mode_message': '             MODALITÀ MODIFICA MASCHERA -\n              Premi ESC per uscire',
         'mask_edit_mode_exited': 'Modalità modifica maschera terminata',
@@ -826,7 +838,7 @@ translations = {
         'portuguese': 'Portugués',
         'hebrew': 'Hebreo',
         'select_theme': 'Seleccionar Tema',
-        'default': 'Predeterminado',
+        'default': 'Predeterm.',
         'light': 'Claro',
         'dark': 'Oscuro',
         'layer_state': 'Estado',
@@ -879,7 +891,7 @@ translations = {
         'cancel': 'Cancelar',
         'apply': 'Aplicar',
         'language_settings_info': 'Cambiar el idioma de la aplicación.',
-        'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto para ver el tutorial que explica:',
+        'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto\npara ver el tutorial que explica:',
         'whats_new_info': '''
         <h2>Novedades de la versión 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -963,6 +975,10 @@ translations = {
         'x_movement': 'Movimiento X',
         'y_movement': 'Movimiento Y',
         'move_group': 'Mover Grupo',
+        'grid_movement': 'Movimiento Cuadrícula',
+        'x_grid_steps': 'Pasos Cuadrícula X',
+        'y_grid_steps': 'Pasos Cuadrícula Y',
+        'apply': 'Aplicar',
         'toggle_shadow': 'Sombra',
         'mask_edit_mode_message': '             MODO EDICIÓN MÁSCARA -\n              Presiona ESC para salir',
         'mask_edit_mode_exited': 'Modo edición máscara finalizado',
@@ -1148,7 +1164,7 @@ translations = {
         'cancel': 'Cancelar',
         'apply': 'Aplicar',
         'language_settings_info': 'Mudar o idioma da aplicação.',
-        'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto para visualizar o tutorial explicando:',
+        'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto\npara visualizar o tutorial explicando:',
         'whats_new_info': '''
         <h2>Novidades da versão 1.100</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -1231,6 +1247,10 @@ translations = {
         'x_movement': 'Movimento X',
         'y_movement': 'Movimento Y',
         'move_group': 'Mover Grupo',
+        'grid_movement': 'Movimento Grade',
+        'x_grid_steps': 'Passos Grade X',
+        'y_grid_steps': 'Passos Grade Y',
+        'apply': 'Aplicar',
         'toggle_shadow': 'Sombra',
         'mask_edit_mode_message': '             MODO EDIÇÃO DE MÁSCARA -\n              Pressione ESC para sair',
         'mask_edit_mode_exited': 'Modo de edição de máscara encerrado',
@@ -1415,7 +1435,7 @@ translations = {
         'cancel': 'ביטול',
         'apply': 'החל',
         'language_settings_info': 'שנה את שפת האפליקציה.',
-        'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט כדי לראות את המדריך המסביר:',
+        'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט\nכדי לראות את המדריך המסביר:',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
         <b>מה חדש בגרסה 1.100</b><br><br>
@@ -1499,6 +1519,10 @@ translations = {
         'x_movement': 'תנועת X',
         'y_movement': 'תנועת Y',
         'move_group': 'הזז קבוצה',
+        'grid_movement': 'תנועת רשת',
+        'x_grid_steps': 'צעדי רשת X',
+        'y_grid_steps': 'צעדי רשת Y',
+        'apply': 'החל',
         'toggle_shadow': 'צל',
         'mask_edit_mode_message': '             מצב עריכת מסכה -\n              לחץ ESC ליציאה',
         'mask_edit_mode_exited': 'מצב עריכת מסכה הסתיים',

@@ -50,6 +50,7 @@ class SettingsDialog(QDialog):
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
+        self.snap_to_grid_enabled = True  # Default to snap to grid enabled
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -239,6 +240,8 @@ class SettingsDialog(QDialog):
                     self.affected_strand_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
                     self.third_control_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'snap_to_grid_label'):
+                    self.snap_to_grid_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -259,6 +262,8 @@ class SettingsDialog(QDialog):
                     self.affected_strand_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'third_control_label'):
                     self.third_control_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'snap_to_grid_label'):
+                    self.snap_to_grid_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -271,7 +276,7 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
-                'third_control_layout', # 'extended_mask_layout', 
+                'third_control_layout', 'snap_to_grid_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout'
             ]
             for layout_name in general_setting_layouts:
@@ -317,6 +322,8 @@ class SettingsDialog(QDialog):
              self.performance_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'third_control_layout'):
              self.third_control_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+        if hasattr(self, 'snap_to_grid_layout'):
+             self.snap_to_grid_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'icon_layout'):
              self.icon_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'third_cp_icon_layout'):
@@ -584,6 +591,21 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.third_control_layout.invalidate()
             self.third_control_layout.activate()
+                
+        # Snap to grid layout reorganization
+        if hasattr(self, 'snap_to_grid_layout') and hasattr(self, 'snap_to_grid_label') and hasattr(self, 'snap_to_grid_checkbox'):
+            self.clear_layout(self.snap_to_grid_layout)
+            if is_rtl:
+                self.snap_to_grid_layout.addStretch()
+                self.snap_to_grid_layout.addWidget(self.snap_to_grid_checkbox)
+                self.snap_to_grid_layout.addWidget(self.snap_to_grid_label)
+            else:
+                self.snap_to_grid_layout.addWidget(self.snap_to_grid_label)
+                self.snap_to_grid_layout.addWidget(self.snap_to_grid_checkbox)
+                self.snap_to_grid_layout.addStretch()
+            # Force immediate update
+            self.snap_to_grid_layout.invalidate()
+            self.snap_to_grid_layout.activate()
                 
         # Default arrow color checkbox layout reorganization
         if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_label') and hasattr(self, 'default_arrow_color_checkbox'):
@@ -1097,6 +1119,10 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
                             logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
+                        elif line.startswith('EnableSnapToGrid:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.snap_to_grid_enabled = (value == 'true')
+                            logging.info(f"SettingsDialog: Found EnableSnapToGrid: {self.snap_to_grid_enabled}")
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -1393,6 +1419,23 @@ class SettingsDialog(QDialog):
             self.third_control_layout.addWidget(self.third_control_checkbox)
             self.third_control_layout.addStretch()
 
+        # Snap to Grid Option
+        if not hasattr(self, 'snap_to_grid_layout'):
+            self.snap_to_grid_layout = QHBoxLayout()
+        self.snap_to_grid_label = QLabel(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
+        self.snap_to_grid_checkbox = QCheckBox()
+        self.snap_to_grid_checkbox.setChecked(self.snap_to_grid_enabled)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.snap_to_grid_layout.addStretch()
+            self.snap_to_grid_layout.addWidget(self.snap_to_grid_checkbox)
+            self.snap_to_grid_layout.addWidget(self.snap_to_grid_label)
+        else:
+            self.snap_to_grid_layout.addWidget(self.snap_to_grid_label)
+            self.snap_to_grid_layout.addWidget(self.snap_to_grid_checkbox)
+            self.snap_to_grid_layout.addStretch()
+
         # NEW: Use Extended Mask Option
         # self.extended_mask_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         # self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
@@ -1424,6 +1467,7 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(self.shadow_layout)
         general_layout.addLayout(self.performance_layout)
         general_layout.addLayout(self.third_control_layout)
+        general_layout.addLayout(self.snap_to_grid_layout)
         # general_layout.addLayout(self.extended_mask_layout)
 
         # Add Shadow Blur Steps
@@ -2427,7 +2471,17 @@ class SettingsDialog(QDialog):
             # Check if the setting changed
             if previous_third_control_point != self.enable_third_control_point:
                 logging.info("SettingsDialog: Third control point setting changed, resetting all masked strands")
-                
+
+        # Apply Snap to Grid Setting
+        self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
+        
+        if self.canvas:
+            # Set the new value in canvas
+            self.canvas.snap_to_grid_enabled = self.snap_to_grid_enabled
+            logging.info(f"SettingsDialog: Set snap_to_grid_enabled to {self.snap_to_grid_enabled}")
+
+            # Check if the third control point setting changed
+            if previous_third_control_point != self.enable_third_control_point:
                 # Reset all masked strands if the canvas has strands
                 if hasattr(self.canvas, 'strands'):
                     for i, strand in enumerate(self.canvas.strands):
@@ -2573,6 +2627,7 @@ class SettingsDialog(QDialog):
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        self.snap_to_grid_label.setText(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
@@ -2816,6 +2871,8 @@ class SettingsDialog(QDialog):
                 file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                 # Save enable third control point setting
                 file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
+                # Save enable snap to grid setting
+                file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
@@ -2850,6 +2907,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                     local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
+                    local_file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                     # local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")

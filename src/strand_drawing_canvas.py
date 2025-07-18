@@ -421,6 +421,15 @@ class StrandDrawingCanvas(QWidget):
         except Exception as e:
             logging.error(f"Error applying draw_only_affected_strand setting: {e}")
 
+        # Apply snap_to_grid_enabled setting from user settings if available
+        try:
+            snap_to_grid_setting = self.load_snap_to_grid_setting()
+            if snap_to_grid_setting is not None:
+                self.snap_to_grid_enabled = snap_to_grid_setting
+                logging.info(f"Applied snap_to_grid_enabled setting during initialization: {snap_to_grid_setting}")
+        except Exception as e:
+            logging.error(f"Error applying snap_to_grid_enabled setting: {e}")
+
         # Mask mode setup
         # Pass the undo_redo_manager instance here
         self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
@@ -1216,6 +1225,8 @@ class StrandDrawingCanvas(QWidget):
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = False
+        # Initialize snap to grid setting
+        self.snap_to_grid_enabled = True  # Default to enabled
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10
@@ -1284,6 +1295,42 @@ class StrandDrawingCanvas(QWidget):
             return None
         except Exception as e:
             logging.error(f"StrandDrawingCanvas error loading draw_only_affected_strand from settings: {e}")
+            return None
+
+    def load_snap_to_grid_setting(self):
+        """Load snap_to_grid_enabled setting from user_settings.txt if available."""
+        try:
+            import os
+            import sys
+            from PyQt5.QtCore import QStandardPaths
+            
+            # Use the appropriate directory for each OS
+            app_name = "OpenStrand Studio"
+            if sys.platform == 'darwin':  # macOS
+                program_data_dir = os.path.expanduser('~/Library/Application Support')
+                settings_dir = os.path.join(program_data_dir, app_name)
+            else:
+                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+            file_path = os.path.join(settings_dir, 'user_settings.txt')
+            logging.info(f"StrandDrawingCanvas looking for snap_to_grid_enabled setting at: {file_path}")
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('EnableSnapToGrid:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            snap_to_grid_setting = (value == 'true')
+                            logging.info(f"StrandDrawingCanvas found EnableSnapToGrid in settings: {snap_to_grid_setting}")
+                            return snap_to_grid_setting
+            else:
+                logging.info(f"StrandDrawingCanvas: Settings file not found at {file_path}, will use default snap_to_grid_enabled setting")
+                
+            return None
+        except Exception as e:
+            logging.error(f"StrandDrawingCanvas error loading snap_to_grid_enabled from settings: {e}")
             return None
 
     def show_control_points(self, visible):
@@ -3756,6 +3803,8 @@ class StrandDrawingCanvas(QWidget):
 
     def snap_to_grid(self, point):
         """Snap a point to the nearest grid intersection."""
+        if not self.snap_to_grid_enabled:
+            return point
         return QPointF(
             round(point.x() / self.grid_size) * self.grid_size,
             round(point.y() / self.grid_size) * self.grid_size

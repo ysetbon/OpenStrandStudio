@@ -80,32 +80,52 @@ class CustomTooltip(QFrame):
         self.setText(text)
         self.updateTheme()
         
-    def updateTheme(self):
-        # Get the current theme from parent window
-        current_theme = 'default'
+    def get_parent_theme(self):
+        """Helper method to fetch the current theme from parent chain."""
+        # First try to get theme from parent hierarchy
         parent = self.parent()
         while parent:
-            if hasattr(parent, 'current_theme'):
-                current_theme = parent.current_theme
-                break
+            if hasattr(parent, "current_theme"):
+                return parent.current_theme
+            # Also check for main window pattern used elsewhere
             elif hasattr(parent, 'parent_window') and hasattr(parent.parent_window, 'current_theme'):
-                current_theme = parent.parent_window.current_theme
-                break
+                return parent.parent_window.current_theme
             parent = parent.parent()
         
-        # Define theme-specific colors to match application theme
+        # If no parent has theme, try to find main window from QApplication
+        try:
+            from PyQt5.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app:
+                for widget in app.topLevelWidgets():
+                    if hasattr(widget, 'current_theme'):
+                        return widget.current_theme
+        except:
+            pass
+        
+        return "default"
+        
+    def set_theme(self, theme_name):
+        """Update the tooltip theme - called when theme changes dynamically."""
+        self.updateTheme()
+        
+    def updateTheme(self):
+        # Get the current theme from parent window using the established pattern
+        current_theme = self.get_parent_theme()
+        
+        # Define theme-specific colors to match group coloring used throughout the application
         if current_theme == "dark":
-            bg_color = QColor("#2C2C2C")        # Match app's dark theme background
-            text_color = QColor("#FFFFFF")      # White text
-            border_color = QColor("#555555")    # Medium gray border for visibility
+            bg_color = QColor("#2C2C2C")        # Match group dialog dark theme background
+            text_color = QColor("#FFFFFF")      # White text for dark theme
+            border_color = QColor("#555555")    # Match group dialog border color
         elif current_theme == "light":
-            bg_color = QColor("#FFFFFF")        # Pure white background
+            bg_color = QColor("#FFFFFF")        # Match group dialog light theme background  
+            text_color = QColor("#000000")      # Black text for light theme
+            border_color = QColor("#000000")    # Match group dialog light border
+        else:  # default theme - use light theme colors as default
+            bg_color = QColor("#FFFFFF")        # White background like group dialogs
             text_color = QColor("#000000")      # Black text
-            border_color = QColor("#CCCCCC")    # Light gray border
-        else:  # default theme
-            bg_color = QColor("#F0F0F0")        # Light gray background
-            text_color = QColor("#000000")      # Black text
-            border_color = QColor("#888888")    # Medium gray border
+            border_color = QColor("#000000")    # Light gray border like group dialogs
         
         self.setStyleSheet(f"""
             QFrame {{
@@ -307,7 +327,7 @@ class TooltipButton(QPushButton):
                             self._custom_tooltip_widget.hide()
                             self._custom_tooltip_widget.deleteLater()
                         
-                        self._custom_tooltip_widget = CustomTooltip("", None)
+                        self._custom_tooltip_widget = CustomTooltip("", self)
                         self._custom_tooltip_widget.setText(self.custom_tooltip)
                         # Force theme update to ensure proper styling
                         self._custom_tooltip_widget.updateTheme()
@@ -1110,6 +1130,10 @@ class LayerPanel(QWidget):
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme(theme_name)
             # Similarly update other buttons if necessary
+            
+            # Update any existing tooltips with the new theme
+            if hasattr(self, '_custom_tooltip_widget') and self._custom_tooltip_widget:
+                self._custom_tooltip_widget.set_theme(theme_name)
 
         elif theme_name == "light":
             palette = self.palette()
@@ -1211,6 +1235,10 @@ class LayerPanel(QWidget):
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager.set_theme("default")
             # Similarly reset other buttons if necessary
+
+        # Update any existing tooltips with the new theme
+        if hasattr(self, '_custom_tooltip_widget') and self._custom_tooltip_widget:
+            self._custom_tooltip_widget.set_theme(theme_name)
 
         self.mask_edit_label.hide() # Hide initially
 

@@ -1,10 +1,10 @@
 # src/layer_panel.py
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-    QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction  # Add QMenu, QAction and QWidgetAction here
+    QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction, QToolTip, QFrame  # Add QMenu, QAction and QWidgetAction here
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect# Added QMimeData
-from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication # Added QDrag and QGuiApplication
+from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor # Added QDrag and QGuiApplication
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
 from render_utils import RenderUtils
@@ -43,6 +43,114 @@ from PyQt5.QtWidgets import QStyleOption
 from undo_redo_manager import StrokeTextButton, setup_undo_redo
 import os # Import os for path manipulation
 import sys # Import sys for platform check
+
+class CustomTooltip(QFrame):
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.is_hebrew = False
+        self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
+        # Remove translucent background to allow proper border rendering
+        # self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # Apply minimal global tooltip styling
+        self.setStyleSheet("""
+            QToolTip QLabel, QFrame QLabel {
+                margin: 0px !important;
+                padding: 0px !important;
+                border: none !important;
+            }
+        """)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  # Remove all layout margins
+        layout.setSpacing(0)  # Remove spacing between layout items
+        self.label = QLabel(text)
+        self.label.setWordWrap(False)
+        self.label.setAlignment(Qt.AlignCenter)  # Center both horizontally and vertically
+        # Use negative margins to counteract Qt's internal text spacing
+        self.label.setStyleSheet("QLabel { margin: -2px -6px -2px -6px; padding: 0px; border: none; line-height: 1.0; text-align: center; }")
+        layout.addWidget(self.label)
+        
+        # Auto-hide timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.hide)
+        self.timer.setSingleShot(True)
+        
+        # Set text and update theme after layout is set up
+        self.setText(text)
+        self.updateTheme()
+        
+    def updateTheme(self):
+        # Get the current theme from parent window
+        current_theme = 'default'
+        parent = self.parent()
+        while parent:
+            if hasattr(parent, 'current_theme'):
+                current_theme = parent.current_theme
+                break
+            elif hasattr(parent, 'parent_window') and hasattr(parent.parent_window, 'current_theme'):
+                current_theme = parent.parent_window.current_theme
+                break
+            parent = parent.parent()
+        
+        # Define theme-specific colors to match application theme
+        if current_theme == "dark":
+            bg_color = QColor("#2C2C2C")        # Match app's dark theme background
+            text_color = QColor("#FFFFFF")      # White text
+            border_color = QColor("#555555")    # Medium gray border for visibility
+        elif current_theme == "light":
+            bg_color = QColor("#FFFFFF")        # Pure white background
+            text_color = QColor("#000000")      # Black text
+            border_color = QColor("#CCCCCC")    # Light gray border
+        else:  # default theme
+            bg_color = QColor("#F0F0F0")        # Light gray background
+            text_color = QColor("#000000")      # Black text
+            border_color = QColor("#888888")    # Medium gray border
+        
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {bg_color.name()} !important;
+                border: 2px solid {border_color.name()} !important;
+                border-radius: 0px !important;
+                padding: 1px !important;
+                margin: 0px !important;
+                color: {text_color.name()} !important;
+            }}
+            QFrame QLabel {{
+                margin: 0px !important;
+                padding: 0px !important;
+                border: none !important;
+                background: transparent !important;
+            }}
+        """)
+        
+        # Ensure the label still has tight spacing even after theme update
+        if hasattr(self, 'label'):
+            self.label.setStyleSheet("QLabel { margin: 0px; padding: 0px; border: none; line-height: 1.0; text-align: center; }")
+        
+    def setText(self, text):
+        self.text = text
+        # Check if text contains Hebrew characters (for reference only)
+        self.is_hebrew = any('\u0590' <= char <= '\u05FF' for char in text)
+        
+        if hasattr(self, 'label'):
+            self.label.setText(text)
+            # Center text for all languages
+            self.label.setAlignment(Qt.AlignCenter)
+            # Use left-to-right layout direction for consistent display
+            self.label.setLayoutDirection(Qt.LeftToRight)
+            self.setLayoutDirection(Qt.LeftToRight)
+            # Ensure compact styling is maintained with centered text
+            self.label.setStyleSheet("QLabel { margin: -2px -6px -2px -6px; padding: 0px; border: none; line-height: 1.0; text-align: center; }")
+            
+    def showAt(self, pos, timeout=0):
+        self.updateTheme()  # Update theme colors before showing
+        self.adjustSize()
+        self.move(pos)
+        self.show()
+        self.raise_()
+        if timeout > 0:
+            self.timer.start(timeout)
 
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
@@ -136,6 +244,110 @@ class DropTargetWidget(QWidget):
 # --- End Custom Widget ---
 
 
+class TooltipButton(QPushButton):
+    """Custom button that shows tooltip on right-click instead of hover"""
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.custom_tooltip = ""
+        # Disable default tooltip behavior
+        self.setToolTip("")
+        
+    def set_custom_tooltip(self, text):
+        """Set the custom tooltip text"""
+        self.custom_tooltip = text
+        # Make sure default tooltip is disabled
+        self.setToolTip("")
+        
+    def mousePressEvent(self, event):
+        """Handle mouse press events"""
+        if event.button() == Qt.RightButton:
+            logging.info(f"Right-click press detected on TooltipButton. Tooltip text: '{self.custom_tooltip}'")
+            
+            if self.custom_tooltip:
+                # Find the LayerPanel to get the panel's position and size
+                layer_panel = None
+                parent = self.parent()
+                while parent:
+                    if parent.__class__.__name__ == 'LayerPanel':
+                        layer_panel = parent
+                        break
+                    parent = parent.parent()
+                
+                if layer_panel:
+                    # Get the LayerPanel's position and size
+                    panel_global_pos = layer_panel.mapToGlobal(QPoint(0, 0))
+                    panel_size = layer_panel.size()
+                    
+                    # Simple 4th row calculation: 3 rows down from panel top
+                    fourth_row_y = panel_global_pos.y() + 200  # 3 rows * 40px + 3 gaps * 5px
+                    
+                    # Find the center X based on hide button and refresh button positions
+                    # Get the hide button (multi_select_button) and refresh button positions
+                    hide_button = getattr(layer_panel, 'multi_select_button', None)
+                    refresh_button = getattr(layer_panel, 'refresh_button', None)
+                    
+                    if hide_button and refresh_button:
+                        # Get the global positions of both buttons
+                        hide_global_pos = hide_button.mapToGlobal(QPoint(0, 0))
+                        refresh_global_pos = refresh_button.mapToGlobal(QPoint(0, 0))
+
+                        # Calculate the center between these two buttons
+                        # Get the actual content area of buttons, excluding any extra spacing
+                        hide_left = hide_global_pos.x()
+                        hide_right = hide_global_pos.x() + hide_button.width()
+                        refresh_left = refresh_global_pos.x()
+                        refresh_right = refresh_global_pos.x() + refresh_button.width()
+                        
+                        # Calculate center point between the two button regions
+                        center_x = (hide_right + refresh_left) // 2
+
+                        # Create and show custom tooltip at exact position
+                        # Always recreate the tooltip to ensure consistent styling
+                        if hasattr(self, '_custom_tooltip_widget'):
+                            self._custom_tooltip_widget.hide()
+                            self._custom_tooltip_widget.deleteLater()
+                        
+                        self._custom_tooltip_widget = CustomTooltip("", None)
+                        self._custom_tooltip_widget.setText(self.custom_tooltip)
+                        # Force theme update to ensure proper styling
+                        self._custom_tooltip_widget.updateTheme()
+                        self._custom_tooltip_widget.adjustSize()
+                        
+                        # Position tooltip so its center aligns exactly with center_x
+                        tooltip_width = self._custom_tooltip_widget.width()
+                        tooltip_pos = QPoint(
+                            center_x - tooltip_width // 2,
+                            fourth_row_y
+                        )
+                        
+                        self._custom_tooltip_widget.showAt(tooltip_pos, timeout=0)  # No auto-hide
+                    
+            event.accept()
+            return
+        
+        # For left-click or other buttons, process normally
+        super().mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release events"""
+        if event.button() == Qt.RightButton:
+            # Hide tooltip immediately when right-click is released
+            if hasattr(self, '_custom_tooltip_widget'):
+                self._custom_tooltip_widget.hide()
+            event.accept()
+            return
+        
+        # For left-click or other buttons, process normally
+        super().mouseReleaseEvent(event)
+            
+    def event(self, event):
+        """Override event to disable hover tooltips"""
+        if event.type() == event.ToolTip:
+            # Ignore tooltip events
+            return True
+        return super().event(event)
+
+
 class LayerPanel(QWidget):
     # Custom signals for various events
     new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested
@@ -159,6 +371,7 @@ class LayerPanel(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None
+        
         
         # Determine the base path for settings and temp files
         app_name = "OpenStrand Studio"
@@ -188,7 +401,7 @@ class LayerPanel(QWidget):
         top_layout.setAlignment(Qt.AlignLeft)
 
         # Create the home/reset button (moved from 3rd row)
-        self.reset_states_button = QPushButton("🏠")
+        self.reset_states_button = TooltipButton("🏠")
         self.reset_states_button.setFixedSize(40, 40)
         self.reset_states_button.setStyleSheet("""
             QPushButton {
@@ -217,7 +430,8 @@ class LayerPanel(QWidget):
             }
         """)
         self.reset_states_button.clicked.connect(self.reset_to_current_state)
-        self.reset_states_button.setToolTip("Reset: Keep only current state as first state")
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.reset_states_button, _['reset_tooltip'])
 
         # Add the home/reset button to the top layout
         top_layout.addWidget(self.reset_states_button)
@@ -236,7 +450,7 @@ class LayerPanel(QWidget):
         zoom_layout.setAlignment(Qt.AlignLeft)
         
         # Create zoom in button
-        self.zoom_in_button = QPushButton("🔍")
+        self.zoom_in_button = TooltipButton("🔍")
         self.zoom_in_button.setFixedSize(40, 40)
         self.zoom_in_button.setStyleSheet("""
             QPushButton {
@@ -264,9 +478,11 @@ class LayerPanel(QWidget):
             }
         """)
         self.zoom_in_button.clicked.connect(self.canvas.zoom_in)
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.zoom_in_button, _['zoom_in_tooltip'])
         
         # Create zoom out button
-        self.zoom_out_button = QPushButton("🔎")
+        self.zoom_out_button = TooltipButton("🔎")
         self.zoom_out_button.setFixedSize(40, 40)
         self.zoom_out_button.setStyleSheet("""
             QPushButton {
@@ -294,12 +510,16 @@ class LayerPanel(QWidget):
             }
         """)
         self.zoom_out_button.clicked.connect(self.canvas.zoom_out)
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.zoom_out_button, _['zoom_out_tooltip'])
         
         # Create pan button
-        self.pan_button = QPushButton("🖐")  # Using a more modern hand emoji
+        self.pan_button = TooltipButton("🖐")  # Using a more modern hand emoji
         self.pan_button.setFixedSize(40, 40)
         self.pan_button.setCheckable(True)  # Make it toggleable
         self.pan_button.clicked.connect(self.toggle_pan_mode)
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.pan_button, _['pan_tooltip'])
         self.pan_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;  /* Dark red color */
@@ -348,7 +568,7 @@ class LayerPanel(QWidget):
         refresh_layout.setAlignment(Qt.AlignLeft)
         
         # Create the refresh button (moved from 1st row)
-        self.refresh_button = QPushButton("🔄")
+        self.refresh_button = TooltipButton("🔄")
         self.refresh_button.setFixedSize(40, 40)
         self.refresh_button.setStyleSheet("""
             QPushButton {
@@ -376,10 +596,11 @@ class LayerPanel(QWidget):
             }
         """)
         self.refresh_button.clicked.connect(self.refresh_layers)
-        self.refresh_button.setToolTip("Refresh: Reload layers")
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.refresh_button, _['refresh_tooltip'])
         
         # Create the center/pan button
-        self.center_strands_button = QPushButton("🎯")
+        self.center_strands_button = TooltipButton("🎯")
         self.center_strands_button.setFixedSize(40, 40)
         self.center_strands_button.setStyleSheet("""
             QPushButton {
@@ -409,10 +630,11 @@ class LayerPanel(QWidget):
             }
         """)
         self.center_strands_button.clicked.connect(self.center_all_strands)
-        self.center_strands_button.setToolTip("Center: Pan to center all strands in canvas")
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.center_strands_button, _['center_tooltip'])
 
         # Create the multi-select button
-        self.multi_select_button = QPushButton("🙉")
+        self.multi_select_button = TooltipButton("🙉")
         self.multi_select_button.setFixedSize(40, 40)
         self.multi_select_button.setCheckable(True)  # Make it toggleable
         self.multi_select_button.setStyleSheet("""
@@ -448,7 +670,8 @@ class LayerPanel(QWidget):
             }
         """)
         self.multi_select_button.clicked.connect(self.toggle_multi_select_mode)
-        self.multi_select_button.setToolTip("Hide Mode: Click to enable layer selection, then right-click for batch hide/show operations")
+        _ = translations[self.language_code]
+        self.set_button_tooltip(self.multi_select_button, _['hide_mode_tooltip'])
 
         # Add buttons to refresh layout
         refresh_layout.addWidget(self.refresh_button)
@@ -1212,6 +1435,19 @@ class LayerPanel(QWidget):
         else:
             logging.warning(f"toggle_layer_shadow_only called with invalid index: {strand_index}")
     
+
+    def set_button_tooltip(self, button, tooltip_text):
+        """Set tooltip for custom TooltipButton with center alignment"""
+        logging.info(f"Setting tooltip '{tooltip_text}' for button {button.__class__.__name__}")
+        # For TooltipButton instances, use the custom tooltip method
+        if isinstance(button, TooltipButton):
+            button.set_custom_tooltip(tooltip_text)
+            logging.info(f"Set custom tooltip for TooltipButton: '{tooltip_text}'")
+        else:
+            # Fallback for regular buttons (shouldn't happen)
+            button.setToolTip(tooltip_text)
+            logging.info(f"Set regular tooltip for button: '{tooltip_text}'")
+    
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
         if self.canvas:
@@ -1234,6 +1470,7 @@ class LayerPanel(QWidget):
     def update_translations(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
+        
         # Update any UI elements with new translations
         self.draw_names_button.setText(_['draw_names'])
         
@@ -1251,6 +1488,15 @@ class LayerPanel(QWidget):
             self.deselect_all_button.setText(_['clear_all_locks'])
         else:
             self.deselect_all_button.setText(_['deselect_all'])
+            
+        # Update button tooltips
+        self.set_button_tooltip(self.reset_states_button, _['reset_tooltip'])
+        self.set_button_tooltip(self.refresh_button, _['refresh_tooltip'])
+        self.set_button_tooltip(self.center_strands_button, _['center_tooltip'])
+        self.set_button_tooltip(self.multi_select_button, _['hide_mode_tooltip'])
+        self.set_button_tooltip(self.zoom_in_button, _['zoom_in_tooltip'])
+        self.set_button_tooltip(self.zoom_out_button, _['zoom_out_tooltip'])
+        self.set_button_tooltip(self.pan_button, _['pan_tooltip'])
         # Update other text elements as needed
 
         # Update the GroupLayerManager

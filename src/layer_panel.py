@@ -49,8 +49,8 @@ class CustomTooltip(QFrame):
         super().__init__(parent)
         self.is_hebrew = False
         self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
-        # Remove translucent background to allow proper border rendering
-        # self.setAttribute(Qt.WA_TranslucentBackground)
+        # Enable translucent background for proper transparency
+        self.setAttribute(Qt.WA_TranslucentBackground)
         
         # Apply minimal global tooltip styling
         self.setStyleSheet("""
@@ -113,26 +113,17 @@ class CustomTooltip(QFrame):
         # Get the current theme from parent window using the established pattern
         current_theme = self.get_parent_theme()
         
-        # Define theme-specific colors to match group coloring used throughout the application
+        # Always use fully transparent background and border, regardless of theme
         if current_theme == "dark":
-            bg_color = QColor("#2C2C2C")        # Match group dialog dark theme background
             text_color = QColor("#FFFFFF")      # White text for dark theme
-            border_color = QColor("#555555")    # Match group dialog border color
-        elif current_theme == "light":
-            bg_color = QColor("#FFFFFF")        # Match group dialog light theme background  
-            text_color = QColor("#000000")      # Black text for light theme
-            border_color = QColor("#000000")    # Match group dialog light border
-        else:  # default theme - use light theme colors as default
-            bg_color = QColor("#FFFFFF")        # White background like group dialogs
-            text_color = QColor("#000000")      # Black text
-            border_color = QColor("#000000")    # Light gray border like group dialogs
-        
+        else:
+            text_color = QColor("#000000")      # Black text for light and default theme
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {bg_color.name()} !important;
-                border: 2px solid {border_color.name()} !important;
+                background: transparent !important;
+                border: none !important;
                 border-radius: 0px !important;
-                padding: 1px !important;
+                padding: 0px !important;
                 margin: 0px !important;
                 color: {text_color.name()} !important;
             }}
@@ -299,7 +290,7 @@ class TooltipButton(QPushButton):
                     panel_size = layer_panel.size()
                     
                     # Simple 4th row calculation: 3 rows down from panel top
-                    fourth_row_y = panel_global_pos.y() + 200  # 3 rows * 40px + 3 gaps * 5px
+                    fourth_row_y = panel_global_pos.y() + 190  # 3 rows * 40px + 3 gaps * 5px
                     
                     # Find the center X based on hide button and refresh button positions
                     # Get the hide button (multi_select_button) and refresh button positions

@@ -1673,14 +1673,23 @@ class StrandDrawingCanvas(QWidget):
                     moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
                     for strand in self.strands:
                         if strand != affected_strand:
-                            # Check if this strand is connected to the affected strand at the moving side
-                            # Skip proximity detection if "drag only affected strand" is enabled
-                            if (not getattr(self.current_mode, 'draw_only_affected_strand', False) and
-                                ((self.current_mode.moving_side == 0 and 
-                                  self.current_mode.points_are_close(strand.end, moving_point)) or \
-                                 (self.current_mode.moving_side == 1 and 
-                                  self.current_mode.points_are_close(strand.start, moving_point)))):
-                                connected_strands.append(strand)
+                            # Only use state manager connections, never proximity detection
+                            # Check if this strand is actually connected in the state manager
+                            connections = self.layer_state_manager.getConnections()
+                            connected_strand_names = connections.get(affected_strand.layer_name, [])
+                            is_connected = (strand.layer_name in connected_strand_names or
+                                          affected_strand.layer_name in connections.get(strand.layer_name, []))
+                            
+                            if is_connected:
+                                # If draw_only_affected_strand is enabled, verify connection at moving point
+                                if getattr(self.current_mode, 'draw_only_affected_strand', False):
+                                    at_moving_point = (self.current_mode.points_are_close(strand.start, moving_point) or
+                                                     self.current_mode.points_are_close(strand.end, moving_point))
+                                    if at_moving_point:
+                                        connected_strands.append(strand)
+                                else:
+                                    # Setting is off, show all connected strands
+                                    connected_strands.append(strand)
             
             
             # Handle RotateMode
@@ -1905,9 +1914,8 @@ class StrandDrawingCanvas(QWidget):
                             end_already_drawn = False
                             
                             for pos in drawn_rectangle_positions:
-                                # Skip proximity detection if in move mode with "drag only affected strand" enabled
-                                if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                                        getattr(self.current_mode, 'draw_only_affected_strand', False))):
+                                # Always skip proximity detection in move mode to prevent unwanted connections
+                                if not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)):
                                     if self.points_are_close(strand.start, pos):
                                         start_already_drawn = True
                                     if self.points_are_close(strand.end, pos):

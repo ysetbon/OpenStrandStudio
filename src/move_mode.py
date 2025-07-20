@@ -424,7 +424,8 @@ class MoveMode:
                       use_optimized_path = True
 
             if not use_optimized_path:
-                logging.info("MoveMode: Not moving or no strands designated for optimized drawing, using original paint event.")
+                logging.info(f"MoveMode: Not moving (is_moving={getattr(move_mode_ref, 'is_moving', False)}) or no strands designated for optimized drawing, using original paint event.")
+                logging.info(f"MoveMode: show_control_points={getattr(self_canvas, 'show_control_points', False)}")
                 # If the original event exists, call it. Otherwise, maybe log an error or do nothing.
                 if hasattr(self_canvas, 'original_paintEvent'):
                     self_canvas.original_paintEvent(event)
@@ -731,7 +732,7 @@ class MoveMode:
                 if hasattr(self_canvas, 'draw_interaction_elements'):
                     self_canvas.draw_interaction_elements(painter)
                 
-                # Draw control points only for the moving strands
+                # Draw control points based on move state and settings
                 if hasattr(self_canvas, 'show_control_points') and self_canvas.show_control_points:
                     if hasattr(self_canvas, 'draw_control_points'):
                         if not perf_logger.suppress_move_logging:
@@ -742,14 +743,17 @@ class MoveMode:
                         # Check if we're moving a control point or a strand endpoint
                         is_moving_control_point = getattr(move_mode, 'is_moving_control_point', False)
                         is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
+                        draw_only_affected = getattr(move_mode, 'draw_only_affected_strand', False)
                         
-                        # If we're moving a control point or a strand endpoint, only draw for the affected strand
-                        if is_moving_control_point or is_moving_strand_point:
+                        # If draw_only_affected_strand is ON and we're actively moving something
+                        if draw_only_affected and (is_moving_control_point or is_moving_strand_point) and sorted_moving_strands:
                             # Only draw control points for truly moving strands
                             self_canvas.strands = sorted_moving_strands
                             self_canvas.draw_control_points(painter)
                         else:
-                            # Normal behavior when not moving anything
+                            # Draw control points for all strands (normal behavior)
+                            # Ensure we use the original strands list, not sorted_moving_strands
+                            self_canvas.strands = original_strands
                             self_canvas.draw_control_points(painter)
                         
                         # Restore original strands

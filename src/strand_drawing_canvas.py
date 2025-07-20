@@ -1783,7 +1783,10 @@ class StrandDrawingCanvas(QWidget):
 
         # Only draw control points if they're enabled
         if self.show_control_points:
+            logging.info(f"StrandDrawingCanvas: Drawing control points in paintEvent (show_control_points=True)")
             self.draw_control_points(painter)
+        else:
+            logging.info(f"StrandDrawingCanvas: NOT drawing control points in paintEvent (show_control_points=False)")
 
         # Draw strand labels if enabled
         if self.should_draw_names:
@@ -4335,8 +4338,8 @@ class StrandDrawingCanvas(QWidget):
 
             # --- Determine if we should skip drawing CPs for this strand ---
             should_skip = False
-            if draw_only_setting_on:
-                # When "drag only affected strand" is enabled, ONLY show control points for truly moving strands
+            if draw_only_setting_on and (moving_control_point or moving_strand_point):
+                # When "drag only affected strand" is enabled AND actively moving, ONLY show control points for truly moving strands
                 if strand not in truly_moving_strands:
                     should_skip = True
 

@@ -1147,12 +1147,15 @@ class StrandDrawingCanvas(QWidget):
                         end_updated = False
 
                         for original_point, new_point in original_points.items():
-                            if self.points_are_close(strand.start, original_point):
-                                strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
-                                start_updated = True
-                            if self.points_are_close(strand.end, original_point):
-                                strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
-                                end_updated = True
+                            # Skip proximity detection if in move mode with "drag only affected strand" enabled
+                            if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                    getattr(self.current_mode, 'draw_only_affected_strand', False))):
+                                if self.points_are_close(strand.start, original_point):
+                                    strand.start = QPointF(strand.start.x() + dx, strand.start.y() + dy)
+                                    start_updated = True
+                                if self.points_are_close(strand.end, original_point):
+                                    strand.end = QPointF(strand.end.x() + dx, strand.end.y() + dy)
+                                    end_updated = True
 
                         if start_updated or end_updated:
                             strand.update_shape()
@@ -1619,8 +1622,19 @@ class StrandDrawingCanvas(QWidget):
                     strand.canvas = self  # Ensure all strands have canvas reference
                 # --- MODIFIED: Check both selected_strand and selected_attached_strand --- 
                 is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand)
-                # Only highlight selected strand if we're not in mask mode
-                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode):
+                
+                # Check if we should suppress highlighting due to "drag only affected strand" setting
+                should_suppress_highlight = False
+                if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                    hasattr(self.current_mode, 'draw_only_affected_strand') and 
+                    self.current_mode.draw_only_affected_strand and
+                    (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                    if strand not in truly_moving_strands:
+                        should_suppress_highlight = True
+                
+                # Only highlight selected strand if we're not in mask mode and not suppressed
+                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not should_suppress_highlight:
                     # Reduced high-frequency logging for performance
             # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)
@@ -1660,10 +1674,12 @@ class StrandDrawingCanvas(QWidget):
                     for strand in self.strands:
                         if strand != affected_strand:
                             # Check if this strand is connected to the affected strand at the moving side
-                            if (self.current_mode.moving_side == 0 and 
-                                self.current_mode.points_are_close(strand.end, moving_point)) or \
-                               (self.current_mode.moving_side == 1 and 
-                                self.current_mode.points_are_close(strand.start, moving_point)):
+                            # Skip proximity detection if "drag only affected strand" is enabled
+                            if (not getattr(self.current_mode, 'draw_only_affected_strand', False) and
+                                ((self.current_mode.moving_side == 0 and 
+                                  self.current_mode.points_are_close(strand.end, moving_point)) or \
+                                 (self.current_mode.moving_side == 1 and 
+                                  self.current_mode.points_are_close(strand.start, moving_point)))):
                                 connected_strands.append(strand)
             
             
@@ -1889,10 +1905,13 @@ class StrandDrawingCanvas(QWidget):
                             end_already_drawn = False
                             
                             for pos in drawn_rectangle_positions:
-                                if self.points_are_close(strand.start, pos):
-                                    start_already_drawn = True
-                                if self.points_are_close(strand.end, pos):
-                                    end_already_drawn = True
+                                # Skip proximity detection if in move mode with "drag only affected strand" enabled
+                                if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                        getattr(self.current_mode, 'draw_only_affected_strand', False))):
+                                    if self.points_are_close(strand.start, pos):
+                                        start_already_drawn = True
+                                    if self.points_are_close(strand.end, pos):
+                                        end_already_drawn = True
                             
                             # Draw with red color for non-selected rectangles
                             square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
@@ -2553,8 +2572,10 @@ class StrandDrawingCanvas(QWidget):
                         isinstance(self.selected_attached_strand, AttachedStrand) and 
                         hasattr(self.selected_attached_strand, 'is_hidden') and 
                         self.selected_attached_strand.is_hidden and
-                        (self.points_are_close(self.selected_attached_strand.start, center) or 
-                         self.points_are_close(self.selected_attached_strand.end, center))):
+                        (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                              getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                         (self.points_are_close(self.selected_attached_strand.start, center) or 
+                          self.points_are_close(self.selected_attached_strand.end, center)))):
                         skip_c_shape = True
                         logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected attached strand is hidden and connects here.")
                     
@@ -2563,7 +2584,9 @@ class StrandDrawingCanvas(QWidget):
                         for other_strand in self.strands:
                             if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
                                 # Check if the hidden attached strand connects to the current center point AND is the selected strand
-                                if (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand:
+                                if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                        getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                                    (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
                                     skip_c_shape = True
                                     logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected hidden attached strand {other_strand.layer_name} connects here.")
                                     break # Found the selected hidden attached strand, no need to check further
@@ -4108,12 +4131,15 @@ class StrandDrawingCanvas(QWidget):
             logging.info(f"Found attachment_side from attached_strand: {attachment_side}")
         else:
             # Fallback: determine attachment side by comparing positions
-            if self.points_are_close(parent_strand.start, attached_strand.start):
-                attachment_side = 0
-                logging.info(f"Determined attachment_side by position comparison (start): {attachment_side}")
-            elif self.points_are_close(parent_strand.end, attached_strand.start):
-                attachment_side = 1
-                logging.info(f"Determined attachment_side by position comparison (end): {attachment_side}")
+            # Skip proximity detection if in move mode with "drag only affected strand" enabled
+            if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                    getattr(self.current_mode, 'draw_only_affected_strand', False))):
+                if self.points_are_close(parent_strand.start, attached_strand.start):
+                    attachment_side = 0
+                    logging.info(f"Determined attachment_side by position comparison (start): {attachment_side}")
+                elif self.points_are_close(parent_strand.end, attached_strand.start):
+                    attachment_side = 1
+                    logging.info(f"Determined attachment_side by position comparison (end): {attachment_side}")
         
         if attachment_side is not None:
             # Check if there are other strands still attached to this side
@@ -4274,23 +4300,21 @@ class StrandDrawingCanvas(QWidget):
         if in_move_mode and hasattr(self.current_mode, 'draw_only_affected_strand'):
             draw_only_setting_on = self.current_mode.draw_only_affected_strand
 
+        # Get the list of truly moving strands (includes main strand + attached strands)
+        truly_moving_strands = getattr(self, 'truly_moving_strands', []) if in_move_mode else []
+        
+        # Fallback to affected_strand if truly_moving_strands is empty
+        if draw_only_setting_on and not truly_moving_strands and affected_strand:
+            truly_moving_strands = [affected_strand]
+
         # --- Find connected strands if moving an endpoint with Draw Only ON ---
         connected_strands_at_moving_point = set()
         if draw_only_setting_on and moving_strand_point and affected_strand:
-            moving_point_coord = None
-            if moving_side == 0:
-                moving_point_coord = affected_strand.start
-            elif moving_side == 1:
-                moving_point_coord = affected_strand.end
-
-            if moving_point_coord:
-                for other_strand in self.strands:
-                    if other_strand == affected_strand or isinstance(other_strand, MaskedStrand):
-                        continue
-                    # Check both start and end points of the other strand
-                    if self.points_are_close(other_strand.start, moving_point_coord) or \
-                       self.points_are_close(other_strand.end, moving_point_coord):
-                        connected_strands_at_moving_point.add(other_strand)
+            # When "drag only affected strand" is enabled, we should NOT show control points
+            # for strands that are just nearby. Only show for truly connected strands.
+            # For now, don't add any strands to connected_strands_at_moving_point
+            # This will only show control points for the affected strand itself
+            pass
         # --- End finding connected strands ---
 
         # Iterate through all strands
@@ -4304,11 +4328,8 @@ class StrandDrawingCanvas(QWidget):
             # --- Determine if we should skip drawing CPs for this strand ---
             should_skip = False
             if draw_only_setting_on:
-                if moving_control_point and strand != affected_strand:
-                    # Skip if moving a CP and this isn't the affected strand
-                    should_skip = True
-                elif moving_strand_point and strand != affected_strand and strand not in connected_strands_at_moving_point:
-                    # Skip if moving an endpoint, and this strand is not the affected one NOR connected at the moving point
+                # When "drag only affected strand" is enabled, ONLY show control points for truly moving strands
+                if strand not in truly_moving_strands:
                     should_skip = True
 
             if should_skip:
@@ -4892,17 +4913,20 @@ class StrandDrawingCanvas(QWidget):
                     )
                     
                     if connected_strand:
-                    # Check start point connections
-                        if self.points_are_close(strand.start, connected_strand.start) or \
-                           self.points_are_close(strand.start, connected_strand.end):
-                            strand.start_attached = True
-                            strand.has_circles[0] = True
+                        # Skip proximity detection if in move mode with "drag only affected strand" enabled
+                        if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                getattr(self.current_mode, 'draw_only_affected_strand', False))):
+                            # Check start point connections
+                            if self.points_are_close(strand.start, connected_strand.start) or \
+                               self.points_are_close(strand.start, connected_strand.end):
+                                strand.start_attached = True
+                                strand.has_circles[0] = True
 
-                    # Check end point connections
-                        if self.points_are_close(strand.end, connected_strand.start) or \
-                           self.points_are_close(strand.end, connected_strand.end):
-                            strand.end_attached = True
-                            strand.has_circles[1] = True
+                            # Check end point connections
+                            if self.points_are_close(strand.end, connected_strand.start) or \
+                               self.points_are_close(strand.end, connected_strand.end):
+                                strand.end_attached = True
+                                strand.has_circles[1] = True
 
         # --- NEW: Re-apply manual circle visibility overrides (recursive for attached strands) ---
         def _apply_manual_circle_overrides(s):

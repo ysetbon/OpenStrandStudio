@@ -312,6 +312,10 @@ class SettingsDialog(QDialog):
 
         if hasattr(self, 'tutorial_widget'):
             self.tutorial_widget.setLayoutDirection(direction)
+            # Ensure tutorial_label remains center-aligned and handles RTL properly
+            if hasattr(self, 'tutorial_label'):
+                self.tutorial_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+                self.tutorial_label.setTextFormat(Qt.PlainText)
         if hasattr(self, 'about_widget'):
             self.about_widget.setLayoutDirection(direction)
         if hasattr(self, 'whats_new_widget'):
@@ -2013,7 +2017,10 @@ class SettingsDialog(QDialog):
 
         # Add a tutorial label
         self.tutorial_label = QLabel(_['tutorial_info'])
-        tutorial_layout.addWidget(self.tutorial_label, 0, Qt.AlignLeft) # Default alignment, will be updated
+        self.tutorial_label.setAlignment(Qt.AlignCenter)
+        self.tutorial_label.setWordWrap(True)  # Enable word wrap for multiline text
+        self.tutorial_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        tutorial_layout.addWidget(self.tutorial_label)
 
         self.video_buttons = []
 

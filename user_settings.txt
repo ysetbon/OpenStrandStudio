@@ -1,9 +1,9 @@
 Theme: dark
-Language: he
+Language: en
 ShadowColor: 0,0,0,50
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: true
-EnableSnapToGrid: true
+EnableSnapToGrid: false
 NumSteps: 2
 MaxBlurRadius: 40.0
 ExtensionLength: 200.0

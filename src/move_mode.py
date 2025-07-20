@@ -649,6 +649,8 @@ class MoveMode:
                 # --- ADD LOGGING HERE ---
                 if not perf_logger.suppress_move_logging:
                     logging.info(f"MoveMode (Optimized Paint): Drawing truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
+                print(f"DEBUG3: TRACKING 1_2 - optimized_paint_event truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
+                print(f"DEBUG3: TRACKING 1_2 - optimized_paint_event affected_strands_for_drawing: {[s.layer_name for s in getattr(self_canvas, 'affected_strands_for_drawing', [])]}")
                 # --- END LOGGING ---
 
                 # --- DRAW C-SHAPE EARLY --- 
@@ -1415,14 +1417,19 @@ class MoveMode:
                     if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
                         continue
                     
-                    # Check if they are connected according to the state manager
-                    if other_strand.layer_name in connected_strand_names:
+                    # Check if they are connected according to the state manager (bidirectional)
+                    is_connected = (other_strand.layer_name in connected_strand_names or
+                                  self.affected_strand.layer_name in connections.get(other_strand.layer_name, []))
+                    
+                    if is_connected:
                         # Determine which end of the connected strand needs to move
+                        # Skip proximity detection if "drag only affected strand" is enabled
                         connected_moving_side = -1
-                        if self.points_are_close(other_strand.start, moving_point_coord):
-                            connected_moving_side = 0
-                        elif self.points_are_close(other_strand.end, moving_point_coord):
-                            connected_moving_side = 1
+                        if not self.draw_only_affected_strand:
+                            if self.points_are_close(other_strand.start, moving_point_coord):
+                                connected_moving_side = 0
+                            elif self.points_are_close(other_strand.end, moving_point_coord):
+                                connected_moving_side = 1
                         
                         # Update the appropriate end to maintain connection
                         if connected_moving_side == 0:
@@ -1855,19 +1862,52 @@ class MoveMode:
                     continue
                 # --- END ADDED ---
                 # Check if the other strand shares the start or end point being moved
-                if self.points_are_close(other_strand.start, moving_point_coord) or \
-                   self.points_are_close(other_strand.end, moving_point_coord):
-                    if other_strand not in truly_moving_strands:
-                        truly_moving_strands.append(other_strand)
-                        logging.info(f"MoveMode: Added strand {other_strand.layer_name} sharing moving point {moving_point_coord} to truly_moving_strands (initiated by non-masked strand)")
+                should_add_strand = False
+                
+                if self.draw_only_affected_strand:
+                    # When "drag only affected strand" is enabled:
+                    # ONLY use proximity detection, but ONLY for strands that are connected in state
+                    # This ensures we only show strands that are both connected AND at the moving point
+                    if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                        connections = self.canvas.layer_state_manager.getConnections()
+                        # Check bidirectional connections
+                        affected_connections = connections.get(self.affected_strand.layer_name, [])
+                        other_connections = connections.get(other_strand.layer_name, [])
+                        
+                        # Only consider proximity if they're connected in the state
+                        are_connected = (other_strand.layer_name in affected_connections or 
+                                       self.affected_strand.layer_name in other_connections)
+                        
+                        # Only add if connected in state AND actually at the moving point
+                        at_moving_point = (self.points_are_close(other_strand.start, moving_point_coord) or \
+                                         self.points_are_close(other_strand.end, moving_point_coord))
+                        
+                        if are_connected and at_moving_point:
+                            should_add_strand = True
+                            print(f"DEBUG: Adding {other_strand.layer_name} - connected in state: {are_connected}, at moving point: {at_moving_point}")
+                            print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
+                        elif are_connected:
+                            print(f"DEBUG: NOT adding {other_strand.layer_name} - connected in state: {are_connected}, but NOT at moving point: {at_moving_point}")
+                            print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
+                else:
+                    # When setting is disabled, use proximity detection as before
+                    if (self.points_are_close(other_strand.start, moving_point_coord) or \
+                       self.points_are_close(other_strand.end, moving_point_coord)):
+                        should_add_strand = True
+                
+                if should_add_strand and other_strand not in truly_moving_strands:
+                    truly_moving_strands.append(other_strand)
+                    logging.info(f"MoveMode: Added strand {other_strand.layer_name} to truly_moving_strands (connection-based: {self.draw_only_affected_strand})")
         # If the initiating strand *was* a MaskedStrand, truly_moving_strands remains just [MaskedStrand],
         # and its components will be handled by the MaskedStrand-specific move logic.
 
 
         # Store the list on the canvas for use in optimized_paint_event
         self.canvas.truly_moving_strands = truly_moving_strands
+        print(f"DEBUG3: TRACKING 1_2 - start_movement INITIAL truly_moving_strands: {[s.layer_name for s in truly_moving_strands]}")
         # Ensure affected_strands_for_drawing also contains all truly moving strands initially
         self.canvas.affected_strands_for_drawing = list(truly_moving_strands)
+        print(f"DEBUG3: TRACKING 1_2 - start_movement INITIAL affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
         # --- END REVISED CODE ---
 
         # Control point movement specific handling
@@ -1974,7 +2014,8 @@ class MoveMode:
         # --- CORRECTED: Preserve truly_moving_strands from start_movement --- 
         # truly_moving_strands = [self.affected_strand] # OLD LOGIC
         # Retrieve the list set by start_movement and ensure it's treated as read-only here
-        truly_moving_strands_read_only = getattr(self.canvas, 'truly_moving_strands', [self.affected_strand]) 
+        truly_moving_strands_read_only = getattr(self.canvas, 'truly_moving_strands', [self.affected_strand])
+        print(f"DEBUG3: TRACKING 1_2 - Retrieved truly_moving_strands_read_only: {[s.layer_name for s in truly_moving_strands_read_only]}")
         # --- END CORRECTION ---
         
         # --- Find and include connected strands for drawing --- NEW BLOCK
@@ -2005,17 +2046,41 @@ class MoveMode:
                     if other_strand == self.affected_strand or isinstance(other_strand, MaskedStrand):
                         continue
 
-                    # Check if points are close
-                    points_close = (self.points_are_close(other_strand.start, moving_point_coord) or \
-                                    self.points_are_close(other_strand.end, moving_point_coord))
+                    # Check if they should be added as connected strands
+                    should_add_connected = False
+                    
+                    if self.draw_only_affected_strand:
+                        # When "drag only affected strand" is enabled, only add strands that are:
+                        # 1. Connected according to state manager AND
+                        # 2. Actually connected at the specific moving point (proximity check)
+                        is_manager_connected = (other_strand.layer_name in connected_strand_names or
+                                              self.affected_strand.layer_name in connections.get(other_strand.layer_name, []))
+                        
+                        # If connected in state, also verify they're connected at this specific moving point
+                        at_moving_point = (self.points_are_close(other_strand.start, moving_point_coord) or \
+                                         self.points_are_close(other_strand.end, moving_point_coord))
+                        
+                        if is_manager_connected and at_moving_point:
+                            should_add_connected = True
+                            print(f"DEBUG2: Adding {other_strand.layer_name} to connected_strands - manager connected: {is_manager_connected}, at moving point: {at_moving_point}")
+                            print(f"DEBUG3: TRACKING 1_2 - Adding {other_strand.layer_name} to connected_strands_at_moving_point via manager+proximity check")
+                        elif is_manager_connected:
+                            print(f"DEBUG2: NOT adding {other_strand.layer_name} to connected_strands - manager connected: {is_manager_connected}, but NOT at moving point: {at_moving_point}")
+                    else:
+                        # When setting is disabled, use proximity + state manager check as before
+                        points_close = (self.points_are_close(other_strand.start, moving_point_coord) or \
+                                      self.points_are_close(other_strand.end, moving_point_coord))
+                        is_manager_connected = (other_strand.layer_name in connected_strand_names or
+                                              self.affected_strand.layer_name in connections.get(other_strand.layer_name, []))
+                        
+                        if points_close and is_manager_connected:
+                            should_add_connected = True
 
-                    # Check if they are connected according to the state manager
-                    is_manager_connected = other_strand.layer_name in connected_strand_names
-
-                    # Only add if points are close AND they are explicitly connected via the manager
-                    if points_close and is_manager_connected:
+                    if should_add_connected:
                         connected_strands_at_moving_point.add(other_strand)
+                        print(f"DEBUG3: TRACKING 1_2 - Added {other_strand.layer_name} to connected_strands_at_moving_point SET. Current set: {[s.layer_name for s in connected_strands_at_moving_point]}")
                         affected_strands.add(other_strand)
+                        print(f"DEBUG3: TRACKING 1_2 - Added {other_strand.layer_name} to affected_strands via connection logic")
                         # logging.info(f"MoveMode (Update Pos): Adding {other_strand.layer_name} to affected (points close AND manager connected to {self.affected_strand.layer_name})")
                     #elif points_close:
                          # Optional: Log when points are close but not connected
@@ -2027,13 +2092,15 @@ class MoveMode:
             moving_point_coord = self.affected_strand.start # Get the start point being moved
             for attached_strand in self.affected_strand.attached_strands:
                 # Check if the attached strand starts at the same point being moved
-                if self.points_are_close(attached_strand.start, moving_point_coord):
+                # Skip proximity detection if "drag only affected strand" is enabled
+                if not self.draw_only_affected_strand and self.points_are_close(attached_strand.start, moving_point_coord):
                     # --- CORRECTED: Don't add to truly moving here --- 
                     # if attached_strand not in truly_moving_strands:
                     #     truly_moving_strands.append(attached_strand) # Add to the list for drawing
                     # --- END CORRECTION ---
                     
                     affected_strands.add(attached_strand) # Ensure it's also in affected
+                    print(f"DEBUG3: TRACKING 1_2 - Added attached strand {attached_strand.layer_name} to affected_strands (shares start point)")
                     # Corrected Log Message:
                     # logging.info(f"MoveMode (Update Pos): Added attached strand {attached_strand.layer_name} sharing start point to affected_strands.")
         # --- End NEW BLOCK ---
@@ -2164,13 +2231,16 @@ class MoveMode:
                 # --- Update connected strands positions (moved from within move_strand_and_update_attached) ---
                 # The connected strands were already found and added to truly_moving_strands/affected_strands above
                 if moving_point_coord:
+                    print(f"DEBUG3: TRACKING 1_2 - About to process connected_strands_at_moving_point: {[s.layer_name for s in connected_strands_at_moving_point]}")
                     for connected_strand in connected_strands_at_moving_point:
                         # Determine which end of the connected strand needs to move
+                        # Skip proximity detection if "drag only affected strand" is enabled
                         connected_moving_side = -1
-                        if self.points_are_close(connected_strand.start, moving_point_coord):
-                            connected_moving_side = 0
-                        elif self.points_are_close(connected_strand.end, moving_point_coord):
-                            connected_moving_side = 1
+                        if not self.draw_only_affected_strand:
+                            if self.points_are_close(connected_strand.start, moving_point_coord):
+                                connected_moving_side = 0
+                            elif self.points_are_close(connected_strand.end, moving_point_coord):
+                                connected_moving_side = 1
 
                         if connected_moving_side == 0:
                             connected_strand.start = new_pos
@@ -2249,9 +2319,11 @@ class MoveMode:
         # Store affected strands for optimized rendering
         # Ensure affected_strands includes everything needed (main, connected, parents, children)
         self.canvas.affected_strands_for_drawing = list(affected_strands)
+        print(f"DEBUG3: TRACKING 1_2 - Final affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
 
         # --- CORRECTED: Re-assert the read-only list from the start of the function --- 
         self.canvas.truly_moving_strands = truly_moving_strands_read_only
+        print(f"DEBUG3: TRACKING 1_2 - Set truly_moving_strands to read_only list: {[s.layer_name for s in self.canvas.truly_moving_strands]}")
         # --- END CORRECTION ---
         # logging.info(f"MoveMode (Update Pos): Final truly_moving_strands: {[s.layer_name for s in self.canvas.truly_moving_strands]}, affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
         
@@ -2265,7 +2337,9 @@ class MoveMode:
 
         # Check for attached strands that share the same start/end point with the affected strand
         # This is crucial for when moving a shared point between main strand and attached strand
+        print(f"DEBUG3: TRACKING 1_2 - About to check attached strands for {self.affected_strand.layer_name if self.affected_strand else 'None'}")
         if self.affected_strand and hasattr(self.affected_strand, 'attached_strands'):
+            print(f"DEBUG3: TRACKING 1_2 - {self.affected_strand.layer_name} has attached_strands: {[s.layer_name for s in self.affected_strand.attached_strands]}")
             is_moving_start = (self.moving_side == 0)
             is_moving_end = (self.moving_side == 1)
             moving_point = self.affected_strand.start if is_moving_start else self.affected_strand.end
@@ -2274,13 +2348,25 @@ class MoveMode:
             for attached in self.affected_strand.attached_strands:
                 # If we're moving the start point of the main strand, check if any attached strand
                 # also starts at this same point (or ends at this same point)
-                if (is_moving_start and self.points_are_close(attached.start, moving_point)) or \
+                should_add_attached = False
+                print(f"DEBUG3: TRACKING 1_2 - Checking attached strand {attached.layer_name}")
+                
+                # Always check if the attached strand is actually connected at the moving point
+                # regardless of the draw_only_affected_strand setting
+                if ((is_moving_start and self.points_are_close(attached.start, moving_point)) or \
                    (is_moving_start and self.points_are_close(attached.end, moving_point)) or \
                    (is_moving_end and self.points_are_close(attached.start, moving_point)) or \
-                   (is_moving_end and self.points_are_close(attached.end, moving_point)):
-                    # Ensure this attached strand is in truly_moving_strands
-                    if attached not in self.canvas.truly_moving_strands:
-                        self.canvas.truly_moving_strands.append(attached)
+                   (is_moving_end and self.points_are_close(attached.end, moving_point))):
+                    should_add_attached = True
+                    print(f"DEBUG3: TRACKING 1_2 - {attached.layer_name} is connected at moving point, adding to truly_moving_strands")
+                else:
+                    print(f"DEBUG3: TRACKING 1_2 - {attached.layer_name} is NOT connected at moving point, not adding to truly_moving_strands")
+                
+                if should_add_attached and attached not in self.canvas.truly_moving_strands:
+                    print(f"DEBUG3: TRACKING 1_2 - APPENDING attached strand {attached.layer_name} to truly_moving_strands! draw_only_affected_strand={self.draw_only_affected_strand}")
+                    print(f"DEBUG3: TRACKING 1_2 - Attached strand check details: moving_point={moving_point}, attached.start={attached.start}, attached.end={attached.end}")
+                    print(f"DEBUG3: TRACKING 1_2 - Points close checks: start_close={self.points_are_close(attached.start, moving_point)}, end_close={self.points_are_close(attached.end, moving_point)}")
+                    self.canvas.truly_moving_strands.append(attached)
                         # logging.info(f"MoveMode: Added {attached.layer_name} to truly_moving_strands - shares point with {self.affected_strand.layer_name}")
 
         # For immediate visual feedback during dragging, invalidate the cache here too
@@ -2880,13 +2966,15 @@ class MoveMode:
                 if connected_strand and connected_strand != strand:
                     # Check which side this connection is on
                     # Side 0 (start) connects to other strand's end
-                    if self.points_are_close(strand.start, connected_strand.end):
-                        cache_key = (strand.layer_name, 0)
-                        self.connection_cache[cache_key] = connected_strand
-                    # Side 1 (end) connects to other strand's start  
-                    elif self.points_are_close(strand.end, connected_strand.start):
-                        cache_key = (strand.layer_name, 1)
-                        self.connection_cache[cache_key] = connected_strand
+                    # Skip proximity detection if "drag only affected strand" is enabled
+                    if not self.draw_only_affected_strand:
+                        if self.points_are_close(strand.start, connected_strand.end):
+                            cache_key = (strand.layer_name, 0)
+                            self.connection_cache[cache_key] = connected_strand
+                        # Side 1 (end) connects to other strand's start  
+                        elif self.points_are_close(strand.end, connected_strand.start):
+                            cache_key = (strand.layer_name, 1)
+                            self.connection_cache[cache_key] = connected_strand
         
         self.cache_valid = True
 
@@ -2912,10 +3000,12 @@ class MoveMode:
         cached_strand = self.get_cached_connected_strand(strand, side)
         if cached_strand:
             # Verify the cached connection is still valid by checking the moving point
-            if side == 0 and self.points_are_close(cached_strand.end, moving_point):
-                return cached_strand
-            elif side == 1 and self.points_are_close(cached_strand.start, moving_point):
-                return cached_strand
+            # Skip proximity detection if "drag only affected strand" is enabled
+            if not self.draw_only_affected_strand:
+                if side == 0 and self.points_are_close(cached_strand.end, moving_point):
+                    return cached_strand
+                elif side == 1 and self.points_are_close(cached_strand.start, moving_point):
+                    return cached_strand
             # If cached connection is invalid, fall back to original search
             
         # Fallback to original search method if cache miss or invalid
@@ -2934,9 +3024,10 @@ class MoveMode:
                 None
             )
 
-            if connected_strand and connected_strand != strand:             
-                if (side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
-                (side == 1 and self.points_are_close(connected_strand.start, moving_point)):
+            if connected_strand and connected_strand != strand:
+                # Skip proximity detection if "drag only affected strand" is enabled
+                if not self.draw_only_affected_strand and ((side == 0 and self.points_are_close(connected_strand.end, moving_point)) or \
+                (side == 1 and self.points_are_close(connected_strand.start, moving_point))):
                     return connected_strand
 
         return None

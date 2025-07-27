@@ -1,11 +1,11 @@
-Theme: dark
-Language: he
+Theme: default
+Language: fr
 ShadowColor: 0,0,0,150
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 EnableSnapToGrid: false
 NumSteps: 2
-MaxBlurRadius: 360.0
+MaxBlurRadius: 60.0
 ExtensionLength: 200.0
 ExtensionDashCount: 15
 ExtensionDashWidth: 20.0

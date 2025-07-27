@@ -2058,7 +2058,7 @@ class SettingsDialog(QDialog):
             history_layout.addWidget(self.history_explanation_label) # Default alignment, will be updated later
 
         self.history_list = QListWidget()
-        self.history_list.setToolTip("Select a session to load its final state")
+        self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
         history_layout.addWidget(self.history_list)
         
         # Move the populate_history_list call to after button creation
@@ -2839,6 +2839,19 @@ class SettingsDialog(QDialog):
         self.default_strand_width_button.setText(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
         self.default_strand_width_button.setToolTip(_['default_strand_width_tooltip'] if 'default_strand_width_tooltip' in _ else "Configure default strand width")
         
+        # Update all layer panel tooltips
+        self.num_steps_spinbox.setToolTip(_['shadow_blur_steps_tooltip'] if 'shadow_blur_steps_tooltip' in _ else "Number of steps for the shadow fade effect")
+        self.blur_radius_spinbox.setToolTip(_['shadow_blur_radius_tooltip'] if 'shadow_blur_radius_tooltip' in _ else "Shadow blur radius in pixels (range: 0.0 - 360.0)")
+        self.extension_length_spinbox.setToolTip(_['extension_length_tooltip'] if 'extension_length_tooltip' in _ else "Length of extension lines")
+        self.extension_dash_count_spinbox.setToolTip(_['extension_dash_count_tooltip'] if 'extension_dash_count_tooltip' in _ else "Number of dashes in extension line")
+        self.extension_dash_width_spinbox.setToolTip(_['extension_dash_width_tooltip'] if 'extension_dash_width_tooltip' in _ else "Width of extension dashes")
+        self.arrow_head_length_spinbox.setToolTip(_['arrow_head_length_tooltip'] if 'arrow_head_length_tooltip' in _ else "Length of arrow head in pixels")
+        self.arrow_head_width_spinbox.setToolTip(_['arrow_head_width_tooltip'] if 'arrow_head_width_tooltip' in _ else "Width of arrow head base in pixels")
+        self.arrow_head_stroke_width_spinbox.setToolTip(_['arrow_head_stroke_width_tooltip'] if 'arrow_head_stroke_width_tooltip' in _ else "Thickness of arrow head border in pixels")
+        self.arrow_gap_length_spinbox.setToolTip(_['arrow_gap_length_tooltip'] if 'arrow_gap_length_tooltip' in _ else "Gap between strand end and arrow shaft start")
+        self.arrow_line_length_spinbox.setToolTip(_['arrow_line_length_tooltip'] if 'arrow_line_length_tooltip' in _ else "Length of the arrow shaft")
+        self.arrow_line_width_spinbox.setToolTip(_['arrow_line_width_tooltip'] if 'arrow_line_width_tooltip' in _ else "Thickness of the arrow shaft")
+        
         # Update button size based on new translated text
         self.update_default_strand_width_button_size()
         
@@ -2856,6 +2869,7 @@ class SettingsDialog(QDialog):
         self.history_explanation_label.setText(_['history_explanation'])
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
+        self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
         # Update What's New page elements
         self.whats_new_text_browser.setHtml(_['whats_new_info'])
         # Update about text browser instead of label

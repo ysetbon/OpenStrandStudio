@@ -120,6 +120,7 @@ translations = {
         'zoom_in_tooltip': 'Zoom In',
         'zoom_out_tooltip': 'Zoom Out',
         'pan_tooltip': 'Pan:\nClick and drag to move the canvas',
+        'layer_cannot_delete_tooltip': 'This layer cannot be deleted (both ends are attached)',
      
    
         # Additional texts
@@ -259,6 +260,7 @@ translations = {
         'history_cleared_text': 'All past history sessions have been cleared.',
         'no_history_found': 'No past history sessions found.',
         'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
+        'history_list_tooltip': 'Select a session to load its final state',
         # About translations
         'about': 'About',
         'about_info': '''
@@ -511,6 +513,7 @@ translations = {
         'zoom_in_tooltip': 'Zoom avant',
         'zoom_out_tooltip': 'Zoom arrière',
         'pan_tooltip': 'Panoramique :\nCliquez et faites glisser pour\ndéplacer le canevas',
+        'layer_cannot_delete_tooltip': 'Cette couche ne peut pas être supprimée (les deux extrémités sont attachées)',
         'arrow_head_length': "Longueur de la Tête de Flèche",
         'arrow_head_length_tooltip': "Longueur de la tête de flèche en pixels",
         'arrow_head_width': "Largeur de la Tête de Flèche",
@@ -539,6 +542,7 @@ translations = {
         'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
         'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
+        'history_list_tooltip': 'Sélectionnez une session à charger dans son état final',
         'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
         'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
         'width_preview_label': 'Total : {total}px | Couleur : {color}px | Contour : {stroke}px de chaque côté',
@@ -790,6 +794,7 @@ translations = {
         'zoom_in_tooltip': 'Zoom avanti',
         'zoom_out_tooltip': 'Zoom indietro',
         'pan_tooltip': 'Panoramica:\nClicca e trascina per muovere il canvas',
+        'layer_cannot_delete_tooltip': 'Questo livello non può essere eliminato (entrambe le estremità sono collegate)',
         'arrow_head_length': 'Lunghezza punta freccia',
         'arrow_head_length_tooltip': 'Lunghezza della punta della freccia in pixel',
         'arrow_head_width': 'Larghezza punta freccia',
@@ -819,6 +824,7 @@ translations = {
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
+        'history_list_tooltip': 'Seleziona una sessione da caricare nel suo stato finale',
         'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
         'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
         'width_preview_label': 'Totale: {total}px | Colore: {color}px | Contorno: {stroke}px per lato',
@@ -1074,6 +1080,7 @@ translations = {
         'zoom_in_tooltip': 'Acercar',
         'zoom_out_tooltip': 'Alejar',
         'pan_tooltip': 'Panorámica:\nHaga clic y arrastre para\nmover el lienzo',
+        'layer_cannot_delete_tooltip': 'Esta capa no se puede eliminar (ambos extremos están conectados)',
         'arrow_head_length': 'Longitud de la punta de la flecha',
         'arrow_head_length_tooltip': 'Longitud de la punta de la flecha en píxeles',
         'arrow_head_width': 'Ancho de la punta de la flecha',
@@ -1103,6 +1110,7 @@ translations = {
         'history_cleared_text': 'Todas las sesiones de historial pasadas han sido borradas.',
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
         'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
+        'history_list_tooltip': 'Selecciona una sesión para cargar su estado final',
         'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
         'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
         'width_preview_label': 'Total: {total}px | Color: {color}px | Contorno: {stroke}px cada lado',
@@ -1357,6 +1365,7 @@ translations = {
         'zoom_in_tooltip': 'Aumentar zoom',
         'zoom_out_tooltip': 'Diminuir zoom',
         'pan_tooltip': 'Panorâmica:\nClique e arraste para mover a tela',
+        'layer_cannot_delete_tooltip': 'Esta camada não pode ser excluída (ambas as extremidades estão conectadas)',
         'arrow_head_length': 'Comprimento da ponta da flecha',
         'arrow_head_length_tooltip': 'Comprimento da ponta da flecha em pixels',
         'arrow_head_width': 'Largura da ponta da flecha',
@@ -1385,6 +1394,7 @@ translations = {
         'history_cleared_text': 'Todas as sessões de histórico passadas foram limpas.',
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
         'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.',
+        'history_list_tooltip': 'Selecione uma sessão para carregar seu estado final',
         'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
         'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
         # About translations
@@ -1612,6 +1622,7 @@ translations = {
         'zoom_in_tooltip': 'הגדל',
         'zoom_out_tooltip': 'הקטן',
         'pan_tooltip': 'גרירה:\nלחץ וגרור להזזת הקנבס',
+        'layer_cannot_delete_tooltip': 'שכבה זו לא ניתנת למחיקה (שני הקצוות מחוברים)',
         'arrow_head_length': 'אורך ראש החץ',
         'arrow_head_length_tooltip': 'אורך ראש החץ בפיקסלים',
         'arrow_head_width': 'רוחב ראש החץ',
@@ -1669,6 +1680,7 @@ translations = {
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
             'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
+        'history_list_tooltip': 'בחר הפעלה לטעינת המצב הסופי שלה',
         # About translations
         'about': 'אודות',
         'about_info': '''

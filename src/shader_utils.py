@@ -258,7 +258,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # deleted for clarity and correctness.
     # ------------------------------------------------------------------
 
-    # Create a combined shadow path that will hold all intersections
+    # Create a list to hold individual shadow intersections
+    # Instead of combining them with united() which can cause issues with multiple overlaps,
+    # we'll keep them separate and handle them properly
+    individual_shadow_paths = []
     combined_shadow_path = QPainterPath()
     has_shadow_content = False
     all_shadow_paths = []
@@ -625,14 +628,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 clip_path = other_stroke_path
                             else:
                                 clip_path = clip_path.united(other_stroke_path)
-                            # Add this intersection to the combined path
-                            if has_shadow_content:
-                                combined_shadow_path = combined_shadow_path.united(current_intersection_shadow)
-                            else:
-                                combined_shadow_path = current_intersection_shadow
-                                has_shadow_content = True
+                            
+                            # Add this intersection to the list of individual shadows
+                            # This preserves each shadow intersection separately to avoid issues with united()
+                            individual_shadow_paths.append(current_intersection_shadow)
+                            has_shadow_content = True
                                 
-                            # logging.info(f"Added shadow from {this_layer} onto {other_layer} to combined path")
+                            # logging.info(f"Added shadow from {this_layer} onto {other_layer} to individual paths")
                         else:
                             logging.info(f"No intersection between {this_layer} and {other_layer} paths")
                     except Exception as e:
@@ -641,22 +643,36 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 else:
                     logging.info(f"Layer {this_layer} should NOT be above {other_layer}, no shadow calculated")
         
-        # Draw the combined shadow path once
-        if has_shadow_content and not combined_shadow_path.isEmpty():
-            # Draw shadow
+        # Combine individual shadow paths properly
+        if has_shadow_content and individual_shadow_paths:
+            # Create combined path by carefully merging individual paths
+            # This approach handles multiple overlapping regions better than repeated united() calls
+            combined_shadow_path = QPainterPath()
+            
+            # Method 1: Add all paths as subpaths to preserve overlapping regions
+            for shadow_path in individual_shadow_paths:
+                if not shadow_path.isEmpty():
+                    # Add each path as a subpath to preserve its geometry
+                    combined_shadow_path.addPath(shadow_path)
+            
+            # Set fill rule to handle overlapping regions correctly
+            combined_shadow_path.setFillRule(Qt.WindingFill)
+            
+            # Draw shadow (uncommented to actually render the solid shadow core)
             painter.setPen(Qt.NoPen)
             painter.setBrush(QBrush(color_to_use))
             
             # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
             old_composition = painter.compositionMode()
             painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            #painter.drawPath(combined_shadow_path)
+            # Uncommented to fix the missing shadow rendering
+            painter.drawPath(combined_shadow_path)
             painter.setCompositionMode(old_composition)
             
             # Initialize shadow_paths and all_shadow_paths
             all_shadow_paths = [combined_shadow_path]
             
-            # logging.info(f"Drew unified shadow path for strand {this_layer}")
+            logging.info(f"Drew combined shadow path for strand {this_layer} with {len(individual_shadow_paths)} individual shadows")
     else:
         # If no layer manager available, draw simple shadow
         # This is a fallback method
@@ -885,7 +901,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 # --- End Mask Subtraction ---
 
                 if not intersection.isEmpty():
-                    all_shadow_paths.append(intersection)
+                    # Add circle shadows to the same list as body shadows for consistent handling
+                    individual_shadow_paths.append(intersection)
                     # Expand clip path as well
                     if clip_path.isEmpty():
                         clip_path = other_stroke_path
@@ -902,7 +919,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 if not candidate.isEmpty():
                     final_circle_path = candidate
 
-            all_shadow_paths.append(final_circle_path)
+            # Add to individual shadow paths for consistent handling
+            individual_shadow_paths.append(final_circle_path)
             if clip_path.isEmpty():
                 clip_path = final_circle_path
             else:
@@ -912,6 +930,17 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # ----------------------------------------------------------
     # Draw all shadow paths at once using the faded effect (existing logic below)
     # ----------------------------------------------------------
+    # If we have individual shadow paths but all_shadow_paths wasn't set, create the combined path now
+    if not all_shadow_paths and individual_shadow_paths:
+        # Combine all individual paths for the faded effect
+        combined_path = QPainterPath()
+        for path in individual_shadow_paths:
+            if not path.isEmpty():
+                combined_path.addPath(path)
+        combined_path.setFillRule(Qt.WindingFill)
+        all_shadow_paths = [combined_path]
+        logging.info(f"Created combined path from {len(individual_shadow_paths)} individual shadow paths")
+    
     # Draw all shadow paths at once using the faded effect
     # logging.info(f"Shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}: count={len(all_shadow_paths)}, empty_paths={sum(1 for p in all_shadow_paths if p.isEmpty())}, non_empty={sum(1 for p in all_shadow_paths if not p.isEmpty())}")
 

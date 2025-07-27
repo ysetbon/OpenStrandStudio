@@ -1273,6 +1273,7 @@ class SettingsDialog(QDialog):
             _['layer_panel_title'],  # Add Layer Panel Settings category
             _['change_language'],
             _['tutorial'],
+            _['button_explanations'],  # Add Button Guide category
             _['history'],
             _['whats_new'],  # Add What's New category here
             _['about']  # Make sure About is the last item
@@ -2047,7 +2048,87 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.tutorial_widget)
 
-        # History Page (index 3)
+        # Button Explanations Page (index 4)
+        self.button_explanations_widget = QWidget()
+        button_explanations_layout = QVBoxLayout(self.button_explanations_widget)
+        
+        # Add the main info label at the top
+        self.button_guide_label = QLabel(_['button_guide_info'])
+        self.button_guide_label.setAlignment(Qt.AlignCenter)
+        self.button_guide_label.setWordWrap(True)
+        self.button_guide_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        button_explanations_layout.addWidget(self.button_guide_label)
+        
+        # Add some spacing
+        button_explanations_layout.addSpacing(10)
+        
+        # Use QTextBrowser for the button explanations content
+        self.button_explanations_text_browser = QTextBrowser()
+        self.button_explanations_text_browser.setOpenExternalLinks(False)
+        
+        # Build the HTML content for button explanations
+        button_html = f'''
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 10px; }}
+            h2 {{ color: #333; margin-top: 15px; margin-bottom: 10px; }}
+            ul {{ margin-top: 5px; margin-bottom: 15px; }}
+            li {{ margin-bottom: 8px; }}
+            .button-name {{ font-weight: bold; }}
+        </style>
+        
+        <h2>{_['layer_panel_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
+        </ul>
+        
+        <h2>{_['main_window_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['move_mode_desc'].split(' - ')[0]}</span> - {_['move_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rotate_mode_desc'].split(' - ')[0]}</span> - {_['rotate_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_grid_desc'].split(' - ')[0]}</span> - {_['toggle_grid_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['angle_adjust_desc'].split(' - ')[0]}</span> - {_['angle_adjust_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['save_desc'].split(' - ')[0]}</span> - {_['save_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['load_desc'].split(' - ')[0]}</span> - {_['load_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['save_image_desc'].split(' - ')[0]}</span> - {_['save_image_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['select_strand_desc'].split(' - ')[0]}</span> - {_['select_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['mask_mode_desc'].split(' - ')[0]}</span> - {_['mask_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['settings_desc'].split(' - ')[0]}</span> - {_['settings_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_control_points_desc'].split(' - ')[0]}</span> - {_['toggle_control_points_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_shadow_desc'].split(' - ')[0]}</span> - {_['toggle_shadow_desc'].split(' - ')[1]}</li>
+        </ul>
+        
+        <h2>{_['group_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['create_group_desc'].split(' - ')[0]}</span> - {_['create_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['group_header_desc'].split(' - ')[0]}</span> - {_['group_header_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['select_group_desc'].split(' - ')[0]}</span> - {_['select_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['move_group_desc'].split(' - ')[0]}</span> - {_['move_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rotate_group_desc'].split(' - ')[0]}</span> - {_['rotate_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['edit_strand_angles_desc'].split(' - ')[0]}</span> - {_['edit_strand_angles_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+        </ul>
+        '''
+        
+        self.button_explanations_text_browser.setHtml(button_html)
+        button_explanations_layout.addWidget(self.button_explanations_text_browser)
+        
+        self.stacked_widget.addWidget(self.button_explanations_widget)
+
+        # History Page (index 5)
         self.history_widget = QWidget()
         history_layout = QVBoxLayout(self.history_widget)
 
@@ -2113,6 +2194,7 @@ class SettingsDialog(QDialog):
         self.general_settings_widget.setMinimumWidth(550)  # Set minimum width for content
         self.change_language_widget.setMinimumWidth(550)
         self.tutorial_widget.setMinimumWidth(550)
+        self.button_explanations_widget.setMinimumWidth(550)  # Add min width for button explanations
         self.history_widget.setMinimumWidth(550)
         self.whats_new_widget.setMinimumWidth(550) # Set min width for new page
         self.about_widget.setMinimumWidth(550)
@@ -2780,9 +2862,10 @@ class SettingsDialog(QDialog):
         self.categories_list.item(1).setText(_['layer_panel_title'])
         self.categories_list.item(2).setText(_['change_language'])
         self.categories_list.item(3).setText(_['tutorial'])
-        self.categories_list.item(4).setText(_['history']) # Update history category name
-        self.categories_list.item(5).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(6).setText(_['about']) # Adjust index for About
+        self.categories_list.item(4).setText(_['button_explanations']) # Update button guide category name
+        self.categories_list.item(5).setText(_['history']) # Update history category name
+        self.categories_list.item(6).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(7).setText(_['about']) # Adjust index for About
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -2865,6 +2948,69 @@ class SettingsDialog(QDialog):
         # Update information labels
         self.language_info_label.setText(_['language_settings_info'])
         self.tutorial_label.setText(_['tutorial_info'])
+        
+        # Update button explanations page
+        if hasattr(self, 'button_guide_label'):
+            self.button_guide_label.setText(_['button_guide_info'])
+            
+        # Update the button explanations text browser content
+        if hasattr(self, 'button_explanations_text_browser'):
+            button_html = f'''
+            <style>
+                body {{ font-family: Arial, sans-serif; padding: 10px; }}
+                h2 {{ color: #333; margin-top: 15px; margin-bottom: 10px; }}
+                ul {{ margin-top: 5px; margin-bottom: 15px; }}
+                li {{ margin-bottom: 8px; }}
+                .button-name {{ font-weight: bold; }}
+            </style>
+            
+            <h2>{_['layer_panel_buttons']}</h2>
+            <ul>
+                <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
+            </ul>
+            
+            <h2>{_['main_window_buttons']}</h2>
+            <ul>
+                <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['move_mode_desc'].split(' - ')[0]}</span> - {_['move_mode_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['rotate_mode_desc'].split(' - ')[0]}</span> - {_['rotate_mode_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['toggle_grid_desc'].split(' - ')[0]}</span> - {_['toggle_grid_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['angle_adjust_desc'].split(' - ')[0]}</span> - {_['angle_adjust_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['save_desc'].split(' - ')[0]}</span> - {_['save_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['load_desc'].split(' - ')[0]}</span> - {_['load_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['save_image_desc'].split(' - ')[0]}</span> - {_['save_image_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['select_strand_desc'].split(' - ')[0]}</span> - {_['select_strand_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['mask_mode_desc'].split(' - ')[0]}</span> - {_['mask_mode_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['settings_desc'].split(' - ')[0]}</span> - {_['settings_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['toggle_control_points_desc'].split(' - ')[0]}</span> - {_['toggle_control_points_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['toggle_shadow_desc'].split(' - ')[0]}</span> - {_['toggle_shadow_desc'].split(' - ')[1]}</li>
+            </ul>
+            
+            <h2>{_['group_buttons']}</h2>
+            <ul>
+                <li><span class="button-name">{_['create_group_desc'].split(' - ')[0]}</span> - {_['create_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['group_header_desc'].split(' - ')[0]}</span> - {_['group_header_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['select_group_desc'].split(' - ')[0]}</span> - {_['select_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['move_group_desc'].split(' - ')[0]}</span> - {_['move_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['rotate_group_desc'].split(' - ')[0]}</span> - {_['rotate_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['edit_strand_angles_desc'].split(' - ')[0]}</span> - {_['edit_strand_angles_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+            </ul>
+            '''
+            self.button_explanations_text_browser.setHtml(button_html)
         # Update history page elements
         self.history_explanation_label.setText(_['history_explanation'])
         self.load_history_button.setText(_['load_selected_history'])

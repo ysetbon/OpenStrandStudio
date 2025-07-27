@@ -51,7 +51,9 @@
       "Bash(build_env/Scripts/python.exe -c \"from PIL import Image, ImageDraw; print(''PIL is available'')\")",
       "Bash(build_env/Scripts/python.exe create_israeli_flag.py)",
       "Bash(build_env/Scripts/python.exe final_israeli_flag.py)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(conda init:*)",
+      "Bash(C:/ProgramData/Anaconda3/Scripts/conda.exe init powershell)"
     ],
     "deny": []
   }

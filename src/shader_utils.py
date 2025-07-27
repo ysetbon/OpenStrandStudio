@@ -14,6 +14,8 @@ def draw_mask_strand_shadow(
     shadow_color: QColor = None,
     num_steps: int = 3,
     max_blur_radius: float = 29.99,
+    *,
+    inner_shrink: float | None = None,
 ):
     """Draw a blurred shadow for the **intersection** between *first_path* and *second_path*.
 
@@ -95,52 +97,93 @@ def draw_mask_strand_shadow(
 
     
     # ------------------------------------------------------------------
-    # 1) Fill the solid shadow core.
+    # 1) Base fill of the intersection – keep it at the original opacity so we can
+    #    add an even darker layer inside later for clear visual contrast.
     # ------------------------------------------------------------------
     painter.setPen(Qt.NoPen)
-    painter.setBrush(QBrush(base_color))
-    painter.drawPath(intersection_path)  # <-- actual drawing: solid core of the mask shadow
-    painter.setBrush(Qt.NoBrush)
+    if inner_shrink is not None and inner_shrink > 0:
+        # Only fill the base intersection when we subsequently draw an even darker
+        # inner core – this gives a two-tone effect.  When the darkest core covers
+        # the whole mask path (inner_shrink == 0) we skip this fill so the centre
+        # uses the single darkest shade only.
+        base_core_color = QColor(base_color)
+        painter.setBrush(QBrush(base_core_color))
+        painter.drawPath(intersection_path)
+        painter.setBrush(Qt.NoBrush)
+    
+    # Decide whether we want to carve out a narrower centre or use the whole
+    # intersection.  A non-positive shrink means “use full intersection”.
+    if inner_shrink is not None and inner_shrink > 0:
+        center_stroker = QPainterPathStroker()
+        center_stroker.setWidth(inner_shrink * 2)  # radius → stroke width
+        center_stroker.setJoinStyle(Qt.RoundJoin)
+        center_stroker.setCapStyle(Qt.RoundCap)
+        center_outline = center_stroker.createStroke(intersection_path)
+        center_area = intersection_path.subtracted(center_outline)
+    else:
+        center_area = QPainterPath(intersection_path)
 
     # ------------------------------------------------------------------
-    # 2) Add a blurred / faded edge by repeatedly stroking the path with
-    #    increasing width and decreasing alpha.
+    # 2) Add blurred edges using blur rings (EXACTLY like strand shadow)
+    #    Create rings AROUND the center, not on top of it
     # ------------------------------------------------------------------
-    # We allow the blurred edge to extend anywhere the ORIGINAL component
-    # paths exist (their union) so that the blur is not clipped too early.
- 
-
-    # ------------------------------------------------------------------
-    # Restrict the blurred stroke so that it can expand inside the
-    # *receiving* strand (``second_path``) but never draws over the
-    # *casting* strand (``first_strand``).
-    #
-    # We therefore construct a clipping path that equals the second
-    # strand **minus** the first strand and apply that as the painter's
-    # clipping region.  QPainter::setClipPath replaces the previous
-    # clip region by default, so we build the final region explicitly
-    # and set it only once.
-    # ------------------------------------------------------------------
-
-    clip_path = QPainterPath(second_path)            # Start with the full receiver geometry
-       # Remove the area covered by the caster
-    clip_path.intersected(intersection_path)
+    # Apply clipping to the receiving strand area
+    clip_path = QPainterPath(second_path)
     painter.setClipPath(clip_path)
 
     for i in range(num_steps):
         progress = (num_steps - i) / num_steps  # 1 → 0
-        current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
+        current_alpha = base_alpha * progress * (1.0 / num_steps) * 1.5
+        
+        # Width increases for each blur ring
         current_width = max_blur_radius * ((i + 1) / num_steps)
+        
+        # Create expanded path for this blur step
+        stroker = QPainterPathStroker()
+        stroker.setWidth(current_width * 2)  # Double width since stroker creates radius, not diameter
+        stroker.setJoinStyle(Qt.RoundJoin)
+        stroker.setCapStyle(Qt.RoundCap)
+        expanded_path = stroker.createStroke(intersection_path)
+        
+        # Create blur ring by subtracting the solid core from expanded path
+        # This ensures no overlap with the solid center (SAME AS STRAND SHADOW)
+        blur_ring = expanded_path.subtracted(intersection_path)
+        
+        if not blur_ring.isEmpty():
+            ring_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
+                              max(0, min(255, int(current_alpha))))
+            painter.setBrush(QBrush(ring_color))
+            painter.drawPath(blur_ring)  # <-- actual drawing: blur ring without core overlap
+            painter.setBrush(Qt.NoBrush)
 
-        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
-                           max(0, min(255, int(current_alpha))))
-        pen = QPen(pen_color)
-        pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
+    # ------------------------------------------------------------------
+    # FINAL STEP: Draw the darkest center area LAST to ensure it's never covered
+    # ------------------------------------------------------------------
+    if not center_area.isEmpty():
+        # Darkest inner core – use 2× opacity (clamped) for visible difference
+        darkest_center_color = QColor(base_color)
+        darkest_alpha = min(255, int(base_alpha * 2.5))
+        darkest_center_color.setAlpha(darkest_alpha)
+        painter.setBrush(QBrush(darkest_center_color))
+        painter.drawPath(center_area)  # darkest inner patch
+        painter.setBrush(Qt.NoBrush)
 
-        painter.setPen(pen)
-        painter.strokePath(intersection_path, pen)  # <-- actual drawing: blurred/faded shadow strokes
+    # ------------------------------------------------------------------
+    # 3) Extra halo pass to emphasise the intersection centre
+    # ------------------------------------------------------------------
+    if not center_area.isEmpty():
+        halo_stroker = QPainterPathStroker()
+        halo_stroker.setWidth(max_blur_radius * 0.4)  # 40 % of blur radius
+        halo_stroker.setJoinStyle(Qt.RoundJoin)
+        halo_stroker.setCapStyle(Qt.RoundCap)
+        halo_outline = halo_stroker.createStroke(center_area)
+        halo_ring = halo_outline.subtracted(center_area)
+        if not halo_ring.isEmpty():
+            halo_color = QColor(base_color)
+            halo_color.setAlpha(min(255, int(base_alpha * 1.2)))  # slightly stronger than base
+            painter.setBrush(QBrush(halo_color))
+            painter.drawPath(halo_ring)
+            painter.setBrush(Qt.NoBrush)
 
     painter.restore()
     logging.info(
@@ -971,30 +1014,53 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         if not total_shadow_path.isEmpty():
             # --- Wrap stroking in try...except ---
             try:
+                # ------------------------------------------------------------------
+                # 1) Fill the solid shadow core first with darker shade
+                # ------------------------------------------------------------------
+                painter.setPen(Qt.NoPen)
+                # Make the core MUCH darker by doubling the alpha
+                darker_core_color = QColor(base_color)
+                darker_alpha = min(255, int(base_alpha * 2.0))  # Double the alpha for much darker center
+                darker_core_color.setAlpha(darker_alpha)
+                painter.setBrush(QBrush(darker_core_color))
+                painter.drawPath(total_shadow_path)  # <-- actual drawing: darker solid core of the strand shadow
+                painter.setBrush(Qt.NoBrush)
+                
+                # ------------------------------------------------------------------
+                # 2) Add blurred edges using blur rings (expanded paths with core subtracted)
+                #    to avoid overlap artifacts with the solid core
+                # ------------------------------------------------------------------
                 for i in range(num_steps):
                     # Alpha fades from base_alpha down towards zero
-                    # Distribute alpha across steps for smoother look
-                    # Adjusted alpha calculation slightly for potentially better distribution
                     progress = (float(num_steps - i) / num_steps)
-                    current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
-
-                    # Width increases
+                    current_alpha = base_alpha * progress * (1.0 / num_steps) * 1.5
+                    
+                    # Width increases for each blur ring
                     current_width = max_blur_radius * (float(i + 1) / num_steps)
-
-                    pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
-                    pen = QPen(pen_color)
-                    pen.setWidthF(current_width)
-                    pen.setCapStyle(Qt.RoundCap) # Use RoundCap/Join for softer edges
-                    pen.setJoinStyle(Qt.RoundJoin)
-
-                    painter.setPen(pen)
-                    painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands
+                    
+                    # Create expanded path for this blur step
+                    stroker = QPainterPathStroker()
+                    stroker.setWidth(current_width * 2)  # Double width since stroker creates radius, not diameter
+                    stroker.setJoinStyle(Qt.RoundJoin)
+                    stroker.setCapStyle(Qt.RoundCap)
+                    expanded_path = stroker.createStroke(total_shadow_path)
+                    
+                    # Create blur ring by subtracting the solid core from expanded path
+                    # This ensures no overlap with the solid center
+                    blur_ring = expanded_path.subtracted(total_shadow_path)
+                    
+                    if not blur_ring.isEmpty():
+                        ring_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
+                                          max(0, min(255, int(current_alpha))))
+                        painter.setBrush(QBrush(ring_color))
+                        painter.drawPath(blur_ring)  # <-- actual drawing: blur ring without core overlap
+                        painter.setBrush(Qt.NoBrush)
             except Exception as stroke_error:
                 # logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
                 pass
             # --- End try...except ---
 
-            # logging.info(f"Drew faded shadow stroke path with {num_steps} steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
+            # logging.info(f"Drew shadow with solid core + {num_steps} blurred steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
         else:
              # logging.warning(f"Total shadow path became empty unexpectedly for strand {strand.layer_name}, cannot draw faded shadow.")
              pass

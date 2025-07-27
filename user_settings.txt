@@ -5,7 +5,7 @@ DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 EnableSnapToGrid: false
 NumSteps: 2
-MaxBlurRadius: 40.0
+MaxBlurRadius: 60.0
 ExtensionLength: 200.0
 ExtensionDashCount: 15
 ExtensionDashWidth: 20.0

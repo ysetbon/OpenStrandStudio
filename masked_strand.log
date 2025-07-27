@@ -1,0 +1,24 @@
+Calculated center point for 1_1_2_1: 964.28, 389.87 from 1288 points
+Calculated center point for 1_1_2_1: 964.28, 389.87 from 1256 points
+Initialized masked strand 1_1_2_1 with center point: 964.28, 389.87
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Updated mask path for 1_1_2_1
+Preserved absolute coordinates for 1_1_2_1
+Updated mask path for 1_1_2_1
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Updated mask path for 1_1_2_1
+Preserved absolute coordinates for 1_1_2_1
+Updated mask path for 1_1_2_1
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Successfully constrained shadow path for 1_1_2_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Successfully constrained shadow path for 1_1_2_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Successfully constrained shadow path for 1_1_2_1

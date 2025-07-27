@@ -402,16 +402,34 @@ class MaskedStrand(Strand):
                         logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
                 else:
                     logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
+                # Determine a sensible shrink distance for the darkest core: half of the
+                # narrower strand’s width (ignores stroke width so that the effect sits
+                # comfortably inside both bodies).
+                try:
+                    narrower_width = self.first_selected_strand.width
+                    # Shrink the darkest core to half of the thinner strand’s
+                    # thickness – this mimics how a single strand keeps a
+                    # lighter ring before the blur starts and prevents a harsh
+                    # second-darkest band right at the edge.
+                    inner_shrink = narrower_width *0.5
+                except Exception:
+                    inner_shrink = None  # fall back to default behaviour
+
                 painter.save()
                 # Draw shadow and apply deletion rectangles at intersection stage
+                # Use the true strand geometry (without the extra blur padding) for
+                # the intersection so the darkest core aligns *exactly* with the
+                # mask path.  Passing the oversized *shadow* geometry caused a
+                # small gap between the darkest centre and the mask edge.
                 draw_mask_strand_shadow(
                     painter,
-                    strand1_shadow_path,
+                    strand1_path,
                     strand2_path,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
                     max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                    inner_shrink=inner_shrink,
                 )
 
                 painter.restore()
@@ -880,9 +898,12 @@ class MaskedStrand(Strand):
                 # Save painter state before shadow drawing
                 painter.save()
                 # Draw shadow and apply deletion rectangles at intersection stage
+                # Pass the exact body geometry instead of the padded shadow path
+                # so that the intersection calculation inside the helper is
+                # strictly limited to the actual mask area.
                 draw_mask_strand_shadow(
                     painter,
-                    strand1_shadow_path,
+                    strand1_path,
                     strand2_path,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,

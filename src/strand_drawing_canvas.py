@@ -1250,6 +1250,9 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_color = self.default_stroke_color
 
     def start_new_strand_mode(self, set_number):
+        # Comprehensive state reset to ensure consistent behavior across all zoom levels
+        self._reset_all_modes_for_new_strand()
+        
         self.new_strand_set_number = set_number
         self.new_strand_start_point = None
         self.new_strand_end_point = None
@@ -1263,7 +1266,11 @@ class StrandDrawingCanvas(QWidget):
         else:
             logging.info(f"strand_colors[{set_number}] already exists with color: {self.strand_colors[set_number].red()},{self.strand_colors[set_number].green()},{self.strand_colors[set_number].blue()},{self.strand_colors[set_number].alpha()}")
         
-        logging.info(f"Entered new strand mode for set: {set_number}")
+        logging.info(f"Entered new strand mode for set: {set_number} - all modes and states reset for zoom consistency")
+        
+        # Debug logging to verify state save/restore
+        if hasattr(self, '_pre_creation_state') and self._pre_creation_state:
+            logging.debug(f"State saving verified - saved state contains: {list(self._pre_creation_state.keys())}")
     def load_draw_only_affected_strand_setting(self):
         """Load draw_only_affected_strand setting from user_settings.txt if available."""
         try:
@@ -1538,6 +1545,7 @@ class StrandDrawingCanvas(QWidget):
         # next paint event will render the final, correct canvas in one go.
         # --------------------------------------------------
         if getattr(self, "_suppress_repaint", False):
+            logging.debug("Paint event suppressed - _suppress_repaint flag is active")
             return  # Skip custom painting while suppression is active
 
         # Proceed with full painting when not suppressed
@@ -3495,6 +3503,238 @@ class StrandDrawingCanvas(QWidget):
         # Force a repaint that will use the optimized drawing path
         self.update()
     
+    def clear_suppression_flags(self):
+        """
+        Clear all suppression flags to ensure the canvas can be properly repainted.
+        This is a safety method to prevent canvas from getting stuck in a suppressed state.
+        """
+        self._suppress_layer_panel_refresh = False
+        self._suppress_repaint = False
+        self._suppress_attachment_updates = False
+        logging.info("Canvas suppression flags cleared - canvas should be able to repaint now")
+    
+    def _reset_all_modes_for_new_strand(self):
+        """
+        Comprehensive reset of all modes and states to ensure consistent behavior
+        when creating new strands regardless of zoom level.
+        SAVES current state to restore it later.
+        """
+        # Save current state before resetting
+        self._save_pre_creation_state()
+        
+        # Keep control points visibility as-is (don't turn them off during creation)
+        # Control points help with positioning during strand creation
+        control_points_were_on = self.show_control_points
+        
+        # Don't change control points state - keep them as they were
+        # self.show_control_points remains unchanged
+        
+        # Don't sync the control points button state during creation
+        # The button should reflect the actual state (which we're preserving)
+        
+        logging.info(f"Control points preserved during new strand creation: {control_points_were_on}")
+        
+        # Deactivate all modes
+        if hasattr(self.current_mode, 'deactivate'):
+            self.current_mode.deactivate()
+        
+        # Reset mode-specific flags
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
+        
+        # Reset move mode state
+        if hasattr(self, 'move_mode') and self.move_mode:
+            self.move_mode.reset_selection()
+            self.move_mode.is_moving = False
+            if hasattr(self.move_mode, 'is_moving_control_point'):
+                self.move_mode.is_moving_control_point = False
+            if hasattr(self.move_mode, 'is_moving_strand_point'):
+                self.move_mode.is_moving_strand_point = False
+        
+        # Reset attach mode state
+        if hasattr(self, 'attach_mode') and self.attach_mode:
+            if hasattr(self.attach_mode, 'deactivate'):
+                self.attach_mode.deactivate()
+            if hasattr(self.attach_mode, 'reset'):
+                self.attach_mode.reset()
+        
+        # Reset angle adjust mode state
+        if hasattr(self, 'angle_adjust_mode') and self.angle_adjust_mode:
+            if hasattr(self.angle_adjust_mode, 'deactivate'):
+                self.angle_adjust_mode.deactivate()
+            if hasattr(self.angle_adjust_mode, 'confirm_adjustment'):
+                # Only confirm if there's an active adjustment
+                if hasattr(self.angle_adjust_mode, 'active_strand') and self.angle_adjust_mode.active_strand:
+                    self.angle_adjust_mode.confirm_adjustment()
+        
+        # Reset rotate mode state  
+        if hasattr(self, 'rotate_mode') and self.rotate_mode:
+            if hasattr(self.rotate_mode, 'deactivate'):
+                self.rotate_mode.deactivate()
+            if hasattr(self.rotate_mode, 'is_rotating'):
+                self.rotate_mode.is_rotating = False
+        
+        # Clear any selected attached strands
+        if hasattr(self, 'selected_attached_strand') and self.selected_attached_strand:
+            self.selected_attached_strand.is_selected = False
+            self.selected_attached_strand = None
+        
+        # Set current mode to None to ensure clean state
+        self.current_mode = None
+        
+        # Force update to reflect the changes
+        self.update()
+        
+        logging.info("All modes and states reset for new strand creation - zoom-consistent behavior ensured")
+    
+    def _save_pre_creation_state(self):
+        """
+        Save the current state before strand creation so it can be restored afterward.
+        """
+        if not hasattr(self, '_pre_creation_state'):
+            self._pre_creation_state = {}
+        
+        # Save control points state (though we keep them visible during creation)
+        self._pre_creation_state['show_control_points'] = self.show_control_points
+        
+        # Save current mode and its state
+        self._pre_creation_state['current_mode'] = self.current_mode
+        self._pre_creation_state['is_angle_adjusting'] = self.is_angle_adjusting
+        self._pre_creation_state['mask_mode_active'] = self.mask_mode_active
+        
+        # Save move mode state
+        if hasattr(self, 'move_mode') and self.move_mode:
+            self._pre_creation_state['move_mode_is_moving'] = getattr(self.move_mode, 'is_moving', False)
+            self._pre_creation_state['move_mode_is_moving_control_point'] = getattr(self.move_mode, 'is_moving_control_point', False)
+            self._pre_creation_state['move_mode_is_moving_strand_point'] = getattr(self.move_mode, 'is_moving_strand_point', False)
+        
+        # Save attach mode state
+        if hasattr(self, 'attach_mode') and self.attach_mode:
+            self._pre_creation_state['attach_mode_current_strand'] = getattr(self.attach_mode, 'current_strand', None)
+        
+        # Save rotate mode state
+        if hasattr(self, 'rotate_mode') and self.rotate_mode:
+            self._pre_creation_state['rotate_mode_is_rotating'] = getattr(self.rotate_mode, 'is_rotating', False)
+        
+        # Save selected attached strand
+        self._pre_creation_state['selected_attached_strand'] = self.selected_attached_strand
+        
+        logging.info(f"Pre-creation state saved: mode={self.current_mode}, control_points={self.show_control_points}, angle_adjusting={self.is_angle_adjusting}")
+        logging.info("Note: Control points will remain visible during strand creation for positioning assistance")
+    
+    def _ensure_consistent_post_creation_state(self):
+        """
+        Restore the previous state after strand creation to maintain user's workflow.
+        This restores control points, modes, etc. that were active before creation.
+        """
+        self._restore_pre_creation_state()
+        
+        logging.info("Post-creation state restored to previous user settings")
+    
+    def _restore_pre_creation_state(self):
+        """
+        Restore the state that was saved before strand creation.
+        """
+        if not hasattr(self, '_pre_creation_state') or not self._pre_creation_state:
+            logging.warning("No pre-creation state to restore, using default select mode")
+            self.current_mode = "select"
+            self.show_control_points = False
+            return
+        
+        state = self._pre_creation_state
+        
+        # Restore control points state (should be same as during creation since we didn't change it)
+        self.show_control_points = state.get('show_control_points', False)
+        
+        # Restore mode button states in the main window
+        main_window = self._get_main_window_reference()
+        if main_window and hasattr(main_window, '_restore_button_states'):
+            main_window._restore_button_states()
+            # Control points button was never changed during creation, so it should already be correct
+        
+        # Restore mode flags
+        self.is_angle_adjusting = state.get('is_angle_adjusting', False)
+        self.mask_mode_active = state.get('mask_mode_active', False)
+        
+        # Restore move mode state
+        if hasattr(self, 'move_mode') and self.move_mode:
+            if 'move_mode_is_moving' in state:
+                self.move_mode.is_moving = state['move_mode_is_moving']
+            if 'move_mode_is_moving_control_point' in state:
+                self.move_mode.is_moving_control_point = state['move_mode_is_moving_control_point']
+            if 'move_mode_is_moving_strand_point' in state:
+                self.move_mode.is_moving_strand_point = state['move_mode_is_moving_strand_point']
+        
+        # Restore attach mode state
+        if hasattr(self, 'attach_mode') and self.attach_mode:
+            if 'attach_mode_current_strand' in state:
+                self.attach_mode.current_strand = state['attach_mode_current_strand']
+        
+        # Restore rotate mode state
+        if hasattr(self, 'rotate_mode') and self.rotate_mode:
+            if 'rotate_mode_is_rotating' in state:
+                self.rotate_mode.is_rotating = state['rotate_mode_is_rotating']
+        
+        # Restore selected attached strand
+        if 'selected_attached_strand' in state:
+            self.selected_attached_strand = state['selected_attached_strand']
+        
+        # Restore current mode
+        previous_mode = state.get('current_mode', "select")
+        self.current_mode = previous_mode
+        
+        # If the previous mode was an object with activate method, reactivate it
+        if hasattr(previous_mode, 'activate'):
+            previous_mode.activate()
+        
+        # Clear the saved state
+        self._pre_creation_state = {}
+        
+        logging.info(f"Pre-creation state restored: mode={previous_mode}, control_points={self.show_control_points}, angle_adjusting={self.is_angle_adjusting}")
+        logging.info("State restoration complete - user workflow preserved")
+    
+    def _get_main_window_reference(self):
+        """Get a reference to the main window for button synchronization."""
+        # Try direct reference first
+        if hasattr(self, 'main_window') and self.main_window:
+            return self.main_window
+        
+        # Try through parent
+        if hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'main_window'):
+            return self.parent().main_window
+        
+        # Try through layer panel
+        if hasattr(self, 'layer_panel') and self.layer_panel:
+            if hasattr(self.layer_panel, 'parent_window'):
+                return self.layer_panel.parent_window
+            elif hasattr(self.layer_panel, 'parent'):
+                return self.layer_panel.parent()
+        
+        return None
+    
+    def _normalize_coordinate_for_zoom(self, point):
+        """
+        Normalize coordinates to ensure consistent strand creation regardless of zoom level.
+        This prevents zoom-related coordinate inconsistencies.
+        """
+        if not point:
+            return point
+            
+        # The coordinates should already be in canvas space due to screen_to_canvas conversion
+        # but we ensure they are properly rounded to avoid floating point precision issues
+        # that could vary based on zoom level
+        normalized_x = round(point.x(), 2)  # Round to 2 decimal places for consistency
+        normalized_y = round(point.y(), 2)
+        
+        normalized_point = QPointF(normalized_x, normalized_y)
+        
+        # Log coordinate normalization for debugging
+        if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
+            logging.debug(f"Coordinate normalized for zoom {self.zoom_factor}: "
+                         f"({point.x():.4f}, {point.y():.4f}) -> ({normalized_x}, {normalized_y})")
+        
+        return normalized_point
+    
     def wheelEvent(self, event):
         """Handle mouse wheel events for zooming."""
         # Get the scroll delta
@@ -3511,7 +3751,11 @@ class StrandDrawingCanvas(QWidget):
 
     def finalize_new_strand(self):
         if self.new_strand_start_point and self.new_strand_end_point:
-            new_strand = Strand(self.new_strand_start_point, self.new_strand_end_point, self.strand_width, 
+            # Ensure coordinates are properly normalized regardless of zoom level
+            start_point = self._normalize_coordinate_for_zoom(self.new_strand_start_point)
+            end_point = self._normalize_coordinate_for_zoom(self.new_strand_end_point)
+            
+            new_strand = Strand(start_point, end_point, self.strand_width, 
                                self.default_strand_color, self.default_stroke_color, self.stroke_width)
             new_strand.set_number = self.new_strand_set_number
             new_strand.set_color(self.strand_colors[self.new_strand_set_number])
@@ -3538,6 +3782,9 @@ class StrandDrawingCanvas(QWidget):
             # Reset MoveMode selection state
             if hasattr(self, 'move_mode') and self.move_mode:
                 self.move_mode.reset_selection()
+            
+            # Ensure consistent state after strand creation (zoom-independent)
+            self._ensure_consistent_post_creation_state()
             
             # Ensure the new strand is selected and highlighted
             new_strand.is_selected = True
@@ -3568,22 +3815,28 @@ class StrandDrawingCanvas(QWidget):
                 self._suppress_repaint = True
                 self._suppress_attachment_updates = True
                 
-                self.layer_panel.on_strand_created(new_strand)
-                # Ensure the layer panel selection is updated
-                self.layer_panel.select_layer(new_strand_index, emit_signal=False)
-                
-                # Re-enable UI updates
-                if main_window:
-                    main_window.setUpdatesEnabled(True)
-                self._suppress_layer_panel_refresh = False
-                self._suppress_repaint = False
-                self._suppress_attachment_updates = False
+                try:
+                    self.layer_panel.on_strand_created(new_strand)
+                    # Ensure the layer panel selection is updated
+                    self.layer_panel.select_layer(new_strand_index, emit_signal=False)
+                except Exception as e:
+                    logging.error(f"Error during strand creation UI update: {e}")
+                finally:
+                    # Re-enable UI updates - ALWAYS execute this even if there's an exception
+                    if main_window:
+                        main_window.setUpdatesEnabled(True)
+                    self._suppress_layer_panel_refresh = False
+                    self._suppress_repaint = False
+                    self._suppress_attachment_updates = False
                 
                 # The layer panel already performed a lightweight update; avoid costly refresh() to prevent flash.
                 logging.info("[FLASH_DEBUG] finalize_new_strand: Skipping simulate_refresh_button_click() to avoid flash")
             
             # Force a canvas update to show the selection
             self.update()
+            
+            # Ensure suppression flags are cleared after strand creation
+            self.clear_suppression_flags()
             
             # Add this line to emit the strand_created signal
             # This is crucial for updating the layer_state_manager and enabling proper shading

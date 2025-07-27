@@ -1472,7 +1472,7 @@ class SettingsDialog(QDialog):
         self.num_steps_spinbox = QSpinBox()
         self.num_steps_spinbox.setRange(1, 100)
         self.num_steps_spinbox.setValue(self.num_steps)
-        self.num_steps_spinbox.setToolTip("Number of steps for the shadow fade effect (default 3)")
+        self.num_steps_spinbox.setToolTip(_['shadow_blur_steps_tooltip'] if 'shadow_blur_steps_tooltip' in _ else "Number of steps for the shadow fade effect")
         
         # Add widgets in proper order for current language
         if self.is_rtl_language(self.current_language):
@@ -1489,11 +1489,11 @@ class SettingsDialog(QDialog):
         self.blur_radius_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.blur_radius_label = QLabel(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:") # Will be translated later
         self.blur_radius_spinbox = QDoubleSpinBox()
-        self.blur_radius_spinbox.setRange(0.0, 60.0)
+        self.blur_radius_spinbox.setRange(0.0, 360.0)
         self.blur_radius_spinbox.setSingleStep(0.01)
         self.blur_radius_spinbox.setDecimals(2)
         self.blur_radius_spinbox.setValue(self.max_blur_radius)
-        self.blur_radius_spinbox.setToolTip("Maximum radius of the shadow blur in pixels (default 29.99)")
+        self.blur_radius_spinbox.setToolTip(_['shadow_blur_radius_tooltip'] if 'shadow_blur_radius_tooltip' in _ else "Shadow blur radius in pixels (range: 0.0 - 360.0)")
         
         # Add widgets in proper order for current language
         if self.is_rtl_language(self.current_language):

@@ -1995,6 +1995,15 @@ class MainWindow(QMainWindow):
                 event.accept() # Indicate the event was handled
                 return # Stop further processing
 
+        # Debug key combination: Ctrl+Shift+D to clear canvas suppression flags
+        elif event.key() == Qt.Key_D and event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
+            if hasattr(self.canvas, 'clear_suppression_flags'):
+                self.canvas.clear_suppression_flags()
+                self.canvas.update()  # Force a repaint
+                logging.info("Debug: Canvas suppression flags cleared via keyboard shortcut (Ctrl+Shift+D)")
+                event.accept()
+                return
+
         # Call the base class implementation for other keys
         super().keyPressEvent(event)
 
@@ -2066,10 +2075,97 @@ class MainWindow(QMainWindow):
         
         self.canvas.start_new_strand_mode(set_number)
         
+        # Ensure UI buttons are synchronized with the zoom-consistent state
+        self._sync_mode_buttons_for_new_strand()
+        
         logging.info(f"Ready to create new main strand for set: {set_number}")
         
         self.layer_state_manager.save_current_state()
 
+    def _sync_mode_buttons_for_new_strand(self):
+        """
+        Synchronize UI buttons to ensure consistent state during new strand creation
+        regardless of zoom level. Also saves current button states to restore later.
+        """
+        # Save current button states for restoration later
+        self._save_button_states()
+        
+        # Keep control points button state as-is (don't force it OFF during creation)
+        # Control points are helpful during strand creation for positioning
+        # if hasattr(self, 'toggle_control_points_button'):
+        #     self.toggle_control_points_button.setChecked(False)
+        
+        # Ensure angle adjust button is OFF
+        if hasattr(self, 'angle_adjust_button'):
+            self.angle_adjust_button.setChecked(False)
+        
+        # Ensure attach mode button is OFF
+        if hasattr(self, 'attach_button'):
+            self.attach_button.setChecked(False)
+        
+        # Ensure move mode button is OFF
+        if hasattr(self, 'move_button'):
+            self.move_button.setChecked(False)
+        
+        # Ensure mask mode button is OFF
+        if hasattr(self, 'mask_button'):
+            self.mask_button.setChecked(False)
+        
+        # Ensure rotate mode button is OFF
+        if hasattr(self, 'rotate_button'):
+            self.rotate_button.setChecked(False)
+        
+        logging.debug("Mode buttons synchronized for new strand creation - zoom consistency ensured")
+
+    def _save_button_states(self):
+        """Save current button states for restoration after strand creation."""
+        if not hasattr(self, '_pre_creation_button_states'):
+            self._pre_creation_button_states = {}
+        
+        # Save button states (except control points which we preserve during creation)
+        # Control points button state is preserved as-is during strand creation
+        # if hasattr(self, 'toggle_control_points_button'):
+        #     self._pre_creation_button_states['control_points'] = self.toggle_control_points_button.isChecked()
+        if hasattr(self, 'angle_adjust_button'):
+            self._pre_creation_button_states['angle_adjust'] = self.angle_adjust_button.isChecked()
+        if hasattr(self, 'attach_button'):
+            self._pre_creation_button_states['attach'] = self.attach_button.isChecked()
+        if hasattr(self, 'move_button'):
+            self._pre_creation_button_states['move'] = self.move_button.isChecked()
+        if hasattr(self, 'mask_button'):
+            self._pre_creation_button_states['mask'] = self.mask_button.isChecked()
+        if hasattr(self, 'rotate_button'):
+            self._pre_creation_button_states['rotate'] = self.rotate_button.isChecked()
+        
+        logging.debug(f"Button states saved: {self._pre_creation_button_states}")
+
+    def _restore_button_states(self):
+        """Restore button states that were saved before strand creation."""
+        if not hasattr(self, '_pre_creation_button_states') or not self._pre_creation_button_states:
+            logging.warning("No button states to restore")
+            return
+        
+        states = self._pre_creation_button_states
+        
+        # Restore button states (control points were preserved, so no need to restore)
+        # Control points button state was never changed during strand creation
+        # if hasattr(self, 'toggle_control_points_button') and 'control_points' in states:
+        #     self.toggle_control_points_button.setChecked(states['control_points'])
+        if hasattr(self, 'angle_adjust_button') and 'angle_adjust' in states:
+            self.angle_adjust_button.setChecked(states['angle_adjust'])
+        if hasattr(self, 'attach_button') and 'attach' in states:
+            self.attach_button.setChecked(states['attach'])
+        if hasattr(self, 'move_button') and 'move' in states:
+            self.move_button.setChecked(states['move'])
+        if hasattr(self, 'mask_button') and 'mask' in states:
+            self.mask_button.setChecked(states['mask'])
+        if hasattr(self, 'rotate_button') and 'rotate' in states:
+            self.rotate_button.setChecked(states['rotate'])
+        
+        # Clear saved states
+        self._pre_creation_button_states = {}
+        
+        logging.debug(f"Button states restored: {states}")
 
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:

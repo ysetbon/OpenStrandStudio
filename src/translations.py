@@ -42,7 +42,9 @@ translations = {
         'use_extended_mask_tooltip': 'If you want to use shadows, toggle on; if you don\'t want shadows, toggle off.',
         'use_extended_mask_desc': 'If you want to use shadows, toggle on; if you don\'t want shadows, toggle off.',
         'shadow_blur_steps': 'Shadow Blur Steps:',
+        'shadow_blur_steps_tooltip': 'Number of steps for the shadow fade effect',
         'shadow_blur_radius': 'Shadow Blur Radius:',
+        'shadow_blur_radius_tooltip': 'Shadow blur radius in pixels (range: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -325,7 +327,9 @@ translations = {
         'use_extended_mask_tooltip': "Si vous voulez utiliser des ombres, cochez ; si vous ne voulez pas d'ombre, décochez.",
         'use_extended_mask_desc': "Si vous voulez utiliser des ombres, cochez ; si vous ne voulez pas d'ombre, décochez.",
         'shadow_blur_steps': 'Étapes de flou d\'ombre:',
+        'shadow_blur_steps_tooltip': 'Nombre d\'étapes pour l\'effet de fondu d\'ombre',
         'shadow_blur_radius': 'Rayon de flou d\'ombre:',
+        'shadow_blur_radius_tooltip': 'Rayon de flou d\'ombre en pixels (plage: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>
@@ -602,7 +606,9 @@ translations = {
         'use_extended_mask_tooltip': 'Se vuoi usare le ombre, attiva; se non vuoi ombre, disattiva.',
         'use_extended_mask_desc': 'Se vuoi usare le ombre, attiva; se non vuoi ombre, disattiva.',
         'shadow_blur_steps': 'Passi di sfocatura dell\'ombra:',
+        'shadow_blur_steps_tooltip': 'Numero di passi per l\'effetto di dissolvenza dell\'ombra',
         'shadow_blur_radius': 'Raggio di sfocatura dell\'ombra:',
+        'shadow_blur_radius_tooltip': 'Raggio di sfocatura dell\'ombra in pixel (intervallo: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Spiegazione delle informazioni sullo stato dei livelli:</b><br>
@@ -883,7 +889,9 @@ translations = {
         'use_extended_mask_tooltip': 'Si quieres usar sombras, activa; si no quieres sombras, desactiva.',
         'use_extended_mask_desc': 'Si quieres usar sombras, activa; si no quieres sombras, desactiva.',
         'shadow_blur_steps': 'Pasos de desenfoque de sombra:',
+        'shadow_blur_steps_tooltip': 'Número de pasos para el efecto de desvanecimiento de sombra',
         'shadow_blur_radius': 'Radio de desenfoque de sombra:',
+        'shadow_blur_radius_tooltip': 'Radio de desenfoque de sombra en píxeles (rango: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicación de la Información de Estado de Capas:</b><br>
@@ -1165,7 +1173,9 @@ translations = {
         'use_extended_mask_tooltip': 'Se você quiser usar sombras, ligue; se não quiser sombras, desligue.',
         'use_extended_mask_desc': 'Se você quiser usar sombras, ligue; se não quiser sombras, desligue.',
         'shadow_blur_steps': 'Passos de desfoque de sombra:',
+        'shadow_blur_steps_tooltip': 'Número de passos para o efeito de desvanecimento da sombra',
         'shadow_blur_radius': 'Raio de desfoque de sombra:',
+        'shadow_blur_radius_tooltip': 'Raio de desfoque da sombra em pixels (faixa: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicação das Informações de Estado das Camadas:</b><br>
@@ -1445,7 +1455,9 @@ translations = {
         'use_extended_mask_tooltip': 'אם אתה רוצה להשתמש בצללים, הפעל; אם אתה לא רוצה צללים, כבה.',
         'use_extended_mask_desc': 'אם אתה רוצה להשתמש בצללים, הפעל; אם אתה לא רוצה צללים, כבה.',
         'shadow_blur_steps': 'צעדי טשטוש צל:',
+        'shadow_blur_steps_tooltip': 'מספר צעדים לאפקט דהייה של צל',
         'shadow_blur_radius': 'רדיוס טשטוש צל:',
+        'shadow_blur_radius_tooltip': 'רדיוס טשטוש צל בפיקסלים (טווח: 0.0 - 360.0)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>הסבר על מידע מצב השכבות:</b><br>

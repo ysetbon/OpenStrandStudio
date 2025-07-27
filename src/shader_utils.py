@@ -136,8 +136,8 @@ def draw_mask_strand_shadow(
                            max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
         pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setCapStyle(Qt.FlatCap)
+        pen.setJoinStyle(Qt.MiterJoin)
 
         painter.setPen(pen)
         painter.strokePath(intersection_path, pen)  # <-- actual drawing: blurred/faded shadow strokes
@@ -516,8 +516,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                     stroker = QPainterPathStroker()
                                                     # Extend by blur radius to match shadow rendering
                                                     stroker.setWidth(max_blur_radius)
-                                                    stroker.setJoinStyle(Qt.RoundJoin)  # Smoother joins for blur simulation
-                                                    stroker.setCapStyle(Qt.RoundCap)   # Smoother caps for blur simulation
+                                                    stroker.setJoinStyle(Qt.MiterJoin)  # Use miter joins for sharper blocker edges
+                                                    stroker.setCapStyle(Qt.FlatCap)    # Use flat caps for straight blocker ends
                                                     
                                                     # Create the extended path for shadow blocking
                                                     extended_mask = stroker.createStroke(base_mask_path)
@@ -561,8 +561,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                 if not base_intersection.isEmpty():
                                                     stroker = QPainterPathStroker()
                                                     stroker.setWidth(max_blur_radius * 2)
-                                                    stroker.setJoinStyle(Qt.RoundJoin)
-                                                    stroker.setCapStyle(Qt.RoundCap)
+                                                    stroker.setJoinStyle(Qt.MiterJoin)
+                                                    stroker.setCapStyle(Qt.FlatCap)
                                                     extended_intersection = stroker.createStroke(base_intersection)
                                                     subtraction_path = base_intersection.united(extended_intersection)
                                                     
@@ -984,8 +984,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
                     pen = QPen(pen_color)
                     pen.setWidthF(current_width)
-                    pen.setCapStyle(Qt.RoundCap) # Use RoundCap/Join for softer edges
-                    pen.setJoinStyle(Qt.RoundJoin)
+                    pen.setCapStyle(Qt.FlatCap) # Use FlatCap/MiterJoin for sharper edges
+                    pen.setJoinStyle(Qt.MiterJoin)
 
                     painter.setPen(pen)
                     painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands
@@ -1370,8 +1370,8 @@ def get_shadow_blocker_path(mask_strand, blur_px):
 
         stroker = QPainterPathStroker()
         stroker.setWidth(blur_px)
-        stroker.setJoinStyle(Qt.RoundJoin)
-        stroker.setCapStyle(Qt.RoundCap)
+        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setCapStyle(Qt.FlatCap)
         extended = stroker.createStroke(base_path)
         blocker = base_path.united(extended)
 

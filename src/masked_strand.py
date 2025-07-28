@@ -364,12 +364,26 @@ class MaskedStrand(Strand):
             elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
-                # Get the shadow color directly from the canvas if available
+                # Resolve shadow colour: canvas setting → existing strand colour fallback
                 shadow_color = None
                 if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
                     shadow_color = self.canvas.default_shadow_color
-                    # Also update the strand's shadow color for future reference
+                    # Also mirror it locally so subsequent draws can fall back to it
                     self.shadow_color = QColor(shadow_color)
+
+                # Secondary fallback: use the first component strand's current shadow colour
+                if (
+                    shadow_color is None
+                    and hasattr(self, 'first_selected_strand')
+                    and self.first_selected_strand
+                    and hasattr(self.first_selected_strand, 'shadow_color')
+                    and self.first_selected_strand.shadow_color
+                ):
+                    shadow_color = QColor(self.first_selected_strand.shadow_color)
+
+                # Tertiary fallback: use our own stored colour
+                if shadow_color is None and hasattr(self, 'shadow_color') and self.shadow_color:
+                    shadow_color = QColor(self.shadow_color)
                     
                 # Always get fresh paths for both strands to ensure consistent refresh
                 # Always get fresh paths for both strands to ensure consistent refresh
@@ -410,6 +424,8 @@ class MaskedStrand(Strand):
                     strand2_path,
                     self.first_selected_strand.get_path(),
                     self.first_selected_strand.width,
+                    self.first_selected_strand.stroke_width,
+                    first_strand=self.first_selected_strand,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
@@ -842,11 +858,26 @@ class MaskedStrand(Strand):
             elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
                 logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
-                # Get the shadow color directly from the canvas if available
+                # Resolve shadow colour: canvas setting → existing strand colour fallback
                 shadow_color = None
                 if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
                     shadow_color = self.canvas.default_shadow_color
+                    # Also mirror it locally so subsequent draws can fall back to it
                     self.shadow_color = QColor(shadow_color)
+
+                # Secondary fallback: use the first component strand's current shadow colour
+                if (
+                    shadow_color is None
+                    and hasattr(self, 'first_selected_strand')
+                    and self.first_selected_strand
+                    and hasattr(self.first_selected_strand, 'shadow_color')
+                    and self.first_selected_strand.shadow_color
+                ):
+                    shadow_color = QColor(self.first_selected_strand.shadow_color)
+
+                # Tertiary fallback: use our own stored colour
+                if shadow_color is None and hasattr(self, 'shadow_color') and self.shadow_color:
+                    shadow_color = QColor(self.shadow_color)
                     
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -888,6 +919,8 @@ class MaskedStrand(Strand):
                     strand2_path,
                     self.first_selected_strand.get_path(),
                     self.first_selected_strand.width,
+                    self.first_selected_strand.stroke_width,
+                    first_strand=self.first_selected_strand,
                     deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
                     shadow_color=shadow_color,
                     num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,

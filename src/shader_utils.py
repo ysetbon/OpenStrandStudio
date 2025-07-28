@@ -45,8 +45,10 @@ def draw_mask_strand_shadow(
     second_path: QPainterPath,
     first_strand_center_path: QPainterPath,
     first_strand_width: float,
+    first_strand_stroke_width: float,
     deletion_rects: List[QRectF] = None,
     shadow_color: QColor = None,
+    first_strand=None,
     num_steps: int = 3,
     max_blur_radius: float = 29.99,
 ):
@@ -82,18 +84,22 @@ def draw_mask_strand_shadow(
     intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
 
     # ------------------------------------------------------------------
-    # Resolve shadow colour.  If the caller did not provide one we default
-    # to a semi-transparent black (matching the normal strand shadow).
+    # Resolve shadow colour – mirror the logic from ``draw_strand_shadow``.
+    # Priority:
+    #   1. Explicit *shadow_color* argument supplied by caller
+    #   2. ``first_strand.shadow_color`` if available
+    #   3. Default semi-transparent black
     # ------------------------------------------------------------------
-    if shadow_color is None:
-        shadow_color = QColor(0, 0, 0, 150)  # ~59 % opacity by default
-    elif not isinstance(shadow_color, QColor):
-        # Allow callers to pass e.g. a `Qt.GlobalColor` or a tuple.
-        shadow_color = QColor(shadow_color)
-
+    if shadow_color is not None:
+        # Caller has provided an explicit colour (may be a tuple, Qt.GlobalColor, …)
+        color_to_use = QColor(shadow_color) if not isinstance(shadow_color, QColor) else QColor(shadow_color)
+    elif first_strand and hasattr(first_strand, "shadow_color") and first_strand.shadow_color:
+        color_to_use = QColor(first_strand.shadow_color)
+    else:
+        color_to_use = QColor(0, 0, 0, 150)  # ~59 % opacity
     # Ensure we have an *independent* QColor instance so that we can safely
     # tweak its alpha value later.
-    base_color = QColor(shadow_color)
+    base_color = QColor(color_to_use)
     base_alpha = base_color.alpha()
 
     # ------------------------------------------------------------------
@@ -145,13 +151,8 @@ def draw_mask_strand_shadow(
     # and the solid core fill that follows.
     # ------------------------------------------------------------------
     try:
-        stroker_inner = QPainterPathStroker()
-        stroker_inner.setWidth(max_blur_radius / 4.0)  # same logic as the old inner-core block
-        stroker_inner.setJoinStyle(Qt.MiterJoin)
-        stroker_inner.setCapStyle(Qt.FlatCap)
-
-        thinner_stroke_inner = stroker_inner.createStroke(first_strand_center_path)
-        shading_path = thinner_stroke_inner.intersected(second_path)
+        # Do not use stroker_inner; just use the first_strand_center_path directly
+        shading_path = QPainterPath(first_strand_center_path).intersected(second_path)
 
         # Respect deletion rectangles so the shading honours user erasures
         shading_path = _apply_deletion_rects(shading_path, deletion_rects)
@@ -164,42 +165,41 @@ def draw_mask_strand_shadow(
         logging.error(f"Failed to build inner shading path: {_inner_err}")
         shading_path = intersection_path
 
-    # Boost alpha so centre is as dark (or darker) than the subsequent
-    # blurred edges.
-    core_color = QColor(base_color)
-    core_color.setAlpha(min(255, int(core_color.alpha() * 1.7)))
-
-    # --- 1) Draw blurred strokes, clipped to the receiving strand ---
+    # Follow the EXACT same pattern as draw_strand_shadow for consistent layering
     painter.save()
+    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
+    
+    # Apply clipping so the shadow cannot appear where no underlying strand exists
     painter.setClipPath(second_path)
 
+    # --- 1) Draw solid fill first (exactly like draw_strand_shadow) ---
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QBrush(base_color))
+    painter.drawPath(shading_path)
+    
+    # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
     for i in range(num_steps):
-        progress = (num_steps - i) / num_steps  # 1 → 0
+        # Use EXACT same alpha calculation as draw_strand_shadow
+        progress = (float(num_steps - i) / num_steps)
         current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
-        current_width = max_blur_radius * ((i + 1) / num_steps)
+        current_width = max_blur_radius * (float(i + 1) / num_steps)
 
-        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(),
-                           max(0, min(255, int(current_alpha))))
+        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
         pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.FlatCap)
+        pen.setCapStyle(Qt.FlatCap)  # Use FlatCap/MiterJoin for sharper edges
         pen.setJoinStyle(Qt.MiterJoin)
 
         painter.setPen(pen)
         painter.strokePath(shading_path, pen)
 
-    painter.restore()  # Release the clip
+    painter.restore()  # Release all painter state
 
-    # --- 2) Draw the solid core on top of the blur ---
-    # This guarantees the centre is a solid, dark fill without any
-    # blending artifacts from the strokes underneath.
-    # ------------------------------------------------------------------
-    painter.save()
-    painter.setCompositionMode(QPainter.CompositionMode_Source)
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(QBrush(core_color))
-    painter.drawPath(shading_path)
-    painter.restore()
+    # Define core_color for the additional layers you added back
+    core_color = QColor(base_color)
+    
+
 
     # --- 3) Draw a final, darker "inner core" shadow ---
     # This adds extra depth by taking a thinner version of the casting
@@ -208,7 +208,7 @@ def draw_mask_strand_shadow(
     try:
         # Create a stroker with half the width of the first strand.
         stroker = QPainterPathStroker()
-        stroker.setWidth(max_blur_radius / 4.0)
+        stroker.setWidth(first_strand_width + first_strand_stroke_width * 2)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         
@@ -222,9 +222,8 @@ def draw_mask_strand_shadow(
         inner_core_path = _apply_deletion_rects(inner_core_path, deletion_rects)
 
         if not inner_core_path.isEmpty():
-            # Use the darkest color, but slightly more opaque
+            # Use the same colour and opacity as the centre layer of the strand shadow
             inner_core_color = QColor(core_color)
-            inner_core_color.setAlpha(min(255, int(inner_core_color.alpha() * 1.2)))
             
             painter.save()
             painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
@@ -1071,6 +1070,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # Draw the combined path with a faded edge effect
         base_color = color_to_use
         base_alpha = base_color.alpha()
+        # Mirror draw_mask_strand_shadow: introduce a dedicated core_color derived from base_color
+        core_color = QColor(base_color)
 
         # Prepare painter with clipping so the shadow cannot appear where no underlying strand exists
         painter.save()
@@ -1100,7 +1101,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             #      outline.
             # ------------------------------------------------------------------
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(base_color))
+            painter.setBrush(QBrush(core_color))
             painter.drawPath(total_shadow_path)
             painter.setBrush(Qt.NoBrush)  # revert for subsequent stroke operations
 
@@ -1111,7 +1112,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     # Distribute alpha across steps for smoother look
                     # Adjusted alpha calculation slightly for potentially better distribution
                     progress = (float(num_steps - i) / num_steps)
-                    current_alpha = base_alpha * progress*(1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
+                    current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
 
                     # Width increases
                     current_width = max_blur_radius * (float(i + 1) / num_steps)

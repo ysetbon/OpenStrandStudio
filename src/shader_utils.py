@@ -175,9 +175,8 @@ def draw_mask_strand_shadow(
 
     # --- 1) Draw solid fill first (exactly like draw_strand_shadow) ---
     painter.setPen(Qt.NoPen)
-    painter.setBrush(QBrush(base_color))
-    painter.drawPath(shading_path)
-    
+ 
+    painter.setBrush(QBrush(base_color))    
     # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
     for i in range(num_steps):
         # Use EXACT same alpha calculation as draw_strand_shadow
@@ -1100,11 +1099,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             #      shadow uses the same colour/opacity before we add the blurred
             #      outline.
             # ------------------------------------------------------------------
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(core_color))
-            painter.drawPath(total_shadow_path)
-            painter.setBrush(Qt.NoBrush)  # revert for subsequent stroke operations
-
+            
+   
             # --- Wrap stroking in try...except ---
             try:
                 for i in range(num_steps):

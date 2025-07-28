@@ -2,552 +2,150 @@ Calculated center point for 2_1_4_1: 1448.92, 443.98 from 1876 points
 Calculated center point for 2_1_4_1: 1448.92, 443.98 from 1934 points
 Initialized masked strand 2_1_4_1 with center point: 1448.92, 443.98
 Using absolute coordinates for deletion rectangles in 2_1_4_1, preserving exact JSON positions
- Applied corner-based deletion rect with corners: [1395.8380881003225, 398.6411944231468] [1451.2591648692387, 398.6411944231468] [1395.8380881003225, 455.6017455467553] [1451.2591648692387, 455.6017455467553]
- Applied corner-based deletion rect with corners: [1469.2196990073135, 412.4964636153759] [1499.4960279829252, 412.4964636153759] [1469.2196990073135, 451.49648060090965] [1499.4960279829252, 451.49648060090965]
- Applied corner-based deletion rect with corners: [1434.3249469676255, 394.5359294773012] [1458.4433785244687, 394.5359294773012] [1434.3249469676255, 450.47016436444824] [1458.4433785244687, 450.47016436444824]
 Updated mask path for 2_1_4_1
 Preserved absolute coordinates for 2_1_4_1
 Updated mask path for 2_1_4_1
 Using absolute coordinates for deletion rectangles in 2_1_4_1, preserving exact JSON positions
- Applied corner-based deletion rect with corners: [1395.8380881003225, 398.6411944231468] [1451.2591648692387, 398.6411944231468] [1395.8380881003225, 455.6017455467553] [1451.2591648692387, 455.6017455467553]
- Applied corner-based deletion rect with corners: [1469.2196990073135, 412.4964636153759] [1499.4960279829252, 412.4964636153759] [1469.2196990073135, 451.49648060090965] [1499.4960279829252, 451.49648060090965]
- Applied corner-based deletion rect with corners: [1434.3249469676255, 394.5359294773012] [1458.4433785244687, 394.5359294773012] [1434.3249469676255, 450.47016436444824] [1458.4433785244687, 450.47016436444824]
 Updated mask path for 2_1_4_1
 Preserved absolute coordinates for 2_1_4_1
 Updated mask path for 2_1_4_1
 Using absolute coordinates for deletion rectangles in 2_1_4_1, preserving exact JSON positions
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': [1395.8380881003225, 398.6411944231468], 'top_right': [1451.2591648692387, 398.6411944231468], 'bottom_left': [1395.8380881003225, 455.6017455467553], 'bottom_right': [1451.2591648692387, 455.6017455467553]}, {'top_left': [1469.2196990073135, 412.4964636153759], 'top_right': [1499.4960279829252, 412.4964636153759], 'bottom_left': [1469.2196990073135, 451.49648060090965], 'bottom_right': [1499.4960279829252, 451.49648060090965]}, {'top_left': [1434.3249469676255, 394.5359294773012], 'top_right': [1458.4433785244687, 394.5359294773012], 'bottom_left': [1434.3249469676255, 450.47016436444824], 'bottom_right': [1458.4433785244687, 450.47016436444824]}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1429.3114730955901, 420.7451480888304, 47.975517123853706, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.236354470746, 424.53104103544683, 50.99751519914935, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Reset mask and cleared deletion rectangles for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
 Drawing MaskedStrand - Has deletion rectangles: True
 Current deletion rectangles: []
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Completed direct drawing for masked strand 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 2_1_4_1
+Successfully constrained shadow path for 2_1_4_1
 Calculated center point for 2_1_4_1: 1448.92, 443.98 from 1876 points
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Calculated center point for 2_1_4_1: 1454.96, 446.76 from 1511 points
-Updated center point after custom mask set for 2_1_4_1: 1454.96, 446.76
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Calculated center point for 2_1_4_1: 1455.51, 447.53 from 1392 points
+Updated center point after custom mask set for 2_1_4_1: 1455.51, 447.53
 Saved 1 deletion rectangles for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Calculated center point for 2_1_4_1: 1448.92, 443.98 from 1876 points
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Calculated center point for 2_1_4_1: 1452.65, 449.40 from 1238 points
-Updated center point after custom mask set for 2_1_4_1: 1452.65, 449.40
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Calculated center point for 2_1_4_1: 1454.88, 450.73 from 1165 points
+Updated center point after custom mask set for 2_1_4_1: 1454.88, 450.73
 Saved 2 deletion rectangles for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
 Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
+Current deletion rectangles: [{'top_left': (1403.3202213443806, 404.5962695440435), 'top_right': (1451.1275892336425, 404.5962695440435), 'bottom_left': (1403.3202213443806, 448.5482045390101), 'bottom_right': (1451.1275892336425, 448.5482045390101)}, {'top_left': (1411.0310871329712, 371.0540033636742), 'top_right': (1466.9348641002532, 371.0540033636742), 'bottom_left': (1411.0310871329712, 436.9819058561241), 'bottom_right': (1466.9348641002532, 436.9819058561241)}]
 Drawing shadow for MaskedStrand 2_1_4_1
 Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Calculated center point for 2_1_4_1: 1448.92, 443.98 from 1876 points
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Calculated center point for 2_1_4_1: 1452.54, 453.83 from 1893 points
-Updated center point after custom mask set for 2_1_4_1: 1452.54, 453.83
-Saved 3 deletion rectangles for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}, {'top_left': (1427.704099455996, 408.8355107829659), 'top_right': (1471.8356976238367, 408.8355107829659), 'bottom_left': (1427.704099455996, 444.2434209408846), 'bottom_right': (1471.8356976238367, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 444.2434209408846, 49.840039066767986, 22.972514698662224), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}, {'top_left': (1427.704099455996, 408.8355107829659), 'top_right': (1471.8356976238367, 408.8355107829659), 'bottom_left': (1427.704099455996, 444.2434209408846), 'bottom_right': (1471.8356976238367, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 444.2434209408846, 49.840039066767986, 22.972514698662224), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}, {'top_left': (1427.704099455996, 408.8355107829659), 'top_right': (1471.8356976238367, 408.8355107829659), 'bottom_left': (1427.704099455996, 444.2434209408846), 'bottom_right': (1471.8356976238367, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 444.2434209408846, 49.840039066767986, 22.972514698662224), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Completed direct drawing for masked strand 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Drawing MaskedStrand - Has deletion rectangles: True
-Current deletion rectangles: [{'top_left': (1405.6383003720755, 397.5460321818903), 'top_right': (1446.6909498305322, 397.5460321818903), 'bottom_left': (1405.6383003720755, 448.86184400496103), 'bottom_right': (1446.6909498305322, 448.86184400496103)}, {'top_left': (1459.0067446680691, 398.05919030012103), 'top_right': (1487.7435992889887, 398.05919030012103), 'bottom_left': (1459.0067446680691, 444.2434209408846), 'bottom_right': (1487.7435992889887, 444.2434209408846)}, {'top_left': (1427.704099455996, 408.8355107829659), 'top_right': (1471.8356976238367, 408.8355107829659), 'bottom_left': (1427.704099455996, 444.2434209408846), 'bottom_right': (1471.8356976238367, 444.2434209408846)}]
-Drawing shadow for MaskedStrand 2_1_4_1
-Successfully constrained shadow path for 2_1_4_1
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 420.7451480888304, 49.840039066767986, 46.470787550716466), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 421.1990122573702, 49.840039066767986, 46.01692338217663), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1427.4469511526759, 444.2434209408846, 49.840039066767986, 22.972514698662224), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 424.53104103544683, 52.862037142063855, 38.89900165748355), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 425.2093309791179, 52.862037142063855, 38.22071171381248), empty=False
-Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.3718325278314, 444.2434209408846, 52.862037142063855, 19.186621752045767), empty=False
-Completed direct drawing for masked strand 2_1_4_1
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1425.285067511636, 424.53104103544683, 52.94880215825924, 38.89900165748355), empty=False

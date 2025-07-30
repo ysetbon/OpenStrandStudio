@@ -465,6 +465,10 @@ class AttachedStrand(Strand):
 
     def draw(self, painter, skip_painter_setup=False):
         """Draw the attached strand with a rounded start and squared end."""
+        # Debug logging for closed connections
+        print(f"[ATTACHED_STRAND_DRAW_START] {getattr(self, 'layer_name', 'unknown')} - draw() called")
+        print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
+        print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - About to check drawing path")
         painter.save() # Top Level Save
         if not skip_painter_setup:
             RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -484,10 +488,15 @@ class AttachedStrand(Strand):
         is_panned = (pan_offset_x != 0 or pan_offset_y != 0)
         
         if zoom_factor != 1.0 or is_panned:
+            print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Using _draw_direct (zoom: {zoom_factor}, panned: {is_panned})")
             # logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
             self._draw_direct(painter)
             painter.restore() # Top Level Restore
             return
+        
+        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Using regular draw path (not _draw_direct)")
+        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - is_hidden: {self.is_hidden}")
+        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - shadow_only: {getattr(self, 'shadow_only', False)}")
 
         # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
@@ -849,6 +858,7 @@ class AttachedStrand(Strand):
                 painter.drawLine(end_line_start_extended, end_line_end_extended)
             
             painter.restore()
+        
         
         # --- START: Skip visual rendering in shadow-only mode ---
         if getattr(self, 'shadow_only', False):
@@ -1276,6 +1286,64 @@ class AttachedStrand(Strand):
                 painter.drawPolygon(arrow_head_poly)
             painter.restore()
         # --- END Draw full strand arrow on TOP ---
+
+        # Draw ending circle ON TOP of everything if needed
+        # For attached strands, check the attachment side to determine which closed_connection to use
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
+            # Check for attached children that would skip circle drawing
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            if not skip_end_circle:
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+                # Use same implementation as start circle but with opposite angle
+                mask_rect_end = QPainterPath()
+                rect_width = total_diameter * 2
+                rect_height = total_diameter * 2
+                # Mask on the opposite side (left side instead of right side)
+                mask_rect_end.addRect(-rect_width, -rect_height / 2, rect_width, rect_height)
+
+                transform_end = QTransform()
+                transform_end.translate(self.end.x(), self.end.y())
+                # Try without 180 degrees rotation to see if this orientation works
+                transform_end.rotate(math.degrees(angle_end))
+                mask_rect_end = transform_end.map(mask_rect_end)
+
+                outer_circle_end = QPainterPath()
+                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+                # Draw stroke using circle_stroke_color (same as start circle)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_mask_end)
+
+                # Draw fill using main color
+                inner_circle_end = QPainterPath()
+                inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_circle_end)
+
+                # Draw side line that covers the inner circle
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.color)
+                just_inner_end = QPainterPath()
+                just_inner_end.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
+                tr_inner_end.rotate(math.degrees(angle_end))
+                just_inner_end = tr_inner_end.map(just_inner_end)
+                painter.drawPath(just_inner_end)
 
         painter.restore() # This is the final restore for the AttachedStrand draw method
 
@@ -1801,6 +1869,7 @@ class AttachedStrand(Strand):
     def _draw_direct(self, painter):
         """Draw the attached strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
+        print(f"[DRAW_DIRECT_DEBUG] _draw_direct called for {getattr(self, 'layer_name', 'unknown')}")
         
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -2375,8 +2444,15 @@ class AttachedStrand(Strand):
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
 
-        # Draw ending circle if has_circles == [True, True]
-        if self.has_circles == [True, True]:
+        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Reached ending circle section check")
+        # Draw ending circle if has_circles == [True, True] or if it's a closed connection
+        # For attached strands, check the attachment side to determine which closed_connection to use
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+        print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, is_closed_connection: {is_closed_connection}, attachment_side: {attachment_side}")
+        print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - condition check: has_circles==[True,True]: {self.has_circles == [True, True]}, has_circles[1] and is_closed: {self.has_circles[1] and is_closed_connection}")
+        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
+            print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - ENTERING end circle drawing block")
             # Check for attached children that would skip circle drawing
             skip_start_circle = any(
                 isinstance(child, AttachedStrand) and child.start == self.start
@@ -2436,44 +2512,6 @@ class AttachedStrand(Strand):
                 just_inner = tr_inner.map(just_inner)
                 painter.drawPath(just_inner)
 
-            # Draw End Circle (if not skipped)
-            if not skip_end_circle:
-                tangent_end = self.calculate_cubic_tangent(1.0)
-                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-
-                # Creating Outer Circle Half-Circle
-                mask_rect_end = QPainterPath()
-                rect_width_end = total_diameter * 2
-                rect_height_end = total_diameter * 2
-                mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-                transform_end = QTransform()
-                transform_end.translate(self.end.x(), self.end.y())
-                transform_end.rotate(math.degrees(angle_end - math.pi))
-                mask_rect_end = transform_end.map(mask_rect_end)
-                outer_circle_end = QPainterPath()
-                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
-                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
-
-                # Draw the outer circle stroke
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(outer_mask_end)
-
-                # Draw the inner circle fill
-                inner_circle_end = QPainterPath()
-                inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner_circle_end)
-            
-                # Draw side line that covers the inner circle
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                tr_inner = QTransform().translate(self.end.x(), self.end.y())
-                tr_inner.rotate(math.degrees(angle_end))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
 
         # Draw half-circle attachments at endpoints where there are AttachedStrand children
         # (This would use the same logic as in the original draw method, but directly to painter)
@@ -2552,3 +2590,114 @@ class AttachedStrand(Strand):
             tr_inner_side.rotate(math.degrees(angle))
             just_inner_side = tr_inner_side.map(just_inner_side)
             painter.drawPath(just_inner_side)
+        # Draw ending circle if has_circles == [True, True] or if it's a closed connection (for _draw_direct)
+        # For attached strands, check the attachment side to determine which closed_connection to use
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+        print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, is_closed_connection: {is_closed_connection}, attachment_side: {attachment_side}")
+        print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - condition check: has_circles==[True,True]: {self.has_circles == [True, True]}, has_circles[1] and is_closed: {self.has_circles[1] and is_closed_connection}")
+        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
+            print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - ENTERING end circle drawing block")
+            # Check for attached children that would skip circle drawing
+            skip_start_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.start
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.start
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            total_diameter = self.width + self.stroke_width * 2
+            circle_radius = total_diameter / 2
+
+            # Draw Start Circle (if not skipped)
+            if not skip_start_circle:
+                angle_start = self.calculate_start_tangent()
+
+                mask_rect_start = QPainterPath()
+                rect_width_start = total_diameter * 2
+                rect_height_start = total_diameter * 2
+                mask_rect_start.addRect(0, -rect_height_start / 2, rect_width_start, rect_height_start)
+
+                transform_start = QTransform()
+                transform_start.translate(self.start.x(), self.start.y())
+                transform_start.rotate(math.degrees(angle_start))
+                mask_rect_start = transform_start.map(mask_rect_start)
+
+                outer_circle_start = QPainterPath()
+                outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
+                outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
+
+                # Draw stroke using circle_stroke_color
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_mask_start)
+
+                # Draw fill using main color
+                inner_circle_start = QPainterPath()
+                inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_circle_start)
+
+                # Draw side line that covers the inner circle
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.color)
+                just_inner_start = QPainterPath()
+                just_inner_start.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_start = QTransform().translate(self.start.x(), self.start.y())
+                tr_inner_start.rotate(math.degrees(angle_start))
+                just_inner_start = tr_inner_start.map(just_inner_start)
+                painter.drawPath(just_inner_start)
+
+            # Draw End Circle (if not skipped)
+            print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - skip_end_circle: {skip_end_circle}")
+            if not skip_end_circle:
+                print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - DRAWING END CIRCLE")
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+                # Use same implementation as start circle but with opposite angle
+                mask_rect_end = QPainterPath()
+                rect_width_end = total_diameter * 2
+                rect_height_end = total_diameter * 2
+                # Mask on the opposite side (left side instead of right side)
+                mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
+
+                transform_end = QTransform()
+                transform_end.translate(self.end.x(), self.end.y())
+                # Try without 180 degrees rotation to see if this orientation works
+                transform_end.rotate(math.degrees(angle_end))
+                mask_rect_end = transform_end.map(mask_rect_end)
+
+                outer_circle_end = QPainterPath()
+                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+                # Draw stroke using circle_stroke_color (same as start circle)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_mask_end)
+
+                # Draw fill using main color
+                inner_circle_end = QPainterPath()
+                inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_circle_end)
+
+                # Draw side line that covers the inner circle
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.color)
+                just_inner_end = QPainterPath()
+                just_inner_end.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
+                tr_inner_end.rotate(math.degrees(angle_end))
+                just_inner_end = tr_inner_end.map(just_inner_end)
+                painter.drawPath(just_inner_end)

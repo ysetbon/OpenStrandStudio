@@ -279,6 +279,49 @@ class Strand:
     def update_attachable(self):
         """Update the attachable property based on has_circles."""
         self.attachable = not all(self.has_circles)
+        
+    def maintain_knot_connections(self):
+        """Maintain coordinate synchronization for knot connections."""
+        if not hasattr(self, 'knot_connections'):
+            return
+            
+        # Skip synchronization if we're in the middle of a move operation
+        if hasattr(self, 'updating_position') and self.updating_position:
+            return
+            
+        # Skip synchronization if this strand is currently being moved
+        if hasattr(self, '_is_being_moved') and self._is_being_moved:
+            return
+            
+        for end_type, connection_info in self.knot_connections.items():
+            connected_strand = connection_info['connected_strand']
+            connected_end = connection_info['connected_end']
+            
+            # Skip if the connected strand is being moved
+            if hasattr(connected_strand, '_is_being_moved') and connected_strand._is_being_moved:
+                return
+            
+            # Get current coordinates
+            if end_type == 'start':
+                my_point = self.start
+            else:
+                my_point = self.end
+                
+            if connected_end == 'start':
+                connected_point = connected_strand.start
+            else:
+                connected_point = connected_strand.end
+                
+            # Only synchronize if coordinates have drifted significantly (more than 1 pixel)
+            # This prevents interference with intentional movements
+            distance = ((my_point.x() - connected_point.x()) ** 2 + 
+                       (my_point.y() - connected_point.y()) ** 2) ** 0.5
+            if distance > 1.0:
+                # Use the connected strand's coordinate as the reference
+                if end_type == 'start':
+                    self.start = connected_point
+                else:
+                    self.end = connected_point
 
     def set_has_circles(self, start_circle, end_circle):
         """Set the has_circles attribute and update attachable."""
@@ -307,6 +350,9 @@ class Strand:
             # Only update the side lines without modifying control points
             self.update_side_line()
             return
+            
+        # Maintain knot connections - ensure connected endpoints stay synchronized
+        self.maintain_knot_connections()
 
         # Store original control points if they exist
         original_cp1 = getattr(self, 'control_point1', None)
@@ -2257,30 +2303,52 @@ class Strand:
 
         # Draw circles directly without temporary images
         # Only draw the start circle if explicitly enabled (has_circles[0] == True)
+        print(f"[CIRCLE_DEBUG] {self.layer_name} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
+        logging.info(f"[Strand.draw] {self.layer_name} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
         if self.has_circles[0]:
+            print(f"[CIRCLE_DEBUG] Drawing START circle for {self.layer_name}")
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
 
             # Calculate the angle based on the tangent at the start point
             angle = self.calculate_start_tangent()
 
-            # Create the masking rectangle for half circle
-            mask_rect = QPainterPath()
-            rect_width = total_diameter * 2
-            rect_height = total_diameter * 2
-            mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-            transform = QTransform()
-            transform.translate(self.start.x(), self.start.y())
-            transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
-            mask_rect = transform.map(mask_rect)
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-            outer_mask = outer_circle.subtracted(mask_rect)
+            # Check if this is a closed connection (should draw full circle)
+            is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections[0]
+            
+            if is_closed_connection:
+                # Draw full circle for closed connections
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                
+                # Draw the outer circle (stroke)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_circle)
+                
+                # Draw the inner circle (fill) for closed connections
+                inner_circle = QPainterPath()
+                inner_circle.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_circle)
+            else:
+                # Create the masking rectangle for half circle
+                mask_rect = QPainterPath()
+                rect_width = total_diameter * 2
+                rect_height = total_diameter * 2
+                mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                transform = QTransform()
+                transform.translate(self.start.x(), self.start.y())
+                transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
+                mask_rect = transform.map(mask_rect)
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                outer_mask = outer_circle.subtracted(mask_rect)
 
-            # Draw the outer circle (stroke)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.circle_stroke_color)
-            painter.drawPath(outer_mask)
+                # Draw the outer circle (stroke)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.circle_stroke_color)
+                painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
             inner = QPainterPath()
@@ -2317,6 +2385,7 @@ class Strand:
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
         # Draw ending circle if has_circles == [True, True]
+        logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [False, True]: {self.has_circles == [False, True]}")
         if (self.has_circles == [False, True]):
             # Check for attached children that would skip circle drawing
             # Only check parent's attached strands if this strand has a parent (i.e., it's an AttachedStrand)
@@ -2343,23 +2412,42 @@ class Strand:
                 tangent_end = self.calculate_cubic_tangent(1.0)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
-                # Creating Outer Circle Half-Circle
-                mask_rect_end = QPainterPath()
-                rect_width_end = total_diameter * 2
-                rect_height_end = total_diameter * 2
-                mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-                transform_end = QTransform()
-                transform_end.translate(self.end.x(), self.end.y())
-                transform_end.rotate(math.degrees(angle_end))
-                mask_rect_end = transform_end.map(mask_rect_end)
-                outer_circle_end = QPainterPath()
-                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
-                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+                # Check if this is a closed connection (should draw full circle)
+                is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections[1]
+                
+                if is_closed_connection:
+                    # Draw full circle for closed connections
+                    outer_circle_end = QPainterPath()
+                    outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                    
+                    # Draw the outer circle (stroke)
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.circle_stroke_color)
+                    painter.drawPath(outer_circle_end)
+                    
+                    # Draw the inner circle (fill) for closed connections
+                    inner_circle_end = QPainterPath()
+                    inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                    painter.setBrush(self.color)
+                    painter.drawPath(inner_circle_end)
+                else:
+                    # Creating Outer Circle Half-Circle
+                    mask_rect_end = QPainterPath()
+                    rect_width_end = total_diameter * 2
+                    rect_height_end = total_diameter * 2
+                    mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
+                    transform_end = QTransform()
+                    transform_end.translate(self.end.x(), self.end.y())
+                    transform_end.rotate(math.degrees(angle_end))
+                    mask_rect_end = transform_end.map(mask_rect_end)
+                    outer_circle_end = QPainterPath()
+                    outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                    outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                # Draw the outer circle stroke
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
-                painter.drawPath(outer_mask_end)
+                    # Draw the outer circle stroke
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.circle_stroke_color)
+                    painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill
                 inner = QPainterPath()
@@ -2377,6 +2465,7 @@ class Strand:
                 just_inner = tr_inner.map(just_inner)
                 painter.drawPath(just_inner)
         # Draw ending circle if has_circles == [True, True]
+        logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [True, True]: {self.has_circles == [True, True]}")
         if (self.has_circles == [True, True]):
             # Check for attached children that would skip circle drawing
             # Only check parent's attached strands if this strand has a parent (i.e., it's an AttachedStrand)
@@ -2445,23 +2534,42 @@ class Strand:
                 tangent_end = self.calculate_cubic_tangent(1.0)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
-                # Creating Outer Circle Half-Circle
-                mask_rect_end = QPainterPath()
-                rect_width_end = total_diameter * 2
-                rect_height_end = total_diameter * 2
-                mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-                transform_end = QTransform()
-                transform_end.translate(self.end.x(), self.end.y())
-                transform_end.rotate(math.degrees(angle_end))
-                mask_rect_end = transform_end.map(mask_rect_end)
-                outer_circle_end = QPainterPath()
-                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
-                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+                # Check if this is a closed connection (should draw full circle)
+                is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections[1]
+                
+                if is_closed_connection:
+                    # Draw full circle for closed connections
+                    outer_circle_end = QPainterPath()
+                    outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                    
+                    # Draw the outer circle (stroke)
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.circle_stroke_color)
+                    painter.drawPath(outer_circle_end)
+                    
+                    # Draw the inner circle (fill) for closed connections
+                    inner_circle_end = QPainterPath()
+                    inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                    painter.setBrush(self.color)
+                    painter.drawPath(inner_circle_end)
+                else:
+                    # Creating Outer Circle Half-Circle
+                    mask_rect_end = QPainterPath()
+                    rect_width_end = total_diameter * 2
+                    rect_height_end = total_diameter * 2
+                    mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
+                    transform_end = QTransform()
+                    transform_end.translate(self.end.x(), self.end.y())
+                    transform_end.rotate(math.degrees(angle_end))
+                    mask_rect_end = transform_end.map(mask_rect_end)
+                    outer_circle_end = QPainterPath()
+                    outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                    outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                # Draw the outer circle stroke
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
-                painter.drawPath(outer_mask_end)
+                    # Draw the outer circle stroke
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.circle_stroke_color)
+                    painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill
                 inner = QPainterPath()

@@ -11,8 +11,8 @@ import logging
 class RenderUtils:
     """Utility class for enhanced rendering with high-DPI support."""
     
-    # Global rendering quality multiplier (4x for crisp rendering)
-    QUALITY_FACTOR = 4.0
+    # Global rendering quality multiplier (16x for ultra-crisp rendering)
+    QUALITY_FACTOR = 2.0
     
     @staticmethod
     def setup_painter(painter, enable_high_quality=True, ui_element=False):

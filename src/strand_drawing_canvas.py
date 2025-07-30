@@ -53,8 +53,8 @@ class StrandDrawingCanvas(QWidget):
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
         
         # High-DPI rendering settings
-        self.use_supersampling = False  # Start with supersampling disabled for testing
-        self.supersampling_factor = 4.0  # 4x more pixels
+        self.use_supersampling = True  # Disable supersampling
+        self.supersampling_factor = 2  # 16x more pixels for ultra-crisp rendering
         self.render_buffer = None  # Will be created when needed
         
         # Load shadow color from user settings if available

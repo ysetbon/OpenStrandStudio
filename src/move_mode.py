@@ -1876,9 +1876,22 @@ class MoveMode:
                 
                 if self.draw_only_affected_strand:
                     # When "drag only affected strand" is enabled:
-                    # ONLY use proximity detection, but ONLY for strands that are connected in state
+                    # ONLY use proximity detection, but ONLY for strands that are connected in state or via knots
                     # This ensures we only show strands that are both connected AND at the moving point
-                    if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                    
+                    # Check knot connections first
+                    are_connected = False
+                    if hasattr(self.affected_strand, 'knot_connections') and self.affected_strand.knot_connections:
+                        side_name = 'start' if self.moving_side == 0 else 'end'
+                        if side_name in self.affected_strand.knot_connections:
+                            knot_connection = self.affected_strand.knot_connections[side_name]
+                            connected_strand = knot_connection.get('connected_strand')
+                            if connected_strand == other_strand:
+                                are_connected = True
+                                logging.info(f"Found knot connection in start_movement: {self.affected_strand.layer_name}.{side_name} -> {other_strand.layer_name}")
+                    
+                    # Check layer state manager connections if no knot connection found
+                    if not are_connected and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                         connections = self.canvas.layer_state_manager.getConnections()
                         # Check bidirectional connections
                         affected_connections = connections.get(self.affected_strand.layer_name, [])
@@ -1888,17 +1901,17 @@ class MoveMode:
                         are_connected = (other_strand.layer_name in affected_connections or 
                                        self.affected_strand.layer_name in other_connections)
                         
-                        # Only add if connected in state AND actually at the moving point
-                        at_moving_point = (self.points_are_close(other_strand.start, moving_point_coord) or \
-                                         self.points_are_close(other_strand.end, moving_point_coord))
-                        
-                        if are_connected and at_moving_point:
-                            should_add_strand = True
-                            print(f"DEBUG: Adding {other_strand.layer_name} - connected in state: {are_connected}, at moving point: {at_moving_point}")
-                            print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
-                        elif are_connected:
-                            print(f"DEBUG: NOT adding {other_strand.layer_name} - connected in state: {are_connected}, but NOT at moving point: {at_moving_point}")
-                            print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
+                    # Only add if connected (via knot or state) AND actually at the moving point
+                    at_moving_point = (self.points_are_close(other_strand.start, moving_point_coord) or \
+                                     self.points_are_close(other_strand.end, moving_point_coord))
+                    
+                    if are_connected and at_moving_point:
+                        should_add_strand = True
+                        print(f"DEBUG: Adding {other_strand.layer_name} - connected in state: {are_connected}, at moving point: {at_moving_point}")
+                        print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
+                    elif are_connected:
+                        print(f"DEBUG: NOT adding {other_strand.layer_name} - connected in state: {are_connected}, but NOT at moving point: {at_moving_point}")
+                        print(f"DEBUG: Moving point: {moving_point_coord}, Other start: {other_strand.start}, Other end: {other_strand.end}")
                 else:
                     # When setting is disabled, only include strands that are actually connected in state manager
                     # AND are connected at the specific moving point - no proximity-based connections
@@ -2033,6 +2046,7 @@ class MoveMode:
         
         # Keep track of what strands are affected for optimization
         affected_strands = set([self.affected_strand])
+        logging.info(f"[MOVE_DEBUG] update_strand_position initial affected_strands: {[s.layer_name for s in affected_strands]}")
         
         # Identify truly moving strands (ones being dragged by user, not just connected)
         # --- CORRECTED: Preserve truly_moving_strands from start_movement --- 
@@ -2054,11 +2068,23 @@ class MoveMode:
                 moving_point_coord = self.affected_strand.end
 
             if moving_point_coord:
-                # Check for connected strands using the layer state manager
+                # Check for connected strands using knot connections first, then layer state manager
                 connected_strand_names = set()
+                
+                # First check knot connections
+                if hasattr(self.affected_strand, 'knot_connections') and self.affected_strand.knot_connections:
+                    side_name = 'start' if self.moving_side == 0 else 'end'
+                    if side_name in self.affected_strand.knot_connections:
+                        knot_connection = self.affected_strand.knot_connections[side_name]
+                        connected_strand = knot_connection.get('connected_strand')
+                        if connected_strand and hasattr(connected_strand, 'layer_name'):
+                            connected_strand_names.add(connected_strand.layer_name)
+                            logging.info(f"Found knot connection for {self.affected_strand.layer_name}.{side_name}: {connected_strand.layer_name}")
+                
+                # Then check layer state manager connections
                 if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                     connections = self.canvas.layer_state_manager.getConnections()
-                    connected_strand_names = set(connections.get(self.affected_strand.layer_name, []))
+                    connected_strand_names.update(connections.get(self.affected_strand.layer_name, []))
                     # logging.info(f"MoveMode: Direct connections for {self.affected_strand.layer_name}: {connected_strand_names}")
                     # Also check the reverse connection
                     for name, connected_list in connections.items():
@@ -2104,6 +2130,7 @@ class MoveMode:
                                 print(f"DEBUG2: NOT adding {other_strand.layer_name} - connected in state manager but NOT at moving point")
 
                     if should_add_connected:
+                        logging.info(f"[MOVE_DEBUG] update_strand_position adding connected strand {other_strand.layer_name} to affected_strands")
                         connected_strands_at_moving_point.add(other_strand)
                         print(f"DEBUG3: TRACKING 1_2 - Added {other_strand.layer_name} to connected_strands_at_moving_point SET. Current set: {[s.layer_name for s in connected_strands_at_moving_point]}")
                         affected_strands.add(other_strand)
@@ -2126,6 +2153,7 @@ class MoveMode:
                     #     truly_moving_strands.append(attached_strand) # Add to the list for drawing
                     # --- END CORRECTION ---
                     
+                    logging.info(f"[MOVE_DEBUG] update_strand_position adding attached strand {attached_strand.layer_name} to affected_strands (shares start point)")  
                     affected_strands.add(attached_strand) # Ensure it's also in affected
                     print(f"DEBUG3: TRACKING 1_2 - Added attached strand {attached_strand.layer_name} to affected_strands (shares start point)")
                     # Corrected Log Message:
@@ -2253,6 +2281,7 @@ class MoveMode:
                 
                 # If we found a parent strand, add it to affected strands but NOT truly_moving_strands
                 if parent_strand:
+                    logging.info(f"[MOVE_DEBUG] update_strand_position adding parent strand {parent_strand.layer_name} to affected_strands")
                     affected_strands.add(parent_strand)
 
                 # --- Update connected strands positions (moved from within move_strand_and_update_attached) ---
@@ -2352,6 +2381,7 @@ class MoveMode:
         
         # Store affected strands for optimized rendering
         # Ensure affected_strands includes everything needed (main, connected, parents, children)
+        logging.info(f"[MOVE_DEBUG] update_strand_position final affected_strands before setting canvas: {[s.layer_name for s in affected_strands]}")
         self.canvas.affected_strands_for_drawing = list(affected_strands)
         print(f"DEBUG3: TRACKING 1_2 - Final affected_strands_for_drawing: {[s.layer_name for s in self.canvas.affected_strands_for_drawing]}")
 
@@ -2608,13 +2638,14 @@ class MoveMode:
         strand.update_side_line()
 
         # Update parent strands recursively
-        parent_strands = self.update_parent_strands(strand)
+        parent_strands = self.update_parent_strands(strand, moving_side)
         affected_strands.update(parent_strands)
         
         # Find the immediate parent strand
         if isinstance(strand, AttachedStrand):
             parent_strand = self.find_parent_strand(strand)
             if parent_strand:
+                logging.info(f"[MOVE_DEBUG] Found parent strand {parent_strand.layer_name} for {strand.layer_name}")
                 affected_strands.add(parent_strand)
 
         # Update all attached strands without resetting their control points
@@ -2675,26 +2706,18 @@ class MoveMode:
                 
                 affected_strands.add(strand.second_selected_strand)
                 
-        # Find any connected strands using the OLD position before the move
-        old_moving_point = old_start if moving_side == 0 else old_end
-        connected_strand = self.find_connected_strand(strand, moving_side, old_moving_point)
-        # logging.info(f"MoveStrandUpdate: find_connected_strand for {strand.layer_name} side {moving_side} at {old_moving_point} -> {connected_strand.layer_name if connected_strand else None}")
-        
-        if connected_strand:
-            affected_strands.add(connected_strand)
-            
-            # Update connected strand's connection point to match the new position
-            if moving_side == 0:
-                # Moving strand's start -> update connected strand's end
-                connected_strand.end = new_pos
-                # logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} end to {new_pos}")
-            else:
-                # Moving strand's end -> update connected strand's start
-                connected_strand.start = new_pos
-                # logging.info(f"MoveStrandUpdate: Updated connected {connected_strand.layer_name} start to {new_pos}")
-                
-            connected_strand.update_shape()
-            connected_strand.update_side_line()
+        # This logic was moved to update_strand_position to be more contextual
+        # and check against truly_moving_strands.
+        # old_moving_point = old_start if moving_side == 0 else old_end
+        # connected_strand = self.find_connected_strand(strand, moving_side, old_moving_point)
+        # if connected_strand:
+        #     affected_strands.add(connected_strand)
+        #     if moving_side == 0:
+        #         connected_strand.end = new_pos
+        #     else:
+        #         connected_strand.start = new_pos
+        #     connected_strand.update_shape()
+        #     connected_strand.update_side_line()
             
         # Store affected strands for optimized rendering
         self.canvas.affected_strands_for_drawing = list(affected_strands)
@@ -2705,7 +2728,7 @@ class MoveMode:
 
         return parent_strand
 
-    def update_parent_strands(self, strand):
+    def update_parent_strands(self, strand, moving_side):
         """
         Recursively update parent strands.
 
@@ -2718,11 +2741,18 @@ class MoveMode:
         updated_strands = set()
         
         if isinstance(strand, AttachedStrand):
+            # An AttachedStrand's attachment point is its 'start' (side 0).
+            # We only propagate updates to the parent if this attachment point is the one moving.
+            if moving_side != 0:
+                return updated_strands
+
             parent = self.find_parent_strand(strand)
             if parent:
+                parent_moving_side = -1
                 # --- FIX: Update only the correct parent endpoint --- 
                 # Check which side of the parent the child (strand) is attached to
                 if hasattr(strand, 'attachment_side'):
+                    parent_moving_side = strand.attachment_side
                     if strand.attachment_side == 0:
                         # Child is attached to parent's start, update parent's start
                         parent.start = strand.start
@@ -2738,16 +2768,19 @@ class MoveMode:
                     # As a fallback, try the old (potentially problematic) logic
                     if strand.start == parent.start:
                         parent.start = strand.start
+                        parent_moving_side = 0
                     else:
                         parent.end = strand.start
+                        parent_moving_side = 1
                 # --- END FIX ---
 
                 parent.update_shape()
                 parent.update_side_line()
                 updated_strands.add(parent)
                 # Recursively update the parent's parent
-                parent_updated = self.update_parent_strands(parent)
-                updated_strands.update(parent_updated)
+                if parent_moving_side != -1:
+                    parent_updated = self.update_parent_strands(parent, parent_moving_side)
+                    updated_strands.update(parent_updated)
                 
         return updated_strands
 
@@ -2799,7 +2832,30 @@ class MoveMode:
         """
         for strand in self.canvas.strands:
             if attached_strand in strand.attached_strands:
-                return strand
+                # Check if this is a knot connection rather than a true parent-child relationship
+                # Knot connections should not be treated as parent-child relationships
+                is_knot_connected = False
+                
+                if hasattr(strand, 'knot_connections') and strand.knot_connections:
+                    # Check if any knot connection points to the attached_strand
+                    for side, connection in strand.knot_connections.items():
+                        if connection.get('connected_strand') == attached_strand:
+                            logging.info(f"[MOVE_DEBUG] Skipping {strand.layer_name} as parent of {attached_strand.layer_name} - they are knot-connected, not parent-child")
+                            is_knot_connected = True
+                            break
+                            
+                if not is_knot_connected and hasattr(attached_strand, 'knot_connections') and attached_strand.knot_connections:
+                    # Check if the attached_strand has a knot connection to this strand
+                    for side, connection in attached_strand.knot_connections.items():
+                        if connection.get('connected_strand') == strand:
+                            logging.info(f"[MOVE_DEBUG] Skipping {strand.layer_name} as parent of {attached_strand.layer_name} - they are knot-connected, not parent-child")
+                            is_knot_connected = True
+                            break
+                
+                # Only return as parent if NOT knot-connected
+                if not is_knot_connected:
+                    return strand
+                    
             parent = self.find_parent_in_attached(strand, attached_strand)
             if parent:
                 return parent
@@ -3027,6 +3083,16 @@ class MoveMode:
 
     def find_connected_strand(self, strand, side, moving_point):
         """Find a strand connected to the given strand at the specified side."""
+        # First check for knot connections made via "close the knot" functionality
+        if hasattr(strand, 'knot_connections') and strand.knot_connections:
+            side_name = 'start' if side == 0 else 'end'
+            if side_name in strand.knot_connections:
+                knot_connection = strand.knot_connections[side_name]
+                connected_strand = knot_connection.get('connected_strand')
+                if connected_strand and connected_strand in self.canvas.strands:
+                    logging.info(f"Found knot connection: {strand.layer_name}.{side_name} -> {connected_strand.layer_name}")
+                    return connected_strand
+        
         if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
             return None
 

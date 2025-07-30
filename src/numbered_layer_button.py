@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
 import logging
@@ -7,6 +7,7 @@ from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 import sys  # Add sys for platform detection
+import math  # Add math for angle calculations
 
 # Create a custom hover-aware label class
 class HoverLabel(QLabel):
@@ -549,6 +550,45 @@ class NumberedLayerButton(QPushButton):
                 )
             )
             context_menu.addAction(full_arrow_action)
+            # --- END NEW ---
+            
+            # --- NEW: Add Close the Knot option for strands with exactly 1 free end ---
+            # Count free ends (ends without circles or attachments)
+            free_ends = 0
+            free_end_type = None  # 'start' or 'end'
+            
+            # Check start end
+            if not strand.has_circles[0] and not getattr(strand, 'start_attached', False):
+                free_ends += 1
+                free_end_type = 'start'
+            
+            # Check end end
+            if not strand.has_circles[1] and not getattr(strand, 'end_attached', False):
+                free_ends += 1
+                free_end_type = 'end'
+            
+            # For AttachedStrand, start is always attached, so only check the end
+            if isinstance(strand, AttachedStrand):
+                free_ends = 0
+                free_end_type = None
+                if not strand.has_circles[1]:
+                    free_ends = 1
+                    free_end_type = 'end'
+            
+            # Show "Close the Knot" option only if exactly 1 free end
+            if free_ends == 1:
+                context_menu.addSeparator()
+                close_knot_text = _['close_the_knot'] if 'close_the_knot' in _ else "Close the Knot"
+                close_knot_label = HoverLabel(close_knot_text, self, theme)
+                if is_hebrew:
+                    close_knot_label.setLayoutDirection(Qt.RightToLeft)
+                    close_knot_label.setAlignment(Qt.AlignLeft)
+                close_knot_action = QWidgetAction(self)
+                close_knot_action.setDefaultWidget(close_knot_label)
+                close_knot_action.triggered.connect(
+                    lambda: self.close_the_knot(strand, free_end_type, layer_panel)
+                )
+                context_menu.addAction(close_knot_action)
             # --- END NEW ---
 
             # Add extension line toggles
@@ -1377,6 +1417,250 @@ class NumberedLayerButton(QPushButton):
                 else:
                     self.update()
 
+    def close_the_knot(self, strand, free_end_type, layer_panel):
+        """
+        Close the knot by connecting the strand's free end to another strand with exactly 1 free end.
+        """
+        logging.info(f"Close the knot for strand {strand.layer_name} with free end: {free_end_type}")
+        
+        # Find all strands with exactly 1 free end (excluding self)
+        candidate_strands = []
+        
+        for other_strand in layer_panel.canvas.strands:
+            if other_strand == strand:
+                continue
+                
+            # Count free ends for the other strand
+            other_free_ends = 0
+            other_free_end_type = None
+            
+            # Check if it's an AttachedStrand
+            if isinstance(other_strand, AttachedStrand):
+                # For AttachedStrand, only the end can be free
+                if not other_strand.has_circles[1]:
+                    other_free_ends = 1
+                    other_free_end_type = 'end'
+            else:
+                # For regular Strand, check both ends
+                if not other_strand.has_circles[0] and not getattr(other_strand, 'start_attached', False):
+                    other_free_ends += 1
+                    other_free_end_type = 'start'
+                
+                if not other_strand.has_circles[1] and not getattr(other_strand, 'end_attached', False):
+                    if other_free_ends == 0:
+                        other_free_end_type = 'end'
+                    other_free_ends += 1
+            
+            # Only consider strands with exactly 1 free end
+            if other_free_ends == 1:
+                # Check if this strand belongs to a compatible set (x_y -> x_w pattern)
+                my_parts = strand.layer_name.split('_')
+                other_parts = other_strand.layer_name.split('_')
+                
+                if len(my_parts) >= 2 and len(other_parts) >= 2:
+                    # Check if same set number (x)
+                    if my_parts[0] == other_parts[0]:
+                        # Check if different sub-numbers (y != w)
+                        if my_parts[1] != other_parts[1]:
+                            candidate_strands.append((other_strand, other_free_end_type))
+                            logging.info(f"Found candidate: {other_strand.layer_name} with free {other_free_end_type}")
+        
+        if not candidate_strands:
+            logging.info("No suitable strand found to close the knot")
+            return
+        
+        # Find the closest candidate by distance between free ends
+        if free_end_type == 'start':
+            my_free_point = strand.start
+        else:
+            my_free_point = strand.end
+        
+        best_candidate = None
+        best_distance = float('inf')
+        
+        for candidate_strand, candidate_free_end in candidate_strands:
+            if candidate_free_end == 'start':
+                candidate_point = candidate_strand.start
+            else:
+                candidate_point = candidate_strand.end
+            
+            # Calculate distance between free ends
+            distance = ((my_free_point.x() - candidate_point.x()) ** 2 + 
+                       (my_free_point.y() - candidate_point.y()) ** 2) ** 0.5
+            
+            logging.info(f"Candidate {candidate_strand.layer_name} distance: {distance:.2f}")
+            
+            if distance < best_distance:
+                best_distance = distance
+                best_candidate = (candidate_strand, candidate_free_end)
+        
+        if best_candidate is None:
+            logging.info("No valid candidate found")
+            return
+            
+        target_strand, target_free_end = best_candidate
+        logging.info(f"Selected closest candidate: {target_strand.layer_name} at distance {best_distance:.2f}")
+        
+        # Get the positions of the free ends (my_free_point already calculated above)
+            
+        if target_free_end == 'start':
+            target_free_point = target_strand.start
+        else:
+            target_free_point = target_strand.end
+        
+        # Move the free end of the selected strand to exactly match the target's free end
+        if free_end_type == 'start':
+            # Move the start point to the target position
+            strand.start = target_free_point
+            # If control points were at the start, move them too
+            if hasattr(strand, 'control_point1') and (strand.control_point1 - my_free_point).manhattanLength() < 1:
+                strand.control_point1 = target_free_point
+            if hasattr(strand, 'control_point2') and (strand.control_point2 - my_free_point).manhattanLength() < 1:
+                strand.control_point2 = target_free_point
+            if hasattr(strand, 'control_point_center') and (strand.control_point_center - my_free_point).manhattanLength() < 1:
+                strand.control_point_center = target_free_point
+        else:
+            # Move the end point to the target position
+            strand.end = target_free_point
+            # If control points were at the end, move them too
+            if hasattr(strand, 'control_point1') and (strand.control_point1 - my_free_point).manhattanLength() < 1:
+                strand.control_point1 = target_free_point
+            if hasattr(strand, 'control_point2') and (strand.control_point2 - my_free_point).manhattanLength() < 1:
+                strand.control_point2 = target_free_point
+            if hasattr(strand, 'control_point_center') and (strand.control_point_center - my_free_point).manhattanLength() < 1:
+                strand.control_point_center = target_free_point
+        
+        # Update the strand's shape after moving the endpoint
+        if hasattr(strand, 'update_shape'):
+            strand.update_shape()
+        
+        # Add circles at both connection points
+        strand.has_circles[0 if free_end_type == 'start' else 1] = True
+        target_strand.has_circles[0 if target_free_end == 'start' else 1] = True
+        
+        logging.info(f"Set has_circles for {strand.layer_name}: {strand.has_circles}")
+        logging.info(f"Set has_circles for {target_strand.layer_name}: {target_strand.has_circles}")
+        
+        # Ensure circle stroke color is set (needed for circles to render properly)
+        if not hasattr(strand, 'circle_stroke_color') or strand.circle_stroke_color is None:
+            strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
+        if not hasattr(target_strand, 'circle_stroke_color') or target_strand.circle_stroke_color is None:
+            target_strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
+            
+        # Ensure the property getter works
+        if hasattr(strand, '_circle_stroke_color') and strand._circle_stroke_color is None:
+            strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        if hasattr(target_strand, '_circle_stroke_color') and target_strand._circle_stroke_color is None:
+            target_strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        
+        # For attached strands, ensure they have the _circle_stroke_color attribute
+        if isinstance(strand, AttachedStrand) and not hasattr(strand, '_circle_stroke_color'):
+            strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        if isinstance(target_strand, AttachedStrand) and not hasattr(target_strand, '_circle_stroke_color'):
+            target_strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        
+        # Update attachment status
+        if free_end_type == 'start':
+            strand.start_attached = True
+            # Mark this as a closed connection for full circle rendering
+            if not hasattr(strand, 'closed_connections'):
+                strand.closed_connections = [False, False]
+            strand.closed_connections[0] = True
+        else:
+            strand.end_attached = True
+            # Mark this as a closed connection for full circle rendering
+            if not hasattr(strand, 'closed_connections'):
+                strand.closed_connections = [False, False]
+            strand.closed_connections[1] = True
+            
+        if target_free_end == 'start':
+            target_strand.start_attached = True
+            # Mark this as a closed connection for full circle rendering
+            if not hasattr(target_strand, 'closed_connections'):
+                target_strand.closed_connections = [False, False]
+            target_strand.closed_connections[0] = True
+        else:
+            target_strand.end_attached = True
+            # Mark this as a closed connection for full circle rendering
+            if not hasattr(target_strand, 'closed_connections'):
+                target_strand.closed_connections = [False, False]
+            target_strand.closed_connections[1] = True
+        
+        # Skip creating parent-child attached_strand relationships for knot closures.
+        # Knot connections should be handled solely via knot_connections without altering the attached_strands hierarchy.
+        logging.info("[KNOT_DEBUG] Skipping parent-child attached_strand relationship creation for close_the_knot operation")
+        
+        
+        # For AttachedStrands, update their attachment info
+        if isinstance(strand, AttachedStrand):
+            if free_end_type == 'end':
+                # The end of this attached strand is now connected
+                strand.end_attached = True
+        
+        if isinstance(target_strand, AttachedStrand):
+            if target_free_end == 'end':
+                # The end of the target attached strand is now connected
+                target_strand.end_attached = True
+        
+        # Don't create circular references in attached_strands lists
+        # Just mark the connection points as having circles
+        
+        # Force manual circle visibility to ensure circles are shown
+        if not hasattr(strand, 'manual_circle_visibility'):
+            strand.manual_circle_visibility = [None, None]
+        if not hasattr(target_strand, 'manual_circle_visibility'):
+            target_strand.manual_circle_visibility = [None, None]
+            
+        # Set manual override to ensure circles stay visible
+        strand.manual_circle_visibility[0 if free_end_type == 'start' else 1] = True
+        target_strand.manual_circle_visibility[0 if target_free_end == 'start' else 1] = True
+        
+        # Skip updating attachable state to avoid affecting other strands
+        # strand.update_attachable()
+        # target_strand.update_attachable()
+        
+        # Refresh geometry-based attachments to ensure circles render properly
+        # Temporarily disabled to avoid LayerStateManager updates
+        # if hasattr(layer_panel.canvas, 'refresh_geometry_based_attachments'):
+        #     layer_panel.canvas.refresh_geometry_based_attachments()
+        
+        # Update canvas
+        layer_panel.canvas.update()
+        
+        # Force a repaint to ensure circles are drawn
+        layer_panel.canvas.repaint()
+        
+        # Store connection information for future coordinate maintenance
+        if not hasattr(strand, 'knot_connections'):
+            strand.knot_connections = {}
+        if not hasattr(target_strand, 'knot_connections'):
+            target_strand.knot_connections = {}
+            
+        # Record which end is connected to which strand and end
+        strand.knot_connections[free_end_type] = {
+            'connected_strand': target_strand,
+            'connected_end': target_free_end
+        }
+        target_strand.knot_connections[target_free_end] = {
+            'connected_strand': strand,
+            'connected_end': free_end_type
+        }
+        
+        logging.info(f"KNOT_CONNECTION: {strand.layer_name}.{free_end_type} <-> {target_strand.layer_name}.{target_free_end}")
+        logging.info(f"KNOT_CONNECTION: {strand.layer_name} knot_connections: {strand.knot_connections}")
+        logging.info(f"KNOT_CONNECTION: {target_strand.layer_name} knot_connections: {target_strand.knot_connections}")
+        
+        # Double check the values were set
+        logging.info(f"After close knot - {strand.layer_name} has_circles: {strand.has_circles}, closed_connections: {getattr(strand, 'closed_connections', None)}")
+        logging.info(f"After close knot - {target_strand.layer_name} has_circles: {target_strand.has_circles}, closed_connections: {getattr(target_strand, 'closed_connections', None)}")
+        
+        # Skip saving state to avoid state layer manager updates
+        # if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+        #     layer_panel.canvas.undo_redo_manager._last_save_time = 0
+        #     layer_panel.canvas.undo_redo_manager.save_state()
+        
+        logging.info(f"Successfully closed the knot: {strand.layer_name} connected to {target_strand.layer_name}")
+    
     def change_width(self, strand, layer_panel):
         """Open a width configuration dialog to change strand width."""
         dialog = WidthConfigDialog(strand, layer_panel, self)

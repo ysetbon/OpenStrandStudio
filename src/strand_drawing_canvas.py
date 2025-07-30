@@ -4323,6 +4323,10 @@ class StrandDrawingCanvas(QWidget):
                 parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
                 logging.info(f"Updated parent strand {parent_strand.layer_name} attached_strands list")
                 self.remove_parent_circle(parent_strand, strand)
+        
+        # Clean up knot connections for all strands being removed
+        for s in strands_to_remove:
+            self.cleanup_knot_connections(s)
                 
         # Clean up connections in layer state manager
         if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
@@ -4350,6 +4354,8 @@ class StrandDrawingCanvas(QWidget):
         if self.layer_panel:
             self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
             self.update_layer_panel_colors()
+            # Re-evaluate layer button states after deletion to update deletability
+            self.layer_panel.update_layer_button_states()
 
         logging.info(f"Strand removed. Current selected strand: {self.selected_strand}")
         logging.info("Finished remove_strand")
@@ -4425,6 +4431,58 @@ class StrandDrawingCanvas(QWidget):
         # Update the parent strand's attachable status
         parent_strand.update_attachable()
         logging.info(f"Final state after update_attachable - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+
+    def cleanup_knot_connections(self, strand):
+        """
+        Clean up knot connections when a strand is being deleted.
+        
+        Args:
+            strand: The strand being deleted
+        """
+        if not hasattr(strand, 'knot_connections') or not strand.knot_connections:
+            return
+            
+        logging.info(f"Cleaning up knot connections for {strand.layer_name}: {strand.knot_connections}")
+        
+        # For each knot connection, update the connected strand
+        for end_type, connection_info in strand.knot_connections.items():
+            connected_strand = connection_info['connected_strand']
+            connected_end = connection_info['connected_end']
+            
+            if connected_strand in self.strands:
+                # Remove the connection from the connected strand
+                if hasattr(connected_strand, 'knot_connections') and connected_strand.knot_connections:
+                    if connected_end in connected_strand.knot_connections:
+                        del connected_strand.knot_connections[connected_end]
+                        logging.info(f"Removed knot connection from {connected_strand.layer_name}.{connected_end}")
+                        
+                        # Update attachment status - the connected end is no longer attached
+                        if connected_end == 'start':
+                            connected_strand.start_attached = False
+                            if hasattr(connected_strand, 'closed_connections') and connected_strand.closed_connections:
+                                connected_strand.closed_connections[0] = False
+                            # Remove circle at this end since it's no longer connected
+                            connected_strand.has_circles[0] = False
+                        else:
+                            connected_strand.end_attached = False
+                            if hasattr(connected_strand, 'closed_connections') and connected_strand.closed_connections:
+                                connected_strand.closed_connections[1] = False
+                            # Remove circle at this end since it's no longer connected
+                            connected_strand.has_circles[1] = False
+                        
+                        # Mark this strand as having knot connections cleaned up to prevent geometry-based updates
+                        # from immediately overriding our changes
+                        connected_strand._knot_cleanup_applied = True
+                        
+                        logging.info(f"Updated {connected_strand.layer_name}: has_circles={connected_strand.has_circles}, closed_connections={getattr(connected_strand, 'closed_connections', None)}")
+                        
+                        # Note: We don't call update_attachable() here because we've already manually
+                        # set the correct has_circles state based on knot connection removal.
+                        # Calling update_attachable() would recalculate based on geometry and undo our changes.
+        
+        # Clear the knot connections from the strand being deleted
+        strand.knot_connections = {}
+        logging.info(f"Cleared knot connections from {strand.layer_name}")
 
     def remove_main_strand(self, strand, set_number):
         logging.info(f"Removing main strand and related strands for set {set_number}")
@@ -5184,13 +5242,17 @@ class StrandDrawingCanvas(QWidget):
                             if self.points_are_close(strand.start, connected_strand.start) or \
                                self.points_are_close(strand.start, connected_strand.end):
                                 strand.start_attached = True
-                                strand.has_circles[0] = True
+                                # Don't override has_circles if knot cleanup was just applied
+                                if not hasattr(strand, '_knot_cleanup_applied'):
+                                    strand.has_circles[0] = True
 
                             # Check end point connections
                             if self.points_are_close(strand.end, connected_strand.start) or \
                                self.points_are_close(strand.end, connected_strand.end):
                                 strand.end_attached = True
-                                strand.has_circles[1] = True
+                                # Don't override has_circles if knot cleanup was just applied
+                                if not hasattr(strand, '_knot_cleanup_applied'):
+                                    strand.has_circles[1] = True
 
         # --- NEW: Re-apply manual circle visibility overrides (recursive for attached strands) ---
         def _apply_manual_circle_overrides(s):
@@ -5208,6 +5270,11 @@ class StrandDrawingCanvas(QWidget):
         for strand in self.strands:
             _apply_manual_circle_overrides(strand)
         # --- END NEW ---
+
+        # Clear knot cleanup flags after processing
+        for strand in self.strands:
+            if hasattr(strand, '_knot_cleanup_applied'):
+                delattr(strand, '_knot_cleanup_applied')
 
         # update_attachment_statuses completed
         delattr(self, '_updating_attachment_statuses')

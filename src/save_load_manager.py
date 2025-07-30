@@ -132,6 +132,20 @@ def serialize_strand(strand, canvas, index=None):
         "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
         "shadow_only": getattr(strand, 'shadow_only', False),
     }
+    
+    # Save knot connections - we need to save the layer names instead of strand references
+    if hasattr(strand, 'knot_connections') and strand.knot_connections:
+        knot_connections_data = {}
+        for end_type, connection_info in strand.knot_connections.items():
+            connected_strand = connection_info['connected_strand']
+            if hasattr(connected_strand, 'layer_name'):
+                knot_connections_data[end_type] = {
+                    'connected_strand_name': connected_strand.layer_name,
+                    'connected_end': connection_info['connected_end']
+                }
+        data["knot_connections"] = knot_connections_data
+    else:
+        data["knot_connections"] = {}
 
     # Only save circle_stroke_color if it exists
     if hasattr(strand, 'circle_stroke_color'):
@@ -405,6 +419,14 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.start_arrow_visible = data.get("start_arrow_visible", False)
         strand.end_arrow_visible = data.get("end_arrow_visible", False)
         strand.full_arrow_visible = data.get("full_arrow_visible", False)
+        
+        # Initialize knot connections - we'll restore the actual references later
+        strand.knot_connections = {}
+        # Store the raw knot connection data for later processing
+        if "knot_connections" in data and data["knot_connections"]:
+            strand._knot_connections_data = data["knot_connections"]
+        else:
+            strand._knot_connections_data = {}
 
         # Now handle control_points if present
         if "control_points" in data:
@@ -570,6 +592,14 @@ def load_strands(filename, canvas):
             # --- NEW: Load manual circle visibility overrides ---
             if "manual_circle_visibility" in strand_data:
                 strand.manual_circle_visibility = strand_data["manual_circle_visibility"]
+            
+            # Initialize knot connections - we'll restore the actual references later
+            strand.knot_connections = {}
+            # Store the raw knot connection data for later processing
+            if "knot_connections" in strand_data and strand_data["knot_connections"]:
+                strand._knot_connections_data = strand_data["knot_connections"]
+            else:
+                strand._knot_connections_data = {}
 
             # Add to collections
             index = strand_data["index"]
@@ -665,6 +695,14 @@ def load_strands(filename, canvas):
                 # --- NEW: Load manual circle visibility overrides ---
                 if "manual_circle_visibility" in masked_data:
                     strand.manual_circle_visibility = masked_data["manual_circle_visibility"]
+                
+                # Initialize knot connections - we'll restore the actual references later
+                strand.knot_connections = {}
+                # Store the raw knot connection data for later processing
+                if "knot_connections" in masked_data and masked_data["knot_connections"]:
+                    strand._knot_connections_data = masked_data["knot_connections"]
+                else:
+                    strand._knot_connections_data = {}
 
                 index = masked_data["index"]
                 strands[index] = strand
@@ -777,6 +815,33 @@ def load_strands(filename, canvas):
         logging.info("Canvas updated and repainted after loading strands - this should trigger shadow rendering")
     elif getattr(canvas, '_suppress_repaint', False):
         logging.info("Canvas updated after loading strands - repaint suppressed during undo/redo")
+
+    # Fifth pass: Restore knot connections now that all strands are loaded
+    logging.info("Restoring knot connections...")
+    for strand in strands:
+        if hasattr(strand, '_knot_connections_data') and strand._knot_connections_data:
+            for end_type, connection_data in strand._knot_connections_data.items():
+                connected_strand_name = connection_data['connected_strand_name']
+                connected_end = connection_data['connected_end']
+                
+                # Find the connected strand
+                connected_strand = strand_dict.get(connected_strand_name)
+                if connected_strand:
+                    # Restore the knot connection
+                    strand.knot_connections[end_type] = {
+                        'connected_strand': connected_strand,
+                        'connected_end': connected_end
+                    }
+                    logging.info(f"Restored knot connection: {strand.layer_name}.{end_type} <-> {connected_strand_name}.{connected_end}")
+                else:
+                    logging.warning(f"Could not find connected strand {connected_strand_name} for knot connection from {strand.layer_name}")
+            
+            # Clean up the temporary data
+            delattr(strand, '_knot_connections_data')
+        
+        # Ensure strand has knot_connections attribute even if empty
+        if not hasattr(strand, 'knot_connections'):
+            strand.knot_connections = {}
 
     locked_layers = set(data.get("locked_layers", []))  # Get locked layers from saved data
     lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data

@@ -77,6 +77,10 @@ class Strand:
         self._circle_stroke_color = None  # Keep for backward compatibility
         self._start_circle_stroke_color = None
         self._end_circle_stroke_color = None
+        
+        # Initialize knot connections
+        self.knot_connections = {}
+        
         self.update_attachable()
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
@@ -1716,6 +1720,84 @@ class Strand:
             just_inner = tr_inner.map(just_inner)
             painter.drawPath(just_inner)
 
+        # --- NEW: Draw semi-circles on top for closed connections ---
+        # Draw semi-circle on top when start connection is closed
+        if hasattr(self, 'closed_connections') and self.closed_connections[0] and not shadow_only_mode:
+            tangent = self.calculate_cubic_tangent(0.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Creating Outer Circle Half-Circle (same as AttachedStrand logic)
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.start.x(), self.start.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+            outer = QPainterPath()
+            outer.addEllipse(self.start, radius, radius)
+            clip = outer.subtracted(mask)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.start_circle_stroke_color)
+            painter.drawPath(clip)
+
+            # Draw the inner circle (fill)
+            inner = QPainterPath()
+            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            painter.setBrush(self.color)
+            painter.drawPath(inner)
+
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color)
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
+            tr_inner = QTransform().translate(self.start.x(), self.start.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
+
+        # Draw semi-circle on top when end connection is closed
+        if hasattr(self, 'closed_connections') and self.closed_connections[1] and not shadow_only_mode:
+            tangent = self.calculate_cubic_tangent(1.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Creating Outer Circle Half-Circle (same as AttachedStrand logic)
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(-rect_width, -rect_height/2, rect_width, rect_height)
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.end_circle_stroke_color)
+            painter.drawPath(clip)
+
+            # Draw the inner circle (fill)
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            painter.setBrush(self.color)
+            painter.drawPath(inner)
+
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color) 
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.end.x(), self.end.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
+        # --- END NEW ---
+
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
@@ -2634,6 +2716,84 @@ class Strand:
                 tr_inner.rotate(math.degrees(angle))
                 just_inner = tr_inner.map(just_inner)
                 painter.drawPath(just_inner)
+
+        # --- NEW: Draw semi-circles on top for closed connections (direct drawing) ---
+        # Draw semi-circle on top when start connection is closed
+        if hasattr(self, 'closed_connections') and self.closed_connections[0]:
+            tangent = self.calculate_cubic_tangent(0.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Creating Outer Circle Half-Circle (same as AttachedStrand logic)
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.start.x(), self.start.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+            outer = QPainterPath()
+            outer.addEllipse(self.start, radius, radius)
+            clip = outer.subtracted(mask)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.start_circle_stroke_color)
+            painter.drawPath(clip)
+
+            # Draw the inner circle (fill)
+            inner = QPainterPath()
+            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            painter.setBrush(self.color)
+            painter.drawPath(inner)
+
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color)
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
+            tr_inner = QTransform().translate(self.start.x(), self.start.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
+
+        # Draw semi-circle on top when end connection is closed
+        if hasattr(self, 'closed_connections') and self.closed_connections[1]:
+            tangent = self.calculate_cubic_tangent(1.0)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Creating Outer Circle Half-Circle (same as AttachedStrand logic)
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(-rect_width, -rect_height/2, rect_width, rect_height)
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.end_circle_stroke_color)
+            painter.drawPath(clip)
+
+            # Draw the inner circle (fill)
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            painter.setBrush(self.color)
+            painter.drawPath(inner)
+
+            # Draw side line that covers the inner circle
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.color) 
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.end.x(), self.end.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            painter.drawPath(just_inner)
+        # --- END NEW ---
 
         # Draw half-circle attachments at endpoints where there are AttachedStrand children
         # (This would use the same logic as in the original draw method, but directly to painter)

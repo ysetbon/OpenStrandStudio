@@ -2415,6 +2415,24 @@ class LayerPanel(QWidget):
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(True)
 
+    def is_strand_deletable(self, strand):
+        """
+        Check if a strand can be deleted.
+        
+        Args:
+            strand: The strand to check
+            
+        Returns:
+            bool: True if the strand can be deleted, False otherwise
+        """
+        # If strand has knot connections, it's always deletable
+        # because knot connections are user-created connections that can be broken
+        if hasattr(strand, 'knot_connections') and strand.knot_connections:
+            return True
+            
+        # Otherwise, use the original logic: deletable if not all ends have circles
+        return not all(strand.has_circles)
+
     def update_delete_button_state(self):
         """Update the delete button state based on the currently selected strand's deletability."""
             
@@ -2424,8 +2442,8 @@ class LayerPanel(QWidget):
             selected_index < len(self.canvas.strands)):
             
             selected_strand = self.canvas.strands[selected_index]
-            # Use the same criteria as in update_layer_button_states
-            is_deletable = not all(selected_strand.has_circles)
+            # Use the improved deletability check that considers knot connections
+            is_deletable = self.is_strand_deletable(selected_strand)
             
             # Keep delete button disabled if in lock mode
             if self.lock_mode:
@@ -3443,10 +3461,10 @@ class LayerPanel(QWidget):
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
-                # A strand is only non-deletable if both ends have circles
-                is_deletable = not all(strand.has_circles)
+                # Use the improved deletability check that considers knot connections
+                is_deletable = self.is_strand_deletable(strand)
                 
-                logging.info(f"Strand {strand.layer_name}: has_circles={strand.has_circles}, is_deletable={is_deletable}")
+                logging.info(f"Strand {strand.layer_name}: has_circles={strand.has_circles}, knot_connections={getattr(strand, 'knot_connections', None)}, is_deletable={is_deletable}")
                 if hasattr(strand, 'attached_strands'):
                     logging.info(f"  Connected to: {[ast.layer_name for ast in strand.attached_strands]}")
                 
@@ -3458,7 +3476,10 @@ class LayerPanel(QWidget):
                 
                 # Add visual indication for non-deletable strands
                 if not is_deletable:
-                    button.setToolTip("This layer cannot be deleted (both ends are attached)")
+                    if hasattr(strand, 'knot_connections') and strand.knot_connections:
+                        button.setToolTip("This layer has knot connections but can still be deleted")
+                    else:
+                        button.setToolTip("This layer cannot be deleted (both ends are attached)")
                 else:
                     button.setToolTip("")
             else:
@@ -3471,8 +3492,8 @@ class LayerPanel(QWidget):
             selected_index < len(self.canvas.strands)):
             
             selected_strand = self.canvas.strands[selected_index]
-            # Use the same simple criteria for the delete button
-            is_deletable = not all(selected_strand.has_circles)
+            # Use the improved deletability check that considers knot connections
+            is_deletable = self.is_strand_deletable(selected_strand)
             
             # Keep delete button disabled if in lock mode
             if self.lock_mode:

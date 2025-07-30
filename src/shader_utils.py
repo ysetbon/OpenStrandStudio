@@ -317,13 +317,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # region from the shadow path.
     # --------------------------------------------------
     try:
-        if (
-            hasattr(strand, "circle_stroke_color")
-            and strand.circle_stroke_color
-            and strand.circle_stroke_color.alpha() == 0
-            and hasattr(strand, "has_circles")
-            and any(strand.has_circles)
-        ):
+        if hasattr(strand, "has_circles") and any(strand.has_circles):
             radius_base = (strand.width + strand.stroke_width * 2) / 1.5
             adj_radius = radius_base   # ensure we cut beyond blur
 
@@ -331,13 +325,25 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 if not enabled:
                     continue  # Circle already hidden by flag
 
-                centre = strand.start if idx == 0 else strand.end
-                cut = QPainterPath()
-                cut.addEllipse(centre, adj_radius, adj_radius)
-                shadow_path = shadow_path.subtracted(cut)
-                logging.info(
-                    f"Transparent circle exclusion applied ({'start' if idx == 0 else 'end'}) on {strand.layer_name} – r={adj_radius:.1f}"
-                )
+                # Check transparency for each circle separately
+                is_transparent = False
+                if idx == 0:  # Start circle
+                    start_color = strand.start_circle_stroke_color
+                    if start_color and start_color.alpha() == 0:
+                        is_transparent = True
+                elif idx == 1:  # End circle
+                    end_color = strand.end_circle_stroke_color
+                    if end_color and end_color.alpha() == 0:
+                        is_transparent = True
+
+                if is_transparent:
+                    centre = strand.start if idx == 0 else strand.end
+                    cut = QPainterPath()
+                    cut.addEllipse(centre, adj_radius, adj_radius)
+                    shadow_path = shadow_path.subtracted(cut)
+                    logging.info(
+                        f"Transparent circle exclusion applied ({'start' if idx == 0 else 'end'}) on {strand.layer_name} – r={adj_radius:.1f}"
+                    )
     except Exception as exc:
         # logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
         pass
@@ -1366,14 +1372,38 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
         if not hasattr(strand, 'has_circles') or not any(strand.has_circles):
             return circle_path
             
-        # Check if circles are transparent
-        transparent_circles = (
-            hasattr(strand, 'circle_stroke_color') and
-            strand.circle_stroke_color and
-            strand.circle_stroke_color.alpha() == 0
-        )
+        # Check if any circles are transparent
+        has_transparent_circles = False
+        if hasattr(strand, 'start_circle_stroke_color'):
+            start_color = strand.start_circle_stroke_color
+            if start_color and start_color.alpha() == 0:
+                has_transparent_circles = True
+        if hasattr(strand, 'end_circle_stroke_color'):
+            end_color = strand.end_circle_stroke_color
+            if end_color and end_color.alpha() == 0:
+                has_transparent_circles = True
         
-        if transparent_circles:
+        # Skip shadow generation only if ALL circles are transparent
+        all_transparent = True
+        for idx, enabled in enumerate(strand.has_circles):
+            if not enabled:
+                continue
+            
+            is_circle_transparent = False
+            if idx == 0:  # Start circle
+                start_color = strand.start_circle_stroke_color
+                if start_color and start_color.alpha() == 0:
+                    is_circle_transparent = True
+            elif idx == 1:  # End circle
+                end_color = strand.end_circle_stroke_color
+                if end_color and end_color.alpha() == 0:
+                    is_circle_transparent = True
+            
+            if not is_circle_transparent:
+                all_transparent = False
+                break
+        
+        if all_transparent and has_transparent_circles:
             return circle_path
             
         # Circle radius includes the fixed shadow extension
@@ -1385,6 +1415,22 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
         for idx, enabled in enumerate(strand.has_circles):
             if not enabled:
                 continue
+            
+            # Check if this specific circle is transparent
+            is_circle_transparent = False
+            if idx == 0:  # Start circle
+                start_color = strand.start_circle_stroke_color
+                if start_color and start_color.alpha() == 0:
+                    is_circle_transparent = True
+            elif idx == 1:  # End circle
+                end_color = strand.end_circle_stroke_color
+                if end_color and end_color.alpha() == 0:
+                    is_circle_transparent = True
+            
+            # Skip shadow generation for transparent circles
+            if is_circle_transparent:
+                continue
+                
             centre = strand.start if idx == 0 else strand.end
             
             # For AttachedStrand starting circles, create a half-circle shadow

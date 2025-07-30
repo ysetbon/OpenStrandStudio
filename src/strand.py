@@ -74,7 +74,9 @@ class Strand:
 
         self.layer_name = layer_name
         self.set_number = set_number
-        self._circle_stroke_color = None
+        self._circle_stroke_color = None  # Keep for backward compatibility
+        self._start_circle_stroke_color = None
+        self._end_circle_stroke_color = None
         self.update_attachable()
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
@@ -127,31 +129,67 @@ class Strand:
 
     @property
     def circle_stroke_color(self):
-        # If nothing was set or loaded, return black as the default:
-        if self._circle_stroke_color is None:
-            return QColor(0, 0, 0, 255)
-        return self._circle_stroke_color
+        # Keep for backward compatibility - return start circle color
+        return self.start_circle_stroke_color
 
     @circle_stroke_color.setter
     def circle_stroke_color(self, value):
+        # Keep for backward compatibility - set both start and end colors
+        self.start_circle_stroke_color = value
+        self.end_circle_stroke_color = value
+
+    @property
+    def start_circle_stroke_color(self):
+        # If separate start color is set, use it
+        if self._start_circle_stroke_color is not None:
+            return self._start_circle_stroke_color
+        # Otherwise fall back to general circle_stroke_color
+        if self._circle_stroke_color is not None:
+            return self._circle_stroke_color
+        # Default to black
+        return QColor(0, 0, 0, 255)
+
+    @start_circle_stroke_color.setter
+    def start_circle_stroke_color(self, value):
         if value is not None and isinstance(value, (Qt.GlobalColor, int)):
             value = QColor(value)
-
-        # Set a flag to indicate we're just updating transparency, not geometry
+        
         self._setting_circle_transparency = True
         
         if value is None:
-            logging.info(f"Setting default circle_stroke_color for {self.layer_name}")
-            # If setter is called with None, revert to default black
-            self._circle_stroke_color = QColor(0, 0, 0, 255)
+            logging.info(f"Setting default start_circle_stroke_color for {self.layer_name}")
+            self._start_circle_stroke_color = QColor(0, 0, 0, 255)
         else:
-            logging.info(
-                f"Setting circle_stroke_color for {self.layer_name} to "
-                f"rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})"
-            )
-            self._circle_stroke_color = value
+            logging.info(f"Setting start_circle_stroke_color for {self.layer_name} to rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})")
+            self._start_circle_stroke_color = value
         
-        # Reset the transparency flag after setting the color
+        self._setting_circle_transparency = False
+
+    @property
+    def end_circle_stroke_color(self):
+        # If separate end color is set, use it
+        if self._end_circle_stroke_color is not None:
+            return self._end_circle_stroke_color
+        # Otherwise fall back to general circle_stroke_color
+        if self._circle_stroke_color is not None:
+            return self._circle_stroke_color
+        # Default to black
+        return QColor(0, 0, 0, 255)
+
+    @end_circle_stroke_color.setter
+    def end_circle_stroke_color(self, value):
+        if value is not None and isinstance(value, (Qt.GlobalColor, int)):
+            value = QColor(value)
+        
+        self._setting_circle_transparency = True
+        
+        if value is None:
+            logging.info(f"Setting default end_circle_stroke_color for {self.layer_name}")
+            self._end_circle_stroke_color = QColor(0, 0, 0, 255)
+        else:
+            logging.info(f"Setting end_circle_stroke_color for {self.layer_name} to rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})")
+            self._end_circle_stroke_color = value
+        
         self._setting_circle_transparency = False
 
     def draw_selection_path(self, painter):
@@ -405,19 +443,23 @@ class Strand:
         """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
 
-        # Check if this is an AttachedStrand with a transparent start circle
-        is_attached_transparent_start = False
-        # Use class name check for robustness as AttachedStrand is defined later
-        if self.__class__.__name__ == 'AttachedStrand':
-            # AttachedStrand always has a start circle (has_circles[0] is True)
-            # Check transparency using the circle_stroke_color property
-            # Add a check for None before accessing alpha()
-            circle_color = self.circle_stroke_color
-            if circle_color and circle_color.alpha() == 0:
-                is_attached_transparent_start = True
-                logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+        # Check if this is a strand with transparent start or end circles
+        is_transparent_start = False
+        is_transparent_end = False
+        
+        # Check for transparent start circle
+        start_circle_color = self.start_circle_stroke_color
+        if start_circle_color and start_circle_color.alpha() == 0:
+            is_transparent_start = True
+            logging.info(f"{self.layer_name}: Transparent start circle detected, removing shadow extension.")
+        
+        # Check for transparent end circle
+        end_circle_color = self.end_circle_stroke_color
+        if end_circle_color and end_circle_color.alpha() == 0:
+            is_transparent_end = True
+            logging.info(f"{self.layer_name}: Transparent end circle detected, removing shadow extension.")
 
-        if is_attached_transparent_start:
+        if is_transparent_start:
             # If transparent start circle on AttachedStrand, don't extend
             extended_start = self.start
         else:
@@ -450,24 +492,30 @@ class Strand:
                     # If start and end are the same, use a default horizontal direction
                     extended_start = QPointF(self.start.x() - 0, self.start.y())
 
-        # For end point, use the tangent direction from control_point2 towards the end
-        end_vector = self.end - self.control_point2
-        if end_vector.manhattanLength() > 0:
-            # Normalize and extend by exactly 10 pixels using Euclidean length
-            end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
-            normalized_end_vector = end_vector / end_vector_length
-            extended_end = self.end + (normalized_end_vector * 10)
+        # For end point, check if transparent end circle should skip shadow extension
+        if is_transparent_end:
+            # If transparent end circle, don't extend
+            extended_end = self.end
         else:
-            # Fallback if control point is at same position as end
-            # Use direction from end to start instead
-            fallback_vector = self.end - self.start
-            if fallback_vector.manhattanLength() > 0:
-                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
-                normalized_fallback = fallback_vector / fallback_length
-                extended_end = self.end + (normalized_fallback * 10)
+            # Original extension logic for non-transparent end
+            # For end point, use the tangent direction from control_point2 towards the end
+            end_vector = self.end - self.control_point2
+            if end_vector.manhattanLength() > 0:
+                # Normalize and extend by exactly 10 pixels using Euclidean length
+                end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
+                normalized_end_vector = end_vector / end_vector_length
+                extended_end = self.end + (normalized_end_vector * 10)
             else:
-                # If start and end are the same, use a default horizontal direction
-                extended_end = QPointF(self.end.x() + 0, self.end.y())
+                # Fallback if control point is at same position as end
+                # Use direction from end to start instead
+                fallback_vector = self.end - self.start
+                if fallback_vector.manhattanLength() > 0:
+                    fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                    normalized_fallback = fallback_vector / fallback_length
+                    extended_end = self.end + (normalized_fallback * 10)
+                else:
+                    # If start and end are the same, use a default horizontal direction
+                    extended_end = QPointF(self.end.x() + 0, self.end.y())
             
         # Create the path with the extended points
         path.moveTo(self.start)
@@ -2323,7 +2371,7 @@ class Strand:
                 
                 # Draw the outer circle (stroke)
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.start_circle_stroke_color)
                 painter.drawPath(outer_circle)
                 
                 # Draw the inner circle (fill) for closed connections
@@ -2347,7 +2395,7 @@ class Strand:
 
                 # Draw the outer circle (stroke)
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.start_circle_stroke_color)
                 painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -2422,7 +2470,7 @@ class Strand:
                     
                     # Draw the outer circle (stroke)
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.circle_stroke_color)
+                    painter.setBrush(self.end_circle_stroke_color)
                     painter.drawPath(outer_circle_end)
                     
                     # Draw the inner circle (fill) for closed connections
@@ -2446,7 +2494,7 @@ class Strand:
 
                     # Draw the outer circle stroke
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.circle_stroke_color)
+                    painter.setBrush(self.end_circle_stroke_color)
                     painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill
@@ -2508,9 +2556,9 @@ class Strand:
                 outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
 
-                # Draw stroke using circle_stroke_color
+                # Draw stroke using start_circle_stroke_color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.start_circle_stroke_color)
                 painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
@@ -2544,7 +2592,7 @@ class Strand:
                     
                     # Draw the outer circle (stroke)
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.circle_stroke_color)
+                    painter.setBrush(self.end_circle_stroke_color)
                     painter.drawPath(outer_circle_end)
                     
                     # Draw the inner circle (fill) for closed connections
@@ -2568,7 +2616,7 @@ class Strand:
 
                     # Draw the outer circle stroke
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.circle_stroke_color)
+                    painter.setBrush(self.end_circle_stroke_color)
                     painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill

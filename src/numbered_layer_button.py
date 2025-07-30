@@ -589,6 +589,52 @@ class NumberedLayerButton(QPushButton):
                     lambda: self.close_the_knot(strand, free_end_type, layer_panel)
                 )
                 context_menu.addAction(close_knot_action)
+
+            # --- NEW: Add Transparent Ending Edge option for closed connections ---
+            # Check if strand has closed connections at the end
+            has_closed_ending = False
+            if hasattr(strand, 'closed_connections') and strand.closed_connections:
+                # For regular strands, check if end is closed
+                if not isinstance(strand, AttachedStrand) and strand.closed_connections[1]:
+                    has_closed_ending = True
+                # For attached strands, check if the free end (typically index 1) has closed connection
+                elif isinstance(strand, AttachedStrand):
+                    # For AttachedStrands, the free end is usually at index 1 (end), regardless of attachment_side
+                    # Check both ends to be safe, but prioritize the end (index 1)
+                    if strand.closed_connections[1]:
+                        has_closed_ending = True
+                    elif strand.closed_connections[0]:
+                        has_closed_ending = True
+
+            if has_closed_ending:
+                context_menu.addSeparator()
+                # Check if ending edge is already transparent
+                end_circle_color = strand.end_circle_stroke_color
+                is_transparent = end_circle_color and end_circle_color.alpha() == 0
+                
+                if is_transparent:
+                    # Show restore option
+                    restore_closing_knot_text = _['restore_default_closing_knot_stroke'] if 'restore_default_closing_knot_stroke' in _ else "Restore Default Closing Knot Stroke"
+                    restore_closing_knot_label = HoverLabel(restore_closing_knot_text, self, theme)
+                    if is_hebrew:
+                        restore_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
+                        restore_closing_knot_label.setAlignment(Qt.AlignLeft)
+                    restore_closing_knot_action = QWidgetAction(self)
+                    restore_closing_knot_action.setDefaultWidget(restore_closing_knot_label)
+                    restore_closing_knot_action.triggered.connect(self.reset_default_ending_stroke)
+                    context_menu.addAction(restore_closing_knot_action)
+                else:
+                    # Show transparent option
+                    transparent_closing_knot_text = _['transparent_closing_knot_side'] if 'transparent_closing_knot_side' in _ else "Transparent Closing Knot Side"
+                    transparent_closing_knot_label = HoverLabel(transparent_closing_knot_text, self, theme)
+                    if is_hebrew:
+                        transparent_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
+                        transparent_closing_knot_label.setAlignment(Qt.AlignLeft)
+                    transparent_closing_knot_action = QWidgetAction(self)
+                    transparent_closing_knot_action.setDefaultWidget(transparent_closing_knot_label)
+                    transparent_closing_knot_action.triggered.connect(self.set_transparent_ending_edge)
+                    context_menu.addAction(transparent_closing_knot_action)
+            # --- END NEW ---
             # --- END NEW ---
 
             # Add extension line toggles
@@ -1036,6 +1082,94 @@ class NumberedLayerButton(QPushButton):
         Resets the attached strand's circle stroke color to solid black.
         """
         self.set_circle_stroke_color(QColor(0, 0, 0, 255))
+
+    def set_transparent_ending_edge(self):
+        """
+        Sets the strand's ending circle stroke color to transparent for closed connections.
+        """
+        self.set_end_circle_stroke_color(Qt.transparent)
+
+    def reset_default_ending_stroke(self):
+        """
+        Resets the strand's ending circle stroke color to solid black.
+        """
+        self.set_end_circle_stroke_color(QColor(0, 0, 0, 255))
+
+    def set_end_circle_stroke_color(self, color):
+        """
+        Helper that sets end_circle_stroke_color on the correct strand,
+        making sure only the specific strand matching our button text is updated.
+        """
+        button_text = self.text()
+        if '_' not in button_text:
+            print(f"Button text '{button_text}' does not have an underscore; skipping end stroke color change.")
+            return
+
+        found = False
+
+        if self.layer_context and hasattr(self.layer_context, "all_strands"):
+            for strand in self.layer_context.all_strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                    strand.end_circle_stroke_color = color
+                    if hasattr(strand, 'update'):
+                        strand.update(None, False)
+                    found = True
+        else:
+            parent = self.parent()
+            while parent is not None:
+                if hasattr(parent, 'layer_context') and hasattr(parent.layer_context, 'all_strands'):
+                    for strand in parent.layer_context.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.end_circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+                    break
+                elif hasattr(parent, 'all_strands'):
+                    for strand in parent.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.end_circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+                    break
+                parent = parent.parent()
+
+            # Fallback: search for the LayerPanel (which has canvas.strands)
+            if not found:
+                layer_panel = None
+                parent2 = self.parent()
+                while parent2 is not None:
+                    if hasattr(parent2, 'canvas') and hasattr(parent2.canvas, 'strands'):
+                        layer_panel = parent2
+                        break
+                    parent2 = parent2.parent()
+
+                if layer_panel:
+                    for strand in layer_panel.canvas.strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.end_circle_stroke_color = color
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+
+                if not found:
+                    print("Warning: Could not find a parent or layer_context with 'all_strands' to update end circle stroke color.")
+
+        # Force a canvas repaint if we found the strand
+        if found:
+            try:
+                # Force immediate update via traversing the parent hierarchy to find the canvas
+                current_parent = self.parent()
+                while current_parent is not None:
+                    if hasattr(current_parent, 'canvas'):
+                        current_parent.canvas.update()
+                        current_parent.canvas.repaint()
+                        logging.info(f"Forced canvas repaint after end circle stroke color change for {button_text}")
+                        break
+                    current_parent = current_parent.parent()
+            except Exception as e:
+                logging.warning(f"Could not force canvas repaint: {e}")
 
     # NEW: Helper method to fetch the current theme from parent chain
     def get_parent_theme(self):

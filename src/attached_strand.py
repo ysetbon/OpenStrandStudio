@@ -1062,7 +1062,7 @@ class AttachedStrand(Strand):
 
             # Draw the outer circle (stroke)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.circle_stroke_color)
+            painter.setBrush(self.start_circle_stroke_color)
             painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -1324,9 +1324,9 @@ class AttachedStrand(Strand):
                 outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                # Draw stroke using circle_stroke_color (same as start circle)
+                # Draw stroke using end_circle_stroke_color for end circle
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.end_circle_stroke_color)
                 painter.drawPath(outer_mask_end)
 
                 # Draw fill using main color
@@ -1584,19 +1584,23 @@ class AttachedStrand(Strand):
         """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
 
-        # Check if this is an AttachedStrand with a transparent start circle
-        is_attached_transparent_start = False
-        # Use class name check for robustness as AttachedStrand is defined later
-        if self.__class__.__name__ == 'AttachedStrand':
-            # AttachedStrand always has a start circle (has_circles[0] is True)
-            # Check transparency using the circle_stroke_color property
-            # Add a check for None before accessing alpha()
-            circle_color = self.circle_stroke_color
-            if circle_color and circle_color.alpha() == 0:
-                is_attached_transparent_start = True
-                logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+        # Check if this is an AttachedStrand with transparent start or end circles
+        is_transparent_start = False
+        is_transparent_end = False
+        
+        # Check for transparent start circle
+        start_circle_color = self.start_circle_stroke_color
+        if start_circle_color and start_circle_color.alpha() == 0:
+            is_transparent_start = True
+            logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+        
+        # Check for transparent end circle
+        end_circle_color = self.end_circle_stroke_color
+        if end_circle_color and end_circle_color.alpha() == 0:
+            is_transparent_end = True
+            logging.info(f"AttachedStrand {self.layer_name}: Transparent end circle detected, removing shadow extension.")
 
-        if is_attached_transparent_start:
+        if is_transparent_start:
             # If transparent start circle on AttachedStrand, don't extend
             extended_start = self.start
         else:
@@ -1629,24 +1633,30 @@ class AttachedStrand(Strand):
                     # If start and end are the same, use a default horizontal direction
                     extended_start = QPointF(self.start.x() - 10, self.start.y())
 
-        # For end point, use the tangent direction from control_point2 towards the end
-        end_vector = self.end - self.control_point2
-        if end_vector.manhattanLength() > 0:
-            # Normalize and extend by exactly 10 pixels using Euclidean length
-            end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
-            normalized_end_vector = end_vector / end_vector_length
-            extended_end = self.end + (normalized_end_vector * 10)
+        # For end point, check if transparent end circle should skip shadow extension
+        if is_transparent_end:
+            # If transparent end circle, don't extend
+            extended_end = self.end
         else:
-            # Fallback if control point is at same position as end
-            # Use direction from end to start instead
-            fallback_vector = self.end - self.start
-            if fallback_vector.manhattanLength() > 0:
-                fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
-                normalized_fallback = fallback_vector / fallback_length
-                extended_end = self.end + (normalized_fallback * 10)
+            # Original extension logic for non-transparent end
+            # For end point, use the tangent direction from control_point2 towards the end
+            end_vector = self.end - self.control_point2
+            if end_vector.manhattanLength() > 0:
+                # Normalize and extend by exactly 10 pixels using Euclidean length
+                end_vector_length = math.sqrt(end_vector.x()**2 + end_vector.y()**2)
+                normalized_end_vector = end_vector / end_vector_length
+                extended_end = self.end + (normalized_end_vector * 10)
             else:
-                # If start and end are the same, use a default horizontal direction
-                extended_end = QPointF(self.end.x() + 10, self.end.y())
+                # Fallback if control point is at same position as end
+                # Use direction from end to start instead
+                fallback_vector = self.end - self.start
+                if fallback_vector.manhattanLength() > 0:
+                    fallback_length = math.sqrt(fallback_vector.x()**2 + fallback_vector.y()**2)
+                    normalized_fallback = fallback_vector / fallback_length
+                    extended_end = self.end + (normalized_fallback * 10)
+                else:
+                    # If start and end are the same, use a default horizontal direction
+                    extended_end = QPointF(self.end.x() + 10, self.end.y())
             
         # Create the path with the extended points
         path.moveTo(self.start)
@@ -2407,7 +2417,7 @@ class AttachedStrand(Strand):
 
             # Draw the outer circle (stroke)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.circle_stroke_color)
+            painter.setBrush(self.start_circle_stroke_color)
             painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -2493,7 +2503,7 @@ class AttachedStrand(Strand):
 
                 # Draw stroke using circle_stroke_color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.start_circle_stroke_color)
                 painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
@@ -2638,7 +2648,7 @@ class AttachedStrand(Strand):
 
                 # Draw stroke using circle_stroke_color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.start_circle_stroke_color)
                 painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
@@ -2681,9 +2691,9 @@ class AttachedStrand(Strand):
                 outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                # Draw stroke using circle_stroke_color (same as start circle)
+                # Draw stroke using end_circle_stroke_color for end circle
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.circle_stroke_color)
+                painter.setBrush(self.end_circle_stroke_color)
                 painter.drawPath(outer_mask_end)
 
                 # Draw fill using main color

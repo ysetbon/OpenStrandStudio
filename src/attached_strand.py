@@ -469,6 +469,7 @@ class AttachedStrand(Strand):
         print(f"[ATTACHED_STRAND_DRAW_START] {getattr(self, 'layer_name', 'unknown')} - draw() called")
         print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
         print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - About to check drawing path")
+        print(f"[HIGHLIGHT_DEBUG] {getattr(self, 'layer_name', 'unknown')} - is_selected at start of draw: {getattr(self, 'is_selected', None)}")
         painter.save() # Top Level Save
         if not skip_painter_setup:
             RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -798,6 +799,7 @@ class AttachedStrand(Strand):
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            logging.info(f"[HIGHLIGHT_DEBUG] {self.layer_name} - Drawing highlight: is_selected={self.is_selected}, parent_type={type(self.parent)}")
             # We need stroke_path for highlighting, so calculate it here
             stroke_stroker = QPainterPathStroker()
             stroke_stroker.setWidth(self.width + self.stroke_width * 2)
@@ -858,6 +860,9 @@ class AttachedStrand(Strand):
                 painter.drawLine(end_line_start_extended, end_line_end_extended)
             
             painter.restore()
+        else:
+            if hasattr(self, 'layer_name') and self.layer_name == '1_2':
+                logging.info(f"[HIGHLIGHT_DEBUG] {self.layer_name} - NOT drawing highlight: is_selected={self.is_selected}, parent_type={type(self.parent)}, is_MaskedStrand={isinstance(self.parent, MaskedStrand)}")
         
         
         # --- START: Skip visual rendering in shadow-only mode ---

@@ -1628,8 +1628,8 @@ class StrandDrawingCanvas(QWidget):
             # logging.info(f"Drawing strand '{strand.layer_name}'")
                 if not hasattr(strand, 'canvas'):
                     strand.canvas = self  # Ensure all strands have canvas reference
-                # --- MODIFIED: Check both selected_strand and selected_attached_strand --- 
-                is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand)
+                # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property --- 
+                is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
                 
                 # Check if we should suppress highlighting due to "drag only affected strand" setting
                 should_suppress_highlight = False
@@ -1658,46 +1658,62 @@ class StrandDrawingCanvas(QWidget):
             
             # Handle different modes
             if isinstance(self.current_mode, MoveMode):
-                affected_strand = self.current_mode.affected_strand
+                # --- MODIFIED: Use truly_moving_strands for consistent highlighting ---
+                truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                logging.info(f"Optimized drawing: truly_moving_strands={[s.layer_name for s in truly_moving_strands]}")
                 
-                # If we're moving an attached strand, handle it differently
-                if hasattr(self.current_mode, 'temp_selected_strand') and self.current_mode.temp_selected_strand:
-                    affected_strand = self.current_mode.temp_selected_strand
-                
-                # If we're explicitly moving a strand that's not the selected one
-                if affected_strand is None and self.current_mode.is_moving:
-                    # Try to get the strand from originally_selected_strand
-                    affected_strand = self.current_mode.originally_selected_strand
-                
-                # Final fallback to the selected strand if no other strand is being moved
-                if affected_strand is None:
-                    # --- MODIFIED: Check both selected_strand and selected_attached_strand for fallback ---
-                    affected_strand = self.selected_strand or self.selected_attached_strand
-                
-                # Get any connected/attached strands that are also being affected
-                # Try to get attached strands from the current move operation
-                if affected_strand and self.current_mode.moving_side is not None:
-                    # Find connected strands at the moving point
-                    moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
-                    for strand in self.strands:
-                        if strand != affected_strand:
-                            # Only use state manager connections, never proximity detection
-                            # Check if this strand is actually connected in the state manager
-                            connections = self.layer_state_manager.getConnections()
-                            connected_strand_names = connections.get(affected_strand.layer_name, [])
-                            is_connected = (strand.layer_name in connected_strand_names or
-                                          affected_strand.layer_name in connections.get(strand.layer_name, []))
-                            
-                            if is_connected:
-                                # If draw_only_affected_strand is enabled, verify connection at moving point
-                                if getattr(self.current_mode, 'draw_only_affected_strand', False):
-                                    at_moving_point = (self.current_mode.points_are_close(strand.start, moving_point) or
-                                                     self.current_mode.points_are_close(strand.end, moving_point))
-                                    if at_moving_point:
+                if truly_moving_strands:
+                    # Use the first strand as the affected strand
+                    affected_strand = truly_moving_strands[0]
+                    # All other strands in the list are connected strands
+                    connected_strands = truly_moving_strands[1:]
+                    logging.info(f"Using truly_moving_strands: affected={affected_strand.layer_name}, connected={[s.layer_name for s in connected_strands]}")
+                    
+                    # Ensure all truly moving strands have is_selected=True
+                    for strand in truly_moving_strands:
+                        strand.is_selected = True
+                else:
+                    # Fallback to the old logic if truly_moving_strands is not available
+                    affected_strand = self.current_mode.affected_strand
+                    
+                    # If we're moving an attached strand, handle it differently
+                    if hasattr(self.current_mode, 'temp_selected_strand') and self.current_mode.temp_selected_strand:
+                        affected_strand = self.current_mode.temp_selected_strand
+                    
+                    # If we're explicitly moving a strand that's not the selected one
+                    if affected_strand is None and self.current_mode.is_moving:
+                        # Try to get the strand from originally_selected_strand
+                        affected_strand = self.current_mode.originally_selected_strand
+                    
+                    # Final fallback to the selected strand if no other strand is being moved
+                    if affected_strand is None:
+                        # --- MODIFIED: Check both selected_strand and selected_attached_strand for fallback ---
+                        affected_strand = self.selected_strand or self.selected_attached_strand
+                    
+                    # Get any connected/attached strands that are also being affected
+                    # Try to get attached strands from the current move operation
+                    if affected_strand and self.current_mode.moving_side is not None:
+                        # Find connected strands at the moving point
+                        moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
+                        for strand in self.strands:
+                            if strand != affected_strand:
+                                # Only use state manager connections, never proximity detection
+                                # Check if this strand is actually connected in the state manager
+                                connections = self.layer_state_manager.getConnections()
+                                connected_strand_names = connections.get(affected_strand.layer_name, [])
+                                is_connected = (strand.layer_name in connected_strand_names or
+                                              affected_strand.layer_name in connections.get(strand.layer_name, []))
+                                
+                                if is_connected:
+                                    # If draw_only_affected_strand is enabled, verify connection at moving point
+                                    if getattr(self.current_mode, 'draw_only_affected_strand', False):
+                                        at_moving_point = (self.current_mode.points_are_close(strand.start, moving_point) or
+                                                         self.current_mode.points_are_close(strand.end, moving_point))
+                                        if at_moving_point:
+                                            connected_strands.append(strand)
+                                    else:
+                                        # Setting is off, show all connected strands
                                         connected_strands.append(strand)
-                                else:
-                                    # Setting is off, show all connected strands
-                                    connected_strands.append(strand)
             
             
             # Handle RotateMode
@@ -1720,7 +1736,7 @@ class StrandDrawingCanvas(QWidget):
                 # --- REVISED: Handle highlighting based on movement type ---
                 is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
                 is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
-                is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand)
+                is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand or getattr(affected_strand, 'is_selected', False))
                 
                 if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
                     # Draw with highlight if selected and NOT moving control points (to prevent flickering for strand movement)
@@ -1729,12 +1745,17 @@ class StrandDrawingCanvas(QWidget):
                     # Draw without highlight if not selected OR if moving control points
                     self.draw_moving_strand(painter, affected_strand)
                 
-                # Draw any connected strands (typically without highlight during move)
+                # Draw any connected strands (check if they should be highlighted)
                 for strand in connected_strands:
                     logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
                     # Check if strand is valid (not deleted)
                     if strand in self.strands:
-                        self.draw_moving_strand(painter, strand)
+                        # Check if this connected strand should be highlighted
+                        is_connected_selected = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
+                        if is_connected_selected and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
+                            self.draw_highlighted_strand(painter, strand)
+                        else:
+                            self.draw_moving_strand(painter, strand)
 
         # Draw the temporary strand (whether it's a new strand or an attached strand)
         if self.current_strand:
@@ -3059,12 +3080,27 @@ class StrandDrawingCanvas(QWidget):
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
         logging.info(f"Entering select_strand. Index: {index}")
-        # Deselect all strands first
-        for strand in self.strands:
-            strand.is_selected = False
-            if hasattr(strand, 'attached_strands'):
-                for attached_strand in strand.attached_strands:
-                    attached_strand.is_selected = False
+        
+        # Don't clear is_selected if we're in the middle of a movement operation
+        should_clear_selection = True
+        if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+            self.current_mode.is_moving and hasattr(self, 'truly_moving_strands')):
+            should_clear_selection = False
+            logging.info(f"[SELECTION_DEBUG] Skipping is_selected clearing during movement operation")
+        else:
+            logging.info(f"[SELECTION_DEBUG] Will clear is_selected: current_mode={type(self.current_mode).__name__}, is_moving={getattr(self.current_mode, 'is_moving', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, has_truly_moving={hasattr(self, 'truly_moving_strands')}")
+        
+        # Deselect all strands first (unless we're moving)
+        if should_clear_selection:
+            for strand in self.strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name == '1_2':
+                    logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for strand 1_2 in select_strand method")
+                strand.is_selected = False
+                if hasattr(strand, 'attached_strands'):
+                    for attached_strand in strand.attached_strands:
+                        if hasattr(attached_strand, 'layer_name') and attached_strand.layer_name == '1_2':
+                            logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for attached strand 1_2 in select_strand method")
+                        attached_strand.is_selected = False
 
         # When explicitly selecting a strand, reset the user_deselected_all flag in MoveMode
         if index is not None and 0 <= index < len(self.strands) and isinstance(self.current_mode, MoveMode):

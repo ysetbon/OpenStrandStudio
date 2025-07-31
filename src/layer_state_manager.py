@@ -28,12 +28,17 @@ class LayerStateManager(QObject):
        - 1_1: ['null', '1_2(0)']  (1_1's start is free, 1_1's end connects to 1_2's start)
        - 1_2: ['1_1(1)', 'null']  (1_2's start connects to 1_1's end, 1_2's end is free)
     
-    2. Chain of attachments: 1_3 attached to 1_2's ending point
+    2. Multiple attachments: 1_2 and 1_3 attached to 1_1's different ends
+       - 1_1: ['1_3(0)', '1_2(0)'] (1_1's start connects to 1_3's start, 1_1's end connects to 1_2's start)
+       - 1_2: ['1_1(1)', 'null']  (1_2's start connects to 1_1's end, 1_2's end is free)
+       - 1_3: ['1_1(0)', 'null']  (1_3's start connects to 1_1's start, 1_3's end is free)
+    
+    3. Chain of attachments: 1_3 attached to 1_2's ending point
        - 1_1: ['null', '1_2(0)']  (1_1's start is free, 1_1's end connects to 1_2's start)
        - 1_2: ['1_1(1)', '1_3(0)'] (1_2's start connects to 1_1's end, 1_2's end connects to 1_3's start)
        - 1_3: ['1_2(1)', 'null']  (1_3's start connects to 1_2's end, 1_3's end is free)
     
-    3. Closed knot: 1_3's ending point connected to 1_1's starting point
+    4. Closed knot: 1_3's ending point connected to 1_1's starting point
        - 1_1: ['1_3(1)', '1_2(0)'] (1_1's start connects to 1_3's end, 1_1's end connects to 1_2's start)
        - 1_2: ['1_1(1)', '1_3(0)'] (1_2's start connects to 1_1's end, 1_2's end connects to 1_3's start)
        - 1_3: ['1_2(1)', '1_1(0)'] (1_3's start connects to 1_2's end, 1_3's end connects to 1_1's start)
@@ -41,15 +46,28 @@ class LayerStateManager(QObject):
     Connection Types:
     ----------------
     1. Attached Strand Relationships (Parent-Child):
-       - Parent strand's ending point (1) connects to child strand's starting point (0)
+       - Child strand's starting point (0) connects to parent strand's end point
+       - The end point of the parent depends on the child's attachment_side:
+         * attachment_side = 0: Child connects to parent's start (0)
+         * attachment_side = 1: Child connects to parent's end (1)
        - Child strand has a 'parent' attribute pointing to the parent strand
        - Parent strand has the child in its 'attached_strands' list
+       - Multiple children can be attached to different ends of the same parent
+       - Connections are bidirectional: if A connects to B, then B also shows A
     
     2. Knot Connections (End-to-End):
        - Created when closing a knot
        - Stored in 'knot_connections' dictionary on each strand
        - Can connect any end of one strand to any end of another strand
        - Format: {'start'/'end': {'connected_strand': strand, 'connected_end': 'start'/'end'}}
+    
+    Connection Logic:
+    ----------------
+    The get_layer_connections() method determines connections by:
+    1. For AttachedStrands: Check parent relationship and attachment_side
+    2. For parent strands: Check attached_strands list and determine which end each child connects to
+    3. For knot connections: Check knot_connections dictionary
+    4. Combine all connection types to create the final connection state
     
     The LayerStateManager combines both types of connections to provide a complete
     view of how all strands are interconnected in the canvas.
@@ -281,16 +299,45 @@ class LayerStateManager(QObject):
             
             # Check if this strand is an AttachedStrand and has a parent
             if hasattr(strand, 'parent') and strand.parent:
-                # This strand's start is connected to its parent's end
+                # This strand's start is connected to its parent
                 start_connection = strand.parent.layer_name
-                start_end_point = 1  # Parent's end point (1)
+                # Determine which end of the parent this strand is attached to
+                if hasattr(strand, 'attachment_side'):
+                    start_end_point = strand.attachment_side  # 0=parent's start, 1=parent's end
+                else:
+                    # Fallback: determine by position comparison
+                    if strand.start == strand.parent.start:
+                        start_end_point = 0  # Parent's start
+                    elif strand.start == strand.parent.end:
+                        start_end_point = 1  # Parent's end
+                    else:
+                        start_end_point = 1  # Default to parent's end for backward compatibility
             
             # Check if this strand has attached children
+            # We need to determine which end each child is attached to
             for attached_strand in strand.attached_strands:
                 if hasattr(attached_strand, 'layer_name'):
-                    # This strand's end is connected to the attached strand's start
-                    end_connection = attached_strand.layer_name
-                    end_end_point = 0  # Child's start point (0)
+                    # Check which end of the parent the child is attached to
+                    # by comparing the attachment points
+                    if hasattr(attached_strand, 'attachment_side'):
+                        if attached_strand.attachment_side == 0:  # Attached to parent's start
+                            if start_connection is None:  # Only set if not already set
+                                start_connection = attached_strand.layer_name
+                                start_end_point = 0  # Child's start point (0)
+                        elif attached_strand.attachment_side == 1:  # Attached to parent's end
+                            if end_connection is None:  # Only set if not already set
+                                end_connection = attached_strand.layer_name
+                                end_end_point = 0  # Child's start point (0)
+                    else:
+                        # Fallback: determine by position comparison
+                        if attached_strand.start == strand.start:
+                            if start_connection is None:
+                                start_connection = attached_strand.layer_name
+                                start_end_point = 0
+                        elif attached_strand.start == strand.end:
+                            if end_connection is None:
+                                end_connection = attached_strand.layer_name
+                                end_end_point = 0
             
             # Get knot connections (end-to-end connections)
             if hasattr(strand, 'knot_connections') and strand.knot_connections:

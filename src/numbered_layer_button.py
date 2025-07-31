@@ -1576,11 +1576,13 @@ class NumberedLayerButton(QPushButton):
                     other_free_end_type = 'end'
             else:
                 # For regular Strand, check both ends
-                if not other_strand.has_circles[0] and not getattr(other_strand, 'start_attached', False):
+                # For knot closing, we only check has_circles, not attachment status
+                # because an end can still accept knot connections even if something is attached TO it
+                if not other_strand.has_circles[0]:
                     other_free_ends += 1
                     other_free_end_type = 'start'
                 
-                if not other_strand.has_circles[1] and not getattr(other_strand, 'end_attached', False):
+                if not other_strand.has_circles[1]:
                     if other_free_ends == 0:
                         other_free_end_type = 'end'
                     other_free_ends += 1

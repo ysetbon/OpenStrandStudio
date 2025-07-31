@@ -1771,13 +1771,16 @@ class NumberedLayerButton(QPushButton):
             target_strand.knot_connections = {}
             
         # Record which end is connected to which strand and end
+        # Also mark the strand as the "closing strand" and target_strand as "target strand"
         strand.knot_connections[free_end_type] = {
             'connected_strand': target_strand,
-            'connected_end': target_free_end
+            'connected_end': target_free_end,
+            'is_closing_strand': True  # This strand initiated the knot closing
         }
         target_strand.knot_connections[target_free_end] = {
             'connected_strand': strand,
-            'connected_end': free_end_type
+            'connected_end': free_end_type,
+            'is_closing_strand': False  # This strand was the target of the knot closing
         }
         
         logging.info(f"KNOT_CONNECTION: {strand.layer_name}.{free_end_type} <-> {target_strand.layer_name}.{target_free_end}")

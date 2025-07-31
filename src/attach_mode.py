@@ -900,6 +900,12 @@ class AttachMode(QObject):
         # Update parent strand
         parent_strand.attached_strands.append(new_strand)
         parent_strand.has_circles[side] = True
+        
+        # Clear knot freed flag for this side since we're making a new connection
+        if hasattr(parent_strand, 'knot_freed_ends'):
+            side_name = 'start' if side == 0 else 'end'
+            parent_strand.knot_freed_ends.discard(side_name)
+        
         parent_strand.update_attachable()
         
         # Setup canvas and position

@@ -3114,15 +3114,86 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Exiting select_strand. Selected strand: {self.selected_strand}")
     def delete_strand(self, index):
         if 0 <= index < len(self.strands):
-            # Add this line to capture the deleted strand's layer name (optional)
-            deleted_strand = self.strands.pop(index)
+            # Capture the deleted strand before removing it
+            deleted_strand = self.strands[index]
             
-            del self.strands[index]
+            # Check if this is a closing strand (strand that closed a knot)
+            if hasattr(deleted_strand, 'knot_connections') and deleted_strand.knot_connections:
+                # Look for connections where this strand was the closing strand
+                for end_type, connection_info in deleted_strand.knot_connections.items():
+                    if connection_info.get('is_closing_strand', False):
+                        # This deleted strand was the closing strand
+                        target_strand = connection_info['connected_strand']
+                        target_end = connection_info['connected_end']
+                        
+                        logging.info(f"KNOT_DELETION: Deleting closing strand {deleted_strand.layer_name}.{end_type}")
+                        logging.info(f"KNOT_DELETION: Target strand {target_strand.layer_name}.{target_end} should be freed")
+                        
+                        # Free the target strand's end that was connected to this closing strand
+                        if target_end == 'start':
+                            target_strand.has_circles[0] = False
+                            target_strand.start_attached = False
+                            if hasattr(target_strand, 'closed_connections'):
+                                target_strand.closed_connections[0] = False
+                        else:
+                            target_strand.has_circles[1] = False
+                            target_strand.end_attached = False
+                            if hasattr(target_strand, 'closed_connections'):
+                                target_strand.closed_connections[1] = False
+                        
+                        # Remove the knot connection from the target strand
+                        if hasattr(target_strand, 'knot_connections') and target_end in target_strand.knot_connections:
+                            del target_strand.knot_connections[target_end]
+                        
+                        # Mark this end as permanently freed from this knot
+                        if not hasattr(target_strand, 'knot_freed_ends'):
+                            target_strand.knot_freed_ends = set()
+                        target_strand.knot_freed_ends.add(target_end)
+                        
+                        logging.info(f"KNOT_DELETION: Updated {target_strand.layer_name}")
+                        logging.info(f"KNOT_DELETION:   - has_circles: {target_strand.has_circles}")
+                        logging.info(f"KNOT_DELETION:   - closed_connections: {getattr(target_strand, 'closed_connections', 'None')}")
+                        logging.info(f"KNOT_DELETION:   - knot_freed_ends: {getattr(target_strand, 'knot_freed_ends', 'None')}")
+                    else:
+                        # This deleted strand was the target of a knot closing, also clean up
+                        connected_strand = connection_info['connected_strand']
+                        connected_end = connection_info['connected_end']
+                        
+                        logging.info(f"KNOT_DELETION: Deleting target strand {deleted_strand.layer_name}.{end_type}")
+                        logging.info(f"KNOT_DELETION: Connected closing strand {connected_strand.layer_name}.{connected_end} should be freed")
+                        
+                        # Free the connected strand's end
+                        if connected_end == 'start':
+                            connected_strand.has_circles[0] = False
+                            connected_strand.start_attached = False
+                            if hasattr(connected_strand, 'closed_connections'):
+                                connected_strand.closed_connections[0] = False
+                        else:
+                            connected_strand.has_circles[1] = False
+                            connected_strand.end_attached = False
+                            if hasattr(connected_strand, 'closed_connections'):
+                                connected_strand.closed_connections[1] = False
+                        
+                        # Remove the knot connection from the connected strand
+                        if hasattr(connected_strand, 'knot_connections') and connected_end in connected_strand.knot_connections:
+                            del connected_strand.knot_connections[connected_end]
+                        
+                        # Mark this end as permanently freed from this knot
+                        if not hasattr(connected_strand, 'knot_freed_ends'):
+                            connected_strand.knot_freed_ends = set()
+                        connected_strand.knot_freed_ends.add(connected_end)
+                        
+                        logging.info(f"KNOT_DELETION: Updated {connected_strand.layer_name}")
+                        logging.info(f"KNOT_DELETION:   - has_circles: {connected_strand.has_circles}")
+                        logging.info(f"KNOT_DELETION:   - closed_connections: {getattr(connected_strand, 'closed_connections', 'None')}")
+                        logging.info(f"KNOT_DELETION:   - knot_freed_ends: {getattr(connected_strand, 'knot_freed_ends', 'None')}")
+            
+            # Remove the strand from the list
+            self.strands.pop(index)
             self.strand_deleted.emit(index)  # Emit the signal when a strand is deleted
             self.update()
-            self.strand_deleted.emit(index)
 
-            # Optionally log the deletion
+            # Log the deletion
             logging.info(f"Deleted strand: {deleted_strand.layer_name}")
     def deselect_all_strands(self):
         """Deselect all strands and update the canvas."""
@@ -4254,13 +4325,25 @@ class StrandDrawingCanvas(QWidget):
         logging.info(f"Starting remove_strand for: {strand.layer_name}")
         logging.info(f"Removing strand {strand.layer_name}. Current selected strand: {self.selected_strand}")
 
+        # Suppress attachment updates during deletion to preserve _deletion_freed_ends
+        self._suppress_attachment_updates_during_deletion = True
+        logging.info("Set _suppress_attachment_updates_during_deletion = True")
+
         if strand not in self.strands:
             logging.warning(f"Strand {strand.layer_name} not found in self.strands")
+            self._suppress_attachment_updates_during_deletion = False
             return False
 
         set_number = strand.set_number
         is_main_strand = strand.layer_name.split('_')[1] == '1'
         is_attached_strand = isinstance(strand, AttachedStrand)
+        
+        # Debug logging to understand strand type
+        logging.info(f"Strand {strand.layer_name} type check:")
+        logging.info(f"  - Type: {type(strand)}")
+        logging.info(f"  - Class name: {strand.__class__.__name__}")
+        logging.info(f"  - isinstance(strand, AttachedStrand): {is_attached_strand}")
+        logging.info(f"  - is_main_strand: {is_main_strand}")
 
         if self.newest_strand == strand:
             self.newest_strand = None
@@ -4317,12 +4400,19 @@ class StrandDrawingCanvas(QWidget):
         if self.current_mode == self.mask_mode:
             self.mask_mode.clear_selection()
         # Update parent strand's attached_strands list and remove circle if it's an attached strand
+        logging.info(f"Checking if strand {strand.layer_name} is attached strand: {is_attached_strand}")
         if is_attached_strand:
+            logging.info(f"Finding parent strand for attached strand {strand.layer_name}")
             parent_strand = self.find_parent_strand(strand)
+            logging.info(f"Found parent strand: {parent_strand.layer_name if parent_strand else 'None'}")
             if parent_strand:
                 parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
                 logging.info(f"Updated parent strand {parent_strand.layer_name} attached_strands list")
                 self.remove_parent_circle(parent_strand, strand)
+            else:
+                logging.warning(f"No parent strand found for attached strand {strand.layer_name}")
+        else:
+            logging.info(f"Strand {strand.layer_name} is not an attached strand, skipping parent circle removal")
         
         # Clean up knot connections for all strands being removed
         for s in strands_to_remove:
@@ -4340,11 +4430,11 @@ class StrandDrawingCanvas(QWidget):
         elif is_attached_strand:
             self.update_layer_names_for_attached_strand_deletion(set_number)
 
-        # Newly added step: re-check attachments via geometry
-        self.refresh_geometry_based_attachments()
+        # Skip geometry refresh during deletion - let suppression mechanism handle it
+        # self.refresh_geometry_based_attachments()
         
-        # Force update of attachment statuses to ensure all has_circles arrays are correct
-        self.update_attachment_statuses()
+        # Don't force update of attachment statuses here - let the suppression mechanism handle it
+        # self.update_attachment_statuses()
 
         # Force a complete redraw of the canvas
         self.update()
@@ -4357,9 +4447,29 @@ class StrandDrawingCanvas(QWidget):
             # Re-evaluate layer button states after deletion to update deletability
             self.layer_panel.update_layer_button_states()
 
+
+
         logging.info(f"Strand removed. Current selected strand: {self.selected_strand}")
         logging.info("Finished remove_strand")
         return True
+    
+    def _cleanup_after_deletion(self):
+        """Clean up flags and temporary data after strand deletion is complete."""
+        logging.info("Cleaning up after deletion - clearing _deletion_freed_ends and re-enabling attachment updates")
+        
+        # Clean up _deletion_freed_ends from all strands
+        for s in self.strands:
+            if hasattr(s, '_deletion_freed_ends'):
+                logging.info(f"Cleaning up _deletion_freed_ends for {s.layer_name}")
+                delattr(s, '_deletion_freed_ends')
+        
+        # Re-enable attachment updates
+        self._suppress_attachment_updates_during_deletion = False
+        logging.info("Set _suppress_attachment_updates_during_deletion = False")
+        
+        # Don't call update_attachment_statuses here - the attachment states are already correct
+        # from the deletion process and calling it would override the freed ends based on geometry
+        logging.info("Cleanup complete - attachment states preserved from deletion process")
 
     def delete_groups_containing_strands(self, strands):
         """
@@ -4423,6 +4533,13 @@ class StrandDrawingCanvas(QWidget):
                 parent_strand.has_circles[attachment_side] = False
                 logging.info(f"Removed circle from side {attachment_side} of parent strand: {parent_strand.layer_name}")
                 logging.info(f"After removal - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+                
+                # Mark this end as temporarily freed during deletion
+                # This will be cleared after the deletion is complete
+                if not hasattr(parent_strand, '_deletion_freed_ends'):
+                    parent_strand._deletion_freed_ends = set()
+                freed_end = 'start' if attachment_side == 0 else 'end'
+                parent_strand._deletion_freed_ends.add(freed_end)
             else:
                 logging.info(f"Keeping circle on side {attachment_side} of parent strand {parent_strand.layer_name} - other attachments exist")
         else:
@@ -4474,7 +4591,41 @@ class StrandDrawingCanvas(QWidget):
                         # from immediately overriding our changes
                         connected_strand._knot_cleanup_applied = True
                         
-                        logging.info(f"Updated {connected_strand.layer_name}: has_circles={connected_strand.has_circles}, closed_connections={getattr(connected_strand, 'closed_connections', None)}")
+                        # Also store which end was cleaned up to prevent re-connection based on geometry
+                        if not hasattr(connected_strand, '_cleaned_knot_ends'):
+                            connected_strand._cleaned_knot_ends = set()
+                        connected_strand._cleaned_knot_ends.add(connected_end)
+                        
+                        # Add a more persistent flag that this end should stay false
+                        if not hasattr(connected_strand, 'knot_freed_ends'):
+                            connected_strand.knot_freed_ends = set()
+                        connected_strand.knot_freed_ends.add(connected_end)
+                        
+                        
+                        # Also update layer state manager to remove the connection between these strands
+                        if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
+                            # Remove the connection from both strands in the layer state manager
+                            connections = self.layer_state_manager.getConnections()
+                            
+                            # Remove strand from connected_strand's connections
+                            if connected_strand.layer_name in connections:
+                                connected_connections = connections[connected_strand.layer_name]
+                                if strand.layer_name in connected_connections:
+                                    connected_connections.remove(strand.layer_name)
+                                    logging.info(f"Removed {strand.layer_name} from {connected_strand.layer_name}'s connections in layer state manager")
+                            
+                            # Remove connected_strand from strand's connections
+                            if strand.layer_name in connections:
+                                strand_connections = connections[strand.layer_name]
+                                if connected_strand.layer_name in strand_connections:
+                                    strand_connections.remove(connected_strand.layer_name)
+                                    logging.info(f"Removed {connected_strand.layer_name} from {strand.layer_name}'s connections in layer state manager")
+                            
+                            # Make sure the changes are persisted in the layer state manager
+                            # by updating its internal connections dictionary
+                            if hasattr(self.layer_state_manager, '_connections'):
+                                self.layer_state_manager._connections = connections
+                                logging.info(f"Updated layer state manager connections after knot cleanup")
                         
                         # Note: We don't call update_attachable() here because we've already manually
                         # set the correct has_circles state based on knot connection removal.
@@ -5140,7 +5291,7 @@ class StrandDrawingCanvas(QWidget):
                 abs(point1.y() - point2.y()) <= tolerance)
 
     def update(self):
-        # Skip update_attachment_statuses if we're in the middle of attaching, moving, or during undo/redo
+        # Skip update_attachment_statuses if we're in the middle of attaching, moving, during undo/redo, or during deletion
         if hasattr(self, 'current_mode') and (
             (hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching) or
             (hasattr(self.current_mode, 'is_moving') and self.current_mode.is_moving)
@@ -5150,12 +5301,20 @@ class StrandDrawingCanvas(QWidget):
         elif hasattr(self, '_suppress_attachment_updates') and self._suppress_attachment_updates:
             # Don't update attachment statuses during undo/redo operations
             super().update()
+        elif hasattr(self, '_suppress_attachment_updates_during_deletion') and self._suppress_attachment_updates_during_deletion:
+            # Don't update attachment statuses during deletion to preserve _deletion_freed_ends
+            super().update()
         else:
             self.update_attachment_statuses()
             super().update()
 
     def update_attachment_statuses(self):
         """Update attachment statuses and has_circles states of all strands."""
+        # Add logging to track when this is called during deletion
+        if hasattr(self, '_suppress_attachment_updates_during_deletion') and self._suppress_attachment_updates_during_deletion:
+            logging.info("update_attachment_statuses called during deletion suppression - skipping")
+            return
+        
         if not hasattr(self, 'layer_state_manager') or not self.layer_state_manager:
             return
         
@@ -5178,6 +5337,29 @@ class StrandDrawingCanvas(QWidget):
             delattr(self, '_updating_attachment_statuses')
             return
         
+        # PRE-PRESERVATION: Apply knot_freed_ends and deletion_freed_ends before any geometric checks
+        for strand in self.strands:
+            # Apply knot freed ends (permanent)
+            if hasattr(strand, 'knot_freed_ends') and strand.knot_freed_ends:
+                for freed_end in strand.knot_freed_ends:
+                    if freed_end == 'start':
+                        strand.has_circles[0] = False
+                    elif freed_end == 'end':
+                        strand.has_circles[1] = False
+            
+            # Apply deletion freed ends (temporary - only during deletion)
+            if hasattr(strand, '_deletion_freed_ends') and strand._deletion_freed_ends:
+                logging.info(f"PRE-PRESERVATION: Applying deletion freed ends for {strand.layer_name}: {strand._deletion_freed_ends}")
+                logging.info(f"  Before: has_circles = {strand.has_circles}")
+                for freed_end in strand._deletion_freed_ends:
+                    if freed_end == 'start':
+                        strand.has_circles[0] = False
+                        logging.info(f"  Set start (index 0) to False")
+                    elif freed_end == 'end':
+                        strand.has_circles[1] = False
+                        logging.info(f"  Set end (index 1) to False")
+                logging.info(f"  After: has_circles = {strand.has_circles}")
+
         # Group strands by their prefix (e.g., "1_" or "2_")
         strand_groups = {}
         for strand in self.strands:
@@ -5242,17 +5424,41 @@ class StrandDrawingCanvas(QWidget):
                             if self.points_are_close(strand.start, connected_strand.start) or \
                                self.points_are_close(strand.start, connected_strand.end):
                                 strand.start_attached = True
-                                # Don't override has_circles if knot cleanup was just applied
-                                if not hasattr(strand, '_knot_cleanup_applied'):
+                                # Check if this end was freed from a knot or deletion and should stay False
+                                if (hasattr(strand, 'knot_freed_ends') and 'start' in strand.knot_freed_ends) or \
+                                   (hasattr(strand, '_deletion_freed_ends') and 'start' in strand._deletion_freed_ends):
+                                    # Don't override - freed_ends takes priority
+                                    pass
+                                elif hasattr(strand, 'knot_freed_ends') and 'start' not in strand.knot_freed_ends:
                                     strand.has_circles[0] = True
+                                # Don't override has_circles if knot cleanup was just applied or this end was cleaned
+                                elif not hasattr(strand, '_knot_cleanup_applied') and \
+                                   not (hasattr(strand, '_cleaned_knot_ends') and 'start' in strand._cleaned_knot_ends):
+                                    strand.has_circles[0] = True
+                                else:
+                                    # If this end was cleaned up from a knot, keep it False
+                                    if hasattr(strand, '_cleaned_knot_ends') and 'start' in strand._cleaned_knot_ends:
+                                        strand.has_circles[0] = False
 
                             # Check end point connections
                             if self.points_are_close(strand.end, connected_strand.start) or \
                                self.points_are_close(strand.end, connected_strand.end):
                                 strand.end_attached = True
-                                # Don't override has_circles if knot cleanup was just applied
-                                if not hasattr(strand, '_knot_cleanup_applied'):
+                                # Check if this end was freed from a knot or deletion and should stay False
+                                if (hasattr(strand, 'knot_freed_ends') and 'end' in strand.knot_freed_ends) or \
+                                   (hasattr(strand, '_deletion_freed_ends') and 'end' in strand._deletion_freed_ends):
+                                    # Don't override - freed_ends takes priority
+                                    pass
+                                elif hasattr(strand, 'knot_freed_ends') and 'end' not in strand.knot_freed_ends:
                                     strand.has_circles[1] = True
+                                # Don't override has_circles if knot cleanup was just applied or this end was cleaned
+                                elif not hasattr(strand, '_knot_cleanup_applied') and \
+                                   not (hasattr(strand, '_cleaned_knot_ends') and 'end' in strand._cleaned_knot_ends):
+                                    strand.has_circles[1] = True
+                                else:
+                                    # If this end was cleaned up from a knot, keep it False
+                                    if hasattr(strand, '_cleaned_knot_ends') and 'end' in strand._cleaned_knot_ends:
+                                        strand.has_circles[1] = False
 
         # --- NEW: Re-apply manual circle visibility overrides (recursive for attached strands) ---
         def _apply_manual_circle_overrides(s):
@@ -5271,11 +5477,40 @@ class StrandDrawingCanvas(QWidget):
             _apply_manual_circle_overrides(strand)
         # --- END NEW ---
 
-        # Clear knot cleanup flags after processing
+        # Clear temporary knot cleanup flag after processing
+        # But keep the _cleaned_knot_ends attribute to prevent re-connection
         for strand in self.strands:
             if hasattr(strand, '_knot_cleanup_applied'):
                 delattr(strand, '_knot_cleanup_applied')
+            # Note: We intentionally keep _cleaned_knot_ends to prevent geometry-based reconnection
 
+        # FINAL PRESERVATION: Re-apply freed_ends one final time to override any geometric overrides
+        for strand in self.strands:
+            # Apply knot freed ends (permanent)
+            if hasattr(strand, 'knot_freed_ends') and strand.knot_freed_ends:
+                for freed_end in strand.knot_freed_ends:
+                    if freed_end == 'start':
+                        strand.has_circles[0] = False
+                    elif freed_end == 'end':
+                        strand.has_circles[1] = False
+            
+            # Apply deletion freed ends (temporary)
+            if hasattr(strand, '_deletion_freed_ends') and strand._deletion_freed_ends:
+                logging.info(f"Applying deletion freed ends for {strand.layer_name}: {strand._deletion_freed_ends}")
+                logging.info(f"  Before: has_circles = {strand.has_circles}")
+                for freed_end in strand._deletion_freed_ends:
+                    if freed_end == 'start':
+                        strand.has_circles[0] = False
+                        logging.info(f"  Set start (index 0) to False")
+                    elif freed_end == 'end':
+                        strand.has_circles[1] = False
+                        logging.info(f"  Set end (index 1) to False")
+                logging.info(f"  After: has_circles = {strand.has_circles}")
+                # Don't clear _deletion_freed_ends here - it will be cleared in remove_strand after all updates
+                # delattr(strand, '_deletion_freed_ends')
+                # logging.info(f"  Cleared _deletion_freed_ends for {strand.layer_name}")
+
+        
         # update_attachment_statuses completed
         delattr(self, '_updating_attachment_statuses')
 

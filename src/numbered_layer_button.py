@@ -1794,6 +1794,11 @@ class NumberedLayerButton(QPushButton):
         logging.info(f"After close knot - {strand.layer_name} has_circles: {strand.has_circles}, closed_connections: {getattr(strand, 'closed_connections', None)}")
         logging.info(f"After close knot - {target_strand.layer_name} has_circles: {target_strand.has_circles}, closed_connections: {getattr(target_strand, 'closed_connections', None)}")
         
+        # Update the LayerStateManager to reflect the new connections
+        if hasattr(layer_panel.canvas, 'layer_state_manager'):
+            layer_panel.canvas.layer_state_manager.save_current_state()
+            logging.info("Updated LayerStateManager after closing knot")
+        
         # Skip saving state to avoid state layer manager updates
         # if hasattr(layer_panel.canvas, 'undo_redo_manager'):
         #     layer_panel.canvas.undo_redo_manager._last_save_time = 0

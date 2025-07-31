@@ -9,6 +9,51 @@ from attached_strand import AttachedStrand
 import sys
 
 class LayerStateManager(QObject):
+    """
+    LayerStateManager manages the state of all strands and their connections in the canvas.
+    
+    CONNECTION STRUCTURE:
+    ====================
+    
+    The LayerStateManager tracks connections in the format: w: [x(end_point), y(end_point)]
+    where:
+    - w = strand name (e.g., '1_1', '1_2', '1_3')
+    - x = strand connected to w's STARTING point with its end point (0=start, 1=end)
+    - y = strand connected to w's ENDING point with its end point (0=start, 1=end)
+    - Format: 'strand_name(end_point)' where end_point is 0 for start, 1 for end
+    
+    Examples:
+    --------
+    1. Simple attachment: 1_2 attached to 1_1's ending point
+       - 1_1: ['null', '1_2(0)']  (1_1's start is free, 1_1's end connects to 1_2's start)
+       - 1_2: ['1_1(1)', 'null']  (1_2's start connects to 1_1's end, 1_2's end is free)
+    
+    2. Chain of attachments: 1_3 attached to 1_2's ending point
+       - 1_1: ['null', '1_2(0)']  (1_1's start is free, 1_1's end connects to 1_2's start)
+       - 1_2: ['1_1(1)', '1_3(0)'] (1_2's start connects to 1_1's end, 1_2's end connects to 1_3's start)
+       - 1_3: ['1_2(1)', 'null']  (1_3's start connects to 1_2's end, 1_3's end is free)
+    
+    3. Closed knot: 1_3's ending point connected to 1_1's starting point
+       - 1_1: ['1_3(1)', '1_2(0)'] (1_1's start connects to 1_3's end, 1_1's end connects to 1_2's start)
+       - 1_2: ['1_1(1)', '1_3(0)'] (1_2's start connects to 1_1's end, 1_2's end connects to 1_3's start)
+       - 1_3: ['1_2(1)', '1_1(0)'] (1_3's start connects to 1_2's end, 1_3's end connects to 1_1's start)
+    
+    Connection Types:
+    ----------------
+    1. Attached Strand Relationships (Parent-Child):
+       - Parent strand's ending point (1) connects to child strand's starting point (0)
+       - Child strand has a 'parent' attribute pointing to the parent strand
+       - Parent strand has the child in its 'attached_strands' list
+    
+    2. Knot Connections (End-to-End):
+       - Created when closing a knot
+       - Stored in 'knot_connections' dictionary on each strand
+       - Can connect any end of one strand to any end of another strand
+       - Format: {'start'/'end': {'connected_strand': strand, 'connected_end': 'start'/'end'}}
+    
+    The LayerStateManager combines both types of connections to provide a complete
+    view of how all strands are interconnected in the canvas.
+    """
     def __init__(self, canvas=None):
         super().__init__()
         self.canvas = canvas
@@ -201,8 +246,13 @@ class LayerStateManager(QObject):
                         for item in value:
                             f.write(f"  - {item}\n")
                     elif isinstance(value, dict):
-                        for k, v in value.items():
-                            f.write(f"  {k}: {v}\n")
+                        if key == 'connections':
+                            # Special handling for connections to show start/end format
+                            for strand_name, connection_data in value.items():
+                                f.write(f"  {strand_name}: {connection_data}\n")
+                        else:
+                            for k, v in value.items():
+                                f.write(f"  {k}: {v}\n")
                     else:
                         f.write(f"  {value}\n")
                     f.write("\n")
@@ -221,8 +271,51 @@ class LayerStateManager(QObject):
 
     def get_layer_connections(self, strands):
         connections = {}
+        
         for strand in strands:
-            connections[strand.layer_name] = [s.layer_name for s in strand.attached_strands]
+            # Initialize connection info for this strand
+            start_connection = None  # What strand is connected to the start point
+            start_end_point = None   # Which end point of the connected strand (0=start, 1=end)
+            end_connection = None    # What strand is connected to the end point
+            end_end_point = None     # Which end point of the connected strand (0=start, 1=end)
+            
+            # Check if this strand is an AttachedStrand and has a parent
+            if hasattr(strand, 'parent') and strand.parent:
+                # This strand's start is connected to its parent's end
+                start_connection = strand.parent.layer_name
+                start_end_point = 1  # Parent's end point (1)
+            
+            # Check if this strand has attached children
+            for attached_strand in strand.attached_strands:
+                if hasattr(attached_strand, 'layer_name'):
+                    # This strand's end is connected to the attached strand's start
+                    end_connection = attached_strand.layer_name
+                    end_end_point = 0  # Child's start point (0)
+            
+            # Get knot connections (end-to-end connections)
+            if hasattr(strand, 'knot_connections') and strand.knot_connections:
+                for end_type, connection_info in strand.knot_connections.items():
+                    if 'connected_strand' in connection_info:
+                        connected_strand = connection_info['connected_strand']
+                        connected_end = connection_info.get('connected_end', 'end')
+                        if hasattr(connected_strand, 'layer_name'):
+                            if end_type == 'start':
+                                start_connection = connected_strand.layer_name
+                                start_end_point = 0 if connected_end == 'start' else 1
+                            elif end_type == 'end':
+                                end_connection = connected_strand.layer_name
+                                end_end_point = 0 if connected_end == 'start' else 1
+            
+            # Format connections with end point information
+            start_formatted = f"{start_connection}({start_end_point})" if start_connection else 'null'
+            end_formatted = f"{end_connection}({end_end_point})" if end_connection else 'null'
+            
+            # Return the format: [start_connection(end_point), end_connection(end_point)]
+            connections[strand.layer_name] = [start_formatted, end_formatted]
+            
+            if hasattr(self, 'logger'):
+                self.logger.info(f"Layer {strand.layer_name}: [{start_formatted}, {end_formatted}]")
+        
         return connections
 
     @pyqtSlot(object)
@@ -423,7 +516,38 @@ class LayerStateManager(QObject):
 
     def getConnections(self):
         """Return the current layer connections."""
-        return self.layer_state.get('connections', {})
+        connections = self.layer_state.get('connections', {})
+        
+        # The connections are now in the format [start_connection, end_connection]
+        # Return them as-is since this is the new expected format
+        return connections
+    
+    def getDetailedConnections(self):
+        """Return the detailed layer connections with start/end information."""
+        connections = self.layer_state.get('connections', {})
+        
+        # Convert the [start(end_point), end(end_point)] format to detailed format
+        detailed_connections = {}
+        for strand_name, connection_data in connections.items():
+            if isinstance(connection_data, list) and len(connection_data) == 2:
+                # Parse the new format: 'strand_name(end_point)'
+                start_connection = connection_data[0] if connection_data[0] != 'null' else None
+                end_connection = connection_data[1] if connection_data[1] != 'null' else None
+                
+                detailed_connections[strand_name] = {
+                    'start': start_connection,
+                    'end': end_connection,
+                    'attached': []
+                }
+            else:
+                # Handle legacy format
+                detailed_connections[strand_name] = {
+                    'start': None,
+                    'end': None,
+                    'attached': connection_data if isinstance(connection_data, list) else []
+                }
+        
+        return detailed_connections
 
     def getMaskedLayers(self):
         """Get the current masked layers."""

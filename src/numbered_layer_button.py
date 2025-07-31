@@ -553,19 +553,9 @@ class NumberedLayerButton(QPushButton):
             # --- END NEW ---
             
             # --- NEW: Add Close the Knot option for strands with exactly 1 free end ---
-            # Count free ends (ends without circles or attachments)
+            # Count free ends (ends without circles - for knot connections, we ignore attachment status)
             free_ends = 0
             free_end_type = None  # 'start' or 'end'
-            
-            # Check start end
-            if not strand.has_circles[0] and not getattr(strand, 'start_attached', False):
-                free_ends += 1
-                free_end_type = 'start'
-            
-            # Check end end
-            if not strand.has_circles[1] and not getattr(strand, 'end_attached', False):
-                free_ends += 1
-                free_end_type = 'end'
             
             # For AttachedStrand, start is always attached, so only check the end
             if isinstance(strand, AttachedStrand):
@@ -574,6 +564,17 @@ class NumberedLayerButton(QPushButton):
                 if not strand.has_circles[1]:
                     free_ends = 1
                     free_end_type = 'end'
+            else:
+                # For regular Strand, check both ends (only check has_circles, not attachment status)
+                # This matches the logic in close_the_knot function
+                if not strand.has_circles[0]:
+                    free_ends += 1
+                    free_end_type = 'start'
+                
+                if not strand.has_circles[1]:
+                    if free_ends == 0:
+                        free_end_type = 'end'
+                    free_ends += 1
             
             # Show "Close the Knot" option only if exactly 1 free end
             if free_ends == 1:

@@ -90,6 +90,10 @@ class LayerStateManager(QObject):
         self.undo_stack = []
         self.redo_stack = []
         self.current_state = {}
+        
+        # Prevent connection recalculation during movement operations
+        self.movement_in_progress = False
+        self.cached_connections = None
 
         self.setup_logging()
         self.check_log_file()
@@ -98,6 +102,24 @@ class LayerStateManager(QObject):
 
         if canvas:
             self.set_canvas(canvas)
+
+    def start_movement_operation(self):
+        """Start a movement operation - cache connections and prevent recalculation."""
+        self.movement_in_progress = True
+        # Cache the current connections to prevent recalculation during movement
+        if self.canvas and hasattr(self.canvas, 'strands'):
+            self.cached_connections = self.get_layer_connections(self.canvas.strands)
+        if hasattr(self, 'logger'):
+            self.logger.info("Movement operation started - connections cached")
+
+    def end_movement_operation(self):
+        """End a movement operation - allow connection recalculation."""
+        self.movement_in_progress = False
+        self.cached_connections = None
+        # Force a state save to update positions
+        self.save_current_state()
+        if hasattr(self, 'logger'):
+            self.logger.info("Movement operation ended - connections cache cleared")
 
     def _log(self, level, message):
         """Helper method to safely log messages using the dedicated logger."""
@@ -302,16 +324,21 @@ class LayerStateManager(QObject):
                 # This strand's start is connected to its parent
                 start_connection = strand.parent.layer_name
                 # Determine which end of the parent this strand is attached to
-                if hasattr(strand, 'attachment_side'):
+                if hasattr(strand, 'attachment_side') and strand.attachment_side is not None:
                     start_end_point = strand.attachment_side  # 0=parent's start, 1=parent's end
                 else:
-                    # Fallback: determine by position comparison
-                    if strand.start == strand.parent.start:
-                        start_end_point = 0  # Parent's start
-                    elif strand.start == strand.parent.end:
-                        start_end_point = 1  # Parent's end
+                    # Only use position comparison if attachment_side is truly not available
+                    # and we're not in the middle of a movement operation
+                    if not self.movement_in_progress:
+                        if strand.start == strand.parent.start:
+                            start_end_point = 0  # Parent's start
+                        elif strand.start == strand.parent.end:
+                            start_end_point = 1  # Parent's end
+                        else:
+                            start_end_point = 1  # Default to parent's end for backward compatibility
                     else:
-                        start_end_point = 1  # Default to parent's end for backward compatibility
+                        # During movement, default to end to avoid connection confusion
+                        start_end_point = 1
             
             # Check if this strand has attached children
             # We need to determine which end each child is attached to
@@ -319,7 +346,7 @@ class LayerStateManager(QObject):
                 if hasattr(attached_strand, 'layer_name'):
                     # Check which end of the parent the child is attached to
                     # by comparing the attachment points
-                    if hasattr(attached_strand, 'attachment_side'):
+                    if hasattr(attached_strand, 'attachment_side') and attached_strand.attachment_side is not None:
                         if attached_strand.attachment_side == 0:  # Attached to parent's start
                             if start_connection is None:  # Only set if not already set
                                 start_connection = attached_strand.layer_name
@@ -329,15 +356,17 @@ class LayerStateManager(QObject):
                                 end_connection = attached_strand.layer_name
                                 end_end_point = 0  # Child's start point (0)
                     else:
-                        # Fallback: determine by position comparison
-                        if attached_strand.start == strand.start:
-                            if start_connection is None:
-                                start_connection = attached_strand.layer_name
-                                start_end_point = 0
-                        elif attached_strand.start == strand.end:
-                            if end_connection is None:
-                                end_connection = attached_strand.layer_name
-                                end_end_point = 0
+                        # Only use position comparison if attachment_side is not available
+                        # and we're not in the middle of a movement operation
+                        if not self.movement_in_progress:
+                            if attached_strand.start == strand.start:
+                                if start_connection is None:
+                                    start_connection = attached_strand.layer_name
+                                    start_end_point = 0
+                            elif attached_strand.start == strand.end:
+                                if end_connection is None:
+                                    end_connection = attached_strand.layer_name
+                                    end_end_point = 0
             
             # Get knot connections (end-to-end connections)
             if hasattr(strand, 'knot_connections') and strand.knot_connections:
@@ -563,6 +592,10 @@ class LayerStateManager(QObject):
 
     def getConnections(self):
         """Return the current layer connections."""
+        # During movement operations, use cached connections to prevent race conditions
+        if self.movement_in_progress and self.cached_connections is not None:
+            return self.cached_connections
+            
         connections = self.layer_state.get('connections', {})
         
         # The connections are now in the format [start_connection, end_connection]

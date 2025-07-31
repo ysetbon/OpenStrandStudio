@@ -242,10 +242,11 @@ class LayerStateManager(QObject):
     def save_current_state(self):
         """Save the current state of all layers."""
         # print("LayerStateManager: Saving current state")
+        logging.info("LayerStateManager: save_current_state called")
+        
         if not self.canvas:
             # print("LayerStateManager: Canvas is not set. Cannot save current state.")
-            if hasattr(self, 'logger'):
-                self.logger.warning("Canvas is not set. Cannot save current state.")
+            logging.warning("LayerStateManager: Canvas is not set. Cannot save current state.")
             return
 
         try:
@@ -262,13 +263,11 @@ class LayerStateManager(QObject):
             }
             
             # print("LayerStateManager: Current state saved")
-            if hasattr(self, 'logger'):
-                self.logger.info("Current state saved")
+            logging.info("LayerStateManager: Current state saved")
             self.log_layer_state()
         except Exception as e:
             # print(f"LayerStateManager: Error saving current state: {str(e)}")
-            if hasattr(self, 'logger'):
-                self.logger.error(f"Error saving current state: {str(e)}")
+            logging.error(f"LayerStateManager: Error saving current state: {str(e)}")
 
     def log_layer_state(self):
         """Write the current layer state to a text file and update current_state."""
@@ -312,12 +311,25 @@ class LayerStateManager(QObject):
     def get_layer_connections(self, strands):
         connections = {}
         
+        logging.info(f"LayerStateManager: get_layer_connections called with {len(strands)} strands")
+        
         for strand in strands:
             # Initialize connection info for this strand
             start_connection = None  # What strand is connected to the start point
             start_end_point = None   # Which end point of the connected strand (0=start, 1=end)
             end_connection = None    # What strand is connected to the end point
             end_end_point = None     # Which end point of the connected strand (0=start, 1=end)
+            
+            logging.info(f"LayerStateManager: Processing strand: {strand.layer_name}")
+            if hasattr(strand, 'parent') and strand.parent:
+                logging.info(f"LayerStateManager:   Has parent: {strand.parent.layer_name}")
+            if hasattr(strand, 'attached_strands'):
+                logging.info(f"LayerStateManager:   Has {len(strand.attached_strands)} attached strands")
+                for attached in strand.attached_strands:
+                    if hasattr(attached, 'layer_name'):
+                        logging.info(f"LayerStateManager:     Attached strand: {attached.layer_name}")
+                        if hasattr(attached, 'attachment_side'):
+                            logging.info(f"LayerStateManager:     Attachment side: {attached.attachment_side}")
             
             # Check if this strand is an AttachedStrand and has a parent
             if hasattr(strand, 'parent') and strand.parent:
@@ -389,8 +401,8 @@ class LayerStateManager(QObject):
             # Return the format: [start_connection(end_point), end_connection(end_point)]
             connections[strand.layer_name] = [start_formatted, end_formatted]
             
-            if hasattr(self, 'logger'):
-                self.logger.info(f"Layer {strand.layer_name}: [{start_formatted}, {end_formatted}]")
+            logging.info(f"LayerStateManager: Layer {strand.layer_name}: [{start_formatted}, {end_formatted}]")
+            logging.info(f"LayerStateManager:   Final connections for {strand.layer_name}: start={start_formatted}, end={end_formatted}")
         
         return connections
 
@@ -689,6 +701,11 @@ class LayerStateManager(QObject):
 
     def removeStrandConnections(self, strand_name):
         """Remove all connections for a deleted strand."""
+        # Don't remove connections during movement operations
+        if hasattr(self, 'movement_in_progress') and self.movement_in_progress:
+            logging.info(f"Skipping connection cleanup for {strand_name} during movement operation")
+            return
+            
         connections = self.layer_state.get('connections', {})
         
         # Remove the strand from connections dict

@@ -5304,6 +5304,9 @@ class StrandDrawingCanvas(QWidget):
         elif hasattr(self, '_suppress_attachment_updates_during_deletion') and self._suppress_attachment_updates_during_deletion:
             # Don't update attachment statuses during deletion to preserve _deletion_freed_ends
             super().update()
+        elif hasattr(self, 'layer_state_manager') and self.layer_state_manager and hasattr(self.layer_state_manager, 'movement_in_progress') and self.layer_state_manager.movement_in_progress:
+            # Don't update attachment statuses during LayerStateManager movement operations
+            super().update()
         else:
             self.update_attachment_statuses()
             super().update()
@@ -5389,7 +5392,18 @@ class StrandDrawingCanvas(QWidget):
                 
                 # Check if any connections are stale (strand no longer exists)
                 valid_connections = []
-                for connected_layer_name in strand_connections:
+                for connection_str in strand_connections:
+                    # Parse the connection string to extract strand name
+                    # Format is either 'null' or 'strand_name(end_point)'
+                    if connection_str == 'null':
+                        continue
+                    
+                    # Extract strand name from 'strand_name(end_point)' format
+                    if '(' in connection_str and ')' in connection_str:
+                        connected_layer_name = connection_str.split('(')[0]
+                    else:
+                        connected_layer_name = connection_str
+                    
                     # Find the connected strand in the same group
                     connected_strand = next(
                         (s for s in strands_in_group if s.layer_name == connected_layer_name), 
@@ -5397,7 +5411,7 @@ class StrandDrawingCanvas(QWidget):
                     )
                     
                     if connected_strand:
-                        valid_connections.append(connected_layer_name)
+                        valid_connections.append(connection_str)  # Keep the original format
                 
                 # If we found stale connections, clean them up
                 if len(valid_connections) != len(strand_connections):
@@ -5405,11 +5419,20 @@ class StrandDrawingCanvas(QWidget):
                         # Remove the stale connections for this strand
                         connections[strand.layer_name] = valid_connections
                         # Also remove this strand from the missing strand's connections
-                        for missing_strand in set(strand_connections) - set(valid_connections):
-                            self.layer_state_manager.removeStrandConnections(missing_strand)
+                        for missing_connection in set(strand_connections) - set(valid_connections):
+                            # Parse the connection string to extract strand name
+                            if missing_connection != 'null' and '(' in missing_connection and ')' in missing_connection:
+                                missing_strand = missing_connection.split('(')[0]
+                                self.layer_state_manager.removeStrandConnections(missing_strand)
                 
                 # Now process only valid connections
-                for connected_layer_name in valid_connections:
+                for connection_str in valid_connections:
+                    # Parse the connection string to extract strand name
+                    if '(' in connection_str and ')' in connection_str:
+                        connected_layer_name = connection_str.split('(')[0]
+                    else:
+                        connected_layer_name = connection_str
+                    
                     # Find the connected strand in the same group
                     connected_strand = next(
                         (s for s in strands_in_group if s.layer_name == connected_layer_name), 

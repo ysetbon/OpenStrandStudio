@@ -1088,6 +1088,7 @@ class AttachedStrand(Strand):
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
                 # Draw a red highlight around the C-shape
                 # Calculate the highlight radius (outer edge of the highlight)
                 highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
@@ -1173,6 +1174,18 @@ class AttachedStrand(Strand):
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
+
+            # Draw highlight around the END C-shape if this strand is selected
+            if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing END semicircle highlight: is_selected={self.is_selected}")
+                highlight_radius = radius + 5  # 5 pixels outside the normal circle
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask)
+                ring_path = highlight_mask.subtracted(outer)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
 
             
             # Draw side line that covers the inner circle
@@ -2443,6 +2456,7 @@ class AttachedStrand(Strand):
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
                 # Draw a red highlight around the C-shape
                 # Calculate the highlight radius (outer edge of the highlight)
                 highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
@@ -2594,6 +2608,18 @@ class AttachedStrand(Strand):
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
             painter.setBrush(self.color)
             painter.drawPath(inner)
+
+            # Draw highlight around the END C-shape if this strand is selected
+            if self.is_selected and not isinstance(self.parent, MaskedStrand):
+                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing END semicircle highlight: is_selected={self.is_selected}")
+                highlight_radius = radius + 5  # 5 pixels outside the normal circle
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask)
+                ring_path = highlight_mask.subtracted(outer)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
 
             
             # Draw side line that covers the inner circle

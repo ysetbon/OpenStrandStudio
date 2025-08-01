@@ -2498,7 +2498,7 @@ class Strand:
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self, MaskedStrand):
-
+                logging.info(f"[STRAND_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
                 # Draw a red highlight around the C-shape
                 # Calculate the highlight radius (outer edge of the highlight)
                 highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle

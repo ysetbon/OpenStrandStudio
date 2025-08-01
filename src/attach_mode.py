@@ -855,15 +855,25 @@ class AttachMode(QObject):
         # Clear any previous selection/highlighting before starting attachment
         if self.canvas.selected_strand:
             logging.info(f"[AttachMode.start_attachment] Clearing previous selected strand: {self.canvas.selected_strand.layer_name}")
-            # Also clear the is_selected property on the strand itself
+            # Clear selection flags on the previously highlighted strand
             if hasattr(self.canvas.selected_strand, 'is_selected'):
                 self.canvas.selected_strand.is_selected = False
+            # Clear semi-circle highlighting flags, if present (for attached strands)
+            if hasattr(self.canvas.selected_strand, 'start_selected'):
+                self.canvas.selected_strand.start_selected = False
+            if hasattr(self.canvas.selected_strand, 'end_selected'):
+                self.canvas.selected_strand.end_selected = False
             self.canvas.selected_strand = None
         if self.canvas.selected_attached_strand:
             logging.info(f"[AttachMode.start_attachment] Clearing previous selected attached strand: {self.canvas.selected_attached_strand.layer_name}")
-            # Also clear the is_selected property on the strand itself
+            # Clear selection flags on the previously highlighted attached strand
             if hasattr(self.canvas.selected_attached_strand, 'is_selected'):
                 self.canvas.selected_attached_strand.is_selected = False
+            # Clear semi-circle highlighting flags so they are not rendered anymore
+            if hasattr(self.canvas.selected_attached_strand, 'start_selected'):
+                self.canvas.selected_attached_strand.start_selected = False
+            if hasattr(self.canvas.selected_attached_strand, 'end_selected'):
+                self.canvas.selected_attached_strand.end_selected = False
             self.canvas.selected_attached_strand = None
         
         # Find the parent strand's group before creating new strand

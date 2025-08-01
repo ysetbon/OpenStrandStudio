@@ -3681,10 +3681,8 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(self.rotate_mode, 'is_rotating'):
                 self.rotate_mode.is_rotating = False
         
-        # Clear any selected attached strands
-        if hasattr(self, 'selected_attached_strand') and self.selected_attached_strand:
-            self.selected_attached_strand.is_selected = False
-            self.selected_attached_strand = None
+        # Don't clear selected attached strands during strand creation start
+        # They should remain highlighted during creation and only be cleared when creation completes
         
         # Set current mode to None to ensure clean state
         self.current_mode = None
@@ -3877,21 +3875,47 @@ class StrandDrawingCanvas(QWidget):
             # Clear any previously selected attached strands before selecting the new strand
             if self.selected_attached_strand:
                 self.selected_attached_strand.is_selected = False
+                # Also clear the start_selected property to remove semi-circle highlighting
+                if hasattr(self.selected_attached_strand, 'start_selected'):
+                    self.selected_attached_strand.start_selected = False
                 self.selected_attached_strand = None
             
             # Also deselect all strands to ensure clean selection state
             for strand in self.strands:
                 strand.is_selected = False
+                # Clear semi-circle highlighting properties
+                if hasattr(strand, 'start_selected'):
+                    strand.start_selected = False
+                if hasattr(strand, 'end_selected'):
+                    strand.end_selected = False
+                # Debug logging for strand clearing
+                if hasattr(strand, 'layer_name'):
+                    logging.info(f"[CLEAR_DEBUG] Cleared highlighting for strand {strand.layer_name}: is_selected={strand.is_selected}")
                 if hasattr(strand, 'attached_strands'):
                     for attached in strand.attached_strands:
                         attached.is_selected = False
+                        # Clear semi-circle highlighting for attached strands too
+                        if hasattr(attached, 'start_selected'):
+                            attached.start_selected = False
+                        if hasattr(attached, 'end_selected'):
+                            attached.end_selected = False
+                        # Debug logging for attached strand clearing
+                        if hasattr(attached, 'layer_name'):
+                            logging.info(f"[CLEAR_DEBUG] Cleared highlighting for attached strand {attached.layer_name}: is_selected={attached.is_selected}")
             
             # Reset MoveMode selection state
             if hasattr(self, 'move_mode') and self.move_mode:
                 self.move_mode.reset_selection()
             
+            # Force canvas update after clearing highlighting to ensure visual changes take effect
+            logging.info("[CLEAR_DEBUG] Forcing canvas update after clearing all highlighting")
+            self.update()
+            
             # Ensure consistent state after strand creation (zoom-independent)
             self._ensure_consistent_post_creation_state()
+            
+            # Clear any previously restored attached-strand selection so old semicircle highlights disappear
+            self.selected_attached_strand = None
             
             # Ensure the new strand is selected and highlighted
             new_strand.is_selected = True

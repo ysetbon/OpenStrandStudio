@@ -900,6 +900,8 @@ class MoveMode:
         """
         import logging
         pos = event.pos()
+        logging.info(f"MoveMode: mousePressEvent at position {pos}")
+        logging.info(f"MoveMode: Current state - is_moving={self.is_moving}, in_move_mode={self.in_move_mode}")
         
 
         # --- Capture selection at the absolute start ---
@@ -992,12 +994,14 @@ class MoveMode:
 
         # First try to handle control point movement
         control_point_moved = False
+        logging.info(f"MoveMode: Checking for control point movement at {pos}")
         logging.info("MoveMode: Starting control point movement check")
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False):
+                logging.info(f"MoveMode: Checking control points for strand {strand.layer_name}")
                 if self.try_move_control_points(strand, pos):
                     control_point_moved = True
-                    logging.info("MoveMode: Moving control point")
+                    logging.info(f"MoveMode: Moving control point for strand {strand.layer_name}")
                     
                     # For control point movement, we'll temporarily clear visible selections
                     # but maintain selection state internally for restoration later
@@ -1299,6 +1303,16 @@ class MoveMode:
         # --- 2. Reset MoveMode State COMPLETELY ---
         self.is_moving = False
         self.moving_point = None
+        
+        # Clear the _is_being_moved flag from the affected strand and any connected strands
+        if self.affected_strand:
+            self.affected_strand._is_being_moved = False
+            # Also clear the flag on any connected strands
+            if hasattr(self.affected_strand, 'knot_connections') and self.affected_strand.knot_connections:
+                for end_type, connection_info in self.affected_strand.knot_connections.items():
+                    connected_strand = connection_info['connected_strand']
+                    connected_strand._is_being_moved = False
+        
         self.affected_strand = None
         self.moving_side = None
         self.selected_rectangle = None
@@ -1541,6 +1555,9 @@ class MoveMode:
         # --- END CORRECTION ---
             if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 logging.info(f"handle_strand_movement: Checking strand {strand.layer_name} at index {i}")
+                # Debug: Check if this strand has knot connections
+                if hasattr(strand, 'knot_connections') and strand.knot_connections:
+                    logging.info(f"  Strand {strand.layer_name} has knot_connections: {list(strand.knot_connections.keys())}")
                 if self.try_move_strand(strand, pos, i):
                     logging.info(f"handle_strand_movement: try_move_strand returned True for {strand.layer_name}")
                     return
@@ -1681,10 +1698,14 @@ class MoveMode:
         end_area = self.get_end_area(strand)
         
         logging.info(f"try_move_strand: Checking if pos {pos} is within start_area or end_area")
+        logging.info(f"try_move_strand: strand.start = {strand.start}, strand.end = {strand.end}")
         logging.info(f"try_move_strand: start_area contains pos: {start_area.contains(pos)}")
         logging.info(f"try_move_strand: end_area contains pos: {end_area.contains(pos)}")
         logging.info(f"try_move_strand: can_move_side(0): {self.can_move_side(strand, 0, strand_index)}")
         logging.info(f"try_move_strand: can_move_side(1): {self.can_move_side(strand, 1, strand_index)}")
+        # Check if strand has closed connections
+        if hasattr(strand, 'closed_connections'):
+            logging.info(f"try_move_strand: strand.closed_connections = {strand.closed_connections}")
 
         if start_area.contains(pos) and self.can_move_side(strand, 0, strand_index):
             logging.info(f"try_move_strand: Starting movement for {strand.layer_name} at start point")
@@ -1809,6 +1830,15 @@ class MoveMode:
             self.originally_selected_strand = self.canvas.selected_strand
         elif self.canvas.selected_attached_strand is not None:
             self.originally_selected_strand = self.canvas.selected_attached_strand
+
+        # Set the _is_being_moved flag to prevent knot connection synchronization during movement
+        strand._is_being_moved = True
+        
+        # Also set the flag on any connected strands to prevent mutual synchronization
+        if hasattr(strand, 'knot_connections') and strand.knot_connections:
+            for end_type, connection_info in strand.knot_connections.items():
+                connected_strand = connection_info['connected_strand']
+                connected_strand._is_being_moved = True
 
         # Store a reference to the undo_redo_manager if it exists
         if hasattr(self.canvas, 'undo_redo_manager') and not hasattr(self, 'undo_redo_manager'):

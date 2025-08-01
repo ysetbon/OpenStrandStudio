@@ -1696,28 +1696,24 @@ class NumberedLayerButton(QPushButton):
         if isinstance(target_strand, AttachedStrand) and not hasattr(target_strand, '_circle_stroke_color'):
             target_strand._circle_stroke_color = QColor(0, 0, 0, 255)
         
-        # Update attachment status
+        # Mark closed connections for full circle rendering (without setting attached status)
         if free_end_type == 'start':
-            strand.start_attached = True
             # Mark this as a closed connection for full circle rendering
             if not hasattr(strand, 'closed_connections'):
                 strand.closed_connections = [False, False]
             strand.closed_connections[0] = True
         else:
-            strand.end_attached = True
             # Mark this as a closed connection for full circle rendering
             if not hasattr(strand, 'closed_connections'):
                 strand.closed_connections = [False, False]
             strand.closed_connections[1] = True
             
         if target_free_end == 'start':
-            target_strand.start_attached = True
             # Mark this as a closed connection for full circle rendering
             if not hasattr(target_strand, 'closed_connections'):
                 target_strand.closed_connections = [False, False]
             target_strand.closed_connections[0] = True
         else:
-            target_strand.end_attached = True
             # Mark this as a closed connection for full circle rendering
             if not hasattr(target_strand, 'closed_connections'):
                 target_strand.closed_connections = [False, False]
@@ -1728,16 +1724,8 @@ class NumberedLayerButton(QPushButton):
         logging.info("[KNOT_DEBUG] Skipping parent-child attached_strand relationship creation for close_the_knot operation")
         
         
-        # For AttachedStrands, update their attachment info
-        if isinstance(strand, AttachedStrand):
-            if free_end_type == 'end':
-                # The end of this attached strand is now connected
-                strand.end_attached = True
-        
-        if isinstance(target_strand, AttachedStrand):
-            if target_free_end == 'end':
-                # The end of the target attached strand is now connected
-                target_strand.end_attached = True
+        # AttachedStrands don't need special attachment info updates for knot connections
+        # The knot_connections dictionary handles all the connection tracking
         
         # Don't create circular references in attached_strands lists
         # Just mark the connection points as having circles

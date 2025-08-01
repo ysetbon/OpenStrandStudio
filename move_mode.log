@@ -1,42 +1,33 @@
+MoveMode: mousePressEvent at position PyQt5.QtCore.QPoint(1074, 249)
+MoveMode: Current state - is_moving=False, in_move_mode=False
 MoveMode: Preparing optimized drawing - caching background
 MoveMode: Background cache is now valid
 MoveMode: Set originally_selected_strand from selected_strand
 MoveMode: LayerStateManager movement operation started (early)
 MoveMode: Updating LayerStateManager connections before first movement
 MoveMode: LayerStateManager connections updated
-DEBUG: Final moving strands: ['1_2', '1_1']
+DEBUG: Final moving strands: ['1_3', '1_1']
 DEBUG: is_moving_control_point = False
 DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_2
+DEBUG: self.affected_strand = 1_3
 DEBUG: About to set is_selected for 2 strands
-DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_3
 DEBUG: Set is_selected=True for moving strand: 1_1
-DEBUG: Final moving strands: ['1_2', '1_1']
+DEBUG: is_moving_control_point = True
+DEBUG: is_moving_control_point = True
+DEBUG: Final moving strands: ['1_3', '1_1']
 DEBUG: is_moving_control_point = False
 DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_2
+DEBUG: self.affected_strand = 1_3
 DEBUG: About to set is_selected for 2 strands
-DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_3
 DEBUG: Set is_selected=True for moving strand: 1_1
-DEBUG: Final moving strands: ['1_1']
+DEBUG: Final moving strands: ['1_3', '1_1']
 DEBUG: is_moving_control_point = False
 DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_1
-DEBUG: About to set is_selected for 1 strands
-DEBUG: Set is_selected=True for moving strand: 1_1
-DEBUG: Final moving strands: ['1_2', '1_1']
-DEBUG: is_moving_control_point = False
-DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_2
+DEBUG: self.affected_strand = 1_3
 DEBUG: About to set is_selected for 2 strands
-DEBUG: Set is_selected=True for moving strand: 1_2
-DEBUG: Set is_selected=True for moving strand: 1_1
-DEBUG: Final moving strands: ['1_2', '1_1']
-DEBUG: is_moving_control_point = False
-DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_2
-DEBUG: About to set is_selected for 2 strands
-DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_3
 DEBUG: Set is_selected=True for moving strand: 1_1
 DEBUG: Final moving strands: ['1_3', '1_2']
 DEBUG: is_moving_control_point = False
@@ -45,17 +36,12 @@ DEBUG: self.affected_strand = 1_3
 DEBUG: About to set is_selected for 2 strands
 DEBUG: Set is_selected=True for moving strand: 1_3
 DEBUG: Set is_selected=True for moving strand: 1_2
-DEBUG: Final moving strands: ['1_3']
+DEBUG: Final moving strands: ['1_2', '1_1']
 DEBUG: is_moving_control_point = False
 DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_3
-DEBUG: About to set is_selected for 1 strands
-DEBUG: Set is_selected=True for moving strand: 1_3
-DEBUG: Final moving strands: ['1_1']
-DEBUG: is_moving_control_point = False
-DEBUG: In normal strand movement path
-DEBUG: self.affected_strand = 1_1
-DEBUG: About to set is_selected for 1 strands
+DEBUG: self.affected_strand = 1_2
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_2
 DEBUG: Set is_selected=True for moving strand: 1_1
 DEBUG: Final moving strands: ['1_2', '1_1']
 DEBUG: is_moving_control_point = False
@@ -63,4 +49,60 @@ DEBUG: In normal strand movement path
 DEBUG: self.affected_strand = 1_2
 DEBUG: About to set is_selected for 2 strands
 DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_2', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_2
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_2', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_2
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_3', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_3
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_3', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_3
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_3', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_3
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_3', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_3
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_2', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_2
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_2
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Final moving strands: ['1_3', '1_1']
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_3
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_3
 DEBUG: Set is_selected=True for moving strand: 1_1

@@ -1370,7 +1370,6 @@ class MoveMode:
         # Capture selection state *before* reset
         selection_at_release_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
         original_selection_ref = self.originally_selected_strand # Keep reference used during move
-        was_moving_control_point = self.is_moving_control_point
         
         self.reset_movement_state()
         
@@ -1411,11 +1410,9 @@ class MoveMode:
         # Clear the originally_selected_strand reference ONLY AFTER the release event is fully processed
         self.originally_selected_strand = None
 
-        # --- 5. Save State if Control Point Moved ---
-        if was_moving_control_point and hasattr(self, 'undo_redo_manager'):
-             logging.info("MoveMode: Control point movement finished, saving state.")
-             if hasattr(self.undo_redo_manager, '_last_save_time'): self.undo_redo_manager._last_save_time = 0
-             self.undo_redo_manager.save_state()
+        # --- 5. Removed duplicate control point save ---
+        # Control point saves are now handled by undo_redo_manager's enhanced_mouse_release
+        # to ensure consistent behavior with start/end point movements
 
         # --- 6. Force Updates ---
         self.canvas.update() # Force immediate redraw with restored state

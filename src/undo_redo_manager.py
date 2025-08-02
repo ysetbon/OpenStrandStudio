@@ -3407,6 +3407,8 @@ def setup_undo_redo(canvas, layer_panel, base_path):
     # Connect to attach mode for *suppression* during strand creation
     connect_to_attach_mode(canvas, manager)
 
+    # Connect directly to strand_created for saving *after* creation
+    connect_strand_creation(canvas, manager) # <-- ADD THIS CALL
 
     # Connect to mask mode creation
     connect_to_mask_mode(canvas, manager)

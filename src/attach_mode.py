@@ -981,8 +981,7 @@ class AttachMode(QObject):
                 connections[new_strand.layer_name] = []
             connections[new_strand.layer_name].append(parent_strand.layer_name)
             logging.info(f"Added connection between {parent_strand.layer_name} and {new_strand.layer_name} in layer state manager")
-            # Save the updated state
-            self.canvas.layer_state_manager.save_current_state()
+            # Note: State saving will be handled by the undo_redo_manager through strand_created signal
         
         # Emit signals
         self.strand_attached.emit(parent_strand, new_strand)

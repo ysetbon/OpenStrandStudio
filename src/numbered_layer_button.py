@@ -1787,10 +1787,11 @@ class NumberedLayerButton(QPushButton):
             layer_panel.canvas.layer_state_manager.save_current_state()
             logging.info("Updated LayerStateManager after closing knot")
         
-        # Skip saving state to avoid state layer manager updates
-        # if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-        #     layer_panel.canvas.undo_redo_manager._last_save_time = 0
-        #     layer_panel.canvas.undo_redo_manager.save_state()
+        # Save state for undo/redo functionality
+        if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+            # Use a small delay to ensure all knot properties are established
+            QTimer.singleShot(50, lambda: layer_panel.canvas.undo_redo_manager.save_state())
+            logging.info("Scheduled undo/redo state save after closing knot")
         
         logging.info(f"Successfully closed the knot: {strand.layer_name} connected to {target_strand.layer_name}")
     

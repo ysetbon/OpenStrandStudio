@@ -131,6 +131,7 @@ def serialize_strand(strand, canvas, index=None):
         "end_arrow_visible": getattr(strand, 'end_arrow_visible', False),
         "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
         "shadow_only": getattr(strand, 'shadow_only', False),
+        "closed_connections": getattr(strand, 'closed_connections', [False, False]),
     }
     
     # Save knot connections - we need to save the layer names instead of strand references
@@ -141,7 +142,8 @@ def serialize_strand(strand, canvas, index=None):
             if hasattr(connected_strand, 'layer_name'):
                 knot_connections_data[end_type] = {
                     'connected_strand_name': connected_strand.layer_name,
-                    'connected_end': connection_info['connected_end']
+                    'connected_end': connection_info['connected_end'],
+                    'is_closing_strand': connection_info.get('is_closing_strand', False)
                 }
         data["knot_connections"] = knot_connections_data
     else:
@@ -155,16 +157,29 @@ def serialize_strand(strand, canvas, index=None):
 
     # Add attached_to information for AttachedStrands
     if isinstance(strand, AttachedStrand):
-        # Get the connections from LayerStateManager
-        layer_name = strand.layer_name
-        # Find the parent by looking at who this strand is connected to
+        # First try to get parent directly from the strand
         connected_to = None
-        if hasattr(canvas, 'layer_state_manager'):
-            for potential_parent, connections in canvas.layer_state_manager.getConnections().items():
-                if layer_name in connections:
-                    connected_to = potential_parent
-                    break
-        
+        if hasattr(strand, 'parent') and strand.parent and hasattr(strand.parent, 'layer_name'):
+            connected_to = strand.parent.layer_name
+            logging.info(f"Got parent {connected_to} directly from AttachedStrand {strand.layer_name}")
+        else:
+            # Fallback: Get the connections from LayerStateManager
+            layer_name = strand.layer_name
+            # Find the parent by looking at who this strand is connected to
+            if hasattr(canvas, 'layer_state_manager'):
+                connections = canvas.layer_state_manager.getConnections()
+                # In the new format, connections are stored as [start_connection, end_connection]
+                # We need to find which strand has this attached strand in its connections
+                for parent_name, conn_list in connections.items():
+                    if isinstance(conn_list, list) and len(conn_list) == 2:
+                        # Check both start and end connections
+                        for conn in conn_list:
+                            if conn and conn != 'null' and layer_name in conn:
+                                connected_to = parent_name
+                                break
+                    if connected_to:
+                        break
+                        
         data["attached_to"] = connected_to
         logging.info(f"Serializing AttachedStrand {strand.layer_name} attached to {connected_to}")
 
@@ -412,6 +427,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.end_line_visible = data.get("end_line_visible", True)
         strand.is_hidden = data.get("is_hidden", False)
         strand.shadow_only = data.get("shadow_only", False)
+        strand.closed_connections = data.get("closed_connections", [False, False])
 
         # NEW: Extension & Arrow visibility flags
         strand.start_extension_visible = data.get("start_extension_visible", False)
@@ -573,6 +589,7 @@ def load_strands(filename, canvas):
             strand.is_start_side = strand_data["is_start_side"]
             strand.is_hidden = strand_data.get("is_hidden", False)
             strand.shadow_only = strand_data.get("shadow_only", False)
+            strand.closed_connections = strand_data.get("closed_connections", [False, False])
 
             # Visibility flags
             strand.start_line_visible = strand_data.get("start_line_visible", True)
@@ -660,6 +677,7 @@ def load_strands(filename, canvas):
                 strand.is_start_side = masked_data["is_start_side"]
                 strand.is_hidden = masked_data.get("is_hidden", False)
                 strand.shadow_only = masked_data.get("shadow_only", False)
+                strand.closed_connections = masked_data.get("closed_connections", [False, False])
                 
                 # Load visibility flags
                 strand.start_line_visible = masked_data.get("start_line_visible", True)
@@ -823,6 +841,7 @@ def load_strands(filename, canvas):
             for end_type, connection_data in strand._knot_connections_data.items():
                 connected_strand_name = connection_data['connected_strand_name']
                 connected_end = connection_data['connected_end']
+                is_closing_strand = connection_data.get('is_closing_strand', False)
                 
                 # Find the connected strand
                 connected_strand = strand_dict.get(connected_strand_name)
@@ -830,9 +849,10 @@ def load_strands(filename, canvas):
                     # Restore the knot connection
                     strand.knot_connections[end_type] = {
                         'connected_strand': connected_strand,
-                        'connected_end': connected_end
+                        'connected_end': connected_end,
+                        'is_closing_strand': is_closing_strand
                     }
-                    logging.info(f"Restored knot connection: {strand.layer_name}.{end_type} <-> {connected_strand_name}.{connected_end}")
+                    logging.info(f"Restored knot connection: {strand.layer_name}.{end_type} <-> {connected_strand_name}.{connected_end} (closing: {is_closing_strand})")
                 else:
                     logging.warning(f"Could not find connected strand {connected_strand_name} for knot connection from {strand.layer_name}")
             

@@ -264,8 +264,9 @@ class UndoRedoManager(QObject):
         current_time = time.time()
         last_save_time = getattr(self, '_last_save_time', 0)
         
-        # If we've saved very recently (<300ms), check if we should skip this save
-        if (current_time - last_save_time < 0.3) and self.current_step > 0:
+        # If we've saved very recently (<500ms), check if we should skip this save  
+        # Increased from 300ms to 500ms to account for 50ms timer delays in signal handlers
+        if (current_time - last_save_time < 0.5) and self.current_step > 0:
             # Check if the current state would be identical to the previous state
             if self._would_be_identical_save():
                 logging.info("Skipping identical state save that would occur too soon after previous save")
@@ -628,6 +629,47 @@ class UndoRedoManager(QObject):
                             return False
                     elif hasattr(current_strand, 'has_circles') != ('has_circles' in prev_strand):
                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} has_circles attribute presence differs.")
+                        return False
+                    # --- END ADD ---
+
+                    # --- ADD: Check knot connections ---
+                    if hasattr(current_strand, 'knot_connections') and 'knot_connections' in prev_strand:
+                        current_knots = getattr(current_strand, 'knot_connections', {})
+                        prev_knots = prev_strand.get('knot_connections', {})
+                        
+                        # Compare connection count and end types
+                        if set(current_knots.keys()) != set(prev_knots.keys()):
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot_connections end types differ. Current: {list(current_knots.keys())}, Prev: {list(prev_knots.keys())}")
+                            return False
+                            
+                        # Compare each connection
+                        for end_type, current_conn in current_knots.items():
+                            if end_type in prev_knots:
+                                prev_conn = prev_knots[end_type]
+                                # Extract connected strand name from current connection (strand object -> layer_name)
+                                current_connected_name = None
+                                if 'connected_strand' in current_conn and hasattr(current_conn['connected_strand'], 'layer_name'):
+                                    current_connected_name = current_conn['connected_strand'].layer_name
+                                
+                                if (current_connected_name != prev_conn.get('connected_strand_name') or
+                                    current_conn.get('connected_end') != prev_conn.get('connected_end') or
+                                    current_conn.get('is_closing_strand', False) != prev_conn.get('is_closing_strand', False)):
+                                    logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot connection {end_type} differs")
+                                    return False
+                    elif hasattr(current_strand, 'knot_connections') != ('knot_connections' in prev_strand):
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot_connections attribute presence differs.")
+                        return False
+                    # --- END ADD ---
+
+                    # --- ADD: Check closed_connections ---
+                    if hasattr(current_strand, 'closed_connections') and 'closed_connections' in prev_strand:
+                        current_closed = getattr(current_strand, 'closed_connections', [False, False])
+                        prev_closed = prev_strand.get('closed_connections', [False, False])
+                        if current_closed != prev_closed:
+                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} closed_connections differs. Current: {current_closed}, Prev: {prev_closed}")
+                            return False
+                    elif hasattr(current_strand, 'closed_connections') != ('closed_connections' in prev_strand):
+                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} closed_connections attribute presence differs.")
                         return False
                     # --- END ADD ---
 
@@ -3166,25 +3208,38 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
     if hasattr(canvas, 'attach_mode') and canvas.attach_mode:
         original_mouse_release = canvas.attach_mode.mouseReleaseEvent
 
-        def enhanced_mouse_release_suppression(event):
-            # --- ADD: Set suppression flag ---
-            setattr(undo_redo_manager, '_suppress_intermediate_saves', True)
-            # logging.info("Attach Mode Start: Set _suppress_intermediate_saves = True")
+        def enhanced_mouse_release_and_save(event):
+            """Wrap attach_mode.mouseReleaseEvent to perform a single state save *after* the
+            attach operation finishes. Any internal calls to save_state that may occur
+            during the original handler are temporarily suppressed using the _skip_save
+            flag. Once the original handler completes, the flag is cleared and a single
+            save_state call is executed on the next iteration of the event loop so that
+            the newly-created or attached strand is fully initialised."""
 
+            # Suppress any intermediate saves that might be triggered inside the original handler
+            setattr(undo_redo_manager, '_skip_save', True)
             try:
-                # Call the original function first to perform the attach/creation
+                # Execute the original attach_mode mouseReleaseEvent logic
                 original_mouse_release(event)
             finally:
-                # --- ADD: Clear suppression flag ---
-                # Use QTimer.singleShot to ensure flag is cleared *after* current event processing finishes
-                QTimer.singleShot(0, lambda: (
-                    setattr(undo_redo_manager, '_suppress_intermediate_saves', False),
-                    # logging.info("Attach Mode End (Delayed): Set _suppress_intermediate_saves = False")
-                ))
+                # After the attach operation has completed (and other handlers such as
+                # layer-panel updates have had a chance to run) perform ONE state save.
+                # Keep the suppression flag enabled a little longer so that any other
+                # delayed handlers that might try to save are ignored.
+                def _finalize_save():
+                    # Temporarily lift the suppression to allow exactly one save
+                    setattr(undo_redo_manager, '_skip_save', False)
+                    undo_redo_manager.save_state()
+                    # Re-enable suppression for the next 250 ms to swallow any late calls
+                    setattr(undo_redo_manager, '_skip_save', True)
+                    QTimer.singleShot(250, lambda: setattr(undo_redo_manager, '_skip_save', False))
+                # Run after 300 ms – long enough for all delayed UI/logic handlers (color updates, group recreation, etc.)
+                # to complete, so we capture the *final* stable state only once.
+                QTimer.singleShot(300, _finalize_save)
 
-        # Replace the original function with our suppression-handling version
-        canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release_suppression
-        logging.info("Connected UndoRedoManager suppression logic to attach_mode mouse release events")
+        # Replace the original function with our enhanced version
+        canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release_and_save
+        logging.info("Connected UndoRedoManager to attach_mode mouse release events (state will be saved after attachment)")
     else:
         logging.warning("Could not connect suppression logic to attach_mode: attach_mode not found on canvas")
 
@@ -3285,16 +3340,15 @@ def connect_strand_creation(canvas, undo_redo_manager):
     """
     if hasattr(canvas, 'strand_created'):
         def on_strand_really_created(strand):
-            # Check suppression flag *after* a tiny delay, allowing suppression to be lifted
-            def check_and_save():
-                if not getattr(undo_redo_manager, '_suppress_intermediate_saves', False):
-                    logging.info(f"strand_created signal processed for {strand.layer_name}, saving state.")
-                    undo_redo_manager.save_state()
-                else:
-                    logging.info(f"strand_created signal processed for {strand.layer_name}, but save was suppressed.")
-
-            # Use QTimer.singleShot to run the check slightly after the signal emission completes
-            QTimer.singleShot(10, check_and_save) # Small delay (10ms)
+            # Skip saving for AttachedStrands - the attach mode handler will take care of it
+            if hasattr(strand, 'parent') and strand.parent:
+                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
+                return
+                
+            # Save state for regular strands only
+            logging.info(f"strand_created signal processed for regular strand {strand.layer_name}, saving state.")
+            # Use a small delay to ensure all strand properties and connections are established
+            QTimer.singleShot(50, lambda: undo_redo_manager.save_state())
 
         try:
             canvas.strand_created.disconnect() # Clear previous connections if any

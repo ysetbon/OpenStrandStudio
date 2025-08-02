@@ -1289,6 +1289,14 @@ class GroupPanel(QWidget):
     def finish_group_rotation(self, group_name):
         """Finish the rotation of a group and ensure data is preserved."""
         logging.info(f"GroupPanel: Starting finish_group_rotation for '{group_name}'")
+        
+        # Use a flag to ensure we only save once per rotation
+        if hasattr(self, '_rotation_save_done') and self._rotation_save_done:
+            logging.info("GroupPanel: Rotation save already done, skipping")
+            return
+            
+
+            
         if self.canvas:
             try:
                 # Get the current main strands before preserving
@@ -1311,6 +1319,18 @@ class GroupPanel(QWidget):
                 # Finish rotation in canvas
                 self.canvas.finish_group_rotation(group_name)
                 self.canvas.update()
+                
+                # Save state once after rotation is complete
+                if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                    # Mark that we're saving to prevent duplicate saves BEFORE calling save_state
+                    self._rotation_save_done = True
+                    
+                    logging.info("GroupPanel: Saving state after group rotation")
+                    self.canvas.layer_panel.undo_redo_manager.save_state()
+                    
+                    # Schedule cleanup of the flag after a short delay
+                    from PyQt5.QtCore import QTimer
+                    QTimer.singleShot(300, lambda: setattr(self, '_rotation_save_done', False))
                 
             except Exception as e:
                 logging.error(f"Error during finish_group_rotation: {str(e)}")
@@ -1894,9 +1914,9 @@ class GroupPanel(QWidget):
             dialog.exec_()
         else:
             logging.warning(f"Attempted to edit angles for non-existent or invalid group in canvas.groups: {group_name}")
-    def finish_group_rotation(self, group_name):
-        """Finish the rotation of a group and ensure data is preserved."""
-        logging.info(f"GroupPanel: Starting finish_group_rotation for '{group_name}'")
+    def finish_group_rotation_duplicate_remove_me(self, group_name):
+        """DUPLICATE METHOD - SHOULD BE REMOVED - Finish the rotation of a group and ensure data is preserved."""
+        logging.info(f"GroupPanel: Starting finish_group_rotation_duplicate_remove_me for '{group_name}'")
         if self.canvas:
             try:
                 # Get the current main strands before preserving
@@ -5469,9 +5489,9 @@ class StrandAngleEditDialog(QDialog):
     def _cleanup_on_close(self):
         # Set flag to indicate dialog is closing
         self.dialog_closing = True
-        # Perform final cleanup and save state
+        # Perform final cleanup (this will save state if needed)
         self.stop_adjustment()
-        # Re-enable saving when dialog closes
+        # Re-enable saving for future operations
         if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
             self.canvas.layer_panel.undo_redo_manager._skip_save = False
         if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):

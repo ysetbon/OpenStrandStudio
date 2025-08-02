@@ -283,6 +283,10 @@ class UndoRedoManager(QObject):
             if self._would_be_identical_save():
                 logging.info("Skipping identical state save that would occur too soon after previous save")
                 return
+            else:
+                logging.info(f"State would not be identical, proceeding with save (time since last save: {current_time - last_save_time:.3f}s)")
+        else:
+            logging.info(f"Proceeding with save (time since last save: {current_time - last_save_time:.3f}s)")
         
         self._last_save_time = current_time
             
@@ -414,6 +418,7 @@ class UndoRedoManager(QObject):
                 
                 # If strand count and layer names match, also compare strand positions
                 # to detect angle changes and movements
+                logging.info(f"_would_be_identical_save: Comparing {len(self.canvas.strands)} strands for position differences")
                 for i, current_strand in enumerate(self.canvas.strands):
                     if i >= prev_strand_count:
                         return False
@@ -3389,8 +3394,10 @@ def connect_to_group_operations(canvas, undo_redo_manager):
         original_canvas_finish_rotation = canvas.finish_group_rotation
         def enhanced_canvas_finish_rotation(*args, **kwargs):
             result = original_canvas_finish_rotation(*args, **kwargs)
-            logging.info("Canvas group rotation finished, saving state")
-            undo_redo_manager.save_state()
+            
+            # Don't schedule a delayed save for rotation - it should be handled explicitly
+            logging.info("Canvas group rotation finished - save should be handled by rotation dialog or operation")
+                
             return result
         canvas.finish_group_rotation = enhanced_canvas_finish_rotation
     
@@ -3595,14 +3602,13 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
         return result
     group_panel.finish_group_move = enhanced_finish_group_move
     
-    # Connect to rotation operation completion
-    original_finish_group_rotation = group_panel.finish_group_rotation
-    def enhanced_finish_group_rotation(*args, **kwargs):
-        result = original_finish_group_rotation(*args, **kwargs)
-        logging.info("Group rotation finished, saving state")
-        undo_redo_manager.save_state()
-        return result
-    group_panel.finish_group_rotation = enhanced_finish_group_rotation
+    # Connect to rotation operation completion - DISABLED to prevent duplicate saves
+    # The original finish_group_rotation already handles state saving with proper duplicate prevention
+    # original_finish_group_rotation = group_panel.finish_group_rotation
+    # def enhanced_finish_group_rotation(*args, **kwargs):
+    #     result = original_finish_group_rotation(*args, **kwargs)
+    #     return result
+    # group_panel.finish_group_rotation = enhanced_finish_group_rotation
     
     # Connect to angle edit completion
     original_update_group_after_angle_edit = getattr(group_panel, 'update_group_after_angle_edit', None)

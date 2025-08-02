@@ -1475,38 +1475,50 @@ class GroupPanel(QWidget):
             duplicated_strands = []
             new_main_strands = set()
             strand_mapping = {}  # Maps original strands to duplicated strands
-            masked_strands_to_process = []  # MaskedStrands to process after component strands
-            
-            # First pass: duplicate regular strands and AttachedStrands
+            masked_strands_to_process = []      # Will be handled after attached strands
+            attached_strands_to_process = []    # Will be handled after regular strands
+
+            # First pass: duplicate ONLY regular strands (skip masked & attached)
             for original_strand in original_strands:
-                if hasattr(original_strand, '__class__'):
-                    if original_strand.__class__.__name__ == 'MaskedStrand':
-                        # Store MaskedStrands for second pass
-                        masked_strands_to_process.append(original_strand)
-                        continue
-                    elif original_strand.__class__.__name__ == 'AttachedStrand':
-                        new_strand = self.duplicate_attached_strand(original_strand, old_to_new_set_mapping)
-                    else:
-                        new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
-                else:
-                    new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
-                
+                cls_name = getattr(original_strand.__class__, '__name__', '')
+                if cls_name == 'MaskedStrand':
+                    masked_strands_to_process.append(original_strand)
+                    continue
+                if cls_name == 'AttachedStrand':
+                    attached_strands_to_process.append(original_strand)
+                    continue
+
+                # Regular strand
+                new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_strand] = new_strand
-                
-                # Check if this is a main strand (ends with _1)
+
+                # Identify main strands (layer names ending with _1)
                 if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
                     new_main_strands.add(new_strand)
-                
-                # Add to canvas strands using proper method to set canvas reference
+
+                # Add to canvas and color mapping
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-                    
-                    # Update canvas color mapping
                     if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
                         self.canvas.strand_colors[new_strand.set_number] = new_strand.color
-            
-            # Second pass: duplicate MaskedStrands with references to duplicated component strands
+
+            # Second pass: duplicate AttachedStrands now that parent strands exist
+            for original_attached_strand in attached_strands_to_process:
+                new_strand = self.duplicate_attached_strand(original_attached_strand, old_to_new_set_mapping, strand_mapping)
+                duplicated_strands.append(new_strand)
+                strand_mapping[original_attached_strand] = new_strand
+
+                if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
+                    new_main_strands.add(new_strand)
+
+                if self.canvas:
+                    self.canvas.add_strand(new_strand)
+                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
+                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
+
+            # Third pass: duplicate MaskedStrands with references to duplicated component strands
             for original_masked_strand in masked_strands_to_process:
                 new_strand = self.duplicate_masked_strand(original_masked_strand, old_to_new_set_mapping, strand_mapping)
                 duplicated_strands.append(new_strand)
@@ -1732,39 +1744,68 @@ class GroupPanel(QWidget):
         
         return new_strand
 
-    def duplicate_attached_strand(self, original_strand, set_mapping):
-        """Duplicate an AttachedStrand object."""
+    def duplicate_attached_strand(self, original_strand, set_mapping, strand_mapping):
+        """Duplicate an AttachedStrand while preserving its relationship to the duplicated parent strand."""
         from attached_strand import AttachedStrand
         from PyQt5.QtCore import QPointF
         from PyQt5.QtGui import QColor
         
-        # Get new set number
-        old_set = original_strand.set_number if hasattr(original_strand, 'set_number') else 1
-        new_set = set_mapping.get(old_set, old_set)
+        # Locate the duplicated parent strand
+        new_parent = None
+        if hasattr(original_strand, 'parent'):
+            new_parent = strand_mapping.get(original_strand.parent)
         
-        # Generate new layer name
-        new_layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        # If we cannot resolve a parent, fall back to a regular duplication
+        if new_parent is None:
+            logging.warning(f"Could not locate duplicated parent for attached strand '{getattr(original_strand, 'layer_name', '')}'. Falling back to regular duplication.")
+            return self.duplicate_regular_strand(original_strand, set_mapping)
         
-        # Create new attached strand (avoid deepcopy for Qt objects)
+        # Determine on which side the attachment occurs (0 = start, 1 = end). Default to 0 if missing.
+        attachment_side = getattr(original_strand, 'attachment_side', 0)
+        
+        # Create the duplicated attached strand
         new_strand = AttachedStrand(
-            start=QPointF(original_strand.start.x(), original_strand.start.y()),
-            end=QPointF(original_strand.end.x(), original_strand.end.y()),
-            width=original_strand.width,
-            color=QColor(original_strand.color),
-            stroke_color=QColor(original_strand.stroke_color),
-            stroke_width=original_strand.stroke_width,
-            set_number=new_set,
-            layer_name=new_layer_name
+            new_parent,
+            QPointF(original_strand.start.x(), original_strand.start.y()),
+            attachment_side
         )
         
-        # Copy AttachedStrand specific properties
-        if hasattr(original_strand, 'parent_strand'):
-            # Note: We don't copy the parent_strand reference as it would point to old strand
-            # This will need to be resolved separately if needed
-            pass
+        # Assign the correct layer name and, if necessary, set number
+        new_strand.layer_name = self.generate_new_layer_name(original_strand.layer_name, set_mapping)
+        if hasattr(original_strand, 'set_number'):
+            new_strand.set_number = set_mapping.get(original_strand.set_number, original_strand.set_number)
         
-        # Copy all other properties
+        # Copy basic visual / geometric properties that the constructor did not inherit from parent
+        from PyQt5.QtGui import QColor
+        new_strand.color = QColor(original_strand.color)
+        new_strand.stroke_color = QColor(original_strand.stroke_color)
+        new_strand.stroke_width = original_strand.stroke_width
+        new_strand.width = original_strand.width
+
+        # Copy common control-point / state data
         self.copy_strand_properties(original_strand, new_strand)
+
+        # Preserve original geometry exactly – copy end point first, then sync angle/length
+        new_strand.end = QPointF(original_strand.end.x(), original_strand.end.y())
+        if hasattr(new_strand, 'update_angle_length_from_geometry'):
+            new_strand.update_angle_length_from_geometry()
+        if hasattr(new_strand, 'update_side_line'):
+            new_strand.update_side_line()
+        
+        # Register the new attachment on the parent
+        if hasattr(new_parent, 'attached_strands'):
+            new_parent.attached_strands.append(new_strand)
+        
+        # Inform the LayerStateManager (if present) about the new connection
+        if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            try:
+                self.canvas.layer_state_manager.connectLayers(new_parent, new_strand)
+            except Exception as e:
+                logging.error(f"Failed to register connection in LayerStateManager: {e}")
+        
+        # Ensure canvas reference is set
+        if self.canvas:
+            new_strand.canvas = self.canvas
         
         return new_strand
 
@@ -4636,15 +4677,14 @@ class StrandAngleEditDialog(QDialog):
         # Only save state if dialog is actually closing, not on every button release
         if self.dialog_closing:
             logging.info("Group angle edit finished, saving state")
+            # Only save state on the layer panel's undo/redo manager to prevent duplicate saves
             if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                 self.canvas.layer_panel.undo_redo_manager._skip_save = False
                 self.canvas.layer_panel.undo_redo_manager.save_state()
-            if self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
-                # Clear flag for direct undo_redo_manager access too
+            elif self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
+                # Fallback to canvas undo/redo manager if layer panel doesn't have one
                 self.canvas.undo_redo_manager._skip_save = False
-                # Only save if we didn't already save above
-                if not (hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager')):
-                    self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state()
     def start_continuous_adjustment_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_plus

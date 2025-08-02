@@ -3610,15 +3610,16 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     #     return result
     # group_panel.finish_group_rotation = enhanced_finish_group_rotation
     
-    # Connect to angle edit completion
-    original_update_group_after_angle_edit = getattr(group_panel, 'update_group_after_angle_edit', None)
-    if original_update_group_after_angle_edit:
-        def enhanced_update_group_after_angle_edit(*args, **kwargs):
-            result = original_update_group_after_angle_edit(*args, **kwargs)
-            logging.info("Group angle edit finished, saving state")
-            undo_redo_manager.save_state()
-            return result
-        group_panel.update_group_after_angle_edit = enhanced_update_group_after_angle_edit
+    # Connect to angle edit completion - DISABLED to prevent duplicate saves
+    # The StrandAngleEditDialog already handles state saving directly
+    # original_update_group_after_angle_edit = getattr(group_panel, 'update_group_after_angle_edit', None)
+    # if original_update_group_after_angle_edit:
+    #     def enhanced_update_group_after_angle_edit(*args, **kwargs):
+    #         result = original_update_group_after_angle_edit(*args, **kwargs)
+    #         logging.info("Group angle edit finished, saving state")
+    #         undo_redo_manager.save_state()
+    #         return result
+    #     group_panel.update_group_after_angle_edit = enhanced_update_group_after_angle_edit
     
     # Connect to group operation signal
     def on_group_operation(operation, group_name, layers):

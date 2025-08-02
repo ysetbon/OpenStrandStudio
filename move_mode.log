@@ -1,0 +1,9 @@
+MoveMode: mousePressEvent at position PyQt5.QtCore.QPoint(535, 259)
+MoveMode: Current state - is_moving=False, in_move_mode=False
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_strand
+MoveMode: LayerStateManager movement operation started (early)
+MoveMode: Updating LayerStateManager connections before first movement
+MoveMode: LayerStateManager connections updated
+DEBUG: is_moving_control_point = True

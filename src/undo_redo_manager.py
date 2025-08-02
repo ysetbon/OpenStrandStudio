@@ -17,6 +17,7 @@ from group_layers import CollapsibleGroupWidget # Import at the top level to ens
 # Note: We don't import GroupPanel here, as it can cause issues with Qt objects
 # We'll work with instances that are already created
 from masked_strand import MaskedStrand
+from attached_strand import AttachedStrand
 
 # StrokeTextButton class incorporated directly into this file
 class StrokeTextButton(QPushButton):
@@ -239,8 +240,19 @@ class UndoRedoManager(QObject):
 
     def save_state(self, allow_empty=False):
         """Save the current state of strands and groups for undo/redo."""
+        # Add debug logging to track save_state calls
+        import traceback
+        caller_info = traceback.extract_stack()[-2]  # Get the caller info
+        logging.info(f"=== SAVE STATE DEBUG === save_state called from {caller_info.filename}:{caller_info.lineno} in {caller_info.name}")
+        
+        # Check skip_save flag
+        skip_save = getattr(self, '_skip_save', False)
+        logging.info(f"=== SAVE STATE DEBUG === _skip_save flag: {skip_save}")
+        logging.info(f"=== SAVE STATE DEBUG === _mask_save_in_progress flag: {getattr(self, '_mask_save_in_progress', False)}")
+        logging.info(f"=== SAVE STATE DEBUG === _mask_save_completed flag: {getattr(self, '_mask_save_completed', False)}")
+        
         # Skip save if flagged to avoid saving states
-        if getattr(self, '_skip_save', False):
+        if skip_save:
             logging.info("Skipping state save due to _skip_save flag")
             return
             
@@ -3216,8 +3228,26 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
             save_state call is executed on the next iteration of the event loop so that
             the newly-created or attached strand is fully initialised."""
 
+            # Check if we're already processing an attach operation to prevent multiple saves
+            if getattr(undo_redo_manager, '_attach_save_in_progress', False):
+                logging.info("=== ATTACH MODE DEBUG === Skipping duplicate attach save (already in progress)")
+                # Still execute the original mouse release logic, just skip the state saving
+                original_mouse_release(event)
+                return
+
+            # Check if a mask operation was just completed to prevent duplicate saves
+            if getattr(undo_redo_manager, '_mask_save_completed', False):
+                logging.info("=== ATTACH MODE DEBUG === Skipping attach save (mask operation just completed)")
+                # Still execute the original mouse release logic, just skip the state saving
+                original_mouse_release(event)
+                # Clear the mask completion flag since we've handled it
+                setattr(undo_redo_manager, '_mask_save_completed', False)
+                return
+
             # Suppress any intermediate saves that might be triggered inside the original handler
             setattr(undo_redo_manager, '_skip_save', True)
+            setattr(undo_redo_manager, '_attach_save_in_progress', True)
+            
             try:
                 # Execute the original attach_mode mouseReleaseEvent logic
                 original_mouse_release(event)
@@ -3227,12 +3257,26 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                 # Keep the suppression flag enabled a little longer so that any other
                 # delayed handlers that might try to save are ignored.
                 def _finalize_save():
+                    # Check if we already saved to prevent duplicate saves
+                    if getattr(undo_redo_manager, '_attach_save_completed', False):
+                        logging.info("=== ATTACH MODE DEBUG === Skipping duplicate attach save (already completed)")
+                        return
+                    
                     # Temporarily lift the suppression to allow exactly one save
                     setattr(undo_redo_manager, '_skip_save', False)
+                    logging.info(f"=== ATTACH MODE DEBUG === Saving state from attach mode handler for strand creation")
                     undo_redo_manager.save_state()
+                    
+                    # Mark as completed to prevent duplicate saves
+                    setattr(undo_redo_manager, '_attach_save_completed', True)
+                    
                     # Re-enable suppression for the next 250 ms to swallow any late calls
                     setattr(undo_redo_manager, '_skip_save', True)
-                    QTimer.singleShot(250, lambda: setattr(undo_redo_manager, '_skip_save', False))
+                    QTimer.singleShot(250, lambda: (
+                        setattr(undo_redo_manager, '_skip_save', False),
+                        setattr(undo_redo_manager, '_attach_save_in_progress', False),
+                        setattr(undo_redo_manager, '_attach_save_completed', False)
+                    ))
                 # Run after 100 ms to ensure all side-effects (group recreation, layer updates…) are done
                 QTimer.singleShot(100, _finalize_save)
 
@@ -3254,13 +3298,41 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
     if hasattr(canvas, 'mask_mode') and canvas.mask_mode:
         # Connect the mask_created signal to save state
         def on_mask_created(_strand1, _strand2):
-            logging.info("Mask created signal received, scheduling state save.")
-            # Use QTimer.singleShot to delay the save until after the current event processing
-            # This ensures the new MaskedStrand is likely added to canvas.strands
-            QTimer.singleShot(0, lambda: ( 
-                logging.info("Executing delayed save state after mask creation."),
+            logging.info("=== MASK MODE DEBUG === Mask created signal received, scheduling state save.")
+            
+            # Check if we're already processing a mask operation to prevent multiple saves
+            if getattr(undo_redo_manager, '_mask_save_in_progress', False):
+                logging.info("=== MASK MODE DEBUG === Skipping duplicate mask save (already in progress)")
+                return
+            
+            # Set suppression flags to prevent duplicate saves
+            setattr(undo_redo_manager, '_skip_save', True)
+            setattr(undo_redo_manager, '_mask_save_in_progress', True)
+            
+            def _finalize_mask_save():
+                # Check if we already saved to prevent duplicate saves
+                if getattr(undo_redo_manager, '_mask_save_completed', False):
+                    logging.info("=== MASK MODE DEBUG === Skipping duplicate mask save (already completed)")
+                    return
+                
+                # Temporarily lift the suppression to allow exactly one save
+                setattr(undo_redo_manager, '_skip_save', False)
+                logging.info("=== MASK MODE DEBUG === Saving state from mask mode handler for mask creation")
                 undo_redo_manager.save_state()
-            ))
+                
+                # Mark as completed to prevent duplicate saves
+                setattr(undo_redo_manager, '_mask_save_completed', True)
+                
+                # Re-enable suppression for the next 250 ms to swallow any late calls
+                setattr(undo_redo_manager, '_skip_save', True)
+                QTimer.singleShot(250, lambda: (
+                    setattr(undo_redo_manager, '_skip_save', False),
+                    setattr(undo_redo_manager, '_mask_save_in_progress', False),
+                    setattr(undo_redo_manager, '_mask_save_completed', False)
+                ))
+            
+            # Run after 100 ms to ensure all side-effects are done
+            QTimer.singleShot(100, _finalize_mask_save)
             
         # Connect the signal to our handler
         try:
@@ -3336,21 +3408,46 @@ def connect_to_group_operations(canvas, undo_redo_manager):
 def connect_strand_creation(canvas, undo_redo_manager):
     """
     Connect the canvas's strand_created signal to save the state.
+    This function should ONLY save states for regular strands, NOT for AttachedStrands.
+    AttachedStrands are handled by the attach mode handler.
     """
     if hasattr(canvas, 'strand_created'):
         def on_strand_really_created(strand):
-            # Skip saving for AttachedStrands - the attach mode handler will take care of it
-            if hasattr(strand, 'parent') and strand.parent:
+            # IMPORTANT: Skip saving for AttachedStrands - the attach mode handler will take care of it
+            logging.info(f"=== STRAND CREATION DEBUG === strand_created signal received for strand: {strand.layer_name}, class: {strand.__class__.__name__}")
+            
+            # Check if this strand is the current_strand in attach mode (indicates it's an AttachedStrand being created)
+            current_strand = getattr(canvas, 'current_strand', None)
+            logging.info(f"Canvas current_strand: {current_strand.layer_name if current_strand else 'None'}")
+            if current_strand == strand:
+                logging.info(f"strand_created signal processed for current_strand {strand.layer_name}, skipping save (attach mode handler will save).")
+                return
+            
+            # Check by isinstance first (most reliable)
+            is_attached_strand_instance = isinstance(strand, AttachedStrand)
+            logging.info(f"Is AttachedStrand instance: {is_attached_strand_instance}")
+            if is_attached_strand_instance:
                 logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
                 return
             
-            # Additional check for AttachedStrands by class name
-            if strand.__class__.__name__ == 'AttachedStrand':
-                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
+            # Additional check for AttachedStrands by class name (fallback)
+            is_attached_strand_class = strand.__class__.__name__ == 'AttachedStrand'
+            logging.info(f"Is AttachedStrand class: {is_attached_strand_class}")
+            if is_attached_strand_class:
+                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name} (by class name), skipping save (attach mode handler will save).")
+                return
+            
+            # Additional check for AttachedStrands by parent attribute (fallback)
+            has_parent = hasattr(strand, 'parent') and strand.parent
+            logging.info(f"Has parent attribute: {has_parent}")
+            if has_parent:
+                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name} (has parent), skipping save (attach mode handler will save).")
                 return
             
             # Skip saving for MaskedStrands - they have their own state management
-            if strand.__class__.__name__ == 'MaskedStrand':
+            is_masked_strand = isinstance(strand, MaskedStrand)
+            logging.info(f"Is MaskedStrand: {is_masked_strand}")
+            if is_masked_strand:
                 logging.info(f"strand_created signal processed for MaskedStrand {strand.layer_name}, skipping save (masked strands have their own state management).")
                 return
                 
@@ -3364,7 +3461,7 @@ def connect_strand_creation(canvas, undo_redo_manager):
         except TypeError:
             pass # Ignore if no connection exists
         canvas.strand_created.connect(on_strand_really_created)
-        logging.info("Connected UndoRedoManager directly to canvas.strand_created signal for state saving.")
+        logging.info("Connected UndoRedoManager directly to canvas.strand_created signal for state saving (AttachedStrands will be skipped).")
     else:
         logging.warning("Canvas does not have strand_created signal.")
 # --- END ADD NEW FUNCTION ---

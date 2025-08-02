@@ -2959,8 +2959,16 @@ class StrandDrawingCanvas(QWidget):
                 logging.info(f"Updating layer names for set {set_number}")
                 self.layer_panel.update_layer_names(set_number)
 
+            # Suppress intermediate saves during strand creation to prevent duplicate states
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager._suppress_intermediate_saves = True
+            
             # Update the color in the layer panel
             self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
+            
+            # Clear suppression flag after color update
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager._suppress_intermediate_saves = False
 
         # Select the new strand if it's not an attached strand
         if not isinstance(strand, AttachedStrand):

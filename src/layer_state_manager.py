@@ -428,6 +428,13 @@ class LayerStateManager(QObject):
         # print(f"LayerStateManager: Masked layer created: {masked_strand.layer_name}")
         if hasattr(self, 'logger'):
             self.logger.info(f"Masked layer created: {masked_strand.layer_name}")
+        
+        # Check if we should skip saving due to mask operation in progress
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            if getattr(self.canvas.undo_redo_manager, '_mask_save_in_progress', False):
+                logging.info("=== LAYER STATE MANAGER DEBUG === Skipping save_current_state (mask save in progress)")
+                return
+        
         self.save_current_state()
 
     @pyqtSlot()

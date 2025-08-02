@@ -1986,18 +1986,14 @@ class LayerPanel(QWidget):
         self.masked_mode_exited.emit()
         self.notification_label.clear()
 
-        # Save state after mask editing is complete
+        # Save state after exiting mask mode (only once)
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            logging.info("Saving state after mask edit completed")
-            self.undo_redo_manager.save_state()
-
-        # --- ADD: Save state after exiting mask edit mode ---
-        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
-            self.undo_redo_manager._last_save_time = 0
-            logging.info("Saving state after exiting mask edit mode")
-            self.undo_redo_manager.save_state()
-        # --- END ADD ---
+            # Check if we're already in a mask save operation to prevent duplicates
+            if not getattr(self.undo_redo_manager, '_mask_save_in_progress', False):
+                logging.info("=== MASK MODE DEBUG === Saving state after exiting mask mode")
+                self.undo_redo_manager.save_state()
+            else:
+                logging.info("=== MASK MODE DEBUG === Skipping save after exiting mask mode (mask save already in progress)")
 
     def toggle_lock_mode(self):
         """Toggle lock mode on/off and update UI accordingly."""

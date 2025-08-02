@@ -205,13 +205,7 @@ class MaskMode(QObject):
                     self.canvas.update()
                     logging.info(f"Completed masked layer creation with restored properties")
 
-                    # --- SAVE STATE AFTER MASK CREATION ---
-                    logging.info("Mask creation complete, saving state AFTER mask processing.")
-                    if self.undo_redo_manager:
-                        self.undo_redo_manager.save_state()
-                    else:
-                        logging.warning("UndoRedoManager not available in MaskMode, cannot save state after mask creation.")
-                    # --- END SAVE STATE ---
+                    # State saving will be handled by the enhanced mask_created signal handler in undo_redo_manager.py
 
     def find_masked_strand(self, strand1, strand2):
         for strand in self.canvas.strands:

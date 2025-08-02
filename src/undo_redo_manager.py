@@ -3233,9 +3233,8 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                     # Re-enable suppression for the next 250 ms to swallow any late calls
                     setattr(undo_redo_manager, '_skip_save', True)
                     QTimer.singleShot(250, lambda: setattr(undo_redo_manager, '_skip_save', False))
-                # Run after 300 ms – long enough for all delayed UI/logic handlers (color updates, group recreation, etc.)
-                # to complete, so we capture the *final* stable state only once.
-                QTimer.singleShot(300, _finalize_save)
+                # Run after 100 ms to ensure all side-effects (group recreation, layer updates…) are done
+                QTimer.singleShot(100, _finalize_save)
 
         # Replace the original function with our enhanced version
         canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release_and_save
@@ -3344,8 +3343,18 @@ def connect_strand_creation(canvas, undo_redo_manager):
             if hasattr(strand, 'parent') and strand.parent:
                 logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
                 return
+            
+            # Additional check for AttachedStrands by class name
+            if strand.__class__.__name__ == 'AttachedStrand':
+                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
+                return
+            
+            # Skip saving for MaskedStrands - they have their own state management
+            if strand.__class__.__name__ == 'MaskedStrand':
+                logging.info(f"strand_created signal processed for MaskedStrand {strand.layer_name}, skipping save (masked strands have their own state management).")
+                return
                 
-            # Save state for regular strands only
+            # Save state for regular main strands only
             logging.info(f"strand_created signal processed for regular strand {strand.layer_name}, saving state.")
             # Use a small delay to ensure all strand properties and connections are established
             QTimer.singleShot(50, lambda: undo_redo_manager.save_state())
@@ -3398,8 +3407,6 @@ def setup_undo_redo(canvas, layer_panel, base_path):
     # Connect to attach mode for *suppression* during strand creation
     connect_to_attach_mode(canvas, manager)
 
-    # Connect directly to strand_created for saving *after* creation
-    connect_strand_creation(canvas, manager) # <-- ADD THIS CALL
 
     # Connect to mask mode creation
     connect_to_mask_mode(canvas, manager)

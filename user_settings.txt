@@ -1,7 +1,7 @@
 Theme: default
-Language: he
+Language: en
 ShadowColor: 0,0,0,230
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: true
 EnableSnapToGrid: true
 NumSteps: 4

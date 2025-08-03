@@ -6,7 +6,7 @@ import logging
 import shutil
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
 from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
@@ -289,10 +289,21 @@ class StrokeTextButton(QPushButton):
         super().mouseReleaseEvent(event)
     
     def event(self, event):
-        """Override event to disable hover tooltips"""
-        if event.type() == event.ToolTip:
+        """Override event to disable hover tooltips and allow mouse events on disabled button"""
+        if event.type() == QEvent.ToolTip:
             # Ignore tooltip events
             return True
+        
+        # Allow mouse press/release events even when disabled
+        if not self.isEnabled() and event.type() in [QEvent.MouseButtonPress, QEvent.MouseButtonRelease]:
+            # Process mouse events directly for disabled buttons
+            if event.type() == QEvent.MouseButtonPress:
+                self.mousePressEvent(event)
+                return True
+            elif event.type() == QEvent.MouseButtonRelease:
+                self.mouseReleaseEvent(event)
+                return True
+        
         return super().event(event)
 
 # Removing the import of StrokeTextButton from external file
@@ -2811,6 +2822,23 @@ class UndoRedoManager(QObject):
             # This allows undoing from step 1 to the empty state
             can_undo = self.current_step > 0
             self.undo_button.setEnabled(can_undo)
+            
+            # Update tooltip based on enabled state
+            from translations import translations
+            language_code = 'en'  # Default
+            if hasattr(self.layer_panel, 'language_code'):
+                language_code = self.layer_panel.language_code
+            elif hasattr(self.layer_panel, 'parent_window') and hasattr(self.layer_panel.parent_window, 'language_code'):
+                language_code = self.layer_panel.parent_window.language_code
+            
+            _ = translations[language_code]
+            if can_undo:
+                self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+            else:
+                # Add "currently unavailable" to the tooltip when disabled
+                unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
+                self.undo_button.set_custom_tooltip(_['undo_tooltip'] + f'\n({unavailable_text})')
+            
             logging.debug(f"Undo button {'enabled' if can_undo else 'disabled'} (current_step={self.current_step})")
         else:
             logging.debug("Undo button not initialized yet")
@@ -2818,6 +2846,23 @@ class UndoRedoManager(QObject):
         if self.redo_button:
             can_redo = self.current_step < self.max_step
             self.redo_button.setEnabled(can_redo)
+            
+            # Update tooltip based on enabled state
+            from translations import translations
+            language_code = 'en'  # Default
+            if hasattr(self.layer_panel, 'language_code'):
+                language_code = self.layer_panel.language_code
+            elif hasattr(self.layer_panel, 'parent_window') and hasattr(self.layer_panel.parent_window, 'language_code'):
+                language_code = self.layer_panel.parent_window.language_code
+            
+            _ = translations[language_code]
+            if can_redo:
+                self.redo_button.set_custom_tooltip(_['redo_tooltip'])
+            else:
+                # Add "currently unavailable" to the tooltip when disabled
+                unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
+                self.redo_button.set_custom_tooltip(_['redo_tooltip'] + f'\n({unavailable_text})')
+                
             logging.debug(f"Redo button {'enabled' if can_redo else 'disabled'} (current_step={self.current_step}, max_step={self.max_step})")
         else:
             logging.debug("Redo button not initialized yet")
@@ -2934,8 +2979,19 @@ class UndoRedoManager(QObject):
         if self.undo_button and self.redo_button:
             from translations import translations
             _ = translations[language_code]
-            self.undo_button.set_custom_tooltip(_['undo_tooltip'])
-            self.redo_button.set_custom_tooltip(_['redo_tooltip'])
+            
+            # Check if buttons are enabled and set appropriate tooltip
+            if self.undo_button.isEnabled():
+                self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+            else:
+                unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
+                self.undo_button.set_custom_tooltip(_['undo_tooltip'] + f'\n({unavailable_text})')
+                
+            if self.redo_button.isEnabled():
+                self.redo_button.set_custom_tooltip(_['redo_tooltip'])
+            else:
+                unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
+                self.redo_button.set_custom_tooltip(_['redo_tooltip'] + f'\n({unavailable_text})')
 
     def clear_history(self, save_current=True):
         """Clear all saved states for the current session and reset the history."""

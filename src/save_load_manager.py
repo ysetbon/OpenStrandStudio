@@ -732,31 +732,54 @@ def load_strands(filename, canvas):
     # Fourth pass: Validate has_circles based on actual attached strands
     for strand in strands:
         if hasattr(strand, 'has_circles') and isinstance(strand.has_circles, list) and len(strand.has_circles) == 2:
-            # Reset has_circles array
-            start_has_attachment = False
-            end_has_attachment = False
-            
-            # For each strand, check if there are actual attached strands at each end
-            if hasattr(strand, 'attached_strands'):
-                for attached in strand.attached_strands:
-                    # Determine if attached to start or end
-                    # Check attachment_side to be sure
-                    if attached.start == strand.start and getattr(attached, 'attachment_side', 0) == 0:
-                        start_has_attachment = True
-                    elif attached.start == strand.end and getattr(attached, 'attachment_side', 0) == 1:
-                        end_has_attachment = True
-            
-            # Update has_circles to reflect actual attached strands, *unless* manually overridden
-            manual_override = getattr(strand, 'manual_circle_visibility', [None, None])
-            if manual_override[0] is None: # No manual override for start circle
-                strand.has_circles[0] = start_has_attachment
-            else: # Manual override exists, respect it
-                strand.has_circles[0] = manual_override[0]
+            # For AttachedStrand instances, always keep the starting circle (at attachment point)
+            if isinstance(strand, AttachedStrand):
+                # AttachedStrand should always have has_circles[0] = True (at attachment point)
+                # Only validate the end circle
+                end_has_attachment = False
+                
+                # Check if there are attached strands at the end
+                if hasattr(strand, 'attached_strands'):
+                    for attached in strand.attached_strands:
+                        if attached.start == strand.end and getattr(attached, 'attachment_side', 0) == 1:
+                            end_has_attachment = True
+                
+                # Always keep start circle for AttachedStrand
+                strand.has_circles[0] = True
+                
+                # Update end circle based on attachments, unless manually overridden
+                manual_override = getattr(strand, 'manual_circle_visibility', [None, None])
+                if manual_override[1] is None: # No manual override for end circle
+                    strand.has_circles[1] = end_has_attachment
+                else: # Manual override exists, respect it
+                    strand.has_circles[1] = manual_override[1]
+            else:
+                # For regular Strand instances, validate both circles
+                # Reset has_circles array
+                start_has_attachment = False
+                end_has_attachment = False
+                
+                # For each strand, check if there are actual attached strands at each end
+                if hasattr(strand, 'attached_strands'):
+                    for attached in strand.attached_strands:
+                        # Determine if attached to start or end
+                        # Check attachment_side to be sure
+                        if attached.start == strand.start and getattr(attached, 'attachment_side', 0) == 0:
+                            start_has_attachment = True
+                        elif attached.start == strand.end and getattr(attached, 'attachment_side', 0) == 1:
+                            end_has_attachment = True
+                
+                # Update has_circles to reflect actual attached strands, *unless* manually overridden
+                manual_override = getattr(strand, 'manual_circle_visibility', [None, None])
+                if manual_override[0] is None: # No manual override for start circle
+                    strand.has_circles[0] = start_has_attachment
+                else: # Manual override exists, respect it
+                    strand.has_circles[0] = manual_override[0]
 
-            if manual_override[1] is None: # No manual override for end circle
-                strand.has_circles[1] = end_has_attachment
-            else: # Manual override exists, respect it
-                strand.has_circles[1] = manual_override[1]
+                if manual_override[1] is None: # No manual override for end circle
+                    strand.has_circles[1] = end_has_attachment
+                else: # Manual override exists, respect it
+                    strand.has_circles[1] = manual_override[1]
             
             # Call update_attachable to refresh the attachable property
             if hasattr(strand, 'update_attachable'):

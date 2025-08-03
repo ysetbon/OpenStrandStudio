@@ -6,7 +6,7 @@ import logging
 import shutil
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
 from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
@@ -31,6 +31,10 @@ class StrokeTextButton(QPushButton):
         self.setAttribute(Qt.WA_StyledBackground, True)
         # Enable mouse tracking for better hover detection
         self.setMouseTracking(True)
+        # For right-click tooltip functionality
+        self.custom_tooltip = ""
+        # Disable default tooltip behavior
+        self.setToolTip("")
     
     def setup_theme_colors(self):
         """Set up color schemes for different themes"""
@@ -192,6 +196,104 @@ class StrokeTextButton(QPushButton):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.updateStyleSheet()
+    
+    def set_custom_tooltip(self, text):
+        """Set the custom tooltip text"""
+        self.custom_tooltip = text
+        # Make sure default tooltip is disabled
+        self.setToolTip("")
+    
+    def mousePressEvent(self, event):
+        """Handle mouse press events"""
+        if event.button() == Qt.RightButton:
+            logging.info(f"Right-click press detected on StrokeTextButton. Tooltip text: '{self.custom_tooltip}'")
+            
+            if self.custom_tooltip:
+                # Import CustomTooltip here to avoid circular imports
+                from layer_panel import CustomTooltip
+                
+                # Find the LayerPanel to get the panel's position and size
+                layer_panel = None
+                parent = self.parent()
+                while parent:
+                    if parent.__class__.__name__ == 'LayerPanel':
+                        layer_panel = parent
+                        break
+                    parent = parent.parent()
+                
+                if layer_panel:
+                    # Get the LayerPanel's position and size
+                    panel_global_pos = layer_panel.mapToGlobal(QPoint(0, 0))
+                    panel_size = layer_panel.size()
+                    
+                    # Simple 4th row calculation: 3 rows down from panel top
+                    fourth_row_y = panel_global_pos.y() + 190  # 3 rows * 40px + 3 gaps * 5px
+                    
+                    # Find the center X based on hide button and refresh button positions
+                    # Get the hide button (multi_select_button) and refresh button positions
+                    hide_button = getattr(layer_panel, 'multi_select_button', None)
+                    refresh_button = getattr(layer_panel, 'refresh_button', None)
+                    
+                    if hide_button and refresh_button:
+                        # Get the global positions of both buttons
+                        hide_global_pos = hide_button.mapToGlobal(QPoint(0, 0))
+                        refresh_global_pos = refresh_button.mapToGlobal(QPoint(0, 0))
+
+                        # Calculate the center between these two buttons
+                        # Get the actual content area of buttons, excluding any extra spacing
+                        hide_left = hide_global_pos.x()
+                        hide_right = hide_global_pos.x() + hide_button.width()
+                        refresh_left = refresh_global_pos.x()
+                        refresh_right = refresh_global_pos.x() + refresh_button.width()
+                        
+                        # Calculate center point between the two button regions
+                        center_x = (hide_right + refresh_left) // 2
+
+                        # Create and show custom tooltip at exact position
+                        # Always recreate the tooltip to ensure consistent styling
+                        if hasattr(self, '_custom_tooltip_widget'):
+                            self._custom_tooltip_widget.hide()
+                            self._custom_tooltip_widget.deleteLater()
+                        
+                        self._custom_tooltip_widget = CustomTooltip("", self)
+                        self._custom_tooltip_widget.setText(self.custom_tooltip)
+                        # Force theme update to ensure proper styling
+                        self._custom_tooltip_widget.updateTheme()
+                        self._custom_tooltip_widget.adjustSize()
+                        
+                        # Position tooltip so its center aligns exactly with center_x
+                        tooltip_width = self._custom_tooltip_widget.width()
+                        tooltip_pos = QPoint(
+                            center_x - tooltip_width // 2,
+                            fourth_row_y
+                        )
+                        
+                        self._custom_tooltip_widget.showAt(tooltip_pos, timeout=0)  # No auto-hide
+                    
+            event.accept()
+            return
+        
+        # For left-click or other buttons, process normally
+        super().mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release events"""
+        if event.button() == Qt.RightButton:
+            # Hide tooltip immediately when right-click is released
+            if hasattr(self, '_custom_tooltip_widget'):
+                self._custom_tooltip_widget.hide()
+            event.accept()
+            return
+        
+        # For left-click or other buttons, process normally
+        super().mouseReleaseEvent(event)
+    
+    def event(self, event):
+        """Override event to disable hover tooltips"""
+        if event.type() == event.ToolTip:
+            # Ignore tooltip events
+            return True
+        return super().event(event)
 
 # Removing the import of StrokeTextButton from external file
 # from stroke_text_button import StrokeTextButton
@@ -2796,9 +2898,17 @@ class UndoRedoManager(QObject):
         self.undo_button.setFixedSize(40, 40)
         self.redo_button.setFixedSize(40, 40)
         
-        # Set tooltips
-        self.undo_button.setToolTip("Undo last action")
-        self.redo_button.setToolTip("Redo last undone action")
+        # Set tooltips using custom tooltip method for right-click with translations
+        from translations import translations
+        language_code = 'en'  # Default
+        if hasattr(self.layer_panel, 'language_code'):
+            language_code = self.layer_panel.language_code
+        elif hasattr(self.canvas, 'language_code'):
+            language_code = self.canvas.language_code
+        
+        _ = translations[language_code]
+        self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+        self.redo_button.set_custom_tooltip(_['redo_tooltip'])
         
         # Connect button clicks
         self.undo_button.clicked.connect(self.undo)
@@ -2818,6 +2928,14 @@ class UndoRedoManager(QObject):
         logging.info("Undo/redo buttons initialized and added to layout")
         
         return self.undo_button, self.redo_button
+    
+    def update_button_tooltips(self, language_code='en'):
+        """Update button tooltips with the current language"""
+        if self.undo_button and self.redo_button:
+            from translations import translations
+            _ = translations[language_code]
+            self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+            self.redo_button.set_custom_tooltip(_['redo_tooltip'])
 
     def clear_history(self, save_current=True):
         """Clear all saved states for the current session and reset the history."""

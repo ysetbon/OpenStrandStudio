@@ -1518,6 +1518,10 @@ class LayerPanel(QWidget):
         self.set_button_tooltip(self.pan_button, _['pan_tooltip'])
         # Update other text elements as needed
 
+        # Update undo/redo button tooltips
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.update_button_tooltips(self.language_code)
+
         # Update the GroupLayerManager
         if self.group_layer_manager:
             self.group_layer_manager.language_code = self.language_code

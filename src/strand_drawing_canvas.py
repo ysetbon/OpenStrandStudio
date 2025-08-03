@@ -1623,26 +1623,92 @@ class StrandDrawingCanvas(QWidget):
 
         # Draw ALL existing strands first (background)
         if draw_all_strands:
+            # Debug: log all strands that should be drawn
+            if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving:
+                if not hasattr(self, '_logged_strands_list'):
+                    self._logged_strands_list = True
+                    logging.info(f"paintEvent: draw_all_strands=True, draw_only_affected_strand={getattr(self.current_mode, 'draw_only_affected_strand', None)}")
+                    logging.info(f"paintEvent: Drawing all strands. Total strands count: {len(self.strands)}")
+                    logging.info(f"paintEvent: Strands list: {[s.layer_name for s in self.strands]}")
+                    
+                    # Also log which strands have parent_strand
+                    for s in self.strands:
+                        if hasattr(s, 'parent_strand') and s.parent_strand:
+                            logging.info(f"paintEvent: Strand {s.layer_name} has parent {s.parent_strand.layer_name}")
+                    
             for strand in self.strands:
                 # Reduced high-frequency logging for performance
             # logging.info(f"Drawing strand '{strand.layer_name}'")
                 if not hasattr(strand, 'canvas'):
                     strand.canvas = self  # Ensure all strands have canvas reference
+                    
+                # Also draw parent strands that might not be in self.strands
+                # Check if this is an attached strand with a parent
+                if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
+                    parent = strand.parent_strand
+                    if not hasattr(parent, '_already_drawn_this_frame'):
+                        parent._already_drawn_this_frame = True
+                        # Draw the parent strand first
+                        if not hasattr(parent, 'canvas'):
+                            parent.canvas = self
+                        
+                        # Apply the same highlighting logic to parent strand
+                        parent_is_selected = (parent == self.selected_strand or parent == self.selected_attached_strand or getattr(parent, 'is_selected', False))
+                        parent_should_suppress = False
+                        parent_should_force = False
+                        
+                        if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                            (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                            truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                            parent_should_be_highlighted = (parent in truly_moving_strands or 
+                                                          (hasattr(parent, 'is_selected') and parent.is_selected))
+                            
+                            if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                                if not parent_should_be_highlighted:
+                                    parent_should_suppress = True
+                            else:
+                                if parent_should_be_highlighted:
+                                    parent_should_force = True
+                                    if not hasattr(self, '_logged_parent_force_highlight'):
+                                        self._logged_parent_force_highlight = True
+                                        logging.info(f"Toggle OFF: Force highlighting parent strand {parent.layer_name}")
+                        
+                        # Draw the parent with appropriate highlighting
+                        if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress:
+                            self.draw_highlighted_strand(painter, parent)
+                        else:
+                            parent.draw(painter, skip_painter_setup=True)
                 # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property --- 
                 is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
                 
                 # Check if we should suppress highlighting due to "drag only affected strand" setting
                 should_suppress_highlight = False
+                should_force_highlight = False  # New flag to force highlighting when toggle is off
+                
                 if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                    hasattr(self.current_mode, 'draw_only_affected_strand') and 
-                    self.current_mode.draw_only_affected_strand and
                     (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
                     truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                    if strand not in truly_moving_strands:
-                        should_suppress_highlight = True
+                    
+                    # Also check if this strand is set to be selected by the move mode
+                    # This handles the case where paintEvent runs before truly_moving_strands is fully populated
+                    strand_should_be_highlighted = (strand in truly_moving_strands or 
+                                                   (hasattr(strand, 'is_selected') and strand.is_selected))
+                    
+                    if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                        # When toggle is ON: suppress non-moving strands
+                        if not strand_should_be_highlighted:
+                            should_suppress_highlight = True
+                    else:
+                        # When toggle is OFF: force highlight for all strands that should be highlighted
+                        if strand_should_be_highlighted:
+                            should_force_highlight = True
+                            if not hasattr(self, '_logged_force_highlight'):
+                                self._logged_force_highlight = True
+                                logging.info(f"Toggle OFF: Force highlighting strand {strand.layer_name} (is_selected={getattr(strand, 'is_selected', False)}, in truly_moving_strands: {[s.layer_name for s in truly_moving_strands]})")
                 
                 # Only highlight selected strand if we're not in mask mode and not suppressed
-                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not should_suppress_highlight:
+                # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
+                if (is_selected_for_highlight or should_force_highlight) and not isinstance(self.current_mode, MaskMode) and not should_suppress_highlight:
                     # Reduced high-frequency logging for performance
             # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)
@@ -2145,6 +2211,18 @@ class StrandDrawingCanvas(QWidget):
         
         painter.end()
         
+        # Clear the frame flags for parent strands
+        for strand in self.strands:
+            if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
+                if hasattr(strand.parent_strand, '_already_drawn_this_frame'):
+                    delattr(strand.parent_strand, '_already_drawn_this_frame')
+        
+        # Clear other temporary flags
+        if hasattr(self, '_logged_strands_list'):
+            delattr(self, '_logged_strands_list')
+        if hasattr(self, '_logged_parent_force_highlight'):
+            delattr(self, '_logged_parent_force_highlight')
+        
         # If using supersampling, now draw the high-res buffer to the widget
         if self.use_supersampling:
             widget_painter = QPainter(self)
@@ -2585,6 +2663,7 @@ class StrandDrawingCanvas(QWidget):
 
 
             # Slightly thinner stroke for circles
+            logging.warning(f"Canvas: Strand {strand.layer_name} has_circles: {strand.has_circles}")
             for i, has_circle in enumerate(strand.has_circles):
                 # Skip drawing C-shapes when moving control points or when strand is locked
                 if has_circle:
@@ -2598,7 +2677,21 @@ class StrandDrawingCanvas(QWidget):
                         # Reduced high-frequency logging for performance during moves
                         # logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
                         pass
-                if has_circle and not is_moving_control_point and not is_strand_locked:
+                
+                # Check if we should draw C-shapes for this strand
+                should_draw_c_shape = has_circle and not is_moving_control_point and not is_strand_locked
+                
+                # If strand is in truly_moving_strands, always draw C-shapes regardless of is_selected
+                if not should_draw_c_shape and has_circle:
+                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                    if strand in truly_moving_strands:
+                        should_draw_c_shape = True
+                        logging.warning(f"Canvas: Drawing C-shape for {strand.layer_name} because it's in truly_moving_strands (even though is_selected={getattr(strand, 'is_selected', False)})")
+                
+                if should_draw_c_shape:
+                    # Debug logging for C-shape drawing
+                    logging.warning(f"Canvas: About to draw C-shape for {strand.layer_name} at position {i} (has_circle={has_circle}, is_selected={getattr(strand, 'is_selected', False)})")
+                    
                     # Save painter state
                     painter.save()
                     
@@ -2724,6 +2817,9 @@ class StrandDrawingCanvas(QWidget):
                     
                     # Restore painter state
                     painter.restore()
+                    
+                    # Debug logging for C-shape completion
+                    logging.warning(f"Canvas: Completed drawing C-shape for {strand.layer_name} at position {i}")
             
             # This restore was likely misplaced inside the loop, moved outside
             # painter.restore()
@@ -3092,33 +3188,50 @@ class StrandDrawingCanvas(QWidget):
         # Don't clear is_selected if we're in the middle of a movement operation
         should_clear_selection = True
         if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-            self.current_mode.is_moving and hasattr(self, 'truly_moving_strands')):
+            (self.current_mode.is_moving or self.current_mode.in_move_mode) and hasattr(self, 'truly_moving_strands')):
             should_clear_selection = False
             logging.info(f"[SELECTION_DEBUG] Skipping is_selected clearing during movement operation")
+        elif (hasattr(self, 'truly_moving_strands') and self.truly_moving_strands):
+            # ADDITIONAL CHECK: If truly_moving_strands exists and is not empty, we're in movement setup
+            should_clear_selection = False
+            logging.info(f"[SELECTION_DEBUG] Skipping is_selected clearing because truly_moving_strands exists: {[s.layer_name for s in self.truly_moving_strands]}")
         else:
-            logging.info(f"[SELECTION_DEBUG] Will clear is_selected: current_mode={type(self.current_mode).__name__}, is_moving={getattr(self.current_mode, 'is_moving', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, has_truly_moving={hasattr(self, 'truly_moving_strands')}")
+            logging.info(f"[SELECTION_DEBUG] Will clear is_selected: current_mode={type(self.current_mode).__name__}, is_moving={getattr(self.current_mode, 'is_moving', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, in_move_mode={getattr(self.current_mode, 'in_move_mode', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, has_truly_moving={hasattr(self, 'truly_moving_strands')}")
         
         # Deselect all strands first (unless we're moving)
         if should_clear_selection:
             for strand in self.strands:
+                # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
+                if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
+                    logging.info(f"[SELECTION_DEBUG] Preserving is_selected=True for moving strand {strand.layer_name}")
+                    continue
+                
                 if hasattr(strand, 'layer_name') and strand.layer_name == '1_2':
                     logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for strand 1_2 in select_strand method")
                 strand.is_selected = False
                 if hasattr(strand, 'attached_strands'):
                     for attached_strand in strand.attached_strands:
+                        # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
+                        if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
+                            logging.info(f"[SELECTION_DEBUG] Preserving is_selected=True for moving attached strand {attached_strand.layer_name}")
+                            continue
+                        
                         if hasattr(attached_strand, 'layer_name') and attached_strand.layer_name == '1_2':
                             logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for attached strand 1_2 in select_strand method")
                         attached_strand.is_selected = False
 
         # When explicitly selecting a strand, reset the user_deselected_all flag in MoveMode
-        if index is not None and 0 <= index < len(self.strands) and isinstance(self.current_mode, MoveMode):
-            if hasattr(self.current_mode, 'user_deselected_all'):
-                self.current_mode.user_deselected_all = False
-
         if index is not None and 0 <= index < len(self.strands):
-            # print(f"selected_strand = {self.strands[index]}")
-            self.selected_strand = self.strands[index]
-            self.selected_strand.is_selected = True
+            # If we are in move mode, ensure all truly_moving_strands are selected
+            if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving:
+                if hasattr(self.current_mode, 'truly_moving_strands'):
+                    for s in self.current_mode.truly_moving_strands:
+                        s.is_selected = True
+            else:
+                # Default behavior: select only the clicked strand
+                self.selected_strand = self.strands[index]
+                self.selected_strand.is_selected = True
+
             self.selected_strand_index = index
             self.last_selected_strand_index = index
 
@@ -3242,11 +3355,20 @@ class StrandDrawingCanvas(QWidget):
     def deselect_all_strands(self):
         """Deselect all strands and update the canvas."""
         def deselect_strand_recursively(strand):
+            # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
+            if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
+                logging.info(f"[DESELECT_DEBUG] Preserving is_selected=True for moving strand {strand.layer_name}")
+                return  # Skip this strand
+            
             strand.is_selected = False
             strand.start_selected = False
             strand.end_selected = False
             if hasattr(strand, 'attached_strands'):
                 for attached_strand in strand.attached_strands:
+                    # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
+                    if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
+                        logging.info(f"[DESELECT_DEBUG] Preserving is_selected=True for moving attached strand {attached_strand.layer_name}")
+                        continue
                     deselect_strand_recursively(attached_strand)
 
         for strand in self.strands:

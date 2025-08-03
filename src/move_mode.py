@@ -257,9 +257,15 @@ class MoveMode:
         # Set active strand for drawing
         self.canvas.active_strand_for_drawing = self.affected_strand
         
-        # Setup efficient paint handler if needed
-        if not hasattr(self.canvas, 'original_paintEvent'):
+        # Always setup efficient paint handler during movement for consistent behavior
+        # The toggle setting will control what gets drawn, not which paint handler to use
+        has_original = hasattr(self.canvas, 'original_paintEvent')
+        logging.info(f"MoveMode: update_strand_position - has_original_paintEvent: {has_original}")
+        if not has_original:
+            logging.info("MoveMode: Setting up optimized paint handler in update_strand_position")
             self._setup_optimized_paint_handler()
+        else:
+            logging.info("MoveMode: Optimized paint handler already exists, skipping setup")
         
         # Track first movement of C-shape
         if is_moving_c_shape and not hasattr(self, '_c_shape_first_move'):
@@ -403,25 +409,43 @@ class MoveMode:
             from PyQt5.QtCore import Qt
             import logging
             
-            if not perf_logger.suppress_move_logging:
-                logging.info("MoveMode: Optimized paint event triggered")
+            # Always log at WARNING level to ensure we see this
+            logging.warning("MoveMode: Optimized paint event triggered")
             
             # Access the MoveMode instance through the stored reference
             move_mode = move_mode_ref
             
             # --- MODIFIED ENTRY CONDITION ---
-            # Check if we should use the optimized path based on moving state and populated truly_moving_strands
+            # Check if we should use the optimized path
             use_optimized_path = False
-            if hasattr(move_mode_ref, 'is_moving') and move_mode_ref.is_moving:
-                 truly_moving_strands_check = getattr(self_canvas, 'truly_moving_strands', [])
-                 if truly_moving_strands_check: # If there are strands marked for optimized drawing
-                     use_optimized_path = True
-                 # Fallback: Check if the legacy active_strand is set (less reliable but keep for safety)
-                 elif hasattr(self_canvas, 'active_strand_for_drawing') and self_canvas.active_strand_for_drawing is not None:
-                      logging.warning("MoveMode: Using optimized path based on fallback active_strand_for_drawing.")
-                      use_optimized_path = True
-
+            
+            # Check if we have any selected strands that need highlighting
+            has_selected_strands = False
+            truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
+            for strand in self_canvas.strands:
+                if getattr(strand, 'is_selected', False):
+                    has_selected_strands = True
+                    break
+            
+            # Always use optimized path when:
+            # 1. MoveMode is set up AND
+            # 2. Either we're actively moving OR we have selected strands that need highlighting
+            has_canvas = hasattr(move_mode_ref, 'canvas')
+            canvas_match = move_mode_ref.canvas == self_canvas if has_canvas else False
+            is_moving = getattr(move_mode_ref, 'is_moving', False)
+            
+            logging.warning(f"MoveMode: Entry condition check - has_canvas: {has_canvas}, canvas_match: {canvas_match}, is_moving: {is_moving}, has_selected_strands: {has_selected_strands}")
+            
+            if has_canvas and canvas_match and (is_moving or has_selected_strands or truly_moving_strands):
+                use_optimized_path = True
+                logging.warning("MoveMode: Using optimized paint handler for highlighting")
+                logging.warning(f"MoveMode: draw_only_affected_strand = {getattr(move_mode_ref, 'draw_only_affected_strand', None)}")
+                logging.warning(f"MoveMode: truly_moving_strands = {[s.layer_name for s in truly_moving_strands]}")
+            else:
+                logging.warning(f"MoveMode: Not using optimized path - move_mode_ref: {move_mode_ref}, self_canvas: {self_canvas}")
+            
             if not use_optimized_path:
+                logging.warning(f"MoveMode: Not using optimized path, falling back to original paint event")
                 logging.info(f"MoveMode: Not moving (is_moving={getattr(move_mode_ref, 'is_moving', False)}) or no strands designated for optimized drawing, using original paint event.")
                 logging.info(f"MoveMode: show_control_points={getattr(self_canvas, 'show_control_points', False)}")
                 # If the original event exists, call it. Otherwise, maybe log an error or do nothing.
@@ -442,7 +466,29 @@ class MoveMode:
         
 
             # Store original order of all strands for proper z-ordering
-            original_strands_order = list(self_canvas.strands)
+            # We need to collect ALL strands including attached strands
+            original_strands_order = []
+            logging.info(f"MoveMode: self_canvas.strands contains {len(self_canvas.strands)} main strands")
+            
+            # First, collect all main strands
+            for strand in self_canvas.strands:
+                original_strands_order.append(strand)
+                logging.info(f"MoveMode: Added main strand: {strand.layer_name}")
+            
+            # Then recursively add all attached strands
+            for strand in self_canvas.strands:
+                def collect_attached_strands(parent_strand):
+                    for attached in parent_strand.attached_strands:
+                        if attached not in original_strands_order:  # Avoid duplicates
+                            original_strands_order.append(attached)
+                            logging.info(f"MoveMode: Added attached strand: {attached.layer_name} (parent: {parent_strand.layer_name})")
+                        collect_attached_strands(attached)
+                collect_attached_strands(strand)
+                
+            # Debug logging
+            if not perf_logger.suppress_move_logging:
+                logging.info(f"MoveMode: self_canvas.strands contains: {[s.layer_name for s in self_canvas.strands]}")
+                logging.info(f"MoveMode: Collected original_strands_order: {[s.layer_name for s in original_strands_order]}")
             
             # --- MODIFIED: Don't exit early if active_strand is None but truly_moving_strands has strands ---
             if not hasattr(self_canvas, 'active_strand_for_drawing') or self_canvas.active_strand_for_drawing is None:
@@ -465,6 +511,18 @@ class MoveMode:
             
             # Special handling for the very first paint during movement to ensure consistent rendering
             first_movement = hasattr(self_canvas, 'movement_first_draw') and self_canvas.movement_first_draw == False
+            
+            # Debug: Check if this is the very first paint
+            if first_movement and not perf_logger.suppress_move_logging:
+                logging.info("MoveMode: FIRST PAINT EVENT during movement")
+                logging.info(f"MoveMode: Canvas has {len(self_canvas.strands)} strands in main list")
+                all_strand_names = []
+                for s in self_canvas.strands:
+                    all_strand_names.append(s.layer_name)
+                    if hasattr(s, 'attached_strands'):
+                        for att in s.attached_strands:
+                            all_strand_names.append(att.layer_name)
+                logging.info(f"MoveMode: All strands (including attached): {all_strand_names}")
             
             # Create a background cache first time or if it's invalidated
             background_cache_needed = (not hasattr(self_canvas, 'background_cache') or 
@@ -507,12 +565,70 @@ class MoveMode:
             
             # Get truly moving strands from the canvas attribute if available, otherwise create it
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
-            if not truly_moving_strands and hasattr(move_mode, 'affected_strand') and move_mode.affected_strand:
-                truly_moving_strands = [move_mode.affected_strand]
-                # For attached strands, we want to also move immediate children but keep parents in original order
-                if isinstance(move_mode.affected_strand, AttachedStrand) and hasattr(move_mode.affected_strand, 'attached_strands'):
-                    # Include the attached strands of the moving strand
-                    truly_moving_strands.extend(move_mode.affected_strand.attached_strands)
+            
+            # Ensure truly_moving_strands is populated even when not actively moving
+            # This is crucial for proper highlighting when toggle is OFF
+            if not truly_moving_strands:
+                # If we have an affected strand, use it
+                if hasattr(move_mode, 'affected_strand') and move_mode.affected_strand:
+                    truly_moving_strands = [move_mode.affected_strand]
+                    # For attached strands, we want to also move immediate children but keep parents in original order
+                    if isinstance(move_mode.affected_strand, AttachedStrand) and hasattr(move_mode.affected_strand, 'attached_strands'):
+                        # Include the attached strands of the moving strand
+                        truly_moving_strands.extend(move_mode.affected_strand.attached_strands)
+                # If no affected strand but we have selected strands, use those for highlighting
+                elif not getattr(move_mode, 'is_moving', False):
+                    # When not actively moving, collect all selected strands for highlighting
+                    for strand in self_canvas.strands:
+                        if getattr(strand, 'is_selected', False):
+                            truly_moving_strands.append(strand)
+                        # Also check attached strands
+                        if hasattr(strand, 'attached_strands'):
+                            for attached in strand.attached_strands:
+                                if getattr(attached, 'is_selected', False):
+                                    truly_moving_strands.append(attached)
+                    # Also check canvas selection references
+                    if self_canvas.selected_strand and self_canvas.selected_strand not in truly_moving_strands:
+                        truly_moving_strands.append(self_canvas.selected_strand)
+                    if self_canvas.selected_attached_strand and self_canvas.selected_attached_strand not in truly_moving_strands:
+                        truly_moving_strands.append(self_canvas.selected_attached_strand)
+                        
+            # CRITICAL FIX: When toggle is OFF, ensure ALL strands with is_selected=True are in truly_moving_strands
+            # This ensures proper highlighting for connected strands
+            if not move_mode.draw_only_affected_strand:
+                logging.info("MoveMode: Toggle OFF - collecting all selected strands for highlighting")
+                # Collect all strands that have is_selected=True
+                selected_strands = []
+                for strand in original_strands_order:
+                    if getattr(strand, 'is_selected', False):
+                        if strand not in truly_moving_strands:
+                            truly_moving_strands.append(strand)
+                            logging.info(f"MoveMode: Added selected strand {strand.layer_name} to truly_moving_strands")
+                            
+                logging.info(f"MoveMode: Final truly_moving_strands after toggle OFF collection: {[s.layer_name for s in truly_moving_strands]}")
+                    
+            # Important: Ensure all truly moving strands are actually present in the original_strands_order
+            # This handles the case where strands were just attached and might not be fully synchronized
+            for moving_strand in truly_moving_strands[:]:  # Use slice to avoid modifying list while iterating
+                if moving_strand not in original_strands_order:
+                    logging.warning(f"MoveMode: Moving strand {moving_strand.layer_name} was not in original_strands_order! This suggests a synchronization issue.")
+                    # Try to find it in the canvas strands or attached strands
+                    found = False
+                    for canvas_strand in self_canvas.strands:
+                        if canvas_strand == moving_strand:
+                            original_strands_order.append(moving_strand)
+                            found = True
+                            break
+                        elif hasattr(canvas_strand, 'attached_strands'):
+                            for attached in canvas_strand.attached_strands:
+                                if attached == moving_strand:
+                                    original_strands_order.append(moving_strand)
+                                    found = True
+                                    break
+                            if found:
+                                break
+                    if not found:
+                        logging.error(f"MoveMode: Could not find moving strand {moving_strand.layer_name} anywhere!")
                 
                 # Special handling for MaskedStrand - ensure both selected strands are included
                 if isinstance(move_mode.affected_strand, MaskedStrand):
@@ -565,10 +681,20 @@ class MoveMode:
                     # Save the original strands list
                     original_strands = list(self_canvas.strands)
                     
-                    # Create a temporary list without the truly moving strands
-                    # This way, affected but not moving strands (like parent strands) 
-                    # will be drawn in their original order
-                    static_strands = [s for s in original_strands if s not in truly_moving_strands]
+                    # Handle both toggle states: 
+                    # - When toggle ON: draw only affected strands (exclude non-moving strands from background)
+                    # - When toggle OFF: draw all strands with proper highlighting (exclude all strands from background, draw them on top)
+                    if move_mode.draw_only_affected_strand:
+                        # Original behavior: Create a temporary list without the truly moving strands
+                        # This way, affected but not moving strands (like parent strands) 
+                        # will be drawn in their original order
+                        static_strands = [s for s in original_strands if s not in truly_moving_strands]
+                        logging.info("MoveMode: Toggle ON - drawing only affected strands")
+                    else:
+                        # New behavior: When toggle is OFF, exclude ALL strands from background cache
+                        # so they can all be drawn on top with proper highlighting
+                        static_strands = []  # Empty background cache (just grid/background)
+                        logging.info("MoveMode: Toggle OFF - drawing all strands with proper highlighting")
                     
                     # For MaskedStrand, ensure both constituent strands are handled properly
                     if isinstance(active_strand, MaskedStrand):
@@ -658,30 +784,120 @@ class MoveMode:
                         logging.info(f"MoveMode: Drawing C-shape EARLY for affected: {affected_strand.layer_name}")
                 # --- END DRAW C-SHAPE EARLY ---
 
-                # Now draw only the truly moving strands on top - maintain their original relative order
-                sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
+                # Draw strands on top based on toggle state:
+                # - When toggle ON: draw only truly moving strands  
+                # - When toggle OFF: draw ALL strands with proper highlighting
+                if move_mode.draw_only_affected_strand:
+                    # Original behavior: draw only the truly moving strands on top
+                    sorted_moving_strands = [s for s in original_strands_order if s in truly_moving_strands]
+                else:
+                    # New behavior: draw ALL strands on top, maintaining original order
+                    # BUT also ensure any selected strands not in original order are included
+                    sorted_moving_strands = list(original_strands_order)  # Start with original order
+                    
+                    # Add any selected strands that aren't in original order but are in truly_moving_strands
+                    for strand in truly_moving_strands:
+                        if strand not in sorted_moving_strands:
+                            sorted_moving_strands.append(strand)
+                            logging.warning(f"MoveMode: Added strand {strand.layer_name} from truly_moving_strands to sorted_moving_strands")
+                    
+                # Debug: Check if strands marked with is_selected are in sorted_moving_strands
+                for strand in original_strands_order:
+                    if getattr(strand, 'is_selected', False) and strand not in sorted_moving_strands:
+                        logging.error(f"MoveMode: PROBLEM! Strand {strand.layer_name} has is_selected=True but is NOT in sorted_moving_strands!")
+                    if getattr(strand, 'is_selected', False):
+                        logging.info(f"MoveMode: Strand {strand.layer_name} has is_selected=True")
+                
+                # Debug logging for strand filtering - use WARNING to ensure visibility
+                logging.warning(f"MoveMode: original_strands_order contains {len(original_strands_order)} strands")
+                logging.warning(f"MoveMode: original_strands_order strand names: {[s.layer_name for s in original_strands_order]}")
+                logging.warning(f"MoveMode: truly_moving_strands contains: {[s.layer_name for s in truly_moving_strands]}")
+                logging.warning(f"MoveMode: sorted_moving_strands contains: {[s.layer_name for s in sorted_moving_strands]}")
+                logging.warning(f"MoveMode: sorted_moving_strands count: {len(sorted_moving_strands)}")
+                if move_mode.draw_only_affected_strand:
+                    logging.warning("MoveMode: Toggle ON - will draw only moving strands")
+                else:
+                    logging.warning("MoveMode: Toggle OFF - will draw all strands with highlighting")
+                    
+                    # Check if any strands are missing (only relevant when toggle is ON)
+                    if move_mode.draw_only_affected_strand:
+                        for strand in truly_moving_strands:
+                            if strand not in sorted_moving_strands:
+                                logging.warning(f"MoveMode: Strand {strand.layer_name} is in truly_moving_strands but NOT in sorted_moving_strands!")
+                                if strand not in original_strands_order:
+                                    logging.warning(f"MoveMode: Strand {strand.layer_name} is NOT in original_strands_order!")
 
-                # --- DRAW ALL MOVING STRAND BODIES (AFTER C-SHAPE) --- 
+                # --- DRAW STRAND BODIES WITH PROPER HIGHLIGHTING --- 
                 if not perf_logger.suppress_move_logging:
-                    logging.info("MoveMode: Drawing moving strand bodies")
+                    if move_mode.draw_only_affected_strand:
+                        logging.info("MoveMode: Drawing moving strand bodies (toggle ON)")
+                    else:
+                        logging.info("MoveMode: Drawing all strand bodies with highlighting (toggle OFF)")
+                        
                 for strand in sorted_moving_strands:
                     painter.save() # Ensure clean state for each strand
                     try:
                         if hasattr(strand, 'draw'):
-                            strand.draw(painter, skip_painter_setup=True)
-                            logging.info(f"MoveMode: Drew strand body for {strand.layer_name}")
-
-                            # --- ADD C-SHAPE DRAW HERE ---
-                            # Check if this is the main affected strand and if it should be highlighted
-                            is_affected_and_selected = (strand == move_mode.affected_strand and strand.is_selected)
-                            if is_affected_and_selected:
+                            # Always log at WARNING to ensure visibility
+                            logging.warning(f"MoveMode: About to draw strand: {strand.layer_name}")
+                            
+                            # DEBUG: Log the current selection state for this strand
+                            logging.warning(f"MoveMode: DEBUG - {strand.layer_name}.is_selected = {getattr(strand, 'is_selected', False)}")
+                            logging.warning(f"MoveMode: DEBUG - {strand.layer_name} in truly_moving_strands = {strand in truly_moving_strands}")
+                            logging.warning(f"MoveMode: DEBUG - {strand.layer_name} == selected_strand = {strand == self_canvas.selected_strand}")
+                            logging.warning(f"MoveMode: DEBUG - {strand.layer_name} == selected_attached_strand = {strand == self_canvas.selected_attached_strand}")
+                            
+                            # CRITICAL DEBUG: Force this to show up
+                            print(f"CRITICAL DEBUG: {strand.layer_name}.is_selected = {getattr(strand, 'is_selected', False)}")
+                            print(f"CRITICAL DEBUG: {strand.layer_name} in truly_moving_strands = {strand in truly_moving_strands}")
+                                
+                            # Determine if this strand should be highlighted
+                            should_highlight = False
+                            if move_mode.draw_only_affected_strand:
+                                # Toggle ON: only highlight if strand is selected and moving
+                                should_highlight = strand.is_selected and strand in truly_moving_strands
+                            else:
+                                # Toggle OFF: highlight ALL strands that have is_selected=True
+                                # This ensures connected strands are highlighted properly
+                                should_highlight = getattr(strand, 'is_selected', False)
+                                if not should_highlight:
+                                    # Also check other highlighting conditions
+                                    # Check if strand is in truly_moving_strands or is the selected strand
+                                    should_highlight = (strand in truly_moving_strands or 
+                                                      strand == self_canvas.selected_strand or 
+                                                      strand == self_canvas.selected_attached_strand)
+                                    # If still not highlighted and it's in truly_moving_strands, force highlight
+                                    if not should_highlight and strand in truly_moving_strands:
+                                        should_highlight = True
+                                
+                            # CRITICAL FIX: If strand is in truly_moving_strands, always highlight it
+                            # This ensures that connected strands are always highlighted during movement
+                            if strand in truly_moving_strands:
+                                should_highlight = True
+                                logging.warning(f"MoveMode: CRITICAL FIX - Forcing highlight for {strand.layer_name} because it's in truly_moving_strands")
+                                
+                            if should_highlight:
+                                logging.warning(f"MoveMode: Strand {strand.layer_name} will be highlighted (is_selected={getattr(strand, 'is_selected', False)})")
+                            
+                            # Draw the strand with or without highlighting
+                            if should_highlight:
+                                # Draw with highlighting using the canvas's highlight method
+                                if hasattr(self_canvas, 'draw_highlighted_strand'):
+                                    self_canvas.draw_highlighted_strand(painter, strand)
+                                    logging.warning(f"MoveMode: Drew highlighted strand: {strand.layer_name}")
+                                else:
+                                    # Fallback: draw normally and add C-shape
+                                    strand.draw(painter, skip_painter_setup=True)
+                                    if strand.is_selected:
+                                        move_mode_ref.draw_c_shape_for_strand(painter, strand)
+                            else:
+                                # Draw normally without highlighting
+                                strand.draw(painter, skip_painter_setup=True)
                                 if not perf_logger.suppress_move_logging:
-                                    logging.info(f"MoveMode: Drawing C-shape highlight for affected strand: {strand.layer_name}")
-                                move_mode_ref.draw_c_shape_for_strand(painter, strand)
-                            # --- END ADD C-SHAPE DRAW --- 
+                                    logging.info(f"MoveMode: Drew normal strand: {strand.layer_name}")
                     finally:
                         painter.restore() # Restore state after drawing strand
-                # --- END DRAWING MOVING BODIES AND C-SHAPE ---
+                # --- END DRAWING STRAND BODIES WITH HIGHLIGHTING ---
                 
                 # --- ADD POST-BODY C-SHAPE DRAW ---
                 is_moving_strand_point = getattr(move_mode, 'is_moving_strand_point', False)
@@ -691,9 +907,9 @@ class MoveMode:
                         logging.info(f"MoveMode: Drawing C-shape POST bodies for affected: {affected_strand.layer_name}")
                 # --- END POST-BODY C-SHAPE DRAW ---
                 
-                # Special handling for MaskedStrand (might be redundant if included in truly_moving_strands)
-                if isinstance(active_strand, MaskedStrand):
-                    logging.info("MoveMode: Special drawing for MaskedStrand")
+                # Special handling for MaskedStrand - only needed when toggle is ON
+                if isinstance(active_strand, MaskedStrand) and move_mode.draw_only_affected_strand:
+                    logging.info("MoveMode: Special drawing for MaskedStrand (toggle ON)")
                     constituent_strands = []
                     if hasattr(active_strand, 'first_selected_strand') and active_strand.first_selected_strand:
                         constituent_strands.append(active_strand.first_selected_strand)
@@ -773,6 +989,8 @@ class MoveMode:
         
         # Replace with our optimized paint event
         self.canvas.paintEvent = optimized_paint_event.__get__(self.canvas, type(self.canvas))
+        logging.warning(f"MoveMode: Replaced paintEvent - canvas.paintEvent is now: {self.canvas.paintEvent}")
+        logging.warning(f"MoveMode: original_paintEvent stored as: {self.canvas.original_paintEvent}")
 
     def draw_selection_square(self, painter):
         """Draw the yellow selection square for the currently selected point."""
@@ -1033,7 +1251,8 @@ class MoveMode:
         logging.info("MoveMode: handle_strand_movement completed")
         
         # If no movement was initiated, restore selection states
-        if not self.is_moving:
+        # BUT only if we're not in the middle of setting up movement highlighting
+        if not self.is_moving and not self.in_move_mode:
             for strand, was_selected in current_selection_states.items():
                 strand.is_selected = was_selected
         
@@ -1200,9 +1419,9 @@ class MoveMode:
                     self.temp_selected_strand.is_selected = False
                     self.canvas.selected_attached_strand = None
                 
-            # Setup efficient paint handler
+            # Always setup efficient paint handler during movement for consistent behavior
             if not hasattr(self.canvas, 'original_paintEvent'):
-                logging.info("MoveMode: Setting up optimized paint handler")
+                logging.info("MoveMode: Setting up optimized paint handler for consistent highlighting")
                 self._setup_optimized_paint_handler()
                 
             # Ensure background cache is properly invalidated on first movement
@@ -1349,7 +1568,8 @@ class MoveMode:
         attrs_to_clean = ['active_strand_for_drawing', 'active_strand_update_rect',
                           'last_strand_rect', 'background_cache', 'background_cache_valid',
                           'movement_first_draw', 'affected_strands_for_drawing',
-                          'truly_moving_strands', '_frames_since_click']
+                          'truly_moving_strands', '_frames_since_click', '_logged_force_highlight',
+                          '_logged_parent_force_highlight', '_logged_strands_list']
         for attr in attrs_to_clean:
             if hasattr(self.canvas, attr):
                 try:
@@ -1546,10 +1766,68 @@ class MoveMode:
                     return
 
         # Second pass: Check start and end points for all strands
-        # --- CORRECTED: Iterate in reverse to check topmost strands first --- 
-        # for i, strand in enumerate(self.canvas.strands):
+        # First, check if we're clicking on a connection point
+        connection_point_strands = []
+        
+        # Check all strands to see if the click position matches any connection points
+        for i, strand in enumerate(self.canvas.strands):
+            if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
+                start_area = self.get_start_area(strand)
+                end_area = self.get_end_area(strand)
+                
+                if start_area.contains(pos) and self.can_move_side(strand, 0, i):
+                    # Always add this strand if we clicked on it
+                    if not any(s[0] == strand for s in connection_point_strands):
+                        connection_point_strands.append((strand, 0, start_area))
+                    # Check if this is a connection point with other strands
+                    connected_strands = self.get_connected_strands(strand.layer_name, 0)
+                    if connected_strands:
+                        # Add all connected strands at this point
+                        for conn_strand, conn_side in connected_strands:
+                            if not any(s[0] == conn_strand for s in connection_point_strands):
+                                conn_area = self.get_end_area(conn_strand) if conn_side == 1 else self.get_start_area(conn_strand)
+                                connection_point_strands.append((conn_strand, conn_side, conn_area))
+                                
+                if end_area.contains(pos) and self.can_move_side(strand, 1, i):
+                    # Always add this strand if we clicked on it
+                    if not any(s[0] == strand for s in connection_point_strands):
+                        connection_point_strands.append((strand, 1, end_area))
+                    # Check if this is a connection point with other strands
+                    connected_strands = self.get_connected_strands(strand.layer_name, 1)
+                    if connected_strands:
+                        # Add all connected strands at this point
+                        for conn_strand, conn_side in connected_strands:
+                            if not any(s[0] == conn_strand for s in connection_point_strands):
+                                conn_area = self.get_end_area(conn_strand) if conn_side == 1 else self.get_start_area(conn_strand)
+                                connection_point_strands.append((conn_strand, conn_side, conn_area))
+        
+        # If we found strands at a connection point, handle them specially
+        if connection_point_strands:
+            logging.info(f"Found {len(connection_point_strands)} strands at connection point")
+            for s, side, area in connection_point_strands:
+                logging.info(f"  - Strand {s.layer_name} at side {side}")
+            
+            # If we have multiple strands at a connection point, prefer the main strand over attached
+            # This ensures we start movement with the parent strand when possible
+            main_strand_entry = None
+            for entry in connection_point_strands:
+                strand, side, area = entry
+                if not isinstance(strand, AttachedStrand):
+                    main_strand_entry = entry
+                    break
+            
+            # Use main strand if found, otherwise use first strand
+            if main_strand_entry:
+                first_strand, first_side, first_area = main_strand_entry
+            else:
+                first_strand, first_side, first_area = connection_point_strands[0]
+                
+            logging.info(f"Starting movement with strand {first_strand.layer_name} at side {first_side}")
+            self.start_movement(first_strand, first_side, first_area, pos)
+            return
+        
+        # Otherwise, iterate in reverse to check topmost strands first
         for i, strand in reversed(list(enumerate(self.canvas.strands))):
-        # --- END CORRECTION ---
             if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 logging.info(f"handle_strand_movement: Checking strand {strand.layer_name} at index {i}")
                 # Debug: Check if this strand has knot connections
@@ -1822,6 +2100,12 @@ class MoveMode:
 
     def start_movement(self, strand, side, area, actual_click_pos=None):
         """Start movement tracking for a strand."""
+        import logging
+        
+        # Ensure canvas is fully updated before starting movement
+        # This is important when movement starts immediately after creating an attached strand
+        self.canvas.update()
+        
         # Save the currently selected strand before starting a new movement operation
         if self.canvas.selected_strand is not None:
             self.originally_selected_strand = self.canvas.selected_strand
@@ -1953,10 +2237,27 @@ class MoveMode:
         
         # Store the list on the canvas for use in optimized_paint_event
         self.canvas.truly_moving_strands = truly_moving_strands
+        # Explicitly set is_selected for all moving strands to ensure highlighting
+        for s in truly_moving_strands:
+            s.is_selected = True
         logging.info(f"Truly moving strands: {[s.layer_name for s in truly_moving_strands]}")
         
         # Ensure affected_strands_for_drawing also contains all truly moving strands initially
         self.canvas.affected_strands_for_drawing = list(truly_moving_strands)
+        
+        # CRITICAL FIX: Set up optimized paint handler BEFORE calling canvas.update()
+        # This ensures highlighting works correctly on the first move
+        if not hasattr(self.canvas, 'original_paintEvent'):
+            logging.info("MoveMode: Setting up optimized paint handler in start_movement before first update")
+            self._setup_optimized_paint_handler()
+        
+        # Force an immediate update to ensure highlighting is applied right away
+        # This is important when draw_only_affected_strand is False
+        self.canvas.update()
+        
+        # Force a paint event update to ensure the optimized paint handler gets the correct strands
+        if hasattr(self.canvas, 'movement_first_draw'):
+            self.canvas.movement_first_draw = False  # Reset to ensure first draw happens with correct strands
 
         # Control point movement specific handling
         logging.warning(f"DEBUG: is_moving_control_point = {self.is_moving_control_point}")
@@ -1972,10 +2273,18 @@ class MoveMode:
             # When moving control points, temporarily clear visible selections to maintain proper z-ordering
             # but remember the original selection state for restoration later
             for s in self.canvas.strands:
+                # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
+                if s in truly_moving_strands:
+                    logging.info(f"[CONTROL_POINT_DEBUG] Preserving is_selected=True for moving strand {s.layer_name}")
+                    continue
                 s.is_selected = False
                 # Also clear selections in attached strands
                 if hasattr(s, 'attached_strands'):
                     for attached in s.attached_strands:
+                        # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
+                        if attached in truly_moving_strands:
+                            logging.info(f"[CONTROL_POINT_DEBUG] Preserving is_selected=True for moving attached strand {attached.layer_name}")
+                            continue
                         attached.is_selected = False
                         
             # Temporarily clear selected attached strand
@@ -1985,13 +2294,28 @@ class MoveMode:
             self.highlighted_strand = None
             # Ensure the affected strand itself is not visibly selected during control point movement
             if self.affected_strand:
-                self.affected_strand.is_selected = False
+                # CRITICAL FIX: Never clear is_selected for the affected strand if it's in truly_moving_strands
+                if self.affected_strand not in truly_moving_strands:
+                    self.affected_strand.is_selected = False
         else:
             # For normal strand movement, ensure all truly moving strands are selected
             logging.warning(f"DEBUG: In normal strand movement path")
             logging.warning(f"DEBUG: self.affected_strand = {self.affected_strand.layer_name if self.affected_strand else 'None'}")
             if self.affected_strand:
-                # Set the primary strand as selected for canvas selection state
+                # Set is_selected = True for ALL truly moving strands to ensure proper highlighting
+                logging.warning(f"DEBUG: About to set is_selected for {len(truly_moving_strands)} strands")
+                for moving_strand in truly_moving_strands:
+                    moving_strand.is_selected = True
+                    logging.warning(f"DEBUG: Set is_selected=True for moving strand: {moving_strand.layer_name}")
+                
+                # Verify the selection states were set correctly
+                logging.warning(f"DEBUG: Verifying selection states after setting:")
+                for moving_strand in truly_moving_strands:
+                    logging.warning(f"DEBUG: {moving_strand.layer_name}.is_selected = {moving_strand.is_selected}")
+                
+                # CRITICAL: Move the canvas selection AFTER setting is_selected flags
+                # This prevents any canvas selection logic from interfering with our flags
+                logging.warning(f"DEBUG: Moving canvas selection setup to AFTER is_selected flags are set")
                 if isinstance(self.affected_strand, MaskedStrand):
                     self.canvas.selected_strand = self.affected_strand
                     self.canvas.selected_attached_strand = None
@@ -1999,15 +2323,36 @@ class MoveMode:
                     self.canvas.selected_attached_strand = self.affected_strand
                     self.canvas.selected_strand = None
                 else:
-                    # Regular strand - treat as attached strand
-                    self.canvas.selected_attached_strand = self.affected_strand
-                    self.canvas.selected_strand = None
+                    # Regular strand - set as selected_strand (not attached)
+                    self.canvas.selected_strand = self.affected_strand
+                    self.canvas.selected_attached_strand = None
                 
-                # Set is_selected = True for ALL truly moving strands to ensure proper highlighting
-                logging.warning(f"DEBUG: About to set is_selected for {len(truly_moving_strands)} strands")
+                # Verify flags are still correct after canvas selection changes
+                logging.warning(f"DEBUG: Verifying selection states AFTER canvas selection setup:")
                 for moving_strand in truly_moving_strands:
-                    moving_strand.is_selected = True
-                    logging.warning(f"DEBUG: Set is_selected=True for moving strand: {moving_strand.layer_name}")
+                    logging.warning(f"DEBUG: POST-CANVAS: {moving_strand.layer_name}.is_selected = {moving_strand.is_selected}")
+                
+                # CRITICAL: Set up optimized paint handler immediately after selection to ensure highlighting works
+                self.canvas.active_strand_for_drawing = self.affected_strand
+                self.canvas.truly_moving_strands = truly_moving_strands
+                logging.warning("MoveMode: Checking if optimized paint handler needs setup...")
+                has_original = hasattr(self.canvas, 'original_paintEvent')
+                logging.warning(f"MoveMode: After selection setup - has_original_paintEvent: {has_original}")
+                if not has_original:
+                    logging.warning("MoveMode: Setting up optimized paint handler after selection setup")
+                    self._setup_optimized_paint_handler()
+                else:
+                    logging.warning("MoveMode: Optimized paint handler already exists after selection setup")
+                
+                # CRITICAL: Invalidate background cache to ensure proper redraw with highlighting
+                if hasattr(self.canvas, 'background_cache_valid'):
+                    self.canvas.background_cache_valid = False
+                    logging.warning("MoveMode: Invalidated background cache for proper highlighting")
+                
+                # CRITICAL: Force canvas update to trigger optimized paint handler with selected strands
+                # This ensures the highlighting is visible immediately when clicking on strands
+                logging.warning("MoveMode: Forcing canvas update to show highlighted strands")
+                self.canvas.update()
                 
                 # NOW suppress verbose logging after selection is set up
                 perf_logger.suppress_during_move(True)
@@ -2849,6 +3194,12 @@ class MoveMode:
             connected = self.get_connected_strands(current_strand.layer_name, current_point)
             logging.info(f"Found {len(connected)} connected strands for {current_strand.layer_name} at point {current_point}: {[(s.layer_name, p) for s, p in connected]}")
             
+            # Debug: Log the actual connection info
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                connections = self.canvas.layer_state_manager.getConnections()
+                current_connections = connections.get(current_strand.layer_name, ['null', 'null'])
+                logging.info(f"  LayerStateManager connections for {current_strand.layer_name}: {current_connections}")
+            
             for conn_strand, conn_point in connected:
                 # The connected strand moves at the point where it connects
                 # For example, if 1_1's end connects to 1_2's start, 
@@ -2898,6 +3249,7 @@ class MoveMode:
 
     def build_connection_cache(self):
         """Build a cache of connections for performance optimization."""
+        import logging
         if not hasattr(self.canvas, 'layer_state_manager') or not self.canvas.layer_state_manager:
             self.connection_cache = {}
             self.cache_valid = False
@@ -2949,9 +3301,14 @@ class MoveMode:
         # Draw the circles at connection points
         for i, has_circle in enumerate(strand.has_circles):
             # --- REPLACE WITH THIS SIMPLE CHECK ---
-            # Only draw if this end should have a circle and the strand is currently selected
-            if not has_circle or not strand.is_selected:
+            # Only draw if this end should have a circle and the strand is currently selected OR in truly_moving_strands
+            truly_moving_strands = getattr(self.canvas, 'truly_moving_strands', [])
+            if not has_circle or (not strand.is_selected and strand not in truly_moving_strands):
                 continue
+            
+            # Debug logging for highlighting fix
+            if strand in truly_moving_strands and not strand.is_selected:
+                logging.warning(f"MoveMode: Drawing C-shape for {strand.layer_name} because it's in truly_moving_strands (even though is_selected={strand.is_selected})")
             # --- END REPLACE ---
             
             # Save painter state (Original line)
@@ -3054,34 +3411,34 @@ class MoveMode:
             if isinstance(strand, MaskedStrand):
                 continue
                 
-            strand_connections = connections.get(strand.layer_name, [])
-            prefix = strand.layer_name.split('_')[0]
+            strand_connections = connections.get(strand.layer_name, ['null', 'null'])
+            logging.info(f"build_connection_cache: Processing strand {strand.layer_name}, connections: {strand_connections}")
             
-            for connected_layer_name in strand_connections:
-                if not connected_layer_name.startswith(f"{prefix}_"):
-                    continue
-                    
-                # Find the connected strand object
-                connected_strand = next(
-                    (s for s in self.canvas.strands 
-                     if s.layer_name == connected_layer_name 
-                     and not isinstance(s, MaskedStrand)), 
-                    None
-                )
-                
-                if connected_strand and connected_strand != strand:
-                    # Check which side this connection is on
-                    # Side 0 (start) connects to other strand's end
-                    # Skip proximity detection if "drag only affected strand" is enabled
-                    if not self.draw_only_affected_strand:
-                        if self.points_are_close(strand.start, connected_strand.end):
-                            cache_key = (strand.layer_name, 0)
-                            self.connection_cache[cache_key] = connected_strand
-                        # Side 1 (end) connects to other strand's start  
-                        elif self.points_are_close(strand.end, connected_strand.start):
-                            cache_key = (strand.layer_name, 1)
-                            self.connection_cache[cache_key] = connected_strand
+            # Process start point (side 0) connection
+            start_connection = strand_connections[0]
+            if start_connection != 'null':
+                connected_name, connected_end = self.parse_connection_string(start_connection)
+                if connected_name:
+                    # Find the connected strand object
+                    connected_strand = self.get_strand_by_name(connected_name)
+                    if connected_strand and connected_strand != strand:
+                        cache_key = (strand.layer_name, 0)
+                        self.connection_cache[cache_key] = connected_strand
+                        logging.info(f"build_connection_cache: Added connection {cache_key} -> {connected_strand.layer_name}")
+            
+            # Process end point (side 1) connection  
+            end_connection = strand_connections[1]
+            if end_connection != 'null':
+                connected_name, connected_end = self.parse_connection_string(end_connection)
+                if connected_name:
+                    # Find the connected strand object
+                    connected_strand = self.get_strand_by_name(connected_name)
+                    if connected_strand and connected_strand != strand:
+                        cache_key = (strand.layer_name, 1)
+                        self.connection_cache[cache_key] = connected_strand
+                        logging.info(f"build_connection_cache: Added connection {cache_key} -> {connected_strand.layer_name}")
         
+        logging.info(f"build_connection_cache: Final connection cache: {self.connection_cache}")
         self.cache_valid = True
 
     def invalidate_connection_cache(self):

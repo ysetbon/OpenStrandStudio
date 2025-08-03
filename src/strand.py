@@ -29,7 +29,7 @@ class Strand:
         self.attached_strands = []  # List to store attached strands
         self.has_circles = [False, False]  # Flags for circles at start and end
         self.is_start_side = True
-        self.is_selected = False  # Indicates if the strand is selected
+        self._is_selected = False  # Indicates if the strand is selected (use private attribute for property)
         self.is_hidden = False # Indicates if the strand is hidden
         self.shadow_only = False # Indicates if the strand is in shadow-only mode
 
@@ -121,6 +121,23 @@ class Strand:
     def stroke_color(self, value):
         """Setter for the stroke color that also updates circle_stroke_color."""
         self._stroke_color = value
+
+    @property
+    def is_selected(self):
+        """Getter for the is_selected property."""
+        return self._is_selected
+
+    @is_selected.setter
+    def is_selected(self, value):
+        """Setter for the is_selected property with protection for moving strands."""
+        # CRITICAL FIX: Never allow is_selected to be set to False for strands in truly_moving_strands
+        if value is False and hasattr(self, 'canvas') and self.canvas:
+            truly_moving_strands = getattr(self.canvas, 'truly_moving_strands', [])
+            if self in truly_moving_strands:
+                logging.warning(f"[STRAND_PROPERTY] Preventing is_selected=False for moving strand {self.layer_name}")
+                return  # Don't set to False if strand is in truly_moving_strands
+        
+        self._is_selected = value
         
         # For AttachedStrand instances, also update circle_stroke_color
         # Check class name to avoid circular import issues

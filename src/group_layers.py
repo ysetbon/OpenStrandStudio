@@ -1567,8 +1567,25 @@ class GroupPanel(QWidget):
                 }
                 logging.info(f"Added duplicated group '{new_group_name}' to canvas.groups")
             
+            # Update knot connections for duplicated strands BEFORE creating UI elements
+            # This ensures deletable state is calculated correctly when buttons are created
+            self.update_knot_connections_for_duplicated_group(strand_mapping)
+            
             # Use the existing group creation mechanism for UI
             self.create_group(new_group_name, duplicated_strands)
+            
+            # Update LayerStateManager - simply save the current state after all strands are created
+            if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                # The strands have been added to the canvas and layer panel
+                # Now save the complete state including all duplicated strands
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info("Saved layer state after group duplication")
+            
+            # Refresh layer panel to ensure deletable states are correct for new layers
+            if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
+                # Use refresh_layers_no_zoom to avoid resetting the view
+                self.canvas.layer_panel.refresh_layers_no_zoom()
+                logging.info("Refreshed layer panel after group duplication")
             
             # Emit group operation signal for the new group
             layer_names = [strand.layer_name for strand in duplicated_strands if hasattr(strand, 'layer_name')]
@@ -1872,6 +1889,16 @@ class GroupPanel(QWidget):
             new_strand.side_line_color = QColor(original.side_line_color)  # Create new QColor
         if hasattr(original, 'shadow_color'):
             new_strand.shadow_color = QColor(original.shadow_color)  # Create new QColor
+        
+        # Initialize knot_connections for the new strand
+        # Note: The actual connections will be rebuilt in update_knot_connections_for_duplicated_group
+        if hasattr(original, 'knot_connections'):
+            new_strand.knot_connections = {}  # Initialize empty, will be populated later
+            # Store original connections for later remapping
+            new_strand._original_knot_connections = original.knot_connections.copy() if original.knot_connections else {}
+        else:
+            new_strand.knot_connections = {}
+            new_strand._original_knot_connections = {}
 
     def generate_new_layer_name(self, original_layer_name, set_mapping):
         """Generate new layer name based on set number mapping."""
@@ -1891,6 +1918,47 @@ class GroupPanel(QWidget):
                 return '_'.join(parts)
         
         return original_layer_name
+
+    def update_knot_connections_for_duplicated_group(self, strand_mapping):
+        """Update knot connections for duplicated strands to reference the correct duplicated strands."""
+        logging.info(f"Updating knot connections for {len(strand_mapping)} duplicated strands")
+        
+        for original_strand, new_strand in strand_mapping.items():
+            if not hasattr(new_strand, '_original_knot_connections'):
+                continue
+                
+            original_connections = new_strand._original_knot_connections
+            if not original_connections:
+                continue
+                
+            logging.info(f"Processing knot connections for {new_strand.layer_name}: {list(original_connections.keys())}")
+            
+            # Rebuild knot connections for this strand
+            for end_type, connection_info in original_connections.items():
+                if 'connected_strand' in connection_info:
+                    original_connected_strand = connection_info['connected_strand']
+                    
+                    # Find the duplicated version of the connected strand
+                    new_connected_strand = strand_mapping.get(original_connected_strand)
+                    
+                    if new_connected_strand is not None:
+                        # Create the connection with the duplicated strand
+                        new_strand.knot_connections[end_type] = {
+                            'connected_strand': new_connected_strand,
+                            'connected_end': connection_info.get('connected_end', 'start')
+                        }
+                        
+                        logging.info(f"Remapped knot connection: {new_strand.layer_name}[{end_type}] -> {new_connected_strand.layer_name}[{connection_info.get('connected_end', 'start')}]")
+                    else:
+                        # Connected strand was not duplicated (not in the same group)
+                        # Keep the original connection
+                        new_strand.knot_connections[end_type] = connection_info.copy()
+                        logging.info(f"Kept external knot connection: {new_strand.layer_name}[{end_type}] -> {connection_info.get('connected_strand', 'unknown')}[{connection_info.get('connected_end', 'start')}]")
+            
+            # Clean up temporary attribute
+            delattr(new_strand, '_original_knot_connections')
+        
+        logging.info("Finished updating knot connections for duplicated group")
 
     def create_group_widget(self, group_name, strands, main_strands):
         """Create UI widget for the duplicated group."""

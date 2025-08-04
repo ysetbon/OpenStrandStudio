@@ -455,6 +455,8 @@ class StrandDrawingCanvas(QWidget):
         strand.canvas = self
         self.strands.append(strand)
         #logging.info(f"Added strand to canvas. Show control points: {self.show_control_points}")
+        # Emit the strand_created signal so LayerStateManager can track it
+        self.strand_created.emit(strand)
         self.update()
 
     @property

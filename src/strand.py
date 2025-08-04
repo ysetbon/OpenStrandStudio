@@ -145,8 +145,9 @@ class Strand:
             # Only update circle_stroke_color if it's not transparent (alpha > 0)
             # This preserves intentionally transparent circle strokes
             if hasattr(self, '_circle_stroke_color') and self._circle_stroke_color and self._circle_stroke_color.alpha() > 0:
-                self.circle_stroke_color = QColor(value)
-                logging.info(f"Updated circle_stroke_color for AttachedStrand {self.layer_name} to match stroke_color: {value.red()},{value.green()},{value.blue()},{value.alpha()}")
+                new_color = QColor(self.stroke_color) if hasattr(self, 'stroke_color') and self.stroke_color else QColor(0, 0, 0, 255)
+                self.circle_stroke_color = new_color
+                logging.info(f"Updated circle_stroke_color for AttachedStrand {self.layer_name} to match stroke_color: {new_color.red()},{new_color.green()},{new_color.blue()},{new_color.alpha()}")
 
     @property
     def circle_stroke_color(self):
@@ -350,6 +351,10 @@ class Strand:
             
         # Skip synchronization if this strand is currently being moved
         if hasattr(self, '_is_being_moved') and self._is_being_moved:
+            return
+            
+        # Skip synchronization if this strand is currently being rotated as part of a group
+        if hasattr(self, '_is_being_rotated') and self._is_being_rotated:
             return
             
         for end_type, connection_info in self.knot_connections.items():

@@ -614,6 +614,10 @@ class StrandDrawingCanvas(QWidget):
             center = self.rotation_center  # computed in start_group_rotation
             self.current_rotation_angle = angle
 
+            # Set rotation flag on all strands to prevent knot connection maintenance during rotation
+            for strand in group_data['strands']:
+                strand._is_being_rotated = True
+
             for strand in group_data['strands']:
                 original_pos = self.pre_rotation_state.get(strand.layer_name)
                 if not original_pos:
@@ -646,6 +650,10 @@ class StrandDrawingCanvas(QWidget):
                 # 2) Now perform exactly one rotation step
                 #    i.e. rotate from the original baseline to 'angle' degrees
                 self.rotate_strand(strand, center, angle)
+
+            # Clear rotation flag after all rotations are complete
+            for strand in group_data['strands']:
+                strand._is_being_rotated = False
 
             self.update()  # Trigger redraw
         else:
@@ -782,6 +790,12 @@ class StrandDrawingCanvas(QWidget):
                 # Log final group data
                 final_main_strands = self.groups[group_name].get('main_strands', [])
                 #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Final main strands after restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in final_main_strands]}")
+                
+                # Clear rotation flag on all strands in the group
+                group_data = self.groups[group_name]
+                for strand in group_data.get('strands', []):
+                    if hasattr(strand, '_is_being_rotated'):
+                        strand._is_being_rotated = False
             else:
                 #logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
                 pass

@@ -1153,7 +1153,11 @@ class GroupPanel(QWidget):
             new_y = pivot.y() + dx * sin_a + dy * cos_a
             return QPointF(new_x, new_y)
 
-        # -- 2) For each strand, restore from pre_rotation_state, then rotate. --
+        # -- 2) Set rotation flag on all strands to prevent knot connection maintenance during rotation --
+        for strand in group_data.get('strands', []):
+            strand._is_being_rotated = True
+
+        # -- 3) For each strand, restore from pre_rotation_state, then rotate. --
         for strand in group_data.get('strands', []):
             pre_rotation_pos = self.pre_rotation_state.get(strand.layer_name)
             if not pre_rotation_pos:
@@ -1274,7 +1278,11 @@ class GroupPanel(QWidget):
             if isinstance(strand, MaskedStrand) and hasattr(strand, 'force_shadow_update'):
                  strand.force_shadow_update()
 
-        # -- 3) Repaint with updated geometry. --
+        # -- 4) Clear rotation flag after all rotations are complete --
+        for strand in group_data.get('strands', []):
+            strand._is_being_rotated = False
+
+        # -- 5) Repaint with updated geometry. --
         self.canvas.update()
         logging.info(f"Group '{group_name}' rotated to angle={angle}°, ensuring pinned control points track correctly.")
     def update_group_rotation(self, group_name, angle):
@@ -1310,6 +1318,13 @@ class GroupPanel(QWidget):
                     logging.info(f"Successfully preserved group data for {group_name}")
                 else:
                     logging.error(f"Failed to preserve group data for {group_name}")
+                
+                # Clear rotation flag on all strands in the group
+                if group_name in self.canvas.groups:
+                    group_data = self.canvas.groups[group_name]
+                    for strand in group_data.get('strands', []):
+                        if hasattr(strand, '_is_being_rotated'):
+                            strand._is_being_rotated = False
                     
                 # Clean up rotation state
                 if hasattr(self, 'pre_rotation_state'):
@@ -4016,7 +4031,11 @@ class GroupRotateDialog(QDialog):
         else:
             pre_state = {}
 
-        # 4) Rotate each strand from original positions
+        # 4) Set rotation flag on all strands to prevent knot connection maintenance during rotation
+        for strand in group_data['strands']:
+            strand._is_being_rotated = True
+
+        # 5) Rotate each strand from original positions
         for strand in group_data['strands']:
             layer_name = strand.layer_name
             if layer_name in pre_state:
@@ -4048,7 +4067,11 @@ class GroupRotateDialog(QDialog):
                 if hasattr(strand, 'update_side_line'):
                     strand.update_side_line()
 
-        # 5) Redraw the canvas
+        # 6) Clear rotation flag after all rotations are complete
+        for strand in group_data['strands']:
+            strand._is_being_rotated = False
+
+        # 7) Redraw the canvas
         self.canvas.update()
 
     def rotate_point(self, point: QPointF, pivot: QPointF, angle_radians: float) -> QPointF:

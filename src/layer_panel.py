@@ -2703,7 +2703,7 @@ class LayerPanel(QWidget):
         max_set_number = max(existing_set_numbers, default=0)
         return max_set_number + 1
 
-    def add_layer_button(self, set_number, count):
+    def add_layer_button(self, set_number, count, strand=None):
         """Add a new layer button directly to the layout."""
         logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
 
@@ -2715,20 +2715,31 @@ class LayerPanel(QWidget):
         button_name = f"{set_number}_{count}"
         logging.info(f"Created new button: {button_name}")
 
-        # Find the strand with the matching set_number (most recently added)
+        # Find the strand index - use provided strand if available, otherwise search
         strand_index = None
-        for i in range(len(self.canvas.strands) - 1, -1, -1):  # Search backwards for most recent
-            strand = self.canvas.strands[i]
-            if hasattr(strand, 'set_number') and strand.set_number == set_number:
-                strand_index = i
-                break
+        target_strand = strand
         
-        if strand_index is None:
+        if target_strand is not None:
+            # Find the index of the provided strand
+            for i, canvas_strand in enumerate(self.canvas.strands):
+                if canvas_strand is target_strand:
+                    strand_index = i
+                    break
+        else:
+            # Fallback to original search logic if no strand provided
+            for i in range(len(self.canvas.strands) - 1, -1, -1):  # Search backwards for most recent
+                canvas_strand = self.canvas.strands[i]
+                if hasattr(canvas_strand, 'set_number') and canvas_strand.set_number == set_number:
+                    strand_index = i
+                    target_strand = canvas_strand
+                    break
+        
+        if strand_index is None or target_strand is None:
             logging.error(f"Could not find strand with set_number {set_number}")
             return
 
         # Create and add the button
-        button = self.create_layer_button(strand_index, self.canvas.strands[strand_index], count)
+        button = self.create_layer_button(strand_index, target_strand, count)
         self.layer_buttons.append(button)  # Add to end of list
 
         # Add button directly to layout at the top, aligned center
@@ -2736,7 +2747,7 @@ class LayerPanel(QWidget):
 
         # Debug logging to trace button text issues
         logging.info(f"Added new button directly to layout at top (index 0)")
-        logging.info(f"Button created with text: '{button.text()}' for strand: '{self.canvas.strands[strand_index].layer_name}'")
+        logging.info(f"Button created with text: '{button.text()}' for strand: '{target_strand.layer_name}'")
         logging.info(f"Total layer_buttons count: {len(self.layer_buttons)}")
         for i, btn in enumerate(self.layer_buttons):
             logging.info(f"  layer_buttons[{i}]: text='{btn.text()}'")
@@ -3085,7 +3096,7 @@ class LayerPanel(QWidget):
 
         # Add the new layer button
         logging.info(f"Adding new layer button for set {set_number}, count {count}")
-        self.add_layer_button(set_number, count)
+        self.add_layer_button(set_number, count, strand)
 
         # Lift suppression again so manual clicks behave normally
         if temp_suppress_lock:

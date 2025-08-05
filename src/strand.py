@@ -2518,29 +2518,7 @@ class Strand:
             just_inner = tr_inner.map(just_inner)
             painter.drawPath(just_inner)
             
-            # Draw highlight for C-shape if selected
-            if self.is_selected and not isinstance(self, MaskedStrand):
-                logging.info(f"[STRAND_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
-                # Draw a red highlight around the C-shape
-                # Calculate the highlight radius (outer edge of the highlight)
-                highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
-                
-                # Create the highlight path
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                
-                if mask_rect is not None:
-                    # For half-circles, create a masked highlight
-                    highlight_mask = highlight_circle.subtracted(mask_rect)
-                    # Create a ring path by subtracting the normal outer circle
-                    ring_path = highlight_mask.subtracted(outer_circle)
-                else:
-                    # For full circles, create a simple ring
-                    ring_path = highlight_circle.subtracted(outer_circle)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
-                
+            
         # Draw ending circle if has_circles == [True, True]
         logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [False, True]: {self.has_circles == [False, True]}")
         if (self.has_circles == [False, True]):

@@ -3384,9 +3384,22 @@ class MoveMode:
             color_ring = color_outer_circle.subtracted(color_inner_circle)
             color_c_shape = color_ring.subtracted(mask_rect)
             
-            # Draw the stroke part in red
+            # Draw the stroke part in red (or transparent red if circle stroke is transparent)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(255, 0, 0, 255))
+            
+            # Check if this circle has transparent stroke
+            if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
+                circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
+                if circle_stroke_color and circle_stroke_color.alpha() == 0:
+                    # Use transparent red for transparent circles
+                    painter.setBrush(QColor(255, 0, 0, 0))
+                else:
+                    # Use solid red for normal circles
+                    painter.setBrush(QColor(255, 0, 0, 255))
+            else:
+                # Default to solid red if properties don't exist
+                painter.setBrush(QColor(255, 0, 0, 255))
+                
             painter.drawPath(stroke_c_shape)
             
             # Draw the color part in black

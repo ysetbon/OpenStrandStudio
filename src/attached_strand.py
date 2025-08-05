@@ -1102,8 +1102,14 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer_circle)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
-                painter.drawPath(ring_path)
+                # Check if circle stroke is transparent
+                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
+                    # Use transparent red for transparent circles
+                    painter.setBrush(QColor(255, 0, 0, 0))
+                else:
+                    # Use solid red for normal circles
+                    painter.setBrush(QColor('red'))
+               
         # Restore painter state
         painter.restore()
 
@@ -1184,7 +1190,13 @@ class AttachedStrand(Strand):
                 highlight_mask = highlight_circle.subtracted(mask)
                 ring_path = highlight_mask.subtracted(outer)
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                # Check if circle stroke is transparent
+                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
+                    # Use transparent red for transparent circles
+                    painter.setBrush(QColor(255, 0, 0, 100))
+                else:
+                    # Use solid red for normal circles
+                    painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
 
             
@@ -2470,7 +2482,13 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer_circle)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                # Check if circle stroke is transparent
+                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
+                    # Use transparent red for transparent circles
+                    painter.setBrush(QColor(255, 0, 0, 0))
+                else:
+                    # Use solid red for normal circles
+                    painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
 
         print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Reached ending circle section check")
@@ -2618,7 +2636,13 @@ class AttachedStrand(Strand):
                 highlight_mask = highlight_circle.subtracted(mask)
                 ring_path = highlight_mask.subtracted(outer)
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                # Check if circle stroke is transparent
+                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
+                    # Use transparent red for transparent circles
+                    painter.setBrush(QColor(255, 0, 0, 0))
+                else:
+                    # Use solid red for normal circles
+                    painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
 
             

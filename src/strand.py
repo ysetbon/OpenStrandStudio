@@ -2468,15 +2468,17 @@ class Strand:
             # Check if this is a closed connection (should draw full circle)
             is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections[0]
             
+            # Initialize variables that will be used in highlight drawing
+            mask_rect = None
+            outer_circle = QPainterPath()
+            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+            
             if is_closed_connection:
                 # Draw full circle for closed connections
-                outer_circle = QPainterPath()
-                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-                
                 # Draw the outer circle (stroke)
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.start_circle_stroke_color)
-                painter.drawPath(outer_circle)
+                
                 
                 # Draw the inner circle (fill) for closed connections
                 inner_circle = QPainterPath()
@@ -2493,8 +2495,6 @@ class Strand:
                 transform.translate(self.start.x(), self.start.y())
                 transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
                 mask_rect = transform.map(mask_rect)
-                outer_circle = QPainterPath()
-                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
                 outer_mask = outer_circle.subtracted(mask_rect)
 
                 # Draw the outer circle (stroke)
@@ -2528,14 +2528,19 @@ class Strand:
                 # Create the highlight path
                 highlight_circle = QPainterPath()
                 highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask_rect)
                 
-                # Create a ring path by subtracting the normal outer circle
-                ring_path = highlight_mask.subtracted(outer_circle)
+                if mask_rect is not None:
+                    # For half-circles, create a masked highlight
+                    highlight_mask = highlight_circle.subtracted(mask_rect)
+                    # Create a ring path by subtracting the normal outer circle
+                    ring_path = highlight_mask.subtracted(outer_circle)
+                else:
+                    # For full circles, create a simple ring
+                    ring_path = highlight_circle.subtracted(outer_circle)
                 
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QColor('red'))
-                painter.drawPath(ring_path)
+                
         # Draw ending circle if has_circles == [True, True]
         logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [False, True]: {self.has_circles == [False, True]}")
         if (self.has_circles == [False, True]):

@@ -1112,6 +1112,7 @@ class NumberedLayerButton(QPushButton):
             for strand in self.layer_context.all_strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                     strand.end_circle_stroke_color = color
+                    logging.info(f"[TRANSPARENT_DEBUG] Set end_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                     if hasattr(strand, 'update'):
                         strand.update(None, False)
                     found = True
@@ -1166,6 +1167,13 @@ class NumberedLayerButton(QPushButton):
                     if hasattr(current_parent, 'canvas'):
                         current_parent.canvas.update()
                         current_parent.canvas.repaint()
+                        
+                        # Save state for undo/redo to persist the transparent stroke color change
+                        if hasattr(current_parent.canvas, 'undo_redo_manager'):
+                            current_parent.canvas.undo_redo_manager._last_save_time = 0
+                            current_parent.canvas.undo_redo_manager.save_state()
+                            logging.info(f"Saved undo/redo state after changing end circle stroke color for {button_text}")
+                        
                         logging.info(f"Forced canvas repaint after end circle stroke color change for {button_text}")
                         break
                     current_parent = current_parent.parent()
@@ -1306,6 +1314,11 @@ class NumberedLayerButton(QPushButton):
         if found:
             if 'layer_panel' in locals() and layer_panel and hasattr(layer_panel, 'canvas'):
                 layer_panel.canvas.update()
+                # Save state for undo/redo to persist the circle stroke color change
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    layer_panel.canvas.undo_redo_manager.save_state()
+                    logging.info(f"Saved undo/redo state after changing circle stroke color for {button_text}")
             else:
                 # Fall back to just updating ourselves or the parent widget
                 self.update()
@@ -1679,22 +1692,30 @@ class NumberedLayerButton(QPushButton):
         logging.info(f"Set has_circles for {target_strand.layer_name}: {target_strand.has_circles}")
         
         # Ensure circle stroke color is set (needed for circles to render properly)
-        if not hasattr(strand, 'circle_stroke_color') or strand.circle_stroke_color is None:
-            strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
-        if not hasattr(target_strand, 'circle_stroke_color') or target_strand.circle_stroke_color is None:
-            target_strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
-            
-        # Ensure the property getter works
-        if hasattr(strand, '_circle_stroke_color') and strand._circle_stroke_color is None:
-            strand._circle_stroke_color = QColor(0, 0, 0, 255)
-        if hasattr(target_strand, '_circle_stroke_color') and target_strand._circle_stroke_color is None:
-            target_strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        # But preserve any transparent end_circle_stroke_color that was set
         
-        # For attached strands, ensure they have the _circle_stroke_color attribute
-        if isinstance(strand, AttachedStrand) and not hasattr(strand, '_circle_stroke_color'):
-            strand._circle_stroke_color = QColor(0, 0, 0, 255)
-        if isinstance(target_strand, AttachedStrand) and not hasattr(target_strand, '_circle_stroke_color'):
-            target_strand._circle_stroke_color = QColor(0, 0, 0, 255)
+        # For the strand being closed
+        if free_end_type == 'end':
+            # Check if end_circle_stroke_color was already set (including transparent)
+            if not hasattr(strand, '_end_circle_stroke_color') or strand._end_circle_stroke_color is None:
+                # Only set default if not already set
+                if not hasattr(strand, 'circle_stroke_color') or strand.circle_stroke_color is None:
+                    strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
+        else:
+            # For start, check start_circle_stroke_color
+            if not hasattr(strand, '_start_circle_stroke_color') or strand._start_circle_stroke_color is None:
+                if not hasattr(strand, 'circle_stroke_color') or strand.circle_stroke_color is None:
+                    strand.circle_stroke_color = QColor(0, 0, 0, 255)  # Black stroke
+        
+        # For the target strand - automatically set connecting end to transparent
+        if target_free_end == 'end':
+            # Automatically set the target strand's end circle stroke to transparent
+            target_strand.end_circle_stroke_color = QColor(0, 0, 0, 0)  # Transparent
+            logging.info(f"Automatically set transparent end circle stroke for target strand {target_strand.layer_name}")
+        else:
+            # Automatically set the target strand's start circle stroke to transparent
+            target_strand.start_circle_stroke_color = QColor(0, 0, 0, 255)  # Transparent
+            logging.info(f"Automatically set transparent start circle stroke for target strand {target_strand.layer_name}")
         
         # Mark closed connections for full circle rendering (without setting attached status)
         if free_end_type == 'start':

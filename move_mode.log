@@ -1,0 +1,2022 @@
+MoveMode: mousePressEvent at position PyQt5.QtCore.QPoint(455, 222)
+MoveMode: Current state - is_moving=False, in_move_mode=False
+MoveMode: Preparing optimized drawing - caching background
+MoveMode: Background cache is now valid
+MoveMode: Set originally_selected_strand from selected_strand
+MoveMode: LayerStateManager movement operation started (early)
+MoveMode: Updating LayerStateManager connections before first movement
+MoveMode: LayerStateManager connections updated
+build_connection_cache: Processing strand 1_1, connections: ['1_3(1)', '1_2(0)']
+build_connection_cache: Added connection ('1_1', 0) -> 1_3
+build_connection_cache: Added connection ('1_1', 1) -> 1_2
+build_connection_cache: Processing strand 1_2, connections: ['1_1(1)', '1_3(0)']
+build_connection_cache: Added connection ('1_2', 0) -> 1_1
+build_connection_cache: Added connection ('1_2', 1) -> 1_3
+build_connection_cache: Processing strand 1_3, connections: ['1_2(1)', '1_1(0)']
+build_connection_cache: Added connection ('1_3', 0) -> 1_2
+build_connection_cache: Added connection ('1_3', 1) -> 1_1
+build_connection_cache: Final connection cache: {('1_1', 0): <attached_strand.AttachedStrand object at 0x000001F355A0BF50>, ('1_1', 1): <attached_strand.AttachedStrand object at 0x000001F36085ABD0>, ('1_2', 0): <strand.Strand object at 0x000001F360858800>, ('1_2', 1): <attached_strand.AttachedStrand object at 0x000001F355A0BF50>, ('1_3', 0): <attached_strand.AttachedStrand object at 0x000001F36085ABD0>, ('1_3', 1): <strand.Strand object at 0x000001F360858800>}
+MoveMode: Replaced paintEvent - canvas.paintEvent is now: <bound method MoveMode._setup_optimized_paint_handler.<locals>.optimized_paint_event of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+MoveMode: original_paintEvent stored as: <bound method StrandDrawingCanvas.paintEvent of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+DEBUG: is_moving_control_point = True
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Replaced paintEvent - canvas.paintEvent is now: <bound method MoveMode._setup_optimized_paint_handler.<locals>.optimized_paint_event of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+MoveMode: original_paintEvent stored as: <bound method StrandDrawingCanvas.paintEvent of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+DEBUG: is_moving_control_point = True
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+DEBUG: Final moving strands: ['1_1', '1_3']
+MoveMode: Replaced paintEvent - canvas.paintEvent is now: <bound method MoveMode._setup_optimized_paint_handler.<locals>.optimized_paint_event of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+MoveMode: original_paintEvent stored as: <bound method StrandDrawingCanvas.paintEvent of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_1
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Verifying selection states after setting:
+DEBUG: 1_1.is_selected = True
+DEBUG: 1_3.is_selected = True
+DEBUG: Moving canvas selection setup to AFTER is_selected flags are set
+DEBUG: Verifying selection states AFTER canvas selection setup:
+DEBUG: POST-CANVAS: 1_1.is_selected = True
+DEBUG: POST-CANVAS: 1_3.is_selected = True
+MoveMode: Checking if optimized paint handler needs setup...
+MoveMode: After selection setup - has_original_paintEvent: True
+MoveMode: Optimized paint handler already exists after selection setup
+MoveMode: Invalidated background cache for proper highlighting
+MoveMode: Forcing canvas update to show highlighted strands
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Replaced paintEvent - canvas.paintEvent is now: <bound method MoveMode._setup_optimized_paint_handler.<locals>.optimized_paint_event of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+MoveMode: original_paintEvent stored as: <bound method StrandDrawingCanvas.paintEvent of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+DEBUG: is_moving_control_point = True
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands contains: ['1_1']
+MoveMode: sorted_moving_strands count: 1
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = False
+MoveMode: DEBUG - 1_1 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+DEBUG: Final moving strands: ['1_1', '1_3']
+MoveMode: Replaced paintEvent - canvas.paintEvent is now: <bound method MoveMode._setup_optimized_paint_handler.<locals>.optimized_paint_event of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+MoveMode: original_paintEvent stored as: <bound method StrandDrawingCanvas.paintEvent of <strand_drawing_canvas.StrandDrawingCanvas object at 0x000001F35A107020>>
+DEBUG: is_moving_control_point = False
+DEBUG: In normal strand movement path
+DEBUG: self.affected_strand = 1_1
+DEBUG: About to set is_selected for 2 strands
+DEBUG: Set is_selected=True for moving strand: 1_1
+DEBUG: Set is_selected=True for moving strand: 1_3
+DEBUG: Verifying selection states after setting:
+DEBUG: 1_1.is_selected = True
+DEBUG: 1_3.is_selected = True
+DEBUG: Moving canvas selection setup to AFTER is_selected flags are set
+DEBUG: Verifying selection states AFTER canvas selection setup:
+DEBUG: POST-CANVAS: 1_1.is_selected = True
+DEBUG: POST-CANVAS: 1_3.is_selected = True
+MoveMode: Checking if optimized paint handler needs setup...
+MoveMode: After selection setup - has_original_paintEvent: True
+MoveMode: Optimized paint handler already exists after selection setup
+MoveMode: Invalidated background cache for proper highlighting
+MoveMode: Forcing canvas update to show highlighted strands
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3
+MoveMode: Optimized paint event triggered
+MoveMode: Entry condition check - has_canvas: True, canvas_match: True, is_moving: True, has_selected_strands: True
+MoveMode: Using optimized paint handler for highlighting
+MoveMode: draw_only_affected_strand = True
+MoveMode: truly_moving_strands = ['1_1', '1_3']
+MoveMode: original_strands_order contains 3 strands
+MoveMode: original_strands_order strand names: ['1_1', '1_2', '1_3']
+MoveMode: truly_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands contains: ['1_1', '1_3']
+MoveMode: sorted_moving_strands count: 2
+MoveMode: Toggle ON - will draw only moving strands
+MoveMode: About to draw strand: 1_1
+MoveMode: DEBUG - 1_1.is_selected = True
+MoveMode: DEBUG - 1_1 in truly_moving_strands = True
+MoveMode: DEBUG - 1_1 == selected_strand = True
+MoveMode: DEBUG - 1_1 == selected_attached_strand = True
+MoveMode: CRITICAL FIX - Forcing highlight for 1_1 because it's in truly_moving_strands
+MoveMode: Strand 1_1 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_1
+MoveMode: About to draw strand: 1_3
+MoveMode: DEBUG - 1_3.is_selected = True
+MoveMode: DEBUG - 1_3 in truly_moving_strands = True
+MoveMode: DEBUG - 1_3 == selected_strand = False
+MoveMode: DEBUG - 1_3 == selected_attached_strand = False
+MoveMode: CRITICAL FIX - Forcing highlight for 1_3 because it's in truly_moving_strands
+MoveMode: Strand 1_3 will be highlighted (is_selected=True)
+MoveMode: Drew highlighted strand: 1_3

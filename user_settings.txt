@@ -19,7 +19,7 @@ ArrowLineLength: 5.0
 ArrowLineWidth: 10.0
 UseDefaultArrowColor: true
 DefaultArrowColor: 255,170,127,255
-DefaultStrandColor: 85,170,0,255
+DefaultStrandColor: 203,139,216,255
 DefaultStrokeColor: 0,0,0,255
 DefaultStrandWidth: 36
 DefaultStrokeWidth: 4

@@ -125,18 +125,15 @@ translations = {
         'edit_strand_angles_desc': 'Edit Strand Angles - Aligns all strand angles in the group to be parallel with a single click',
         'duplicate_group_desc': 'Duplicate Group - Create a copy of this group and its strands',
         'whats_new_info': '''
-        <h2>What's New in Version 1.100</h2>
+        <h2>What's New in Version 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-            <li style="font-size:15px;"><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-            <li style="font-size:15px;"><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-            <li style="font-size:15px;"><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-            <li style="font-size:15px;"><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-            <li style="font-size:15px;"><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-            <li style="font-size:15px;"><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-            <li style="font-size:15px;"><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+            <li style="font-size:15px;"><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+            <li style="font-size:15px;"><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+            <li style="font-size:15px;"><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+            <li style="font-size:15px;"><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+            <li style="font-size:15px;"><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
         ''',
 
 
@@ -422,18 +419,15 @@ translations = {
         'layer_panel_buttons': 'Boutons du Panneau de Calques',
         'main_window_buttons': 'Boutons de la Fenêtre Principale',
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.100</h2>
+        <h2>Nouveautés de la version 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-            <li style="font-size:15px;"><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-            <li style="font-size:15px;"><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-            <li style="font-size:15px;"><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-            <li style="font-size:15px;"><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-            <li style="font-size:15px;"><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-            <li style="font-size:15px;"><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-            <li style="font-size:15px;"><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+            <li style="font-size:15px;"><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+            <li style="font-size:15px;"><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+            <li style="font-size:15px;"><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+            <li style="font-size:15px;"><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+            <li style="font-size:15px;"><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.100</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
         ''',
 
 
@@ -753,18 +747,15 @@ translations = {
         'layer_panel_buttons': 'Pulsanti del Pannello Livelli',
         'main_window_buttons': 'Pulsanti della Finestra Principale',
         'whats_new_info': '''
-        <h2>Novità della versione 1.100</h2>
+        <h2>Novità della versione 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-            <li style="font-size:15px;"><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-            <li style="font-size:15px;"><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-            <li style="font-size:15px;"><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-            <li style="font-size:15px;"><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-            <li style="font-size:15px;"><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-            <li style="font-size:15px;"><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-            <li style="font-size:15px;"><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+            <li style="font-size:15px;"><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+            <li style="font-size:15px;"><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+            <li style="font-size:15px;"><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+            <li style="font-size:15px;"><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+            <li style="font-size:15px;"><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.100</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.101</p>
         ''',
 
 
@@ -1088,18 +1079,15 @@ translations = {
         'layer_panel_buttons': 'Botones del Panel de Capas',
         'main_window_buttons': 'Botones de la Ventana Principal',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.100</h2>
+        <h2>Novedades de la versión 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-            <li style="font-size:15px;"><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-            <li style="font-size:15px;"><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-            <li style="font-size:15px;"><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-            <li style="font-size:15px;"><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-            <li style="font-size:15px;"><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-            <li style="font-size:15px;"><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-            <li style="font-size:15px;"><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+            <li style="font-size:15px;"><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+            <li style="font-size:15px;"><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+            <li style="font-size:15px;"><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+            <li style="font-size:15px;"><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+            <li style="font-size:15px;"><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.100</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.101</p>
 
         ''',
  
@@ -1424,18 +1412,15 @@ translations = {
         'layer_panel_buttons': 'Botões do Painel de Camadas',
         'main_window_buttons': 'Botões da Janela Principal',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.100</h2>
+        <h2>Novidades da versão 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-            <li style="font-size:15px;"><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-            <li style="font-size:15px;"><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-            <li style="font-size:15px;"><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-            <li style="font-size:15px;"><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-            <li style="font-size:15px;"><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-            <li style="font-size:15px;"><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-            <li style="font-size:15px;"><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+            <li style="font-size:15px;"><b>Gerenciamento de camadas aprimorado:</b> Estrutura StateLayerManager aprimorada para melhor gerenciamento de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+            <li style="font-size:15px;"><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+            <li style="font-size:15px;"><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente várias camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+            <li style="font-size:15px;"><b>Centralizar visualização:</b> Centralize instantaneamente todos os fios em sua visualização com o novo botão alvo (🎯). Isso ajusta automaticamente a posição do canvas para mostrar todo o seu trabalho centralizado na tela.</li>
+            <li style="font-size:15px;"><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.100</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.101</p>
         ''',
 
 
@@ -1764,16 +1749,13 @@ translations = {
         'main_window_buttons': 'כפתורי החלון הראשי',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <b>מה חדש בגרסה 1.100</b><br><br>
-        • <b>שינוי רוחב חוטים:</b> עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.<br>
-        • <b>הגדלה והקטנה:</b> אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.<br>
-        • <b>הזזת המסך:</b> אפשר לגרור את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.<br>
-        • <b>מצב צל בלבד:</b> עכשיו אפשר להסתיר שכבה תוך הצגת הצללים וההדגשות שלה על ידי לחיצה ימנית על כפתור שכבה ובחירת "צל בלבד". זה עוזר להמחיש אפקטי צל ללא העומס החזותי.<br>
-        • <b>התחלת עבודה:</b> כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.<br>
-        • <b>תיקונים כלליים:</b>תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.<br>
-        • <b>איכות תצוגה משופרת:</b> שיפור באיכות תצוגת הקנבס ויצוא תמונות ברזולוציה גבוהה פי 4 לתוצאות חדות ומקצועיות.<br>
-        • <b>הסרת אפשרות מסכה מורחבת:</b> האפשרות למסכה מורחבת בשכבה הכללית הוסרה מכיוון שהיא הייתה נחוצה רק כגיבוי לבעיות shader בגרסאות קודמות (1.09x). עם שיפור ההצללה באופן משמעותי, אפשרות זו אינה נחוצה עוד.<br><br>
-        © 2025 OpenStrand Studio - גרסה 1.100
+        <b>מה חדש בגרסה 1.101</b><br><br>
+        • <b>ניהול שכבות משופר:</b> מבנה StateLayerManager משופר לניהול טוב יותר של חיבורי קשרים ויחסים בין חוטים, המספק פעולות שכבה אמינות יותר וביצועים משופרים.<br>
+        • <b>שכפול קבוצה:</b> עכשיו אפשר לשכפל קבוצות שלמות עם כל החוטים שלהן על ידי לחיצה ימנית על כותרת הקבוצה ובחירת "שכפל קבוצה". הקבוצה המשוכפלת שומרת על כל המאפיינים של החוטים ויוצרת אוטומטית שמות שכבה ייחודיים.<br>
+        • <b>מצב הסתרה:</b> מצב הסתרה חדש נגיש דרך כפתור הקוף (🙉/🙈) מאפשר להסתיר במהירות מספר שכבות בבת אחת. לחץ על הכפתור כדי להיכנס למצב הסתרה, ואז לחץ על שכבות כדי להסתיר אותן. צא ממצב הסתרה כדי להחיל את השינויים.<br>
+        • <b>מרכוז תצוגה:</b> מרכז מיידית את כל החוטים בתצוגה שלך עם כפתור המטרה החדש (🎯). זה מכוונן אוטומטית את מיקום הקנבס כדי להציג את כל העבודה שלך במרכז המסך.<br>
+        • <b>סגירת קשר מהירה:</b> לחץ לחיצה ימנית על כל חוט או חוט מחובר עם קצה חופשי כדי לסגור במהירות את הקשר. המערכת מוצאת ומתחברת אוטומטית לחוט התואם הקרוב ביותר עם קצה חופשי.<br><br>
+        © 2025 OpenStrand Studio - גרסה 1.101
         </div>
         ''',
 

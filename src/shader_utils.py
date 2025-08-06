@@ -169,14 +169,11 @@ def draw_mask_strand_shadow(
     painter.save()
     painter.setRenderHint(QPainter.Antialiasing, True)
     painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
-    
+    painter.setPen(Qt.NoPen)  # We are stroking, not filling
+
     # Apply clipping so the shadow cannot appear where no underlying strand exists
     painter.setClipPath(second_path)
-
-    # --- 1) Draw solid fill first (exactly like draw_strand_shadow) ---
-    painter.setPen(Qt.NoPen)
- 
-    painter.setBrush(QBrush(base_color))    
+    shading_path = second_path.intersected(first_path)
     # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
     for i in range(num_steps):
         # Use EXACT same alpha calculation as draw_strand_shadow

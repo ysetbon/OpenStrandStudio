@@ -1,0 +1,52 @@
+Calculated center point for 1_1_2_1: 563.69, 451.74 from 1198 points
+Calculated center point for 1_1_2_1: 563.77, 451.53 from 1198 points
+Initialized masked strand 1_1_2_1 with center point: 563.77, 451.53
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Updated mask path for 1_1_2_1
+Preserved absolute coordinates for 1_1_2_1
+Updated mask path for 1_1_2_1
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Updated mask path for 1_1_2_1
+Preserved absolute coordinates for 1_1_2_1
+Updated mask path for 1_1_2_1
+Using absolute coordinates for deletion rectangles in 1_1_2_1, preserving exact JSON positions
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Using default intersection mask
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Using default intersection mask
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Using default intersection mask
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: []
+Drawing shadow for MaskedStrand 1_1_2_1
+Using default intersection mask
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(534.701065671235, 413.0521087863183, 68.42389339755869, 75.07752877675426)
+Skipping additional shadow for nested masked strand 1_1_2_1
+Transferred masked strand image to main painter for 1_1_2_1
+Completed drawing masked strand

@@ -392,35 +392,13 @@ class MaskedStrand(Strand):
                 strand2_path = self.get_stroked_path_for_strand(self.second_selected_strand)
                 strand1_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.first_selected_strand)
                 strand2_shadow_path = self.get_stroked_path_for_strand_with_shadow(self.second_selected_strand)
-
-                # Check if strand2_shadow_path is valid before attempting to constrain it (deletions handled in draw_mask_strand_shadow)
-                if not strand2_shadow_path.isEmpty():
-                    # Create a slightly expanded boundary to ensure we don't lose the shadow
-                    stroker = QPainterPathStroker()
-                    stroker.setWidth(0)  # Use a more substantial width to avoid losing the path
-                    strand1_shadow_path = stroker.createStroke(strand1_path)
-                    
-                    # Only apply the intersection if both paths are valid
-                    if not strand1_shadow_path.isEmpty():
-                        # Create a union with the original path to ensure we don't lose anything
-                        strand1_shadow_path = strand1_shadow_path.united(strand1_shadow_path)
-                        # Now constrain the shadow path
-                        constrained_path = strand1_shadow_path.intersected(strand1_shadow_path)
-                        # Only use the constrained path if it's not empty
-                        if not constrained_path.isEmpty():
-                            strand1_shadow_path = constrained_path
-                            logging.info(f"Successfully constrained shadow path for {self.layer_name}")
-                        else:
-                            logging.warning(f"Constrained shadow path became empty, keeping original for {self.layer_name}")
-                    else:
-                        logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
-                else:
-                    logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
-                painter.save()
+           
+           
+                
                 # Draw shadow and apply deletion rectangles at intersection stage
                 draw_mask_strand_shadow(
                     painter,
-                    strand1_shadow_path,
+                    strand1_path,
                     strand2_path,
                     self.first_selected_strand.get_path(),
                     self.first_selected_strand.width,

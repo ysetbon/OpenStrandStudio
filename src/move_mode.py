@@ -1766,21 +1766,21 @@ class MoveMode:
         
         logging.info(f"handle_strand_movement called with pos={pos}")
 
-        # First pass: Check all control points for all strands
+        # First pass: Check all control points for all strands (excluding masked strands)
         for strand in self.canvas.strands:
-            if not getattr(strand, 'deleted', False):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand):
                 if self.try_move_control_points(strand, pos):
                     return
                 if self.try_move_attached_strands_control_points(strand.attached_strands, pos):
                     return
 
-        # Second pass: Check start and end points for all strands
+        # Second pass: Check start and end points for all strands (excluding masked strands)
         # First, check if we're clicking on a connection point
         connection_point_strands = []
         
         # Check all strands to see if the click position matches any connection points
         for i, strand in enumerate(self.canvas.strands):
-            if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and (not self.lock_mode_active or i not in self.locked_layers):
                 start_area = self.get_start_area(strand)
                 end_area = self.get_end_area(strand)
                 
@@ -1835,9 +1835,9 @@ class MoveMode:
             self.start_movement(first_strand, first_side, first_area, pos)
             return
         
-        # Otherwise, iterate in reverse to check topmost strands first
+        # Otherwise, iterate in reverse to check topmost strands first (excluding masked strands)
         for i, strand in reversed(list(enumerate(self.canvas.strands))):
-            if not getattr(strand, 'deleted', False) and (not self.lock_mode_active or i not in self.locked_layers):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and (not self.lock_mode_active or i not in self.locked_layers):
                 logging.info(f"handle_strand_movement: Checking strand {strand.layer_name} at index {i}")
                 # Debug: Check if this strand has knot connections
                 if hasattr(strand, 'knot_connections') and strand.knot_connections:

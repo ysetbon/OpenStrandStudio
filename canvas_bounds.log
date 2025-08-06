@@ -1,91 +1,504 @@
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 1_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
-Canvas: Strand 2_1 has_circles: [False, False]
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: Drawing C-shape for 1_1 because it's in truly_moving_strands (even though is_selected=True)
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1
+Canvas: Strand 1_1 has_circles: [False, True]
+Canvas: About to draw C-shape for 1_1 at position 1 (has_circle=True, is_selected=True)
+Canvas: Completed drawing C-shape for 1_1 at position 1

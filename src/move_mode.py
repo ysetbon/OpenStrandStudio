@@ -1046,6 +1046,15 @@ class MoveMode:
                 square_control_size
             )
             painter.drawRect(yellow_rect)
+        elif self.moving_side == 'control_point_center' and hasattr(self.affected_strand, 'control_point_center'):
+            # Use control point size for the center control point
+            yellow_rect = QRectF(
+                self.affected_strand.control_point_center.x() - half_control_size,
+                self.affected_strand.control_point_center.y() - half_control_size,
+                square_control_size,
+                square_control_size
+            )
+            painter.drawRect(yellow_rect)
 
 
     def invalidate_background_cache(self):

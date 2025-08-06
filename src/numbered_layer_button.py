@@ -1074,15 +1074,15 @@ class NumberedLayerButton(QPushButton):
 
     def set_transparent_circle_stroke(self):
         """
-        Sets the attached strand's circle stroke color to transparent.
+        Sets the attached strand's START circle stroke color to transparent.
         """
-        self.set_circle_stroke_color(Qt.transparent)
+        self.set_start_circle_stroke_color(Qt.transparent)
 
     def reset_default_circle_stroke(self):
         """
-        Resets the attached strand's circle stroke color to solid black.
+        Resets the attached strand's START circle stroke color to solid black.
         """
-        self.set_circle_stroke_color(QColor(0, 0, 0, 255))
+        self.set_start_circle_stroke_color(QColor(0, 0, 0, 255))
 
     def set_transparent_ending_edge(self):
         """
@@ -1095,6 +1095,95 @@ class NumberedLayerButton(QPushButton):
         Resets the strand's ending circle stroke color to solid black.
         """
         self.set_end_circle_stroke_color(QColor(0, 0, 0, 255))
+
+    def set_start_circle_stroke_color(self, color):
+        """
+        Helper that sets start_circle_stroke_color on the correct strand,
+        making sure only the specific strand matching our button text is updated.
+        """
+        button_text = self.text()
+        if '_' not in button_text:
+            print(f"Button text '{button_text}' does not have an underscore; skipping start stroke color change.")
+            return
+
+        # Convert GlobalColor to QColor if needed
+        if not isinstance(color, QColor):
+            color = QColor(color)
+
+        found = False
+
+        if self.layer_context and hasattr(self.layer_context, "all_strands"):
+            for strand in self.layer_context.all_strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                    strand.start_circle_stroke_color = color
+                    logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
+                    if hasattr(strand, 'update'):
+                        strand.update(None, False)
+                    found = True
+        else:
+            parent = self.parent()
+            while parent is not None:
+                if hasattr(parent, 'layer_context') and hasattr(parent.layer_context, 'all_strands'):
+                    for strand in parent.layer_context.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.start_circle_stroke_color = color
+                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+                    break
+                elif hasattr(parent, 'all_strands'):
+                    for strand in parent.all_strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.start_circle_stroke_color = color
+                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+                    break
+                parent = parent.parent()
+
+            # Fallback: search for the LayerPanel (which has canvas.strands)
+            if not found:
+                layer_panel = None
+                parent2 = self.parent()
+                while parent2 is not None:
+                    if hasattr(parent2, 'canvas') and hasattr(parent2.canvas, 'strands'):
+                        layer_panel = parent2
+                        break
+                    parent2 = parent2.parent()
+
+                if layer_panel:
+                    for strand in layer_panel.canvas.strands:
+                        if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
+                            strand.start_circle_stroke_color = color
+                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
+                            if hasattr(strand, 'update'):
+                                strand.update(None, False)
+                    found = True
+
+                if not found:
+                    print("Warning: Could not find a parent or layer_context with 'all_strands' to update.")
+
+        # Force a canvas or widget repaint if we found the strand
+        if found:
+            # Look for canvas through various paths
+            canvas = None
+            current_parent = self.parent()
+            while current_parent and not canvas:
+                if hasattr(current_parent, 'canvas'):
+                    canvas = current_parent.canvas
+                    break
+                current_parent = current_parent.parent()
+                    
+            if canvas:
+                canvas.update()
+                canvas.repaint()
+                
+                # Save state for undo/redo to persist the transparent stroke color change
+                if hasattr(canvas, 'undo_redo_manager'):
+                    canvas.undo_redo_manager._last_save_time = 0
+                    canvas.undo_redo_manager.save_state()
 
     def set_end_circle_stroke_color(self, color):
         """

@@ -809,13 +809,69 @@ class AttachedStrand(Strand):
             path = self.get_path()
             stroke_path = stroke_stroker.createStroke(path)
             
-            highlight_pen = QPen(QColor('red'), 10)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(stroke_path)
+            # Create a shortened path for the highlight (10 pixels from each end)
+            # Use percentAtLength to get accurate t values for pixel offsets
+            total_length = path.length()
+                   # Create a shortened path for the highlight (10 pixels from each end)
+            # Use percentAtLength to get accurate t values for pixel offsets
+            total_length = path.length()
+            if self.start_circle_stroke_color.alpha() == 0:
+                t_start_point = 5.5
+            else:
+                t_start_point = 0.0
+            if self.end_circle_stroke_color.alpha() == 0:
+                t_end_point = 3.5
+            else:
+                t_end_point = 0.0
+            if self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0:
+                if total_length > 10:  # Only shorten if path is longer than 20 pixels
+                    # Get t values at exactly 10 pixels from start and 10 pixels from end
+                    t_start = path.percentAtLength(t_start_point)
+                    t_end = path.percentAtLength(total_length - t_end_point)
+                    
+                    # Create a new path for the shortened highlight
+                    highlight_path = QPainterPath()
+                    
+                    # Sample points along the actual path using pointAtPercent
+                    # This correctly handles both 2 and 3 control point configurations
+                    num_samples = 100
+                    points = []
+                    for i in range(num_samples + 1):
+                        t = t_start + (t_end - t_start) * (i / num_samples)
+                        # Use pointAtPercent to get the actual point on the path
+                        # This works correctly for any path configuration (2 or 3 control points)
+                        point = path.pointAtPercent(t)
+                        points.append(point)
+                    
+                    # Build the shortened path
+                    if points:
+                        highlight_path.moveTo(points[0])
+                        for point in points[1:]:
+                            highlight_path.lineTo(point)
+                    
+                    # Create stroker for the shortened highlight path
+                    highlight_stroker = QPainterPathStroker()
+                    highlight_stroker.setWidth(self.width + self.stroke_width * 2)
+                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
+                    highlight_stroker.setCapStyle(Qt.FlatCap)
+                    shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
+                    
+                    # Draw the shortened highlight
+                    highlight_pen = QPen(QColor('red'), 10)
+                    highlight_pen.setJoinStyle(Qt.RoundJoin)
+                    highlight_pen.setCapStyle(Qt.FlatCap)
+                    painter.setPen(highlight_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPath(shortened_stroke_path)
+            else:
+                # If path is too short, draw normal highlight
+                highlight_pen = QPen(QColor('red'), 10)
+                highlight_pen.setJoinStyle(Qt.RoundJoin)
+                highlight_pen.setCapStyle(Qt.FlatCap)
+                
+                painter.setPen(highlight_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPath(stroke_path)
             
             # Draw highlight for AttachedStrand's side line
             painter.save()
@@ -2206,13 +2262,67 @@ class AttachedStrand(Strand):
 
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            highlight_pen = QPen(QColor('red'), 10)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(stroke_path)
+            # Create a shortened path for the highlight (10 pixels from each end)
+            # Use percentAtLength to get accurate t values for pixel offsets
+            total_length = path.length()
+            if self.start_circle_stroke_color.alpha() == 0:
+                t_start_point = 5.5
+            else:
+                t_start_point = 0.0
+            if self.end_circle_stroke_color.alpha() == 0:
+                t_end_point = 3.5
+            else:
+                t_end_point = 0.0
+            if self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0:
+    
+                if total_length > 10:  # Only shorten if path is longer than 20 pixels
+                    # Get t values at exactly 10 pixels from start and 10 pixels from end
+                    t_start = path.percentAtLength(t_start_point)
+                    t_end = path.percentAtLength(total_length - t_end_point)
+                    
+                    # Create a new path for the shortened highlight
+                    highlight_path = QPainterPath()
+                    
+                    # Sample points along the actual path using pointAtPercent
+                    # This correctly handles both 2 and 3 control point configurations
+                    num_samples = 100
+                    points = []
+                    for i in range(num_samples + 1):
+                        t = t_start + (t_end - t_start) * (i / num_samples)
+                        # Use pointAtPercent to get the actual point on the path
+                        # This works correctly for any path configuration (2 or 3 control points)
+                        point = path.pointAtPercent(t)
+                        points.append(point)
+                    
+                    # Build the shortened path
+                    if points:
+                        highlight_path.moveTo(points[0])
+                        for point in points[1:]:
+                            highlight_path.lineTo(point)
+                    
+                    # Create stroker for the shortened highlight path
+                    highlight_stroker = QPainterPathStroker()
+                    highlight_stroker.setWidth(self.width + self.stroke_width * 2)
+                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
+                    highlight_stroker.setCapStyle(Qt.FlatCap)
+                    shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
+                    
+                    # Draw the shortened highlight
+                    highlight_pen = QPen(QColor('red'), 10)
+                    highlight_pen.setJoinStyle(Qt.RoundJoin)
+                    highlight_pen.setCapStyle(Qt.FlatCap)
+                    painter.setPen(highlight_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPath(shortened_stroke_path)
+            else:
+                # If path is too short, draw normal highlight
+                highlight_pen = QPen(QColor('red'), 10)
+                highlight_pen.setJoinStyle(Qt.RoundJoin)
+                highlight_pen.setCapStyle(Qt.FlatCap)
+                
+                painter.setPen(highlight_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPath(stroke_path)
             
             # Draw highlight for AttachedStrand's side line
             painter.save()

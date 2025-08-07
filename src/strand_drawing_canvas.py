@@ -1782,9 +1782,22 @@ class StrandDrawingCanvas(QWidget):
                                 # Only use state manager connections, never proximity detection
                                 # Check if this strand is actually connected in the state manager
                                 connections = self.layer_state_manager.getConnections()
-                                connected_strand_names = connections.get(affected_strand.layer_name, [])
-                                is_connected = (strand.layer_name in connected_strand_names or
-                                              affected_strand.layer_name in connections.get(strand.layer_name, []))
+                                # Connections format: [start_connection(end_point), end_connection(end_point)]
+                                affected_connections = connections.get(affected_strand.layer_name, ['null', 'null'])
+                                strand_connections = connections.get(strand.layer_name, ['null', 'null'])
+                                
+                                # Check if strand appears in affected_strand's connections
+                                is_connected = False
+                                for conn in affected_connections:
+                                    if conn != 'null' and strand.layer_name in conn:
+                                        is_connected = True
+                                        break
+                                if not is_connected:
+                                    # Check if affected_strand appears in strand's connections
+                                    for conn in strand_connections:
+                                        if conn != 'null' and affected_strand.layer_name in conn:
+                                            is_connected = True
+                                            break
                                 
                                 if is_connected:
                                     # If draw_only_affected_strand is enabled, verify connection at moving point
@@ -4822,30 +4835,11 @@ class StrandDrawingCanvas(QWidget):
                         connected_strand.knot_freed_ends.add(connected_end)
                         
                         
-                        # Also update layer state manager to remove the connection between these strands
+                        # Update layer state manager - let it recalculate connections based on the updated knot_connections
                         if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
-                            # Remove the connection from both strands in the layer state manager
-                            connections = self.layer_state_manager.getConnections()
-                            
-                            # Remove strand from connected_strand's connections
-                            if connected_strand.layer_name in connections:
-                                connected_connections = connections[connected_strand.layer_name]
-                                if strand.layer_name in connected_connections:
-                                    connected_connections.remove(strand.layer_name)
-                                    logging.info(f"Removed {strand.layer_name} from {connected_strand.layer_name}'s connections in layer state manager")
-                            
-                            # Remove connected_strand from strand's connections
-                            if strand.layer_name in connections:
-                                strand_connections = connections[strand.layer_name]
-                                if connected_strand.layer_name in strand_connections:
-                                    strand_connections.remove(connected_strand.layer_name)
-                                    logging.info(f"Removed {connected_strand.layer_name} from {strand.layer_name}'s connections in layer state manager")
-                            
-                            # Make sure the changes are persisted in the layer state manager
-                            # by updating its internal connections dictionary
-                            if hasattr(self.layer_state_manager, '_connections'):
-                                self.layer_state_manager._connections = connections
-                                logging.info(f"Updated layer state manager connections after knot cleanup")
+                            # Force recalculation of connections based on the actual strand relationships
+                            self.layer_state_manager.save_current_state()
+                            logging.info(f"Updated layer state manager connections after removing knot between {strand.layer_name} and {connected_strand.layer_name}")
                         
                         # Note: We don't call update_attachable() here because we've already manually
                         # set the correct has_circles state based on knot connection removal.
@@ -5608,21 +5602,29 @@ class StrandDrawingCanvas(QWidget):
                 pass
                 
                 # Get connections for this strand from layer_state_manager
-                strand_connections = connections.get(strand.layer_name, [])
+                # Format: [start_connection(end_point), end_connection(end_point)]
+                strand_connections = connections.get(strand.layer_name, ['null', 'null'])
+                
+                # Ensure we have exactly 2 elements
+                if len(strand_connections) != 2:
+                    strand_connections = ['null', 'null']
                 
                 # Check if any connections are stale (strand no longer exists)
-                valid_connections = []
-                for connection_str in strand_connections:
+                valid_connections = ['null', 'null']
+                for idx, connection_str in enumerate(strand_connections):
                     # Parse the connection string to extract strand name
                     # Format is either 'null' or 'strand_name(end_point)'
                     if connection_str == 'null':
+                        valid_connections[idx] = 'null'
                         continue
                     
                     # Extract strand name from 'strand_name(end_point)' format
                     if '(' in connection_str and ')' in connection_str:
                         connected_layer_name = connection_str.split('(')[0]
                     else:
-                        connected_layer_name = connection_str
+                        # Invalid format, treat as null
+                        valid_connections[idx] = 'null'
+                        continue
                     
                     # Find the connected strand in the same group
                     connected_strand = next(
@@ -5631,19 +5633,15 @@ class StrandDrawingCanvas(QWidget):
                     )
                     
                     if connected_strand:
-                        valid_connections.append(connection_str)  # Keep the original format
+                        valid_connections[idx] = connection_str  # Keep the original format
+                    else:
+                        valid_connections[idx] = 'null'  # Strand no longer exists
                 
                 # If we found stale connections, clean them up
-                if len(valid_connections) != len(strand_connections):
+                if valid_connections != strand_connections:
                     if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
-                        # Remove the stale connections for this strand
-                        connections[strand.layer_name] = valid_connections
-                        # Also remove this strand from the missing strand's connections
-                        for missing_connection in set(strand_connections) - set(valid_connections):
-                            # Parse the connection string to extract strand name
-                            if missing_connection != 'null' and '(' in missing_connection and ')' in missing_connection:
-                                missing_strand = missing_connection.split('(')[0]
-                                self.layer_state_manager.removeStrandConnections(missing_strand)
+                        # Force recalculation of connections
+                        self.layer_state_manager.save_current_state()
                 
                 # Now process only valid connections
                 for connection_str in valid_connections:

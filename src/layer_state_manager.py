@@ -732,11 +732,19 @@ class LayerStateManager(QObject):
             del connections[strand_name]
             logging.info(f"Removed connections entry for {strand_name}")
         
-        # Remove references to this strand from other strands' connections
-        for parent_name, child_names in connections.items():
-            if strand_name in child_names:
-                connections[parent_name] = [name for name in child_names if name != strand_name]
-                logging.info(f"Removed {strand_name} from {parent_name}'s connections")
+        # Update references to this strand in other strands' connections
+        # Connections format: [start_connection(end_point), end_connection(end_point)]
+        for other_strand_name, connection_data in connections.items():
+            if isinstance(connection_data, list) and len(connection_data) == 2:
+                # Check and update start connection
+                if connection_data[0] and strand_name in connection_data[0]:
+                    connection_data[0] = 'null'
+                    logging.info(f"Removed {strand_name} from {other_strand_name}'s start connection")
+                
+                # Check and update end connection  
+                if connection_data[1] and strand_name in connection_data[1]:
+                    connection_data[1] = 'null'
+                    logging.info(f"Removed {strand_name} from {other_strand_name}'s end connection")
         
         # Save the updated state
         self.save_current_state()

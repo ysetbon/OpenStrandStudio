@@ -2435,7 +2435,15 @@ class UndoRedoManager(QObject):
             
             logging.info("Button state restoration completed")
 
-            # --- Step 5: Final Canvas Update --- 
+            # --- Step 5: Update LayerStateManager ---
+            # IMPORTANT: After loading all strands, we must recalculate connections
+            # to ensure all strands (including new ones like '1_4') are in the connections dictionary
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                logging.info("Recalculating layer state connections after loading state...")
+                self.canvas.layer_state_manager.save_current_state()
+                logging.info("Layer state connections recalculated successfully")
+            
+            # --- Step 6: Final Canvas Update --- 
             logging.info("Updating canvas display...")
             self.canvas.update()
             

@@ -530,18 +530,12 @@ class LayerStateManager(QObject):
                     strand_dict[masked_layer_name] = masked_strand
                     logging.info(f"Created masked strand: {masked_layer_name}")
 
-        # Now read the 'connections' from state_data.
-        connections = state_data['connections']
-        for parent_name, child_names in connections.items():
-            parent_strand = strand_dict.get(parent_name)
-            if not parent_strand:
-                continue
-
-            for child_name in child_names:
-                child_strand = strand_dict.get(child_name)
-                if child_strand and child_strand is not parent_strand:
-                    # This is where "connectLayers" is used 
-                    self.connectLayers(parent_strand, child_strand)
+        # Connections in the new format are already properly established through
+        # the parent-child relationships and attachment_side values when creating
+        # AttachedStrands above. The format is:
+        # {layer_name: [start_connection(end_point), end_connection(end_point)]}
+        # We don't need to manually process them since they're derived from the
+        # actual strand relationships.
 
         # Update UI
         if self.layer_panel:
@@ -689,11 +683,13 @@ class LayerStateManager(QObject):
         return self.layer_state.get('newest_layer')
 
     def connect_layers(self, layer_name1, layer_name2):
-        """Connect two layers by their names."""
-        connections = self.layer_state.setdefault('connections', {})
-        connections.setdefault(layer_name1, []).append(layer_name2)
-        connections.setdefault(layer_name2, []).append(layer_name1)
-        logging.info(f"Connected layers: {layer_name1} and {layer_name2}")
+        """Connect two layers by their names.
+        DEPRECATED: This method uses the old connection format.
+        Instead, connections should be recalculated from strand relationships
+        by calling save_current_state() which uses get_layer_connections()."""
+        # Don't manually modify connections - force a recalculation instead
+        logging.info(f"connect_layers called for {layer_name1} and {layer_name2} - recalculating connections")
+        self.save_current_state()
 
     def connectLayers(self, parent_strand, child_strand):
         """

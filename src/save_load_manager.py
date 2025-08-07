@@ -352,14 +352,9 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 strand.set_number = set_number
                 strand.layer_name = layer_name
                 
-                # Connect layers in the canvas
-                if hasattr(canvas, 'layer_state_manager'):
-                    canvas.layer_state_manager.connect_layers(parent_layer_name, layer_name)
-                
-                # Update the parent strand's connections
-                if not hasattr(parent_strand, 'connections'):
-                    parent_strand.connections = []
-                parent_strand.connections.append(layer_name)
+                # Don't manually update connections - let LayerStateManager handle it
+                # The connections will be properly calculated when save_current_state() is called
+                # based on the actual parent/child relationships and attachment_side values
                 
                 # Update the parent strand's position if needed
                 update_parent_strand_position(parent_strand, strand)

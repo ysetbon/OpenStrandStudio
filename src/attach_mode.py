@@ -970,17 +970,13 @@ class AttachMode(QObject):
             logging.info(f"Group {parent_group_name} was deleted or not found after attach_strand processing - not adding new strand to group")
         
         # Update connections in layer state manager
+        # NOTE: Don't manually update connections here - let LayerStateManager.save_current_state() 
+        # calculate them based on the actual strand relationships (parent/child, attachment_side, etc.)
+        # This ensures connections are always in the correct format: [start_connection(end_point), end_connection(end_point)]
         if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
-            # Add the connection between parent and new strand
-            connections = self.canvas.layer_state_manager.getConnections()
-            if parent_strand.layer_name not in connections:
-                connections[parent_strand.layer_name] = []
-            connections[parent_strand.layer_name].append(new_strand.layer_name)
-            # Also add reverse connection
-            if new_strand.layer_name not in connections:
-                connections[new_strand.layer_name] = []
-            connections[new_strand.layer_name].append(parent_strand.layer_name)
-            logging.info(f"Added connection between {parent_strand.layer_name} and {new_strand.layer_name} in layer state manager")
+            # Force a state save to recalculate connections properly
+            self.canvas.layer_state_manager.save_current_state()
+            logging.info(f"Updated layer state after attaching {new_strand.layer_name} to {parent_strand.layer_name}")
             # Note: State saving will be handled by the undo_redo_manager through strand_created signal
         
         # Emit signals

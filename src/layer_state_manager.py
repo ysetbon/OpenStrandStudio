@@ -314,6 +314,10 @@ class LayerStateManager(QObject):
         logging.info(f"LayerStateManager: get_layer_connections called with {len(strands)} strands")
         
         for strand in strands:
+            # Skip MaskedStrand objects - they should not be included in connection data
+            if isinstance(strand, MaskedStrand):
+                logging.info(f"LayerStateManager: Skipping masked strand: {strand.layer_name}")
+                continue
             # Initialize connection info for this strand
             start_connection = None  # What strand is connected to the start point
             start_end_point = None   # Which end point of the connected strand (0=start, 1=end)
@@ -333,28 +337,36 @@ class LayerStateManager(QObject):
             
             # Check if this strand is an AttachedStrand and has a parent
             if hasattr(strand, 'parent') and strand.parent:
-                # This strand's start is connected to its parent
-                start_connection = strand.parent.layer_name
-                # Determine which end of the parent this strand is attached to
-                if hasattr(strand, 'attachment_side') and strand.attachment_side is not None:
-                    start_end_point = strand.attachment_side  # 0=parent's start, 1=parent's end
+                # Skip if parent is a MaskedStrand
+                if isinstance(strand.parent, MaskedStrand):
+                    logging.info(f"LayerStateManager: Skipping connection to masked parent: {strand.parent.layer_name}")
                 else:
-                    # Only use position comparison if attachment_side is truly not available
-                    # and we're not in the middle of a movement operation
-                    if not self.movement_in_progress:
-                        if strand.start == strand.parent.start:
-                            start_end_point = 0  # Parent's start
-                        elif strand.start == strand.parent.end:
-                            start_end_point = 1  # Parent's end
-                        else:
-                            start_end_point = 1  # Default to parent's end for backward compatibility
+                    # This strand's start is connected to its parent
+                    start_connection = strand.parent.layer_name
+                    # Determine which end of the parent this strand is attached to
+                    if hasattr(strand, 'attachment_side') and strand.attachment_side is not None:
+                        start_end_point = strand.attachment_side  # 0=parent's start, 1=parent's end
                     else:
-                        # During movement, default to end to avoid connection confusion
-                        start_end_point = 1
+                        # Only use position comparison if attachment_side is truly not available
+                        # and we're not in the middle of a movement operation
+                        if not self.movement_in_progress:
+                            if strand.start == strand.parent.start:
+                                start_end_point = 0  # Parent's start
+                            elif strand.start == strand.parent.end:
+                                start_end_point = 1  # Parent's end
+                            else:
+                                start_end_point = 1  # Default to parent's end for backward compatibility
+                        else:
+                            # During movement, default to end to avoid connection confusion
+                            start_end_point = 1
             
             # Check if this strand has attached children
             # We need to determine which end each child is attached to
             for attached_strand in strand.attached_strands:
+                # Skip if attached strand is a MaskedStrand
+                if isinstance(attached_strand, MaskedStrand):
+                    logging.info(f"LayerStateManager: Skipping masked attached strand: {attached_strand.layer_name}")
+                    continue
                 if hasattr(attached_strand, 'layer_name'):
                     # Check which end of the parent the child is attached to
                     # by comparing the attachment points
@@ -385,6 +397,10 @@ class LayerStateManager(QObject):
                 for end_type, connection_info in strand.knot_connections.items():
                     if 'connected_strand' in connection_info:
                         connected_strand = connection_info['connected_strand']
+                        # Skip if connected strand is a MaskedStrand
+                        if isinstance(connected_strand, MaskedStrand):
+                            logging.info(f"LayerStateManager: Skipping knot connection to masked strand: {connected_strand.layer_name}")
+                            continue
                         connected_end = connection_info.get('connected_end', 'end')
                         if hasattr(connected_strand, 'layer_name'):
                             if end_type == 'start':

@@ -2526,8 +2526,9 @@ class StrandDrawingCanvas(QWidget):
     def mask_exists(self, strand1, strand2):
         for strand in self.strands:
             if isinstance(strand, MaskedStrand):
-                if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2) or \
-                (strand.first_selected_strand == strand2 and strand.second_selected_strand == strand1):
+                # Only check if it's the exact same mask (same strands in same order)
+                # This allows creating masks with different selection orders (e.g., x_y_z_w and z_w_x_y)
+                if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2):
                     return True
         return False
     

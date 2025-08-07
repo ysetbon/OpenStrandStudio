@@ -81,7 +81,9 @@ class MaskMode(QObject):
                     'width': strand1.width,
                     'stroke_color': strand1.stroke_color,
                     'stroke_width': strand1.stroke_width,
-                    'layer_name': strand1.layer_name
+                    'layer_name': strand1.layer_name,
+                    'attached_strands': strand1.attached_strands.copy() if hasattr(strand1, 'attached_strands') else [],
+                    'parent': strand1.parent if hasattr(strand1, 'parent') else None
                 }
                 
                 strand2_props = {
@@ -91,7 +93,9 @@ class MaskMode(QObject):
                     'width': strand2.width,
                     'stroke_color': strand2.stroke_color,
                     'stroke_width': strand2.stroke_width,
-                    'layer_name': strand2.layer_name
+                    'layer_name': strand2.layer_name,
+                    'attached_strands': strand2.attached_strands.copy() if hasattr(strand2, 'attached_strands') else [],
+                    'parent': strand2.parent if hasattr(strand2, 'parent') else None
                 }
                 
                 logging.info(f"Storing original properties for strands")
@@ -147,21 +151,36 @@ class MaskMode(QObject):
                     # Apply the new order
                     self.canvas.strands = new_order
                     
-                    # Restore all original properties to strands
+                    # Restore all original properties to strands (including connections)
                     for prop, val in strand1_props.items():
                         if hasattr(strand1, prop) and prop != 'layer_name':  # Don't change the name
-                            setattr(strand1, prop, val)
+                            if prop == 'attached_strands':
+                                # Restore attached strands list
+                                strand1.attached_strands = val
+                            elif prop == 'parent':
+                                # Restore parent reference
+                                strand1.parent = val
+                            else:
+                                setattr(strand1, prop, val)
                     
                     for prop, val in strand2_props.items():
                         if hasattr(strand2, prop) and prop != 'layer_name':  # Don't change the name
-                            setattr(strand2, prop, val)
+                            if prop == 'attached_strands':
+                                # Restore attached strands list
+                                strand2.attached_strands = val
+                            elif prop == 'parent':
+                                # Restore parent reference
+                                strand2.parent = val
+                            else:
+                                setattr(strand2, prop, val)
                             
                     logging.info(f"Restored all original properties to strands")
                     
-                    # Explicitly fix any attachment relationships that might have been affected
-                    if hasattr(self.canvas, "refresh_geometry_based_attachments"):
-                        logging.info("Refreshing geometry-based attachments to fix any connection issues")
-                        self.canvas.refresh_geometry_based_attachments()
+                    # Don't refresh attachments - we've explicitly preserved all connections
+                    # This prevents creating new unintended connections
+                    # if hasattr(self.canvas, "refresh_geometry_based_attachments"):
+                    #     logging.info("Refreshing geometry-based attachments to fix any connection issues")
+                    #     self.canvas.refresh_geometry_based_attachments()
                     
                     # Update attachable states for all strands
                     for strand in self.canvas.strands:
@@ -218,6 +237,8 @@ class MaskMode(QObject):
     def mask_exists(self, strand1, strand2):
         for strand in self.canvas.strands:
             if isinstance(strand, MaskedStrand):
+                # Only check if it's the exact same mask (same strands in same order)
+                # This allows creating masks with different selection orders (e.g., x_y_z_w and z_w_x_y)
                 if (strand.first_selected_strand == strand1 and strand.second_selected_strand == strand2):
                     return True
         return False

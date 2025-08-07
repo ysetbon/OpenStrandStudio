@@ -16,6 +16,12 @@ class MaskMode(QObject):
 
     def activate(self):
         self.selected_strands = []
+        # Preserve the currently selected strand's highlighting if there is one
+        # The canvas.selected_strand should maintain its is_selected flag
+        if hasattr(self.canvas, 'selected_strand') and self.canvas.selected_strand:
+            # Make sure the selected strand maintains its is_selected flag
+            self.canvas.selected_strand.is_selected = True
+            logging.info(f"Preserving selection for strand: {self.canvas.selected_strand.layer_name}")
         self.canvas.setCursor(Qt.CrossCursor)
         logging.info("Mask mode activated")
 

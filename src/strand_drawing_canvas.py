@@ -1722,9 +1722,9 @@ class StrandDrawingCanvas(QWidget):
                                 self._logged_force_highlight = True
                                 logging.info(f"Toggle OFF: Force highlighting strand {strand.layer_name} (is_selected={getattr(strand, 'is_selected', False)}, in truly_moving_strands: {[s.layer_name for s in truly_moving_strands]})")
                 
-                # Only highlight selected strand if we're not in mask mode and not suppressed
+                # highlight selected strand if we're not suppressed
                 # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
-                if (is_selected_for_highlight or should_force_highlight) and not isinstance(self.current_mode, MaskMode) and not should_suppress_highlight:
+                if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight:
                     # Reduced high-frequency logging for performance
             # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                     self.draw_highlighted_strand(painter, strand)

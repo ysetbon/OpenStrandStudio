@@ -10,6 +10,7 @@ from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterP
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
+from save_load_manager import load_strands, apply_loaded_strands
 import logging
 import os
 import sys
@@ -1276,7 +1277,8 @@ class SettingsDialog(QDialog):
             _['button_explanations'],  # Add Button Guide category
             _['history'],
             _['whats_new'],  # Add What's New category here
-            _['about']  # Make sure About is the last item
+            (_['samples'] if 'samples' in _ else 'Samples'),
+            _['about']  # Keep About as the last item
         ]
         for category in categories:
             item = QListWidgetItem(category)
@@ -2177,6 +2179,31 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.whats_new_widget)
 
+        # Samples Page (second to last, before About)
+        self.samples_widget = QWidget()
+        samples_layout = QVBoxLayout(self.samples_widget)
+
+        samples_header = QLabel((_['samples_header'] if 'samples_header' in _ else 'Sample projects'))
+        samples_sub = QLabel((_['samples_sub'] if 'samples_sub' in _ else 'Choose a sample to load. The dialog will close and the sample will be loaded.'))
+        samples_sub.setWordWrap(True)
+        samples_layout.addWidget(samples_header)
+        samples_layout.addWidget(samples_sub)
+
+        # Build sample buttons from detected sample files
+        self.sample_buttons = []
+        for sample_path in self.find_sample_files(limit=12):
+            btn = QPushButton(os.path.basename(sample_path))
+            btn.clicked.connect(lambda _, p=sample_path: self.on_sample_button_clicked(p))
+            samples_layout.addWidget(btn)
+            self.sample_buttons.append(btn)
+
+        if not self.sample_buttons:
+            no_samples_label = QLabel((_['no_samples_found'] if 'no_samples_found' in _ else 'No sample JSON files found.'))
+            samples_layout.addWidget(no_samples_label)
+
+        samples_layout.addStretch()
+        self.stacked_widget.addWidget(self.samples_widget)
+
 
         # About Page (index 5) - LAST
         self.about_widget = QWidget()
@@ -2198,6 +2225,7 @@ class SettingsDialog(QDialog):
         self.history_widget.setMinimumWidth(550)
         self.whats_new_widget.setMinimumWidth(550) # Set min width for new page
         self.about_widget.setMinimumWidth(550)
+        self.samples_widget.setMinimumWidth(550)
 
         # Add widgets to main layout with proper spacing
         main_layout.addWidget(self.categories_list)
@@ -2225,6 +2253,9 @@ class SettingsDialog(QDialog):
             self.clear_history_button,
             self.default_strand_width_button  # ensure this specific button is included
         ]
+        # Include sample buttons if present
+        if hasattr(self, 'sample_buttons'):
+            buttons.extend(self.sample_buttons)
         
         for button in buttons:
             button.setFixedHeight(32)  # Match MainWindow button height
@@ -2865,7 +2896,8 @@ class SettingsDialog(QDialog):
         self.categories_list.item(4).setText(_['button_explanations']) # Update button guide category name
         self.categories_list.item(5).setText(_['history']) # Update history category name
         self.categories_list.item(6).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(7).setText(_['about']) # Adjust index for About
+        self.categories_list.item(7).setText(_['samples'] if 'samples' in _ else 'Samples')
+        self.categories_list.item(8).setText(_['about']) # About remains last
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -4016,6 +4048,138 @@ class SettingsDialog(QDialog):
             logging.info(f"Button: geometry={self.default_arrow_color_button.geometry()}, visible={self.default_arrow_color_button.isVisible()}")
             
         logging.info("=== END BUTTON COLOR LAYOUT DEBUG INFO ===")
+
+    # --- Samples helpers ---
+    def find_sample_files(self, limit=12):
+        """Locate sample JSON files from common sample directories.
+        Returns a list of absolute file paths, newest first.
+        """
+        candidates = []
+        
+        # Determine base path based on whether app is frozen or not
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            if sys.platform.startswith('darwin'):
+                # For macOS .app bundles, resources are in a different location
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                # For Windows/Linux executables
+                base_path = sys._MEIPASS
+        else:
+            # Running as script - samples is in the same directory as this file
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
+        # Common locations that can contain prepared samples
+        sample_dirs = [
+            os.path.join(base_path, 'samples'),                 # samples folder
+        ]
+
+        seen = set()
+        for d in sample_dirs:
+            if os.path.isdir(d):
+                try:
+                    # Walk recursively to include JSONs inside subfolders such as versioned dirs
+                    for root, _, files in os.walk(d):
+                        for name in files:
+                            if name.lower().endswith('.json'):
+                                full = os.path.join(root, name)
+                                if full not in seen:
+                                    seen.add(full)
+                                    candidates.append(full)
+                except Exception:
+                    continue
+
+        # Sort by modified time, newest first
+        try:
+            candidates.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
+        except Exception:
+            pass
+        if limit and limit > 0:
+            candidates = candidates[:limit]
+        return candidates
+
+    def on_sample_button_clicked(self, file_path):
+        """Close the dialog and then load the selected sample JSON into the canvas."""
+        # Close the dialog first, then load after the event loop processes close
+        self.close()
+
+        def _load():
+            try:
+                parent = self.parent_window if hasattr(self, 'parent_window') else self.parent()
+                if not parent:
+                    logging.error("SettingsDialog.on_sample_button_clicked: No parent window to load into")
+                    return
+
+                # Try to import full history first if available
+                undo_mgr = getattr(getattr(parent, 'layer_panel', None), 'undo_redo_manager', None)
+                history_loaded = False
+                if undo_mgr:
+                    try:
+                        history_loaded = undo_mgr.import_history(file_path)
+                    except Exception as e:
+                        logging.error(f"Samples load: import_history error: {e}")
+                        history_loaded = False
+
+                if history_loaded:
+                    logging.info(f"Sample with history loaded from {file_path}")
+                    if hasattr(parent.canvas, 'layer_panel'):
+                        parent.canvas.layer_panel.refresh()
+                    parent.canvas.update()
+                    return
+
+                # Fallback: simple snapshot
+                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(file_path, parent.canvas)
+
+                # Clear existing canvas state
+                parent.canvas.strands = []
+                parent.canvas.groups = {}
+
+                # Clear group panel UI/state for clean reload
+                if hasattr(parent.canvas, 'group_layer_manager') and hasattr(parent.canvas.group_layer_manager, 'group_panel'):
+                    group_panel = parent.canvas.group_layer_manager.group_panel
+                    if hasattr(group_panel, 'scroll_layout'):
+                        while group_panel.scroll_layout.count():
+                            child = group_panel.scroll_layout.takeAt(0)
+                            if child.widget():
+                                child.widget().deleteLater()
+                    group_panel.groups = {}
+                    group_panel.groups_loaded_from_json = False
+
+                # Apply loaded data
+                apply_loaded_strands(parent.canvas, strands, groups)
+
+                # Restore UI button states
+                if hasattr(parent, 'toggle_control_points_button'):
+                    parent.toggle_control_points_button.setChecked(show_control_points)
+                parent.canvas.show_control_points = show_control_points
+
+                if hasattr(parent, 'toggle_shadow_button'):
+                    parent.toggle_shadow_button.setChecked(shadow_enabled)
+                parent.canvas.shadow_enabled = shadow_enabled
+
+                # Update layer panel and canvas
+                if hasattr(parent.canvas, 'layer_panel'):
+                    parent.canvas.layer_panel.refresh()
+                parent.canvas.update()
+
+                logging.info(f"Sample project successfully loaded from {file_path}")
+
+                # Reset undo history since snapshot load discards previous history
+                if undo_mgr:
+                    try:
+                        undo_mgr.clear_history(save_current=True)
+                    except Exception:
+                        pass
+                # Save initial state
+                if hasattr(parent, 'layer_state_manager'):
+                    try:
+                        parent.layer_state_manager.save_initial_state()
+                    except Exception:
+                        pass
+            except Exception as e:
+                logging.error(f"Error loading sample from {file_path}: {e}")
+
+        QTimer.singleShot(0, _load)
 
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):

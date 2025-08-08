@@ -1,0 +1,418 @@
+{
+  "type": "OpenStrandStudioHistory",
+  "version": 1,
+  "current_step": 5,
+  "max_step": 5,
+  "states": [
+    {
+      "step": 1,
+      "data": {
+        "strands": [
+          {
+            "type": "Strand",
+            "index": 0,
+            "start": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "end": {
+              "x": 1131.0,
+              "y": 599.0
+            },
+            "width": 36,
+            "color": {
+              "r": 85,
+              "g": 170,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_width": 4,
+            "has_circles": [
+              false,
+              false
+            ],
+            "layer_name": "1_1",
+            "set_number": 1,
+            "is_first_strand": false,
+            "is_start_side": true,
+            "start_line_visible": true,
+            "end_line_visible": true,
+            "is_hidden": false,
+            "start_extension_visible": false,
+            "end_extension_visible": false,
+            "start_arrow_visible": false,
+            "end_arrow_visible": false,
+            "full_arrow_visible": false,
+            "shadow_only": false,
+            "closed_connections": [
+              false,
+              false
+            ],
+            "knot_connections": {},
+            "circle_stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "control_points": [
+              {
+                "x": 714.0,
+                "y": 295.0
+              },
+              {
+                "x": 714.0,
+                "y": 295.0
+              }
+            ],
+            "control_point_center": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "control_point_center_locked": false
+          }
+        ],
+        "groups": {},
+        "selected_strand_name": "1_1",
+        "locked_layers": [],
+        "lock_mode": false,
+        "shadow_enabled": true,
+        "show_control_points": true
+      }
+    },
+    {
+      "step": 2,
+      "data": {
+        "strands": [
+          {
+            "type": "Strand",
+            "index": 0,
+            "start": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "end": {
+              "x": 1131.0,
+              "y": 599.0
+            },
+            "width": 36,
+            "color": {
+              "r": 85,
+              "g": 170,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_width": 4,
+            "has_circles": [
+              false,
+              false
+            ],
+            "layer_name": "1_1",
+            "set_number": 1,
+            "is_first_strand": false,
+            "is_start_side": true,
+            "start_line_visible": true,
+            "end_line_visible": true,
+            "is_hidden": false,
+            "start_extension_visible": false,
+            "end_extension_visible": false,
+            "start_arrow_visible": false,
+            "end_arrow_visible": false,
+            "full_arrow_visible": false,
+            "shadow_only": false,
+            "closed_connections": [
+              false,
+              false
+            ],
+            "knot_connections": {},
+            "circle_stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "control_points": [
+              {
+                "x": 728.0,
+                "y": 504.0
+              },
+              {
+                "x": 714.0,
+                "y": 295.0
+              }
+            ],
+            "control_point_center": {
+              "x": 721.0,
+              "y": 399.5
+            },
+            "control_point_center_locked": false
+          }
+        ],
+        "groups": {},
+        "selected_strand_name": null,
+        "locked_layers": [],
+        "lock_mode": false,
+        "shadow_enabled": true,
+        "show_control_points": true
+      }
+    },
+    {
+      "step": 3,
+      "data": {
+        "strands": [
+          {
+            "type": "Strand",
+            "index": 0,
+            "start": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "end": {
+              "x": 1131.0,
+              "y": 599.0
+            },
+            "width": 36,
+            "color": {
+              "r": 85,
+              "g": 170,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_width": 4,
+            "has_circles": [
+              false,
+              false
+            ],
+            "layer_name": "1_1",
+            "set_number": 1,
+            "is_first_strand": false,
+            "is_start_side": true,
+            "start_line_visible": true,
+            "end_line_visible": true,
+            "is_hidden": false,
+            "start_extension_visible": false,
+            "end_extension_visible": false,
+            "start_arrow_visible": false,
+            "end_arrow_visible": false,
+            "full_arrow_visible": false,
+            "shadow_only": false,
+            "closed_connections": [
+              false,
+              false
+            ],
+            "knot_connections": {},
+            "circle_stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "control_points": [
+              {
+                "x": 728.0,
+                "y": 504.0
+              },
+              {
+                "x": 714.0,
+                "y": 295.0
+              }
+            ],
+            "control_point_center": {
+              "x": 721.0,
+              "y": 399.5
+            },
+            "control_point_center_locked": false
+          }
+        ],
+        "groups": {},
+        "selected_strand_name": null,
+        "locked_layers": [],
+        "lock_mode": false,
+        "shadow_enabled": true,
+        "show_control_points": true
+      }
+    },
+    {
+      "step": 4,
+      "data": {
+        "strands": [
+          {
+            "type": "Strand",
+            "index": 0,
+            "start": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "end": {
+              "x": 1131.0,
+              "y": 599.0
+            },
+            "width": 36,
+            "color": {
+              "r": 85,
+              "g": 170,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_width": 4,
+            "has_circles": [
+              false,
+              false
+            ],
+            "layer_name": "1_1",
+            "set_number": 1,
+            "is_first_strand": false,
+            "is_start_side": true,
+            "start_line_visible": true,
+            "end_line_visible": true,
+            "is_hidden": false,
+            "start_extension_visible": false,
+            "end_extension_visible": false,
+            "start_arrow_visible": false,
+            "end_arrow_visible": false,
+            "full_arrow_visible": false,
+            "shadow_only": false,
+            "closed_connections": [
+              false,
+              false
+            ],
+            "knot_connections": {},
+            "circle_stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "control_points": [
+              {
+                "x": 728.0,
+                "y": 504.0
+              },
+              {
+                "x": 714.0,
+                "y": 295.0
+              }
+            ],
+            "control_point_center": {
+              "x": 721.0,
+              "y": 399.5
+            },
+            "control_point_center_locked": false
+          }
+        ],
+        "groups": {},
+        "selected_strand_name": null,
+        "locked_layers": [],
+        "lock_mode": false,
+        "shadow_enabled": true,
+        "show_control_points": true
+      }
+    },
+    {
+      "step": 5,
+      "data": {
+        "strands": [
+          {
+            "type": "Strand",
+            "index": 0,
+            "start": {
+              "x": 714.0,
+              "y": 295.0
+            },
+            "end": {
+              "x": 1131.0,
+              "y": 599.0
+            },
+            "width": 36,
+            "color": {
+              "r": 85,
+              "g": 170,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "stroke_width": 4,
+            "has_circles": [
+              false,
+              false
+            ],
+            "layer_name": "1_1",
+            "set_number": 1,
+            "is_first_strand": false,
+            "is_start_side": true,
+            "start_line_visible": true,
+            "end_line_visible": true,
+            "is_hidden": false,
+            "start_extension_visible": false,
+            "end_extension_visible": false,
+            "start_arrow_visible": false,
+            "end_arrow_visible": false,
+            "full_arrow_visible": false,
+            "shadow_only": false,
+            "closed_connections": [
+              false,
+              false
+            ],
+            "knot_connections": {},
+            "circle_stroke_color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 255
+            },
+            "control_points": [
+              {
+                "x": 728.0,
+                "y": 504.0
+              },
+              {
+                "x": 714.0,
+                "y": 295.0
+              }
+            ],
+            "control_point_center": {
+              "x": 721.0,
+              "y": 399.5
+            },
+            "control_point_center_locked": false
+          }
+        ],
+        "groups": {},
+        "selected_strand_name": null,
+        "locked_layers": [],
+        "lock_mode": false,
+        "shadow_enabled": true,
+        "show_control_points": true
+      }
+    }
+  ]
+}

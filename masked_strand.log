@@ -1,0 +1,286 @@
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+Calculated center point for 1_2_1_3: 1220.30, 452.53 from 147 points
+Initialized masked strand 1_2_1_3 with center point: 1220.30, 452.53
+Using absolute coordinates for deletion rectangles in 1_2_1_3, preserving exact JSON positions
+ Applied corner-based deletion rect with corners: [1139.6888075125435, 359.88441355996594] [1265.6888075125435, 359.88441355996594] [1139.6888075125435, 502.8844135599659] [1265.6888075125435, 502.8844135599659]
+Updated mask path for 1_2_1_3
+Preserved absolute coordinates for 1_2_1_3
+Updated mask path for 1_2_1_3
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+Calculated center point for 1_3_1_2: 1219.44, 452.30 from 150 points
+Initialized masked strand 1_3_1_2 with center point: 1219.44, 452.30
+Using absolute coordinates for deletion rectangles in 1_3_1_2, preserving exact JSON positions
+ Applied corner-based deletion rect with corners: [1170.6516393036666, 406.21663251246724] [1322.6516393036666, 406.21663251246724] [1170.6516393036666, 529.2166325124672] [1322.6516393036666, 529.2166325124672]
+Updated mask path for 1_3_1_2
+Preserved absolute coordinates for 1_3_1_2
+Updated mask path for 1_3_1_2
+Using absolute coordinates for deletion rectangles in 1_2_1_3, preserving exact JSON positions
+ Applied corner-based deletion rect with corners: [1139.6888075125435, 359.88441355996594] [1265.6888075125435, 359.88441355996594] [1139.6888075125435, 502.8844135599659] [1265.6888075125435, 502.8844135599659]
+Updated mask path for 1_2_1_3
+Preserved absolute coordinates for 1_2_1_3
+Updated mask path for 1_2_1_3
+Using absolute coordinates for deletion rectangles in 1_2_1_3, preserving exact JSON positions
+Using absolute coordinates for deletion rectangles in 1_3_1_2, preserving exact JSON positions
+ Applied corner-based deletion rect with corners: [1170.6516393036666, 406.21663251246724] [1322.6516393036666, 406.21663251246724] [1170.6516393036666, 529.2166325124672] [1322.6516393036666, 529.2166325124672]
+Updated mask path for 1_3_1_2
+Preserved absolute coordinates for 1_3_1_2
+Updated mask path for 1_3_1_2
+Using absolute coordinates for deletion rectangles in 1_3_1_2, preserving exact JSON positions
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(995.1515259051831, 391.9868142601496, 464.1212090316295, 126.18444334381127), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 392.324480324222, 465.8375094406109, 124.91606066240911), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': [1139.6888075125435, 359.88441355996594], 'top_right': [1265.6888075125435, 359.88441355996594], 'bottom_left': [1139.6888075125435, 502.8844135599659], 'bottom_right': [1265.6888075125435, 502.8844135599659]}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+Detected center point movement from (1428.62, 420.48) to (1218.76, 453.05)
+Cleared cache for custom_mask_path
+Skipping center recalculation for 1_2_1_3 to preserve deletion rectangle positions
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Updated mask path for 1_2_1_3
+Using center point from JSON: 1521.00, 526.00
+Updated mask path for 1_2_1_3
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Calculated center point for 1_2_1_3: 1428.62, 420.48 from 1225 points
+Forced complete shadow update for masked strand 1_2_1_3
+=== Completed MaskedStrand update for 1_2_1_3 ===
+
+Cleared cache for custom_mask_path
+Skipping center recalculation for 1_2_1_3 to preserve deletion rectangle positions
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Updated mask path for 1_2_1_3
+Using center point from JSON: 1521.00, 526.00
+Updated mask path for 1_2_1_3
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Calculated center point for 1_2_1_3: 1428.62, 420.48 from 1225 points
+Forced complete shadow update for masked strand 1_2_1_3
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': [1170.6516393036666, 406.21663251246724], 'top_right': [1322.6516393036666, 406.21663251246724], 'bottom_left': [1170.6516393036666, 529.2166325124672], 'bottom_right': [1322.6516393036666, 529.2166325124672]}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+Detected center point movement from (1020.58, 482.81) to (1218.76, 453.05)
+Cleared cache for custom_mask_path
+Skipping center recalculation for 1_3_1_2 to preserve deletion rectangle positions
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Updated mask path for 1_3_1_2
+Using center point from JSON: 912.00, 375.00
+Updated mask path for 1_3_1_2
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Calculated center point for 1_3_1_2: 1020.58, 482.81 from 1230 points
+Forced complete shadow update for masked strand 1_3_1_2
+=== Completed MaskedStrand update for 1_3_1_2 ===
+
+Cleared cache for custom_mask_path
+Skipping center recalculation for 1_3_1_2 to preserve deletion rectangle positions
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Updated mask path for 1_3_1_2
+Using center point from JSON: 912.00, 375.00
+Updated mask path for 1_3_1_2
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Calculated center point for 1_3_1_2: 1020.58, 482.81 from 1230 points
+Forced complete shadow update for masked strand 1_3_1_2
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (929.827025163506, 392.4523101469236), 'top_right': (1055.827025163506, 392.4523101469236), 'bottom_left': (929.827025163506, 535.4523101469235), 'bottom_right': (1055.827025163506, 535.4523101469235)}]
+Drawing shadow for MaskedStrand 1_2_1_3
+Using edited mask with deletion rectangles
+Calculated center point for 1_2_1_3: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (929.827025163506, 392.4523101469236) (1055.827025163506, 392.4523101469236) (929.827025163506, 535.4523101469235) (1055.827025163506, 535.4523101469235)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(1393.8465992889137, 388.80585258581726, 69.31041250372573, 63.688449515938885)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_2_1_3
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1396.094452633206, 390.81255656324515, 64.87696307153283, 59.62439521998391), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(1397.693462429957, 391.9868142601496, 61.57927250685566, 57.3278399952203), empty=False
+Transferred masked strand image to main painter for 1_2_1_3
+Completed drawing masked strand
+Drawing MaskedStrand - Has deletion rectangles: True
+Current deletion rectangles: [{'top_left': (1368.827025163506, 376.4523101469236), 'top_right': (1520.827025163506, 376.4523101469236), 'bottom_left': (1368.827025163506, 499.45231014692354), 'bottom_right': (1520.827025163506, 499.45231014692354)}]
+Drawing shadow for MaskedStrand 1_3_1_2
+Using edited mask with deletion rectangles
+Calculated center point for 1_3_1_2: 1218.76, 453.05 from 167 points
+ Applied corner-based deletion rect with corners: (1368.827025163506, 376.4523101469236) (1520.827025163506, 376.4523101469236) (1368.827025163506, 499.45231014692354) (1520.827025163506, 499.45231014692354)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Final shadow path for clipping: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 444.4873413171536, 58.45817983069912, 77.43052755368143)
+Created masked shadow path: empty=False, bounds=PyQt5.QtCore.QRectF(991.4366992625315, 388.80585258581726, 471.7203125301079, 133.11201628501777)
+Skipping additional shadow for nested masked strand 1_3_1_2
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.2925100620548, 446.8966970996918, 54.72525415480345, 72.49212596701364), empty=False
+Applied deletion rect to mask_path: new bounds=PyQt5.QtCore.QRectF(993.9152327471814, 448.91142295080124, 53.36362951064041, 68.32911803582988), empty=False
+Transferred masked strand image to main painter for 1_3_1_2
+Completed drawing masked strand

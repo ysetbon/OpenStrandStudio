@@ -1982,6 +1982,7 @@ class SettingsDialog(QDialog):
         # Add language items with generated icons - using current translations
         self.add_lang_item_en(_['english'], 'en')
         self.add_lang_item_fr(_['french'], 'fr')
+        self.add_lang_item_de(_['german'], 'de')
         self.add_lang_item_it(_['italian'], 'it')
         self.add_lang_item_es(_['spanish'], 'es')
         self.add_lang_item_pt(_['portuguese'], 'pt')
@@ -2183,23 +2184,43 @@ class SettingsDialog(QDialog):
         self.samples_widget = QWidget()
         samples_layout = QVBoxLayout(self.samples_widget)
 
-        samples_header = QLabel((_['samples_header'] if 'samples_header' in _ else 'Sample projects'))
-        samples_sub = QLabel((_['samples_sub'] if 'samples_sub' in _ else 'Choose a sample to load. The dialog will close and the sample will be loaded.'))
-        samples_sub.setWordWrap(True)
-        samples_layout.addWidget(samples_header)
-        samples_layout.addWidget(samples_sub)
+        # Store labels as instance attributes so they can be updated on language change
+        self.samples_header_label = QLabel((_['samples_header'] if 'samples_header' in _ else 'Sample projects'))
+        self.samples_header_label.setAlignment(Qt.AlignCenter)
+        self.samples_header_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        # Build sample buttons from detected sample files
+        self.samples_sub_label = QLabel((_['samples_sub'] if 'samples_sub' in _ else 'Choose a sample to load and learn from. The dialog will close and the sample will be loaded.'))
+        self.samples_sub_label.setWordWrap(True)
+        self.samples_sub_label.setAlignment(Qt.AlignCenter)
+        self.samples_sub_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        samples_layout.addWidget(self.samples_header_label)
+        samples_layout.addWidget(self.samples_sub_label)
+
+        # Build sample buttons for the three curated samples (static, not scanning folder)
         self.sample_buttons = []
-        for sample_path in self.find_sample_files(limit=12):
-            btn = QPushButton(os.path.basename(sample_path))
-            btn.clicked.connect(lambda _, p=sample_path: self.on_sample_button_clicked(p))
-            samples_layout.addWidget(btn)
-            self.sample_buttons.append(btn)
+        samples_dir = os.path.join(os.path.dirname(__file__), 'samples')
 
-        if not self.sample_buttons:
-            no_samples_label = QLabel((_['no_samples_found'] if 'no_samples_found' in _ else 'No sample JSON files found.'))
-            samples_layout.addWidget(no_samples_label)
+        # Closed Knot
+        self.sample_button_closed_knot = QPushButton(_['sample_closed_knot'] if 'sample_closed_knot' in _ else 'Closed Knot')
+        closed_knot_path = os.path.join(samples_dir, 'closed_knot.json')
+        self.sample_button_closed_knot.clicked.connect(lambda _, p=closed_knot_path: self.on_sample_button_clicked(p))
+        samples_layout.addWidget(self.sample_button_closed_knot)
+        self.sample_buttons.append(self.sample_button_closed_knot)
+
+        # Box Stitch
+        self.sample_button_box_stitch = QPushButton(_['sample_box_stitch'] if 'sample_box_stitch' in _ else 'Box Stitch')
+        box_stitch_path = os.path.join(samples_dir, 'box_stitch.json')
+        self.sample_button_box_stitch.clicked.connect(lambda _, p=box_stitch_path: self.on_sample_button_clicked(p))
+        samples_layout.addWidget(self.sample_button_box_stitch)
+        self.sample_buttons.append(self.sample_button_box_stitch)
+
+        # Overhand Knot
+        self.sample_button_overhand_knot = QPushButton(_['sample_overhand_knot'] if 'sample_overhand_knot' in _ else 'Overhand Knot')
+        overhand_knot_path = os.path.join(samples_dir, 'overhand_knot.json')
+        self.sample_button_overhand_knot.clicked.connect(lambda _, p=overhand_knot_path: self.on_sample_button_clicked(p))
+        samples_layout.addWidget(self.sample_button_overhand_knot)
+        self.sample_buttons.append(self.sample_button_overhand_knot)
 
         samples_layout.addStretch()
         self.stacked_widget.addWidget(self.samples_widget)
@@ -3052,10 +3073,26 @@ class SettingsDialog(QDialog):
         self.whats_new_text_browser.setHtml(_['whats_new_info'])
         # Update about text browser instead of label
         self.about_text_browser.setHtml(_['about_info'])
+        
+        # Update samples page labels
+        if hasattr(self, 'samples_header_label'):
+            self.samples_header_label.setText((_['samples_header'] if 'samples_header' in _ else 'Sample projects'))
+            self.samples_header_label.setAlignment(Qt.AlignCenter)
+        if hasattr(self, 'samples_sub_label'):
+            self.samples_sub_label.setText((_['samples_sub'] if 'samples_sub' in _ else 'Choose a sample to load and learn from. The dialog will close and the sample will be loaded.'))
+            self.samples_sub_label.setAlignment(Qt.AlignCenter)
         # Update theme combobox items
         self.theme_combobox.setItemText(0, _['default'])
         self.theme_combobox.setItemText(1, _['light'])
         self.theme_combobox.setItemText(2, _['dark'])
+        
+        # Update sample buttons' text
+        if hasattr(self, 'sample_button_closed_knot'):
+            self.sample_button_closed_knot.setText(_['sample_closed_knot'] if 'sample_closed_knot' in _ else 'Closed Knot')
+        if hasattr(self, 'sample_button_box_stitch'):
+            self.sample_button_box_stitch.setText(_['sample_box_stitch'] if 'sample_box_stitch' in _ else 'Box Stitch')
+        if hasattr(self, 'sample_button_overhand_knot'):
+            self.sample_button_overhand_knot.setText(_['sample_overhand_knot'] if 'sample_overhand_knot' in _ else 'Overhand Knot')
         
         # Completely rebuild the language combobox to ensure proper translation
         current_data = self.language_combobox.currentData()
@@ -3064,6 +3101,7 @@ class SettingsDialog(QDialog):
         # Re-add language items with properly translated names
         self.add_lang_item_en(_['english'], 'en')
         self.add_lang_item_fr(_['french'], 'fr')
+        self.add_lang_item_de(_['german'], 'de')
         self.add_lang_item_it(_['italian'], 'it')
         self.add_lang_item_es(_['spanish'], 'es')
         self.add_lang_item_pt(_['portuguese'], 'pt')
@@ -3145,6 +3183,13 @@ class SettingsDialog(QDialog):
         
         # Update alignment for all labels
         for widget in self.findChildren(QLabel):
+            # Keep samples header/subtitle centered regardless of language direction
+            if hasattr(self, 'samples_header_label') and widget is self.samples_header_label:
+                widget.setAlignment(Qt.AlignCenter)
+                continue
+            if hasattr(self, 'samples_sub_label') and widget is self.samples_sub_label:
+                widget.setAlignment(Qt.AlignCenter)
+                continue
             # Skip labels within specific layouts where alignment might be handled differently
             # or where center alignment is intended (like category items)
             parent_layout = widget.parentWidget().layout() if widget.parentWidget() else None
@@ -3473,6 +3518,14 @@ class SettingsDialog(QDialog):
 
     def add_lang_item_fr(self, text, data):
         icon, icon_size = self.create_flag_icon('fr.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data)
+
+    def add_lang_item_de(self, text, data):
+        icon, icon_size = self.create_flag_icon('de.png')
         if icon:
             self.language_combobox.addItem(icon, text, data)
             self.language_combobox.setIconSize(icon_size)

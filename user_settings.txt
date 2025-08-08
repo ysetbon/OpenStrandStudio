@@ -1,8 +1,8 @@
 Theme: default
-Language: he
+Language: de
 ShadowColor: 0,0,0,230
 DrawOnlyAffectedStrand: true
-EnableThirdControlPoint: true
+EnableThirdControlPoint: false
 EnableSnapToGrid: true
 NumSteps: 4
 MaxBlurRadius: 100.0

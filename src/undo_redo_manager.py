@@ -2,7 +2,6 @@ import os
 import json
 import glob
 import time  # Add time module for timestamp comparison
-import logging
 import shutil
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
@@ -10,7 +9,6 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
 from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
-from safe_logging import safe_info, safe_warning, safe_error, safe_exception
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
 from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
@@ -128,7 +126,6 @@ class StrokeTextButton(QPushButton):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        logging.info(f"[StrokeTextButton.paintEvent] Setting up UI painter for button text: {getattr(self, 'text', 'unknown')}")
         RenderUtils.setup_ui_painter(painter)
 
         # Draw the background (if not handled by stylesheet)
@@ -206,7 +203,6 @@ class StrokeTextButton(QPushButton):
     def mousePressEvent(self, event):
         """Handle mouse press events"""
         if event.button() == Qt.RightButton:
-            logging.info(f"Right-click press detected on StrokeTextButton. Tooltip text: '{self.custom_tooltip}'")
             
             if self.custom_tooltip:
                 # Import CustomTooltip here to avoid circular imports
@@ -344,7 +340,6 @@ class UndoRedoManager(QObject):
         # Use the provided base_path instead of __file__
         temp_dir = os.path.join(base_path, "temp_states")
         os.makedirs(temp_dir, exist_ok=True)
-        logging.info(f"UndoRedoManager: Using temp_states directory at {temp_dir}")
         return temp_dir
 
     def _get_state_filename(self, step):
@@ -356,33 +351,25 @@ class UndoRedoManager(QObject):
         # Add debug logging to track save_state calls
         import traceback
         caller_info = traceback.extract_stack()[-2]  # Get the caller info
-        logging.info(f"=== SAVE STATE DEBUG === save_state called from {caller_info.filename}:{caller_info.lineno} in {caller_info.name}")
         
         # Check skip_save flag
         skip_save = getattr(self, '_skip_save', False)
-        logging.info(f"=== SAVE STATE DEBUG === _skip_save flag: {skip_save}")
-        logging.info(f"=== SAVE STATE DEBUG === _mask_save_in_progress flag: {getattr(self, '_mask_save_in_progress', False)}")
-        logging.info(f"=== SAVE STATE DEBUG === _mask_save_completed flag: {getattr(self, '_mask_save_completed', False)}")
         
         # Skip save if flagged to avoid saving states
         if skip_save:
-            logging.info("Skipping state save due to _skip_save flag")
             return
             
         # Ensure the canvas exists
         if not self.canvas:
-            logging.warning("Cannot save state: Canvas is not available")
             return
             
         # Check if there is content to save (unless explicitly allowing empty states)
         if not allow_empty:
             if not self.canvas.strands and not hasattr(self.canvas, 'groups'):
-                logging.info("No content (strands or groups) to save, skipping state save")
                 return
                 
             # Only save if content actually exists
             if not self.canvas.strands and not (hasattr(self.canvas, 'groups') and self.canvas.groups):
-                logging.info("Empty canvas (no strands or groups), skipping state save")
                 return
             
         # Record the timestamp of this save
@@ -394,12 +381,11 @@ class UndoRedoManager(QObject):
         if (current_time - last_save_time < 0.5) and self.current_step > 0:
             # Check if the current state would be identical to the previous state
             if self._would_be_identical_save():
-                logging.info("Skipping identical state save that would occur too soon after previous save")
                 return
             else:
-                logging.info(f"State would not be identical, proceeding with save (time since last save: {current_time - last_save_time:.3f}s)")
+                pass
         else:
-            logging.info(f"Proceeding with save (time since last save: {current_time - last_save_time:.3f}s)")
+            pass
         
         self._last_save_time = current_time
             
@@ -420,7 +406,6 @@ class UndoRedoManager(QObject):
         
         if filename:
             # Signal that a state was saved
-            logging.info(f"State saved successfully at step {self.current_step}")
             self.state_saved.emit(self.current_step)
             
             # Update button states
@@ -430,13 +415,10 @@ class UndoRedoManager(QObject):
             self.current_step -= 1
             if self.max_step > self.current_step:
                 self.max_step = self.current_step
-            logging.error(f"Failed to save state at step {self.current_step + 1}")
 
     def _would_be_identical_save(self):
         """Check if the current state would be identical to the previous saved state."""
-        logging.info(f"_would_be_identical_save: Checking if current state would be identical to previous state (current_step={self.current_step})")
         if self.current_step <= 0:
-            logging.info("_would_be_identical_save: No previous state to compare (current_step <= 0)")
             return False
             
         try:
@@ -460,10 +442,7 @@ class UndoRedoManager(QObject):
                 # Check previous data for masked strands by looking for the 'type' field set to 'MaskedStrand' in the saved data.
                 # This assumes save_strands correctly serializes MaskedStrand instances with this 'type' field.
                 prev_masked_count = sum(1 for s_data in prev_data.get('strands', []) if s_data.get('type') == 'MaskedStrand')
-                logging.info(f"current_masked_count: {current_masked_count}")
-                logging.info(f"prev_masked_count: {prev_masked_count}")
                 if current_masked_count != prev_masked_count:
-                    logging.info(f"Masked strand count differs (Current: {current_masked_count}, Prev: {prev_masked_count}). State is not identical.")
                     return False
                 # --- END ADD --- 
 
@@ -478,7 +457,6 @@ class UndoRedoManager(QObject):
                 current_layer_order = [s.layer_name for s in self.canvas.strands if hasattr(s, 'layer_name')]
                 prev_layer_order = [s.get('layer_name') for s in prev_data.get('strands', []) if 'layer_name' in s]
                 if current_layer_order != prev_layer_order:
-                    logging.info("_would_be_identical_save: Layer order differs between current and previous state. Treating as different state.")
                     return False
                 # --- END NEW CHECK ---
 
@@ -531,7 +509,6 @@ class UndoRedoManager(QObject):
                 
                 # If strand count and layer names match, also compare strand positions
                 # to detect angle changes and movements
-                logging.info(f"_would_be_identical_save: Comparing {len(self.canvas.strands)} strands for position differences")
                 for i, current_strand in enumerate(self.canvas.strands):
                     if i >= prev_strand_count:
                         return False
@@ -595,11 +572,9 @@ class UndoRedoManager(QObject):
                             # Stroke colors differ, so state is not identical
                             current_rgba = f"({current_stroke_color.red()},{current_stroke_color.green()},{current_stroke_color.blue()},{current_stroke_color.alpha()})"
                             prev_rgba = f"({prev_stroke_color_dict.get('r', 0)},{prev_stroke_color_dict.get('g', 0)},{prev_stroke_color_dict.get('b', 0)},{prev_stroke_color_dict.get('a', 0)})"
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_color differs. Current: {current_rgba}, Previous: {prev_rgba}")
                             return False
                     elif hasattr(current_strand, 'stroke_color') != ('stroke_color' in prev_strand):
                         # Stroke color attribute presence differs, state is not identical
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_color attribute presence differs.")
                         return False
 
                     # --- ADD: Compare mask path for MaskedStrands --- 
@@ -608,7 +583,6 @@ class UndoRedoManager(QObject):
                         current_components = sorted(getattr(current_strand, 'component_strand_names', []))
                         prev_components = sorted(prev_strand.get('component_strand_names', []))
                         if current_components != prev_components:
-                            logging.info(f"Masked strand components changed for {current_strand.layer_name}, state is not identical.")
                             return False
 
                         # Compare deletion rectangles
@@ -616,7 +590,6 @@ class UndoRedoManager(QObject):
                         prev_rects = prev_strand.get('deletion_rectangles', [])
                         
                         if len(current_rects) != len(prev_rects):
-                            logging.info(f"Masked strand {current_strand.layer_name} deletion rectangle count differs. State not identical.")
                             return False
                         
                         # Deep compare rectangles if counts are the same
@@ -648,46 +621,36 @@ class UndoRedoManager(QObject):
                             sig_prev = sorted([rect_signature(r) for r in prev_rects])
 
                             if sig_curr != sig_prev:
-                                logging.info(
-                                    f"Masked strand {current_strand.layer_name} deletion rectangle data changed. State not identical.")
                                 return False
                     # --- ADD: Check line visibility ---
                     if hasattr(current_strand, 'start_line_visible') and 'start_line_visible' in prev_strand:
                         # Safer check using .get()
                         prev_start_vis = prev_strand.get('start_line_visible', not current_strand.start_line_visible)
                         if current_strand.start_line_visible != prev_start_vis:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_line_visible differs.")
                             return False
                     elif hasattr(current_strand, 'start_line_visible') != ('start_line_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_line_visible attribute presence differs.")
                          return False
 
                     if hasattr(current_strand, 'end_line_visible') and 'end_line_visible' in prev_strand:
                         # Safer check using .get()
                         prev_end_vis = prev_strand.get('end_line_visible', not current_strand.end_line_visible)
                         if current_strand.end_line_visible != prev_end_vis:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_line_visible differs.")
                             return False
                     elif hasattr(current_strand, 'end_line_visible') != ('end_line_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_line_visible attribute presence differs.")
                          return False
                     # --- END ADD ---
 
                     # --- ADD: Check strand width and stroke_width ---
                     if hasattr(current_strand, 'width') and 'width' in prev_strand:
                         if abs(current_strand.width - prev_strand.get('width', 0)) > 0.1:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} width differs (Current: {current_strand.width}, Prev: {prev_strand.get('width', 0)}).")
                             return False
                     elif hasattr(current_strand, 'width') != ('width' in prev_strand):
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} width attribute presence differs.")
                         return False
 
                     if hasattr(current_strand, 'stroke_width') and 'stroke_width' in prev_strand:
                         if abs(current_strand.stroke_width - prev_strand.get('stroke_width', 0)) > 0.1:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_width differs (Current: {current_strand.stroke_width}, Prev: {prev_strand.get('stroke_width', 0)}).")
                             return False
                     elif hasattr(current_strand, 'stroke_width') != ('stroke_width' in prev_strand):
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} stroke_width attribute presence differs.")
                         return False
                     # --- END ADD ---
 
@@ -696,7 +659,6 @@ class UndoRedoManager(QObject):
                     # Assume False if 'is_hidden' is not in the saved data (for backward compatibility)
                     prev_hidden = prev_strand.get('is_hidden', False)
                     if current_hidden != prev_hidden:
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} is_hidden differs (Current: {current_hidden}, Prev: {prev_hidden}).")
                         return False
                     # --- END ADD ---
 
@@ -704,48 +666,38 @@ class UndoRedoManager(QObject):
                     if hasattr(current_strand, 'start_extension_visible') and 'start_extension_visible' in prev_strand:
                         prev_start_ext = prev_strand.get('start_extension_visible', not current_strand.start_extension_visible)
                         if current_strand.start_extension_visible != prev_start_ext:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_extension_visible differs.")
                             return False
                     elif hasattr(current_strand, 'start_extension_visible') != ('start_extension_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_extension_visible attribute presence differs.")
                          return False
 
                     if hasattr(current_strand, 'end_extension_visible') and 'end_extension_visible' in prev_strand:
                         prev_end_ext = prev_strand.get('end_extension_visible', not current_strand.end_extension_visible)
                         if current_strand.end_extension_visible != prev_end_ext:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_extension_visible differs.")
                             return False
                     elif hasattr(current_strand, 'end_extension_visible') != ('end_extension_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_extension_visible attribute presence differs.")
                          return False
 
                     # --- NEW: Check arrow visibility ---
                     if hasattr(current_strand, 'start_arrow_visible') and 'start_arrow_visible' in prev_strand:
                         prev_start_arr = prev_strand.get('start_arrow_visible', not current_strand.start_arrow_visible)
                         if current_strand.start_arrow_visible != prev_start_arr:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_arrow_visible differs.")
                             return False
                     elif hasattr(current_strand, 'start_arrow_visible') != ('start_arrow_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} start_arrow_visible attribute presence differs.")
                          return False
 
                     if hasattr(current_strand, 'end_arrow_visible') and 'end_arrow_visible' in prev_strand:
                         prev_end_arr = prev_strand.get('end_arrow_visible', not current_strand.end_arrow_visible)
                         if current_strand.end_arrow_visible != prev_end_arr:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible differs.")
                             return False
                     elif hasattr(current_strand, 'end_arrow_visible') != ('end_arrow_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} end_arrow_visible attribute presence differs.")
                          return False
 
                     # --- ADD: Check full_arrow_visible ---
                     if hasattr(current_strand, 'full_arrow_visible') and 'full_arrow_visible' in prev_strand:
                         prev_full_arrow_vis = prev_strand.get('full_arrow_visible', not getattr(current_strand, 'full_arrow_visible', False)) # Default to opposite if missing
                         if getattr(current_strand, 'full_arrow_visible', False) != prev_full_arrow_vis:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} full_arrow_visible differs.")
                             return False
                     elif hasattr(current_strand, 'full_arrow_visible') != ('full_arrow_visible' in prev_strand):
-                         logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} full_arrow_visible attribute presence differs.")
                          return False
                     # --- END ADD ---
 
@@ -755,10 +707,8 @@ class UndoRedoManager(QObject):
                         current_circles = getattr(current_strand, 'has_circles', [False, False])
                         prev_circles = prev_strand.get('has_circles', [False, False])
                         if current_circles != prev_circles:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} has_circles differs. Current: {current_circles}, Prev: {prev_circles}")
                             return False
                     elif hasattr(current_strand, 'has_circles') != ('has_circles' in prev_strand):
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} has_circles attribute presence differs.")
                         return False
                     # --- END ADD ---
 
@@ -769,7 +719,6 @@ class UndoRedoManager(QObject):
                         
                         # Compare connection count and end types
                         if set(current_knots.keys()) != set(prev_knots.keys()):
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot_connections end types differ. Current: {list(current_knots.keys())}, Prev: {list(prev_knots.keys())}")
                             return False
                             
                         # Compare each connection
@@ -784,10 +733,8 @@ class UndoRedoManager(QObject):
                                 if (current_connected_name != prev_conn.get('connected_strand_name') or
                                     current_conn.get('connected_end') != prev_conn.get('connected_end') or
                                     current_conn.get('is_closing_strand', False) != prev_conn.get('is_closing_strand', False)):
-                                    logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot connection {end_type} differs")
                                     return False
                     elif hasattr(current_strand, 'knot_connections') != ('knot_connections' in prev_strand):
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} knot_connections attribute presence differs.")
                         return False
                     # --- END ADD ---
 
@@ -796,10 +743,8 @@ class UndoRedoManager(QObject):
                         current_closed = getattr(current_strand, 'closed_connections', [False, False])
                         prev_closed = prev_strand.get('closed_connections', [False, False])
                         if current_closed != prev_closed:
-                            logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} closed_connections differs. Current: {current_closed}, Prev: {prev_closed}")
                             return False
                     elif hasattr(current_strand, 'closed_connections') != ('closed_connections' in prev_strand):
-                        logging.info(f"_would_be_identical_save: Strand {current_strand.layer_name} closed_connections attribute presence differs.")
                         return False
                     # --- END ADD ---
 
@@ -811,7 +756,6 @@ class UndoRedoManager(QObject):
                 prev_locked_layers = set(prev_data.get("locked_layers", []))
                 
                 if current_locked_layers != prev_locked_layers:
-                    logging.info(f"_would_be_identical_save: Locked layers differ. Current: {current_locked_layers}, Prev: {prev_locked_layers}")
                     return False
                 
                 # Check for differences in lock mode
@@ -819,17 +763,14 @@ class UndoRedoManager(QObject):
                 if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                     if hasattr(self.canvas.layer_panel, 'lock_mode'):
                         current_lock_mode = self.canvas.layer_panel.lock_mode
-                        logging.info(f"_would_be_identical_save: Found current lock_mode = {current_lock_mode}")
                     else:
-                        logging.warning("_would_be_identical_save: layer_panel has no lock_mode attribute")
+                        pass
                 else:
-                    logging.warning("_would_be_identical_save: canvas has no layer_panel or layer_panel is None")
+                    pass
                 
                 prev_lock_mode = prev_data.get("lock_mode", False)
-                logging.info(f"_would_be_identical_save: Previous lock_mode = {prev_lock_mode}")
                 
                 if current_lock_mode != prev_lock_mode:
-                    logging.info(f"_would_be_identical_save: Lock mode differs. Current: {current_lock_mode}, Prev: {prev_lock_mode}")
                     return False
 
                 # Compare button states
@@ -837,41 +778,35 @@ class UndoRedoManager(QObject):
                 prev_shadow_enabled = prev_data.get('shadow_enabled', True)
                 
                 if current_shadow_enabled != prev_shadow_enabled:
-                    logging.info(f"_would_be_identical_save: Shadow enabled state differs. Current: {current_shadow_enabled}, Prev: {prev_shadow_enabled}")
                     return False
                 
                 current_show_control_points = getattr(self.canvas, 'show_control_points', False)
                 prev_show_control_points = prev_data.get('show_control_points', False)
                 
                 if current_show_control_points != prev_show_control_points:
-                    logging.info(f"_would_be_identical_save: Show control points state differs. Current: {current_show_control_points}, Prev: {prev_show_control_points}")
                     return False
 
                 # If we made it here, states are identical based on checked properties
-                logging.info("_would_be_identical_save: All checks passed - states are identical, will skip save")
                 return True
                 
         except Exception as e:
-            logging.error(f"Error in _would_be_identical_save: {e}")
+            pass
             
         # Default to allowing the save if anything goes wrong
         return False
 
     def _clear_future_states(self):
         """Remove any state files from current_step + 1 to max_step."""
-        logging.info(f"Clearing future states from step {self.current_step + 1} to {self.max_step}")
         for step in range(self.current_step + 1, self.max_step + 1):
             filename = self._get_state_filename(step)
             try:
                 if os.path.exists(filename):
                     os.remove(filename)
-                    logging.debug(f"Removed future state file: {filename}")
             except OSError as e:
-                logging.warning(f"Could not remove future state file {filename}: {e}")
+                pass
         
         # Reset max_step to current_step
         self.max_step = self.current_step
-        logging.info(f"Reset max_step to current_step: {self.current_step}")
 
     def _ensure_groups_are_saved(self):
         """Ensure that all groups are properly captured in the next save."""
@@ -891,15 +826,14 @@ class UndoRedoManager(QObject):
                     
         # Log the groups that will be saved
         if self.canvas.groups:
-            logging.info(f"Canvas has {len(self.canvas.groups)} groups to save: {list(self.canvas.groups.keys())}")
+            pass
         else:
-            logging.info("No groups to save")
+            pass
 
     def _save_state_file(self, step):
         """Save the current state of the canvas to a file."""
         filename = self._get_state_filename(step)
         
-        logging.info(f"Saving state to {filename} (current_step={step}, max_step={self.max_step})")
         
         try:
             save_strands(self.canvas.strands, 
@@ -907,10 +841,8 @@ class UndoRedoManager(QObject):
                          filename,
                          self.canvas)
             self.state_saved.emit(step)
-            safe_info(f"State saved successfully to {filename}")
             return True
         except Exception as e:
-            safe_exception(f"Error saving state to {filename}: {str(e)}")
             return False
 
     def undo(self):
@@ -968,14 +900,12 @@ class UndoRedoManager(QObject):
             
             # Special case: If undoing to step 0 (empty state)
             if self.current_step == 0:
-                logging.info("Undoing to initial empty state")
                 # Clear the canvas by removing all strands and groups
                 self.canvas.strands = []
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = {}
                 
                 # Skip explicit refresh calls to prevent window flash (they're redundant)
-                logging.info("Skipping explicit refresh calls in undo() step 0 - preventing window flash")
                 # Don't call update() here - the refresh will handle it
                 # self.canvas.update()  # Removed to prevent double painting
                 
@@ -1045,11 +975,9 @@ class UndoRedoManager(QObject):
                     not groups_changed and
                     self.current_step > 1):
                     
-                    logging.info("Detected potentially identical state after undo, checking for visual differences...")
                     
                     # --- ADD: Explicit check for layer name set difference --- 
                     if new_layer_names != original_layer_names:
-                        logging.info("Layer name sets differ, considering visually different.")
                         has_visual_difference = True
                     else:
                         # --- Original checks (now nested) --- 
@@ -1062,11 +990,9 @@ class UndoRedoManager(QObject):
                         current_locked_layers = getattr(self.layer_panel, 'locked_layers', set())
                         
                         if current_lock_mode != original_lock_mode:
-                            logging.info(f"Lock mode differs after undo: original={original_lock_mode}, current={current_lock_mode}")
                             has_visual_difference = True
                         
                         if current_locked_layers != original_locked_layers:
-                            logging.info(f"Locked layers differ after undo: original={original_locked_layers}, current={current_locked_layers}")
                             has_visual_difference = True
                         
                         # Check positions and other visual properties
@@ -1146,11 +1072,9 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.stroke_color.green() - original_strand.stroke_color.green()) > 0 or
                                     abs(new_strand.stroke_color.blue() - original_strand.stroke_color.blue()) > 0 or
                                     abs(new_strand.stroke_color.alpha() - original_strand.stroke_color.alpha()) > 0):
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color differs visually.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'stroke_color') != hasattr(original_strand, 'stroke_color'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1161,7 +1085,6 @@ class UndoRedoManager(QObject):
                                 original_rects = getattr(original_strand, 'deletion_rectangles', [])
                                 
                                 if len(new_rects) != len(original_rects):
-                                    logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
                                     has_visual_difference = True
                                     break
                                 
@@ -1189,8 +1112,6 @@ class UndoRedoManager(QObject):
                                     sig_orig = sorted(rect_signature(r) for r in original_rects)
 
                                     if sig_new != sig_orig:
-                                        logging.info(
-                                            f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle geometry changed. State not identical.")
                                         has_visual_difference = True
                                         break
                             elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):
@@ -1203,13 +1124,10 @@ class UndoRedoManager(QObject):
                             if hasattr(new_strand, 'end_line_visible') and hasattr(original_strand, 'end_line_visible'):
                                 new_vis = new_strand.end_line_visible
                                 orig_vis = original_strand.end_line_visible
-                                logging.info(f"Comparing end_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_line_visible') != hasattr(original_strand, 'end_line_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1218,13 +1136,10 @@ class UndoRedoManager(QObject):
                             if hasattr(new_strand, 'start_line_visible') and hasattr(original_strand, 'start_line_visible'):
                                 new_vis = new_strand.start_line_visible
                                 orig_vis = original_strand.start_line_visible
-                                logging.info(f"Comparing start_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_line_visible') != hasattr(original_strand, 'start_line_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1232,11 +1147,9 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check layer visibility (is_hidden) ---
                             if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
                                 if new_strand.is_hidden != original_strand.is_hidden:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1244,11 +1157,9 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check shadow-only mode ---
                             if hasattr(new_strand, 'shadow_only') and hasattr(original_strand, 'shadow_only'):
                                 if new_strand.shadow_only != original_strand.shadow_only:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'shadow_only') != hasattr(original_strand, 'shadow_only'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1256,42 +1167,34 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check extension visibility ---
                             if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
                                 if new_strand.start_extension_visible != original_strand.start_extension_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_extension_visible') != hasattr(original_strand, 'start_extension_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_extension_visible') and hasattr(original_strand, 'end_extension_visible'):
                                 if new_strand.end_extension_visible != original_strand.end_extension_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_extension_visible') != hasattr(original_strand, 'end_extension_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             # --- NEW: Check arrow visibility ---
                             if hasattr(new_strand, 'start_arrow_visible') and hasattr(original_strand, 'start_arrow_visible'):
                                 if new_strand.start_arrow_visible != original_strand.start_arrow_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_arrow_visible') != hasattr(original_strand, 'start_arrow_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_arrow_visible') and hasattr(original_strand, 'end_arrow_visible'):
                                 if new_strand.end_arrow_visible != original_strand.end_arrow_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_arrow_visible') != hasattr(original_strand, 'end_arrow_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1299,11 +1202,9 @@ class UndoRedoManager(QObject):
                             # --- ADD: Check full_arrow_visible for Undo ---
                             if hasattr(new_strand, 'full_arrow_visible') and hasattr(original_strand, 'full_arrow_visible'):
                                 if getattr(new_strand, 'full_arrow_visible', False) != getattr(original_strand, 'full_arrow_visible', False):
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} full_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'full_arrow_visible') != hasattr(original_strand, 'full_arrow_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} full_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1313,11 +1214,9 @@ class UndoRedoManager(QObject):
                                 current_circles = getattr(new_strand, 'has_circles', [False, False])
                                 original_circles = getattr(original_strand, 'has_circles', [False, False])
                                 if current_circles != original_circles:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} has_circles differs. {current_circles} vs {original_circles}")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'has_circles') != hasattr(original_strand, 'has_circles'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} has_circles attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END RE-ADD ---
@@ -1325,44 +1224,36 @@ class UndoRedoManager(QObject):
                             # --- ADD: Check width for Undo ---
                             if hasattr(new_strand, 'width') and hasattr(original_strand, 'width'):
                                 if abs(new_strand.width - original_strand.width) > 0.1:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} width differs (Current: {new_strand.width}, Previous: {original_strand.width}).")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'width') != hasattr(original_strand, 'width'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} width attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'stroke_width') and hasattr(original_strand, 'stroke_width'):
                                 if abs(new_strand.stroke_width - original_strand.stroke_width) > 0.1:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_width differs (Current: {new_strand.stroke_width}, Previous: {original_strand.stroke_width}).")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'stroke_width') != hasattr(original_strand, 'stroke_width'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_width attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
 
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
-                        logging.info("States are visually identical, skipping to previous state...")
                         # Recursively call undo to get to the next state
                         return self.undo()
                 
             self.undo_performed.emit()
-            logging.info(f"Undo performed, now at step {self.current_step}")
             
             # Make sure buttons are properly updated
             self._update_button_states()
 
             # --- ADD LOGGING FOR SELECTED STRAND ---
             selected_strand_after_undo = getattr(self.canvas, 'selected_strand', None)
-            logging.info(f"UNDO: Selected strand after undo: {selected_strand_after_undo.layer_name if selected_strand_after_undo else 'None'}")
             # --- END LOGGING ---
 
             # Additional logging to track what's being refreshed
-            logging.info("Refreshing UI after undo operation")
             
             # --------------------------------------------------
             # Re-enable all suppression flags *before* we trigger the first
@@ -1397,19 +1288,16 @@ class UndoRedoManager(QObject):
             if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
                 self.layer_panel.simulate_refresh_button_click()
         else:
-            logging.info("Cannot undo: already at oldest state")
+            pass
 
     def redo(self):
         """Load the next state if available."""
-        logging.info(f"---") # Separator for clarity
-        logging.info(f"REDO initiated. Current Step: {self.current_step}, Max Step: {self.max_step}")
         if self.current_step < self.max_step:
             # Store the current strands for comparison
             original_strands = self.canvas.strands.copy() if hasattr(self.canvas, 'strands') else []
             original_strands_count = len(original_strands)
             original_layer_names = {s.layer_name for s in original_strands if hasattr(s, 'layer_name')}
             original_layer_order = [s.layer_name for s in original_strands if hasattr(s, 'layer_name')]
-            logging.info(f"REDO: State BEFORE loading - Strands: {original_strands_count}, Order: {original_layer_order}")
             
             # Store original groups for comparison
             original_groups = {}
@@ -1435,7 +1323,7 @@ class UndoRedoManager(QObject):
             
             # Special case: If redoing from step 0 (empty state)
             if self.current_step == 0:
-                logging.info("Redoing from initial empty state to step 1")
+                pass
             
             # Set up suppression flags BEFORE loading state to prevent window flash
             main_window = None
@@ -1461,7 +1349,6 @@ class UndoRedoManager(QObject):
             
             # Increment the step counter
             self.current_step += 1
-            logging.info(f"REDO: Attempting to load step {self.current_step}")
             
             # Load the state (with all suppression flags active)
             result = self._load_state(self.current_step)
@@ -1472,7 +1359,6 @@ class UndoRedoManager(QObject):
                 new_strands_count = len(new_strands)
                 new_layer_names = {s.layer_name for s in new_strands if hasattr(s, 'layer_name')}
                 new_layer_order = [s.layer_name for s in new_strands if hasattr(s, 'layer_name')]
-                logging.info(f"REDO: State AFTER loading step {self.current_step} - Strands: {new_strands_count}, Order: {new_layer_order}")
                 # --- End Log ---
 
                 # Get new groups for comparison
@@ -1511,11 +1397,9 @@ class UndoRedoManager(QObject):
                     not groups_changed and
                     self.current_step < self.max_step):
                     
-                    logging.info("Detected potentially identical state after redo, checking for visual differences...")
                     
                     # --- ADD: Explicit check for layer name set difference --- 
                     if new_layer_names != original_layer_names:
-                        logging.info("Layer name sets differ, considering visually different.")
                         has_visual_difference = True
                     else:
                         # --- Original checks (now nested) --- 
@@ -1528,11 +1412,9 @@ class UndoRedoManager(QObject):
                         current_locked_layers = getattr(self.layer_panel, 'locked_layers', set())
                         
                         if current_lock_mode != original_lock_mode:
-                            logging.info(f"Lock mode differs after undo: original={original_lock_mode}, current={current_lock_mode}")
                             has_visual_difference = True
                         
                         if current_locked_layers != original_locked_layers:
-                            logging.info(f"Locked layers differ after undo: original={original_locked_layers}, current={current_locked_layers}")
                             has_visual_difference = True
                         
                         # Check positions and other visual properties
@@ -1612,11 +1494,9 @@ class UndoRedoManager(QObject):
                                     abs(new_strand.stroke_color.green() - original_strand.stroke_color.green()) > 0 or
                                     abs(new_strand.stroke_color.blue() - original_strand.stroke_color.blue()) > 0 or
                                     abs(new_strand.stroke_color.alpha() - original_strand.stroke_color.alpha()) > 0):
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color differs visually.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'stroke_color') != hasattr(original_strand, 'stroke_color'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} stroke_color attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1627,7 +1507,6 @@ class UndoRedoManager(QObject):
                                 original_rects = getattr(original_strand, 'deletion_rectangles', [])
                                 
                                 if len(new_rects) != len(original_rects):
-                                    logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle count differs. State not identical.")
                                     has_visual_difference = True
                                     break
                                 
@@ -1635,7 +1514,6 @@ class UndoRedoManager(QObject):
                                 if len(new_rects) > 0:
                                     # Simple content comparison (assuming order is consistent or not critical for this check)
                                     if new_rects != original_rects:
-                                        logging.info(f"Undo check: Masked strand {new_strand.layer_name} deletion rectangle content differs. State not identical.")
                                         has_visual_difference = True
                                         break
                             elif isinstance(new_strand, MaskedStrand) != isinstance(original_strand, MaskedStrand):
@@ -1648,13 +1526,10 @@ class UndoRedoManager(QObject):
                             if hasattr(new_strand, 'end_line_visible') and hasattr(original_strand, 'end_line_visible'):
                                 new_vis = new_strand.end_line_visible
                                 orig_vis = original_strand.end_line_visible
-                                logging.info(f"Comparing end_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_line_visible') != hasattr(original_strand, 'end_line_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1663,13 +1538,10 @@ class UndoRedoManager(QObject):
                             if hasattr(new_strand, 'start_line_visible') and hasattr(original_strand, 'start_line_visible'):
                                 new_vis = new_strand.start_line_visible
                                 orig_vis = original_strand.start_line_visible
-                                logging.info(f"Comparing start_line_visible for {new_strand.layer_name}: new={new_vis} ({type(new_vis)}), original={orig_vis} ({type(orig_vis)})")
                                 if new_vis != orig_vis:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_line_visible') != hasattr(original_strand, 'start_line_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_line_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1677,11 +1549,9 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check layer visibility (is_hidden) ---
                             if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
                                 if new_strand.is_hidden != original_strand.is_hidden:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'is_hidden') != hasattr(original_strand, 'is_hidden'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} is_hidden attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1689,11 +1559,9 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check shadow-only mode ---
                             if hasattr(new_strand, 'shadow_only') and hasattr(original_strand, 'shadow_only'):
                                 if new_strand.shadow_only != original_strand.shadow_only:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'shadow_only') != hasattr(original_strand, 'shadow_only'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} shadow_only attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1701,42 +1569,34 @@ class UndoRedoManager(QObject):
                             # --- NEW: Check extension visibility ---
                             if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
                                 if new_strand.start_extension_visible != original_strand.start_extension_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_extension_visible') != hasattr(original_strand, 'start_extension_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_extension_visible') and hasattr(original_strand, 'end_extension_visible'):
                                 if new_strand.end_extension_visible != original_strand.end_extension_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_extension_visible') != hasattr(original_strand, 'end_extension_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_extension_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             # --- NEW: Check arrow visibility ---
                             if hasattr(new_strand, 'start_arrow_visible') and hasattr(original_strand, 'start_arrow_visible'):
                                 if new_strand.start_arrow_visible != original_strand.start_arrow_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'start_arrow_visible') != hasattr(original_strand, 'start_arrow_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} start_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'end_arrow_visible') and hasattr(original_strand, 'end_arrow_visible'):
                                 if new_strand.end_arrow_visible != original_strand.end_arrow_visible:
-                                    logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'end_arrow_visible') != hasattr(original_strand, 'end_arrow_visible'):
-                                logging.info(f"Undo check: Strand {new_strand.layer_name} end_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
@@ -1744,11 +1604,9 @@ class UndoRedoManager(QObject):
                             # --- ADD: Check full_arrow_visible for Redo ---
                             if hasattr(new_strand, 'full_arrow_visible') and hasattr(original_strand, 'full_arrow_visible'):
                                 if getattr(new_strand, 'full_arrow_visible', False) != getattr(original_strand, 'full_arrow_visible', False):
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} full_arrow_visible differs.")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'full_arrow_visible') != hasattr(original_strand, 'full_arrow_visible'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} full_arrow_visible attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
@@ -1758,11 +1616,9 @@ class UndoRedoManager(QObject):
                                 current_circles = getattr(new_strand, 'has_circles', [False, False])
                                 original_circles = getattr(original_strand, 'has_circles', [False, False])
                                 if current_circles != original_circles:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} has_circles differs. {current_circles} vs {original_circles}")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'has_circles') != hasattr(original_strand, 'has_circles'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} has_circles attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END RE-ADD ---
@@ -1770,39 +1626,32 @@ class UndoRedoManager(QObject):
                             # --- ADD: Check width for Redo ---
                             if hasattr(new_strand, 'width') and hasattr(original_strand, 'width'):
                                 if abs(new_strand.width - original_strand.width) > 0.1:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} width differs (Current: {new_strand.width}, Previous: {original_strand.width}).")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'width') != hasattr(original_strand, 'width'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} width attribute presence differs.")
                                 has_visual_difference = True
                                 break
 
                             if hasattr(new_strand, 'stroke_width') and hasattr(original_strand, 'stroke_width'):
                                 if abs(new_strand.stroke_width - original_strand.stroke_width) > 0.1:
-                                    logging.info(f"Redo check: Strand {new_strand.layer_name} stroke_width differs (Current: {new_strand.stroke_width}, Previous: {original_strand.stroke_width}).")
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'stroke_width') != hasattr(original_strand, 'stroke_width'):
-                                logging.info(f"Redo check: Strand {new_strand.layer_name} stroke_width attribute presence differs.")
                                 has_visual_difference = True
                                 break
                             # --- END ADD ---
 
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:
-                        logging.info("REDO: States are visually identical, skipping to next state...")
                         # Recursively call redo to get to the next state
                         return self.redo() # Return the result of the recursive call
                     else:
-                        logging.info("REDO: States have visual differences, completing redo step.")
+                        pass
                         
                 self.redo_performed.emit()
-                logging.info(f"REDO completed, now at step {self.current_step}")
             else:
                 # Rollback if loading failed
                 self.current_step -= 1
-                logging.error(f"Redo failed: Could not load state for step {self.current_step + 1}")
                 return False # Indicate failure
 
             # Make sure buttons are properly updated
@@ -1810,7 +1659,6 @@ class UndoRedoManager(QObject):
 
             # --- ADD LOGGING FOR SELECTED STRAND ---
             selected_strand_after_redo = getattr(self.canvas, 'selected_strand', None)
-            logging.info(f"REDO: Selected strand after redo: {selected_strand_after_redo.layer_name if selected_strand_after_redo else 'None'}")
             # --- END LOGGING ---
 
             # --------------------------------------------------
@@ -1839,18 +1687,13 @@ class UndoRedoManager(QObject):
             if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
                 self.layer_panel.simulate_refresh_button_click()
             
-            logging.info("REDO: UI updated after redo operation")
-            logging.info(f"---") # Separator for clarity
             return result # Return the actual result of the load operation
         else:
-            logging.info("REDO: Cannot redo: already at newest state")
-            logging.info(f"---") # Separator for clarity
             return False # Indicate failure or no action
 
     def _clear_group_panel_ui(self, group_panel):
         """Helper method to reliably clear all widgets from the group panel's scroll layout."""
         if not group_panel or not hasattr(group_panel, 'scroll_layout'):
-            logging.warning("_clear_group_panel_ui: Group panel or scroll layout not found.")
             return
 
         layout = group_panel.scroll_layout
@@ -1859,7 +1702,6 @@ class UndoRedoManager(QObject):
             child = layout.takeAt(0)
             if child.widget():
                 widget = child.widget()
-                logging.debug(f"Removing widget from group panel: {widget.objectName() if hasattr(widget, 'objectName') else type(widget)}")
                 widget.setParent(None) # Necessary for Qt to schedule deletion
                 widget.deleteLater()
             # Clean up the layout item itself if it wasn't holding a widget
@@ -1870,27 +1712,21 @@ class UndoRedoManager(QObject):
         # Clear internal tracking in the panel if it exists
         if hasattr(group_panel, 'groups'):
              group_panel.groups.clear()
-             logging.debug("Cleared group_panel.groups dictionary.")
 
-        logging.info("Cleared all widgets from group panel UI.")
 
 
     def _recreate_group_widgets_from_canvas(self, group_panel):
         """Helper method to recreate group widgets based on self.canvas.groups."""
         if not group_panel or not hasattr(group_panel, 'scroll_layout'):
-            logging.error("_recreate_group_widgets_from_canvas: Group panel or scroll layout not found.")
             return
             
         # Debug: Print the canvas.groups content to diagnose issues
         if not hasattr(self.canvas, 'groups') or not self.canvas.groups:
-            logging.error("canvas.groups is empty or missing - nothing to recreate")
             return
             
-        logging.info(f"Canvas has {len(self.canvas.groups)} groups to recreate: {list(self.canvas.groups.keys())}")
         
         # First clear any existing widgets
         self._clear_group_panel_ui(group_panel)
-        logging.info("Cleared existing group panel UI successfully")
         
         # Get the scroll_layout to add widgets to
         scroll_layout = group_panel.scroll_layout
@@ -1902,28 +1738,23 @@ class UndoRedoManager(QObject):
         # Iterate through a copy of canvas.groups in case we modify it
         for group_name, group_data in dict(self.canvas.groups).items():
             processed += 1
-            logging.info(f"Processing group '{group_name}' from canvas.groups")
             
             # Debug: Print structure of this group's data
             if isinstance(group_data, dict):
-                logging.info(f"Group data keys: {list(group_data.keys())}")
                 if 'strands' in group_data:
                     strand_count = len(group_data['strands'])
-                    logging.info(f"Group has {strand_count} strands")
                     
                     # Check if strands are strings or objects
                     strand_types = []
                     for s in group_data['strands'][:3]:  # Check first few for logging
                         strand_types.append(type(s).__name__)
-                    logging.info(f"Strand types: {strand_types}")
             elif isinstance(group_data, list):
-                logging.info(f"Group data is a list with {len(group_data)} items")
+                pass
             else:
-                logging.info(f"Group data is type: {type(group_data).__name__}")
+                pass
             
             try:
                 # Create a new widget for this group
-                logging.info(f"Creating CollapsibleGroupWidget for group '{group_name}'")
                 group_widget = CollapsibleGroupWidget(group_name=group_name, group_panel=group_panel)
                 
                 # We'll count successful strand additions for this widget
@@ -1949,11 +1780,9 @@ class UndoRedoManager(QObject):
                             
                             if strand_obj:
                                 updated_strands.append(strand_obj)
-                                logging.info(f"Converted strand ID '{strand}' to actual strand object")
                             else:
                                 # Keep the string if we can't find the object
                                 updated_strands.append(strand)
-                                logging.warning(f"Could not find strand object for ID '{strand}'")
                         else:
                             # It's already a strand object (or something else), keep it as is
                             updated_strands.append(strand)
@@ -1962,7 +1791,6 @@ class UndoRedoManager(QObject):
                     group_data['strands'] = updated_strands
                     # Update the canvas.groups entry
                     self.canvas.groups[group_name] = group_data
-                    logging.info(f"Updated strands in group data for '{group_name}' with actual strand objects")
                 
                 # Determine what strands to process
                 if 'strands' in group_data:
@@ -1970,10 +1798,8 @@ class UndoRedoManager(QObject):
                 elif isinstance(group_data, list):
                     strands_to_process = group_data
                 else:
-                    logging.warning(f"Cannot determine strands for group '{group_name}'")
                     strands_to_process = []
                 
-                logging.info(f"Found {len(strands_to_process)} strands to process for group '{group_name}'")
                 
                 for strand in strands_to_process:
                     # Handle both strand objects and layer names
@@ -1989,7 +1815,6 @@ class UndoRedoManager(QObject):
                         if hasattr(self.canvas, 'find_strand_by_name'):
                             strand_obj = self.canvas.find_strand_by_name(layer_id)
                         else:
-                            logging.warning(f"Canvas lacks find_strand_by_name method - using fallback")
                             # Fallback: search through strands list
                             for s in self.canvas.strands:
                                 if hasattr(s, 'layer_name') and s.layer_name == layer_id:
@@ -2014,9 +1839,8 @@ class UndoRedoManager(QObject):
                             group_widget.add_layer(strand.layer_name, strand.color, is_masked)
                             strand_count += 1
                             added = True
-                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using strand object")
                     except Exception as e1:
-                        logging.warning(f"Error adding strand object directly: {e1}")
+                        pass
                         
                     # Approach 2: Add using specific attributes    
                     if not added:
@@ -2024,9 +1848,8 @@ class UndoRedoManager(QObject):
                             group_widget.add_layer(layer_id, color, is_masked)
                             strand_count += 1
                             added = True
-                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using layer ID")
                         except Exception as e2:
-                            logging.warning(f"Error adding layer with specific attributes: {e2}")
+                            pass
                     
                     # Approach 3: Add just the ID as a fallback
                     if not added:
@@ -2034,17 +1857,14 @@ class UndoRedoManager(QObject):
                             group_widget.add_layer(layer_id)
                             strand_count += 1
                             added = True
-                            logging.info(f"Added layer '{layer_id}' to group widget '{group_name}' using ID only")
                         except Exception as e3:
-                            logging.error(f"All attempts to add layer '{layer_id}' failed: {e3}")
+                            pass
                 
                 # Check if any strands were added before proceeding
                 if strand_count == 0:
-                    logging.warning(f"No strands were added to group '{group_name}' - skipping widget")
                     continue
                 
                 # Add the widget to the scroll layout with proper alignment container
-                logging.info(f"Adding group widget to scroll layout with {strand_count} layers")
                 
                 # Create a horizontal layout container for proper alignment (matching button-created groups)
                 from PyQt5.QtWidgets import QWidget, QHBoxLayout
@@ -2093,17 +1913,15 @@ class UndoRedoManager(QObject):
                     if 'control_points' in group_data:
                         group_panel.groups[group_name]['control_points'] = group_data['control_points']
                         
-                    logging.info(f"Group '{group_name}' added to panel.groups with {len(group_panel.groups[group_name]['strands'])} strands")
                 except Exception as e:
-                    logging.error(f"Error adding group to panel.groups: {e}")
+                    pass
                 
                 # If this widget should have collapsed state, set it
                 if hasattr(group_widget, 'toggle_collapse') and 'collapsed' in group_data and group_data['collapsed']:
                     try:
                         group_widget.toggle_collapse()
-                        logging.info(f"Set collapsed state for group '{group_name}'")
                     except Exception as e:
-                        logging.warning(f"Error setting collapsed state: {e}")
+                        pass
 
                 # Fix/Reconnect the move and rotate signals with correct parameter capture
                 try:
@@ -2126,7 +1944,6 @@ class UndoRedoManager(QObject):
                         # Connect the handler with the specific group name
                         move_handler = create_move_handler(group_name)
                         group_widget.move_button.clicked.connect(move_handler)
-                        logging.info(f"Reconnected move signal for group '{group_name}'")
                     
                     # For the rotate function
                     if hasattr(group_widget, 'rotate_button') and hasattr(group_widget.rotate_button, 'clicked'):
@@ -2144,14 +1961,13 @@ class UndoRedoManager(QObject):
                         # Connect the handler with the specific group name
                         rotate_handler = create_rotate_handler(group_name)
                         group_widget.rotate_button.clicked.connect(rotate_handler)
-                        logging.info(f"Reconnected rotate signal for group '{group_name}'")
                 except Exception as e:
-                    logging.error(f"Error connecting signals: {e}")
+                    pass
                 
                 created += 1
 
             except Exception as e:
-                logging.error(f"Error creating widget for group '{group_name}': {str(e)}", exc_info=True)
+                pass
         
         # Force update
         try:
@@ -2164,15 +1980,13 @@ class UndoRedoManager(QObject):
             group_panel.updateGeometry()
             group_panel.update()
             
-            logging.info(f"Forced UI update on group panel")
         except Exception as e:
-            logging.error(f"Error during final UI update: {e}")
+            pass
             
-        logging.info(f"Finished recreating group panel UI. Processed: {processed}, Created: {created}, Layout has {scroll_layout.count()} widgets.")
         
         # Output the final result of the groups stored in the panel
         if hasattr(group_panel, 'groups'):
-            logging.info(f"FINAL RESULT: Group panel now has {len(group_panel.groups)} groups: {list(group_panel.groups.keys())}")
+            pass
             
         # Return success/failure status
         return created > 0
@@ -2182,31 +1996,26 @@ class UndoRedoManager(QObject):
         Refreshes the group panel UI based on the loaded state.
         Always clears the UI first, then rebuilds from self.canvas.groups if necessary.
         """
-        logging.info(f"Refreshing group panel. State has groups: {has_loaded_groups}")
 
         group_manager = getattr(self.canvas, 'group_layer_manager', None)
         if not group_manager:
-            logging.warning("Cannot refresh group panel: No group_layer_manager found on canvas.")
             return
 
         group_panel = getattr(group_manager, 'group_panel', None)
         if not group_panel:
-            logging.warning("Cannot refresh group panel: No group_panel found on group_layer_manager.")
             return
 
         # --- Step 1: Always Clear the UI ---
-        logging.info("Clearing existing group panel UI before refresh...")
         self._clear_group_panel_ui(group_panel)
 
         # --- Step 2: Recreate UI if state has groups ---
         if has_loaded_groups:
-            logging.info("State has groups. Recreating group panel UI from canvas.groups...")
             if hasattr(self.canvas, 'groups') and self.canvas.groups:
                  self._recreate_group_widgets_from_canvas(group_panel)
             else:
-                 logging.warning("State reported having groups, but self.canvas.groups is empty or missing.")
+                 pass
         else:
-            logging.info("State has no groups. Group panel UI remains clear.")
+            pass
 
         # --- Step 3: Final UI Update ---
         # Force an update on the panel to ensure layout changes are visible
@@ -2214,24 +2023,19 @@ class UndoRedoManager(QObject):
             group_panel.update()
             if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
                  group_panel.scroll_area.update()
-            logging.info("Updated group panel and scroll area after refresh.")
         except Exception as e:
-            logging.error(f"Error updating group panel UI components: {str(e)}")
+            pass
 
-        logging.info(f"Group panel refresh complete. Final widget count in layout: {group_panel.scroll_layout.count()}")
 
     def _load_state(self, step):
         """Load the state for the specified step and apply it."""
         filename = self._get_state_filename(step)
-        logging.info(f"Attempting to load state from step {step}: {filename}")
 
         if not os.path.exists(filename):
-            logging.warning(f"State file does not exist: {filename}")
             return False
 
         try:
             # --- Step 1: Load data from file and inspect its structure --- 
-            logging.info(f"Loading strands and groups data from file: {filename}")
             
             # First inspect the raw JSON to understand the structure
             with open(filename, 'r') as f:
@@ -2239,29 +2043,23 @@ class UndoRedoManager(QObject):
                 
             # Log information about the raw data structure
             has_groups_in_file = 'groups' in raw_data and bool(raw_data.get('groups', {}))
-            logging.info(f"File contains group data: {has_groups_in_file}")
             if has_groups_in_file:
                 group_count = len(raw_data.get('groups', {}))
                 group_names = list(raw_data.get('groups', {}).keys())
-                logging.info(f"Found {group_count} groups in file: {group_names}")
             
             # Load the data using the normal method
             # --- MODIFIED: Receive selected_strand_name and button states --- 
             loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
             state_has_groups = bool(loaded_groups_data)
-            logging.info(f"Loaded {len(loaded_strands)} strands and {len(loaded_groups_data)} groups")
-            logging.info(f"State has groups according to loaded_groups_data: {state_has_groups}")
             
             # Check if we lost groups during loading
             if has_groups_in_file and not state_has_groups:
-                logging.warning("Groups found in file but not returned by load_strands - attempting recovery")
                 
                 # Try to manually extract group data from the file
                 if 'groups' in raw_data:
                     loaded_groups_data = raw_data['groups']
                     state_has_groups = bool(loaded_groups_data)
-                    logging.info(f"Manually recovered {len(loaded_groups_data)} groups from file")
 
             # --- Step 2: Replace canvas data --- 
             # Completely replace the existing strands and groups with the loaded data
@@ -2280,18 +2078,14 @@ class UndoRedoManager(QObject):
                         child = self.canvas.group_layer_manager.group_panel.scroll_layout.takeAt(0)
                         if child.widget():
                             child.widget().deleteLater()
-                logging.info("Cleared group panel state during undo/redo load")
                 
             # Set the groups data on the canvas
             if state_has_groups:
                 self.canvas.groups = loaded_groups_data
-                logging.info(f"Set canvas.groups with {len(loaded_groups_data)} groups: {list(loaded_groups_data.keys())}")
             else:
                 # Clear any existing groups if the state has none
                 self.canvas.groups = {}
-                logging.info("Cleared canvas.groups (state has no groups)")
                 
-            logging.info("Replaced canvas strands and groups with loaded data")
             
             # Update strand properties (like canvas reference) after loading
             for strand in self.canvas.strands:
@@ -2312,22 +2106,18 @@ class UndoRedoManager(QObject):
                     self.canvas.selected_strand = found_selected_strand
                     self.canvas.selected_strand_index = found_selected_index
                     self.canvas.selected_strand.is_selected = True
-                    logging.info(f"Restored selection to strand: {selected_strand_name} at index {found_selected_index}")
                 else:
-                    logging.warning(f"Could not find previously selected strand {selected_strand_name} after loading state.")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
             else:
                 # No selection saved, ensure canvas selection is cleared
                 self.canvas.selected_strand = None
                 self.canvas.selected_strand_index = None
-                logging.info("No selected strand name found in loaded state. Cleared selection.")
             # --- END NEW --- 
             
             # --- Step 3: Restore locked layers and lock mode BEFORE UI refresh ---
             # Restore lock mode state first
             if hasattr(self.layer_panel, 'lock_mode'):
-                logging.info(f"Restoring lock mode: {lock_mode}")
                 self.layer_panel.lock_mode = lock_mode
                 if hasattr(self.layer_panel, 'lock_layers_button'):
                     self.layer_panel.lock_layers_button.setChecked(lock_mode)
@@ -2350,54 +2140,46 @@ class UndoRedoManager(QObject):
             
             # Restore locked layers state after lock mode is set
             if hasattr(self.layer_panel, 'locked_layers'):
-                logging.info(f"Restoring locked layers: {locked_layers}")
                 self.layer_panel.locked_layers = locked_layers.copy()
                 
                 # Log current button count for debugging
                 button_count = len(getattr(self.layer_panel, 'layer_buttons', []))
-                logging.info(f"Layer panel has {button_count} layer buttons before applying lock state")
                 
                 # Always call update_layer_buttons_lock_state to apply the visual state
                 if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
-                    logging.info("Calling update_layer_buttons_lock_state to apply visual lock state")
                     self.layer_panel.update_layer_buttons_lock_state()
                 
                 # Also update MoveMode's locked_layers if it exists
                 if hasattr(self.canvas, 'current_mode') and self.canvas.current_mode.__class__.__name__ == 'MoveMode':
                     move_mode = self.canvas.current_mode
                     if hasattr(move_mode, 'set_locked_layers'):
-                        logging.info(f"Updating MoveMode locked_layers to: {locked_layers}")
                         move_mode.set_locked_layers(locked_layers.copy(), lock_mode)
                     else:
                         # Fallback - set directly if set_locked_layers doesn't exist
                         move_mode.locked_layers = locked_layers.copy()
                         move_mode.lock_mode_active = lock_mode
-                        logging.info(f"Directly set MoveMode locked_layers to: {locked_layers}")
 
             # --- Step 4: Refresh UI Panels AFTER lock state restoration (unless suppressed) --- 
             # Check if we're in an undo/redo operation and skip refreshes to prevent window flash
             if not (hasattr(self.canvas, '_suppress_layer_panel_refresh') and self.canvas._suppress_layer_panel_refresh):
                 # Refresh layer panel based on the new self.canvas.strands
-                logging.info("Refreshing Layer Panel UI...")
                 self._refresh_layer_panel() 
 
                 # Try to simulate a refresh button click (preferred method)
                 if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
-                    logging.info("Simulating refresh button click after loading state")
                     self.layer_panel.simulate_refresh_button_click()
                 # Fallback to direct method call if simulate method not available
                 elif hasattr(self.layer_panel, 'refresh_layers'):
-                    logging.info("Explicitly refreshing layer panel UI...")
                     self.layer_panel.refresh_layers_no_zoom()
             else:
-                logging.info("Layer panel refresh suppressed in _load_state during undo/redo operation")
+                pass
             
             # Apply lock state after refresh since refresh recreates buttons (or apply to existing buttons if refresh was suppressed)
             if hasattr(self.layer_panel, 'locked_layers') and hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
                 if hasattr(self.canvas, '_suppress_layer_panel_refresh') and self.canvas._suppress_layer_panel_refresh:
-                    logging.info("Applying lock state to existing buttons (refresh was suppressed)")
+                    pass
                 else:
-                    logging.info("Reapplying lock state after refresh to newly created buttons")
+                    pass
                 self.layer_panel.update_layer_buttons_lock_state()
             
             # Log which buttons are now locked for verification after refresh
@@ -2406,24 +2188,20 @@ class UndoRedoManager(QObject):
                     button = self.layer_panel.layer_buttons[i]
                     is_locked = getattr(button, 'locked', False)
                     should_be_locked = i in locked_layers
-                    logging.info(f"Button {i} locked state after refresh: {is_locked} (should be: {should_be_locked})")
 
             # Refresh group panel based on the new self.canvas.groups
-            logging.info("Refreshing Group Panel UI...")
             success = self._refresh_group_panel(state_has_groups) # Pass the flag indicating if groups exist
             
             if state_has_groups and not success:
-                logging.warning("Group panel refresh unsuccessful - performing additional recovery steps")
                 
                 # Additional recovery steps for groups
                 if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
                     try:
                         group_manager = self.canvas.group_layer_manager
                         if hasattr(group_manager, 'refresh'):
-                            logging.info("Calling group_layer_manager.refresh() as additional recovery")
                             group_manager.refresh()
                     except Exception as e:
-                        logging.error(f"Error during group recovery: {e}")
+                        pass
 
             # --- Step 4: Restore button states ---
             self._restore_button_states(shadow_enabled, show_control_points)
@@ -2433,51 +2211,41 @@ class UndoRedoManager(QObject):
                 if hasattr(strand, 'show_control_points'):
                     strand.show_control_points = show_control_points
             
-            logging.info("Button state restoration completed")
 
             # --- Step 5: Update LayerStateManager ---
             # IMPORTANT: After loading all strands, we must recalculate connections
             # to ensure all strands (including new ones like '1_4') are in the connections dictionary
             if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
-                logging.info("Recalculating layer state connections after loading state...")
                 self.canvas.layer_state_manager.save_current_state()
-                logging.info("Layer state connections recalculated successfully")
             
             # --- Step 6: Final Canvas Update --- 
-            logging.info("Updating canvas display...")
             self.canvas.update()
             
             # Optional: Update selection state if needed (e.g., clear selection)
             if hasattr(self.canvas, 'deselect_strand'):
                  self.canvas.deselect_strand()
-                 logging.debug("Deselected strand after loading state.")
 
-            logging.info(f"State loaded and applied successfully from step {step}")
             return True # Indicate success
             
         except Exception as e:
-            logging.exception(f"CRITICAL Error loading state from step {step} ({filename}): {str(e)}")
             # Consider rolling back or handling the error state more gracefully here if needed
             return False # Indicate failure
     
     def _refresh_layer_panel(self):
         """Refresh the layer panel UI to match loaded state."""
         if hasattr(self.layer_panel, 'refresh'):
-            logging.info("Refreshing layer panel via _refresh_layer_panel")
             self.layer_panel.refresh()
         else:
-            logging.warning("Layer panel has no refresh method")
+            pass
         
         # Also refresh/update the layer state manager if available
         if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
             if hasattr(self.canvas.layer_state_manager, 'update_layer_order'):
                 layer_names = [strand.layer_name for strand in self.canvas.strands if hasattr(strand, 'layer_name')]
                 self.canvas.layer_state_manager.update_layer_order(layer_names)
-                logging.info(f"Updated layer state manager order with {len(layer_names)} layers")
 
     def _force_clear_all_groups(self):
         """Force a complete removal of all groups from both canvas and UI."""
-        logging.info("Beginning force clear of all groups")
         
         # First try to clear the group manager through canvas
         try:
@@ -2491,7 +2259,7 @@ class UndoRedoManager(QObject):
                 elif hasattr(group_manager, 'tree') and hasattr(group_manager.tree, 'clear'):
                     group_manager.tree.clear()
         except Exception as e:
-            logging.error(f"Error clearing group_manager: {str(e)}")
+            pass
             
         # Then clear the groups from the panel itself
         if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
@@ -2502,32 +2270,27 @@ class UndoRedoManager(QObject):
             if hasattr(group_panel, 'groups'):
                 groups_to_delete = list(group_panel.groups.keys())
                 
-            logging.info(f"Found {len(groups_to_delete)} groups to clear from panel: {groups_to_delete}")
                 
             for group_name in groups_to_delete:
                 try:
                     # Check if group exists in canvas
                     if not hasattr(self.canvas, 'groups') or group_name not in self.canvas.groups:
-                        logging.warning(f"Group '{group_name}' not found in canvas.")
+                        pass
                     
                     # Try to use the delete_group method
                     if hasattr(group_panel, 'delete_group'):
-                        logging.info(f"Group operation: delete on group {group_name} with layers {group_panel.groups.get(group_name, [])}")
                         group_panel.delete_group(group_name)
-                        logging.info(f"Group '{group_name}' deleted.")
                 except Exception as e:
-                    logging.error(f"Error deleting group '{group_name}': {str(e)}")
+                    pass
                     
             # Force reset the groups dictionary to be empty
             if hasattr(group_panel, 'groups'):
                 group_panel.groups = {}
-                logging.info("Forcibly reset panel.groups to empty dict")
                 
             # Remove any remaining widgets from the scroll layout
             if hasattr(group_panel, 'scroll_layout'):
                 # Find all widgets in the scroll layout
                 widget_count = group_panel.scroll_layout.count()
-                logging.info(f"Found {widget_count} widgets in scroll_layout")
                 
                 # Remove all widgets
                 for i in range(widget_count - 1, -1, -1):  # Remove in reverse order
@@ -2537,19 +2300,16 @@ class UndoRedoManager(QObject):
                             widget.setParent(None)
                             widget.deleteLater()
                     except Exception as e:
-                        logging.error(f"Error removing widget at index {i}: {str(e)}")
+                        pass
                         
-                logging.info(f"Removed all {widget_count} widgets from scroll_layout")
                 
         # Ensure canvas.groups is empty
         if hasattr(self.canvas, 'groups'):
             self.canvas.groups = {}
             
-        logging.info("Completed force clear of all groups")
     
     def _ensure_all_groups_exist_in_panel(self, group_manager):
         """Ensure all groups in canvas.groups exist in the panel."""
-        logging.info("Ensuring all groups exist in panel")
         if not hasattr(group_manager, 'group_panel') or not group_manager.group_panel:
             return
             
@@ -2565,7 +2325,6 @@ class UndoRedoManager(QObject):
         missing_groups = canvas_groups - panel_groups
         
         if missing_groups:
-            logging.info(f"Found {len(missing_groups)} groups missing from panel: {missing_groups}")
             
             # Create each missing group
             for group_name in missing_groups:
@@ -2573,45 +2332,37 @@ class UndoRedoManager(QObject):
                     strands = self.canvas.groups[group_name]['strands']
                     if strands and hasattr(group_panel, 'create_group'):
                         try:
-                            logging.info(f"Creating missing group '{group_name}' with {len(strands)} strands")
                             group_panel.create_group(group_name, strands)
                         except Exception as e:
-                            logging.error(f"Error creating missing group '{group_name}': {e}")
+                            pass
         else:
-            logging.info("All groups already exist in panel")
+            pass
     
     def _create_all_groups_in_panel(self, group_panel):
         """Create all groups from canvas.groups in the panel."""
-        logging.info(f"Creating all groups from canvas.groups in panel")
         
         # Loop through the available groups in canvas.groups
         for group_name, group_data in self.canvas.groups.items():
             if 'strands' in group_data and group_data['strands']:
                 # If panel has create_group method, use it
                 if hasattr(group_panel, 'create_group'):
-                    logging.info(f"Creating group '{group_name}' with {len(group_data['strands'])} strands")
                     try:
                         # Create group with strands
                         group_panel.create_group(group_name, group_data['strands'])
-                        logging.info(f"Successfully created group '{group_name}' in panel")
                     except Exception as e:
-                        logging.error(f"Error creating group '{group_name}': {e}")
+                        pass
         
-        logging.info("Finished creating all groups in panel")
 
     def load_specific_state(self, filepath):
         """Loads a specific state file, applies it, and preserves the entire history of the loaded session."""
-        logging.info(f"Attempting to load specific state from file: {filepath}")
         if os.path.exists(filepath):
             try:
                 # Extract the session ID and step from the filepath
                 # Filepath format is: /path/to/temp_dir/YYYYMMDDHHMMSS_step.json
                 filename = os.path.basename(filepath)
-                logging.info(f"Processing filename: {filename}")
                 
                 # Store the original session ID for cleanup
                 original_session_id = self.session_id
-                logging.info(f"Original session ID before loading: {original_session_id}")
                 
                 # Parse the session ID and step from the filename
                 parts = filename.split('_')
@@ -2622,13 +2373,10 @@ class UndoRedoManager(QObject):
                     # Extract the step number from the filename (part after underscore, before .json)
                     loaded_step = int(parts[1].split('.')[0])
                     
-                    logging.info(f"Extracted session ID: {loaded_session_id}, step: {loaded_step}")
                     
                     # Update the current session ID to continue with the loaded session
                     self.session_id = loaded_session_id
-                    logging.info(f"Set current session ID to: {self.session_id}")
                 else:
-                    logging.warning(f"Could not parse session ID from filename: {filename}, keeping original session ID")
                     return False
                 
                 # Find all available states for this session
@@ -2646,10 +2394,7 @@ class UndoRedoManager(QObject):
                                 continue
                     
                     available_steps.sort()
-                    logging.info(f"Found {len(available_steps)} steps for session {loaded_session_id}: {available_steps}")
-                    logging.info(f"Maximum step found: {max_step}")
                 except Exception as e:
-                    logging.error(f"Error scanning for available steps: {e}")
                     return False
                 
                 # Clean up any files from the current session before switching
@@ -2658,15 +2403,13 @@ class UndoRedoManager(QObject):
                         if file.startswith(f"{original_session_id}_") and file.endswith(".json"):
                             try:
                                 os.remove(os.path.join(self.temp_dir, file))
-                                logging.debug(f"Removed file from original session: {file}")
                             except:
-                                logging.warning(f"Failed to remove file: {file}")
+                                pass
                 except Exception as e:
-                    logging.error(f"Error cleaning up original session files: {e}")
+                    pass
                 
                 # Load strands and groups from the specified file
                 strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filepath, self.canvas)
-                logging.info(f"Loaded {len(strands)} strands and {len(groups)} groups from {filepath}")
                 
                 # First inspect the raw JSON directly to ensure we didn't miss anything
                 with open(filepath, 'r') as f:
@@ -2675,42 +2418,34 @@ class UndoRedoManager(QObject):
                     if has_groups_in_file:
                         group_count = len(raw_data.get('groups', {}))
                         group_names = list(raw_data.get('groups', {}).keys())
-                        logging.info(f"Raw file contains {group_count} groups: {group_names}")
                         
                         # Ensure the groups data is properly loaded
                         if not groups and has_groups_in_file:
                             groups = raw_data.get('groups', {})
-                            logging.info(f"Recovered groups directly from raw file data: {list(groups.keys())}")
 
                 # Apply the loaded state to the canvas
                 self.canvas.strands = strands
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = groups
-                    logging.info(f"Applied loaded state to canvas with {len(groups)} groups: {list(groups.keys())}")
                 else:
                     self.canvas.groups = {}
-                    logging.warning("Canvas had no groups attribute, created empty one")
 
                 # Set the step pointers to match the loaded state
                 self.current_step = loaded_step
                 self.max_step = max_step
-                logging.info(f"Set current_step to {self.current_step} and max_step to {self.max_step}")
 
                 # Refresh UI
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
-                    logging.info("Layer panel refreshed via its refresh method")
                 
                 # Restore locked layers
                 if hasattr(self.layer_panel, 'locked_layers') and locked_layers:
-                    logging.info(f"Restoring locked layers: {locked_layers}")
                     self.layer_panel.locked_layers = locked_layers.copy()
                     if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
                         self.layer_panel.update_layer_buttons_lock_state()
                 
                 # Restore lock mode state
                 if hasattr(self.layer_panel, 'lock_mode'):
-                    logging.info(f"Restoring lock mode: {lock_mode}")
                     self.layer_panel.lock_mode = lock_mode
                     if hasattr(self.layer_panel, 'lock_layers_button'):
                         self.layer_panel.lock_layers_button.setChecked(lock_mode)
@@ -2733,7 +2468,6 @@ class UndoRedoManager(QObject):
                 
                 # Now handle the group panel update
                 state_has_groups = bool(self.canvas.groups)
-                logging.info(f"State has groups: {state_has_groups}")
                 
                 # --- Perform comprehensive group panel refresh ---
                 if state_has_groups and hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
@@ -2742,85 +2476,68 @@ class UndoRedoManager(QObject):
                     
                     if group_panel:
                         # First clear the current group panel UI
-                        logging.info("Clearing group panel UI before rebuilding it")
                         self._clear_group_panel_ui(group_panel)
                         
                         # Rebuild the group panel UI from scratch
                         success = self._recreate_group_widgets_from_canvas(group_panel)
-                        logging.info(f"Recreated group widgets from canvas.groups: success={success}")
                         
                         # If that didn't work, try group_layer_manager's refresh method
                         if not success and hasattr(group_manager, 'refresh'):
-                            logging.info("Calling group_layer_manager.refresh() as a fallback")
                             group_manager.refresh()
                             
                         # Final approach: recreate each group manually
                         if hasattr(group_panel, 'create_group') and not success:
-                            logging.info("Final approach: Manually creating each group")
                             for group_name, group_data in self.canvas.groups.items():
                                 if 'strands' in group_data and group_data['strands']:
                                     try:
-                                        logging.info(f"Manually creating group '{group_name}' with {len(group_data['strands'])} strands")
                                         group_panel.create_group(group_name, group_data['strands'])
                                     except Exception as e:
-                                        logging.error(f"Error creating group '{group_name}': {e}")
+                                        pass
                             
                         # Force UI update
                         group_panel.update()
                         if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
                             group_panel.scroll_area.update()
                         
-                        logging.info(f"Final group count in panel: {len(group_panel.groups) if hasattr(group_panel, 'groups') else 'Unknown'}")
                 
                 # --- Button state restoration for load_specific_state ---
-                logging.info(f"Restoring button states: shadow={shadow_enabled}, control_points={show_control_points}")
                 
                 # Restore shadow button state
                 self.canvas.shadow_enabled = shadow_enabled
-                logging.info(f"Set canvas.shadow_enabled = {shadow_enabled}")
                 
                 # Try to find the main window for button restoration
                 main_window = None
                 if hasattr(self.canvas, 'main_window') and self.canvas.main_window:
                     main_window = self.canvas.main_window
-                    logging.info("Found main_window via canvas.main_window")
                 elif hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'main_window'):
                     main_window = self.layer_panel.main_window
-                    logging.info("Found main_window via layer_panel.main_window")
                 else:
-                    logging.warning("Could not find main_window reference for button restoration")
+                    pass
                 
                 if main_window:
                     # Restore shadow button
                     if hasattr(main_window, 'toggle_shadow_button'):
                         main_window.toggle_shadow_button.setChecked(shadow_enabled)
-                        logging.info(f"Restored shadow button state: {shadow_enabled}")
                     else:
-                        logging.warning("toggle_shadow_button not found on main_window")
+                        pass
                     
                     # Restore control points button
                     if hasattr(main_window, 'toggle_control_points_button'):
                         main_window.toggle_control_points_button.setChecked(show_control_points)
-                        logging.info(f"Restored control points button state: {show_control_points}")
                     else:
-                        logging.warning("toggle_control_points_button not found on main_window")
+                        pass
                 # --- End button state restoration ---
                 
                 self.canvas.update()
                 self.state_saved.emit(self.current_step) # Emit signal to update buttons
 
                 # Verify the session ID is still set correctly after all operations
-                logging.info(f"Final session ID after all operations: {self.session_id}")
                 test_filename = self._get_state_filename(self.current_step + 1)  # Get what the next state filename would be
-                logging.info(f"Next state would be saved as: {test_filename}")
 
-                logging.info(f"Successfully loaded state from {filepath} with full history preservation.")
                 return True
             except Exception as e:
-                logging.exception(f"Error loading specific state from {filepath}: {e}")
                 return False
         else:
-            logging.error(f"Specific state file not found: {filepath}")
             return False
 
     def _update_button_states(self):
@@ -2847,9 +2564,8 @@ class UndoRedoManager(QObject):
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.undo_button.set_custom_tooltip(_['undo_tooltip'] + f'\n({unavailable_text})')
             
-            logging.debug(f"Undo button {'enabled' if can_undo else 'disabled'} (current_step={self.current_step})")
         else:
-            logging.debug("Undo button not initialized yet")
+            pass
             
         if self.redo_button:
             can_redo = self.current_step < self.max_step
@@ -2871,9 +2587,8 @@ class UndoRedoManager(QObject):
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.redo_button.set_custom_tooltip(_['redo_tooltip'] + f'\n({unavailable_text})')
                 
-            logging.debug(f"Redo button {'enabled' if can_redo else 'disabled'} (current_step={self.current_step}, max_step={self.max_step})")
         else:
-            logging.debug("Redo button not initialized yet")
+            pass
 
     def setup_buttons(self, top_layout):
         """Create and add undo/redo buttons to the specified layout."""
@@ -2885,10 +2600,8 @@ class UndoRedoManager(QObject):
         current_theme = "default"
         if hasattr(self.layer_panel, 'parent_window') and hasattr(self.layer_panel.parent_window, 'theme_name'):
             current_theme = self.layer_panel.parent_window.theme_name
-            logging.info(f"Using theme from parent window for undo/redo buttons: {current_theme}")
         elif hasattr(self.layer_panel, 'current_theme'):
             current_theme = self.layer_panel.current_theme
-            logging.info(f"Using theme from layer_panel for undo/redo buttons: {current_theme}")
         
         # Apply theme to match the refresh button
         # Colors will be shades of blue instead of green to differentiate them
@@ -2978,7 +2691,6 @@ class UndoRedoManager(QObject):
         # Update button states based on current history
         self._update_button_states()
         
-        logging.info("Undo/redo buttons initialized and added to layout")
         
         return self.undo_button, self.redo_button
     
@@ -3003,15 +2715,13 @@ class UndoRedoManager(QObject):
 
     def clear_history(self, save_current=True):
         """Clear all saved states for the current session and reset the history."""
-        logging.info(f"Clearing history for session {self.session_id}. Save current state: {save_current}")
         for step in range(1, self.max_step + 1):
             filename = self._get_state_filename(step)
             try:
                 if os.path.exists(filename):
                     os.remove(filename)
-                    logging.debug(f"Removed state file: {filename}")
             except OSError as e:
-                logging.warning(f"Could not remove state file {filename}: {e}")
+                pass
 
         self.current_step = 0
         self.max_step = 0
@@ -3019,16 +2729,13 @@ class UndoRedoManager(QObject):
         if save_current:
             # Save current state as the initial state (step 1)
             self.save_state() # This increments current_step to 1 and saves
-            logging.info("History cleared and current state saved as initial state.")
         else:
             # If not saving current, just reset steps and update buttons
             self._update_button_states()
-            logging.info("History cleared without saving current state.")
             
     def clear_all_past_history(self):
         """Deletes all *.json state files from the temp_states directory, 
            excluding the files belonging to the current session."""
-        logging.info(f"Clearing all past history. Current session ID: {self.session_id}")
         cleared_count = 0
         error_count = 0
         current_session_prefix = f"{self.session_id}_"
@@ -3040,14 +2747,11 @@ class UndoRedoManager(QObject):
                     filepath = os.path.join(self.temp_dir, filename)
                     try:
                         os.remove(filepath)
-                        logging.info(f"Deleted past history file: {filepath}")
                         cleared_count += 1
                     except OSError as e:
-                        logging.error(f"Could not delete past history file {filepath}: {e}")
                         error_count += 1
-            logging.info(f"Finished clearing past history. Deleted: {cleared_count}, Errors: {error_count}")
         except Exception as e:
-            logging.error(f"Error listing directory {self.temp_dir} for history clearing: {e}")
+            pass
             
         # Note: This function only deletes files, it doesn't affect the current session's history management
 
@@ -3055,9 +2759,8 @@ class UndoRedoManager(QObject):
         """Clean up temporary files when the application closes."""
         try:
             shutil.rmtree(self.temp_dir)
-            logging.info(f"Removed temporary directory: {self.temp_dir}")
         except Exception as e:
-            logging.error(f"Error cleaning up temporary files: {e}")
+            pass
 
     def get_temp_dir(self):
         """Returns the path to the temporary directory."""
@@ -3069,21 +2772,17 @@ class UndoRedoManager(QObject):
 
     def _create_group_in_panel(self, group_name, group_data):
         """Directly create a group in the panel from loaded data."""
-        logging.info(f"Directly creating group in panel: {group_name}")
         
         if not hasattr(self.canvas, 'group_layer_manager') or not self.canvas.group_layer_manager:
-            logging.warning("Cannot create group in panel: group_layer_manager not found")
             return False
             
         if not hasattr(self.canvas.group_layer_manager, 'group_panel'):
-            logging.warning("Cannot create group in panel: group_panel not found")
             return False
             
         group_panel = self.canvas.group_layer_manager.group_panel
         
         # Skip if group already exists in panel
         if hasattr(group_panel, 'groups') and group_name in group_panel.groups:
-            logging.info(f"Group {group_name} already exists in panel")
             return True
         
         # Extract strand IDs from the group data, which can be in different formats
@@ -3107,7 +2806,6 @@ class UndoRedoManager(QObject):
                 # Layers are typically string IDs
                 strand_ids = group_data['layers']
         
-        logging.info(f"Extracted {len(strand_ids)} strand IDs for group {group_name}")
         
         # Now convert those IDs to actual strand objects
         existing_strands = []
@@ -3116,23 +2814,18 @@ class UndoRedoManager(QObject):
             for strand in self.canvas.strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
                     existing_strands.append(strand)
-                    logging.info(f"Found strand object for ID '{strand_id}'")
                     break
         
         if not existing_strands:
-            logging.warning(f"No existing strands found for group {group_name}")
             return False
             
-        logging.info(f"Creating group {group_name} with {len(existing_strands)} strands")
         
         # Try several approaches to create the group
         try:
             # First approach: Use the standard create_group method
             group_panel.create_group(group_name, existing_strands)
-            logging.info(f"Created group {group_name} using standard method")
             return True
         except Exception as e:
-            logging.warning(f"Error using standard create_group method: {str(e)}")
             
             # Second approach: Try to use the CollapsibleGroupWidget directly
             try:
@@ -3157,28 +2850,23 @@ class UndoRedoManager(QObject):
                         'layers': [s.layer_name for s in existing_strands],
                         'widget': widget
                     }
-                    logging.info(f"Created group {group_name} using direct widget creation")
                     return True
             except Exception as e:
-                logging.warning(f"Error creating group widget directly: {str(e)}")
+                pass
         
         # If all approaches failed, log an error
-        logging.error(f"All approaches to create group {group_name} failed")
         return False
 
     def set_theme(self, theme_name):
         """Apply the specified theme to undo/redo buttons"""
         if not hasattr(self, 'undo_button') or not hasattr(self, 'redo_button'):
-            logging.warning("Cannot set theme: undo/redo buttons not initialized")
             return
             
         if self.undo_button and hasattr(self.undo_button, 'set_theme'):
             self.undo_button.set_theme(theme_name)
-            logging.debug(f"Applied {theme_name} theme to undo button")
             
         if self.redo_button and hasattr(self.redo_button, 'set_theme'):
             self.redo_button.set_theme(theme_name)
-            logging.debug(f"Applied {theme_name} theme to redo button")
 
     def export_history(self, filepath):
         """Export the entire undo/redo history to a single JSON file.
@@ -3206,7 +2894,6 @@ class UndoRedoManager(QObject):
             for step in range(1, self.max_step + 1):
                 state_file = self._get_state_filename(step)
                 if not os.path.exists(state_file):
-                    logging.warning(f"export_history: expected state file missing: {state_file}")
                     continue
                 try:
                     with open(state_file, "r", encoding="utf-8") as f:
@@ -3216,17 +2903,14 @@ class UndoRedoManager(QObject):
                         "data": state_data
                     })
                 except Exception as e:
-                    logging.error(f"export_history: failed reading {state_file}: {e}")
                     return False
 
             # Finally write the consolidated history file.
             with open(filepath, "w", encoding="utf-8") as out_f:
                 json.dump(history_payload, out_f, indent=2)
 
-            logging.info(f"export_history: Successfully wrote history with {len(history_payload['states'])} steps to {filepath}")
             return True
         except Exception as e:
-            logging.exception(f"export_history: Unexpected error: {e}")
             return False
 
     def import_history(self, filepath):
@@ -3242,12 +2926,10 @@ class UndoRedoManager(QObject):
                 history_payload = json.load(f)
 
             if not isinstance(history_payload, dict) or "states" not in history_payload:
-                logging.error("import_history: File does not appear to be a valid history export.")
                 return False
 
             states_list = history_payload.get("states", [])
             if not states_list:
-                logging.error("import_history: No states found in history export.")
                 return False
 
             # Wipe existing temp state files for a clean import
@@ -3256,7 +2938,7 @@ class UndoRedoManager(QObject):
                     if fname.endswith(".json"):
                         os.remove(os.path.join(self.temp_dir, fname))
             except Exception as e:
-                logging.warning(f"import_history: Could not clean temp directory: {e}")
+                pass
 
             # Start a **new** session id to avoid clashing with prior sessions
             self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -3267,7 +2949,6 @@ class UndoRedoManager(QObject):
                 step_num = entry.get("step")
                 state_data = entry.get("data")
                 if step_num is None or state_data is None:
-                    logging.warning(f"import_history: Malformed state entry skipped: {entry}")
                     continue
                 try:
                     target_path = self._get_state_filename(step_num)
@@ -3275,26 +2956,22 @@ class UndoRedoManager(QObject):
                         json.dump(state_data, out_f, indent=2)
                     recreated_steps += 1
                 except Exception as e:
-                    logging.error(f"import_history: Failed writing state {step_num}: {e}")
                     return False
 
             # Restore bookkeeping counters
             self.max_step = recreated_steps
             self.current_step = min(history_payload.get("current_step", recreated_steps), recreated_steps)
 
-            logging.info(f"import_history: Recreated {recreated_steps} state files. Loading step {self.current_step}...")
 
             # Load the canvas state corresponding to current_step
             load_success = self._load_state(self.current_step)
             if not load_success:
-                logging.error("import_history: Failed to load reconstructed current state.")
                 return False
 
             # Update UI buttons
             self._update_button_states()
             return True
         except Exception as e:
-            logging.exception(f"import_history: Unexpected error: {e}")
             return False
 
     def _restore_button_states(self, shadow_enabled, show_control_points):
@@ -3305,48 +2982,40 @@ class UndoRedoManager(QObject):
             shadow_enabled (bool): Whether shadow should be enabled
             show_control_points (bool): Whether control points should be shown
         """
-        logging.info(f"Starting button state restoration: shadow={shadow_enabled}, control_points={show_control_points}")
         
         # Restore canvas properties first
         self.canvas.shadow_enabled = shadow_enabled
         self.canvas.show_control_points = show_control_points
-        logging.info(f"Set canvas properties: shadow_enabled={shadow_enabled}, show_control_points={show_control_points}")
         
         # Try to find the main window through parent_window reference
         main_window = None
         if hasattr(self.canvas, 'parent_window') and self.canvas.parent_window:
             main_window = self.canvas.parent_window
-            logging.info("Found main_window via canvas.parent_window")
         elif hasattr(self.canvas, 'main_window') and self.canvas.main_window:
             main_window = self.canvas.main_window
-            logging.info("Found main_window via canvas.main_window")
         elif hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'main_window'):
             main_window = self.layer_panel.main_window
-            logging.info("Found main_window via layer_panel.main_window")
         else:
-            logging.warning("Could not find main_window reference for button restoration")
+            pass
         
         if main_window:
             # Restore shadow button visual state
             if hasattr(main_window, 'toggle_shadow_button'):
                 main_window.toggle_shadow_button.setChecked(shadow_enabled)
-                logging.info(f"Restored shadow button visual state: {shadow_enabled}")
             else:
-                logging.warning("toggle_shadow_button not found on main_window")
+                pass
             
             # Restore control points button visual state
             if hasattr(main_window, 'toggle_control_points_button'):
                 main_window.toggle_control_points_button.setChecked(show_control_points)
-                logging.info(f"Restored control points button visual state: {show_control_points}")
             else:
-                logging.warning("toggle_control_points_button not found on main_window")
+                pass
         
         # Update all strands' control points visibility
         for strand in self.canvas.strands:
             if hasattr(strand, 'show_control_points'):
                 strand.show_control_points = show_control_points
         
-        logging.info("Button state restoration completed")
 
 def connect_to_move_mode(canvas, undo_redo_manager):
     """
@@ -3379,20 +3048,17 @@ def connect_to_move_mode(canvas, undo_redo_manager):
                 # If a control point was being moved, reset the last save time to force a new state
                 if getattr(canvas.move_mode, 'is_moving_control_point', False):
                     undo_redo_manager._last_save_time = 0
-                logging.info("Move detected, saving state for undo/redo.")
                 undo_redo_manager.save_state()
             else:
-                logging.info("Mouse released, but no move detected. Not saving state.")
+                pass
         
         # Replace the original function with our enhanced version
         canvas.move_mode.mouseReleaseEvent = enhanced_mouse_release
-        logging.info("Connected UndoRedoManager to move_mode mouse release events")
         
         # Do NOT save initial state automatically - only save when user actions create content
         # undo_redo_manager.save_state() - REMOVED
-        logging.info("Initial empty state will not be saved for undo/redo until user creates content")
     else:
-        logging.warning("Could not connect to move_mode: move_mode not found on canvas")
+        pass
 
 
 def connect_to_attach_mode(canvas, undo_redo_manager):
@@ -3417,14 +3083,12 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
 
             # Check if we're already processing an attach operation to prevent multiple saves
             if getattr(undo_redo_manager, '_attach_save_in_progress', False):
-                logging.info("=== ATTACH MODE DEBUG === Skipping duplicate attach save (already in progress)")
                 # Still execute the original mouse release logic, just skip the state saving
                 original_mouse_release(event)
                 return
 
             # Check if a mask operation was just completed to prevent duplicate saves
             if getattr(undo_redo_manager, '_mask_save_completed', False):
-                logging.info("=== ATTACH MODE DEBUG === Skipping attach save (mask operation just completed)")
                 # Still execute the original mouse release logic, just skip the state saving
                 original_mouse_release(event)
                 # Clear the mask completion flag since we've handled it
@@ -3446,12 +3110,10 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                 def _finalize_save():
                     # Check if we already saved to prevent duplicate saves
                     if getattr(undo_redo_manager, '_attach_save_completed', False):
-                        logging.info("=== ATTACH MODE DEBUG === Skipping duplicate attach save (already completed)")
                         return
                     
                     # Temporarily lift the suppression to allow exactly one save
                     setattr(undo_redo_manager, '_skip_save', False)
-                    logging.info(f"=== ATTACH MODE DEBUG === Saving state from attach mode handler for strand creation")
                     undo_redo_manager.save_state()
                     
                     # Mark as completed to prevent duplicate saves
@@ -3469,9 +3131,8 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
 
         # Replace the original function with our enhanced version
         canvas.attach_mode.mouseReleaseEvent = enhanced_mouse_release_and_save
-        logging.info("Connected UndoRedoManager to attach_mode mouse release events (state will be saved after attachment)")
     else:
-        logging.warning("Could not connect suppression logic to attach_mode: attach_mode not found on canvas")
+        pass
 
 
 def connect_to_mask_mode(canvas, undo_redo_manager):
@@ -3485,11 +3146,9 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
     if hasattr(canvas, 'mask_mode') and canvas.mask_mode:
         # Connect the mask_created signal to save state
         def on_mask_created(_strand1, _strand2):
-            logging.info("=== MASK MODE DEBUG === Mask created signal received, scheduling state save.")
             
             # Check if we're already processing a mask operation to prevent multiple saves
             if getattr(undo_redo_manager, '_mask_save_in_progress', False):
-                logging.info("=== MASK MODE DEBUG === Skipping duplicate mask save (already in progress)")
                 return
             
             # Set suppression flags to prevent duplicate saves
@@ -3499,12 +3158,10 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
             def _finalize_mask_save():
                 # Check if we already saved to prevent duplicate saves
                 if getattr(undo_redo_manager, '_mask_save_completed', False):
-                    logging.info("=== MASK MODE DEBUG === Skipping duplicate mask save (already completed)")
                     return
                 
                 # Temporarily lift the suppression to allow exactly one save
                 setattr(undo_redo_manager, '_skip_save', False)
-                logging.info("=== MASK MODE DEBUG === Saving state from mask mode handler for mask creation")
                 undo_redo_manager.save_state()
                 
                 # Mark as completed to prevent duplicate saves
@@ -3525,22 +3182,18 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
         try:
             # Disconnect existing connections first to prevent duplicates
             canvas.mask_mode.mask_created.disconnect(on_mask_created)
-            logging.debug("Disconnected existing mask_created signals.")
         except (TypeError, RuntimeError):
             # Expected if no connection existed or it was already disconnected
-            logging.debug("No existing mask_created signal connection found to disconnect.")
             pass
             
         canvas.mask_mode.mask_created.connect(on_mask_created)
-        logging.info("Connected UndoRedoManager to mask_mode mask_created signal")
     else:
-        logging.warning("Could not connect to mask_mode: mask_mode not found on canvas")
+        pass
 
 
 def connect_to_group_operations(canvas, undo_redo_manager):
     """Connect to group operations to trigger state saves"""
     if not hasattr(canvas, 'group_layer_manager'):
-        logging.warning("Could not connect to group operations: group_layer_manager not found on canvas")
         return
         
     group_manager = canvas.group_layer_manager
@@ -3550,7 +3203,6 @@ def connect_to_group_operations(canvas, undo_redo_manager):
         try:
             # Define a handler for group operations
             def on_group_operation(operation, group_name, layers):
-                logging.info(f"Group operation detected: {operation} on {group_name}")
                 # For operations that have completion functions, we'll save state at completion
                 # For other operations, save state immediately
                 if operation not in ["move", "rotate", "edit_angles"]:
@@ -3558,16 +3210,14 @@ def connect_to_group_operations(canvas, undo_redo_manager):
                 
             # Connect the signal
             group_manager.group_operation.connect(on_group_operation)
-            logging.info("Connected to group_operation signal")
         except Exception as e:
-            logging.warning(f"Error connecting to group_operation signal: {str(e)}")
+            pass
     
     # Also connect directly to canvas operations if they exist
     if hasattr(canvas, 'finish_group_move'):
         original_canvas_finish_move = canvas.finish_group_move
         def enhanced_canvas_finish_move(*args, **kwargs):
             result = original_canvas_finish_move(*args, **kwargs)
-            logging.info("Canvas group move finished, saving state")
             undo_redo_manager.save_state()
             return result
         canvas.finish_group_move = enhanced_canvas_finish_move
@@ -3578,7 +3228,6 @@ def connect_to_group_operations(canvas, undo_redo_manager):
             result = original_canvas_finish_rotation(*args, **kwargs)
             
             # Don't schedule a delayed save for rotation - it should be handled explicitly
-            logging.info("Canvas group rotation finished - save should be handled by rotation dialog or operation")
                 
             return result
         canvas.finish_group_rotation = enhanced_canvas_finish_rotation
@@ -3590,7 +3239,6 @@ def connect_to_group_operations(canvas, undo_redo_manager):
     # Mark the connection as established
     canvas._group_ops_connected = True
     
-    logging.info("Successfully connected to group operations")
     return True
 
 # --- ADD NEW FUNCTION ---
@@ -3603,45 +3251,33 @@ def connect_strand_creation(canvas, undo_redo_manager):
     if hasattr(canvas, 'strand_created'):
         def on_strand_really_created(strand):
             # IMPORTANT: Skip saving for AttachedStrands - the attach mode handler will take care of it
-            logging.info(f"=== STRAND CREATION DEBUG === strand_created signal received for strand: {strand.layer_name}, class: {strand.__class__.__name__}")
             
             # Check if this strand is the current_strand in attach mode (indicates it's an AttachedStrand being created)
             current_strand = getattr(canvas, 'current_strand', None)
-            logging.info(f"Canvas current_strand: {current_strand.layer_name if current_strand else 'None'}")
             if current_strand == strand:
-                logging.info(f"strand_created signal processed for current_strand {strand.layer_name}, skipping save (attach mode handler will save).")
                 return
             
             # Check by isinstance first (most reliable)
             is_attached_strand_instance = isinstance(strand, AttachedStrand)
-            logging.info(f"Is AttachedStrand instance: {is_attached_strand_instance}")
             if is_attached_strand_instance:
-                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name}, skipping save (attach mode handler will save).")
                 return
             
             # Additional check for AttachedStrands by class name (fallback)
             is_attached_strand_class = strand.__class__.__name__ == 'AttachedStrand'
-            logging.info(f"Is AttachedStrand class: {is_attached_strand_class}")
             if is_attached_strand_class:
-                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name} (by class name), skipping save (attach mode handler will save).")
                 return
             
             # Additional check for AttachedStrands by parent attribute (fallback)
             has_parent = hasattr(strand, 'parent') and strand.parent
-            logging.info(f"Has parent attribute: {has_parent}")
             if has_parent:
-                logging.info(f"strand_created signal processed for AttachedStrand {strand.layer_name} (has parent), skipping save (attach mode handler will save).")
                 return
             
             # Skip saving for MaskedStrands - they have their own state management
             is_masked_strand = isinstance(strand, MaskedStrand)
-            logging.info(f"Is MaskedStrand: {is_masked_strand}")
             if is_masked_strand:
-                logging.info(f"strand_created signal processed for MaskedStrand {strand.layer_name}, skipping save (masked strands have their own state management).")
                 return
                 
             # Save state for regular main strands only
-            logging.info(f"strand_created signal processed for regular strand {strand.layer_name}, saving state.")
             # Use a small delay to ensure all strand properties and connections are established
             QTimer.singleShot(50, lambda: undo_redo_manager.save_state())
 
@@ -3650,9 +3286,8 @@ def connect_strand_creation(canvas, undo_redo_manager):
         except TypeError:
             pass # Ignore if no connection exists
         canvas.strand_created.connect(on_strand_really_created)
-        logging.info("Connected UndoRedoManager directly to canvas.strand_created signal for state saving (AttachedStrands will be skipped).")
     else:
-        logging.warning("Canvas does not have strand_created signal.")
+        pass
 # --- END ADD NEW FUNCTION ---
 
 
@@ -3681,11 +3316,10 @@ def setup_undo_redo(canvas, layer_panel, base_path):
                 manager.undo_button.setEnabled(False)
             if manager.redo_button:
                 manager.redo_button.setEnabled(False)
-            logging.info("Added undo/redo buttons to layer panel (initially disabled)")
         else:
-            logging.warning("Could not find top_layout in layer_panel")
+            pass
     else:
-        logging.warning("Could not find top_panel in layer_panel")
+        pass
 
     # Connect to move mode mouse release for saving moves
     connect_to_move_mode(canvas, manager)
@@ -3707,7 +3341,6 @@ def setup_undo_redo(canvas, layer_panel, base_path):
         def check_and_connect_group_operations():
             if hasattr(canvas, 'group_layer_manager') and canvas.group_layer_manager:
                 if not getattr(canvas, '_group_ops_connected', False): # Check if already connected
-                    logging.info("Delayed connection: Group layer manager now available, connecting to group operations")
                     connect_to_group_operations(canvas, manager)
                     return True
             return False
@@ -3731,13 +3364,11 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     if not group_panel:
         return False
         
-    logging.info("Directly connecting group panel to undo/redo manager")
     
     # Connect to group creation more directly
     original_create_group = group_panel.create_group
     def enhanced_create_group(*args, **kwargs):
         result = original_create_group(*args, **kwargs)
-        logging.info("Group created, saving state")
         
         # Record the timestamp before saving state
         current_time = time.time()
@@ -3745,13 +3376,11 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
         
         # Check if a state was saved very recently (within 1 second)
         if current_time - last_save_time < 1.0:
-            logging.info("Group creation: Recently saved state detected. Setting flag to enable next save.")
             # Set flag to allow the next save (typically from attach mode) by resetting the prevention flag
             undo_redo_manager._saving_state_now = False
             
             # Force a save anyway to ensure group creation is recorded as a separate step
             # This ensures that strand creation and group creation are treated as separate operations
-            logging.info("Group creation: Forcing a save to ensure it's recorded as a separate step")
             undo_redo_manager.save_state()
         else:
             # Normal save if no recent save
@@ -3770,7 +3399,6 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     original_delete_group = group_panel.delete_group
     def enhanced_delete_group(*args, **kwargs):
         result = original_delete_group(*args, **kwargs)
-        logging.info("Group deleted, saving state")
         undo_redo_manager.save_state()
         return result
     group_panel.delete_group = enhanced_delete_group
@@ -3779,7 +3407,6 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     original_finish_group_move = group_panel.finish_group_move
     def enhanced_finish_group_move(*args, **kwargs):
         result = original_finish_group_move(*args, **kwargs)
-        logging.info("Group move finished, saving state")
         undo_redo_manager.save_state()
         return result
     group_panel.finish_group_move = enhanced_finish_group_move
@@ -3805,7 +3432,6 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     
     # Connect to group operation signal
     def on_group_operation(operation, group_name, layers):
-        logging.info(f"Group operation detected: {operation} on {group_name}")
         # For operations that have completion functions, we'll save state at completion
         # For other operations, save state immediately
         if operation not in ["move", "rotate", "edit_angles"]:
@@ -3813,5 +3439,4 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     
     group_panel.group_operation.connect(on_group_operation)
     
-    logging.info("Successfully connected group panel signals to undo/redo manager")
     return True 

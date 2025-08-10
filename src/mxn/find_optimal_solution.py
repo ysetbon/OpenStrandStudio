@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import shutil
-import logging
 import warnings
 from pathlib import Path
 
@@ -16,7 +15,6 @@ from main_window import MainWindow
 from save_load_manager import load_strands, apply_loaded_strands
 
 # Suppress all warnings and logging
-logging.basicConfig(level=logging.CRITICAL)
 warnings.filterwarnings('ignore')
 os.environ["QT_LOGGING_RULES"] = "*=false"
 os.environ["QT_QPA_PLATFORM"] = "offscreen"

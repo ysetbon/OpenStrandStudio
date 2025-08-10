@@ -10,12 +10,10 @@ This test demonstrates:
 """
 
 import sys
-import logging
 from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QColor
 
 # Set up logging to see what's happening
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # Import the classes we need
 from strand import Strand

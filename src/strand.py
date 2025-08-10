@@ -6,7 +6,6 @@ from PyQt5.QtGui import (
 )
 from render_utils import RenderUtils
 import math
-import logging
 from PyQt5.QtGui import QPolygonF  # Ensure this is included among your imports
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 class Strand:
@@ -134,7 +133,7 @@ class Strand:
         if value is False and hasattr(self, 'canvas') and self.canvas:
             truly_moving_strands = getattr(self.canvas, 'truly_moving_strands', [])
             if self in truly_moving_strands:
-                logging.warning(f"[STRAND_PROPERTY] Preventing is_selected=False for moving strand {self.layer_name}")
+                pass
                 return  # Don't set to False if strand is in truly_moving_strands
         
         self._is_selected = value
@@ -147,7 +146,7 @@ class Strand:
             if hasattr(self, '_circle_stroke_color') and self._circle_stroke_color and self._circle_stroke_color.alpha() > 0:
                 new_color = QColor(self.stroke_color) if hasattr(self, 'stroke_color') and self.stroke_color else QColor(0, 0, 0, 255)
                 self.circle_stroke_color = new_color
-                logging.info(f"Updated circle_stroke_color for AttachedStrand {self.layer_name} to match stroke_color: {new_color.red()},{new_color.green()},{new_color.blue()},{new_color.alpha()}")
+                pass
 
     @property
     def circle_stroke_color(self):
@@ -179,10 +178,10 @@ class Strand:
         self._setting_circle_transparency = True
         
         if value is None:
-            logging.info(f"Setting default start_circle_stroke_color for {self.layer_name}")
+            pass
             self._start_circle_stroke_color = QColor(0, 0, 0, 255)
         else:
-            logging.info(f"Setting start_circle_stroke_color for {self.layer_name} to rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})")
+            pass
             self._start_circle_stroke_color = value
         
         self._setting_circle_transparency = False
@@ -206,10 +205,10 @@ class Strand:
         self._setting_circle_transparency = True
         
         if value is None:
-            logging.info(f"Setting default end_circle_stroke_color for {self.layer_name}")
+            pass
             self._end_circle_stroke_color = QColor(0, 0, 0, 255)
         else:
-            logging.info(f"Setting end_circle_stroke_color for {self.layer_name} to rgba({value.red()}, {value.green()}, {value.blue()}, {value.alpha()})")
+            pass
             self._end_circle_stroke_color = value
         
         self._setting_circle_transparency = False
@@ -477,13 +476,13 @@ class Strand:
         start_circle_color = self.start_circle_stroke_color
         if start_circle_color and start_circle_color.alpha() == 0:
             is_transparent_start = True
-            logging.info(f"{self.layer_name}: Transparent start circle detected, removing shadow extension.")
+            pass
         
         # Check for transparent end circle
         end_circle_color = self.end_circle_stroke_color
         if end_circle_color and end_circle_color.alpha() == 0:
             is_transparent_end = True
-            logging.info(f"{self.layer_name}: Transparent end circle detected, removing shadow extension.")
+            pass
 
         if is_transparent_start:
             # If transparent start circle on AttachedStrand, don't extend
@@ -869,7 +868,7 @@ class Strand:
 
             # Ensure points are valid before calculation
             if p0 is None or p1 is None or p2 is None or p3 is None:
-                 logging.error(f"Strand {self.layer_name}: Found None control point(s) in point_at. p0={p0}, p1={p1}, p2={p2}, p3={p3}")
+                 pass
                  return QPointF(0, 0) # Or handle error appropriately
 
             x = (
@@ -972,7 +971,7 @@ class Strand:
 
             # Ensure points are valid before calculation
             if p0 is None or p1 is None or p2 is None or p3 is None:
-                logging.error(f"Strand {self.layer_name}: Cannot calculate tangent due to None point(s): p0={p0}, p1={p1}, p2={p2}, p3={p3}")
+                pass
                 # Return a default zero vector or handle appropriately
                 return QPointF(0, 0) 
 
@@ -1334,7 +1333,7 @@ class Strand:
                     draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
-            logging.error(f"Error applying strand shadow: {e}")
+            pass
         finally:
             painter.restore() # RESTORE 2
             # Reduced high-frequency logging for performance
@@ -1436,9 +1435,9 @@ class Strand:
             # Add side line highlighting for regular strands (not attached strands)
             # Only highlight sides that don't have attached strands
             if not hasattr(self, 'parent'):  # This is a regular strand, not an attached strand
-                logging.info(f"[Side Line Highlighting] Processing regular strand {getattr(self, 'layer_name', 'unknown')}")
-                logging.info(f"  start_line_visible={self.start_line_visible}, has_circles[0]={self.has_circles[0]}")
-                logging.info(f"  end_line_visible={self.end_line_visible}, has_circles[1]={self.has_circles[1]}")
+                pass
+                pass
+                pass
                 
                 painter.save()
                 
@@ -1488,16 +1487,16 @@ class Strand:
                 # Only draw side lines where there are no attached strands
                 # has_circles[0] = True means start has attached strand, has_circles[1] = True means end has attached strand
                 if self.start_line_visible and not self.has_circles[0] and not self.start_circle_stroke_color.alpha() == 0:
-                    logging.info(f"  Drawing start side line for {getattr(self, 'layer_name', 'unknown')}")
+                    pass
                     painter.drawLine(start_line_start_extended, start_line_end_extended)
                 
                 if self.end_line_visible and not self.has_circles[1] and not self.end_circle_stroke_color.alpha() == 0:
-                    logging.info(f"  Drawing end side line for {getattr(self, 'layer_name', 'unknown')}")
+                    pass
                     painter.drawLine(end_line_start_extended, end_line_end_extended)
                 
                 painter.restore()
             else:
-                logging.info(f"[Side Line Highlighting] Skipping attached strand {getattr(self, 'layer_name', 'unknown')}")
+                pass
 
         # Create a stroker for the fill path with squared ends
         fill_stroker = QPainterPathStroker()
@@ -1715,7 +1714,7 @@ class Strand:
             # Control point drawing code removed to avoid conflicts with canvas drawing
             pass
         except Exception as e:
-            logging.error(f"Error with control points: {e}")
+            pass
             # Continue drawing even if control points fail
         # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
         from attached_strand import AttachedStrand
@@ -2278,7 +2277,7 @@ class Strand:
                     draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
-            logging.error(f"Error applying strand shadow: {e}")
+            pass
       
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self, MaskedStrand):
@@ -2561,7 +2560,7 @@ class Strand:
         # Draw circles directly without temporary images
         # Only draw the start circle if explicitly enabled (has_circles[0] == True)
         print(f"[CIRCLE_DEBUG] {self.layer_name} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
-        logging.info(f"[Strand.draw] {self.layer_name} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
+        pass
         if self.has_circles[0]:
             print(f"[CIRCLE_DEBUG] Drawing START circle for {self.layer_name}")
             total_diameter = self.width + self.stroke_width * 2
@@ -2625,7 +2624,7 @@ class Strand:
             
             
         # Draw ending circle if has_circles == [True, True]
-        logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [False, True]: {self.has_circles == [False, True]}")
+        pass
         if (self.has_circles == [False, True]):
             # Check for attached children that would skip circle drawing
             # Only check parent's attached strands if this strand has a parent (i.e., it's an AttachedStrand)
@@ -2705,7 +2704,7 @@ class Strand:
                 just_inner = tr_inner.map(just_inner)
                 painter.drawPath(just_inner)
         # Draw ending circle if has_circles == [True, True]
-        logging.info(f"[Strand.draw] {self.layer_name} - Checking end circle for [True, True]: {self.has_circles == [True, True]}")
+        pass
         if (self.has_circles == [True, True]):
             # Check for attached children that would skip circle drawing
             # Only check parent's attached strands if this strand has a parent (i.e., it's an AttachedStrand)

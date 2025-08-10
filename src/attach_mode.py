@@ -3,7 +3,6 @@ from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath
 from PyQt5.QtWidgets import QApplication
 from render_utils import RenderUtils
 import math
-import logging
 import time
 
 from strand import Strand
@@ -74,9 +73,6 @@ class AttachMode(QObject):
         pan_active = hasattr(self.canvas, "pan_offset_x") and (self.canvas.pan_offset_x != 0 or self.canvas.pan_offset_y != 0)
         
         if zoom_active or pan_active:
-            logging.info(f"[AttachMode.partial_update] Zoomed (zoom={self.canvas.zoom_factor}) or panned (pan={getattr(self.canvas, 'pan_offset_x', 0)},{getattr(self.canvas, 'pan_offset_y', 0)}), using full repaint for attached strand")
-            logging.info(f"  Current strand type: {type(self.canvas.current_strand).__name__}")
-            logging.info(f"  Current strand pos: start={self.canvas.current_strand.start}, end={self.canvas.current_strand.end}")
             # Don't use optimized paint handler when zoomed
             if hasattr(self.canvas, 'original_paintEvent'):
                 self.canvas.paintEvent = self.canvas.original_paintEvent
@@ -100,7 +96,6 @@ class AttachMode(QObject):
         
         # Store the current strand and calculate minimal update region
         strand = self.canvas.current_strand
-        # logging.info(f"[AttachMode.partial_update] Normal zoom partial update for strand {getattr(strand, 'layer_name', 'unknown')}")
         
         # Setup background caching if needed
         if not hasattr(self.canvas, 'background_cache'):
@@ -134,13 +129,12 @@ class AttachMode(QObject):
                 self._setup_optimized_paint_handler()
             
             # Only update the canvas - can't use update(rect) as it's not supported
-            # logging.info(f"[AttachMode.partial_update] Calling canvas.update() with active_strand_update_rect: {update_rect}")
             self.canvas.update()
 
     def _get_strand_bounds(self):
         """Return a rectangle that fully covers the *visible* logical area.
         
-        logging.info(f"[AttachMode._get_strand_bounds] Called with zoom_factor: {getattr(self.canvas, 'zoom_factor', 1.0)}")
+
 
         When the user zooms *out* (``zoom_factor`` < 1) the logical area that
         fits into the widget becomes larger than the widget physical
@@ -163,7 +157,6 @@ class AttachMode(QObject):
             # Size of the logical area that fills the widget after scaling.
             width  = int(self.canvas.width()  * inv_scale)
             height = int(self.canvas.height() * inv_scale)
-            logging.info(f"[AttachMode._get_strand_bounds] Zoomed out - inv_scale: {inv_scale}, logical size: {width}x{height}")
 
             # Centre the rectangle on the widget centre so that translation in
             # the paint routine still works as expected.
@@ -174,7 +167,6 @@ class AttachMode(QObject):
             top    = cy - height // 2
 
             bounds = QRect(left, top, width, height)
-            logging.info(f"[AttachMode._get_strand_bounds] Returning zoomed-out bounds: {bounds}")
             return bounds
 
         # Normal (zoom == 1.0 or zoomed-in) – widget rectangle is fine.
@@ -182,7 +174,6 @@ class AttachMode(QObject):
             bounds = self.canvas.viewport().rect()
         else:
             bounds = self.canvas.rect()
-        # logging.info(f"[AttachMode._get_strand_bounds] Normal zoom - returning widget bounds: {bounds}")
         return bounds
             
     def _setup_background_cache(self):
@@ -221,10 +212,7 @@ class AttachMode(QObject):
                 self_canvas.background_cache_valid = False
             
             self.canvas.invalidate_background_cache = invalidate_cache.__get__(self.canvas, type(self.canvas))
-            
-            logging.info(f"Background cache initialized: {width}x{height} pixels (transparent)")
-        except Exception as e:
-            logging.error(f"Error setting up background cache: {e}")
+        except Exception:
             # If we can't set up the cache, set a flag to disable it
             self.canvas.use_background_cache = False
 
@@ -237,7 +225,6 @@ class AttachMode(QObject):
             """Optimized paint event that uses background caching for efficiency."""
             from PyQt5.QtGui import QPainter, QPixmap
             from PyQt5.QtCore import Qt, QPointF, QRectF
-            import logging
             
             # --------------------------------------------------
             # Global operations such as undo\/redo temporarily set
@@ -333,8 +320,8 @@ class AttachMode(QObject):
                                 for strand in self_canvas.strands:
                                     if hasattr(strand, 'draw'):
                                         strand.draw(cache_painter)
-                            except Exception as render_error:
-                                logging.error(f"Error rendering to cache: {render_error}")
+                            except Exception:
+                                # Clear the cache region if rendering to cache fails
                                 cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
                             
                             # Restore the strand if needed
@@ -343,8 +330,7 @@ class AttachMode(QObject):
                                 
                             cache_painter.end()
                             self_canvas.background_cache_valid = True
-                        except Exception as e:
-                            logging.error(f"Error updating cache: {e}")
+                        except Exception:
                             self_canvas.background_cache_valid = False
                             self_canvas.strands = original_strands
                     
@@ -352,8 +338,7 @@ class AttachMode(QObject):
                     try:
                         update_rect_adjusted = update_rect.intersected(self_canvas.rect())
                         painter.drawPixmap(update_rect_adjusted, self_canvas.background_cache, update_rect_adjusted)
-                    except Exception as draw_error:
-                        logging.error(f"Error drawing cached background: {draw_error}")
+                    except Exception:
                         painter.fillRect(update_rect, Qt.transparent)
                         
                         # Draw the grid first if it's enabled
@@ -382,16 +367,12 @@ class AttachMode(QObject):
                 # Draw the active strand last (on top of everything)
                 if not hasattr(active_strand, 'canvas'):
                     active_strand.canvas = self_canvas
-                # Log for debugging zoom-out issues
-                if hasattr(self_canvas, 'zoom_factor') and self_canvas.zoom_factor < 1.0:
-                    logging.info(f"Drawing active_strand while zoomed out (zoom={self_canvas.zoom_factor}): {type(active_strand).__name__} {getattr(active_strand, 'layer_name', 'no_name')} start={active_strand.start} end={active_strand.end}")
                 active_strand.draw(painter)
                 
                 # Ensure strands list is restored to its original state
                 self_canvas.strands = original_strands
                 
-            except Exception as e:
-                logging.error(f"Error in optimized paint event: {e}")
+            except Exception:
                 # Restore original strands list in case of error
                 self_canvas.strands = original_strands
             finally:
@@ -450,12 +431,7 @@ class AttachMode(QObject):
         if self.canvas.current_strand:
             # If the strand has a non-zero length, create it
             if self.canvas.current_strand.start != self.canvas.current_strand.end:
-                # --- ADD LOGGING FOR STRAND CREATION ---
-                strand_ref = self.canvas.current_strand
-                # Check *before* accessing attributes for logging
-                if strand_ref:
-                    logging.info(f"Strand Creation: Name={strand_ref.layer_name}, Start={strand_ref.start}, End={strand_ref.end}")
-                # --- END LOGGING ---
+                # No-op: previously logged strand creation details
                 
                 self.strand_created.emit(self.canvas.current_strand)
                 
@@ -463,12 +439,7 @@ class AttachMode(QObject):
         else:
             # If we're attaching a strand, create it
             if self.is_attaching and self.canvas.current_strand:
-                # --- ADD LOGGING FOR STRAND CREATION ---
-                strand_ref = self.canvas.current_strand
-                # Check *before* accessing attributes for logging
-                if strand_ref:
-                    logging.info(f"Strand Creation: Name={strand_ref.layer_name}, Start={strand_ref.start}, End={strand_ref.end}")
-                # --- END LOGGING ---
+                # No-op: previously logged strand creation details
                 
                 self.strand_created.emit(self.canvas.current_strand)
                 
@@ -499,7 +470,6 @@ class AttachMode(QObject):
             return
 
         # Check if we're in new strand creation mode (initiated by button)
-        logging.info(f"AttachMode.mousePressEvent: is_drawing_new_strand={getattr(self.canvas, 'is_drawing_new_strand', False)}")
         if hasattr(self.canvas, 'is_drawing_new_strand') and self.canvas.is_drawing_new_strand:
             # Handle new strand creation initiated by button
             # The event position is already in canvas coordinates (converted by the canvas)
@@ -513,19 +483,15 @@ class AttachMode(QObject):
             if hasattr(self.canvas, 'layer_panel'):
                 # Find existing sets from current strands, skipping masked strands
                 existing_sets = set()
-                logging.info(f"AttachMode: Found {len(self.canvas.strands)} total strands")
                 for s in self.canvas.strands:
                     if not isinstance(s, MaskedStrand) and hasattr(s, 'layer_name') and s.layer_name and '_' in s.layer_name:
                         try:
                             set_num = int(s.layer_name.split('_')[0])
                             existing_sets.add(set_num)
-                            logging.info(f"AttachMode: Found strand {s.layer_name}, set_num={set_num}")
                         except (ValueError, IndexError):
                             # Skip strands with invalid layer names
-                            logging.info(f"AttachMode: Skipping strand with invalid layer_name: {s.layer_name}")
                             continue
                 
-                logging.info(f"AttachMode: Existing sets: {existing_sets}")
                 
                 # Use the set number from the button click, or find next available
                 button_set = getattr(self.canvas, 'new_strand_set_number', None)
@@ -547,7 +513,6 @@ class AttachMode(QObject):
             # Ensure the color is set in the canvas's color management system
             if hasattr(self.canvas, 'strand_colors'):
                 self.canvas.strand_colors[current_set] = strand_color
-                logging.info(f"AttachMode: Set strand_colors[{current_set}] to {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
             
             if hasattr(self.canvas, 'layer_panel'):
                 # Get the next count for this set based on existing strands
@@ -567,7 +532,6 @@ class AttachMode(QObject):
                 
                 new_strand.layer_name = f"{current_set}_{count}"
                 self.canvas.layer_panel.set_counts[current_set] = count
-                logging.info(f"Created new strand with set {current_set}, count {count}")
                 
             self.canvas.current_strand = new_strand
             self.current_end = self.start_pos
@@ -757,7 +721,7 @@ class AttachMode(QObject):
                     if self.try_attach_to_attached_strands(strand.attached_strands, constrained_pos, None):
                         return
             elif isinstance(strand, MaskedStrand):
-                print("Cannot attach to a masked strand layer.")
+                pass
 
     def has_free_side(self, strand):
         """Check if the strand has any free sides for attachment.
@@ -850,11 +814,9 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         """Start the attachment process for a new strand."""
-        logging.info(f"[AttachMode.start_attachment] Starting attachment to parent strand {parent_strand.layer_name} at side {side}")
         
         # Clear any previous selection/highlighting before starting attachment
         if self.canvas.selected_strand:
-            logging.info(f"[AttachMode.start_attachment] Clearing previous selected strand: {self.canvas.selected_strand.layer_name}")
             # Clear selection flags on the previously highlighted strand
             if hasattr(self.canvas.selected_strand, 'is_selected'):
                 self.canvas.selected_strand.is_selected = False
@@ -865,7 +827,6 @@ class AttachMode(QObject):
                 self.canvas.selected_strand.end_selected = False
             self.canvas.selected_strand = None
         if self.canvas.selected_attached_strand:
-            logging.info(f"[AttachMode.start_attachment] Clearing previous selected attached strand: {self.canvas.selected_attached_strand.layer_name}")
             # Clear selection flags on the previously highlighted attached strand
             if hasattr(self.canvas.selected_attached_strand, 'is_selected'):
                 self.canvas.selected_attached_strand.is_selected = False
@@ -884,11 +845,9 @@ class AttachMode(QObject):
                 if parent_strand.layer_name in group_data.get('layers', []):
                     parent_group = group_data
                     parent_group_name = group_name
-                    logging.info(f"[AttachMode.start_attachment] Found parent strand in group: {group_name}")
                     break
             
-            if not parent_group:
-                logging.info(f"[AttachMode.start_attachment] Parent strand {parent_strand.layer_name} not found in any existing group")
+            # Previously logged case where parent_group was not found
         
         self.affected_strand = parent_strand
         self.affected_point = side
@@ -905,7 +864,6 @@ class AttachMode(QObject):
         # Ensure the color is properly set in the canvas's color management system
         if hasattr(self.canvas, 'strand_colors'):
             self.canvas.strand_colors[new_strand.set_number] = parent_strand.color
-            logging.info(f"[AttachMode.start_attachment] Set color for set {new_strand.set_number} to {parent_strand.color}")
         
         # Update parent strand
         parent_strand.attached_strands.append(new_strand)
@@ -951,23 +909,19 @@ class AttachMode(QObject):
             while count in existing_numbers:
                 count += 1
                 
-            logging.info(f"Finding next available number for set {set_number}. Existing numbers: {sorted(existing_numbers)}, using: {count}")
             new_strand.layer_name = f"{set_number}_{count}"
-            logging.info(f"Created new strand with layer name: {new_strand.layer_name}")
 
         # Call canvas's attach_strand method FIRST to handle any group cleanup
         self.canvas.attach_strand(parent_strand, new_strand)
 
         # If parent was in a group and the group still exists after attach_strand processing, update group data
         if parent_group and parent_group_name and parent_group_name in self.canvas.groups:
-            logging.info(f"Group {parent_group_name} main_strands before adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
             # Add new strand to group
             self.canvas.groups[parent_group_name]['layers'].append(new_strand.layer_name)
             self.canvas.groups[parent_group_name]['strands'].append(new_strand)
-            logging.info(f"Added new strand {new_strand.layer_name} to group {parent_group_name}")
-            logging.info(f"Group {parent_group_name} main_strands after adding new strand: {self.canvas.groups[parent_group_name].get('main_strands', [])}")
         elif parent_group and parent_group_name:
-            logging.info(f"Group {parent_group_name} was deleted or not found after attach_strand processing - not adding new strand to group")
+            # Group was deleted or not found after attach_strand processing
+            pass
         
         # Update connections in layer state manager
         # NOTE: Don't manually update connections here - let LayerStateManager.save_current_state() 
@@ -976,7 +930,6 @@ class AttachMode(QObject):
         if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
             # Force a state save to recalculate connections properly
             self.canvas.layer_state_manager.save_current_state()
-            logging.info(f"Updated layer state after attaching {new_strand.layer_name} to {parent_strand.layer_name}")
             # Note: State saving will be handled by the undo_redo_manager through strand_created signal
         
         # Emit signals

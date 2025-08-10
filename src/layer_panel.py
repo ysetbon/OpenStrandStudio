@@ -10,9 +10,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, Q
 from render_utils import RenderUtils
 # --- End Import ---
 from functools import partial
-import logging
 from masked_strand import MaskedStrand
-from safe_logging import safe_info, safe_warning, safe_error, safe_exception
 from attached_strand import AttachedStrand
 from translations import translations
 from PyQt5.QtWidgets import (
@@ -24,7 +22,6 @@ from PyQt5.QtCore import QEventLoop          #  ← add this import
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
-import logging
 from functools import partial
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton, HoverLabel
@@ -43,6 +40,8 @@ from PyQt5.QtWidgets import QStyleOption
 from undo_redo_manager import StrokeTextButton, setup_undo_redo
 import os # Import os for path manipulation
 import sys # Import sys for platform check
+
+
 
 class CustomTooltip(QFrame):
     def __init__(self, text, parent=None):
@@ -246,7 +245,7 @@ class DropTargetWidget(QWidget):
         super().paintEvent(event)
         if self._drag_indicator_y is not None:
             painter = QPainter(self)
-            safe_info(f"[LayerPanel.paintEvent] Setting up UI painter for drag indicator")
+            # safe_info(f"[LayerPanel.paintEvent] Setting up UI painter for drag indicator")
             RenderUtils.setup_ui_painter(painter)
             pen = QPen(QColor(0, 120, 215), 2, Qt.SolidLine) # Blue indicator line
             painter.setPen(pen)
@@ -272,7 +271,6 @@ class TooltipButton(QPushButton):
     def mousePressEvent(self, event):
         """Handle mouse press events"""
         if event.button() == Qt.RightButton:
-            logging.info(f"Right-click press detected on TooltipButton. Tooltip text: '{self.custom_tooltip}'")
             
             if self.custom_tooltip:
                 # Find the LayerPanel to get the panel's position and size
@@ -392,7 +390,7 @@ class LayerPanel(QWidget):
         else:
             program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
             self.base_path = program_data_dir # AppDataLocation already includes the app name
-        safe_info(f"LayerPanel: Base path for data determined as: {self.base_path}")
+        # safe_info(f"LayerPanel: Base path for data determined as: {self.base_path}")
 
         self.group_layer_manager = GroupLayerManager(parent=parent, layer_panel=self, canvas=self.canvas)
 
@@ -428,7 +426,6 @@ class LayerPanel(QWidget):
             QPushButton:hover {
                 background-color: #DA70D6;  /* Orchid - brighter, more vibrant purple */
                 border: 2px solid #8A2BE2;
-                transform: scale(1.05);  /* Slight scale effect */
             }
             QPushButton:pressed {
                 background-color: #663399;  /* Darker purple on press */
@@ -814,14 +811,13 @@ class LayerPanel(QWidget):
         
         # Add debugging for mouse events on the button
         def debug_button_click():
-            logging.info("=== DELETE BUTTON CLICKED ===")
             self.request_delete_strand()
             
         def debug_button_press(event):
-            logging.info(f"=== DELETE BUTTON PRESS EVENT === at {event.pos()}")
+            pass
             
         def debug_button_release(event):
-            logging.info(f"=== DELETE BUTTON RELEASE EVENT === at {event.pos()}")
+            pass
             
         # Override button events for debugging
         original_mousePressEvent = self.delete_strand_button.mousePressEvent
@@ -967,29 +963,29 @@ class LayerPanel(QWidget):
         # Initialize button texts with the correct language
         self.update_translations()
 
-        safe_info("LayerPanel initialized")
+        # safe_info("LayerPanel initialized")
 
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
-        safe_info("Starting refresh of layer panel")
+        # safe_info("Starting refresh of layer panel")
         overlay = None  # Snapshot overlay that masks flicker on Windows
 
-        safe_info("refresh_layers called, redirecting to refresh()")
+        # safe_info("refresh_layers called, redirecting to refresh()")
         self.refresh()
         # Reset canvas zoom and pan to original view
         self.canvas.reset_zoom()
     
     def refresh_layers_no_zoom(self):
         """Refresh the drawing of the layers without resetting zoom/pan. Used for strand attachment."""
-        safe_info("[FLASH_DEBUG] refresh_layers_no_zoom: Begin")
-        safe_info("refresh_layers_no_zoom called, redirecting to refresh()")
+        # safe_info("[FLASH_DEBUG] refresh_layers_no_zoom: Begin")
+        # safe_info("refresh_layers_no_zoom called, redirecting to refresh()")
         self.refresh()
         # Intentionally not resetting zoom to preserve state during strand attachment
     
     def refresh_after_attachment(self):
         """Complete refresh after strand attachment without resetting zoom/pan.
         This function does everything refresh_layers does except the zoom reset and overlay."""
-        safe_info("refresh_after_attachment called - refreshing without zoom reset and overlay")
+        # safe_info("refresh_after_attachment called - refreshing without zoom reset and overlay")
         
         # Get the main window reference
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
@@ -1283,7 +1279,6 @@ class LayerPanel(QWidget):
         Handles MaskedStrand specific actions and common actions like Hide/Show.
         """
         if strand_index < 0 or strand_index >= len(self.canvas.strands):
-            safe_warning(f"show_layer_context_menu called with invalid index: {strand_index}")
             return
 
         strand = self.canvas.strands[strand_index]
@@ -1363,7 +1358,6 @@ class LayerPanel(QWidget):
             return adjusted_pos
             
         except Exception as e:
-            logging.warning(f"Error in screen-aware positioning: {e}, falling back to basic mapToGlobal")
             return widget.mapToGlobal(pos)
 
     def on_edit_mask_click(self, menu, strand_index):
@@ -1387,7 +1381,6 @@ class LayerPanel(QWidget):
         if 0 <= strand_index < len(self.canvas.strands):
             strand = self.canvas.strands[strand_index]
             strand.is_hidden = not strand.is_hidden
-            logging.info(f"Toggled visibility for strand {strand.layer_name} to hidden={strand.is_hidden}")
             self.canvas.update() # Redraw canvas to reflect the change
 
             # Optional: Update button appearance
@@ -1410,14 +1403,13 @@ class LayerPanel(QWidget):
             # Save the current state to persist visibility changes
             if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                 self.canvas.layer_state_manager.save_current_state()
-                logging.info(f"Updated LayerStateManager state after visibility toggle.")
             else:
-                logging.warning("LayerStateManager not found on canvas, cannot update state after visibility toggle.")
+                pass
 
             self.canvas.update() # Redraw canvas to reflect the change
 
         else:
-            logging.warning(f"toggle_layer_visibility called with invalid index: {strand_index}")
+            pass
     # --- END NEW ---
 
     def toggle_layer_shadow_only(self, strand_index):
@@ -1426,7 +1418,6 @@ class LayerPanel(QWidget):
             strand = self.canvas.strands[strand_index]
             # Toggle shadow-only mode
             strand.shadow_only = not getattr(strand, 'shadow_only', False)
-            logging.info(f"Toggled shadow-only for strand {strand.layer_name} to shadow_only={strand.shadow_only}")
             
             # Update button appearance to reflect shadow-only state
             button = self.layer_buttons[strand_index]
@@ -1438,34 +1429,29 @@ class LayerPanel(QWidget):
             # Save the current state to persist shadow-only changes
             if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                 self.canvas.layer_state_manager.save_current_state()
-                logging.info(f"Updated LayerStateManager state after shadow-only toggle.")
             else:
-                logging.warning("LayerStateManager not found on canvas, cannot update state after shadow-only toggle.")
+                pass
 
             # Save state for undo/redo functionality
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 # Force save by resetting timing check to ensure shadow-only changes are captured
                 self.canvas.undo_redo_manager._last_save_time = 0
                 self.canvas.undo_redo_manager.save_state()
-                logging.info(f"Saved undo/redo state after shadow-only toggle for strand {strand.layer_name}")
             else:
-                logging.warning("UndoRedoManager not found on canvas, cannot save undo/redo state for shadow-only toggle.")
+                pass
 
         else:
-            logging.warning(f"toggle_layer_shadow_only called with invalid index: {strand_index}")
+            pass
     
 
     def set_button_tooltip(self, button, tooltip_text):
         """Set tooltip for custom TooltipButton with center alignment"""
-        logging.info(f"Setting tooltip '{tooltip_text}' for button {button.__class__.__name__}")
         # For TooltipButton instances, use the custom tooltip method
         if isinstance(button, TooltipButton):
             button.set_custom_tooltip(tooltip_text)
-            logging.info(f"Set custom tooltip for TooltipButton: '{tooltip_text}'")
         else:
             # Fallback for regular buttons (shouldn't happen)
             button.setToolTip(tooltip_text)
-            logging.info(f"Set regular tooltip for button: '{tooltip_text}'")
     
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
@@ -1481,9 +1467,7 @@ class LayerPanel(QWidget):
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""
-        logging.info(f"[LayerPanel] reset_mask called for strand_index {strand_index}")
         if self.canvas:
-            logging.info(f"Resetting mask for strand {strand_index}")
             self.canvas.reset_mask(strand_index)
 
     def update_translations(self):
@@ -1596,31 +1580,26 @@ class LayerPanel(QWidget):
     def reset_to_current_state(self):
         """Reset the undo/redo history, keeping only the current state as the first state."""
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            logging.info("Resetting states: keeping only current state as first state")
             self.undo_redo_manager.clear_history(save_current=True)
-            logging.info("Reset completed: Current state is now the only state in history")
 
     def center_all_strands(self):
         """Center all strands in the canvas by calculating their bounding box and adjusting pan offset."""
         if hasattr(self.canvas, 'center_all_strands'):
-            logging.info("Centering all strands in canvas")
             self.canvas.center_all_strands()
         else:
-            logging.warning("Canvas does not have center_all_strands method")
+            pass
 
     def toggle_multi_select_mode(self):
         """Toggle multi-selection mode on/off"""
         self.multi_select_mode = not self.multi_select_mode
         
         if self.multi_select_mode:
-            logging.info("Multi-select mode enabled")
             # Change to hide mode emoji when active
             self.multi_select_button.setText("🙈")
             # Clear any existing selections when entering multi-select mode
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
         else:
-            logging.info("Multi-select mode disabled")
             # Change back to hear-no-evil emoji when inactive
             self.multi_select_button.setText("🙉")
             # Clear selections and reset display when exiting multi-select mode
@@ -1836,7 +1815,6 @@ class LayerPanel(QWidget):
         if not self.multi_selected_layers:
             return
             
-        logging.info(f"Hiding layers: {list(self.multi_selected_layers)}")
         for layer_index in self.multi_selected_layers:
             if layer_index < len(self.canvas.strands):
                 strand = self.canvas.strands[layer_index]
@@ -1854,9 +1832,8 @@ class LayerPanel(QWidget):
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
             self.canvas.undo_redo_manager.save_state()
-            logging.info(f"Saved undo/redo state after hiding {len(self.multi_selected_layers)} selected layers")
         else:
-            logging.warning("Could not find undo_redo_manager to save state after hiding layers")
+            pass
         
         # Clear selections after operation
         self.multi_selected_layers.clear()
@@ -1867,7 +1844,6 @@ class LayerPanel(QWidget):
         if not self.multi_selected_layers:
             return
             
-        logging.info(f"Showing layers: {list(self.multi_selected_layers)}")
         for layer_index in self.multi_selected_layers:
             if layer_index < len(self.canvas.strands):
                 strand = self.canvas.strands[layer_index]
@@ -1885,9 +1861,8 @@ class LayerPanel(QWidget):
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
             self.canvas.undo_redo_manager.save_state()
-            logging.info(f"Saved undo/redo state after showing {len(self.multi_selected_layers)} selected layers")
         else:
-            logging.warning("Could not find undo_redo_manager to save state after showing layers")
+            pass
         
         # Clear selections after operation
         self.multi_selected_layers.clear()
@@ -1898,7 +1873,6 @@ class LayerPanel(QWidget):
         if not self.multi_selected_layers:
             return
             
-        logging.info(f"Enabling shadow only for layers: {list(self.multi_selected_layers)}")
         for layer_index in self.multi_selected_layers:
             if layer_index < len(self.canvas.strands):
                 strand = self.canvas.strands[layer_index]
@@ -1922,9 +1896,8 @@ class LayerPanel(QWidget):
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
             self.canvas.undo_redo_manager.save_state()
-            logging.info(f"Saved undo/redo state after enabling shadow-only for {len(self.multi_selected_layers)} selected layers")
         else:
-            logging.warning("Could not find undo_redo_manager to save state after enabling shadow-only")
+            pass
         
         # Clear selections after operation
         self.multi_selected_layers.clear()
@@ -1935,7 +1908,6 @@ class LayerPanel(QWidget):
         if not self.multi_selected_layers:
             return
             
-        logging.info(f"Disabling shadow only for layers: {list(self.multi_selected_layers)}")
         for layer_index in self.multi_selected_layers:
             if layer_index < len(self.canvas.strands):
                 strand = self.canvas.strands[layer_index]
@@ -1954,9 +1926,8 @@ class LayerPanel(QWidget):
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
             self.canvas.undo_redo_manager.save_state()
-            logging.info(f"Saved undo/redo state after disabling shadow-only for {len(self.multi_selected_layers)} selected layers")
         else:
-            logging.warning("Could not find undo_redo_manager to save state after disabling shadow-only")
+            pass
         
         # Clear selections after operation
         self.multi_selected_layers.clear()
@@ -1994,16 +1965,13 @@ class LayerPanel(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Check if we're already in a mask save operation to prevent duplicates
             if not getattr(self.undo_redo_manager, '_mask_save_in_progress', False):
-                logging.info("=== MASK MODE DEBUG === Saving state after exiting mask mode")
                 self.undo_redo_manager.save_state()
             else:
-                logging.info("=== MASK MODE DEBUG === Skipping save after exiting mask mode (mask save already in progress)")
+                pass
 
     def toggle_lock_mode(self):
         """Toggle lock mode on/off and update UI accordingly."""
-        safe_info(f"toggle_lock_mode() called - button isChecked: {self.lock_layers_button.isChecked()}")
         self.lock_mode = self.lock_layers_button.isChecked()
-        safe_info(f"Set self.lock_mode to: {self.lock_mode}")
         
         _ = translations[self.language_code]
         if self.lock_mode:
@@ -2064,11 +2032,9 @@ class LayerPanel(QWidget):
             if index in self.multi_selected_layers:
                 # Deselect if already selected
                 self.multi_selected_layers.remove(index)
-                logging.info(f"Removed layer {index} from multi-selection")
             else:
                 # Add to selection
                 self.multi_selected_layers.add(index)
-                logging.info(f"Added layer {index} to multi-selection")
             
             # Update visual display
             self.update_layer_button_multi_select_display()
@@ -2077,7 +2043,6 @@ class LayerPanel(QWidget):
         
         # Block layer selection if we're in mask editing mode
         if self.mask_editing:
-            safe_info("Layer selection blocked: Currently in mask edit mode")
             # Optionally show a temporary notification
             self.show_notification("Please exit mask edit mode first (Press ESC)")
             return
@@ -2100,23 +2065,19 @@ class LayerPanel(QWidget):
         elif self.lock_mode:
             # In lock mode, always handle locking/unlocking regardless of current mode
             if index in self.locked_layers:
-                safe_info(f"Unlocking strand at index {index}")
                 self.locked_layers.remove(index)
                 # When unlocking, also deselect and unhighlight the strand
                 if 0 <= index < len(self.canvas.strands):
                     strand = self.canvas.strands[index]
                     strand.is_selected = False
-                    safe_info(f"Set strand.is_selected = False for strand {strand.layer_name}")
                 # Clear canvas selection if this was the selected strand
                 if self.canvas.selected_strand_index == index:
-                    safe_info(f"Clearing canvas selection for strand index {index}")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
                     self.canvas.selected_attached_strand = None
                 # Uncheck the layer button
                 if 0 <= index < len(self.layer_buttons):
                     self.layer_buttons[index].setChecked(False)
-                    safe_info(f"Unchecked layer button for index {index}")
                 # Update canvas to reflect deselection and unhighlighting
                 self.canvas.update()
                 self.update_layer_buttons_lock_state()
@@ -2137,27 +2098,23 @@ class LayerPanel(QWidget):
                         self.canvas.selected_strand_index = previously_selected_index
                         if 0 <= previously_selected_index < len(self.layer_buttons):
                             self.layer_buttons[previously_selected_index].setChecked(True)
-                        safe_info(f"Restored selection to strand at index {previously_selected_index}")
+
                 # Don't re-select the strand after unlocking
                 return
             else:
-                safe_info(f"Locking strand at index {index}")
                 self.locked_layers.add(index)
                 # When locking, also deselect and unhighlight the strand if it's currently selected
                 if 0 <= index < len(self.canvas.strands):
                     strand = self.canvas.strands[index]
                     strand.is_selected = False
-                    safe_info(f"Set strand.is_selected = False for locked strand {strand.layer_name}")
                 # Clear canvas selection if this was the selected strand
                 if self.canvas.selected_strand_index == index:
-                    safe_info(f"Clearing canvas selection for locked strand index {index}")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
                     self.canvas.selected_attached_strand = None
                 # Uncheck the layer button
                 if 0 <= index < len(self.layer_buttons):
                     self.layer_buttons[index].setChecked(False)
-                    safe_info(f"Unchecked layer button for locked index {index}")
                 # Update canvas to reflect deselection
                 self.canvas.update()
                 self.update_layer_buttons_lock_state()
@@ -2173,7 +2130,7 @@ class LayerPanel(QWidget):
                         self.canvas.selected_strand_index = previously_selected_index
                         if 0 <= previously_selected_index < len(self.layer_buttons):
                             self.layer_buttons[previously_selected_index].setChecked(True)
-                        safe_info(f"Restored selection to strand at index {previously_selected_index} after locking")
+
                 # Don't re-select the strand after locking
                 return
         else:
@@ -2230,7 +2187,6 @@ class LayerPanel(QWidget):
         """Create a new masked layer from two selected layers."""
         if len(self.selected_strands) == 2:
             strand1, strand2 = self.selected_strands
-            logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
             
             if not self.mask_exists(strand1, strand2):
                 # Store all existing colors before any operations
@@ -2274,9 +2230,7 @@ class LayerPanel(QWidget):
                         # Select the masked layer
                         self.select_layer(masked_strand_index)
                     
-                    logging.info(f"Selected newly created masked strand: {masked_strand.layer_name}")
                 else:
-                    logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}")
                     self.clear_selection()
                 
                 self.canvas.update()
@@ -2314,12 +2268,10 @@ class LayerPanel(QWidget):
         if self.canvas:
             # Make sure the index is within bounds.
             if strand_index < 0 or strand_index >= len(self.canvas.strands):
-                safe_warning(f"request_edit_mask called with invalid index {strand_index}.")
                 return
 
             # Ensure the strand is actually a MaskedStrand before editing.
             if not isinstance(self.canvas.strands[strand_index], MaskedStrand):
-                safe_warning(f"request_edit_mask called on a non-masked strand at index {strand_index}.")
                 return
 
             self.mask_editing = True
@@ -2350,7 +2302,6 @@ class LayerPanel(QWidget):
             if self.parent_window:
                 self.parent_window.disable_all_mainwindow_buttons()
 
-            safe_info(f"Entered mask edit mode for strand {strand_index}")
             self.canvas.enter_mask_edit_mode(strand_index)
             self.canvas.setFocus()
 
@@ -2384,7 +2335,6 @@ class LayerPanel(QWidget):
             self.parent_window.exit_mask_edit_mode()
         
         _ = translations[self.language_code]
-        safe_info("Exited mask edit mode")
         self.show_notification(_['mask_edit_mode_exited'])
         self.update()
 
@@ -2392,7 +2342,6 @@ class LayerPanel(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
             self.undo_redo_manager._last_save_time = 0
-            safe_info("Saving state after exiting mask edit mode")
             self.undo_redo_manager.save_state()
         # --- END ADD ---
 
@@ -2472,12 +2421,10 @@ class LayerPanel(QWidget):
 
     def request_new_strand(self):
         """Request a new strand to be created in the selected set."""
-        logging.info("Add New Strand button clicked.")
         # Start a new set or use an existing one
         self.start_new_set()
         # Call the canvas method to start drawing a new strand
         self.canvas.start_new_strand_mode(self.current_set)
-        logging.info(f"Requested new strand for set {self.current_set}")
 
     def request_delete_strand(self):
         """Request the deletion of the selected strand."""
@@ -2494,7 +2441,6 @@ class LayerPanel(QWidget):
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state()
-                        logging.info("Saved state before masked layer deletion")
                     
                     # Delete only this specific masked layer
                     if self.canvas.delete_masked_layer(strand):
@@ -2506,14 +2452,11 @@ class LayerPanel(QWidget):
                         # Save state AFTER deletion to capture the "deleted" state
                         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                             self.undo_redo_manager.save_state(allow_empty=True)
-                            logging.info("Saved state after masked layer deletion")
 
-                    logging.info(f"Masked layer {strand_name} deleted successfully")
                 else:
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state()
-                        logging.info("Saved state before strand deletion")
                     
                     # Handle regular strand deletion
                     self.strand_deleted.emit(strand_index)
@@ -2525,11 +2468,10 @@ class LayerPanel(QWidget):
                     # Save state AFTER deletion to capture the "deleted" state
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state(allow_empty=True)
-                        logging.info("Saved state after strand deletion")
             else:
-                logging.warning(f"Strand {strand_name} not found in canvas strands")
+                pass
         else:
-            logging.warning("No strand selected for deletion")
+            pass
 
     def remove_layer_button(self, index):
         """Remove a layer button at the specified index."""
@@ -2538,15 +2480,12 @@ class LayerPanel(QWidget):
             button.setParent(None)
             button.deleteLater()
             self.scroll_layout.removeWidget(button)
-            logging.info(f"Removed layer button at index {index}")
 
     def update_masked_layers(self, deleted_set_number, strands_removed):
         """Update masked layers after deletion, ensuring only specific masked layer is removed."""
-        logging.info(f"Updating masked layers for deleted strand index: {strands_removed}")
         
         # Skip if we're deleting a masked layer - this is handled separately in request_delete_strand
         if len(strands_removed) == 1 and isinstance(self.canvas.strands[strands_removed[0]], MaskedStrand):
-            logging.info("Single masked layer deletion - skipping update_masked_layers")
             return
         
         # Only proceed with regular strand deletion logic
@@ -2554,7 +2493,6 @@ class LayerPanel(QWidget):
         for i, button in enumerate(self.layer_buttons):
             if i in strands_removed:
                 buttons_to_remove.append(i)
-                logging.info(f"Marking layer for removal: {button.text()}")
 
         # Remove the marked buttons
         for index in sorted(buttons_to_remove, reverse=True):
@@ -2562,7 +2500,6 @@ class LayerPanel(QWidget):
             button.setParent(None)
             button.deleteLater()
             self.scroll_layout.removeWidget(button)
-            logging.info(f"Removed layer button: {button.text()}")
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand, renumber=False):
 
@@ -2570,7 +2507,6 @@ class LayerPanel(QWidget):
         selected_layer = self.get_selected_layer()
         if selected_layer is not None and selected_layer in strands_removed:
             self.clear_selection()
-            logging.info("Cleared selection before deletion")
 
         # Remove the corresponding buttons
         for index in sorted(strands_removed, reverse=True):
@@ -2579,7 +2515,6 @@ class LayerPanel(QWidget):
                 button.setParent(None)
                 button.deleteLater()
                 self.scroll_layout.removeWidget(button)
-                logging.info(f"Removed button at index {index}")
 
         if is_main_strand:
             # Update set counts and colors
@@ -2595,32 +2530,26 @@ class LayerPanel(QWidget):
                 if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
             )
             self.current_set = max(existing_sets) if existing_sets else 0
-            logging.info(f"Updated current_set to {self.current_set}")
 
         # Update masked layers before refreshing
         try:
             self.update_masked_layers(deleted_set_number, strands_removed)
-            logging.info("Updated masked layers successfully")
         except Exception as e:
-            logging.error(f"Error updating masked layers: {str(e)}")
+            pass
 
         # Ensure button count matches strand count
         if len(self.layer_buttons) != len(self.canvas.strands):
-            logging.warning(f"Button count mismatch: {len(self.layer_buttons)} buttons vs {len(self.canvas.strands)} strands")
             self.refresh()  # Force a complete refresh if counts don't match
         else:
             # Update states only if counts match
             try:
                 self.update_layer_button_states()
                 self.update_attachable_states()
-                logging.info("Updated button states successfully")
             except Exception as e:
-                logging.error(f"Error updating button states: {str(e)}")
                 self.refresh()  # Fall back to complete refresh if update fails
 
         # Final refresh to ensure consistency
         self.refresh()
-        logging.info("Finished update_after_deletion")
 
     def renumber_sets(self):
         new_set_numbers = {}
@@ -2644,11 +2573,9 @@ class LayerPanel(QWidget):
         self.set_counts = {new_set_numbers[k]: v for k, v in self.set_counts.items() if k in new_set_numbers}
         self.set_colors = {new_set_numbers[k]: v for k, v in self.set_colors.items() if k in new_set_numbers}
         
-        logging.info(f"Renumbered sets: {new_set_numbers}")
 
 
     def update_button_numbering_for_set(self, set_number):
-        logging.info(f"Starting update_button_numbering_for_set: set_number={set_number}")
         for button in self.layer_buttons:
             button_text = button.text()
             parts = button_text.split('_')
@@ -2656,10 +2583,8 @@ class LayerPanel(QWidget):
                 if len(parts) == 2:  # Regular strand
                     # Keep the original number, don't increment
                     new_text = button_text
-                    logging.info(f"Kept original button text: {new_text}")
                 else:  # Masked layer
-                    logging.info(f"Skipping renumbering for masked layer: {button_text}")
-        logging.info("Finished update_button_numbering_for_set")
+                    pass
     
 
     def update_layer_buttons_after_deletion(self, deleted_set_number, indices_to_remove):
@@ -2705,15 +2630,12 @@ class LayerPanel(QWidget):
 
     def add_layer_button(self, set_number, count, strand=None):
         """Add a new layer button directly to the layout."""
-        logging.info(f"Starting add_layer_button: set_number={set_number}, count={count}")
 
         # Update set count
         self.set_counts[set_number] = count
-        logging.info(f"Updated set count for set {set_number} to {count}")
 
         # Create button name
         button_name = f"{set_number}_{count}"
-        logging.info(f"Created new button: {button_name}")
 
         # Find the strand index - use provided strand if available, otherwise search
         strand_index = None
@@ -2735,7 +2657,6 @@ class LayerPanel(QWidget):
                     break
         
         if strand_index is None or target_strand is None:
-            logging.error(f"Could not find strand with set_number {set_number}")
             return
 
         # Create and add the button
@@ -2746,12 +2667,8 @@ class LayerPanel(QWidget):
         self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter)
 
         # Debug logging to trace button text issues
-        logging.info(f"Added new button directly to layout at top (index 0)")
-        logging.info(f"Button created with text: '{button.text()}' for strand: '{target_strand.layer_name}'")
-        logging.info(f"Total layer_buttons count: {len(self.layer_buttons)}")
         for i, btn in enumerate(self.layer_buttons):
-            logging.info(f"  layer_buttons[{i}]: text='{btn.text()}'")
-        logging.info("Finished add_layer_button")
+            pass
 
         # Reset monkey button to non-hide mode when creating new layer
         if hasattr(self, 'multi_select_button') and self.multi_select_mode:
@@ -2760,7 +2677,6 @@ class LayerPanel(QWidget):
             self.multi_select_button.setText("🙉")
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
-            logging.info("Reset monkey button to non-hide mode after creating new layer")
 
         # Select the newly created strand
         self.select_layer(strand_index)
@@ -2799,7 +2715,6 @@ class LayerPanel(QWidget):
         self.set_colors[self.current_set] = default_color
 
         
-        logging.info(f"Starting new set {self.current_set} (Existing sets: {sorted(existing_sets)})")
 
     def delete_strand(self, index):
         """
@@ -2811,13 +2726,11 @@ class LayerPanel(QWidget):
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
             set_number = strand.set_number
-            logging.info(f"Starting deletion of strand {strand.layer_name}")
             
             # Log states before deletion
             for i, s in enumerate(self.canvas.strands):
-                logging.info(f"Before deletion - Strand {s.layer_name}: has_circles={s.has_circles}")
                 if hasattr(s, 'attached_strands'):
-                    logging.info(f"  Connected to: {[ast.layer_name for ast in s.attached_strands]}")
+                    pass
 
             # Remove the strand from the canvas
             self.canvas.remove_strand(strand)
@@ -2825,29 +2738,25 @@ class LayerPanel(QWidget):
 
             # Log states after deletion
             for i, s in enumerate(self.canvas.strands):
-                logging.info(f"After deletion - Strand {s.layer_name}: has_circles={s.has_circles}")
                 if hasattr(s, 'attached_strands'):
-                    logging.info(f"  Connected to: {[ast.layer_name for ast in s.attached_strands]}")
+                    pass
 
             # Remove the corresponding layer button
             if index < len(self.layer_buttons):
                 button = self.layer_buttons.pop(index)
                 button.setParent(None)
                 button.deleteLater()
-                logging.info(f"Removed layer button for strand: {strand.layer_name}")
 
             # Update set_counts
             if set_number in self.set_counts:
                 self.set_counts[set_number] -= 1
                 if self.set_counts[set_number] <= 0:
                     del self.set_counts[set_number]
-                    logging.info(f"Removed set_count entry for set {set_number}")
 
             # Remove set color if no strands are left in the set
             if not any(s.set_number == set_number for s in self.canvas.strands):
                 if set_number in self.set_colors:
                     del self.set_colors[set_number]
-                    logging.info(f"Removed set_color entry for set {set_number}")
 
             # Update current_set to the lowest available set number
             existing_sets = set(
@@ -2857,7 +2766,6 @@ class LayerPanel(QWidget):
                 self.current_set = min(existing_sets)
             else:
                 self.current_set = 1
-            logging.info(f"Updated current_set to {self.current_set}")
             self.refresh()
             # Do a single refresh
             self.refresh_layers_no_zoom()
@@ -2865,7 +2773,7 @@ class LayerPanel(QWidget):
             self.update_layer_button_states()
 
         else:
-            logging.warning(f"Invalid index for deleting strand: {index}")
+            pass
 
     def clear_selection(self):
         """Clear the selection of all layer buttons."""
@@ -2884,7 +2792,6 @@ class LayerPanel(QWidget):
         """Deselect all layers and strands, or clear all locks if in lock mode."""
         if self.lock_mode:
             # In lock mode, this button functions as "Clear Locks"
-            safe_info("Clearing all locked layers")
             self.locked_layers.clear()
             
             # Update the visual state of all layer buttons
@@ -2899,7 +2806,6 @@ class LayerPanel(QWidget):
             
             # Update canvas to reflect changes
             self.canvas.update()
-            safe_info("All locks cleared")
         else:
             # Normal mode: deselect all layers and strands
             # Deselect all layer buttons
@@ -2924,7 +2830,6 @@ class LayerPanel(QWidget):
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""
-        logging.info(f"Color change requested for set {set_number}")
         
         # Update color in set_colors dictionary
         self.set_colors[set_number] = color
@@ -2958,42 +2863,36 @@ class LayerPanel(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # --- ADD: Check suppression flag --- 
             if not getattr(self.undo_redo_manager, '_suppress_intermediate_saves', False):
-                logging.info(f"Saving state after color change for set {set_number}")
                 # Reset last save time to force save, as color change alone might not be detected otherwise
                 self.undo_redo_manager._last_save_time = 0 
                 self.undo_redo_manager.save_state()
             else:
-                logging.info(f"Skipping save after color change for set {set_number} due to suppression flag.")
+                pass
             # --- END ADD --- 
 
     def update_colors_for_set(self, set_number, color):
         """
         Update colors for all strands in a specific set.
         """
-        logging.info(f"LayerPanel: Updating colors for set {set_number} to {color.name()}")
         
         # Update colors in canvas strands
         for strand in self.canvas.strands:
-            logging.info(f"LayerPanel: Checking strand: {strand.layer_name}")
             # Get the first number from the layer name
             first_part = strand.layer_name.split('_')[0]
             
             if first_part == str(set_number):
                 # Update regular strand color
                 strand.color = color
-                logging.info(f"LayerPanel: Updated color for strand: {strand.layer_name} (matched set {set_number})")
                 
                 # If it's an attached strand, update its children
                 if hasattr(strand, 'attached_strands'):
-                    logging.info(f"LayerPanel: Checking attached strands for {strand.layer_name}")
                     for attached in strand.attached_strands:
                         if attached.layer_name.split('_')[0] == str(set_number):
                             attached.color = color
-                            logging.info(f"LayerPanel: Updated color for attached strand: {attached.layer_name} (matched set {set_number})")
                         else:
-                            logging.info(f"LayerPanel: Skipped attached strand: {attached.layer_name} (did not match set {set_number})")
+                            pass
             else:
-                logging.info(f"LayerPanel: Skipped strand: {strand.layer_name} (did not match set {set_number})")
+                pass
         
         # Update layer button colors
         for button in self.layer_buttons:
@@ -3004,19 +2903,15 @@ class LayerPanel(QWidget):
                 if parts[0] == str(set_number):
                     # Update main color if it's the first strand
                     button.set_color(color)
-                    logging.info(f"LayerPanel: Updated masked layer main color for {button_text}")
                 elif parts[2] == str(set_number):
                     # Update border color if it's the second strand
                     button.set_border_color(color)
-                    logging.info(f"LayerPanel: Updated masked layer border color for {button_text}")
             else:  # Regular layer button
                 if parts[0] == str(set_number):
                     button.set_color(color)
-                    logging.info(f"LayerPanel: Updated button color for {button_text}")
         
         # Force canvas redraw
         self.canvas.update()
-        logging.info(f"LayerPanel: Finished updating colors for set {set_number}")
 
     def resizeEvent(self, event):
         """Handle resize events by updating the size of the splitter handle."""
@@ -3026,32 +2921,24 @@ class LayerPanel(QWidget):
     def simulate_refresh_button_click(self):
         """Simulate clicking the refresh button without visual feedback"""
         if hasattr(self, 'refresh_button'):
-            logging.info("[FLASH_DEBUG] simulate_refresh_button_click: Simulating refresh button click")
             # Call the refresh_layers_no_zoom method to preserve zoom level and prevent window flash during undo/redo
             self.refresh_layers_no_zoom()
         else:
-            logging.warning("Cannot simulate refresh button click - refresh_button not found")
+            pass
             
     def on_strand_created(self, strand):
         """Handle strand creation event."""
-        logging.info(f"Starting on_strand_created for strand: {strand.layer_name if hasattr(strand, 'layer_name') else ''}")
         
         # SUPER EXPLICIT DEBUG - log everything before processing
-        logging.info(f"STRAND_DEBUG: strand.layer_name = '{strand.layer_name}'")
-        logging.info(f"STRAND_DEBUG: strand.set_number = {strand.set_number}")
-        logging.info(f"STRAND_DEBUG: hasattr(strand, 'layer_name') = {hasattr(strand, 'layer_name')}")
         if hasattr(strand, 'layer_name') and strand.layer_name:
-            logging.info(f"STRAND_DEBUG: '_' in strand.layer_name = {'_' in strand.layer_name}")
             if '_' in strand.layer_name:
                 parts = strand.layer_name.split('_')
-                logging.info(f"STRAND_DEBUG: parts from split = {parts}")
         
         # Check if this is a MaskedStrand - they have composite names and should use strand.set_number
         if isinstance(strand, MaskedStrand):
             # For masked strands, always use strand.set_number and don't parse layer_name
             set_number = strand.set_number
             count = self.set_counts.get(set_number, 0) + 1
-            logging.info(f"STRAND_DEBUG: MaskedStrand detected, using set_number={set_number}, count={count}")
         # Extract set number and count from the strand's layer_name for regular strands
         elif hasattr(strand, 'layer_name') and strand.layer_name and '_' in strand.layer_name:
             try:
@@ -3060,27 +2947,20 @@ class LayerPanel(QWidget):
                 if len(parts) == 2:
                     set_number = int(parts[0])
                     count = int(parts[1])
-                    logging.info(f"STRAND_DEBUG: Successfully extracted set_number={set_number}, count={count}")
                 else:
                     # Layer name has multiple underscores, use fallback
                     set_number = strand.set_number
                     count = self.set_counts.get(set_number, 0) + 1
-                    logging.info(f"STRAND_DEBUG: Layer name has {len(parts)} parts, using fallback set_number={set_number}, count={count}")
             except (ValueError, IndexError) as e:
-                logging.info(f"STRAND_DEBUG: Exception during parsing: {e}")
                 # Fallback to using strand.set_number if layer_name parsing fails
                 set_number = strand.set_number
                 count = self.set_counts.get(set_number, 0) + 1
-                logging.info(f"STRAND_DEBUG: Used fallback set_number={set_number}, count={count}")
         else:
             # Fallback to using strand.set_number if no valid layer_name
             set_number = strand.set_number
             count = self.set_counts.get(set_number, 0) + 1
-            logging.info(f"STRAND_DEBUG: Used fallback (no valid layer_name) set_number={set_number}, count={count}")
         
         # Debug logging
-        logging.info(f"DEBUG on_strand_created: strand.layer_name='{strand.layer_name}', extracted set_number={set_number}, count={count}")
-        logging.info(f"DEBUG on_strand_created: self.set_counts={self.set_counts}")
         
         # ------------------------------------------------------------------
         # If Lock-Mode is currently active we do NOT want the programmatic
@@ -3095,7 +2975,6 @@ class LayerPanel(QWidget):
             temp_suppress_lock = True
 
         # Add the new layer button
-        logging.info(f"Adding new layer button for set {set_number}, count {count}")
         self.add_layer_button(set_number, count, strand)
 
         # Lift suppression again so manual clicks behave normally
@@ -3111,14 +2990,12 @@ class LayerPanel(QWidget):
             self.set_colors[set_number] = existing_color
             # Update the new strand to match the existing set color
             strand.color = existing_color
-            logging.info(f"Set {set_number} already exists with color {existing_color.red()},{existing_color.green()},{existing_color.blue()},{existing_color.alpha()}, updated new strand to match")
         else:
             # This is a new set or first strand in set - use the strand's current color or default
             if set_number not in self.set_colors:
                 # Use the strand's current color if it has one, otherwise use default
                 if hasattr(strand, 'color') and strand.color:
                     self.set_colors[set_number] = strand.color
-                    logging.info(f"New set {set_number}: Using strand's color {strand.color.red()},{strand.color.green()},{strand.color.blue()},{strand.color.alpha()}")
                 else:
                     # Use canvas default strand color if available, otherwise fallback to purple
                     default_color = QColor(200, 170, 230, 255)  # Fallback
@@ -3126,20 +3003,16 @@ class LayerPanel(QWidget):
                         default_color = self.canvas.default_strand_color
                     self.set_colors[set_number] = default_color
                     strand.color = default_color
-                    logging.info(f"New set {set_number}: Using default color {default_color.red()},{default_color.green()},{default_color.blue()},{default_color.alpha()}")
             else:
                 # Set color already exists, update strand to match
                 strand.color = self.set_colors[set_number]
-                logging.info(f"Set {set_number} color already exists, updated strand to match")
         
         # Refresh the layer panel
         if isinstance(strand, AttachedStrand):
-            logging.info("Using refresh_after_attachment for attached strand")
             # For attached strands we still need the specialized lightweight refresh that preserves zoom/pan
             self.refresh_after_attachment()
         else:
             # Avoid the full rebuild (which causes a white-flash) – instead perform a light update:
-            logging.info("Lightweight UI update – skipping costly refresh() to avoid flash")
 
             # 1. Ensure the new button is visually present (add_layer_button already inserted it)
             self.scroll_layout.update()
@@ -3153,7 +3026,6 @@ class LayerPanel(QWidget):
 
             # NOTE: no call to refresh() or refresh_layers*(), so no overlay / flash occurs.
         
-        logging.info("Finished on_strand_created")
 
     def on_strands_deleted(self, indices):
         """Handle the deletion of multiple strands from the canvas."""
@@ -3161,22 +3033,17 @@ class LayerPanel(QWidget):
             self.remove_layer_button(index)
         self.update_layer_button_states()
     def update_layer_names(self, affected_set_number=None):
-        logging.info(f"Starting update_layer_names: affected_set_number={affected_set_number}")
         for i, button in enumerate(self.layer_buttons):
             if i < len(self.canvas.strands):
                 strand = self.canvas.strands[i]
                 if affected_set_number is None or strand.set_number == affected_set_number:
                     # Keep the original layer name
                     button.setText(strand.layer_name)
-                    logging.info(f"Kept original layer name for strand {i}: {button.text()}")
         self.update_layer_button_states()
-        logging.info("Finished update_layer_names")
     def refresh_layers(self):
         """Refresh the drawing of the layers with zero visual flicker."""
-        logging.info("Starting refresh of layer panel")
         overlay = None  # Snapshot overlay that masks flicker on Windows
 
-        logging.info("refresh_layers called, redirecting to refresh()")
         self.refresh()
         # Reset canvas zoom and pan to original view
         self.canvas.reset_zoom()
@@ -3186,7 +3053,6 @@ class LayerPanel(QWidget):
     def refresh_after_attachment(self):
         """Complete refresh after strand attachment without resetting zoom/pan.
         This function does everything refresh_layers does except the zoom reset and overlay."""
-        logging.info("refresh_after_attachment called - refreshing without zoom reset and overlay")
         
         # Get the main window reference
         main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
@@ -3247,7 +3113,6 @@ class LayerPanel(QWidget):
         """
         from PyQt5.QtWidgets import QApplication
 
-        logging.info("LayerPanel.refresh – start (no‑flash)")
 
         # ------------------------------------------------------------------ #
         # 0. Decide which widgets to freeze
@@ -3358,14 +3223,12 @@ class LayerPanel(QWidget):
         # ------------------------------------------------------------------
         viewport.update()
 
-        logging.info("LayerPanel.refresh – done (no‑flash)")
 
 
     def update_masked_strand_color(self, layer_name, color):
         for button in self.layer_buttons:
             if button.text() == layer_name:
                 button.set_color(color)
-                logging.info(f"Updated color for masked strand button: {layer_name} to {color.name()}")
                 break    
     def get_layer_button(self, index):
         """Get the layer button at the specified index."""
@@ -3402,7 +3265,6 @@ class LayerPanel(QWidget):
                 # Only update if it's still the old purple default
                 if self.set_colors[set_number] == QColor(200, 170, 230, 255):
                     self.set_colors[set_number] = self.canvas.default_strand_color
-                    logging.info(f"Updated set_colors[{set_number}] to new default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
             
             # Also update the canvas strand_colors dictionary for any existing sets
             if hasattr(self.canvas, 'strand_colors'):
@@ -3410,12 +3272,10 @@ class LayerPanel(QWidget):
                     # Only update if it's still the old purple default
                     if self.canvas.strand_colors[set_number] == QColor(200, 170, 230, 255):
                         self.canvas.strand_colors[set_number] = self.canvas.default_strand_color
-                        logging.info(f"Updated canvas strand_colors[{set_number}] to new default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
                 
                 # Ensure set 1 uses the correct default color for new projects
                 if 1 not in self.canvas.strand_colors:
                     self.canvas.strand_colors[1] = self.canvas.default_strand_color
-                    logging.info(f"Pre-set strand_colors[1] to default color: {self.canvas.default_strand_color.red()},{self.canvas.default_strand_color.green()},{self.canvas.default_strand_color.blue()},{self.canvas.default_strand_color.alpha()}")
 
     def set_canvas(self, canvas):
         """Set the canvas associated with this layer panel."""
@@ -3427,7 +3287,6 @@ class LayerPanel(QWidget):
         """Handle changes in the order of layers (DEPRECATED by drag/drop refresh)."""
         # This method might become redundant if refresh_layers() is called after drop
         # Keeping it for now in case it's needed elsewhere, but commenting out content
-        logging.warning("on_layer_order_changed called - may be deprecated by drag/drop refresh logic.")
         # reordered_buttons = [self.layer_buttons[i] for i in new_order]
         # self.layer_buttons = reordered_buttons
 
@@ -3466,7 +3325,6 @@ class LayerPanel(QWidget):
 
     def update_layer_button_states(self):
         """Update the states of all layer buttons."""
-        logging.info("Updating layer button states")
         
         # First update all button states
         for i, button in enumerate(self.layer_buttons):
@@ -3475,9 +3333,8 @@ class LayerPanel(QWidget):
                 # Use the improved deletability check that considers knot connections
                 is_deletable = self.is_strand_deletable(strand)
                 
-                logging.info(f"Strand {strand.layer_name}: has_circles={strand.has_circles}, knot_connections={getattr(strand, 'knot_connections', None)}, is_deletable={is_deletable}")
                 if hasattr(strand, 'attached_strands'):
-                    logging.info(f"  Connected to: {[ast.layer_name for ast in strand.attached_strands]}")
+                    pass
                 
                 button.set_attachable(is_deletable)
                 
@@ -3535,23 +3392,19 @@ class LayerPanel(QWidget):
         """Accept the drag if it contains the correct MIME type."""
         # Extra diagnostics for macOS
         if sys.platform == 'darwin':
-            logging.info(f"[macOS] dragEnterEvent: pos={event.pos()} proposedAction={event.proposedAction()} "
-                         f"possibleActions={event.possibleActions()} mimeFormats={event.mimeData().formats()}")
+            pass
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
             # Explicitly set drop action to Move to ensure cross-platform consistency (macOS fix)
             event.setDropAction(Qt.MoveAction)
             event.accept()
-            logging.debug("Drag enter accepted (MoveAction)")
         else:
             event.ignore()
-            logging.debug("Drag enter ignored - wrong mime type")
 
     def dragMoveEvent(self, event: QDragMoveEvent):
         """Accept the move event. Visual indicator is handled by DropTargetWidget."""
         # Extra diagnostics for macOS during drag move
         if sys.platform == 'darwin':
-            logging.info(f"[macOS] dragMoveEvent: pos={event.pos()} proposedAction={event.proposedAction()} "
-                         f"possibleActions={event.possibleActions()}")
+            pass
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
             event.acceptProposedAction()
             # Visual feedback is now handled by DropTargetWidget.paintEvent
@@ -3561,14 +3414,12 @@ class LayerPanel(QWidget):
     def dragLeaveEvent(self, event):
         """Handle drag leaving the drop area."""
         # Reset indicator logic might be needed if DropTargetWidget doesn't cover all cases
-        logging.debug("Drag left drop area")
 
     def dropEvent(self, event: QDropEvent):
         """Handle the drop event to reorder layers visually and update data structures."""
         # Extra diagnostics for macOS at the start of the drop
         if sys.platform == 'darwin':
-            logging.info(f"[macOS] dropEvent START: pos={event.pos()} dropAction={event.dropAction()} "
-                         f"proposedAction={event.proposedAction()} mimeFormats={event.mimeData().formats()}")
+            pass
         if event.mimeData().hasFormat("application/x-layerbutton-index"):
             mime_data = event.mimeData()
             source_index_bytes = mime_data.data("application/x-layerbutton-index")
@@ -3576,13 +3427,11 @@ class LayerPanel(QWidget):
                 # source_index is the VISUAL index in the scroll_layout
                 source_index = int(bytes(source_index_bytes).decode('utf-8'))
             except ValueError:
-                logging.error("Failed to decode drop source index.")
                 event.ignore()
                 return
 
             # Ensure source_index is valid before proceeding
             if not (0 <= source_index < self.scroll_layout.count()):
-                logging.error(f"Invalid source index {source_index} from drop event.")
                 event.ignore()
                 return
 
@@ -3597,7 +3446,6 @@ class LayerPanel(QWidget):
                 for i, btn in enumerate(self.layer_buttons):
                      button_to_strand_map[btn] = self.canvas.strands[i]
             else:
-                logging.error("Button/Strand count mismatch before drop! Aborting reorder.")
                 event.ignore()
                 self.refresh() # Refresh to fix inconsistency
                 return
@@ -3625,7 +3473,6 @@ class LayerPanel(QWidget):
             # --- Move the widget in the layout (macOS-safe) ---
             item_to_move = self.scroll_layout.takeAt(source_index)
             if not item_to_move:
-                 logging.error(f"Could not get item at source index {source_index} to move.")
                  event.ignore()
                  return
 
@@ -3644,7 +3491,6 @@ class LayerPanel(QWidget):
             # --- Insert the widget directly (safer than re-using QLayoutItem) ---
             self.scroll_layout.insertWidget(final_insert_index, widget_to_move, 0, Qt.AlignHCenter)
             widget_to_move.show()
-            logging.info(f"Moved widget from visual index {source_index} to final insert index {final_insert_index} (widget re-inserted)")
 
             # --- Rebuild canvas.strands based on NEW VISUAL order using the map ---
             new_canvas_strands_visual_order = []
@@ -3656,32 +3502,27 @@ class LayerPanel(QWidget):
                     if button in button_to_strand_map:
                         new_canvas_strands_visual_order.append(button_to_strand_map[button])
                     else:
-                        logging.error(f"Button {button.text()} at new visual index {i} not found in map! Aborting.")
                         success = False
                         break
                 else:
                      # Log an error if the widget isn't a NumberedLayerButton
-                     logging.error(f"Widget at layout index {i} is not a NumberedLayerButton (Type: {type(button)}). Aborting.")
                      success = False
                      break
 
             if not success:
-                logging.error("Failed to rebuild canvas strands after drop. Attempting full refresh.")
                 event.ignore()
                 self.refresh()
                 return
 
             # --- Commit the new order (Reverse visual order for canvas) --- 
             self.canvas.strands = new_canvas_strands_visual_order[::-1]
-            logging.info(f"Reordered canvas.strands based on new visual layout. New count: {len(self.canvas.strands)}")
             # self.layer_buttons will be rebuilt correctly by refresh()
 
             # --- Update LayerStateManager state --- 
             if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                 self.canvas.layer_state_manager.save_current_state() # Update state based on new canvas.strands order
-                logging.info(f"Updated LayerStateManager state after drop.")
             else:
-                logging.warning("LayerStateManager not found on canvas, cannot update state after drop.")
+                pass
 
             # --- Update canvas selection index based on the stored object --- 
             if previously_selected_strand:
@@ -3691,22 +3532,18 @@ class LayerPanel(QWidget):
                     self.canvas.selected_strand_index = new_selected_index
                     # Keep the selected_strand object consistent
                     self.canvas.selected_strand = previously_selected_strand
-                    logging.info(f"Selection index updated to {new_selected_index} for strand {previously_selected_strand.layer_name} after reorder.")
                 except ValueError:
-                    logging.warning("Previously selected strand not found after reorder. Clearing selection.")
                     self.canvas.selected_strand = None
                     self.canvas.selected_strand_index = None
             else:
                  # No strand was selected before the drop
                  self.canvas.selected_strand = None
                  self.canvas.selected_strand_index = None
-                 logging.info("No strand was selected before drop, ensuring selection is clear.")
 
             # --- Accept the event action FIRST ---
             event.acceptProposedAction()
-            logging.info("Drop event action accepted.")
             if sys.platform == 'darwin':
-                logging.info("[macOS] dropEvent: accepted proposed action, scheduling UI refresh.")
+                pass
 
             # --- THEN, refresh the UI. On macOS, defer to the next event-loop cycle to avoid crash; on other OS refresh immediately ---
             if sys.platform == 'darwin':
@@ -3728,11 +3565,9 @@ class LayerPanel(QWidget):
                 if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                     self.undo_redo_manager.save_state()
 
-            logging.info("UI refreshed after drop to show reordered layers (platform-specific logic applied).")
 
         else:
             event.ignore()
-            logging.info("Drop ignored - wrong mime type")
 
     # --- Helper to calculate indicator line position ---
     def calculate_drop_indicator_y(self, drop_pos):
@@ -3781,7 +3616,6 @@ class LayerPanel(QWidget):
             pass # Button not found in list
         except IndexError:
              pass # Index out of bounds for canvas strands
-        logging.warning(f"Could not find strand for button: {button.text() if button else 'None'}")
         return None
 
     def show_masked_layer_context_menu(self, strand_index, pos):
@@ -3798,7 +3632,7 @@ class LayerPanel(QWidget):
             try:
                 button.show_context_menu(pos)
             except Exception as e:
-                logging.error(f"Error showing context menu for masked layer button at index {strand_index}: {e}")
+                pass
 
 # End of LayerPanel class
 

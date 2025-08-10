@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea
@@ -44,11 +43,11 @@ class MainWindow(QMainWindow):
         self.language_code = 'en'  # Default language
         self.current_theme = 'default'  # Default theme
 
-        logging.info("Initializing MainWindow")
+        pass
 
         # Initialize components
         self.layer_state_manager = LayerStateManager()
-        logging.info("LayerStateManager initialized in MainWindow")
+        pass
 
         self.canvas = StrandDrawingCanvas(parent=self)  # Pass self as parent
         self.canvas.parent_window = self  # Explicitly set the parent window reference
@@ -60,7 +59,7 @@ class MainWindow(QMainWindow):
         # Set the group_layer_manager in the canvas
         self.canvas.group_layer_manager = self.group_layer_manager
 
-        logging.info(f"Canvas set in MainWindow: {self.canvas}")
+        pass
 
         # Create settings dialog
         # Pass the undo_redo_manager from the layer_panel
@@ -96,15 +95,15 @@ class MainWindow(QMainWindow):
         self.layer_state_manager.layer_panel = self.layer_panel
         self.canvas.layer_state_manager = self.layer_state_manager
 
-        logging.info("LayerStateManager connected to canvas and layer_panel")
+        pass
 
         # Connect signals
         self.canvas.strand_created.connect(self.layer_state_manager.on_strand_created_in_layer_manager)
         self.canvas.strand_deleted.connect(self.layer_state_manager.on_strand_deleted_in_layer_manager)
         self.canvas.masked_layer_created.connect(self.layer_state_manager.on_masked_layer_created_in_layer_manager)
-        logging.info("Connected strand_created, strand_deleted, and masked_layer_created signals to LayerStateManager")
+        pass
 
-        logging.info(f"Canvas set in MainWindow: {self.canvas}")
+        pass
 
         # Connection will be handled in setup_connections
 
@@ -115,19 +114,19 @@ class MainWindow(QMainWindow):
         # Only do initial positioning if this is the first time the window is shown
         # (not during restore from minimize)
         if not hasattr(self, '_initial_show_completed'):
-            logging.info("MainWindow showEvent: Initial window setup")
+            pass
             
             # Check if window has already been assigned to a specific screen by main.py
             if hasattr(self, 'windowHandle') and self.windowHandle() and self.windowHandle().screen():
                 # Window already has a screen assignment - respect it
                 current_screen = self.windowHandle().screen()
                 screen_size = current_screen.availableGeometry()
-                logging.info(f"MainWindow showEvent: Using assigned screen: {current_screen.name()}")
+                pass
             else:
                 # Fallback to primary screen if no assignment
                 screen = QApplication.primaryScreen()
                 screen_size = screen.availableGeometry()
-                logging.info(f"MainWindow showEvent: Using primary screen: {screen.name()}")
+                pass
             
             # Set window to use almost all available space
             self.setGeometry(screen_size)
@@ -137,9 +136,9 @@ class MainWindow(QMainWindow):
             
             # Mark that initial show is complete
             self._initial_show_completed = True
-            logging.info("MainWindow showEvent: Initial setup complete - window maximized")
+            pass
         else:
-            logging.info("MainWindow showEvent: Subsequent show (restore from minimize) - no geometry changes")
+            pass
         
         # Ensure splitter sizes are properly set after the window is fully shown
         # Use QTimer to defer this slightly so all widgets are fully laid out
@@ -191,11 +190,11 @@ class MainWindow(QMainWindow):
 
         app_name = "OpenStrand Studio"
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        logging.info(f"Program data directory: {program_data_dir}")
+        pass
         settings_dir = os.path.join(program_data_dir, app_name)
-        logging.info(f"Settings directory: {settings_dir}")
+        pass
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"Settings file path: {file_path}")
+        pass
 
         theme_name = 'default'
         language_code = 'en'
@@ -211,9 +210,9 @@ class MainWindow(QMainWindow):
                             language_code = line.strip().split(':', 1)[1].strip()
                         # Note: ShadowColor handling removed from here
             except Exception as e:
-                logging.error(f"Error reading user settings: {e}")
+                pass
         else:
-            logging.info("user_settings.txt not found in AppData. Using default settings.")
+            pass
 
         # Apply the theme and language
         self.apply_theme(theme_name)
@@ -222,7 +221,7 @@ class MainWindow(QMainWindow):
         # Note: Shadow color application removed from here
 
     def setup_ui(self):
-        logging.info("Entered setup_ui")
+        pass
 
         # Determine the base path to resources
         if getattr(sys, 'frozen', False):
@@ -236,9 +235,9 @@ class MainWindow(QMainWindow):
         icon_path = os.path.join(base_path, 'box_stitch.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
-            logging.info(f"Window icon set from: {icon_path}")
+            pass
         else:
-            logging.warning(f"Window icon not found at: {icon_path}")
+            pass
 
         # Create central widget and main layout
         central_widget = QWidget()
@@ -270,14 +269,14 @@ class MainWindow(QMainWindow):
 
         # Set the gear icon or fallback to Unicode character if the image is not found
         gear_icon_path = os.path.join(base_path, 'settings_icon.png')
-        logging.info(f"Searching for gear icon at: {gear_icon_path}")
+        pass
 
         if os.path.exists(gear_icon_path):
-            logging.info("Settings icon found. Setting icon for settings_button.")
+            pass
             self.settings_button.setIcon(QIcon(gear_icon_path))
             self.settings_button.setIconSize(QSize(24, 24))
         else:
-            logging.warning("Settings icon not found. Using Unicode '⚙' character.")
+            pass
             self.settings_button.setText('⚙')
             self.settings_button.setFont(QFont('Segoe UI Symbol', 16))  # Adjust font if necessary
 
@@ -453,7 +452,7 @@ class MainWindow(QMainWindow):
 
         # Apply button styles
         self.setup_button_styles()
-        logging.info("UI setup completed")
+        pass
     def set_initial_splitter_sizes(self):
         """
         Set the initial sizes of the splitter to make the layer panel narrower.
@@ -474,7 +473,7 @@ class MainWindow(QMainWindow):
         # Force an update to ensure the sizing takes effect
         self.splitter.update()
         
-        logging.info(f"Set initial splitter sizes: left={left_width}, right={layer_panel_width}, total={total_width}")
+        pass
     def setup_connections(self):
         # Layer panel handle connections
         self.layer_panel.handle.mousePressEvent = self.start_resize
@@ -556,7 +555,7 @@ class MainWindow(QMainWindow):
         if hasattr(self.canvas, 'mask_edit_exited'):
             self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
         else:
-            logging.error("Canvas does not have mask_edit_exited signal")
+            pass
 
     def open_settings_dialog(self):
         """Open the settings dialog if it's not already open."""
@@ -1080,10 +1079,9 @@ class MainWindow(QMainWindow):
 
     def unpress_angle_adjust_button(self):
         """Unpress the angle adjust button exactly like attach button - using standard mode switching"""
-        import logging
-        logging.info("unpress_angle_adjust_button called - using standard mode switching like attach button")
-        logging.info(f"Button state before: checked={self.angle_adjust_button.isChecked()}")
-        logging.info(f"Current mode: {self.current_mode}")
+        pass
+        pass
+        pass
         
         # Always force the button to be unchecked first
         self.angle_adjust_button.setChecked(False)
@@ -1096,24 +1094,24 @@ class MainWindow(QMainWindow):
         # Use the standard mode switching system like attach button does
         if self.current_mode == "angle_adjust":
             previous_mode = _safe(getattr(self, 'previous_mode', 'attach'))
-            logging.info(f"Switching from angle_adjust to {previous_mode} using update_mode()")
+            pass
             self.update_mode(previous_mode)
         else:
             # If not in angle_adjust mode, ensure we're in a proper mode that won't recheck the button
             prev = getattr(self, 'previous_mode', None)
             if prev and prev != "angle_adjust":
                 target = _safe(prev)
-                logging.info(f"Ensuring mode is {target} instead of {self.current_mode}")
+                pass
                 self.update_mode(target)
             else:
-                logging.info(f"Ensuring mode is attach instead of {self.current_mode}")
+                pass
                 self.update_mode("attach")
         
         # Force uncheck again after mode change as safety measure
         self.angle_adjust_button.setChecked(False)
         
-        logging.info(f"Button state after: checked={self.angle_adjust_button.isChecked()}")
-        logging.info(f"Final mode: {self.current_mode}")
+        pass
+        pass
 
     def handle_angle_adjust_click(self):
         # First, ensure the button gets pressed visually
@@ -1131,7 +1129,7 @@ class MainWindow(QMainWindow):
             self.update_mode("angle_adjust")
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
+            pass
             
             # Unpress the button immediately since no strand is selected
             self.unpress_angle_adjust_button()
@@ -1430,7 +1428,7 @@ class MainWindow(QMainWindow):
         if hasattr(self.canvas, 'mask_edit_exited'):
             self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
         else:
-            logging.error("Canvas does not have mask_edit_exited signal")
+            pass
 
     def load_project(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
@@ -1444,11 +1442,11 @@ class MainWindow(QMainWindow):
             try:
                 history_loaded = undo_mgr.import_history(filename)
             except Exception as e:
-                logging.error(f"load_project: import_history raised error: {e}")
+                pass
                 history_loaded = False
 
         if history_loaded:
-            logging.info(f"Project with history loaded from {filename}")
+            pass
             # The import_history() call already applied its current step to the canvas
             # and refreshed UI through _load_state.  We just need to ensure some
             # ancillary UI bits are correct.
@@ -1481,7 +1479,7 @@ class MainWindow(QMainWindow):
                 
                 # Reset the JSON loading flag
                 group_panel.groups_loaded_from_json = False
-                logging.info("Cleared group panel state before loading")
+                pass
 
             # Apply the loaded strands and groups
             apply_loaded_strands(self.canvas, strands, groups)
@@ -1493,7 +1491,7 @@ class MainWindow(QMainWindow):
             self.toggle_shadow_button.setChecked(shadow_enabled)
             self.canvas.shadow_enabled = shadow_enabled
             
-            logging.info(f"Restored button states: control_points={show_control_points}, shadow={shadow_enabled}")
+            pass
 
             # Update the layer panel
             if hasattr(self.canvas, 'layer_panel'):
@@ -1502,7 +1500,7 @@ class MainWindow(QMainWindow):
             # Force a canvas redraw
             self.canvas.update()
 
-            logging.info(f"Project successfully loaded from {filename} (snapshot only)")
+            pass
 
             # Reset undo history now because snapshot load discards previous history
             if undo_mgr:
@@ -1512,7 +1510,7 @@ class MainWindow(QMainWindow):
             self.layer_state_manager.save_initial_state()
 
         except Exception as e:
-            logging.error(f"Error loading project from {filename}: {str(e)}")
+            pass
             # You might want to show an error dialog to the user here
 
     def show_layer_state_log(self):
@@ -1526,7 +1524,7 @@ class MainWindow(QMainWindow):
 
         # Create a new dialog if it doesn't exist or isn't visible
         if not hasattr(self, '_layer_state_dialog') or not self._layer_state_dialog or not self._layer_state_dialog.isVisible():
-            logging.info("Opening layer state log dialog")
+            pass
             _ = self.translations
 
             # Store the dialog reference
@@ -1609,7 +1607,7 @@ class MainWindow(QMainWindow):
             dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
             dialog.finished.connect(self.on_layer_state_dialog_closed)
-            logging.info("Showing layer state log dialog")
+            pass
             dialog.exec_()
         else:
             # If dialog exists and is visible, just bring it to front
@@ -1618,7 +1616,7 @@ class MainWindow(QMainWindow):
 
     def handle_dialog_close(self, event):
         """Handle the dialog close event."""
-        logging.info("Handling dialog close event")
+        pass
         self.layer_state_button.setChecked(False)
         
         # Just accept the event - cleanup will be handled by on_layer_state_dialog_closed
@@ -1628,7 +1626,7 @@ class MainWindow(QMainWindow):
         """
         Closes the layer state dialog and ensures proper cleanup.
         """
-        logging.info("Closing the layer state dialog")
+        pass
         
         # Uncheck the layer state button
         self.layer_state_button.setChecked(False)
@@ -1647,7 +1645,7 @@ class MainWindow(QMainWindow):
 
     def on_layer_state_dialog_closed(self):
         """Handle cleanup when layer state dialog is closed."""
-        logging.info("Layer state log dialog closed")
+        pass
         
         # Ensure button is unchecked
         self.layer_state_button.setChecked(False)
@@ -1710,7 +1708,7 @@ class MainWindow(QMainWindow):
                 self.layer_panel._suppress_lock_mode_temporarily = False
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
+            pass
 
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
@@ -1729,7 +1727,7 @@ class MainWindow(QMainWindow):
                 self.update_mode("angle_adjust")
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
+            pass
 
     def deselect_angle_adjust_button(self):
         # This method is no longer needed, but we'll keep it empty for compatibility
@@ -1750,16 +1748,16 @@ class MainWindow(QMainWindow):
             self.layer_panel._suppress_lock_mode_temporarily = False
 
     def handle_mask_created(self, strand1, strand2):
-        logging.info(f"Received mask_created signal for {strand1.layer_name} and {strand2.layer_name}")
+        pass
 
         # Verify that both strands exist in the canvas
         if strand1 not in self.canvas.strands or strand2 not in self.canvas.strands:
-            logging.error("One or both strands are not in the canvas. Cannot create mask.")
+            pass
             return
 
         # Check if a mask already exists for these strands
         if self.canvas.mask_exists(strand1, strand2):
-            logging.info(f"Mask already exists for {strand1.layer_name} and {strand2.layer_name}. Skipping creation.")
+            pass
             return
 
         # Create the masked layer
@@ -1776,7 +1774,7 @@ class MainWindow(QMainWindow):
         if self.layer_panel:
             self.layer_panel.refresh()
 
-        logging.info(f"Processed mask creation for {strand1.layer_name} and {strand2.layer_name}")
+        pass
 
         # Note: The actual creation of the masked strand is now handled in the StrandDrawingCanvas class
 
@@ -1856,14 +1854,14 @@ class MainWindow(QMainWindow):
                 
                 # Save the image
                 image.save(filename)
-                logging.info(f"Full canvas saved as image: {filename}")
+                pass
 
     def handle_color_change(self, set_number, color):
         self.canvas.update_color_for_set(set_number, color)
         self.layer_panel.update_colors_for_set(set_number, color)
 
     def create_masked_layer(self, layer1_index, layer2_index):
-        logging.info(f"Creating masked layer for layers at indices {layer1_index} and {layer2_index}")
+        pass
         layer1 = self.canvas.strands[layer1_index]
         layer2 = self.canvas.strands[layer2_index]
         
@@ -1873,16 +1871,16 @@ class MainWindow(QMainWindow):
         button = self.layer_panel.add_masked_layer_button(layer1_index, layer2_index)
         button.color_changed.connect(self.handle_color_change)
         
-        logging.info(f"Created masked layer: {masked_strand.layer_name}")
+        pass
         
         # Update the groups with the new masked strand
-        logging.info("Updating groups with new masked strand")
+        pass
         self.layer_panel.group_layer_manager.update_groups_with_new_mask(masked_strand)
         
         self.canvas.update()
         self.update_mode(self.current_mode)
 
-        logging.info("Finished creating masked layer and updating groups")
+        pass
 
     def restore_selection(self):
         if self.layer_panel.last_selected_index is not None:
@@ -1908,7 +1906,7 @@ class MainWindow(QMainWindow):
         # fall back to the previous/attach mode. This prevents the Angle/Length button
         # from getting re-checked visually after it has been deselected.
         if mode == "angle_adjust" and not getattr(self.canvas, "is_angle_adjusting", False):
-            logging.warning("update_mode received 'angle_adjust' while not adjusting – reverting to previous_mode")
+            pass
             mode = getattr(self, "previous_mode", "attach")
         
         # Don't call confirm_adjustment here since it's handled by the angle adjustment dialog
@@ -1988,7 +1986,7 @@ class MainWindow(QMainWindow):
         if event.key() == Qt.Key_Escape:
             # Check if we are in mask edit mode using the layer panel's flag
             if hasattr(self, 'layer_panel') and self.layer_panel.mask_editing:
-                logging.info("Escape key pressed in mask edit mode - exiting.")
+                pass
                 self.layer_panel.exit_mask_edit_mode()
                 _ = translations[self.language_code]
                 self.canvas.exit_mask_edit_mode()
@@ -2000,7 +1998,7 @@ class MainWindow(QMainWindow):
             if hasattr(self.canvas, 'clear_suppression_flags'):
                 self.canvas.clear_suppression_flags()
                 self.canvas.update()  # Force a repaint
-                logging.info("Debug: Canvas suppression flags cleared via keyboard shortcut (Ctrl+Shift+D)")
+                pass
                 event.accept()
                 return
 
@@ -2078,7 +2076,7 @@ class MainWindow(QMainWindow):
         # Ensure UI buttons are synchronized with the zoom-consistent state
         self._sync_mode_buttons_for_new_strand()
         
-        logging.info(f"Ready to create new main strand for set: {set_number}")
+        pass
         
         self.layer_state_manager.save_current_state()
 
@@ -2115,7 +2113,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'rotate_button'):
             self.rotate_button.setChecked(False)
         
-        logging.debug("Mode buttons synchronized for new strand creation - zoom consistency ensured")
+        pass
 
     def _save_button_states(self):
         """Save current button states for restoration after strand creation."""
@@ -2137,12 +2135,12 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'rotate_button'):
             self._pre_creation_button_states['rotate'] = self.rotate_button.isChecked()
         
-        logging.debug(f"Button states saved: {self._pre_creation_button_states}")
+        pass
 
     def _restore_button_states(self):
         """Restore button states that were saved before strand creation."""
         if not hasattr(self, '_pre_creation_button_states') or not self._pre_creation_button_states:
-            logging.warning("No button states to restore")
+            pass
             return
         
         states = self._pre_creation_button_states
@@ -2165,7 +2163,7 @@ class MainWindow(QMainWindow):
         # Clear saved states
         self._pre_creation_button_states = {}
         
-        logging.debug(f"Button states restored: {states}")
+        pass
 
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
@@ -2184,7 +2182,7 @@ class MainWindow(QMainWindow):
                 self.update_mode("angle_adjust")
         else:
             print("No strand selected. Please select a strand before adjusting its angle.")
-            logging.warning("Attempted to enter angle adjust mode with no strand selected.")
+            pass
 
     def select_strand(self, index, emit_signal=True):
         if self.canvas.is_angle_adjusting:
@@ -2212,14 +2210,14 @@ class MainWindow(QMainWindow):
             if 0 <= index < len(self.canvas.strands):
                 strand_to_delete = self.canvas.strands[index]
                 strand_name = strand_to_delete.layer_name
-                logging.info(f"Attempting to delete strand: {strand_name}")
+                pass
 
                 # Find the correct strand in the canvas based on the layer name
                 strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
                 
                 if strand_index is not None:
                     strand = self.canvas.strands[strand_index]
-                    logging.info(f"Deleting strand: {strand.layer_name}")
+                    pass
 
                     set_number = strand.set_number
                     is_main_strand = strand.layer_name.split('_')[1] == '1'
@@ -2235,12 +2233,12 @@ class MainWindow(QMainWindow):
                         if isinstance(s, MaskedStrand):
                             if strand.layer_name in s.layer_name.split('_'):
                                 masks_to_delete.append(s)
-                                logging.info(f"Marking mask for deletion: {s.layer_name}")
+                                pass
 
                     # Remove the strands and masks
                     for s in strands_to_remove + masks_to_delete:
                         self.canvas.remove_strand(s)
-                        logging.info(f"Removed strand/mask: {s.layer_name}")
+                        pass
 
                     # Collect indices of removed strands and masks
                     removed_indices = [i for i, s in enumerate(self.canvas.strands) if s in strands_to_remove + masks_to_delete]
@@ -2260,11 +2258,11 @@ class MainWindow(QMainWindow):
                     # Save the current state after deletion
                     self.layer_state_manager.save_current_state()
 
-                    logging.info("Finished deleting strand and updating UI")
+                    pass
                 else:
-                    logging.warning(f"Strand {strand_name} not found in canvas strands")
+                    pass
             else:
-                logging.warning(f"Invalid strand index: {index}")
+                pass
 
     def start_resize(self, event):
         self.resize_start = event.pos()
@@ -2293,13 +2291,13 @@ class MainWindow(QMainWindow):
             # saving just the current canvas state (previous behaviour).
             undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
             if undo_mgr and undo_mgr.export_history(filename):
-                logging.info(f"Project (with history) saved to {filename}")
+                pass
             else:
                 # Fallback: save only the current snapshot
                 groups = self.group_layer_manager.get_group_data()
-                logging.debug(f"Fallback save path – saving only current snapshot. Group data: {groups}")
+                pass
                 save_strands(self.canvas.strands, groups, filename, self.canvas)
-                logging.info(f"Project saved WITHOUT history to {filename}")
+                pass
     def edit_group_angles(self, group_name):
         if group_name in self.canvas.groups:
             group_data = self.canvas.groups[group_name]
@@ -2353,7 +2351,7 @@ class MainWindow(QMainWindow):
         if self.settings_dialog.isVisible():
             self.settings_dialog.update_translations()
 
-        logging.info(f"Language set to {language_code}")
+        pass
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]
@@ -2408,7 +2406,7 @@ class MainWindow(QMainWindow):
                 # Force immediate save to capture this state change
                 self.canvas.undo_redo_manager._last_save_time = 0
                 self.canvas.undo_redo_manager.save_state()
-                logging.info(f"Undo/redo state saved after toggling control points via button: {current_state}")
+                pass
         
         # Update all strands' control points visibility
         for strand in self.canvas.strands:

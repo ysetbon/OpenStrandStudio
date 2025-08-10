@@ -1,6 +1,5 @@
 import json
 import os
-import logging
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QPointF, QStandardPaths
 from PyQt5.QtGui import QColor
 from strand import Strand
@@ -95,10 +94,9 @@ class LayerStateManager(QObject):
         self.movement_in_progress = False
         self.cached_connections = None
 
-        self.setup_logging()
-        self.check_log_file()
+        
         if hasattr(self, 'logger'):
-            self.logger.info("LayerStateManager initialized")
+            pass
 
         if canvas:
             self.set_canvas(canvas)
@@ -110,7 +108,7 @@ class LayerStateManager(QObject):
         if self.canvas and hasattr(self.canvas, 'strands'):
             self.cached_connections = self.get_layer_connections(self.canvas.strands)
         if hasattr(self, 'logger'):
-            self.logger.info("Movement operation started - connections cached")
+            pass
 
     def end_movement_operation(self):
         """End a movement operation - allow connection recalculation."""
@@ -119,92 +117,20 @@ class LayerStateManager(QObject):
         # Force a state save to update positions
         self.save_current_state()
         if hasattr(self, 'logger'):
-            self.logger.info("Movement operation ended - connections cache cleared")
+            pass
 
     def _log(self, level, message):
         """Helper method to safely log messages using the dedicated logger."""
         try:
             if hasattr(self, 'logger') and self.logger:
-                self.logger.log(level, message)
+                pass
         except Exception:
             # Silently ignore logging errors to prevent recursion
             pass
 
-    def setup_logging(self):
-        # Use the macOS-appropriate directory for logging
-        app_name = "OpenStrand Studio"
-        if sys.platform == 'darwin':  # macOS
-            program_data_dir = os.path.expanduser('~/Library/Application Support')
-            log_dir = os.path.join(program_data_dir, app_name)
-        else:
-            program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-            log_dir = program_data_dir  # AppDataLocation already includes the app name on other platforms
-        
-        # Ensure directory exists with proper permissions
-        if not os.path.exists(log_dir):
-            try:
-                os.makedirs(log_dir, mode=0o755)  # Add mode for proper permissions
-            except Exception as e:
-                # print(f"LayerStateManager: Failed to create log directory. Error: {str(e)}")
-                # Use print instead of logging to avoid potential recursion
-                print(f"LayerStateManager: Failed to create log directory: {log_dir}. Error: {str(e)}")
-                return
 
-        self.log_file_path = os.path.join(log_dir, "layer_state_log.txt")
 
-        # FIXED: Create a separate file handler instead of reconfiguring the root logger
-        try:
-            # Create a dedicated logger for LayerStateManager
-            self.logger = logging.getLogger('LayerStateManager')
-            
-            # Remove any existing handlers to avoid duplicates
-            if self.logger.hasHandlers():
-                self.logger.handlers.clear()
-            
-            # Create file handler for this specific logger
-            file_handler = logging.FileHandler(self.log_file_path, mode='w')
-            file_handler.setLevel(logging.INFO)
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            # Add handler to our specific logger
-            self.logger.addHandler(file_handler)
-            self.logger.setLevel(logging.INFO)
-            
-            # Prevent propagation to root logger to avoid conflicts
-            self.logger.propagate = False
-            
-            self.logger.info(f"LayerStateManager initialized. Log file path: {self.log_file_path}")
-        except Exception as e:
-            print(f"LayerStateManager: Failed to setup dedicated logger. Error: {str(e)}")
-            return
 
-        try:
-            with open(self.log_file_path, 'w') as f:
-                f.write("Layer State Log\n")
-
-        except Exception as e:
-            # print(f"LayerStateManager: Failed to create new log file. Error: {str(e)}")
-            print(f"LayerStateManager: Failed to create new log file: {self.log_file_path}. Error: {str(e)}")
-
-    def check_log_file(self):
-        """Check if the log file exists and is writable."""
-        if os.path.exists(self.log_file_path):
-            if os.access(self.log_file_path, os.W_OK):
-                if hasattr(self, 'logger'):
-                    self.logger.info(f"Log file exists and is writable: {self.log_file_path}")
-            else:
-                # print("LayerStateManager: Log file exists but is not writable")
-                if hasattr(self, 'logger'):
-                    self.logger.error(f"Log file exists but is not writable: {self.log_file_path}")
-        else:
-            try:
-                with open(self.log_file_path, 'w') as f:
-                    f.write("Layer State Log\n")
-
-            except Exception as e:
-                # print(f"LayerStateManager: Failed to create log file. Error: {str(e)}")
-                print(f"LayerStateManager: Failed to create log file: {self.log_file_path}. Error: {str(e)}")
 
     def set_canvas(self, canvas):
         # print("LayerStateManager: Setting canvas")
@@ -215,17 +141,17 @@ class LayerStateManager(QObject):
             canvas.strand_created.connect(self.on_strand_created_in_layer_manager)
             # print("LayerStateManager: Connected to strand_created signal")
             if hasattr(self, 'logger'):
-                self.logger.info("Connected to strand_created signal")
+                pass
         if hasattr(canvas, 'strand_deleted'):
             canvas.strand_deleted.connect(self.on_strand_deleted_in_layer_manager)
             # print("LayerStateManager: Connected to strand_deleted signal")
             if hasattr(self, 'logger'):
-                self.logger.info("Connected to strand_deleted signal")
+                pass
         if hasattr(canvas, 'masked_layer_created'):
             canvas.masked_layer_created.connect(self.on_masked_layer_created_in_layer_manager)
             # print("LayerStateManager: Connected to masked_layer_created signal")
             if hasattr(self, 'logger'):
-                self.logger.info("Connected to masked_layer_created signal")
+                pass
 
         # Initialize state based on current canvas strands
         self.save_current_state()
@@ -237,16 +163,14 @@ class LayerStateManager(QObject):
             layer_panel.new_strand_requested.connect(self.on_new_strand_requested_in_layer_manager)
             # print("LayerStateManager: Connected to new_strand_requested signal")
             if hasattr(self, 'logger'):
-                self.logger.info("Connected to new_strand_requested signal")
+                pass
 
     def save_current_state(self):
         """Save the current state of all layers."""
         # print("LayerStateManager: Saving current state")
-        logging.info("LayerStateManager: save_current_state called")
         
         if not self.canvas:
             # print("LayerStateManager: Canvas is not set. Cannot save current state.")
-            logging.warning("LayerStateManager: Canvas is not set. Cannot save current state.")
             return
 
         try:
@@ -263,16 +187,15 @@ class LayerStateManager(QObject):
             }
             
             # print("LayerStateManager: Current state saved")
-            logging.info("LayerStateManager: Current state saved")
             self.log_layer_state()
         except Exception as e:
             # print(f"LayerStateManager: Error saving current state: {str(e)}")
-            logging.error(f"LayerStateManager: Error saving current state: {str(e)}")
+            pass
 
     def log_layer_state(self):
         """Write the current layer state to a text file and update current_state."""
         if hasattr(self, 'logger'):
-            self.logger.info("Attempting to log layer state")
+            pass
 
         try:
             with open(self.log_file_path, 'a', encoding='utf-8') as f:
@@ -302,21 +225,19 @@ class LayerStateManager(QObject):
             self.current_state = self.layer_state.copy()
 
             if hasattr(self, 'logger'):
-                self.logger.info(f"Successfully wrote layer state to {self.log_file_path}")
+                pass
         except Exception as e:
             # print(f"LayerStateManager: Failed to write layer state. Error: {str(e)}")
             if hasattr(self, 'logger'):
-                self.logger.error(f"Failed to write layer state to {self.log_file_path}. Error: {str(e)}")
+                pass
 
     def get_layer_connections(self, strands):
         connections = {}
         
-        logging.info(f"LayerStateManager: get_layer_connections called with {len(strands)} strands")
         
         for strand in strands:
             # Skip MaskedStrand objects - they should not be included in connection data
             if isinstance(strand, MaskedStrand):
-                logging.info(f"LayerStateManager: Skipping masked strand: {strand.layer_name}")
                 continue
             # Initialize connection info for this strand
             start_connection = None  # What strand is connected to the start point
@@ -324,22 +245,19 @@ class LayerStateManager(QObject):
             end_connection = None    # What strand is connected to the end point
             end_end_point = None     # Which end point of the connected strand (0=start, 1=end)
             
-            logging.info(f"LayerStateManager: Processing strand: {strand.layer_name}")
             if hasattr(strand, 'parent') and strand.parent:
-                logging.info(f"LayerStateManager:   Has parent: {strand.parent.layer_name}")
+                pass
             if hasattr(strand, 'attached_strands'):
-                logging.info(f"LayerStateManager:   Has {len(strand.attached_strands)} attached strands")
                 for attached in strand.attached_strands:
                     if hasattr(attached, 'layer_name'):
-                        logging.info(f"LayerStateManager:     Attached strand: {attached.layer_name}")
                         if hasattr(attached, 'attachment_side'):
-                            logging.info(f"LayerStateManager:     Attachment side: {attached.attachment_side}")
+                            pass
             
             # Check if this strand is an AttachedStrand and has a parent
             if hasattr(strand, 'parent') and strand.parent:
                 # Skip if parent is a MaskedStrand
                 if isinstance(strand.parent, MaskedStrand):
-                    logging.info(f"LayerStateManager: Skipping connection to masked parent: {strand.parent.layer_name}")
+                    pass
                 else:
                     # This strand's start is connected to its parent
                     start_connection = strand.parent.layer_name
@@ -365,7 +283,6 @@ class LayerStateManager(QObject):
             for attached_strand in strand.attached_strands:
                 # Skip if attached strand is a MaskedStrand
                 if isinstance(attached_strand, MaskedStrand):
-                    logging.info(f"LayerStateManager: Skipping masked attached strand: {attached_strand.layer_name}")
                     continue
                 if hasattr(attached_strand, 'layer_name'):
                     # Check which end of the parent the child is attached to
@@ -399,7 +316,6 @@ class LayerStateManager(QObject):
                         connected_strand = connection_info['connected_strand']
                         # Skip if connected strand is a MaskedStrand
                         if isinstance(connected_strand, MaskedStrand):
-                            logging.info(f"LayerStateManager: Skipping knot connection to masked strand: {connected_strand.layer_name}")
                             continue
                         connected_end = connection_info.get('connected_end', 'end')
                         if hasattr(connected_strand, 'layer_name'):
@@ -417,8 +333,6 @@ class LayerStateManager(QObject):
             # Return the format: [start_connection(end_point), end_connection(end_point)]
             connections[strand.layer_name] = [start_formatted, end_formatted]
             
-            logging.info(f"LayerStateManager: Layer {strand.layer_name}: [{start_formatted}, {end_formatted}]")
-            logging.info(f"LayerStateManager:   Final connections for {strand.layer_name}: start={start_formatted}, end={end_formatted}")
         
         return connections
 
@@ -427,7 +341,7 @@ class LayerStateManager(QObject):
         """Called when a new strand is created."""
         # print(f"LayerStateManager: Strand created: {strand.layer_name}")
         if hasattr(self, 'logger'):
-            self.logger.info(f"Strand created: {strand.layer_name}")
+            pass
         self.save_current_state()
 
     @pyqtSlot(int)
@@ -435,7 +349,7 @@ class LayerStateManager(QObject):
         """Called when a strand is deleted."""
         # print(f"LayerStateManager: Strand deleted at index: {index}")
         if hasattr(self, 'logger'):
-            self.logger.info(f"Strand deleted at index: {index}")
+            pass
         self.save_current_state()
 
     @pyqtSlot(object)
@@ -443,12 +357,11 @@ class LayerStateManager(QObject):
         """Called when a masked layer is created."""
         # print(f"LayerStateManager: Masked layer created: {masked_strand.layer_name}")
         if hasattr(self, 'logger'):
-            self.logger.info(f"Masked layer created: {masked_strand.layer_name}")
+            pass
         
         # Check if we should skip saving due to mask operation in progress
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             if getattr(self.canvas.undo_redo_manager, '_mask_save_in_progress', False):
-                logging.info("=== LAYER STATE MANAGER DEBUG === Skipping save_current_state (mask save in progress)")
                 return
         
         self.save_current_state()
@@ -461,11 +374,11 @@ class LayerStateManager(QObject):
             color = self.canvas.strand_colors.get(set_number, QColor('purple'))
             # print(f"LayerStateManager: New strand requested for set {set_number}, color {color.name()}")
             if hasattr(self, 'logger'):
-                self.logger.info(f"New strand requested for set {set_number}, color {color.name()}")
+                pass
         else:
             # print("LayerStateManager: Canvas is not set. Cannot process new strand request.")
             if hasattr(self, 'logger'):
-                self.logger.warning("Canvas is not set. Cannot process new strand request.")
+                pass
 
     def apply_loaded_state(self, state_data):
         """Apply the loaded state to the canvas."""
@@ -473,7 +386,7 @@ class LayerStateManager(QObject):
         if not self.canvas:
             # print("LayerStateManager: Canvas is not set. Cannot apply loaded state.")
             if hasattr(self, 'logger'):
-                self.logger.warning("Canvas is not set. Cannot apply loaded state.")
+                pass
             return
 
         # Clear existing strands
@@ -497,7 +410,6 @@ class LayerStateManager(QObject):
 
             self.canvas.strands.append(strand)
             strand_dict[layer_name] = strand
-            self._log(logging.INFO, f"Created strand: {layer_name}")
 
         # Second pass: Create attached strands and connections
         for layer_name, connected_layers in state_data['connections'].items():
@@ -515,7 +427,6 @@ class LayerStateManager(QObject):
                         strand.attached_strands.append(attached)
                         self.canvas.strands.append(attached)
                         strand_dict[attached.layer_name] = attached
-                        self._log(logging.INFO, f"Created attached strand: {attached.layer_name}")
 
         # Third pass: Create masked layers
         for masked_layer_name in state_data['masked_layers']:
@@ -528,7 +439,6 @@ class LayerStateManager(QObject):
                     masked_strand.layer_name = masked_layer_name
                     self.canvas.strands.append(masked_strand)
                     strand_dict[masked_layer_name] = masked_strand
-                    logging.info(f"Created masked strand: {masked_layer_name}")
 
         # Connections in the new format are already properly established through
         # the parent-child relationships and attachment_side values when creating
@@ -546,7 +456,6 @@ class LayerStateManager(QObject):
         
         # Save the current state after loading
         self.save_current_state()
-        logging.info("Completed applying loaded state")
 
     def save_state_to_json(self, file_path):
         """Save the current state to a JSON file."""
@@ -555,10 +464,9 @@ class LayerStateManager(QObject):
             with open(file_path, 'w') as f:
                 json.dump(self.layer_state, f, indent=4)
             # print("LayerStateManager: State saved to JSON file successfully")
-            logging.info(f"State saved to JSON file: {file_path}")
         except Exception as e:
             # print(f"LayerStateManager: Failed to save state to JSON file. Error: {str(e)}")
-            logging.error(f"Failed to save state to JSON file: {file_path}. Error: {str(e)}")
+            pass
 
     def load_state_from_json(self, file_path):
         """Load the state from a JSON file."""
@@ -570,10 +478,9 @@ class LayerStateManager(QObject):
             self.save_current_state()
             self.log_layer_state()
             # print("LayerStateManager: State loaded from JSON file successfully")
-            logging.info(f"State loaded from JSON file: {file_path}")
         except Exception as e:
             # print(f"LayerStateManager: Failed to load state from JSON file. Error: {str(e)}")
-            logging.error(f"Failed to load state from JSON file: {file_path}. Error: {str(e)}")
+            pass
 
     def compare_with_initial_state(self):
         """Compare the current state with the initial state."""
@@ -607,13 +514,11 @@ class LayerStateManager(QObject):
             )
 
         # print("LayerStateManager: Comparison completed")
-        logging.info(f"Differences found: {differences}")
         return differences
 
     def save_initial_state(self):
         """Save the initial state when loading a JSON file."""
         self.initial_state = self.layer_state.copy()
-        logging.info("Initial state saved")
 
     def getOrder(self):
         """Get the current order of layers."""
@@ -688,7 +593,6 @@ class LayerStateManager(QObject):
         Instead, connections should be recalculated from strand relationships
         by calling save_current_state() which uses get_layer_connections()."""
         # Don't manually modify connections - force a recalculation instead
-        logging.info(f"connect_layers called for {layer_name1} and {layer_name2} - recalculating connections")
         self.save_current_state()
 
     def connectLayers(self, parent_strand, child_strand):
@@ -698,31 +602,20 @@ class LayerStateManager(QObject):
         unconditionally. Let's fix that to avoid overwriting pre-existing transparency.
         """
 
-        self._log(logging.INFO, f"Connected layers: {parent_strand.layer_name} and {child_strand.layer_name}")
 
         old_color = child_strand.circle_stroke_color
         # If child had absolutely no color at all, copy the parent's color
         if old_color is None:
             child_strand.circle_stroke_color = parent_strand.circle_stroke_color
-            self._log(logging.INFO,
-                f"For child {child_strand.layer_name}, circle color was None. Using parent's color: "
-                f"rgba({parent_strand.circle_stroke_color.red()}, "
-                f"{parent_strand.circle_stroke_color.green()}, "
-                f"{parent_strand.circle_stroke_color.blue()}, "
-                f"{parent_strand.circle_stroke_color.alpha()})"
-            )
+
         else:
             # If the child's alpha=0 came from JSON, let it stand
-            self._log(logging.INFO,
-                f"For child {child_strand.layer_name}, leaving already-loaded circle color: "
-                f"rgba({old_color.red()}, {old_color.green()}, {old_color.blue()}, {old_color.alpha()})"
-            )
+            pass
 
     def removeStrandConnections(self, strand_name):
         """Remove all connections for a deleted strand."""
         # Don't remove connections during movement operations
         if hasattr(self, 'movement_in_progress') and self.movement_in_progress:
-            logging.info(f"Skipping connection cleanup for {strand_name} during movement operation")
             return
             
         connections = self.layer_state.get('connections', {})
@@ -730,7 +623,6 @@ class LayerStateManager(QObject):
         # Remove the strand from connections dict
         if strand_name in connections:
             del connections[strand_name]
-            logging.info(f"Removed connections entry for {strand_name}")
         
         # Update references to this strand in other strands' connections
         # Connections format: [start_connection(end_point), end_connection(end_point)]
@@ -739,16 +631,13 @@ class LayerStateManager(QObject):
                 # Check and update start connection
                 if connection_data[0] and strand_name in connection_data[0]:
                     connection_data[0] = 'null'
-                    logging.info(f"Removed {strand_name} from {other_strand_name}'s start connection")
                 
                 # Check and update end connection  
                 if connection_data[1] and strand_name in connection_data[1]:
                     connection_data[1] = 'null'
-                    logging.info(f"Removed {strand_name} from {other_strand_name}'s end connection")
         
         # Save the updated state
         self.save_current_state()
-        logging.info(f"Cleaned up all connections for deleted strand: {strand_name}")
 
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 

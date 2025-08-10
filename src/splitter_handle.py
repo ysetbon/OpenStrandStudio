@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QColor
 from render_utils import RenderUtils
-import logging
 
 class SplitterHandle(QWidget):
     """
@@ -31,7 +30,6 @@ class SplitterHandle(QWidget):
         :param event: The paint event
         """
         painter = QPainter(self)
-        logging.info(f"[SplitterHandle.paintEvent] Setting up UI painter for splitter handle")
         RenderUtils.setup_ui_painter(painter)
         # Make the handle fully transparent - no visual rectangle
         painter.fillRect(self.rect(), QColor(0, 0, 0, 0))  # Fully transparent

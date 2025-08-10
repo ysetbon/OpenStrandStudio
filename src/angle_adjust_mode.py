@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleS
 from PyQt5.QtGui import QPainter, QPen, QColor
 from render_utils import RenderUtils
 import math
-import logging
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QDoubleSpinBox, QPushButton, QLabel
@@ -266,7 +265,6 @@ class AngleAdjustMode:
 
         if event.key() == Qt.Key_X:
             self.x_pressed = True
-            print(f"Using initial angle: {self.initial_angle}")  # Debug print
         elif self.x_pressed and event.text().isdigit():
             angle_input = event.text()
             if angle_input == '1':
@@ -289,19 +287,19 @@ class AngleAdjustMode:
 
     def apply_angle_operation(self, operation):
         if self.initial_angle is None:
-            print("No initial angle set")  # Debug print
             return
         if operation == 'x':
             try:
                 new_angle = eval(operation.replace('x', str(self.initial_angle)))
-                print(f"Calculated new angle: {new_angle}")  # Debug print
+                
+                # print(f"Calculated new angle: {new_angle}")  # Debug print
                 self.rotate_strand(new_angle)
             except Exception as e:
-                print(f"Error in angle calculation: {e}")  # Debug print
+                pass
+                # print(f"Error in angle calculation: {e}")  # Debug print
         if operation == '180+x':
             try:
                 new_angle = eval(operation.replace('180+x', str(self.initial_angle)))
-                print(f"Calculated new angle: {new_angle}")  # Debug print
                 self.rotate_strand(new_angle)
             except Exception as e:
                 print(f"Error in angle calculation: {e}")  # Debug print
@@ -594,7 +592,6 @@ class AngleAdjustMode:
             # Save state for undo/redo after angle adjustment (skip_save flag already cleared in dialog cleanup)
             if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                 self.canvas.layer_panel.undo_redo_manager.save_state()
-                logging.info("Saved state after angle adjustment")
 
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False

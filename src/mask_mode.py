@@ -3,7 +3,6 @@ from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPat
 from PyQt5.QtWidgets import QApplication
 from masked_strand import MaskedStrand
 from render_utils import RenderUtils
-import logging
 
 class MaskMode(QObject):
     mask_created = pyqtSignal(object, object)  # Signal emitted when a mask is created
@@ -21,14 +20,11 @@ class MaskMode(QObject):
         if hasattr(self.canvas, 'selected_strand') and self.canvas.selected_strand:
             # Make sure the selected strand maintains its is_selected flag
             self.canvas.selected_strand.is_selected = True
-            logging.info(f"Preserving selection for strand: {self.canvas.selected_strand.layer_name}")
         self.canvas.setCursor(Qt.CrossCursor)
-        logging.info("Mask mode activated")
 
     def deactivate(self):
         self.selected_strands = []
         self.canvas.setCursor(Qt.ArrowCursor)
-        logging.info("Mask mode deactivated")
 
     def handle_mouse_press(self, event):
         pos = event.pos()
@@ -59,10 +55,8 @@ class MaskMode(QObject):
         return results
 
     def handle_strand_selection(self, strand):
-        logging.info(f"Selecting strand: {strand.layer_name}")
         if strand not in self.selected_strands:
             self.selected_strands.append(strand)
-            logging.info(f"Selected strands: {[s.layer_name for s in self.selected_strands]}")
             if len(self.selected_strands) == 2:
                 self.create_masked_layer()
             self.canvas.update()
@@ -71,7 +65,6 @@ class MaskMode(QObject):
         """Create a masked layer from the two selected strands."""
         if len(self.selected_strands) == 2:
             strand1, strand2 = self.selected_strands
-            logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
             
             if not self.mask_exists(strand1, strand2):
                 # Store original colors and other relevant properties
@@ -104,13 +97,10 @@ class MaskMode(QObject):
                     'parent': strand2.parent if hasattr(strand2, 'parent') else None
                 }
                 
-                logging.info(f"Storing original properties for strands")
-                
                 # Store original strand order - this is critical for preserving the layer ordering
                 original_strands = self.canvas.strands.copy()
                 
                 # Create the masked layer
-                logging.info("Emitting mask_created signal...")
                 self.mask_created.emit(strand1, strand2)
                 
                 # Check if strands have been modified
@@ -130,17 +120,13 @@ class MaskMode(QObject):
                             prop_changes2[prop] = (orig_val, current_val)
                 
                 if prop_changes1:
-                    logging.warning(f"Strand1 properties changed during masking: {prop_changes1}")
+                    pass
                 if prop_changes2:
-                    logging.warning(f"Strand2 properties changed during masking: {prop_changes2}")
+                    pass
                 
                 # Find the newly created masked strand
                 masked_strand = self.find_masked_strand(strand1, strand2)
                 if masked_strand:
-                    # Log current state
-                    current_strand_names = [s.layer_name for s in self.canvas.strands]
-                    logging.info(f"Current strand order after mask creation: {current_strand_names}")
-                    
                     # FIXED: Create a new order that preserves the original positions of all strands
                     # and just adds the masked strand at the end
                     new_order = []
@@ -180,8 +166,6 @@ class MaskMode(QObject):
                             else:
                                 setattr(strand2, prop, val)
                             
-                    logging.info(f"Restored all original properties to strands")
-                    
                     # Don't refresh attachments - we've explicitly preserved all connections
                     # This prevents creating new unintended connections
                     # if hasattr(self.canvas, "refresh_geometry_based_attachments"):
@@ -196,14 +180,12 @@ class MaskMode(QObject):
                     # Force update layer order in layer_state_manager to ensure shadows render correctly
                     if hasattr(self.canvas, "layer_state_manager") and self.canvas.layer_state_manager:
                         # Update the layer manager with the current strand order
-                        logging.info("Updating layer_state_manager with current strand order")
                         layer_names = [s.layer_name for s in self.canvas.strands]
                         
                         # Instead of using a non-existent setOrder method, update the order properly
                         if hasattr(self.canvas.layer_state_manager, "order"):
                             # If there's a direct order attribute, update it
                             self.canvas.layer_state_manager.order = layer_names
-                            logging.info(f"Updated layer order by setting order attribute directly: {self.canvas.layer_state_manager.getOrder()}")
                         else:
                             # Otherwise try to find an appropriate update method
                             update_methods = [attr for attr in dir(self.canvas.layer_state_manager) if "update" in attr.lower() and callable(getattr(self.canvas.layer_state_manager, attr))]
@@ -212,11 +194,10 @@ class MaskMode(QObject):
                                 update_method = getattr(self.canvas.layer_state_manager, update_methods[0])
                                 try:
                                     update_method(layer_names)
-                                    logging.info(f"Updated layer order using {update_methods[0]}: {self.canvas.layer_state_manager.getOrder()}")
                                 except Exception as e:
-                                    logging.error(f"Failed to update layer order: {e}")
+                                    pass
                             else:
-                                logging.warning("No method found to update layer_state_manager order. Shadows may not render correctly.")
+                                pass
                     
                     # Clear selection and refresh (preserve zoom/pan view)
                     self.canvas.clear_selection()
@@ -228,7 +209,6 @@ class MaskMode(QObject):
                     
                     # Update the canvas
                     self.canvas.update()
-                    logging.info(f"Completed masked layer creation with restored properties")
 
                     # State saving will be handled by the enhanced mask_created signal handler in undo_redo_manager.py
 
@@ -251,7 +231,6 @@ class MaskMode(QObject):
 
     def clear_selection(self):
         self.selected_strands = []
-        logging.info("Selection cleared")
         self.canvas.update()
 
     def draw(self, painter):

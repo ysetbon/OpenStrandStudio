@@ -4,7 +4,6 @@ from PyQt5.QtGui import (
     QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
 )
 from render_utils import RenderUtils
-import logging
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import (
@@ -50,9 +49,9 @@ class MaskedStrand(Strand):
             
             # Log initialization with safe center point handling
             if self.edited_center_point:
-                logging.info(f"Initialized masked strand {self.layer_name} with center point: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+                pass
             else:
-                logging.info(f"Initialized masked strand {self.layer_name} without overlap (no center point)")
+                pass
         else:
             super().__init__(QPointF(0, 0), QPointF(1, 1), 1)
             self.set_number = set_number
@@ -98,19 +97,18 @@ class MaskedStrand(Strand):
         
         # Add null check before accessing edited_center_point
         if self.edited_center_point:
-            logging.info(f"Updated center point after custom mask set for {self.layer_name}: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
+            pass
         else:
-            logging.warning(f"No valid center point calculated for {self.layer_name} after setting custom mask")
+            pass
             
         # Save the current state of deletion rectangles
         if hasattr(self, 'deletion_rectangles'):
-            logging.info(f"Saved {len(self.deletion_rectangles)} deletion rectangles for masked strand {self.layer_name}")
+            pass
 
     def reset_mask(self):
         """Reset to the default intersection mask."""
         self.custom_mask_path = None
         self.deletion_rectangles = []  # Clear the deletion rectangles
-        logging.info(f"Reset mask and cleared deletion rectangles for masked strand {self.layer_name}")
     def get_masked_shadow_path(self):
         """
         Get the path representing the shadow of the masked area.
@@ -126,8 +124,6 @@ class MaskedStrand(Strand):
         # Get fresh paths from both strands - explicitly call get_path() here
         path1 = self.first_selected_strand.get_path()
         path2 = self.second_selected_strand.get_path()
-        logging.info(f"MaskedStrand - Fresh path1 bounds: {path1.boundingRect()}")
-        logging.info(f"MaskedStrand - Fresh path2 bounds: {path2.boundingRect()}")
 
         shadow_stroker = QPainterPathStroker()
         shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
@@ -147,9 +143,6 @@ class MaskedStrand(Strand):
         path_shadow = intersection_path
 
         # Log bounds before deletions
-        logging.info(f"MaskedStrand - Shadow path1 bounds: {shadow_path1.boundingRect()}")
-        logging.info(f"MaskedStrand - Shadow path2 bounds: {shadow_path2.boundingRect()}")
-        logging.info(f"MaskedStrand - Initial intersection (path_shadow) bounds before deletions: {path_shadow.boundingRect()}")
 
         # Apply any deletion rectangles to the shadow path
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
@@ -171,7 +164,6 @@ class MaskedStrand(Strand):
 
         # Log shadow path information for debugging
         # Moved logging after potential deletions
-        logging.info(f"MaskedStrand - Final masked shadow path (path_shadow) bounds after deletions: {path_shadow.boundingRect()}, empty={path_shadow.isEmpty()}")
         return path_shadow
     def get_mask_path_stroke(self):
         """
@@ -211,13 +203,10 @@ class MaskedStrand(Strand):
                     elif all(k in rect for k in ('x', 'y', 'width', 'height')):
                         deletion_path.addRect(QRectF(rect['x'], rect['y'], rect['width'], rect['height']))
                     else:
-                        logging.warning(f"Invalid deletion rect format for mask cropping: {rect}")
                         continue
                 except Exception as e:
-                    logging.error(f"Error constructing deletion rect for mask cropping: {e}")
                     continue
                 mask_path = mask_path.subtracted(deletion_path)
-                logging.info(f"Applied deletion rect to mask_path: new bounds={mask_path.boundingRect()}, empty={mask_path.isEmpty()}")
         # Return fresh mask including deletions
         return mask_path
             
@@ -259,13 +248,10 @@ class MaskedStrand(Strand):
                     elif all(k in rect for k in ('x', 'y', 'width', 'height')):
                         deletion_path.addRect(QRectF(rect['x'], rect['y'], rect['width'], rect['height']))
                     else:
-                        logging.warning(f"Invalid deletion rect format for mask cropping: {rect}")
                         continue
                 except Exception as e:
-                    logging.error(f"Error constructing deletion rect for mask cropping: {e}")
                     continue
                 mask_path = mask_path.subtracted(deletion_path)
-                logging.info(f"Applied deletion rect to mask_path: new bounds={mask_path.boundingRect()}, empty={mask_path.isEmpty()}")
         # Return fresh mask including deletions
         return mask_path
     def get_path_for_strand(self, strand):
@@ -311,9 +297,8 @@ class MaskedStrand(Strand):
         return stroker.createStroke(path)    
     def draw(self, painter, skip_painter_setup=False):
         """Draw the masked strand and apply corner-based deletion rectangles."""
-        logging.info(f"Drawing MaskedStrand - Has deletion rectangles: {hasattr(self, 'deletion_rectangles')}")
         if hasattr(self, 'deletion_rectangles'):
-            logging.info(f"Current deletion rectangles: {self.deletion_rectangles}")
+            pass
 
         if not self.first_selected_strand and not self.second_selected_strand:
             return
@@ -359,10 +344,9 @@ class MaskedStrand(Strand):
             
             # Check if shadowing is disabled in the canvas (same as regular strands)
             if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
-                logging.info(f"Skipping shadow for MaskedStrand {self.layer_name} - shadows disabled")
+                pass
             # Only draw shadows if this strand should draw its own shadow
             elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
                 # Resolve shadow colour: canvas setting → existing strand colour fallback
                 shadow_color = None
@@ -412,12 +396,11 @@ class MaskedStrand(Strand):
 
                 painter.restore()
         except Exception as e:
-            logging.error(f"Error applying masked strand shadow: {e}")
             # Attempt to refresh even if there was an error
             try:
                 self.force_shadow_refresh()
             except Exception as refresh_error:
-                logging.error(f"Error during error recovery refresh: {refresh_error}")
+                pass
 
         # --- START: Skip visual rendering in shadow-only mode ---
         if getattr(self, 'shadow_only', False):
@@ -431,7 +414,6 @@ class MaskedStrand(Strand):
 
         # Get the mask path - use edited mask if it exists, otherwise use base mask
         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-            logging.info("Using edited mask with deletion rectangles")
             
             # Get the base intersection mask
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -444,7 +426,6 @@ class MaskedStrand(Strand):
                 abs(new_center.x() - self.base_center_point.x()) > 0.01 or 
                 abs(new_center.y() - self.base_center_point.y()) > 0.01
             ) and not (hasattr(self, 'using_absolute_coords') and self.using_absolute_coords)):
-                logging.info(f"Detected center point movement from ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}) to ({new_center.x():.2f}, {new_center.y():.2f})")
                 self.update(new_center)
             
             # Apply deletion rectangles
@@ -463,10 +444,6 @@ class MaskedStrand(Strand):
                 deletion_path.closeSubpath()
 
                 mask_path = mask_path.subtracted(deletion_path)
-                logging.info(
-                    f" Applied corner-based deletion rect with corners: "
-                    f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
-                )
             
             # Use the temp_painter to clip out the parts outside our mask
             temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
@@ -475,7 +452,6 @@ class MaskedStrand(Strand):
             #temp_painter.drawPath(mask_path)
         else:
             # Get the base intersection mask
-            logging.info("Using default intersection mask")
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
             path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
             mask_path = path1.intersected(path2)
@@ -530,7 +506,6 @@ class MaskedStrand(Strand):
                     path_shadow = intersection_path
                     
                     # Log information about the shadow path
-                    logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
                     
                     # Apply any saved deletion rectangles to the shadow path
                     if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
@@ -552,7 +527,6 @@ class MaskedStrand(Strand):
                             path_shadow = path_shadow.subtracted(deletion_path)
                     
                     # Log information about the final shadow path
-                    logging.info(f"Final shadow path for clipping: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
                     
                     # COMPLETELY NEW APPROACH: Use multiple buffers with soft-edge feathering to eliminate all aliasing
                     
@@ -603,7 +577,6 @@ class MaskedStrand(Strand):
                         path_shadow = intersection_path
                         
                         # Log information about the shadow path
-                        logging.info(f"Created masked shadow path: empty={path_shadow.isEmpty()}, bounds={path_shadow.boundingRect()}")
                         
                         # Apply any saved deletion rectangles to the shadow path
                         if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
@@ -701,7 +674,6 @@ class MaskedStrand(Strand):
                     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
                     #painter.drawImage(0, 0, final_buffer)                        
                     # Skip drawing additional shadows for nested masked strands to prevent double-shadowing
-                    logging.info(f"Skipping additional shadow for nested masked strand {self.layer_name}")
                     
                     # --- NEW: paint the intersection area again as a solid path to guarantee
                     # perfect antialiasing.  We simply fill the same mask_path that we used
@@ -719,7 +691,7 @@ class MaskedStrand(Strand):
                             painter.setBrush(self.first_selected_strand.stroke_color)
                             painter.drawPath(fresh_mask_path)
                     except Exception as _e:
-                        logging.error(f"Could not draw antialiased mask fill: {_e}")
+                        pass
                     try:
                         # Recreate the intersection mask (including deletion rects if present)
                         fresh_mask_path = self.get_mask_path()
@@ -727,22 +699,20 @@ class MaskedStrand(Strand):
                             painter.setBrush(self.first_selected_strand.color)
                             painter.drawPath(fresh_mask_path)
                     except Exception as _e:
-                        logging.error(f"Could not draw antialiased mask fill: {_e}")
+                        pass
 
                     painter.restore()
   
         except Exception as e:
-            logging.error(f"Error drawing first strand on top: {str(e)}")
+            pass
         
         # Debug output
-        logging.info(f"Transferred masked strand image to main painter for {self.layer_name}")
         
         # Restore the painter state
         painter.restore()
 
         # Now handle the highlight or debug drawing
         if self.is_selected:
-            logging.info("Drawing selected strand highlights")
             # Draw the mask outline and fill with a semi-transparent red
             highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             painter.setPen(highlight_pen)
@@ -761,7 +731,6 @@ class MaskedStrand(Strand):
 
                 # Always show base center point in blue
                 if self.base_center_point:
-                    logging.info(f"Drawing base center point at: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
                     temp_painter = QPainter(painter.device())  # a new painter for the crosshair
                     temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
                     temp_painter.setPen(QPen(QColor('transparent'), 0))
@@ -784,7 +753,6 @@ class MaskedStrand(Strand):
 
                 # Only show edited center point if there are deletion rectangles
                 if self.edited_center_point and hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-                    logging.info(f"Drawing edited center point at: {self.edited_center_point.x():.2f}, {self.edited_center_point.y():.2f}")
                     temp_painter = QPainter(painter.device())  # a new painter for the crosshair
                     temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
                     temp_painter.setPen(QPen(QColor('transparent'), 0))
@@ -805,9 +773,8 @@ class MaskedStrand(Strand):
                     )
                     temp_painter.end()
             else:
-                logging.info("Skipping highlight drawing: no intersection between strands")
+                pass
 
-        logging.info("Completed drawing masked strand")
 
     def _draw_direct(self, painter):
         """Draw the masked strand directly to the painter without temporary image optimization.
@@ -832,9 +799,8 @@ class MaskedStrand(Strand):
             
             # Check if shadowing is disabled in the canvas
             if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
-                logging.info(f"Skipping shadow for MaskedStrand {self.layer_name} - shadows disabled")
+                pass
             elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                logging.info(f"Drawing shadow for MaskedStrand {self.layer_name}")
                 
                 # Resolve shadow colour: canvas setting → existing strand colour fallback
                 shadow_color = None
@@ -880,13 +846,12 @@ class MaskedStrand(Strand):
                         # Only use the constrained path if it's not empty
                         if not constrained_path.isEmpty():
                             strand1_shadow_path = constrained_path
-                            logging.info(f"Successfully constrained shadow path for {self.layer_name}")
                         else:
-                            logging.warning(f"Constrained shadow path became empty, keeping original for {self.layer_name}")
+                            pass
                     else:
-                        logging.warning(f"Strand2 boundary is empty for {self.layer_name}, skipping constraint")
+                        pass
                 else:
-                    logging.warning(f"Strand2 shadow path is empty for {self.layer_name}, cannot constrain")
+                    pass
 
                 # Save painter state before shadow drawing
                 painter.save()
@@ -907,12 +872,11 @@ class MaskedStrand(Strand):
                 painter.restore()
 
         except Exception as e:
-            logging.error(f"Error applying masked strand shadow: {e}")
             # Attempt to refresh even if there was an error
             try:
                 self.force_shadow_refresh()
             except Exception as refresh_error:
-                logging.error(f"Error during error recovery refresh: {refresh_error}")
+                pass
 
         # Return early if we're in shadow-only mode (after drawing shadows)
         if skip_visual:
@@ -933,7 +897,7 @@ class MaskedStrand(Strand):
                     painter.setBrush(self.first_selected_strand.stroke_color)
                     painter.drawPath(fresh_mask_path_stroke)
             except Exception as _e:
-                logging.error(f"Could not draw antialiased mask stroke: {_e}")
+                pass
                 
             # Draw fill layer
             try:
@@ -942,12 +906,12 @@ class MaskedStrand(Strand):
                     painter.setBrush(self.first_selected_strand.color)
                     painter.drawPath(fresh_mask_path)
             except Exception as _e:
-                logging.error(f"Could not draw antialiased mask fill: {_e}")
+                pass
 
             painter.restore()
             
         except Exception as e:
-            logging.error(f"Error drawing masked strand directly: {str(e)}")
+            pass
 
         # Handle selection highlights
         if self.is_selected:
@@ -959,19 +923,16 @@ class MaskedStrand(Strand):
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPath(mask_path)
             except Exception as e:
-                logging.error(f"Error drawing selection highlight: {str(e)}")
+                pass
 
-        logging.info(f"Completed direct drawing for masked strand {self.layer_name}")
 
     def update(self, new_position):
         """Update deletion rectangles position while maintaining strand positions."""
         # Check if we're using absolute coordinates (from JSON)
         if hasattr(self, 'using_absolute_coords') and self.using_absolute_coords:
-            logging.info(f"Using absolute coordinates for {self.layer_name}, skipping transformation")
             return
 
         if not hasattr(self, 'base_center_point') or not self.base_center_point:
-            logging.warning("No base center point set, cannot update")
             # Try to calculate center points if they don't exist
             self.calculate_center_point()
             # If still no base_center_point, we can't proceed
@@ -982,9 +943,7 @@ class MaskedStrand(Strand):
         if not new_position:
             if hasattr(self, 'edited_center_point') and self.edited_center_point:
                 new_position = self.edited_center_point
-                logging.info(f"Using current edited_center_point as new position")
             else:
-                logging.warning("No new position provided and no edited_center_point available")
                 return
 
         # Calculate the movement delta
@@ -993,7 +952,6 @@ class MaskedStrand(Strand):
 
         # Only proceed if there's actual movement
         if abs(delta_x) > 0.01 or abs(delta_y) > 0.01:
-            logging.info(f"➡️ Movement delta: dx={delta_x:.2f}, dy={delta_y:.2f}")
 
             # Shift each deletion rectangle's corners by (delta_x, delta_y)
             for rect in self.deletion_rectangles:
@@ -1036,9 +994,8 @@ class MaskedStrand(Strand):
                 self.canvas.update()
 
         else:
-            logging.info("ℹ️ No movement detected, skipping updates")
+            pass
 
-        logging.info(f"=== Completed MaskedStrand update for {self.layer_name} ===\n")
         self.force_shadow_update()
     
     # Add this as a separate method
@@ -1055,7 +1012,6 @@ class MaskedStrand(Strand):
         for attr in cached_attrs:
             if hasattr(self, attr):
                 delattr(self, attr)
-                logging.info(f"Cleared cache for {attr}")
         
         # Update all related shapes and components
         if hasattr(self.first_selected_strand, 'update_shape'):
@@ -1078,7 +1034,6 @@ class MaskedStrand(Strand):
         if hasattr(self, 'canvas') and self.canvas:
             self.canvas.update()
             
-        logging.info(f"Forced complete shadow update for masked strand {self.layer_name}")
     
     # Add a more lightweight refresh method that doesn't recalculate everything
     def force_shadow_refresh(self):
@@ -1094,21 +1049,18 @@ class MaskedStrand(Strand):
         if hasattr(self, 'canvas') and self.canvas:
             self.canvas.update()
             
-        logging.info(f"Refreshed masked strand {self.layer_name} for consistent UI updates")
 
     def add_deletion_rectangle(self, rect):
         """Initialize or add a new deletion rectangle with proper offset tracking."""
         if not hasattr(self, 'deletion_rectangles'):
             self.deletion_rectangles = []
-            logging.info("📦 Initializing deletion rectangles array")
         
         # Ensure base center point exists
         if not hasattr(self, 'base_center_point') or self.base_center_point is None:
             self.calculate_center_point()
             if self.base_center_point:
-                logging.info(f"📍 Calculated initial base center point: ({self.base_center_point.x():.2f}, {self.base_center_point.y():.2f})")
+                pass
             else:
-                logging.error("❌ Failed to calculate base center point")
                 return
         
         # Deep copy the rectangle to avoid reference issues
@@ -1124,16 +1076,12 @@ class MaskedStrand(Strand):
         new_rect['width'] = rect['width']
         new_rect['height'] = rect['height']
         
-        logging.info(f"📐 New rectangle position: ({new_rect['x']:.2f}, {new_rect['y']:.2f})")
-        logging.info(f"📏 Calculated offsets from base center: dx={new_rect['offset_x']:.2f}, dy={new_rect['offset_y']:.2f}")
         
         self.deletion_rectangles.append(new_rect)
         
         # Update the mask path with the new rectangle
         self.update_mask_path()
         
-        logging.info(f"✅ Added deletion rectangle #{len(self.deletion_rectangles)} with dimensions: {new_rect['width']}x{new_rect['height']}")
-        logging.info(f"📊 Total deletion rectangles: {len(self.deletion_rectangles)}")
 
     def update_mask_path(self):
         """Update the custom mask path based on current strand and rectangle positions."""
@@ -1144,9 +1092,9 @@ class MaskedStrand(Strand):
         using_absolute_coords = hasattr(self, 'using_absolute_coords') and self.using_absolute_coords
         
         if using_absolute_coords:
-            logging.info(f"Using absolute coordinates for deletion rectangles in {self.layer_name}, preserving exact JSON positions")
+            pass
         elif skip_recalculation:
-            logging.info(f"Skipping center recalculation for {self.layer_name} to preserve deletion rectangle positions")
+            pass
         
         # Get fresh paths from both strands
         path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -1158,7 +1106,7 @@ class MaskedStrand(Strand):
         
         # Check if the resulting path is empty (strands don't intersect)
         if self.custom_mask_path.isEmpty():
-            logging.info(f"No intersection between strands for {self.layer_name}")
+            pass
             # Even if there's no intersection, we still keep the custom_mask_path
             # (empty) and preserve any deletion rectangles for when they intersect again
         else:
@@ -1185,24 +1133,18 @@ class MaskedStrand(Strand):
                     deletion_path = QPainterPath()
                     deletion_path.addRect(QRectF(min_x, min_y, width, height))
                     self.custom_mask_path = self.custom_mask_path.subtracted(deletion_path)
-                    logging.info(
-                        f" Applied corner-based deletion rect with corners: "
-                        f"{rect['top_left']} {rect['top_right']} {rect['bottom_left']} {rect['bottom_right']}"
-                    )
             
-            logging.info(f"Updated mask path for {self.layer_name}")
         
         # Clear any cached paths that depend on the mask
         cached_attrs = ['_shadow_path', '_cached_path', '_cached_mask', '_base_mask_path']
         for attr in cached_attrs:
             if hasattr(self, attr):
                 delattr(self, attr)
-                logging.info(f"Cleared cache for {attr} after mask update")
 
         # Skip center point recalculation for absolute coordinates
         if using_absolute_coords:
             # Do nothing with center point, keep deletion rectangles exactly as loaded
-            logging.info(f"Preserved absolute coordinates for {self.layer_name}")
+            pass
         # Skip center point recalculation if requested (during loading)
         elif not skip_recalculation:
             # Always update center points after mask path changes
@@ -1217,28 +1159,25 @@ class MaskedStrand(Strand):
                 dx = self.base_center_point.x() - old_base_center.x() if self.base_center_point else 0
                 dy = self.base_center_point.y() - old_base_center.y() if self.base_center_point else 0
                 if abs(dx) > 0.01 or abs(dy) > 0.01:
-                    logging.info(f"Base center point moved: dx={dx:.2f}, dy={dy:.2f}")
+                    pass
                     
             if hasattr(self, 'edited_center_point') and old_edited_center:
                 dx = self.edited_center_point.x() - old_edited_center.x() if self.edited_center_point else 0
                 dy = self.edited_center_point.y() - old_edited_center.y() if self.edited_center_point else 0
                 if abs(dx) > 0.01 or abs(dy) > 0.01:
-                    logging.info(f"Edited center point moved: dx={dx:.2f}, dy={dy:.2f}")
+                    pass
         else:
             # Use control_point_center from JSON if available
             if hasattr(self, 'control_point_center'):
                 self.base_center_point = QPointF(self.control_point_center)
                 self.edited_center_point = QPointF(self.control_point_center)
-                logging.info(f"Using center point from JSON: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
         
-        logging.info(f"Updated mask path for {self.layer_name}")
 
     def set_color(self, color):
         """Set the color of the masked strand while preserving second strand's color."""
         self.color = color
         # Don't propagate the color change to the second selected strand
         # The second strand should keep its own set's color
-        logging.info(f"Set color for masked strand {self.layer_name} to {color.name()}, preserving second strand color")
 
     def remove_attached_strands(self):
         """Recursively remove all attached strands from both selected strands."""
@@ -1326,7 +1265,6 @@ class MaskedStrand(Strand):
         
         # If edited_center_point is None, try to fall back to base_center_point
         if self.edited_center_point is None and self.base_center_point is not None:
-            logging.warning(f"Using base center point as fallback for {self.layer_name}")
             self.edited_center_point = QPointF(self.base_center_point)
         
         # If still None, use the midpoint between the strands as fallback
@@ -1353,7 +1291,6 @@ class MaskedStrand(Strand):
                         mid_y = sum_y / len(valid_points)
                         
                         self.edited_center_point = QPointF(mid_x, mid_y)
-                        logging.warning(f"Using fallback midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
             
             # If still None, use our own endpoints as last resort
             if self.edited_center_point is None and hasattr(self, 'start') and hasattr(self, 'end'):
@@ -1361,11 +1298,9 @@ class MaskedStrand(Strand):
                     mid_x = (self.start.x() + self.end.x()) / 2
                     mid_y = (self.start.y() + self.end.y()) / 2
                     self.edited_center_point = QPointF(mid_x, mid_y)
-                    logging.warning(f"Using own endpoints midpoint for {self.layer_name}: {mid_x:.2f}, {mid_y:.2f}")
         
         # Last resort - create a default point if everything else failed
         if self.edited_center_point is None:
-            logging.error(f"Failed to calculate any center point for {self.layer_name}, using default")
             self.edited_center_point = QPointF(0, 0)
             self.base_center_point = QPointF(0, 0)
             
@@ -1374,7 +1309,6 @@ class MaskedStrand(Strand):
     def _calculate_center_from_path(self, path):
         """Helper method to calculate center point from a given path."""
         if path.isEmpty():
-            logging.warning(f"Empty path for strand {self.layer_name}, cannot calculate center")
             return None
             
         bounds = path.boundingRect()
@@ -1398,7 +1332,6 @@ class MaskedStrand(Strand):
         
         if total_points > 0:
             center = QPointF(sum_x / total_points, sum_y / total_points)
-            logging.info(f"Calculated center point for {self.layer_name}: {center.x():.2f}, {center.y():.2f} from {total_points} points")
             return center
         return None
 
@@ -1455,7 +1388,6 @@ class MaskedStrand(Strand):
         using_absolute_coords = hasattr(self, 'using_absolute_coords') and self.using_absolute_coords
         
         if using_absolute_coords:
-            logging.info(f"Using absolute coordinates for deletion rectangles in {self.layer_name}, preserving exact JSON positions")
             
             # Just update the mask path without moving deletion rectangles
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -1482,13 +1414,11 @@ class MaskedStrand(Strand):
             # Don't clear the flag for absolute coordinate strands
             return
         elif skip_recalculation:
-            logging.info(f"Skipping full recalculation for {self.layer_name} to preserve original deletion rectangle positions")
             
             # Ensure we have base_center_point and edited_center_point from JSON's control_point_center
             if hasattr(self, 'control_point_center'):
                 self.base_center_point = QPointF(self.control_point_center)
                 self.edited_center_point = QPointF(self.control_point_center)
-                logging.info(f"Using center point from JSON for both base and edited centers: {self.base_center_point.x():.2f}, {self.base_center_point.y():.2f}")
             
             # Only update the mask path without recalculating center points
             path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -1532,4 +1462,3 @@ class MaskedStrand(Strand):
                 self.canvas.background_cache_valid = False
             self.canvas.update()
             
-        logging.info(f"Completed force_complete_update for {self.layer_name}")

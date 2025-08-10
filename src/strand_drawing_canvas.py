@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 from render_utils import RenderUtils
-import logging
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from mask_mode import MaskMode  # Add this import
@@ -17,7 +16,6 @@ import traceback
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from PyQt5.QtWidgets import QCheckBox, QLineEdit, QPushButton
-import logging
 import traceback
 import os
 import sys
@@ -228,9 +226,9 @@ class StrandDrawingCanvas(QWidget):
                                 shadow_color = None # Reset on error
                                 break
             except Exception as e:
-                logging.error(f"Canvas: Error reading settings file: {e}")
+                pass
         else:
-            logging.info("Canvas: Settings file not found. Using default shadow color.")
+            pass
             
         return shadow_color
 
@@ -266,9 +264,9 @@ class StrandDrawingCanvas(QWidget):
                                 default_strand_color = None # Reset on error
                                 break
             except Exception as e:
-                logging.error(f"Canvas: Error reading settings file: {e}")
+                pass
         else:
-            logging.info("Canvas: Settings file not found. Using default strand color.")
+            pass
             
         return default_strand_color
 
@@ -304,9 +302,9 @@ class StrandDrawingCanvas(QWidget):
                                 default_stroke_color = None # Reset on error
                                 break
             except Exception as e:
-                logging.error(f"Canvas: Error reading settings file: {e}")
+                pass
         else:
-            logging.info("Canvas: Settings file not found. Using default stroke color.")
+            pass
             
         return default_stroke_color
 
@@ -332,17 +330,17 @@ class StrandDrawingCanvas(QWidget):
                                 self.num_steps = int(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded NumSteps from settings: {self.num_steps}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing NumSteps value. Using default {self.num_steps}.")
+                                pass
                         elif line.startswith('MaxBlurRadius:'):
                             try:
                                 self.max_blur_radius = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded MaxBlurRadius from settings: {self.max_blur_radius:.1f}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
+                                pass
             except Exception as e:
-                logging.error(f"Canvas: Error reading settings file for blur settings: {e}")
+                pass
         else:
-            logging.info("Canvas: Settings file not found. Using default shadow blur settings.")
+            pass
 
     def load_extension_line_settings(self):
         """Load extension line settings (ExtensionLength, ExtensionDashCount, ExtensionDashWidth) from user_settings.txt if available."""
@@ -367,41 +365,41 @@ class StrandDrawingCanvas(QWidget):
                                 self.extension_length = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ExtensionLength from settings: {self.extension_length}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ExtensionLength. Using default {self.extension_length}")
+                                pass
                         elif line.startswith('ExtensionDashCount:'):
                             try:
                                 self.extension_dash_count = int(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ExtensionDashCount from settings: {self.extension_dash_count}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ExtensionDashCount. Using default {self.extension_dash_count}")
+                                pass
                         elif line.startswith('ExtensionDashWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ExtensionDashWidth from settings: {self.extension_dash_width}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ExtensionDashWidth. Using default {self.extension_dash_width}")
+                                pass
                         elif line.startswith('ArrowHeadLength:'):
                             try:
                                 self.arrow_head_length = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ArrowHeadLength from settings: {self.arrow_head_length}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ArrowHeadLength. Using default {self.arrow_head_length}")
+                                pass
                         elif line.startswith('ArrowHeadWidth:'):
                             try:
                                 self.arrow_head_width = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ArrowHeadWidth from settings: {self.arrow_head_width}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ArrowHeadWidth. Using default {self.arrow_head_width}")
+                                pass
                         elif line.startswith('ExtensionLineWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
                                 #logging.info(f"Canvas: Loaded ExtensionLineWidth (legacy): {self.extension_dash_width}")
                             except ValueError:
-                                logging.error(f"Canvas: Error parsing ExtensionLineWidth. Using default {self.extension_dash_width}")
+                                pass
             except Exception as e:
-                logging.error(f"Canvas: Error reading settings file for extension settings: {e}")
+                pass
         else:
-            logging.info("Canvas: Settings file not found. Using default extension settings.")
+            pass
 
     def setup_modes(self):
         """Initialize the interaction modes."""
@@ -419,16 +417,16 @@ class StrandDrawingCanvas(QWidget):
                 self.move_mode.draw_only_affected_strand = draw_only_setting
                 #logging.info(f"Applied draw_only_affected_strand setting during initialization: {draw_only_setting}")
         except Exception as e:
-            logging.error(f"Error applying draw_only_affected_strand setting: {e}")
+            pass
 
         # Apply snap_to_grid_enabled setting from user settings if available
         try:
             snap_to_grid_setting = self.load_snap_to_grid_setting()
             if snap_to_grid_setting is not None:
                 self.snap_to_grid_enabled = snap_to_grid_setting
-                logging.info(f"Applied snap_to_grid_enabled setting during initialization: {snap_to_grid_setting}")
+                pass
         except Exception as e:
-            logging.error(f"Error applying snap_to_grid_enabled setting: {e}")
+            pass
 
         # Mask mode setup
         # Pass the undo_redo_manager instance here
@@ -511,7 +509,7 @@ class StrandDrawingCanvas(QWidget):
         Applicable whether the group is masked or unmasked.
         """
         if group_name not in self.groups:
-            logging.warning(f"Group '{group_name}' was not found in self.groups.")
+            pass
             return
 
         self.rotating_group_name = group_name
@@ -659,7 +657,7 @@ class StrandDrawingCanvas(QWidget):
 
             self.update()  # Trigger redraw
         else:
-            logging.warning(f"Attempted to rotate non-existent or inactive group: {group_name}")
+            pass
 
 
     def rotate_point(self, point, center, angle):
@@ -771,9 +769,9 @@ class StrandDrawingCanvas(QWidget):
         #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Group exists in self.groups: {group_name in self.groups}")
         
         if hasattr(self, 'pre_rotation_main_strands'):
-            logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Found pre_rotation_main_strands: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
+            pass
         else:
-            logging.info("[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands found")
+            pass
 
         if hasattr(self, 'rotating_group_name') and self.rotating_group_name == group_name:
             if group_name in self.groups:
@@ -813,7 +811,7 @@ class StrandDrawingCanvas(QWidget):
             #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Finished rotation cleanup for group '{group_name}'")
             self.update()
         else:
-            logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] Attempted to finish rotation for inactive group: {group_name}. Current rotating group: {getattr(self, 'rotating_group_name', None)}")
+            pass
 
 
     def update_original_positions_recursively(self, strand):
@@ -841,7 +839,7 @@ class StrandDrawingCanvas(QWidget):
             new_strand.shadow_color = QColor(0, 0, 0, 150)
             
         self.strands.append(new_strand)
-        logging.info(f"Created new strand: {new_strand.layer_name}")
+        pass
         self.strand_created.emit(new_strand)
         return new_strand
     def initialize_original_positions(self, group_name):
@@ -849,7 +847,7 @@ class StrandDrawingCanvas(QWidget):
         Initialize original positions for group strands and their attached strands.
         """
         if not self.group_layer_manager:
-            logging.error("GroupLayerManager not connected.")
+            pass
             return
         
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
@@ -910,7 +908,7 @@ class StrandDrawingCanvas(QWidget):
         used during the movement.
         """
         if group_name not in self.groups:
-            logging.error(f"Group '{group_name}' not found in canvas.")
+            pass
             return
 
         strands = self.groups[group_name]['strands']
@@ -957,7 +955,7 @@ class StrandDrawingCanvas(QWidget):
             # Update layers based on valid strands
             group_data['layers'] = [strand.layer_name for strand in group_data['strands']]
             
-            logging.info(f"Validated group data for {group_name}")
+            pass
             return True
         return False
     def snap_group_to_grid(self, group_name):
@@ -967,7 +965,7 @@ class StrandDrawingCanvas(QWidget):
         original positions accordingly.
         """
         if group_name not in self.groups:
-            logging.error(f"Group '{group_name}' not found in canvas.")
+            pass
             return
 
         grid_size = self.grid_size  # Ensure grid_size is defined in your class
@@ -1024,7 +1022,7 @@ class StrandDrawingCanvas(QWidget):
         in the specified group to the closest points on the grid.
         """
         if group_name not in self.groups:
-            logging.error(f"Group '{group_name}' not found in canvas.")
+            pass
             return
 
         grid_size = self.grid_size  # Ensure grid_size is defined in your class
@@ -1090,13 +1088,13 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = layers
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
-        logging.info(f"Started moving group '{group_name}'")
+        pass
 
     def refresh_group_data(self, group_name):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager.group_panel:
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
             if not group_data:
-                logging.warning(f"Group '{group_name}' not found in GroupPanel")
+                pass
                 return
             # Get main set numbers from group data
             main_set_numbers = group_data.get('main_set_numbers', [])
@@ -1111,13 +1109,13 @@ class StrandDrawingCanvas(QWidget):
                         if strand.layer_name not in group_data['layers']:
                             group_data['layers'].append(strand.layer_name)
                             group_data['strands'].append(strand)
-                            logging.info(f"Added strand '{strand.layer_name}' to group '{group_name}' during refresh")
+                            pass
         else:
-            logging.error("GroupLayerManager or GroupPanel not properly connected to StrandDrawingCanvas")
+            pass
 
 
     def move_group_strands(self, group_name, dx, dy):
-        logging.info(f"Moving group '{group_name}' by dx={dx}, dy={dy}")
+        pass
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
             if group_data:
@@ -1150,7 +1148,7 @@ class StrandDrawingCanvas(QWidget):
                                 # Also add to group_data to keep it updated
                                 group_data['strands'].append(strand)
                                 group_data['layers'].append(strand.layer_name)
-                                logging.info(f"Added new strand '{strand.layer_name}' to group '{group_name}' during move")
+                                pass
 
                 # Second pass: Move group strands and update all connected strands
                 for strand in self.strands:
@@ -1179,7 +1177,7 @@ class StrandDrawingCanvas(QWidget):
                                 strand.update_side_line()
                             updated_strands.add(strand)
                             affected_strands.append(strand)
-                            logging.info(f"Updated connected strand '{strand.layer_name}' that shares points with group strands")
+                            pass
 
                 # Update group_data with new positions of all affected strands
                 for strand in affected_strands:
@@ -1197,9 +1195,9 @@ class StrandDrawingCanvas(QWidget):
                 # Force a redraw of the canvas
                 self.update()
             else:
-                logging.warning(f"No group data found for group '{group_name}'")
+                pass
         else:
-            logging.error("GroupLayerManager not properly connected to StrandDrawingCanvas")
+            pass
 
 
     def initialize_properties(self):
@@ -1240,7 +1238,7 @@ class StrandDrawingCanvas(QWidget):
         
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
-        logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
+        pass
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = False
@@ -1278,15 +1276,15 @@ class StrandDrawingCanvas(QWidget):
         # **Add this line to ensure the color is set**
         if set_number not in self.strand_colors:
             self.strand_colors[set_number] = self.default_strand_color   # Use default strand color instead of hardcoded purple
-            logging.info(f"Set strand_colors[{set_number}] to default_strand_color: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}")
+            pass
         else:
-            logging.info(f"strand_colors[{set_number}] already exists with color: {self.strand_colors[set_number].red()},{self.strand_colors[set_number].green()},{self.strand_colors[set_number].blue()},{self.strand_colors[set_number].alpha()}")
+            pass
         
-        logging.info(f"Entered new strand mode for set: {set_number} - all modes and states reset for zoom consistency")
+        pass
         
         # Debug logging to verify state save/restore
         if hasattr(self, '_pre_creation_state') and self._pre_creation_state:
-            logging.debug(f"State saving verified - saved state contains: {list(self._pre_creation_state.keys())}")
+            pass
     def load_draw_only_affected_strand_setting(self):
         """Load draw_only_affected_strand setting from user_settings.txt if available."""
         try:
@@ -1304,7 +1302,7 @@ class StrandDrawingCanvas(QWidget):
                 settings_dir = program_data_dir  # AppDataLocation already includes the app name
 
             file_path = os.path.join(settings_dir, 'user_settings.txt')
-            logging.info(f"StrandDrawingCanvas looking for draw_only_affected_strand setting at: {file_path}")
+            pass
             
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as file:
@@ -1313,14 +1311,14 @@ class StrandDrawingCanvas(QWidget):
                         if line.startswith('DrawOnlyAffectedStrand:'):
                             value = line.split(':', 1)[1].strip().lower()
                             draw_only_setting = (value == 'true')
-                            logging.info(f"StrandDrawingCanvas found DrawOnlyAffectedStrand in settings: {draw_only_setting}")
+                            pass
                             return draw_only_setting
             else:
-                logging.info(f"StrandDrawingCanvas: Settings file not found at {file_path}, will use default draw_only_affected_strand setting")
+                pass
                 
             return None
         except Exception as e:
-            logging.error(f"StrandDrawingCanvas error loading draw_only_affected_strand from settings: {e}")
+            pass
             return None
 
     def load_snap_to_grid_setting(self):
@@ -1340,7 +1338,7 @@ class StrandDrawingCanvas(QWidget):
                 settings_dir = program_data_dir  # AppDataLocation already includes the app name
 
             file_path = os.path.join(settings_dir, 'user_settings.txt')
-            logging.info(f"StrandDrawingCanvas looking for snap_to_grid_enabled setting at: {file_path}")
+            pass
             
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as file:
@@ -1349,14 +1347,14 @@ class StrandDrawingCanvas(QWidget):
                         if line.startswith('EnableSnapToGrid:'):
                             value = line.split(':', 1)[1].strip().lower()
                             snap_to_grid_setting = (value == 'true')
-                            logging.info(f"StrandDrawingCanvas found EnableSnapToGrid in settings: {snap_to_grid_setting}")
+                            pass
                             return snap_to_grid_setting
             else:
-                logging.info(f"StrandDrawingCanvas: Settings file not found at {file_path}, will use default snap_to_grid_enabled setting")
+                pass
                 
             return None
         except Exception as e:
-            logging.error(f"StrandDrawingCanvas error loading snap_to_grid_enabled from settings: {e}")
+            pass
             return None
 
     def show_control_points(self, visible):
@@ -1373,7 +1371,7 @@ class StrandDrawingCanvas(QWidget):
             self.zoom_factor = new_zoom
             self.update_canvas_bounds()
             self.update()
-            logging.info(f"Zoomed in to {self.zoom_factor:.2f}x (increment: {zoom_increment:.2f})")
+            pass
     
     def zoom_out(self):
         """Decrease the zoom level by 10% of current zoom."""
@@ -1388,12 +1386,12 @@ class StrandDrawingCanvas(QWidget):
             
             self.update_canvas_bounds()
             self.update()
-            logging.info(f"Zoomed out to {self.zoom_factor:.2f}x (decrement: {zoom_decrement:.2f}), pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
+            pass
     
     def center_all_strands(self):
         """Center all strands in the canvas by calculating their bounding box and adjusting pan offset."""
         if not self.strands:
-            logging.info("No strands to center")
+            pass
             return
             
         # Calculate bounding box of all strands
@@ -1436,23 +1434,23 @@ class StrandDrawingCanvas(QWidget):
         self.update_canvas_bounds()
         self.update()
         
-        logging.info(f"Centered strands: bounding box ({min_x:.1f}, {min_y:.1f}) to ({max_x:.1f}, {max_y:.1f})")
-        logging.info(f"Strands center: ({strands_center_x:.1f}, {strands_center_y:.1f})")
-        logging.info(f"Canvas center: ({canvas_center_x:.1f}, {canvas_center_y:.1f})")
-        logging.info(f"New pan offset: ({self.pan_offset_x:.1f}, {self.pan_offset_y:.1f})")
+        pass
+        pass
+        pass
+        pass
 
     def reset_zoom(self):
         """Reset zoom to 100% and center the view."""
         import traceback
-        logging.info("reset_zoom() called from:")
+        pass
         for line in traceback.format_stack():
-            logging.info(f"  {line.strip()}")
+            pass
         
         self.zoom_factor = 1.0
         self.pan_offset_x = 0
         self.pan_offset_y = 0
         self.update()
-        logging.info("Reset zoom to 1.0x and centered view")
+        pass
     
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
@@ -1461,7 +1459,7 @@ class StrandDrawingCanvas(QWidget):
         self.pan_start_offset = None
         self.setCursor(Qt.OpenHandCursor if self.pan_mode else Qt.ArrowCursor)
         self.update()
-        logging.info(f"Pan mode {'enabled' if self.pan_mode else 'disabled'}")
+        pass
 
     def exit_pan_mode(self):
         """Exit pan mode (used for right-click exit)"""
@@ -1471,7 +1469,7 @@ class StrandDrawingCanvas(QWidget):
             self.pan_start_offset = None
             self.setCursor(Qt.ArrowCursor)
             self.update()
-            logging.info("Pan mode disabled via right-click")
+            pass
             
             # Notify layer panel to update pan button state
             # Try multiple ways to access the layer panel
@@ -1480,14 +1478,14 @@ class StrandDrawingCanvas(QWidget):
             # Method 1: Through parent
             if hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'layer_panel'):
                 layer_panel = self.parent().layer_panel
-                logging.info("Found layer panel via parent")
+                pass
             
             # Method 2: Through main window
             elif hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'main_window'):
                 main_window = self.parent().main_window
                 if hasattr(main_window, 'layer_panel'):
                     layer_panel = main_window.layer_panel
-                    logging.info("Found layer panel via main window")
+                    pass
             
             # Method 3: Search through QApplication
             if not layer_panel:
@@ -1495,16 +1493,16 @@ class StrandDrawingCanvas(QWidget):
                 for widget in QApplication.allWidgets():
                     if hasattr(widget, 'pan_button') and hasattr(widget, 'canvas') and widget.canvas == self:
                         layer_panel = widget
-                        logging.info("Found layer panel via QApplication search")
+                        pass
                         break
             
             # Update the pan button if we found the layer panel
             if layer_panel and hasattr(layer_panel, 'pan_button'):
                 layer_panel.pan_button.setChecked(False)
                 layer_panel.pan_button.setText("🖐")  # Open hand emoji when inactive
-                logging.info("Updated layer panel pan button to open hand")
+                pass
             else:
-                logging.warning("Could not find layer panel to update pan button")
+                pass
     
     def update_canvas_bounds(self):
         """Update the maximum canvas bounds based on current zoom level"""
@@ -1561,7 +1559,7 @@ class StrandDrawingCanvas(QWidget):
         # next paint event will render the final, correct canvas in one go.
         # --------------------------------------------------
         if getattr(self, "_suppress_repaint", False):
-            logging.debug("Paint event suppressed - _suppress_repaint flag is active")
+            pass
             return  # Skip custom painting while suppression is active
 
         # Proceed with full painting when not suppressed
@@ -1569,7 +1567,7 @@ class StrandDrawingCanvas(QWidget):
             # Create high-resolution buffer for 4x pixel density
             widget_size = self.size()
             buffer_size = widget_size * self.supersampling_factor
-            logging.info(f"[Canvas] Using supersampling: widget_size={widget_size}, buffer_size={buffer_size}")
+            pass
             
             if (self.render_buffer is None or 
                 self.render_buffer.size() != buffer_size):
@@ -1577,7 +1575,7 @@ class StrandDrawingCanvas(QWidget):
                 self.render_buffer = QImage(buffer_size, QImage.Format_ARGB32_Premultiplied)
                 # Fill with transparent background to start clean
                 self.render_buffer.fill(Qt.transparent)
-                logging.info(f"[Canvas] Created new supersampling buffer: {buffer_size}")
+                pass
             else:
                 # Clear the existing buffer
                 self.render_buffer.fill(Qt.transparent)
@@ -1622,20 +1620,20 @@ class StrandDrawingCanvas(QWidget):
         # Check MoveMode
         if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
             draw_all_strands = False
-            logging.info("Using optimized drawing mode in MoveMode - only drawing affected strands")
+            pass
         
         
         # Check RotateMode
         elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode and hasattr(self.rotate_mode, 'draw_only_affected_strand'):
             if self.rotate_mode.draw_only_affected_strand and self.rotate_mode.is_rotating:
                 draw_all_strands = False
-                logging.info("Using optimized drawing mode in RotateMode - only drawing affected strands")
+                pass
         
         # Check AngleAdjustMode
         elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting and hasattr(self.angle_adjust_mode, 'draw_only_affected_strand'):
             if self.angle_adjust_mode.draw_only_affected_strand and self.angle_adjust_mode.active_strand and self.angle_adjust_mode.dialog_is_open:
                 draw_all_strands = False
-                logging.info("Using optimized drawing mode in AngleAdjustMode - only drawing affected strands")
+                pass
 
         # Draw ALL existing strands first (background)
         if draw_all_strands:
@@ -1643,14 +1641,14 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving:
                 if not hasattr(self, '_logged_strands_list'):
                     self._logged_strands_list = True
-                    logging.info(f"paintEvent: draw_all_strands=True, draw_only_affected_strand={getattr(self.current_mode, 'draw_only_affected_strand', None)}")
-                    logging.info(f"paintEvent: Drawing all strands. Total strands count: {len(self.strands)}")
-                    logging.info(f"paintEvent: Strands list: {[s.layer_name for s in self.strands]}")
+                    pass
+                    pass
+                    pass
                     
                     # Also log which strands have parent_strand
                     for s in self.strands:
                         if hasattr(s, 'parent_strand') and s.parent_strand:
-                            logging.info(f"paintEvent: Strand {s.layer_name} has parent {s.parent_strand.layer_name}")
+                            pass
                     
             for strand in self.strands:
                 # Reduced high-frequency logging for performance
@@ -1687,7 +1685,7 @@ class StrandDrawingCanvas(QWidget):
                                     parent_should_force = True
                                     if not hasattr(self, '_logged_parent_force_highlight'):
                                         self._logged_parent_force_highlight = True
-                                        logging.info(f"Toggle OFF: Force highlighting parent strand {parent.layer_name}")
+                                        pass
                         
                         # Draw the parent with appropriate highlighting
                         if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress:
@@ -1720,7 +1718,7 @@ class StrandDrawingCanvas(QWidget):
                             should_force_highlight = True
                             if not hasattr(self, '_logged_force_highlight'):
                                 self._logged_force_highlight = True
-                                logging.info(f"Toggle OFF: Force highlighting strand {strand.layer_name} (is_selected={getattr(strand, 'is_selected', False)}, in truly_moving_strands: {[s.layer_name for s in truly_moving_strands]})")
+                                pass
                 
                 # highlight selected strand if we're not suppressed
                 # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
@@ -1742,14 +1740,14 @@ class StrandDrawingCanvas(QWidget):
             if isinstance(self.current_mode, MoveMode):
                 # --- MODIFIED: Use truly_moving_strands for consistent highlighting ---
                 truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                logging.info(f"Optimized drawing: truly_moving_strands={[s.layer_name for s in truly_moving_strands]}")
+                pass
                 
                 if truly_moving_strands:
                     # Use the first strand as the affected strand
                     affected_strand = truly_moving_strands[0]
                     # All other strands in the list are connected strands
                     connected_strands = truly_moving_strands[1:]
-                    logging.info(f"Using truly_moving_strands: affected={affected_strand.layer_name}, connected={[s.layer_name for s in connected_strands]}")
+                    pass
                     
                     # Ensure all truly moving strands have is_selected=True
                     for strand in truly_moving_strands:
@@ -1827,7 +1825,7 @@ class StrandDrawingCanvas(QWidget):
             
             # Draw the affected strand if available
             if affected_strand:
-                logging.info(f"Drawing affected strand in optimization mode: {affected_strand.layer_name}")
+                pass
                 # --- REVISED: Handle highlighting based on movement type ---
                 is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
                 is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
@@ -1842,7 +1840,7 @@ class StrandDrawingCanvas(QWidget):
                 
                 # Draw any connected strands (check if they should be highlighted)
                 for strand in connected_strands:
-                    logging.info(f"Drawing connected strand in optimization mode: {strand.layer_name}")
+                    pass
                     # Check if strand is valid (not deleted)
                     if strand in self.strands:
                         # Check if this connected strand should be highlighted
@@ -1858,19 +1856,19 @@ class StrandDrawingCanvas(QWidget):
                 self.current_strand.canvas = self
             # Log for debugging zoom-out issues
             if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
-                logging.info(f"Drawing current_strand while zoomed out (zoom={self.zoom_factor}): {type(self.current_strand).__name__} {getattr(self.current_strand, 'layer_name', 'no_name')} start={self.current_strand.start} end={self.current_strand.end}")
-            logging.info(f"[Canvas.paintEvent] Drawing current_strand with painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
-            logging.info(f"[Canvas.paintEvent] Painter device size: {painter.device().size() if hasattr(painter.device(), 'size') else 'No size'}")
-            logging.info(f"[Canvas.paintEvent] Painter clipping enabled: {painter.hasClipping()}, clipRegion: {painter.clipRegion().boundingRect() if painter.hasClipping() else 'No clipping'}")
+                pass
+            pass
+            pass
+            pass
             # Skip painter setup since it's already configured in the main painting loop
             self.current_strand.draw(painter, skip_painter_setup=True)
         elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
             if self.new_strand_set_number in self.strand_colors:
                 strand_color = self.strand_colors[self.new_strand_set_number]
-                logging.info(f"Drawing temporary strand: Using color from strand_colors[{self.new_strand_set_number}]: {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
+                pass
             else:
                 strand_color = self.default_strand_color
-                logging.info(f"Drawing temporary strand: Using default_strand_color: {strand_color.red()},{strand_color.green()},{strand_color.blue()},{strand_color.alpha()}")
+                pass
             temp_strand = Strand(
                 self.new_strand_start_point,
                 self.new_strand_end_point,
@@ -1907,10 +1905,10 @@ class StrandDrawingCanvas(QWidget):
 
         # Only draw control points if they're enabled
         if self.show_control_points:
-            logging.info(f"StrandDrawingCanvas: Drawing control points in paintEvent (show_control_points=True)")
+            pass
             self.draw_control_points(painter)
         else:
-            logging.info(f"StrandDrawingCanvas: NOT drawing control points in paintEvent (show_control_points=False)")
+            pass
 
         # Draw strand labels if enabled
         if self.should_draw_names:
@@ -2342,13 +2340,13 @@ class StrandDrawingCanvas(QWidget):
         # Clear the render buffer when toggling to force recreation
         self.render_buffer = None
         self.update()  # Trigger repaint
-        logging.info(f"Supersampling {'enabled' if self.use_supersampling else 'disabled'}")
+        pass
         
         # Also log which rendering path is being used
         if hasattr(self, 'strands'):
             for strand in self.strands[:1]:  # Just check first strand
                 zoom_factor = getattr(self, 'zoom_factor', 1.0)
-                logging.info(f"Sample strand will use {'_draw_direct' if zoom_factor != 1.0 else 'normal draw'} (zoom: {zoom_factor})")
+                pass
     
     def set_supersampling_factor(self, factor):
         """Set the supersampling factor (default 4.0 for 4x crispness)."""
@@ -2357,12 +2355,12 @@ class StrandDrawingCanvas(QWidget):
         self.render_buffer = None
         if self.use_supersampling:
             self.update()  # Trigger repaint if currently using supersampling
-        logging.info(f"Supersampling factor set to {self.supersampling_factor}x")
+        pass
 
     def toggle_control_points(self):
         """Toggle the visibility of control points."""
         self.show_control_points = not self.show_control_points
-        logging.info(f"Control points visibility toggled: {self.show_control_points}")
+        pass
         
         # Make sure both implementations respect the toggle state
         for strand in self.strands:
@@ -2375,37 +2373,37 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'main_window') and self.main_window:
             if hasattr(self.main_window, 'toggle_control_points_button'):
                 self.main_window.toggle_control_points_button.setChecked(self.show_control_points)
-                logging.info(f"Updated control points button checked state: {self.show_control_points}")
+                pass
         
         # Persist in undo/redo history if available
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
             self.undo_redo_manager.save_state()
-            logging.info(f"Undo/redo state saved after toggling control points: {self.show_control_points}")
+            pass
 
     def toggle_shadow(self):
         """Toggle shadow rendering on or off."""
         self.shadow_enabled = not self.shadow_enabled
-        logging.info(f"Shadow rendering toggled: {self.shadow_enabled}")
+        pass
         self.update()  # Force a redraw of the canvas to apply the change
         
         # Update the button state to match the canvas state
         if hasattr(self, 'main_window') and self.main_window:
             if hasattr(self.main_window, 'toggle_shadow_button'):
                 self.main_window.toggle_shadow_button.setChecked(self.shadow_enabled)
-                logging.info(f"Updated shadow button checked state: {self.shadow_enabled}")
+                pass
         
         # Persist in undo/redo history if available
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
             self.undo_redo_manager.save_state()
-            logging.info(f"Undo/redo state saved after toggling shadow: {self.shadow_enabled}")
+            pass
         
     def set_shadow_color(self, color):
         """Set the shadow color for all strands."""
-        logging.info(f"Setting shadow color: Received {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+        pass
         
         # Create a fresh QColor to avoid reference issues
         self.default_shadow_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
@@ -2415,12 +2413,12 @@ class StrandDrawingCanvas(QWidget):
             # Create a fresh QColor for each strand to avoid reference issues
             strand.shadow_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
         
-        logging.info(f"Shadow color set to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
+        pass
         self.update()  # Force a redraw of the canvas to apply the change
 
     def set_stroke_color(self, color):
         """Set the stroke color for all strands."""
-        logging.info(f"Setting stroke color: Received {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+        pass
         
         # Create a fresh QColor to avoid reference issues
         self.default_stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
@@ -2434,9 +2432,9 @@ class StrandDrawingCanvas(QWidget):
             if strand.__class__.__name__ == 'AttachedStrand':
                 if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
                     strand.circle_stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
-                    logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name}: {color.red()},{color.green()},{color.blue()},{color.alpha()}")
+                    pass
         
-        logging.info(f"Stroke color set to: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}")
+        pass
         self.update()  # Force a redraw of the canvas to apply the change
 
 
@@ -2451,11 +2449,11 @@ class StrandDrawingCanvas(QWidget):
             strand1 (Strand): The first strand to be masked.
             strand2 (Strand): The second strand to be masked.
         """
-        logging.info(f"Attempting to create masked layer for {strand1.layer_name} and {strand2.layer_name}")
+        pass
 
         # Check if a masked layer already exists for these strands
         if self.mask_exists(strand1, strand2):
-            logging.info(f"Masked layer for {strand1.layer_name} and {strand2.layer_name} already exists.")
+            pass
             return
             
         # Check if the strands actually intersect before creating a masked layer
@@ -2473,15 +2471,15 @@ class StrandDrawingCanvas(QWidget):
             
             # If there's no intersection, don't create a masked layer
             if intersection_path.isEmpty():
-                logging.info(f"No intersection between {strand1.layer_name} and {strand2.layer_name}. Skipping masked layer creation.")
+                pass
                 return
                 
-            logging.info(f"Found intersection between {strand1.layer_name} and {strand2.layer_name}. Creating masked layer.")
+            pass
             
             # Use the already created temp_masked instead of creating a new one
             masked_strand = temp_masked
         except Exception as e:
-            logging.error(f"Error checking intersection: {e}")
+            pass
             # Create the masked strand if the intersection check fails
             masked_strand = MaskedStrand(strand1, strand2)
         
@@ -2494,7 +2492,7 @@ class StrandDrawingCanvas(QWidget):
                 self.default_shadow_color.blue(),
                 self.default_shadow_color.alpha()
             )
-            logging.info(f"Set masked strand shadow color to {masked_strand.shadow_color.red()},{masked_strand.shadow_color.green()},{masked_strand.shadow_color.blue()},{masked_strand.shadow_color.alpha()}")
+            pass
         else:
             # Fall back to default shadow color if not set
             masked_strand.shadow_color = QColor(0, 0, 0, 150)
@@ -2517,7 +2515,7 @@ class StrandDrawingCanvas(QWidget):
         masked_strand.layer_name = f"{strand1.layer_name}_{strand2.layer_name}"
         
         # Log the creation of the masked layer
-        logging.info(f"Created masked layer: {masked_strand.layer_name}")
+        pass
         
         # Clear any existing selection
         self.clear_selection()
@@ -2685,7 +2683,7 @@ class StrandDrawingCanvas(QWidget):
                 strand_index = self.strands.index(strand)
                 is_strand_locked = strand_index in self.layer_panel.locked_layers
                 if is_strand_locked:
-                    logging.info(f"Strand {strand.layer_name} at index {strand_index} is locked in layer panel")
+                    pass
 
             # Draw the regular strand first (including shadow)
             strand.draw(painter, skip_painter_setup=True)
@@ -2693,16 +2691,16 @@ class StrandDrawingCanvas(QWidget):
 
 
             # Slightly thinner stroke for circles
-            logging.warning(f"Canvas: Strand {strand.layer_name} has_circles: {strand.has_circles}")
+            pass
             for i, has_circle in enumerate(strand.has_circles):
                 # Skip drawing C-shapes when moving control points or when strand is locked
                 if has_circle:
                     if is_moving_control_point:
-                        logging.info(f"Skipping C-shape for {strand.layer_name} - moving control point")
+                        pass
                     elif is_strand_locked:
-                        logging.info(f"Skipping C-shape for {strand.layer_name} - strand is locked")
+                        pass
                     elif not has_circle:
-                        logging.info(f"Skipping C-shape for {strand.layer_name} - no circle")
+                        pass
                     else:
                         # Reduced high-frequency logging for performance during moves
                         # logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
@@ -2716,11 +2714,11 @@ class StrandDrawingCanvas(QWidget):
                     truly_moving_strands = getattr(self, 'truly_moving_strands', [])
                     if strand in truly_moving_strands:
                         should_draw_c_shape = True
-                        logging.warning(f"Canvas: Drawing C-shape for {strand.layer_name} because it's in truly_moving_strands (even though is_selected={getattr(strand, 'is_selected', False)})")
+                        pass
                 
                 if should_draw_c_shape:
                     # Debug logging for C-shape drawing
-                    logging.warning(f"Canvas: About to draw C-shape for {strand.layer_name} at position {i} (has_circle={has_circle}, is_selected={getattr(strand, 'is_selected', False)})")
+                    pass
                     
                     # Save painter state
                     painter.save()
@@ -2740,7 +2738,7 @@ class StrandDrawingCanvas(QWidget):
                          (self.points_are_close(self.selected_attached_strand.start, center) or 
                           self.points_are_close(self.selected_attached_strand.end, center)))):
                         skip_c_shape = True
-                        logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected attached strand is hidden and connects here.")
+                        pass
                     
                     # Also check other hidden attached strands
                     if not skip_c_shape:
@@ -2751,7 +2749,7 @@ class StrandDrawingCanvas(QWidget):
                                         getattr(self.current_mode, 'draw_only_affected_strand', False)) and
                                     (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
                                     skip_c_shape = True
-                                    logging.info(f"Skipping C-shape at {center} for {strand.layer_name} because the selected hidden attached strand {other_strand.layer_name} connects here.")
+                                    pass
                                     break # Found the selected hidden attached strand, no need to check further
                                 
                     if skip_c_shape:
@@ -2862,7 +2860,7 @@ class StrandDrawingCanvas(QWidget):
                     painter.restore()
                     
                     # Debug logging for C-shape completion
-                    logging.warning(f"Canvas: Completed drawing C-shape for {strand.layer_name} at position {i}")
+                    pass
             
             # This restore was likely misplaced inside the loop, moved outside
             # painter.restore()
@@ -2893,7 +2891,6 @@ class StrandDrawingCanvas(QWidget):
      
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
-        import logging
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -2907,7 +2904,7 @@ class StrandDrawingCanvas(QWidget):
             masked_strand.initialize_shadow_path()
         
         # Log the selection state for debugging
-        logging.info(f"Drawing highlighted masked strand: {masked_strand.layer_name}, is_selected={masked_strand.is_selected}")
+        pass
         
         # Only proceed with drawing if there's an actual intersection
         if not intersection_path.isEmpty():
@@ -2924,24 +2921,24 @@ class StrandDrawingCanvas(QWidget):
                 
                 # Only skip highlight during active movement, not after movement is complete
                 if move_mode.is_moving and move_mode.affected_strand == masked_strand:
-                    logging.info(f"Active movement in progress for {masked_strand.layer_name}")
+                    pass
                     # Even during movement, highlight if this strand is selected
                     # This ensures proper visual feedback during movement
                     if masked_strand.is_selected:
-                        logging.info(f"Strand is selected during movement, will draw highlight")
+                        pass
                         should_draw_highlight = True
                     else:
-                        logging.info(f"Strand is not selected during movement, skipping highlight")
+                        pass
                         should_draw_highlight = False
             
             # Draw highlight if appropriate
             if should_draw_highlight:
-                logging.info(f"Drawing highlight for masked strand: {masked_strand.layer_name}")
+                pass
                 masked_strand.draw_highlight(painter)
             else:
-                logging.info(f"Skipping highlight for masked strand: {masked_strand.layer_name} (not selected or active movement)")
+                pass
         else:
-            logging.info(f"Skipping masked strand highlights: no intersection between strands for {masked_strand.layer_name}")
+            pass
 
         painter.restore()
 
@@ -2963,7 +2960,7 @@ class StrandDrawingCanvas(QWidget):
 
 
     def update_color_for_set(self, set_number, color):
-        logging.info(f"Updating color for set {set_number} to {color.name()}")
+        pass
         self.strand_colors[set_number] = color
         
         # Convert set_number to string for comparison
@@ -2971,10 +2968,10 @@ class StrandDrawingCanvas(QWidget):
         
         for strand in self.strands:
             if not hasattr(strand, 'layer_name') or not strand.layer_name:
-                logging.info("Skipping strand without layer_name")
+                pass
                 continue
 
-            logging.info(f"Checking strand: {strand.layer_name}")
+            pass
 
             # Check if the strand's layer_name starts with our set_prefix
             if strand.layer_name.startswith(set_prefix):
@@ -2990,9 +2987,9 @@ class StrandDrawingCanvas(QWidget):
                     if strand.__class__.__name__ == 'AttachedStrand':
                         if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
                             strand.circle_stroke_color = QColor(stroke_with_alpha)
-                            logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name} in set update: {stroke_with_alpha.red()},{stroke_with_alpha.green()},{stroke_with_alpha.blue()},{stroke_with_alpha.alpha()}")
+                            pass
 
-                logging.info(f"Updated color for strand: {strand.layer_name}")
+                pass
 
             elif isinstance(strand, MaskedStrand):
                 first_part = strand.layer_name.split('_')[0]  # Get the first number only
@@ -3009,29 +3006,29 @@ class StrandDrawingCanvas(QWidget):
                         if strand.__class__.__name__ == 'AttachedStrand':
                             if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
                                 strand.circle_stroke_color = QColor(stroke_with_alpha)
-                                logging.info(f"Updated circle_stroke_color for AttachedStrand {strand.layer_name} in masked set update: {stroke_with_alpha.red()},{stroke_with_alpha.green()},{stroke_with_alpha.blue()},{stroke_with_alpha.alpha()}")
+                                pass
 
-                    logging.info(f"Updated color for masked strand: {strand.layer_name}")
+                    pass
 
         self.update()
-        logging.info(f"Finished updating color for set {set_number}")
+        pass
 
     def update_attached_strands_color(self, parent_strand, color):
         """Recursively update the color of attached strands."""
         for attached_strand in parent_strand.attached_strands:
             attached_strand.set_color(color)
-            logging.info(f"Updated color for attached strand: {attached_strand.layer_name}")
+            pass
             self.update_attached_strands_color(attached_strand, color)
 
     def on_strand_created(self, strand):
         """Handle the creation of a new strand."""
-        logging.info(f"Starting on_strand_created for strand: {strand.layer_name}")
+        pass
 
         # Set the canvas reference
         strand.canvas = self
 
         if hasattr(strand, 'is_being_deleted') and strand.is_being_deleted:
-            logging.info("Strand is being deleted, skipping creation process")
+            pass
             return
 
         # Determine the set number for the new strand
@@ -3054,14 +3051,14 @@ class StrandDrawingCanvas(QWidget):
                 try:
                     set_number = int(set_number)
                 except ValueError:
-                    logging.warning(f"Invalid set_number '{set_number}' encountered. Using next available integer.")
+                    pass
                     set_number = self.get_next_available_set_number()
 
             strand.set_number = set_number
         else:
             # Use the existing set_number
             set_number = strand.set_number
-            logging.info(f"Canvas: Using existing set_number={set_number} from strand")
+            pass
 
         # Assign color to the new strand
         if set_number not in self.strand_colors:
@@ -3087,15 +3084,15 @@ class StrandDrawingCanvas(QWidget):
                     if s.set_number == set_number and not isinstance(s, MaskedStrand)
                 ])
                 strand.layer_name = f"{set_number}_{count}"
-                logging.info(f"Canvas: Set layer_name to {strand.layer_name} (calculated count={count})")
+                pass
             else:
-                logging.info(f"Canvas: Using existing layer_name={strand.layer_name}")
+                pass
 
             if not hasattr(strand, 'is_being_deleted'):
-                logging.info(f"Canvas: Calling layer_panel.on_strand_created for strand {strand.layer_name}")
+                pass
                 self.layer_panel.on_strand_created(strand)
             else:
-                logging.info(f"Updating layer names for set {set_number}")
+                pass
                 self.layer_panel.update_layer_names(set_number)
 
             # Suppress intermediate saves during strand creation to prevent duplicate states
@@ -3124,7 +3121,7 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
             self.group_layer_manager.update_groups_with_new_strand(strand)
 
-        logging.info("Finished on_strand_created")
+        pass
 
         # Add this line to emit the signal
         self.strand_created.emit(strand)
@@ -3162,34 +3159,34 @@ class StrandDrawingCanvas(QWidget):
     def attach_strand(self, parent_strand, new_strand):
         """Handle group cleanup when a new strand is attached."""
         try:
-            logging.info(f"\n=== ATTACH_STRAND PROCESSING ===")
-            logging.info(f"Parent strand: {parent_strand.layer_name}")
-            logging.info(f"Current groups in canvas: {list(self.groups.keys())}")
+            pass
+            pass
+            pass
             
             if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
                 return True
                 
             group_panel = self.group_layer_manager.group_panel
-            logging.info(f"Groups in group_panel: {list(group_panel.groups.keys())}")
+            pass
             
             # Only process groups if the parent strand is actually in an existing group
             # This prevents recreation of manually deleted groups
             affected_groups = {}
             for group_name, group_data in list(self.groups.items()):  # Use self.groups instead of group_panel.groups
                 strand_names_in_group = [strand.layer_name for strand in group_data['strands']]
-                logging.info(f"Checking group '{group_name}' with strands: {strand_names_in_group}")
+                pass
                 
                 # Also check if the group still exists in the group panel
                 if group_name not in group_panel.groups:
-                    logging.info(f"Group '{group_name}' was deleted from panel but still in canvas.groups - removing from canvas")
+                    pass
                     del self.groups[group_name]
                     continue
                 
                 if any(strand.layer_name == parent_strand.layer_name for strand in group_data['strands']):
-                    logging.info(f"Found group '{group_name}' containing parent strand")
+                    pass
                     # Store the original main strands from the canvas groups
                     affected_groups[group_name] = list(group_data.get('main_strands', []))
-                    logging.info(f"Stored original main strands for {group_name}: {affected_groups[group_name]}")
+                    pass
                     
                     # Delete the group
                     if group_name in self.groups:
@@ -3201,7 +3198,7 @@ class StrandDrawingCanvas(QWidget):
                 # Connect to the strand_created signal to recreate groups after new strand is initialized
                 def recreate_groups(new_strand):
                     for group_name, original_main_strands in affected_groups.items():
-                        logging.info(f"Recreating group '{group_name}' with original main strands: {original_main_strands}")
+                        pass
                         # Pass the original main strands to recreate_group
                         self.group_layer_manager.recreate_group(group_name, new_strand, original_main_strands)
                     
@@ -3211,13 +3208,13 @@ class StrandDrawingCanvas(QWidget):
                 # Connect the handler
                 self.strand_created.connect(recreate_groups)
             else:
-                logging.info(f"No groups found containing parent strand {parent_strand.layer_name} - no group recreation needed")
+                pass
             
             return True
 
         except Exception as e:
-            logging.error(f"Error in attach_strand: {str(e)}")
-            logging.error(f"Traceback: {traceback.format_exc()}")
+            pass
+            pass
             return False
 
 
@@ -3226,41 +3223,41 @@ class StrandDrawingCanvas(QWidget):
 
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
-        logging.info(f"Entering select_strand. Index: {index}")
+        pass
         
         # Don't clear is_selected if we're in the middle of a movement operation
         should_clear_selection = True
         if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
             (self.current_mode.is_moving or self.current_mode.in_move_mode) and hasattr(self, 'truly_moving_strands')):
             should_clear_selection = False
-            logging.info(f"[SELECTION_DEBUG] Skipping is_selected clearing during movement operation")
+            pass
         elif (hasattr(self, 'truly_moving_strands') and self.truly_moving_strands):
             # ADDITIONAL CHECK: If truly_moving_strands exists and is not empty, we're in movement setup
             should_clear_selection = False
-            logging.info(f"[SELECTION_DEBUG] Skipping is_selected clearing because truly_moving_strands exists: {[s.layer_name for s in self.truly_moving_strands]}")
+            pass
         else:
-            logging.info(f"[SELECTION_DEBUG] Will clear is_selected: current_mode={type(self.current_mode).__name__}, is_moving={getattr(self.current_mode, 'is_moving', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, in_move_mode={getattr(self.current_mode, 'in_move_mode', 'N/A') if hasattr(self, 'current_mode') else 'No current_mode'}, has_truly_moving={hasattr(self, 'truly_moving_strands')}")
+            pass
         
         # Deselect all strands first (unless we're moving)
         if should_clear_selection:
             for strand in self.strands:
                 # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
                 if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
-                    logging.info(f"[SELECTION_DEBUG] Preserving is_selected=True for moving strand {strand.layer_name}")
+                    pass
                     continue
                 
                 if hasattr(strand, 'layer_name') and strand.layer_name == '1_2':
-                    logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for strand 1_2 in select_strand method")
+                    pass
                 strand.is_selected = False
                 if hasattr(strand, 'attached_strands'):
                     for attached_strand in strand.attached_strands:
                         # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
                         if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
-                            logging.info(f"[SELECTION_DEBUG] Preserving is_selected=True for moving attached strand {attached_strand.layer_name}")
+                            pass
                             continue
                         
                         if hasattr(attached_strand, 'layer_name') and attached_strand.layer_name == '1_2':
-                            logging.info(f"[SELECTION_DEBUG] Setting is_selected=False for attached strand 1_2 in select_strand method")
+                            pass
                         attached_strand.is_selected = False
 
         # When explicitly selecting a strand, reset the user_deselected_all flag in MoveMode
@@ -3302,7 +3299,7 @@ class StrandDrawingCanvas(QWidget):
             self.strand_selected.emit(index)
         else:
             # If no valid index is provided, ensure the strand is deselected
-            logging.info(f"Deselecting all strands in select_strand")
+            pass
             self.selected_strand = None
             if update_layer_panel and self.layer_panel:
                 self.layer_panel.deselect_all()
@@ -3310,8 +3307,8 @@ class StrandDrawingCanvas(QWidget):
             self.strand_selected.emit(-1)  # Emit -1 for deselection
 
         self.update()  # Force a redraw
-        logging.info(f"Selected strand index: {index}")
-        logging.info(f"Exiting select_strand. Selected strand: {self.selected_strand}")
+        pass
+        pass
     def delete_strand(self, index):
         if 0 <= index < len(self.strands):
             # Capture the deleted strand before removing it
@@ -3326,8 +3323,8 @@ class StrandDrawingCanvas(QWidget):
                         target_strand = connection_info['connected_strand']
                         target_end = connection_info['connected_end']
                         
-                        logging.info(f"KNOT_DELETION: Deleting closing strand {deleted_strand.layer_name}.{end_type}")
-                        logging.info(f"KNOT_DELETION: Target strand {target_strand.layer_name}.{target_end} should be freed")
+                        pass
+                        pass
                         
                         # Free the target strand's end that was connected to this closing strand
                         if target_end == 'start':
@@ -3350,17 +3347,17 @@ class StrandDrawingCanvas(QWidget):
                             target_strand.knot_freed_ends = set()
                         target_strand.knot_freed_ends.add(target_end)
                         
-                        logging.info(f"KNOT_DELETION: Updated {target_strand.layer_name}")
-                        logging.info(f"KNOT_DELETION:   - has_circles: {target_strand.has_circles}")
-                        logging.info(f"KNOT_DELETION:   - closed_connections: {getattr(target_strand, 'closed_connections', 'None')}")
-                        logging.info(f"KNOT_DELETION:   - knot_freed_ends: {getattr(target_strand, 'knot_freed_ends', 'None')}")
+                        pass
+                        pass
+                        pass
+                        pass
                     else:
                         # This deleted strand was the target of a knot closing, also clean up
                         connected_strand = connection_info['connected_strand']
                         connected_end = connection_info['connected_end']
                         
-                        logging.info(f"KNOT_DELETION: Deleting target strand {deleted_strand.layer_name}.{end_type}")
-                        logging.info(f"KNOT_DELETION: Connected closing strand {connected_strand.layer_name}.{connected_end} should be freed")
+                        pass
+                        pass
                         
                         # Free the connected strand's end
                         if connected_end == 'start':
@@ -3383,10 +3380,10 @@ class StrandDrawingCanvas(QWidget):
                             connected_strand.knot_freed_ends = set()
                         connected_strand.knot_freed_ends.add(connected_end)
                         
-                        logging.info(f"KNOT_DELETION: Updated {connected_strand.layer_name}")
-                        logging.info(f"KNOT_DELETION:   - has_circles: {connected_strand.has_circles}")
-                        logging.info(f"KNOT_DELETION:   - closed_connections: {getattr(connected_strand, 'closed_connections', 'None')}")
-                        logging.info(f"KNOT_DELETION:   - knot_freed_ends: {getattr(connected_strand, 'knot_freed_ends', 'None')}")
+                        pass
+                        pass
+                        pass
+                        pass
             
             # Remove the strand from the list
             self.strands.pop(index)
@@ -3394,13 +3391,13 @@ class StrandDrawingCanvas(QWidget):
             self.update()
 
             # Log the deletion
-            logging.info(f"Deleted strand: {deleted_strand.layer_name}")
+            pass
     def deselect_all_strands(self):
         """Deselect all strands and update the canvas."""
         def deselect_strand_recursively(strand):
             # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
             if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
-                logging.info(f"[DESELECT_DEBUG] Preserving is_selected=True for moving strand {strand.layer_name}")
+                pass
                 return  # Skip this strand
             
             strand.is_selected = False
@@ -3410,7 +3407,7 @@ class StrandDrawingCanvas(QWidget):
                 for attached_strand in strand.attached_strands:
                     # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
                     if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
-                        logging.info(f"[DESELECT_DEBUG] Preserving is_selected=True for moving attached strand {attached_strand.layer_name}")
+                        pass
                         continue
                     deselect_strand_recursively(attached_strand)
 
@@ -3456,7 +3453,7 @@ class StrandDrawingCanvas(QWidget):
         
         if self.mask_edit_mode and event.button() == Qt.LeftButton:
             self.erase_start_pos = canvas_pos
-            logging.info(f"Started mask deletion at position: ({self.erase_start_pos.x()}, {self.erase_start_pos.y()})")
+            pass
             self.current_erase_rect = None
             self.update()
             event.accept()
@@ -3473,7 +3470,7 @@ class StrandDrawingCanvas(QWidget):
 
         if self.current_mode == "select":
             # Get the position from the event
-            logging.info(f"Selecting strand at position: {canvas_pos}")
+            pass
             self.handle_strand_selection(canvas_pos)
             
         elif self.current_mode == self.mask_mode:
@@ -3491,7 +3488,7 @@ class StrandDrawingCanvas(QWidget):
                                            self.default_strand_color, self.default_stroke_color, self.stroke_width)
                 self.current_strand.canvas = self  # Set canvas reference immediately
                 self.is_drawing_new_strand = True
-                logging.info(f"Created new strand with canvas reference. Show control points: {self.show_control_points}")
+                pass
                 self.update()
         else:
             super().mousePressEvent(event)
@@ -3654,10 +3651,7 @@ class StrandDrawingCanvas(QWidget):
                 abs(canvas_pos.x() - self.erase_start_pos.x()),
                 abs(canvas_pos.y() - self.erase_start_pos.y())
             )
-            logging.info(f"Updated deletion rectangle: x={self.current_erase_rect.x():.2f}, "
-                        f"y={self.current_erase_rect.y():.2f}, "
-                        f"width={self.current_erase_rect.width():.2f}, "
-                        f"height={self.current_erase_rect.height():.2f}")
+            pass
             self.update()  # Force a redraw to show the rectangle
             event.accept()
             return
@@ -3735,7 +3729,7 @@ class StrandDrawingCanvas(QWidget):
                 )
             }
             self.editing_masked_strand.deletion_rectangles.append(rect_data)
-            logging.info(f"Saved deletion rectangle by corners: {rect_data}")
+            pass
             
             # Create and apply the erase path
             erase_path = QPainterPath()
@@ -3744,7 +3738,7 @@ class StrandDrawingCanvas(QWidget):
             if self.mask_edit_path and self.editing_masked_strand:
                 self.mask_edit_path = self.mask_edit_path.subtracted(erase_path)
                 self.editing_masked_strand.set_custom_mask(self.mask_edit_path)
-                logging.info("Updated mask path after deletion")
+                pass
             
             # Clear the current rectangle
             self.current_erase_rect = None
@@ -3791,7 +3785,7 @@ class StrandDrawingCanvas(QWidget):
         self._suppress_layer_panel_refresh = False
         self._suppress_repaint = False
         self._suppress_attachment_updates = False
-        logging.info("Canvas suppression flags cleared - canvas should be able to repaint now")
+        pass
     
     def _reset_all_modes_for_new_strand(self):
         """
@@ -3812,7 +3806,7 @@ class StrandDrawingCanvas(QWidget):
         # Don't sync the control points button state during creation
         # The button should reflect the actual state (which we're preserving)
         
-        logging.info(f"Control points preserved during new strand creation: {control_points_were_on}")
+        pass
         
         # Deactivate all modes
         if hasattr(self.current_mode, 'deactivate'):
@@ -3863,7 +3857,7 @@ class StrandDrawingCanvas(QWidget):
         # Force update to reflect the changes
         self.update()
         
-        logging.info("All modes and states reset for new strand creation - zoom-consistent behavior ensured")
+        pass
     
     def _save_pre_creation_state(self):
         """
@@ -3897,8 +3891,8 @@ class StrandDrawingCanvas(QWidget):
         # Save selected attached strand
         self._pre_creation_state['selected_attached_strand'] = self.selected_attached_strand
         
-        logging.info(f"Pre-creation state saved: mode={self.current_mode}, control_points={self.show_control_points}, angle_adjusting={self.is_angle_adjusting}")
-        logging.info("Note: Control points will remain visible during strand creation for positioning assistance")
+        pass
+        pass
     
     def _ensure_consistent_post_creation_state(self):
         """
@@ -3907,14 +3901,14 @@ class StrandDrawingCanvas(QWidget):
         """
         self._restore_pre_creation_state()
         
-        logging.info("Post-creation state restored to previous user settings")
+        pass
     
     def _restore_pre_creation_state(self):
         """
         Restore the state that was saved before strand creation.
         """
         if not hasattr(self, '_pre_creation_state') or not self._pre_creation_state:
-            logging.warning("No pre-creation state to restore, using default select mode")
+            pass
             self.current_mode = "select"
             self.show_control_points = False
             return
@@ -3968,8 +3962,8 @@ class StrandDrawingCanvas(QWidget):
         # Clear the saved state
         self._pre_creation_state = {}
         
-        logging.info(f"Pre-creation state restored: mode={previous_mode}, control_points={self.show_control_points}, angle_adjusting={self.is_angle_adjusting}")
-        logging.info("State restoration complete - user workflow preserved")
+        pass
+        pass
     
     def _get_main_window_reference(self):
         """Get a reference to the main window for button synchronization."""
@@ -4008,8 +4002,7 @@ class StrandDrawingCanvas(QWidget):
         
         # Log coordinate normalization for debugging
         if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
-            logging.debug(f"Coordinate normalized for zoom {self.zoom_factor}: "
-                         f"({point.x():.4f}, {point.y():.4f}) -> ({normalized_x}, {normalized_y})")
+            pass
         
         return normalized_point
     
@@ -4063,7 +4056,7 @@ class StrandDrawingCanvas(QWidget):
                     strand.end_selected = False
                 # Debug logging for strand clearing
                 if hasattr(strand, 'layer_name'):
-                    logging.info(f"[CLEAR_DEBUG] Cleared highlighting for strand {strand.layer_name}: is_selected={strand.is_selected}")
+                    pass
                 if hasattr(strand, 'attached_strands'):
                     for attached in strand.attached_strands:
                         attached.is_selected = False
@@ -4074,14 +4067,14 @@ class StrandDrawingCanvas(QWidget):
                             attached.end_selected = False
                         # Debug logging for attached strand clearing
                         if hasattr(attached, 'layer_name'):
-                            logging.info(f"[CLEAR_DEBUG] Cleared highlighting for attached strand {attached.layer_name}: is_selected={attached.is_selected}")
+                            pass
             
             # Reset MoveMode selection state
             if hasattr(self, 'move_mode') and self.move_mode:
                 self.move_mode.reset_selection()
             
             # Force canvas update after clearing highlighting to ensure visual changes take effect
-            logging.info("[CLEAR_DEBUG] Forcing canvas update after clearing all highlighting")
+            pass
             self.update()
             
             # Ensure consistent state after strand creation (zoom-independent)
@@ -4124,7 +4117,7 @@ class StrandDrawingCanvas(QWidget):
                     # Ensure the layer panel selection is updated
                     self.layer_panel.select_layer(new_strand_index, emit_signal=False)
                 except Exception as e:
-                    logging.error(f"Error during strand creation UI update: {e}")
+                    pass
                 finally:
                     # Re-enable UI updates - ALWAYS execute this even if there's an exception
                     if main_window:
@@ -4134,7 +4127,7 @@ class StrandDrawingCanvas(QWidget):
                     self._suppress_attachment_updates = False
                 
                 # The layer panel already performed a lightweight update; avoid costly refresh() to prevent flash.
-                logging.info("[FLASH_DEBUG] finalize_new_strand: Skipping simulate_refresh_button_click() to avoid flash")
+                pass
             
             # Force a canvas update to show the selection
             self.update()
@@ -4149,12 +4142,12 @@ class StrandDrawingCanvas(QWidget):
             # --- ADD LOGGING FOR STRAND CREATION (Button initiated) ---
             # Check *before* accessing attributes for logging
             if new_strand:
-                logging.info(f"Strand Creation: Name={new_strand.layer_name}, Start={new_strand.start}, End={new_strand.end}")
+                pass
             # --- END LOGGING ---
 
-            logging.info(f"Created and selected new main strand: {new_strand.layer_name}, index: {new_strand_index}")
+            pass
         else:
-            logging.warning("Attempted to finalize new strand without valid start and end points")
+            pass
     def set_mode(self, mode):
         """
         Set the current mode of the canvas.
@@ -4218,7 +4211,7 @@ class StrandDrawingCanvas(QWidget):
         # Log the mode change
         # Reduced logging for performance during operations
         # logging.info(f"Canvas mode changed to: {mode}")
-        logging.info(f"Mode set to {mode}. Selected strand after mode change: {self.selected_strand}")
+        pass
 
 
 
@@ -4237,11 +4230,11 @@ class StrandDrawingCanvas(QWidget):
             first_strand (Strand): The first selected strand.
             second_strand (Strand): The second selected strand.
         """
-        logging.info(f"Attempting to create masked strand for {first_strand.layer_name} and {second_strand.layer_name}")
+        pass
 
         # Check if a masked strand already exists for these strands
         if self.mask_exists(first_strand, second_strand):
-            logging.info(f"Masked strand for {first_strand.layer_name} and {second_strand.layer_name} already exists.")
+            pass
             return
 
         # Create the new masked strand
@@ -4274,7 +4267,7 @@ class StrandDrawingCanvas(QWidget):
         # --- End new code ---
 
         # Log the creation of the masked strand
-        logging.info(f"Created masked strand: {masked_strand.layer_name}")
+        pass
 
         # Clear any existing selection
         self.clear_selection()
@@ -4297,7 +4290,7 @@ class StrandDrawingCanvas(QWidget):
             if 'main_strands' in group_data and main_set_number in group_data['main_strands']:
                 # If the new strand is not in the group, delete the group
                 if new_strand.layer_name not in group_data['layers']:
-                    logging.info(f"Deleting group '{group_name}' because new strand '{new_strand.layer_name}' connected to its main strand is not in the group.")
+                    pass
                     group_panel.delete_group(group_name)
     def remove_related_masked_layers(self, strand):
         """
@@ -4306,7 +4299,7 @@ class StrandDrawingCanvas(QWidget):
         masked_layers_before = len(self.strands)
         self.strands = [s for s in self.strands if not (isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand))]
         masked_layers_removed = masked_layers_before - len(self.strands)
-        logging.info(f"Removed related masked layers. Total masked layers removed: {masked_layers_removed}")
+        pass
         
     def remove_strand_circles(self, strand):
         """
@@ -4315,10 +4308,10 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(strand, 'has_circles'):
             if strand.has_circles[0]:
                 strand.has_circles[0] = False
-                logging.info(f"Removed start circle for strand: {strand.layer_name}")
+                pass
             if strand.has_circles[1]:
                 strand.has_circles[1] = False
-                logging.info(f"Removed end circle for strand: {strand.layer_name}")
+                pass
 
     def get_all_related_masked_strands(self, strand):
         """
@@ -4365,7 +4358,7 @@ class StrandDrawingCanvas(QWidget):
         
         return False
     def update_layer_names_for_attached_strand_deletion(self, set_number):
-        logging.info(f"Updating layer names for attached strand deletion in set {set_number}")
+        pass
         # Do nothing here to keep original names
         if self.layer_panel:
             self.layer_panel.update_layer_names(set_number)
@@ -4537,7 +4530,7 @@ class StrandDrawingCanvas(QWidget):
 
         # First, capture a non-logging property (like layer_name), or safely handle None:
         strand_desc = self.selected_strand.layer_name if self.selected_strand else "None"
-        logging.info(f"Clearing selection. Current selected strand: {strand_desc}")
+        pass
 
         # Then proceed with clearing selection
         self.selected_strand = None
@@ -4555,15 +4548,15 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def remove_strand(self, strand):
-        logging.info(f"Starting remove_strand for: {strand.layer_name}")
-        logging.info(f"Removing strand {strand.layer_name}. Current selected strand: {self.selected_strand}")
+        pass
+        pass
 
         # Suppress attachment updates during deletion to preserve _deletion_freed_ends
         self._suppress_attachment_updates_during_deletion = True
-        logging.info("Set _suppress_attachment_updates_during_deletion = True")
+        pass
 
         if strand not in self.strands:
-            logging.warning(f"Strand {strand.layer_name} not found in self.strands")
+            pass
             self._suppress_attachment_updates_during_deletion = False
             return False
 
@@ -4572,11 +4565,11 @@ class StrandDrawingCanvas(QWidget):
         is_attached_strand = isinstance(strand, AttachedStrand)
         
         # Debug logging to understand strand type
-        logging.info(f"Strand {strand.layer_name} type check:")
-        logging.info(f"  - Type: {type(strand)}")
-        logging.info(f"  - Class name: {strand.__class__.__name__}")
-        logging.info(f"  - isinstance(strand, AttachedStrand): {is_attached_strand}")
-        logging.info(f"  - is_main_strand: {is_main_strand}")
+        pass
+        pass
+        pass
+        pass
+        pass
 
         if self.newest_strand == strand:
             self.newest_strand = None
@@ -4602,8 +4595,8 @@ class StrandDrawingCanvas(QWidget):
                         masks_to_remove.append(s)
 
         # Log strands and masks to be removed
-        logging.info(f"Strands to be removed: {[s.layer_name for s in strands_to_remove]}")
-        logging.info(f"Masks to be removed: {[m.layer_name for m in masks_to_remove]}")
+        pass
+        pass
 
         # Collect indices before removing strands
         indices_to_remove = []
@@ -4618,34 +4611,34 @@ class StrandDrawingCanvas(QWidget):
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
-                logging.info(f"Removed strand/mask: {s.layer_name}")
+                pass
                 if not isinstance(s, MaskedStrand):
                     self.remove_strand_circles(s)
 
         # Update selection if the removed strand was selected
         if self.selected_strand in strands_to_remove + masks_to_remove:
-            logging.info("Clearing selected strand as it's being removed")
+            pass
             self.selected_strand = None
             self.selected_strand_index = None
-            logging.info("Cleared selected strand")
+            pass
 
         # Clear mask mode selection if active
         if self.current_mode == self.mask_mode:
             self.mask_mode.clear_selection()
         # Update parent strand's attached_strands list and remove circle if it's an attached strand
-        logging.info(f"Checking if strand {strand.layer_name} is attached strand: {is_attached_strand}")
+        pass
         if is_attached_strand:
-            logging.info(f"Finding parent strand for attached strand {strand.layer_name}")
+            pass
             parent_strand = self.find_parent_strand(strand)
-            logging.info(f"Found parent strand: {parent_strand.layer_name if parent_strand else 'None'}")
+            pass
             if parent_strand:
                 parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
-                logging.info(f"Updated parent strand {parent_strand.layer_name} attached_strands list")
+                pass
                 self.remove_parent_circle(parent_strand, strand)
             else:
-                logging.warning(f"No parent strand found for attached strand {strand.layer_name}")
+                pass
         else:
-            logging.info(f"Strand {strand.layer_name} is not an attached strand, skipping parent circle removal")
+            pass
         
         # Clean up knot connections for all strands being removed
         for s in strands_to_remove:
@@ -4654,7 +4647,7 @@ class StrandDrawingCanvas(QWidget):
         # Clean up connections in layer state manager
         if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
             self.layer_state_manager.removeStrandConnections(strand.layer_name)
-            logging.info(f"Cleaned up connections for {strand.layer_name} in layer state manager")
+            pass
 
         # Update layer names and set numbers
         if is_main_strand:
@@ -4682,27 +4675,27 @@ class StrandDrawingCanvas(QWidget):
 
 
 
-        logging.info(f"Strand removed. Current selected strand: {self.selected_strand}")
-        logging.info("Finished remove_strand")
+        pass
+        pass
         return True
     
     def _cleanup_after_deletion(self):
         """Clean up flags and temporary data after strand deletion is complete."""
-        logging.info("Cleaning up after deletion - clearing _deletion_freed_ends and re-enabling attachment updates")
+        pass
         
         # Clean up _deletion_freed_ends from all strands
         for s in self.strands:
             if hasattr(s, '_deletion_freed_ends'):
-                logging.info(f"Cleaning up _deletion_freed_ends for {s.layer_name}")
+                pass
                 delattr(s, '_deletion_freed_ends')
         
         # Re-enable attachment updates
         self._suppress_attachment_updates_during_deletion = False
-        logging.info("Set _suppress_attachment_updates_during_deletion = False")
+        pass
         
         # Don't call update_attachment_statuses here - the attachment states are already correct
         # from the deletion process and calling it would override the freed ends based on geometry
-        logging.info("Cleanup complete - attachment states preserved from deletion process")
+        pass
 
     def delete_groups_containing_strands(self, strands):
         """
@@ -4723,7 +4716,7 @@ class StrandDrawingCanvas(QWidget):
                 groups_to_delete.append(group_name)
 
         for group_name in groups_to_delete:
-            logging.info(f"Deleting group '{group_name}' because it contains a deleted strand.")
+            pass
             group_panel.delete_group(group_name)
     def update_layer_panel_colors(self):
         if self.layer_panel:
@@ -4734,14 +4727,14 @@ class StrandDrawingCanvas(QWidget):
         """
         Remove the circle associated with the attached strand from the parent strand.
         """
-        logging.info(f"Removing parent circle for {parent_strand.layer_name} due to deletion of {attached_strand.layer_name}")
-        logging.info(f"Before removal - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+        pass
+        pass
         
         # Check which side the attached strand was connected to
         attachment_side = None
         if hasattr(attached_strand, 'attachment_side'):
             attachment_side = attached_strand.attachment_side
-            logging.info(f"Found attachment_side from attached_strand: {attachment_side}")
+            pass
         else:
             # Fallback: determine attachment side by comparing positions
             # Skip proximity detection if in move mode with "drag only affected strand" enabled
@@ -4749,23 +4742,23 @@ class StrandDrawingCanvas(QWidget):
                     getattr(self.current_mode, 'draw_only_affected_strand', False))):
                 if self.points_are_close(parent_strand.start, attached_strand.start):
                     attachment_side = 0
-                    logging.info(f"Determined attachment_side by position comparison (start): {attachment_side}")
+                    pass
                 elif self.points_are_close(parent_strand.end, attached_strand.start):
                     attachment_side = 1
-                    logging.info(f"Determined attachment_side by position comparison (end): {attachment_side}")
+                    pass
         
         if attachment_side is not None:
             # Check if there are other strands still attached to this side
             other_attachments = [s for s in parent_strand.attached_strands 
                                if s != attached_strand and hasattr(s, 'attachment_side') and s.attachment_side == attachment_side]
             
-            logging.info(f"Other attachments on side {attachment_side}: {[s.layer_name for s in other_attachments]}")
+            pass
             
             if not other_attachments:
                 # No other strands attached to this side, remove the circle
                 parent_strand.has_circles[attachment_side] = False
-                logging.info(f"Removed circle from side {attachment_side} of parent strand: {parent_strand.layer_name}")
-                logging.info(f"After removal - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+                pass
+                pass
                 
                 # Mark this end as temporarily freed during deletion
                 # This will be cleared after the deletion is complete
@@ -4774,13 +4767,13 @@ class StrandDrawingCanvas(QWidget):
                 freed_end = 'start' if attachment_side == 0 else 'end'
                 parent_strand._deletion_freed_ends.add(freed_end)
             else:
-                logging.info(f"Keeping circle on side {attachment_side} of parent strand {parent_strand.layer_name} - other attachments exist")
+                pass
         else:
-            logging.warning(f"Could not determine attachment side for {attached_strand.layer_name} on parent {parent_strand.layer_name}")
+            pass
         
         # Update the parent strand's attachable status
         parent_strand.update_attachable()
-        logging.info(f"Final state after update_attachable - Parent {parent_strand.layer_name} has_circles: {parent_strand.has_circles}")
+        pass
 
     def cleanup_knot_connections(self, strand):
         """
@@ -4792,7 +4785,7 @@ class StrandDrawingCanvas(QWidget):
         if not hasattr(strand, 'knot_connections') or not strand.knot_connections:
             return
             
-        logging.info(f"Cleaning up knot connections for {strand.layer_name}: {strand.knot_connections}")
+        pass
         
         # For each knot connection, update the connected strand
         for end_type, connection_info in strand.knot_connections.items():
@@ -4804,7 +4797,7 @@ class StrandDrawingCanvas(QWidget):
                 if hasattr(connected_strand, 'knot_connections') and connected_strand.knot_connections:
                     if connected_end in connected_strand.knot_connections:
                         del connected_strand.knot_connections[connected_end]
-                        logging.info(f"Removed knot connection from {connected_strand.layer_name}.{connected_end}")
+                        pass
                         
                         # Update attachment status - the connected end is no longer attached
                         if connected_end == 'start':
@@ -4839,7 +4832,7 @@ class StrandDrawingCanvas(QWidget):
                         if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
                             # Force recalculation of connections based on the actual strand relationships
                             self.layer_state_manager.save_current_state()
-                            logging.info(f"Updated layer state manager connections after removing knot between {strand.layer_name} and {connected_strand.layer_name}")
+                            pass
                         
                         # Note: We don't call update_attachable() here because we've already manually
                         # set the correct has_circles state based on knot connection removal.
@@ -4847,10 +4840,10 @@ class StrandDrawingCanvas(QWidget):
         
         # Clear the knot connections from the strand being deleted
         strand.knot_connections = {}
-        logging.info(f"Cleared knot connections from {strand.layer_name}")
+        pass
 
     def remove_main_strand(self, strand, set_number):
-        logging.info(f"Removing main strand and related strands for set {set_number}")
+        pass
         
         # Get all directly attached strands
         attached_strands = self.get_all_attached_strands(strand)
@@ -4868,13 +4861,13 @@ class StrandDrawingCanvas(QWidget):
         # Add masks to the list of strands to remove
         strands_to_remove.extend(masks_to_remove)
         
-        logging.info(f"Strands to remove: {[s.layer_name for s in strands_to_remove]}")
+        pass
 
         # Remove all collected strands
         for s in strands_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
-                logging.info(f"Removed strand: {s.layer_name}")
+                pass
                 if not isinstance(s, MaskedStrand):
                     self.remove_strand_circles(s)
         
@@ -4885,7 +4878,7 @@ class StrandDrawingCanvas(QWidget):
         self.update_set_numbers_after_main_strand_deletion(set_number)
 
     def update_layer_names_for_set(self, set_number):
-        logging.info(f"Updating layer names for set {set_number}")
+        pass
         # Do nothing here, as we want to keep original names
         if self.layer_panel:
             self.layer_panel.update_layer_names(set_number)
@@ -4908,13 +4901,13 @@ class StrandDrawingCanvas(QWidget):
         return attached
 
     def update_set_numbers_after_main_strand_deletion(self, deleted_set_number):
-        logging.info(f"Updating set numbers after deleting main strand of set {deleted_set_number}")
+        pass
         
         # Remove the deleted set from strand_colors
         if deleted_set_number in self.strand_colors:
             del self.strand_colors[deleted_set_number]
         
-        logging.info(f"Updated strand_colors: {self.strand_colors}")
+        pass
         
         # Update layer names for all strands
         self.update_layer_names()
@@ -4924,10 +4917,10 @@ class StrandDrawingCanvas(QWidget):
             self.current_set = max(self.strand_colors.keys())
         else:
             self.current_set = 0
-        logging.info(f"Reset current_set to {self.current_set}")
+        pass
 
     def update_layer_names(self):
-        logging.info("Starting update_layer_names")
+        pass
         set_counts = {}
         for strand in self.strands:
             if isinstance(strand, MaskedStrand):
@@ -4939,14 +4932,14 @@ class StrandDrawingCanvas(QWidget):
             set_counts[set_number] += 1
             new_name = f"{set_number}_{set_counts[set_number]}"
             if new_name != strand.layer_name:
-                logging.info(f"Updated layer name from {strand.layer_name} to {new_name}")
+                pass
                 strand.layer_name = new_name
         
         # Update the layer panel for all sets
         if self.layer_panel:
-            logging.info("Updating LayerPanel for all sets")
+            pass
             self.layer_panel.refresh()
-        logging.info("Finished update_layer_names")
+        pass
     def toggle_angle_adjust_mode(self, strand):
         if not hasattr(self, 'angle_adjust_mode'):
             self.angle_adjust_mode = AngleAdjustMode(self)
@@ -5338,7 +5331,7 @@ class StrandDrawingCanvas(QWidget):
             if (hasattr(self, 'layer_panel') and self.layer_panel and 
                 hasattr(self.layer_panel, 'locked_layers') and 
                 index in self.layer_panel.locked_layers):
-                logging.info(f"Preventing selection of locked strand {selected_strand.layer_name} at index {index}")
+                pass
                 return
 
             # When directly clicking on a strand, reset the user_deselected_all flag in MoveMode
@@ -5387,17 +5380,17 @@ class StrandDrawingCanvas(QWidget):
 
     def force_redraw(self):
         """Force a complete redraw of the canvas."""
-        logging.info("Forcing redraw of the canvas")
+        pass
         self.update()
         QTimer.singleShot(0, self.update)  # Schedule another update on the next event loop
 
     def set_group_layer_manager(self, group_layer_manager):
         self.group_layer_manager = group_layer_manager
-        logging.info(f"GroupLayerManager set on StrandDrawingCanvas: {self.group_layer_manager}")
-        logging.info("Group layer manager set for canvas")
+        pass
+        pass
 
     def move_group(self, group_name, total_dx, total_dy):
-        logging.info(f"Moving group '{group_name}' by total_dx={total_dx}, total_dy={total_dy}")
+        pass
 
         # Initialize original positions if not already initialized
         if not hasattr(self, 'original_positions_initialized') or not self.original_positions_initialized:
@@ -5405,7 +5398,7 @@ class StrandDrawingCanvas(QWidget):
             self.original_positions_initialized = True
 
         if self.group_layer_manager is None:
-            logging.error("group_layer_manager not set in StrandDrawingCanvas")
+            pass
             return
 
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
@@ -5426,12 +5419,12 @@ class StrandDrawingCanvas(QWidget):
                 if strand:
                     self.move_entire_strand(strand, total_dx, total_dy)
                     updated_strands.add(strand)
-                    logging.info(f"Moved group strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+                    pass
 
             # Force a redraw of the canvas
             self.update()
         else:
-            logging.warning(f"No group data found for group '{group_name}'")
+            pass
 
     def update_attached_strands_recursively(self, strand, dx, dy, updated_strands, group_layers):
         """
@@ -5444,7 +5437,7 @@ class StrandDrawingCanvas(QWidget):
                     # Include the attached strand in the group movement
                     self.move_entire_strand(attached_strand, dx, dy)
                     updated_strands.add(attached_strand)
-                    logging.info(f"Moved attached strand '{attached_strand.layer_name}'")
+                    pass
                 # Recursively update attached strands of the attached strand
                 self.update_attached_strands_recursively(attached_strand, dx, dy, updated_strands, group_layers)
 
@@ -5465,7 +5458,7 @@ class StrandDrawingCanvas(QWidget):
         strand.update_shape()
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
-        logging.info(f"Moved entire strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+        pass
         
         # Update related masked strands if this strand is part of any masks
         for i, other_strand in enumerate(self.strands):
@@ -5475,7 +5468,7 @@ class StrandDrawingCanvas(QWidget):
                 # Check if our strand is part of this masked strand
                 if (other_strand.first_selected_strand == strand or 
                     other_strand.second_selected_strand == strand):
-                    logging.info(f"Updating masked strand {other_strand.layer_name} related to moved strand {strand.layer_name}")
+                    pass
                     # Force shadow update which will transform custom masks
                     if hasattr(other_strand, 'force_shadow_update'):
                         other_strand.force_shadow_update()
@@ -5497,7 +5490,7 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(strand, 'update_side_line'):
             strand.update_side_line()
         updated_strands.add(strand)
-        logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}")
+        pass
 
     def points_are_close(self, point1, point2, tolerance=5.0):
         """Check if two points are within a certain tolerance."""
@@ -5529,7 +5522,7 @@ class StrandDrawingCanvas(QWidget):
         """Update attachment statuses and has_circles states of all strands."""
         # Add logging to track when this is called during deletion
         if hasattr(self, '_suppress_attachment_updates_during_deletion') and self._suppress_attachment_updates_during_deletion:
-            logging.info("update_attachment_statuses called during deletion suppression - skipping")
+            pass
             return
         
         if not hasattr(self, 'layer_state_manager') or not self.layer_state_manager:
@@ -5550,7 +5543,7 @@ class StrandDrawingCanvas(QWidget):
         # logging.info(f"update_attachment_statuses: Current connections from layer_state_manager: {connections}")
             delattr(self, '_logging_attachment_status')
         except Exception as e:
-            logging.error(f"Error getting connections: {e}")
+            pass
             delattr(self, '_updating_attachment_statuses')
             return
         
@@ -5566,16 +5559,16 @@ class StrandDrawingCanvas(QWidget):
             
             # Apply deletion freed ends (temporary - only during deletion)
             if hasattr(strand, '_deletion_freed_ends') and strand._deletion_freed_ends:
-                logging.info(f"PRE-PRESERVATION: Applying deletion freed ends for {strand.layer_name}: {strand._deletion_freed_ends}")
-                logging.info(f"  Before: has_circles = {strand.has_circles}")
+                pass
+                pass
                 for freed_end in strand._deletion_freed_ends:
                     if freed_end == 'start':
                         strand.has_circles[0] = False
-                        logging.info(f"  Set start (index 0) to False")
+                        pass
                     elif freed_end == 'end':
                         strand.has_circles[1] = False
-                        logging.info(f"  Set end (index 1) to False")
-                logging.info(f"  After: has_circles = {strand.has_circles}")
+                        pass
+                pass
 
         # Group strands by their prefix (e.g., "1_" or "2_")
         strand_groups = {}
@@ -5737,16 +5730,16 @@ class StrandDrawingCanvas(QWidget):
             
             # Apply deletion freed ends (temporary)
             if hasattr(strand, '_deletion_freed_ends') and strand._deletion_freed_ends:
-                logging.info(f"Applying deletion freed ends for {strand.layer_name}: {strand._deletion_freed_ends}")
-                logging.info(f"  Before: has_circles = {strand.has_circles}")
+                pass
+                pass
                 for freed_end in strand._deletion_freed_ends:
                     if freed_end == 'start':
                         strand.has_circles[0] = False
-                        logging.info(f"  Set start (index 0) to False")
+                        pass
                     elif freed_end == 'end':
                         strand.has_circles[1] = False
-                        logging.info(f"  Set end (index 1) to False")
-                logging.info(f"  After: has_circles = {strand.has_circles}")
+                        pass
+                pass
                 # Don't clear _deletion_freed_ends here - it will be cleared in remove_strand after all updates
                 # delattr(strand, '_deletion_freed_ends')
                 # logging.info(f"  Cleared _deletion_freed_ends for {strand.layer_name}")
@@ -5774,7 +5767,7 @@ class StrandDrawingCanvas(QWidget):
                 # **Move the entire attached strand**
                 self.move_strand_and_update(attached_strand, dx, dy, updated_strands)
                 updated_strands.add(attached_strand)
-                logging.info(f"Moved entire attached strand '{attached_strand.layer_name}'")
+                pass
                 # Recursively update strands attached to this attached strand
                 self.update_non_group_attached_strands(attached_strand, dx, dy, updated_strands, group_layers)
 
@@ -5806,10 +5799,9 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(strand, 'update_side_line'):
                 strand.update_side_line()
             updated_strands.add(strand)
-            logging.info(f"Moved strand '{strand.layer_name}' to new position: start={strand.start}, end={strand.end}, "
-                        f"cp1={strand.control_point1}, cp2={strand.control_point2}")
+            pass
         else:
-            logging.info(f"Strand '{strand.layer_name}' position unchanged")
+            pass
 
     def update_attached_point(self, attached_strand, moved_strand, dx, dy):
         if not hasattr(attached_strand, 'original_start'):
@@ -5830,7 +5822,7 @@ class StrandDrawingCanvas(QWidget):
         attached_strand.update_shape()
         if hasattr(attached_strand, 'update_side_line'):
             attached_strand.update_side_line()
-        logging.info(f"Updated attached strand '{attached_strand.layer_name}' to match moved strand '{moved_strand.layer_name}'")
+        pass
 
 
 
@@ -5910,7 +5902,7 @@ class StrandDrawingCanvas(QWidget):
 
     def delete_masked_layer(self, masked_strand):
         if isinstance(masked_strand, MaskedStrand) and masked_strand in self.strands:
-            logging.info(f"Deleting masked layer: {masked_strand.layer_name}")
+            pass
             
             # Remove the masked strand from the strands list
             self.strands.remove(masked_strand)
@@ -5930,10 +5922,10 @@ class StrandDrawingCanvas(QWidget):
             # Force a redraw of the canvas
             self.update()
             
-            logging.info(f"Masked layer {masked_strand.layer_name} deleted successfully")
+            pass
             return True
         else:
-            logging.warning(f"Attempted to delete non-existent or non-masked layer")
+            pass
             return False
     def find_control_point_at_position(self, pos):
         """
@@ -6033,7 +6025,7 @@ class StrandDrawingCanvas(QWidget):
                 self.erase_start_pos = None
                 self.current_erase_rect = None
                 self.setFocus()  # Explicitly set focus when entering mask edit mode
-                logging.info(f"Entered mask edit mode for strand {strand_index}")
+                pass
                 self.update()
 
     def exit_mask_edit_mode(self):
@@ -6045,7 +6037,7 @@ class StrandDrawingCanvas(QWidget):
             self.erase_start_pos = None
             self.current_erase_rect = None
             self.setCursor(Qt.ArrowCursor)
-            logging.info("Exited mask edit mode")
+            pass
             
             # Get the parent window directly through the stored reference
             if hasattr(self, 'parent_window'):
@@ -6064,51 +6056,49 @@ class StrandDrawingCanvas(QWidget):
         MaskedStrand.reset_mask(), forces a canvas redraw, and records the action
         in the undo/redo manager if present.
         """
-        logging.info(f"[StrandDrawingCanvas] reset_mask START for index {strand_index}")
+        pass
         if not (0 <= strand_index < len(self.strands)):
-            logging.warning(f"reset_mask called with invalid index: {strand_index}")
+            pass
             return
 
         strand = self.strands[strand_index]
         if not isinstance(strand, MaskedStrand):
-            logging.warning(
-                f"reset_mask called for a non-masked strand at index {strand_index} ({getattr(strand, 'layer_name', 'unknown')})"
-            )
+            pass
             return
 
         # If we are currently editing this mask, exit edit mode first
-        logging.info(f"[StrandDrawingCanvas] Checking if in mask edit mode for strand {strand_index}...")
+        pass
         if self.mask_edit_mode and self.editing_masked_strand is strand:
-            logging.info(f"[StrandDrawingCanvas] Exiting mask edit mode for strand {strand_index}")
+            pass
             self.exit_mask_edit_mode()
 
         # --- NEW: Ensure any open context menus are closed before proceeding ---
-        logging.info(f"[StrandDrawingCanvas] Attempting to close active menus...")
+        pass
         from PyQt5.QtWidgets import QApplication, QMenu
         # Close the currently active popup, if any
         active_popup = QApplication.activePopupWidget()
         if active_popup:
             active_popup.close()
-            logging.info(f"[StrandDrawingCanvas] Closed active popup: {active_popup}")
+            pass
 
         # Additionally close ANY stray QMenu instances that might still be
         # visible (sometimes nested or secondary menus can remain)
         for widget in QApplication.topLevelWidgets():
             if isinstance(widget, QMenu) and widget.isVisible():
                 widget.close()
-                logging.info(f"[StrandDrawingCanvas] Closed stray menu: {widget}")
-        logging.info(f"[StrandDrawingCanvas] Menu closing attempt finished.")
+                pass
+        pass
         # --- END NEW ---
 
         # Perform the reset on the MaskedStrand itself
         try:
             strand.reset_mask()
         except Exception as e:
-            logging.error(f"Error resetting mask for strand {strand.layer_name}: {e}")
+            pass
             return
 
         # Request a repaint
-        logging.info(f"[StrandDrawingCanvas] Requesting repaint after reset.")
+        pass
         self.update()
 
         # Persist in undo/redo history if available
@@ -6116,7 +6106,7 @@ class StrandDrawingCanvas(QWidget):
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
             self.undo_redo_manager.save_state()
-            logging.info(f"Undo/redo state saved after resetting mask for {strand.layer_name}")
+            pass
 
-        logging.info(f"[StrandDrawingCanvas] reset_mask END for index {strand_index}, strand {strand.layer_name}")
-        logging.info(f"Mask reset for strand {strand.layer_name}")
+        pass
+        pass

@@ -11,7 +11,6 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
 from save_load_manager import load_strands, apply_loaded_strands
-import logging
 import os
 import sys
 import subprocess
@@ -106,8 +105,6 @@ class SettingsDialog(QDialog):
             # Apply default strand width settings
             self.canvas.strand_width = self.default_strand_width
             self.canvas.stroke_width = self.default_stroke_width
-            logging.info(f"SettingsDialog: Applied default arrow color settings to canvas - use_default: {self.use_default_arrow_color}, color: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
-            logging.info(f"SettingsDialog: Applied default width settings to canvas - strand_width: {self.default_strand_width}, stroke_width: {self.default_stroke_width}")
         
         # Apply loaded extension line settings to canvas
         if self.canvas:
@@ -115,7 +112,6 @@ class SettingsDialog(QDialog):
             self.canvas.extension_dash_count = self.extension_dash_count
             self.canvas.extension_dash_width = self.extension_dash_width
             self.canvas.extension_dash_gap_length = self.extension_dash_gap_length
-            logging.info(f"SettingsDialog: Applied extension settings to canvas - length: {self.extension_length}, dash_count: {self.extension_dash_count}, dash_width: {self.extension_dash_width}, dash_gap_length: {self.extension_dash_gap_length}")
         
         self.setWindowTitle(translations[self.current_language]['settings'])
         
@@ -285,7 +281,6 @@ class SettingsDialog(QDialog):
                     layout = getattr(self, layout_name)
                     if isinstance(layout, QHBoxLayout):
                         layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
-                        logging.info(f"Set direction for {layout_name} to {'RTL' if is_rtl else 'LTR'}")
 
         # Apply content direction to other content widgets while keeping main structure
         if hasattr(self, 'change_language_widget'):
@@ -339,7 +334,7 @@ class SettingsDialog(QDialog):
         
         if is_rtl:
             # Remove CSS styling that might interfere - rely on layout reorganization
-            logging.info("RTL mode: Relying on layout reorganization rather than CSS overrides")
+            pass
         else: # LTR
             combo_style_adjustments = """
                 QComboBox {
@@ -396,7 +391,6 @@ class SettingsDialog(QDialog):
             if is_rtl:
                 # Use Qt.TextAlignmentRole to properly position text next to the icon
                 self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignRight | Qt.AlignVCenter)
-                logging.info("RTL: Applied TextAlignmentRole for theme combobox text positioning")
             else:
                 # For LTR, use default left alignment and standard padding
                 self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignLeft | Qt.AlignVCenter)
@@ -440,7 +434,6 @@ class SettingsDialog(QDialog):
             if is_rtl:
                 # Use Qt.TextAlignmentRole to properly position text next to the flag icon
                 self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
-                logging.info("RTL: Applied TextAlignmentRole for language combobox text positioning")
             else:
                 # For LTR, use default left alignment and standard padding
                 self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
@@ -682,7 +675,6 @@ class SettingsDialog(QDialog):
                  # Add spacer at the beginning to shift everything right
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
                 self.button_color_layout.addWidget(self.button_color_label)
-                logging.info("RTL REORGANIZE: Added stretch, button, then label for proper RTL positioning")
             else:
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
@@ -696,7 +688,6 @@ class SettingsDialog(QDialog):
                
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
                 self.button_color_layout.addStretch()
-                logging.info("LTR REORGANIZE: Added label, spacing, then button")
             # Force immediate update (same as theme layout)
             self.button_color_layout.invalidate()
             self.button_color_layout.activate()
@@ -704,26 +695,19 @@ class SettingsDialog(QDialog):
             if hasattr(self, 'button_color_container'):
                 self.button_color_container.updateGeometry()
                 self.button_color_container.update()
-                logging.info(f"REORGANIZE: Updated container geometry")
                 
             # Log final reorganized layout state  
-            logging.info(f"REORGANIZE_FINAL: Total items after reorganize: {self.button_color_layout.count()}")
             for i in range(self.button_color_layout.count()):
                 item = self.button_color_layout.itemAt(i)
                 if item.widget():
                     widget = item.widget()
-                    logging.info(f"  Item {i}: Widget {widget.__class__.__name__} - text: '{getattr(widget, 'text', lambda: 'N/A')()}' geometry: {widget.geometry()} pos: {widget.pos()} size: {widget.size()}")
                 elif item.spacerItem():
                     spacer = item.spacerItem()
-                    logging.info(f"  Item {i}: Spacer - size hint: {spacer.sizeHint()}, policy: {spacer.sizePolicy().horizontalPolicy()}")
             # Log container and layout geometry
-            logging.info(f"BUTTON_COLOR_CONTAINER geometry: {self.button_color_container.geometry()} size: {self.button_color_container.size()} pos: {self.button_color_container.pos()}")
-            logging.info(f"BUTTON_COLOR_LAYOUT geometry: {self.button_color_layout.geometry()}")
             # Let the layout decide the width – zero works fine
             self.button_color_label.setMinimumWidth(0)
             self.button_color_label.updateGeometry()
             self.button_color_label.repaint()
-            logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
 
 
         # Default Strand Color layout reorganization
@@ -744,7 +728,6 @@ class SettingsDialog(QDialog):
                  # Add spacer at the beginning to shift everything right
                 self.default_strand_color_layout.addWidget(self.default_strand_color_button)
                 self.default_strand_color_layout.addWidget(self.default_strand_color_label)
-                logging.info("RTL REORGANIZE: Added stretch, button, then label for default strand color proper RTL positioning")
             else:
                 self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
@@ -757,7 +740,6 @@ class SettingsDialog(QDialog):
                
                 self.default_strand_color_layout.addWidget(self.default_strand_color_button)
                 self.default_strand_color_layout.addStretch()
-                logging.info("LTR REORGANIZE: Added label, spacing, then button for default strand color")
             # Force immediate update (same as theme layout)
             self.default_strand_color_layout.invalidate()
             self.default_strand_color_layout.activate()
@@ -765,13 +747,11 @@ class SettingsDialog(QDialog):
             if hasattr(self, 'default_strand_color_container'):
                 self.default_strand_color_container.updateGeometry()
                 self.default_strand_color_container.update()
-                logging.info(f"REORGANIZE: Updated default strand color container geometry")
                 
             # Let the layout decide the width – zero works fine
             self.default_strand_color_label.setMinimumWidth(0)
             self.default_strand_color_label.updateGeometry()
             self.default_strand_color_label.repaint()
-            logging.info(f"DEFAULT_STRAND_COLOR_LABEL after min width set: minWidth={self.default_strand_color_label.minimumWidth()} size={self.default_strand_color_label.size()} geom={self.default_strand_color_label.geometry()} pos={self.default_strand_color_label.pos()}")
 
         # Default Stroke Color layout reorganization
         if hasattr(self, 'default_stroke_color_container') and hasattr(self, 'default_stroke_color_label') and hasattr(self, 'default_stroke_color_button'):
@@ -790,7 +770,6 @@ class SettingsDialog(QDialog):
                  # Add spacer at the beginning to shift everything right
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
-                logging.info("RTL REORGANIZE: Added stretch, button, then label for default stroke color proper RTL positioning")
             else:
                 self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
@@ -803,7 +782,6 @@ class SettingsDialog(QDialog):
                
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
                 self.default_stroke_color_layout.addStretch()
-                logging.info("LTR REORGANIZE: Added label, spacing, then button for default stroke color")
             # Force immediate update (same as theme layout)
             self.default_stroke_color_layout.invalidate()
             self.default_stroke_color_layout.activate()
@@ -811,13 +789,11 @@ class SettingsDialog(QDialog):
             if hasattr(self, 'default_stroke_color_container'):
                 self.default_stroke_color_container.updateGeometry()
                 self.default_stroke_color_container.update()
-                logging.info(f"REORGANIZE: Updated default stroke color container geometry")
                 
             # Let the layout decide the width – zero works fine
             self.default_stroke_color_label.setMinimumWidth(0)
             self.default_stroke_color_label.updateGeometry()
             self.default_stroke_color_label.repaint()
-            logging.info(f"DEFAULT_STROKE_COLOR_LABEL after min width set: minWidth={self.default_stroke_color_label.minimumWidth()} size={self.default_stroke_color_label.size()} geom={self.default_stroke_color_label.geometry()} pos={self.default_stroke_color_label.pos()}")
 
         # Default Strand Width button layout reorganization
         if hasattr(self, 'default_strand_width_container') and hasattr(self, 'default_strand_width_button'):
@@ -831,7 +807,6 @@ class SettingsDialog(QDialog):
             self.default_strand_width_layout.addStretch()
             self.default_strand_width_layout.addWidget(self.default_strand_width_button, 0, Qt.AlignCenter)
             self.default_strand_width_layout.addStretch()
-            logging.info("REORGANIZE: Centered default strand width button for both RTL and LTR")
             # Force immediate update
             self.default_strand_width_layout.invalidate()
             self.default_strand_width_layout.activate()
@@ -839,7 +814,6 @@ class SettingsDialog(QDialog):
             if hasattr(self, 'default_strand_width_container'):
                 self.default_strand_width_container.updateGeometry()
                 self.default_strand_width_container.update()
-                logging.info(f"REORGANIZE: Updated default strand width container geometry")
 
         # Layer Panel layout reorganizations
         if hasattr(self, 'ext_length_layout') and hasattr(self, 'extension_length_label') and hasattr(self, 'extension_length_spinbox'):
@@ -983,7 +957,6 @@ class SettingsDialog(QDialog):
             self.arrow_line_width_layout.activate()
 
         # Force a complete visual update after all reorganizations
-        logging.info(f"Completed layout reorganization for {'RTL' if is_rtl else 'LTR'} - forcing visual update")
         
         # Debug: Check actual widget order in shadow layout
         if hasattr(self, 'shadow_layout'):
@@ -994,7 +967,6 @@ class SettingsDialog(QDialog):
                     widgets_in_order.append(item.widget().__class__.__name__)
                 elif item.spacerItem():
                     widgets_in_order.append("Spacer")
-            logging.info(f"DEBUG: Shadow layout widget order: {widgets_in_order}")
         
         # Debug: Check actual widget order in button color layout  
         if hasattr(self, 'button_color_layout'):
@@ -1005,7 +977,6 @@ class SettingsDialog(QDialog):
                     widgets_in_order.append(item.widget().__class__.__name__)
                 elif item.spacerItem():
                     widgets_in_order.append("Spacer")
-            logging.info(f"DEBUG: Button color layout widget order: {widgets_in_order}")
         
         # Force update of all relevant containers with aggressive repaints
         if hasattr(self, 'general_settings_widget') and self.general_settings_widget:
@@ -1027,7 +998,7 @@ class SettingsDialog(QDialog):
         from PyQt5.QtCore import QTimer
         QTimer.singleShot(50, lambda: self.repaint())
         
-        logging.info("Layout reorganization complete and aggressive visual update forced")
+        
 
     def clear_layout(self, layout):
         """Helper method to clear all widgets from a layout."""
@@ -1082,22 +1053,21 @@ class SettingsDialog(QDialog):
         """Load user settings from file to initialize dialog with saved settings."""
         settings_dir = self.get_settings_directory()
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        logging.info(f"SettingsDialog: Looking for settings file at: {file_path}")
+        
         
         if os.path.exists(file_path):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
-                    logging.info("SettingsDialog: Reading settings from user_settings.txt")
+                    
                     
                     for line in file:
                         line = line.strip()
                         
                         if line.startswith('Theme:'):
                             self.current_theme = line.split(':', 1)[1].strip()
-                            logging.info(f"SettingsDialog: Found Theme: {self.current_theme}")
+                            
                         elif line.startswith('Language:'):
                             self.current_language = line.split(':', 1)[1].strip()
-                            logging.info(f"SettingsDialog: Found Language: {self.current_language}")
                         elif line.startswith('ShadowColor:'):
                             # Parse the RGBA values
                             rgba_str = line.split(':', 1)[1].strip()
@@ -1105,21 +1075,19 @@ class SettingsDialog(QDialog):
                                 r, g, b, a = map(int, rgba_str.split(','))
                                 # Create a fresh QColor instance
                                 self.shadow_color = QColor(r, g, b, a)
-                                logging.info(f"SettingsDialog: Successfully parsed shadow color: {r},{g},{b},{a}")
                             except Exception as e:
-                                logging.error(f"SettingsDialog: Error parsing shadow color values: {e}. Using default shadow color.")
+                                pass
                         elif line.startswith('DrawOnlyAffectedStrand:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.draw_only_affected_strand = (value == 'true')
-                            logging.info(f"SettingsDialog: Found DrawOnlyAffectedStrand: {self.draw_only_affected_strand}")
+                            
                         elif line.startswith('EnableThirdControlPoint:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
-                            logging.info(f"SettingsDialog: Found EnableThirdControlPoint: {self.enable_third_control_point}")
+                            
                         elif line.startswith('EnableSnapToGrid:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.snap_to_grid_enabled = (value == 'true')
-                            logging.info(f"SettingsDialog: Found EnableSnapToGrid: {self.snap_to_grid_enabled}")
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -1127,129 +1095,110 @@ class SettingsDialog(QDialog):
                         elif line.startswith('NumSteps:'):
                             try:
                                 self.num_steps = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found NumSteps: {self.num_steps}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing NumSteps value. Using default {self.num_steps}.")
+                                pass
                         elif line.startswith('MaxBlurRadius:'):
                             try:
                                 self.max_blur_radius = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found MaxBlurRadius: {self.max_blur_radius}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing MaxBlurRadius value. Using default {self.max_blur_radius}.")
+                                pass
                         elif line.startswith('ExtensionLength:'):
                             try:
                                 self.extension_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ExtensionLength: {self.extension_length}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ExtensionLength value. Using default {self.extension_length}.")
+                                pass
                         elif line.startswith('ExtensionDashCount:'):
                             try:
                                 self.extension_dash_count = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ExtensionDashCount: {self.extension_dash_count}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ExtensionDashCount value. Using default {self.extension_dash_count}.")
+                                pass
                         elif line.startswith('ExtensionDashWidth:'):
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ExtensionDashWidth: {self.extension_dash_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ExtensionDashWidth value. Using default {self.extension_dash_width}.")
+                                pass
                         elif line.startswith('ExtensionLineWidth:'):  # legacy key
                             try:
                                 self.extension_dash_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ExtensionLineWidth (legacy): {self.extension_dash_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing legacy ExtensionLineWidth value. Using default {self.extension_dash_width}.")
+                                pass
                         elif line.startswith('ArrowHeadLength:'):
                             try:
                                 self.arrow_head_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowHeadLength: {self.arrow_head_length}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowHeadLength value. Using default {getattr(self, 'arrow_head_length',20.0)}")
+                                pass
                         elif line.startswith('ArrowHeadWidth:'):
                             try:
                                 self.arrow_head_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowHeadWidth: {self.arrow_head_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowHeadWidth value. Using default {getattr(self, 'arrow_head_width',10.0)}")
+                                pass
                         elif line.startswith('ArrowHeadStrokeWidth:'):
                             try:
                                 self.arrow_head_stroke_width = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowHeadStrokeWidth: {self.arrow_head_stroke_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowHeadStrokeWidth value. Using default {getattr(self, 'arrow_head_stroke_width',4)}")
+                                pass
                         elif line.startswith('ArrowGapLength:'):
                             try:
                                 self.arrow_gap_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowGapLength: {self.arrow_gap_length}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowGapLength value. Using default {self.arrow_gap_length}.")
+                                pass
                         elif line.startswith('ArrowLineLength:'):
                             try:
                                 self.arrow_line_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowLineLength: {self.arrow_line_length}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowLineLength value. Using default {self.arrow_line_length}.")
+                                pass
                         elif line.startswith('ArrowLineWidth:'):
                             try:
                                 self.arrow_line_width = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ArrowLineWidth: {self.arrow_line_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ArrowLineWidth value. Using default {self.arrow_line_width}.")
+                                pass
                         elif line.startswith('UseDefaultArrowColor:'):
                             self.use_default_arrow_color = (line.split(':', 1)[1].strip().lower() == 'true')
-                            logging.info(f"SettingsDialog: Found UseDefaultArrowColor: {self.use_default_arrow_color}")
+                            
                         elif line.startswith('DefaultArrowColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
                                 self.default_arrow_fill_color = QColor(r, g, b, a)
-                                logging.info(f"SettingsDialog: Found DefaultArrowColor: {r},{g},{b},{a}")
                             except Exception as e:
-                                logging.error(f"SettingsDialog: Error parsing DefaultArrowColor: {e}. Using default {self.default_arrow_fill_color}.")
+                                pass
                         elif line.startswith('ExtensionDashGapLength:'):
                             try:
                                 self.extension_dash_gap_length = float(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found ExtensionDashGapLength: {self.extension_dash_gap_length}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing ExtensionDashGapLength value. Using default {self.extension_dash_gap_length}.")
+                                pass
                         elif line.startswith('DefaultStrandColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
                                 self.default_strand_color = QColor(r, g, b, a)
-                                logging.info(f"SettingsDialog: Found DefaultStrandColor: {r},{g},{b},{a}")
                             except Exception as e:
-                                logging.error(f"SettingsDialog: Error parsing DefaultStrandColor: {e}. Using default {self.default_strand_color}.")
+                                pass
                         elif line.startswith('DefaultStrokeColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
                                 self.default_stroke_color = QColor(r, g, b, a)
-                                logging.info(f"SettingsDialog: Found DefaultStrokeColor: {r},{g},{b},{a}")
                             except Exception as e:
-                                logging.error(f"SettingsDialog: Error parsing DefaultStrokeColor: {e}. Using default {self.default_stroke_color}.")
+                                pass
                         elif line.startswith('DefaultStrandWidth:'):
                             try:
                                 self.default_strand_width = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found DefaultStrandWidth: {self.default_strand_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing DefaultStrandWidth value. Using default {self.default_strand_width}.")
+                                pass
                         elif line.startswith('DefaultStrokeWidth:'):
                             try:
                                 self.default_stroke_width = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found DefaultStrokeWidth: {self.default_stroke_width}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing DefaultStrokeWidth value. Using default {self.default_stroke_width}.")
+                                pass
                         elif line.startswith('DefaultWidthGridUnits:'):
                             try:
                                 self.default_width_grid_units = int(line.split(':', 1)[1].strip())
-                                logging.info(f"SettingsDialog: Found DefaultWidthGridUnits: {self.default_width_grid_units}")
                             except ValueError:
-                                logging.error(f"SettingsDialog: Error parsing DefaultWidthGridUnits value. Using default {self.default_width_grid_units}.")
+                                pass
                 
                     # logging.info(f"SettingsDialog: User settings loaded successfully. Theme: {self.current_theme}, Language: {self.current_language}, Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Use Extended Mask: {self.use_extended_mask}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius:.1f}")
             except Exception as e:
-                logging.error(f"SettingsDialog: Error reading user settings: {e}. Using default values.")
+                pass
         else:
-            logging.info(f"SettingsDialog: Settings file not found at {file_path}. Using default settings.")
+            pass
 
     def setup_ui(self):
         _ = translations[self.current_language]
@@ -1371,12 +1320,10 @@ class SettingsDialog(QDialog):
             self.shadow_layout.addWidget(self.shadow_color_button)
             self.shadow_layout.addStretch()
             self.shadow_layout.addWidget(self.shadow_color_label)
-            logging.info(f"Initial setup: RTL shadow layout for language {self.current_language} - button at far left, label at far right")
         else:
             self.shadow_layout.addWidget(self.shadow_color_label)
             self.shadow_layout.addWidget(self.shadow_color_button)
             self.shadow_layout.addStretch()
-            logging.info(f"Initial setup: LTR shadow layout for language {self.current_language} - label before button")
 
         # Performance Settings - Option to draw only affected strand during dragging
         # performance_layout = QHBoxLayout() # Already handled if it's self.performance_layout
@@ -1784,7 +1731,6 @@ class SettingsDialog(QDialog):
         self.button_color_container.setContentsMargins(0, 0, 0, 0)
         # Force update to ensure label has proper size
         self.button_color_label.adjustSize()
-        logging.info(f"LABEL CONFIG: After adjustSize - size: {self.button_color_label.size()}, sizeHint: {self.button_color_label.sizeHint()}")
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
         self.update_default_arrow_color_button()
@@ -1795,31 +1741,23 @@ class SettingsDialog(QDialog):
             self.button_color_layout.addWidget(self.button_color_label)
             self.button_color_layout.addStretch()
             self.button_color_layout.addWidget(self.default_arrow_color_button)
-            logging.info("RTL SETUP: Added label, stretch, then button")
         else:
             self.button_color_layout.addWidget(self.button_color_label)
             self.button_color_layout.addWidget(self.default_arrow_color_button)
             self.button_color_layout.addStretch()
-            logging.info("LTR SETUP: Added label, button, then stretch")
         
         # Log final layout state
-        logging.info(f"BUTTON_COLOR_LAYOUT: Total items: {self.button_color_layout.count()}")
         for i in range(self.button_color_layout.count()):
             item = self.button_color_layout.itemAt(i)
             if item.widget():
                 widget = item.widget()
-                logging.info(f"  Item {i}: Widget {widget.__class__.__name__} - text: '{getattr(widget, 'text', lambda: 'N/A')()}' size: {widget.size()} pos: {widget.pos()} geom: {widget.geometry()}")
             elif item.spacerItem():
                 spacer = item.spacerItem()
-                logging.info(f"  Item {i}: Spacer - size hint: {spacer.sizeHint()}, policy: {spacer.sizePolicy().horizontalPolicy()}")
         # Log container and layout geometry
-        logging.info(f"BUTTON_COLOR_CONTAINER geometry: {self.button_color_container.geometry()} size: {self.button_color_container.size()} pos: {self.button_color_container.pos()}")
-        logging.info(f"BUTTON_COLOR_LAYOUT geometry: {self.button_color_layout.geometry()}")
         # Try to force label to fill available space
         self.button_color_label.setMinimumWidth(self.button_color_container.width())
         self.button_color_label.updateGeometry()
         self.button_color_label.repaint()
-        logging.info(f"BUTTON_COLOR_LABEL after min width set: minWidth={self.button_color_label.minimumWidth()} size={self.button_color_label.size()} geom={self.button_color_label.geometry()} pos={self.button_color_label.pos()}")
 
         default_arrow_container_layout.addWidget(self.button_color_container) # Add the container widget instead of layout directly
         self.layer_panel_rows.append(self.button_color_container) # Add container to rows for RTL handling instead of layout
@@ -1997,10 +1935,8 @@ class SettingsDialog(QDialog):
         # Apply text alignment based on current language
         if self.is_rtl_language(current_language):
             self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
-            logging.info(f"RTL: Applied right alignment for language {current_language}")
         else:
             self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
-            logging.info(f"LTR: Applied left alignment for language {current_language}")
 
         self.language_info_label = QLabel(_['language_settings_info'])
         # Add widgets to language layout with logical leading alignment
@@ -2360,11 +2296,7 @@ class SettingsDialog(QDialog):
                 indicator_width = indicator_rect_from_style.width()
                 indicator_height = indicator_rect_from_style.height()
                 
-                logging.info(f"Checkbox ({checkbox.text() if checkbox.text() else 'no text'}): "
-                           f"layout_direction={checkbox.layoutDirection()}, "
-                           f"is_rtl={is_rtl}, "
-                           f"actual_indicator=({indicator_x},{indicator_y},{indicator_width}x{indicator_height}), "
-                           f"checkbox_size=({checkbox_rect.width()}x{checkbox_rect.height()})")
+
                 
                 # Use the actual indicator rectangle from Qt
                 indicator_rect = QRect(indicator_x, indicator_y, indicator_width, indicator_height)
@@ -2387,9 +2319,6 @@ class SettingsDialog(QDialog):
                 
                 # Right stroke of the checkmark (longer diagonal line)  
                 x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
-                
-                logging.info(f"Checkmark center: ({center_x},{center_y}), size: {checkmark_size}, "
-                           f"lines: ({x1},{y1})-({x2},{y2}) and ({x2},{y2})-({x3},{y3})")
                 
                 # Draw the checkmark lines with precise positioning
                 painter.drawLine(x1, y1, x2, y2)
@@ -2458,7 +2387,6 @@ class SettingsDialog(QDialog):
         
         # Find and style all checkboxes in the dialog (including layer panel section)
         all_checkboxes = self.findChildren(QCheckBox)
-        logging.info(f"Applying checkbox styling to {len(all_checkboxes)} checkboxes")
         
         for checkbox in all_checkboxes:
             checkbox.setStyleSheet(checkbox_style)
@@ -2469,7 +2397,7 @@ class SettingsDialog(QDialog):
             # Special handling for default_arrow_color_checkbox which has its own layout logic
             if hasattr(self, 'default_arrow_color_checkbox') and checkbox == self.default_arrow_color_checkbox:
                 # This checkbox has special RTL handling elsewhere - don't override it here
-                logging.info(f"Skipping layout direction override for default_arrow_color_checkbox")
+                pass
             else:
                 # Apply standard RTL/LTR layout for other checkboxes
                 if self.is_rtl_language(self.current_language):
@@ -2767,13 +2695,10 @@ class SettingsDialog(QDialog):
             # Set for all modes that support draw_only_affected_strand
             if hasattr(self.canvas, 'move_mode'):
                 self.canvas.move_mode.draw_only_affected_strand = self.draw_only_affected_strand
-                logging.info(f"SettingsDialog: Set move_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
             if hasattr(self.canvas, 'rotate_mode'):
                 self.canvas.rotate_mode.draw_only_affected_strand = self.draw_only_affected_strand
-                logging.info(f"SettingsDialog: Set rotate_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
             if hasattr(self.canvas, 'angle_adjust_mode'):
                 self.canvas.angle_adjust_mode.draw_only_affected_strand = self.draw_only_affected_strand
-                logging.info(f"SettingsDialog: Set angle_adjust_mode.draw_only_affected_strand to {self.draw_only_affected_strand}")
 
         # Apply Third Control Point Setting
         # Store previous setting to check if it changed
@@ -2784,11 +2709,10 @@ class SettingsDialog(QDialog):
         if self.canvas:
             # Set the new value in canvas
             self.canvas.enable_third_control_point = self.enable_third_control_point
-            logging.info(f"SettingsDialog: Set enable_third_control_point to {self.enable_third_control_point}")
             
             # Check if the setting changed
             if previous_third_control_point != self.enable_third_control_point:
-                logging.info("SettingsDialog: Third control point setting changed, resetting all masked strands")
+                pass
 
         # Apply Snap to Grid Setting
         self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
@@ -2796,7 +2720,6 @@ class SettingsDialog(QDialog):
         if self.canvas:
             # Set the new value in canvas
             self.canvas.snap_to_grid_enabled = self.snap_to_grid_enabled
-            logging.info(f"SettingsDialog: Set snap_to_grid_enabled to {self.snap_to_grid_enabled}")
 
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
@@ -2808,7 +2731,6 @@ class SettingsDialog(QDialog):
                             # Call the canvas's reset_mask method - this is the same one called
                             # when right-clicking on a layer in the layer panel
                             self.canvas.reset_mask(i)
-                            logging.info(f"Reset mask for masked strand at index {i}: {strand.layer_name}")
                 
                 # Force redraw to show/hide third control point and reset masks
                 self.canvas.update()
@@ -2816,7 +2738,6 @@ class SettingsDialog(QDialog):
                 # Force a full refresh of the canvas 
                 if hasattr(self.canvas, 'force_redraw'):
                     self.canvas.force_redraw()
-                    logging.info("Called force_redraw to ensure proper highlighting of masked strands")
 
         # Apply Shadow Blur Settings
         self.num_steps = self.num_steps_spinbox.value()
@@ -2824,7 +2745,6 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.num_steps = self.num_steps
             self.canvas.max_blur_radius = self.max_blur_radius
-            logging.info(f"SettingsDialog: Set num_steps to {self.num_steps} and max_blur_radius to {self.max_blur_radius:.1f} on canvas")
 
         # Apply Extension Line Settings
         self.extension_length = self.extension_length_spinbox.value()
@@ -2856,9 +2776,6 @@ class SettingsDialog(QDialog):
             # Apply default strand width settings
             self.canvas.strand_width = self.default_strand_width
             self.canvas.stroke_width = self.default_stroke_width
-            logging.info(f"SettingsDialog: Set extension_length to {self.extension_length}, dash_count to {self.extension_dash_count}, dashed_width to {self.extension_dash_width} on canvas")
-            logging.info(f"SettingsDialog: Set arrow_head_length to {self.arrow_head_length}, arrow_head_width to {self.arrow_head_width}")
-            logging.info(f"SettingsDialog: Set default strand_width to {self.default_strand_width}, stroke_width to {self.default_stroke_width}")
 
         # Apply Language Settings
         language_code = self.language_combobox.currentData()
@@ -2882,7 +2799,6 @@ class SettingsDialog(QDialog):
             self.update_translations()
             # Update layout direction immediately after language change
             self.update_layout_direction()
-            logging.info(f"Applied layout direction change for language: {language_code}")
             # Force redraw of language-specific elements
             self.repaint()
         
@@ -2895,7 +2811,6 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.use_default_arrow_color = self.use_default_arrow_color
             self.canvas.default_arrow_fill_color = self.default_arrow_fill_color
-            logging.info(f"SettingsDialog: Set use_default_arrow_color to {self.use_default_arrow_color} and default_arrow_fill_color RGBA: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}")
             # Force redraw to update arrow colors
             if hasattr(self.canvas, 'force_redraw'):
                 self.canvas.force_redraw()
@@ -3149,12 +3064,10 @@ class SettingsDialog(QDialog):
             # For RTL languages, align text to the right so it sits next to the icons
             self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignRight | Qt.AlignVCenter)
             self.set_combobox_text_alignment(self.language_combobox, Qt.AlignRight | Qt.AlignVCenter)
-            logging.info("RTL: Applied text alignment to comboboxes after translation update")
         else:
             # For LTR languages, use left alignment
             self.set_combobox_text_alignment(self.theme_combobox, Qt.AlignLeft | Qt.AlignVCenter)
             self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
-            logging.info("LTR: Applied text alignment to comboboxes after translation update")
         
         # For Hebrew, force refresh the combobox text display after rebuilding
         if self.is_rtl_language(self.current_language):
@@ -3166,12 +3079,11 @@ class SettingsDialog(QDialog):
                 # Also force a repaint of the combobox
                 self.language_combobox.update()
                 self.language_combobox.repaint()
-                logging.info(f"RTL: Forced language combobox refresh after rebuild for index {index}")
         
         # For Hebrew, use proper CSS styling instead of adding spaces to text
         if self.is_rtl_language(self.current_language):
             # Remove CSS that might interfere with layout - rely purely on layout reorganization
-            logging.info("RTL language detected - relying on layout reorganization for positioning")
+            pass
         else:
             # For LTR languages, ensure clean text without any added spaces
             # Reset theme combobox text to original translations
@@ -3274,20 +3186,16 @@ class SettingsDialog(QDialog):
         
         # Print the settings directory to help with troubleshooting
         print(f"Saving settings to directory: {settings_dir}")
-        logging.info(f"Saving settings to directory: {settings_dir}")
         
         # Ensure directory exists with proper permissions
         if not os.path.exists(settings_dir):
             try:
                 os.makedirs(settings_dir, mode=0o755)  # Add mode for proper permissions
-                logging.info(f"Created settings directory: {settings_dir}")
             except Exception as e:
-                logging.error(f"Cannot create directory {settings_dir}: {e}")
                 return
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
         print(f"Full settings file path: {file_path}")
-        logging.info(f"Full settings file path: {file_path}")
         
         # Write the settings to the file with error handling
         try:
@@ -3325,7 +3233,6 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                 file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
             print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
-            logging.info(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -3363,7 +3270,6 @@ class SettingsDialog(QDialog):
                 print(f"Could not create settings copy: {e}")
                 
         except Exception as e:
-            logging.error(f"Error saving settings to {file_path}: {e}")
             # Optionally show an error message to the user
             QMessageBox.warning(
                 self,
@@ -3393,7 +3299,7 @@ class SettingsDialog(QDialog):
         # Optional: Log the video paths for debugging
         for path in self.video_paths:
             if not os.path.exists(path):
-                logging.warning(f"Video file not found: {path}")
+                pass
 
 
     def play_video(self, index):
@@ -3412,7 +3318,6 @@ class SettingsDialog(QDialog):
                     "Error Playing Video",
                     f"Could not play the video. Error: {str(e)}"
                 )
-                logging.error(f"Error playing video: {e}")
         else:
             QMessageBox.warning(
                 self,
@@ -3687,7 +3592,6 @@ class SettingsDialog(QDialog):
             if hasattr(self.canvas, 'force_redraw'):
                 self.canvas.force_redraw()
             self.canvas.update()
-            logging.info(f"SettingsDialog: Default arrow color enabled changed to {self.use_default_arrow_color}")
 
     def update_default_strand_color_button(self):
         """Update the default strand color button to reflect current color."""
@@ -3779,11 +3683,10 @@ class SettingsDialog(QDialog):
             current_screen = self.screen()
             if current_screen:
                 logical_dpi = current_screen.logicalDotsPerInch()
-                logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}, screen_dpi={logical_dpi}")
             else:
-                logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}")
+                pass
         except:
-            logging.info(f"Updated default strand width button: text='{button_text}', text_width={text_width}, final_width={final_width}")
+            pass
 
     def open_default_width_dialog(self):
         """Open a dialog to configure default strand width."""
@@ -3802,7 +3705,6 @@ class SettingsDialog(QDialog):
             if self.canvas:
                 self.canvas.strand_width = new_width
                 self.canvas.stroke_width = new_stroke_width
-                logging.info(f"Updated canvas default widths: strand_width={new_width}, stroke_width={new_stroke_width}")
 
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""
@@ -3813,7 +3715,6 @@ class SettingsDialog(QDialog):
         _ = translations[self.current_language]
 
         if not self.undo_redo_manager:
-            logging.warning("UndoRedoManager not available, cannot populate history.")
             self.history_list.addItem(_['no_history_found']) # Show message if manager missing
             self.clear_history_button.setEnabled(False) # Also disable clear button
             return
@@ -3843,11 +3744,11 @@ class SettingsDialog(QDialog):
                                 sessions[session_id] = {'step': step, 'filepath': filepath}
                             found_history = True
                         except (ValueError, IndexError):
-                            logging.warning(f"Could not parse step from filename: {filename}")
+                            pass
         except FileNotFoundError:
-            logging.warning(f"History directory not found: {temp_dir}")
+            pass
         except Exception as e:
-            logging.error(f"Error reading history directory {temp_dir}: {e}")
+            pass
 
         if not found_history:
             self.history_list.addItem(_['no_history_found'])
@@ -3865,7 +3766,6 @@ class SettingsDialog(QDialog):
                     item.setData(Qt.UserRole, data['filepath']) # Store filepath
                     self.history_list.addItem(item)
                 except Exception as parse_e:
-                    logging.warning(f"Could not parse session ID {session_id}: {parse_e}")
                     item = QListWidgetItem(f"{session_id} (State {data['step']}) - Invalid Date Format")
                     item.setData(Qt.UserRole, data['filepath'])
                     self.history_list.addItem(item)
@@ -3881,7 +3781,6 @@ class SettingsDialog(QDialog):
             
         filepath = selected_item.data(Qt.UserRole)
         if not filepath:
-            logging.warning("Selected history item has no associated filepath.")
             return
             
         # Confirmation might be good here, but prompt asks for OK anyway
@@ -3889,11 +3788,9 @@ class SettingsDialog(QDialog):
         success = self.undo_redo_manager.load_specific_state(filepath)
         
         if success:
-            logging.info(f"Successfully loaded history state from {filepath}")
             # Close the settings dialog after loading
             self.accept() # Use accept to signal successful operation if needed
         else:
-            logging.error(f"Failed to load history state from {filepath}")
             QMessageBox.warning(
                 self,
                 _['history_load_error_title'],
@@ -3917,7 +3814,6 @@ class SettingsDialog(QDialog):
         try:
             # Get list of all files
             all_files = os.listdir(temp_dir)
-            logging.info(f"Found {len(all_files)} files in {temp_dir}: {', '.join(all_files)}")
             
             # First delete all temp_states in other directories (sometimes files are created elsewhere)
             root_dir = os.path.dirname(os.path.dirname(temp_dir))
@@ -3929,9 +3825,8 @@ class SettingsDialog(QDialog):
                                 file_path = os.path.join(root, file)
                                 os.remove(file_path)
                                 deleted_count += 1
-                                logging.info(f"Deleted history file from other directory: {file_path}")
                             except Exception as e:
-                                logging.error(f"Failed to delete {file_path}: {e}")
+                                pass
             
             # Now delete files in the main temp directory that don't belong to current session
             for filename in all_files:
@@ -3942,11 +3837,10 @@ class SettingsDialog(QDialog):
                         try:
                             os.remove(file_path)
                             deleted_count += 1
-                            logging.info(f"Deleted history file: {file_path}")
                         except Exception as e:
-                            logging.error(f"Failed to delete {file_path}: {e}")
+                            pass
         except Exception as e:
-            logging.error(f"Error while cleaning history directory: {e}")
+            pass
         
         # Also call the undo_redo_manager's method for any internal cleanup
         self.undo_redo_manager.clear_all_past_history()
@@ -3967,7 +3861,6 @@ class SettingsDialog(QDialog):
         # Always get the current language from the parent and update translations
         if hasattr(self.parent_window, 'language_code'):
             self.current_language = self.parent_window.language_code
-            logging.info(f"SettingsDialog showEvent: Ensuring translations for '{self.current_language}'.")
             self.update_translations()
             # Update layout direction after updating translations
             self.update_layout_direction()
@@ -3992,7 +3885,6 @@ class SettingsDialog(QDialog):
         # Update default arrow color checkbox state
         if hasattr(self, 'default_arrow_color_checkbox') and hasattr(self, 'use_default_arrow_color'):
             self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
-            logging.info(f"SettingsDialog showEvent: Updated default arrow color checkbox to {self.use_default_arrow_color}")
 
     def moveEvent(self, event):
         """Handle dialog movement between screens with different DPI."""
@@ -4120,36 +4012,25 @@ class SettingsDialog(QDialog):
 
     def log_button_color_debug_info(self):
         """Log detailed information about button color layout positioning for debugging."""
-        logging.info("=== BUTTON COLOR LAYOUT DEBUG INFO ===")
         
         if hasattr(self, 'button_color_container') and self.button_color_container:
-            logging.info(f"Container geometry: {self.button_color_container.geometry()}")
-            logging.info(f"Container size policy: {self.button_color_container.sizePolicy().horizontalPolicy()}")
+            pass
             
         if hasattr(self, 'button_color_layout') and self.button_color_layout:
-            logging.info(f"Layout count: {self.button_color_layout.count()}")
-            logging.info(f"Layout geometry: {self.button_color_layout.geometry()}")
-            logging.info(f"Layout spacing: {self.button_color_layout.spacing()}")
-            logging.info(f"Layout margins: {self.button_color_layout.contentsMargins()}")
             
             for i in range(self.button_color_layout.count()):
                 item = self.button_color_layout.itemAt(i)
                 if item.widget():
                     widget = item.widget()
-                    logging.info(f"  Widget {i} ({widget.__class__.__name__}): geometry={widget.geometry()}, visible={widget.isVisible()}, text='{getattr(widget, 'text', lambda: 'N/A')()}'")
                 elif item.spacerItem():
                     spacer = item.spacerItem()
-                    logging.info(f"  Spacer {i}: sizeHint={spacer.sizeHint()}, geometry={spacer.geometry()}")
                     
         if hasattr(self, 'button_color_label') and self.button_color_label:
-            logging.info(f"Label: text='{self.button_color_label.text()}', geometry={self.button_color_label.geometry()}")
-            logging.info(f"Label: font={self.button_color_label.font().toString()}, alignment={self.button_color_label.alignment()}")
-            logging.info(f"Label: styleSheet='{self.button_color_label.styleSheet()}'")
+            pass
             
         if hasattr(self, 'default_arrow_color_button') and self.default_arrow_color_button:
-            logging.info(f"Button: geometry={self.default_arrow_color_button.geometry()}, visible={self.default_arrow_color_button.isVisible()}")
+            pass
             
-        logging.info("=== END BUTTON COLOR LAYOUT DEBUG INFO ===")
 
     # --- Samples helpers ---
     def find_sample_files(self, limit=12):
@@ -4209,7 +4090,6 @@ class SettingsDialog(QDialog):
             try:
                 parent = self.parent_window if hasattr(self, 'parent_window') else self.parent()
                 if not parent:
-                    logging.error("SettingsDialog.on_sample_button_clicked: No parent window to load into")
                     return
 
                 # Try to import full history first if available
@@ -4219,11 +4099,9 @@ class SettingsDialog(QDialog):
                     try:
                         history_loaded = undo_mgr.import_history(file_path)
                     except Exception as e:
-                        logging.error(f"Samples load: import_history error: {e}")
                         history_loaded = False
 
                 if history_loaded:
-                    logging.info(f"Sample with history loaded from {file_path}")
                     if hasattr(parent.canvas, 'layer_panel'):
                         parent.canvas.layer_panel.refresh()
                     parent.canvas.update()
@@ -4264,7 +4142,6 @@ class SettingsDialog(QDialog):
                     parent.canvas.layer_panel.refresh()
                 parent.canvas.update()
 
-                logging.info(f"Sample project successfully loaded from {file_path}")
 
                 # Reset undo history since snapshot load discards previous history
                 if undo_mgr:
@@ -4279,7 +4156,7 @@ class SettingsDialog(QDialog):
                     except Exception:
                         pass
             except Exception as e:
-                logging.error(f"Error loading sample from {file_path}: {e}")
+                pass
 
         QTimer.singleShot(0, _load)
 
@@ -4338,7 +4215,6 @@ class VideoPlayerDialog(QDialog):
         self.media_player.error.connect(self.handle_error)
 
     def load_video(self):
-        logging.info(f"Loading video: {self.video_path}")
         media_content = QMediaContent(QUrl.fromLocalFile(self.video_path))
         self.media_player.setMedia(media_content)
 
@@ -4360,7 +4236,6 @@ class VideoPlayerDialog(QDialog):
 
     def handle_error(self, error):
         error_message = self.media_player.errorString()
-        logging.error(f"Media player error: {error_message}")
         QMessageBox.critical(self, "Media Player Error", f"An error occurred: {error_message}")
 
 
@@ -4575,7 +4450,6 @@ class DefaultWidthConfigDialog(QDialog):
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""
         slider_value = self.color_slider.value()
-        logging.info(f"[DefaultWidthConfigDialog] Color slider changed to {slider_value}%")
         # Get translations
         _ = translations.get(self.settings_dialog.current_language, translations['en'])
         percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
@@ -4587,13 +4461,11 @@ class DefaultWidthConfigDialog(QDialog):
         total_grid_width = total_grid_squares * self.grid_unit
         color_percentage = self.color_slider.value() / 100.0
 
-        logging.info(f"[DefaultWidthConfigDialog] Preview updated - Grid squares: {total_grid_squares}, Color percentage: {color_percentage*100:.0f}%")
 
         # Compute widths
         color_width = total_grid_width * color_percentage
         stroke_width = (total_grid_width - color_width) / 2
 
-        logging.info(f"[DefaultWidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
 
         # Get translations
         _ = translations.get(self.settings_dialog.current_language, translations['en'])
@@ -4610,8 +4482,5 @@ class DefaultWidthConfigDialog(QDialog):
         color_width = total_grid_width * color_percentage
         stroke_width = (total_grid_width - color_width) / 2
 
-        logging.info(
-            f"DEFAULT WIDTH - Values: grid_total={total_grid_width}, color%={color_percentage*100:.0f}, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}"
-        )
 
         return int(color_width), int(stroke_width)

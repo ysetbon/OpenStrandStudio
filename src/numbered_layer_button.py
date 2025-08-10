@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplicat
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
-import logging
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
@@ -148,7 +147,6 @@ class NumberedLayerButton(QPushButton):
             return adjusted_pos
             
         except Exception as e:
-            logging.warning(f"Error in screen-aware positioning: {e}, falling back to basic mapToGlobal")
             return self.mapToGlobal(pos)
     def show_context_menu(self, pos):
         """
@@ -159,11 +157,9 @@ class NumberedLayerButton(QPushButton):
         """
         # --- NEW: Prevent re-entry during reset ---
         if self._resetting_mask:
-            logging.info(f"[NumberedLayerButton] Context menu request ignored for button {self.text()} because reset is in progress.")
             return
         # --- END NEW ---
 
-        logging.info(f"[NumberedLayerButton] Context menu requested for button {self.text()} at pos {pos}")
         
         # Find the layer panel by traversing up the widget hierarchy
         layer_panel = None
@@ -176,22 +172,18 @@ class NumberedLayerButton(QPushButton):
             parent = parent.parent()
 
         if not layer_panel:
-            logging.error("Could not find LayerPanel parent for context menu.")
             return
         
         # Check if we're in multi-select/hide mode - if so, don't show the usual context menu
         if hasattr(layer_panel, 'multi_select_mode') and layer_panel.multi_select_mode:
-            logging.info("Skipping usual context menu - in multi-select/hide mode")
             return
             
         try:
             index = layer_panel.layer_buttons.index(self)
             if index < 0 or index >= len(layer_panel.canvas.strands):
-                logging.error(f"Button index {index} is out of bounds for strands.")
                 return
             strand = layer_panel.canvas.strands[index]
         except (ValueError, IndexError) as e:
-            logging.error(f"Error getting strand for button {self.text()}: {e}")
             return
             
         # Get translations from the layer panel
@@ -314,19 +306,13 @@ class NumberedLayerButton(QPushButton):
             reset_action.setDefaultWidget(reset_label)
             reset_action.triggered.connect(
                 lambda: (
-                    logging.info(f"[NumberedLayerButton] Reset Mask action triggered for button {self.text()}"),
                     setattr(self, '_resetting_mask', True),
-                    logging.info(f"[NumberedLayerButton] _resetting_mask set to True for {self.text()}"),
                     context_menu.close(), 
-                    logging.info(f"[NumberedLayerButton] Context menu closed for button {self.text()}"),
                     self.blockSignals(True),
                     QTimer.singleShot(0, lambda: (
-                        logging.info(f"[NumberedLayerButton] Timer triggered for reset_mask({index}) for button {self.text()}"),
                         layer_panel.reset_mask(index),
                         self.blockSignals(False),
-                        logging.info(f"[NumberedLayerButton] Re-enabled signals for button {self.text()}"),
-                        setattr(self, '_resetting_mask', False),
-                        logging.info(f"[NumberedLayerButton] _resetting_mask set to False for {self.text()}")
+                        setattr(self, '_resetting_mask', False)
                     ))
                 )
             )
@@ -782,7 +768,6 @@ class NumberedLayerButton(QPushButton):
                     child.setStyleSheet(circle_style)
         # --- END NEW Logic ---
 
-        logging.info(f"[NumberedLayerButton] Executing context menu for button {self.text()}")
         
         # Collect menu texts for dynamic width calculation
         menu_texts = []
@@ -900,12 +885,11 @@ class NumberedLayerButton(QPushButton):
                     parent = parent.parent()
 
                 if layer_panel and hasattr(layer_panel.canvas, 'undo_redo_manager') and layer_panel.canvas.undo_redo_manager:
-                    logging.info(f"Saving state after toggling visibility for button {self.text()} via set_hidden")
                     layer_panel.canvas.undo_redo_manager.save_state()
                 else:
-                    logging.warning(f"Could not find UndoRedoManager to save state for button {self.text()} visibility change.")
+                    pass
             except Exception as e:
-                logging.error(f"Error finding UndoRedoManager in NumberedLayerButton.set_hidden: {e}")
+                pass
             # --- END ADD ---
 
     def set_shadow_only(self, shadow_only):
@@ -916,7 +900,6 @@ class NumberedLayerButton(QPushButton):
             shadow_only (bool): Whether the button should be in shadow-only mode.
         """
         if self.shadow_only != shadow_only:
-            logging.info(f"[BUTTON_DEBUG] Button {self.text()} shadow_only changing from {self.shadow_only} to {shadow_only}")
             self.shadow_only = shadow_only
             self.update_style()
             self.update() # Trigger repaint
@@ -997,7 +980,6 @@ class NumberedLayerButton(QPushButton):
         """
         super().paintEvent(event)
         painter = QPainter(self)
-        logging.info(f"[NumberedLayerButton.paintEvent] Setting up UI painter for button: {getattr(self, 'layer_name', 'unknown')}")
         RenderUtils.setup_ui_painter(painter)
 
         # Set up the font
@@ -1116,7 +1098,6 @@ class NumberedLayerButton(QPushButton):
             for strand in self.layer_context.all_strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                     strand.start_circle_stroke_color = color
-                    logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                     if hasattr(strand, 'update'):
                         strand.update(None, False)
                     found = True
@@ -1127,7 +1108,6 @@ class NumberedLayerButton(QPushButton):
                     for strand in parent.layer_context.all_strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.start_circle_stroke_color = color
-                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                             if hasattr(strand, 'update'):
                                 strand.update(None, False)
                     found = True
@@ -1136,7 +1116,6 @@ class NumberedLayerButton(QPushButton):
                     for strand in parent.all_strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.start_circle_stroke_color = color
-                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                             if hasattr(strand, 'update'):
                                 strand.update(None, False)
                     found = True
@@ -1157,7 +1136,6 @@ class NumberedLayerButton(QPushButton):
                     for strand in layer_panel.canvas.strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                             strand.start_circle_stroke_color = color
-                            logging.info(f"[TRANSPARENT_DEBUG] Set start_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                             if hasattr(strand, 'update'):
                                 strand.update(None, False)
                     found = True
@@ -1201,7 +1179,6 @@ class NumberedLayerButton(QPushButton):
             for strand in self.layer_context.all_strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
                     strand.end_circle_stroke_color = color
-                    logging.info(f"[TRANSPARENT_DEBUG] Set end_circle_stroke_color for strand {strand.layer_name} to rgba({color.red()}, {color.green()}, {color.blue()}, {color.alpha()})")
                     if hasattr(strand, 'update'):
                         strand.update(None, False)
                     found = True
@@ -1261,13 +1238,11 @@ class NumberedLayerButton(QPushButton):
                         if hasattr(current_parent.canvas, 'undo_redo_manager'):
                             current_parent.canvas.undo_redo_manager._last_save_time = 0
                             current_parent.canvas.undo_redo_manager.save_state()
-                            logging.info(f"Saved undo/redo state after changing end circle stroke color for {button_text}")
                         
-                        logging.info(f"Forced canvas repaint after end circle stroke color change for {button_text}")
                         break
                     current_parent = current_parent.parent()
             except Exception as e:
-                logging.warning(f"Could not force canvas repaint: {e}")
+                pass
 
     # NEW: Helper method to fetch the current theme from parent chain
     def get_parent_theme(self):
@@ -1407,7 +1382,6 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
                     layer_panel.canvas.undo_redo_manager.save_state()
-                    logging.info(f"Saved undo/redo state after changing circle stroke color for {button_text}")
             else:
                 # Fall back to just updating ourselves or the parent widget
                 self.update()
@@ -1461,7 +1435,6 @@ class NumberedLayerButton(QPushButton):
         # Find the LayerPanel to get the index
         layer_panel = self._find_layer_panel()
         if not layer_panel:
-            logging.error("Could not find LayerPanel parent for drag.")
             return
 
         # Retrieve the *visual* index of this button inside the scroll_layout, not the
@@ -1472,7 +1445,6 @@ class NumberedLayerButton(QPushButton):
         # matter how the two orders differ.
         index = layer_panel.scroll_layout.indexOf(self)
         if index == -1:
-            logging.error(f"Could not find visual index for button {self.text()} during drag start.")
             return
 
         # Setup drag operation
@@ -1487,7 +1459,6 @@ class NumberedLayerButton(QPushButton):
         drag.setPixmap(pixmap)
         drag.setHotSpot(event.pos() - self.rect().topLeft()) # Center pixmap on cursor
 
-        logging.info(f"Starting drag for button index {index}")
         # Start the drag operation
         drop_action = drag.exec_(Qt.MoveAction) # We want to move the layer
 
@@ -1641,7 +1612,6 @@ class NumberedLayerButton(QPushButton):
             # Set the stroke color on the strand
             if hasattr(strand, 'stroke_color'):
                 strand.stroke_color = color
-                logging.info(f"Changed stroke color for strand {strand.layer_name} to {color.red()},{color.green()},{color.blue()},{color.alpha()}")
                 
                 # Request canvas repaint
                 if layer_panel and hasattr(layer_panel, 'canvas'):
@@ -1650,7 +1620,6 @@ class NumberedLayerButton(QPushButton):
                     if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                         layer_panel.canvas.undo_redo_manager._last_save_time = 0
                         layer_panel.canvas.undo_redo_manager.save_state()
-                        logging.info("Saved undo/redo state after changing stroke color")
                 else:
                     self.update()
 
@@ -1658,7 +1627,6 @@ class NumberedLayerButton(QPushButton):
         """
         Close the knot by connecting the strand's free end to another strand with exactly 1 free end.
         """
-        logging.info(f"Close the knot for strand {strand.layer_name} with free end: {free_end_type}")
         
         # Find all strands with exactly 1 free end (excluding self)
         candidate_strands = []
@@ -1702,10 +1670,8 @@ class NumberedLayerButton(QPushButton):
                         # Check if different sub-numbers (y != w)
                         if my_parts[1] != other_parts[1]:
                             candidate_strands.append((other_strand, other_free_end_type))
-                            logging.info(f"Found candidate: {other_strand.layer_name} with free {other_free_end_type}")
         
         if not candidate_strands:
-            logging.info("No suitable strand found to close the knot")
             return
         
         # Find the closest candidate by distance between free ends
@@ -1727,18 +1693,15 @@ class NumberedLayerButton(QPushButton):
             distance = ((my_free_point.x() - candidate_point.x()) ** 2 + 
                        (my_free_point.y() - candidate_point.y()) ** 2) ** 0.5
             
-            logging.info(f"Candidate {candidate_strand.layer_name} distance: {distance:.2f}")
             
             if distance < best_distance:
                 best_distance = distance
                 best_candidate = (candidate_strand, candidate_free_end)
         
         if best_candidate is None:
-            logging.info("No valid candidate found")
             return
             
         target_strand, target_free_end = best_candidate
-        logging.info(f"Selected closest candidate: {target_strand.layer_name} at distance {best_distance:.2f}")
         
         # Get the positions of the free ends (my_free_point already calculated above)
             
@@ -1777,8 +1740,6 @@ class NumberedLayerButton(QPushButton):
         strand.has_circles[0 if free_end_type == 'start' else 1] = True
         target_strand.has_circles[0 if target_free_end == 'start' else 1] = True
         
-        logging.info(f"Set has_circles for {strand.layer_name}: {strand.has_circles}")
-        logging.info(f"Set has_circles for {target_strand.layer_name}: {target_strand.has_circles}")
         
         # Ensure circle stroke color is set (needed for circles to render properly)
         # But preserve any transparent end_circle_stroke_color that was set
@@ -1800,11 +1761,9 @@ class NumberedLayerButton(QPushButton):
         if target_free_end == 'end':
             # Automatically set the target strand's end circle stroke to transparent
             target_strand.end_circle_stroke_color = QColor(0, 0, 0, 0)  # Transparent
-            logging.info(f"Automatically set transparent end circle stroke for target strand {target_strand.layer_name}")
         else:
             # Automatically set the target strand's start circle stroke to transparent
             target_strand.start_circle_stroke_color = QColor(0, 0, 0, 255)  # Transparent
-            logging.info(f"Automatically set transparent start circle stroke for target strand {target_strand.layer_name}")
         
         # Mark closed connections for full circle rendering (without setting attached status)
         if free_end_type == 'start':
@@ -1831,7 +1790,6 @@ class NumberedLayerButton(QPushButton):
         
         # Skip creating parent-child attached_strand relationships for knot closures.
         # Knot connections should be handled solely via knot_connections without altering the attached_strands hierarchy.
-        logging.info("[KNOT_DEBUG] Skipping parent-child attached_strand relationship creation for close_the_knot operation")
         
         
         # AttachedStrands don't need special attachment info updates for knot connections
@@ -1884,26 +1842,18 @@ class NumberedLayerButton(QPushButton):
             'is_closing_strand': False  # This strand was the target of the knot closing
         }
         
-        logging.info(f"KNOT_CONNECTION: {strand.layer_name}.{free_end_type} <-> {target_strand.layer_name}.{target_free_end}")
-        logging.info(f"KNOT_CONNECTION: {strand.layer_name} knot_connections: {strand.knot_connections}")
-        logging.info(f"KNOT_CONNECTION: {target_strand.layer_name} knot_connections: {target_strand.knot_connections}")
         
         # Double check the values were set
-        logging.info(f"After close knot - {strand.layer_name} has_circles: {strand.has_circles}, closed_connections: {getattr(strand, 'closed_connections', None)}")
-        logging.info(f"After close knot - {target_strand.layer_name} has_circles: {target_strand.has_circles}, closed_connections: {getattr(target_strand, 'closed_connections', None)}")
         
         # Update the LayerStateManager to reflect the new connections
         if hasattr(layer_panel.canvas, 'layer_state_manager'):
             layer_panel.canvas.layer_state_manager.save_current_state()
-            logging.info("Updated LayerStateManager after closing knot")
         
         # Save state for undo/redo functionality
         if hasattr(layer_panel.canvas, 'undo_redo_manager'):
             # Use a small delay to ensure all knot properties are established
             QTimer.singleShot(50, lambda: layer_panel.canvas.undo_redo_manager.save_state())
-            logging.info("Scheduled undo/redo state save after closing knot")
         
-        logging.info(f"Successfully closed the knot: {strand.layer_name} connected to {target_strand.layer_name}")
     
     def change_width(self, strand, layer_panel):
         """Open a width configuration dialog to change strand width."""
@@ -1946,9 +1896,7 @@ class NumberedLayerButton(QPushButton):
                                 other_strand.update_shape()
                             updated_strands.append(other_strand.layer_name)
                     
-                    logging.info(f"Updated width for all strands in set {set_number}: {updated_strands}")
             
-            logging.info(f"Changed width from {old_width} to {new_width} and stroke width from {old_stroke_width} to {new_stroke_width} for strand {getattr(strand, 'layer_name', 'unnamed')}")
             
             # Force a complete canvas repaint
             if layer_panel and hasattr(layer_panel, 'canvas'):
@@ -1967,9 +1915,9 @@ class NumberedLayerButton(QPushButton):
                     # Check if save actually happened
                     new_step = layer_panel.canvas.undo_redo_manager.current_step
                     if new_step > current_step:
-                        logging.info(f"Successfully saved undo/redo state after changing width (step {current_step} -> {new_step})")
+                        pass
                     else:
-                        logging.warning(f"Width change may not have been saved to undo/redo (step remained at {current_step})")
+                        pass
 
 
 class WidthConfigDialog(QDialog):
@@ -2292,7 +2240,6 @@ class WidthConfigDialog(QDialog):
     def update_percentage_label(self):
         """Update the percentage label when slider changes."""
         slider_value = self.color_slider.value()
-        logging.info(f"[WidthConfigDialog] Color slider changed to {slider_value}%")
         # Get translations
         _ = translations.get(self.layer_panel.language_code, translations['en'])
         percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
@@ -2304,13 +2251,11 @@ class WidthConfigDialog(QDialog):
         total_grid_width = total_grid_squares * self.grid_unit
         color_percentage = self.color_slider.value() / 100.0
 
-        logging.info(f"[WidthConfigDialog] Preview updated - Grid squares: {total_grid_squares}, Color percentage: {color_percentage*100:.0f}%")
 
         # Compute widths
         color_width = total_grid_width * color_percentage
         stroke_width = (total_grid_width - color_width) / 2
 
-        logging.info(f"[WidthConfigDialog] Calculated widths - Total: {total_grid_width}px, Color: {color_width:.0f}px, Stroke: {stroke_width:.0f}px each side")
 
         # Get translations
         _ = translations.get(self.layer_panel.language_code, translations['en'])
@@ -2327,8 +2272,5 @@ class WidthConfigDialog(QDialog):
         color_width = total_grid_width * color_percentage
         stroke_width = (total_grid_width - color_width) / 2
 
-        logging.info(
-            f"FIXED TOTAL - Values: grid_total={total_grid_width}, color%={color_percentage*100:.0f}, color_width={color_width:.0f}, stroke_width={stroke_width:.0f}"
-        )
 
         return int(color_width), int(stroke_width)

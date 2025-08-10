@@ -5,7 +5,6 @@ This module provides logging functions that are protected against recursion
 and other logging-related errors that can cause infinite loops.
 """
 
-import logging
 
 
 def safe_log(level, message, logger_name=None):
@@ -19,10 +18,9 @@ def safe_log(level, message, logger_name=None):
     """
     try:
         if logger_name:
-            logger = logging.getLogger(logger_name)
-            logger.log(level, message)
+            pass
         else:
-            logging.log(level, message)
+            pass
     except RecursionError:
         # Silently ignore recursion errors to prevent infinite loops
         pass
@@ -55,10 +53,9 @@ def safe_exception(message, logger_name=None):
     """Safely log an exception with traceback."""
     try:
         if logger_name:
-            logger = logging.getLogger(logger_name)
-            logger.exception(message)
+            pass
         else:
-            logging.exception(message)
+            pass
     except RecursionError:
         # Silently ignore recursion errors to prevent infinite loops
         pass

@@ -6,7 +6,6 @@ from PyQt5.QtGui import (
 )
 from render_utils import RenderUtils
 import math
-import logging
 from PyQt5.QtGui import QPolygonF  # Ensure this is included among your imports
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import QPointF, Qt
@@ -81,11 +80,11 @@ class AttachedStrand(Strand):
         # Set circle stroke color to canvas default if available
         if hasattr(parent, 'canvas') and parent.canvas and hasattr(parent.canvas, 'default_stroke_color'):
             self.circle_stroke_color = QColor(parent.canvas.default_stroke_color)
-            logging.info(f"Set AttachedStrand circle_stroke_color to canvas default: {self.circle_stroke_color.red()},{self.circle_stroke_color.green()},{self.circle_stroke_color.blue()},{self.circle_stroke_color.alpha()}")
+            
         else:
             # Fallback to parent's stroke_color if canvas is not available
             self.circle_stroke_color = QColor(parent.stroke_color)
-            logging.info(f"Set AttachedStrand circle_stroke_color to parent stroke_color: {self.circle_stroke_color.red()},{self.circle_stroke_color.green()},{self.circle_stroke_color.blue()},{self.circle_stroke_color.alpha()}")
+            
 
         # --------------------------------------------------------------------
         # Removed the force-default to black if circle_stroke_color is None.
@@ -99,7 +98,7 @@ class AttachedStrand(Strand):
         #
         # NEW CODE to log alpha = 0 if needed:
         if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
-            logging.info("Circle stroke was loaded with alpha=0, leaving it fully transparent.")
+            pass
         # --------------------------------------------------------------------
 
     @property
@@ -356,13 +355,13 @@ class AttachedStrand(Strand):
         if not transform.isIdentity():
             # Check if we're zoomed out
             zoom_factor = transform.m11()  # Assuming uniform scaling
-            logging.info(f"  Detected zoom factor: {zoom_factor}")
+            
             
             if zoom_factor < 1.0:
                 # When zoomed out, use the strand's full bounding rect
                 # Don't clip to viewport as that causes the cropping issue
                 result_rect = bounding_rect
-                logging.info(f"  Zoomed out - using full strand bounds without viewport clipping")
+                
             else:
                 # When zoomed in or at normal zoom, we can optimize by clipping to viewport
                 # Map the bounding rect through the transformation
@@ -379,8 +378,7 @@ class AttachedStrand(Strand):
                 
                 # Use the intersection of mapped bounds and viewport for optimization
                 result_rect = mapped_rect.intersected(viewport)
-                logging.info(f"  Viewport: {viewport}")
-                logging.info(f"  Intersection result: {result_rect}")
+
             
             # Ensure minimum size for the temporary image
             min_size = 100
@@ -393,7 +391,7 @@ class AttachedStrand(Strand):
                 result_rect.setTop(center_y - min_size/2)
                 result_rect.setBottom(center_y + min_size/2)
                 
-            logging.info(f"  Final bounds returned: {result_rect}")
+            
             return result_rect
         else:
             # No transformation, use device size as fallback
@@ -404,7 +402,7 @@ class AttachedStrand(Strand):
             else:
                 # Final fallback
                 fallback_rect = QRectF(-500, -500, 1000, 1000)
-                logging.info(f"  Using final fallback bounds: {fallback_rect}")
+
                 return fallback_rect
 
     def boundingRect(self):
@@ -466,10 +464,6 @@ class AttachedStrand(Strand):
     def draw(self, painter, skip_painter_setup=False):
         """Draw the attached strand with a rounded start and squared end."""
         # Debug logging for closed connections
-        print(f"[ATTACHED_STRAND_DRAW_START] {getattr(self, 'layer_name', 'unknown')} - draw() called")
-        print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
-        print(f"[ATTACHED_STRAND_DEBUG] {getattr(self, 'layer_name', 'unknown')} - About to check drawing path")
-        print(f"[HIGHLIGHT_DEBUG] {getattr(self, 'layer_name', 'unknown')} - is_selected at start of draw: {getattr(self, 'is_selected', None)}")
         painter.save() # Top Level Save
         if not skip_painter_setup:
             RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -489,15 +483,12 @@ class AttachedStrand(Strand):
         is_panned = (pan_offset_x != 0 or pan_offset_y != 0)
         
         if zoom_factor != 1.0 or is_panned:
-            print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Using _draw_direct (zoom: {zoom_factor}, panned: {is_panned})")
             # logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
             self._draw_direct(painter)
             painter.restore() # Top Level Restore
             return
         
-        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Using regular draw path (not _draw_direct)")
-        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - is_hidden: {self.is_hidden}")
-        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - shadow_only: {getattr(self, 'shadow_only', False)}")
+
 
         # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
@@ -795,11 +786,11 @@ class AttachedStrand(Strand):
                     draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
-            logging.error(f"Error applying strand shadow: {e}")
+            pass
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            logging.info(f"[HIGHLIGHT_DEBUG] {self.layer_name} - Drawing highlight: is_selected={self.is_selected}, parent_type={type(self.parent)}")
+            
             # We need stroke_path for highlighting, so calculate it here
             stroke_stroker = QPainterPathStroker()
             stroke_stroker.setWidth(self.width + self.stroke_width * 2)
@@ -918,7 +909,7 @@ class AttachedStrand(Strand):
             painter.restore()
         else:
             if hasattr(self, 'layer_name') and self.layer_name == '1_2':
-                logging.info(f"[HIGHLIGHT_DEBUG] {self.layer_name} - NOT drawing highlight: is_selected={self.is_selected}, parent_type={type(self.parent)}, is_MaskedStrand={isinstance(self.parent, MaskedStrand)}")
+                pass
         
         
         # --- START: Skip visual rendering in shadow-only mode ---
@@ -1144,7 +1135,7 @@ class AttachedStrand(Strand):
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
-                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
+                
                 # Draw a red highlight around the C-shape
                 # Calculate the highlight radius (outer edge of the highlight)
                 highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
@@ -1239,7 +1230,7 @@ class AttachedStrand(Strand):
 
             # Draw highlight around the END C-shape if this strand is selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
-                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing END semicircle highlight: is_selected={self.is_selected}")
+                
                 highlight_radius = radius + 5  # 5 pixels outside the normal circle
                 highlight_circle = QPainterPath()
                 highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
@@ -1678,13 +1669,13 @@ class AttachedStrand(Strand):
         start_circle_color = self.start_circle_stroke_color
         if start_circle_color and start_circle_color.alpha() == 0:
             is_transparent_start = True
-            logging.info(f"AttachedStrand {self.layer_name}: Transparent start circle detected, removing shadow extension.")
+            
         
         # Check for transparent end circle
         end_circle_color = self.end_circle_stroke_color
         if end_circle_color and end_circle_color.alpha() == 0:
             is_transparent_end = True
-            logging.info(f"AttachedStrand {self.layer_name}: Transparent end circle detected, removing shadow extension.")
+            
 
         if is_transparent_start:
             # If transparent start circle on AttachedStrand, don't extend
@@ -1965,7 +1956,6 @@ class AttachedStrand(Strand):
     def _draw_direct(self, painter):
         """Draw the attached strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
-        print(f"[DRAW_DIRECT_DEBUG] _draw_direct called for {getattr(self, 'layer_name', 'unknown')}")
         
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -2258,7 +2248,7 @@ class AttachedStrand(Strand):
                     draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
-            logging.error(f"Error applying strand shadow: {e}")
+            pass
 
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -2578,7 +2568,7 @@ class AttachedStrand(Strand):
             
             # Draw highlight for C-shape if selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
-                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing semicircle highlight: is_selected={self.is_selected}")
+                
                 # Draw a red highlight around the C-shape
                 # Calculate the highlight radius (outer edge of the highlight)
                 highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
@@ -2601,15 +2591,11 @@ class AttachedStrand(Strand):
                     painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
 
-        print(f"[DRAW_DEBUG] {getattr(self, 'layer_name', 'unknown')} - Reached ending circle section check")
         # Draw ending circle if has_circles == [True, True] or if it's a closed connection
         # For attached strands, check the attachment side to determine which closed_connection to use
         attachment_side = getattr(self, 'attachment_side', 1)
         is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
-        print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, is_closed_connection: {is_closed_connection}, attachment_side: {attachment_side}")
-        print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - condition check: has_circles==[True,True]: {self.has_circles == [True, True]}, has_circles[1] and is_closed: {self.has_circles[1] and is_closed_connection}")
         if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
-            print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - ENTERING end circle drawing block")
             # Check for attached children that would skip circle drawing
             skip_start_circle = any(
                 isinstance(child, AttachedStrand) and child.start == self.start
@@ -2739,7 +2725,7 @@ class AttachedStrand(Strand):
 
             # Draw highlight around the END C-shape if this strand is selected
             if self.is_selected and not isinstance(self.parent, MaskedStrand):
-                logging.info(f"[ATTACHED_SEMICIRCLE_HIGHLIGHT] {self.layer_name} - Drawing END semicircle highlight: is_selected={self.is_selected}")
+                
                 highlight_radius = radius + 5  # 5 pixels outside the normal circle
                 highlight_circle = QPainterPath()
                 highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
@@ -2769,10 +2755,7 @@ class AttachedStrand(Strand):
         # For attached strands, check the attachment side to determine which closed_connection to use
         attachment_side = getattr(self, 'attachment_side', 1)
         is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
-        print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - has_circles: {self.has_circles}, is_closed_connection: {is_closed_connection}, attachment_side: {attachment_side}")
-        print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - condition check: has_circles==[True,True]: {self.has_circles == [True, True]}, has_circles[1] and is_closed: {self.has_circles[1] and is_closed_connection}")
         if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
-            print(f"[ATTACHED_END_CIRCLE_DEBUG_DIRECT] {getattr(self, 'layer_name', 'unknown')} - ENTERING end circle drawing block")
             # Check for attached children that would skip circle drawing
             skip_start_circle = any(
                 isinstance(child, AttachedStrand) and child.start == self.start
@@ -2833,9 +2816,7 @@ class AttachedStrand(Strand):
                 painter.drawPath(just_inner_start)
 
             # Draw End Circle (if not skipped)
-            print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - skip_end_circle: {skip_end_circle}")
             if not skip_end_circle:
-                print(f"[ATTACHED_END_CIRCLE_DEBUG] {getattr(self, 'layer_name', 'unknown')} - DRAWING END CIRCLE")
                 tangent_end = self.calculate_cubic_tangent(1.0)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 

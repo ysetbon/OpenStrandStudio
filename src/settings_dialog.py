@@ -2174,7 +2174,8 @@ class SettingsDialog(QDialog):
 
         # Use QTextBrowser to display rich text content for What's New
         self.whats_new_text_browser = QTextBrowser()
-        self.whats_new_text_browser.setHtml(_['whats_new_info'])
+        # Render HTML with runtime assets (e.g., flag icons) replaced
+        self.whats_new_text_browser.setHtml(self.render_whats_new_html(_['whats_new_info']))
         self.whats_new_text_browser.setOpenExternalLinks(True)
         whats_new_layout.addWidget(self.whats_new_text_browser)
 
@@ -2221,6 +2222,28 @@ class SettingsDialog(QDialog):
         self.sample_button_overhand_knot.clicked.connect(lambda _, p=overhand_knot_path: self.on_sample_button_clicked(p))
         samples_layout.addWidget(self.sample_button_overhand_knot)
         self.sample_buttons.append(self.sample_button_overhand_knot)
+
+        # Three-Strand Braid
+        self.sample_button_three_strand_braid = QPushButton(
+            _['sample_three_strand_braid'] if 'sample_three_strand_braid' in _ else 'Three-Strand Braid'
+        )
+        three_strand_braid_path = os.path.join(samples_dir, 'three_strand_braid.json')
+        self.sample_button_three_strand_braid.clicked.connect(
+            lambda _, p=three_strand_braid_path: self.on_sample_button_clicked(p)
+        )
+        samples_layout.addWidget(self.sample_button_three_strand_braid)
+        self.sample_buttons.append(self.sample_button_three_strand_braid)
+
+        # Interwoven Double Closed Knot
+        self.sample_button_interwoven_double_closed_knot = QPushButton(
+            _['sample_interwoven_double_closed_knot'] if 'sample_interwoven_double_closed_knot' in _ else 'Interwoven Double Closed Knot'
+        )
+        interwoven_double_closed_knot_path = os.path.join(samples_dir, 'Interwoven_double_closed_knot.json')
+        self.sample_button_interwoven_double_closed_knot.clicked.connect(
+            lambda _, p=interwoven_double_closed_knot_path: self.on_sample_button_clicked(p)
+        )
+        samples_layout.addWidget(self.sample_button_interwoven_double_closed_knot)
+        self.sample_buttons.append(self.sample_button_interwoven_double_closed_knot)
 
         samples_layout.addStretch()
         self.stacked_widget.addWidget(self.samples_widget)
@@ -3070,7 +3093,7 @@ class SettingsDialog(QDialog):
         self.clear_history_button.setText(_['clear_all_history'])
         self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
         # Update What's New page elements
-        self.whats_new_text_browser.setHtml(_['whats_new_info'])
+        self.whats_new_text_browser.setHtml(self.render_whats_new_html(_['whats_new_info']))
         # Update about text browser instead of label
         self.about_text_browser.setHtml(_['about_info'])
         
@@ -3093,6 +3116,14 @@ class SettingsDialog(QDialog):
             self.sample_button_box_stitch.setText(_['sample_box_stitch'] if 'sample_box_stitch' in _ else 'Box Stitch')
         if hasattr(self, 'sample_button_overhand_knot'):
             self.sample_button_overhand_knot.setText(_['sample_overhand_knot'] if 'sample_overhand_knot' in _ else 'Overhand Knot')
+        if hasattr(self, 'sample_button_three_strand_braid'):
+            self.sample_button_three_strand_braid.setText(
+                _['sample_three_strand_braid'] if 'sample_three_strand_braid' in _ else 'Three-Strand Braid'
+            )
+        if hasattr(self, 'sample_button_interwoven_double_closed_knot'):
+            self.sample_button_interwoven_double_closed_knot.setText(
+                _['sample_interwoven_double_closed_knot'] if 'sample_interwoven_double_closed_knot' in _ else 'Interwoven Double Closed Knot'
+            )
         
         # Completely rebuild the language combobox to ensure proper translation
         current_data = self.language_combobox.currentData()
@@ -3444,6 +3475,24 @@ class SettingsDialog(QDialog):
         
         flag_path = os.path.join(base_path, 'flags', flag_filename)
         return flag_path
+    
+    def render_whats_new_html(self, html):
+        """Replace emoji flags with inline images to ensure consistent rendering in QTextBrowser."""
+        try:
+            de_flag_path = self.get_flag_path('de.png')
+            if de_flag_path and os.path.exists(de_flag_path):
+                de_url = QUrl.fromLocalFile(de_flag_path).toString()
+                img_tag = f'<img src="{de_url}" alt="DE" width="30" height="20" style="vertical-align:text-bottom;" />'
+                # Replace true emoji if present
+                html = html.replace('🇩🇪', img_tag)
+                # Replace fallback textual rendering "DE" that some systems show instead of the flag
+                html = html.replace(' DE:', f' {img_tag}:')
+                html = html.replace(' DE</', f' {img_tag}</')
+                html = html.replace(' DE.', f' {img_tag}.')
+                html = html.replace(' DE ', f' {img_tag} ')
+            return html
+        except Exception:
+            return html
     
     def create_flag_icon(self, flag_filename):
         """Create a flag icon from high-resolution flag images, scaled appropriately for dropdown."""

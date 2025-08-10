@@ -78,9 +78,11 @@ translations = {
         'samples': 'Samples',
         'samples_header': 'Sample projects',
         'samples_sub': 'Choose a sample to load and learn from. The dialog will close and the sample will be loaded.',
-            'sample_closed_knot': 'Closed Knot',
-            'sample_box_stitch': 'Box Stitch',
-            'sample_overhand_knot': 'Overhand Knot',
+        'sample_closed_knot': 'Closed Knot',
+        'sample_box_stitch': 'Box Stitch',
+        'sample_overhand_knot': 'Overhand Knot',
+        'sample_three_strand_braid': 'Three-Strand Braid',
+        'sample_interwoven_double_closed_knot': 'Interwoven Double Closed Knot',
         'about': 'About',
         'select_theme': 'Select Theme:',
         'select_language': 'Select Language:',
@@ -139,6 +141,8 @@ translations = {
             <li style="font-size:15px;"><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
             <li style="font-size:15px;"><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
             <li style="font-size:15px;"><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+            <li style="font-size:15px;"><b>New Language - German (🇩🇪):</b> You can now switch to German in Settings → Change Language.</li>
+            <li style="font-size:15px;"><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
         ''',
@@ -421,6 +425,8 @@ translations = {
             'sample_closed_knot': 'Nœud fermé',
             'sample_box_stitch': 'Couture en boîte',
             'sample_overhand_knot': 'Nœud simple',
+            'sample_three_strand_braid': 'Tresse à trois brins',
+            'sample_interwoven_double_closed_knot': 'Nœud fermé double entrelacé',
         'about': 'À propos',
         'select_theme': 'Sélectionner le thème :',
         'select_language': 'Sélectionner la langue :',
@@ -440,6 +446,8 @@ translations = {
             <li style="font-size:15px;"><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
             <li style="font-size:15px;"><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
             <li style="font-size:15px;"><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+            <li style="font-size:15px;"><b>Nouvelle langue - allemand (🇩🇪) :</b> Vous pouvez maintenant passer à l’allemand dans Paramètres → Changer la langue.</li>
+            <li style="font-size:15px;"><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d’exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l’exemple sera chargé.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
         ''',
@@ -758,6 +766,8 @@ translations = {
             'sample_closed_knot': 'Geschlossener Knoten',
             'sample_box_stitch': 'Kästchennaht',
             'sample_overhand_knot': 'Achterknoten',
+            'sample_three_strand_braid': 'Dreisträngiger Zopf',
+            'sample_interwoven_double_closed_knot': 'Verflochtener doppelter geschlossener Knoten',
         'about': 'Über',
         'select_theme': 'Thema auswählen:',
         'select_language': 'Sprache auswählen:',
@@ -807,6 +817,8 @@ translations = {
             <li style="font-size:15px;"><b>Versteckmodus:</b> Neuer Modus über die Affen-Schaltfläche (🙉/🙈), um mehrere Ebenen schnell auszublenden. Klicken, um zu aktivieren, dann Ebenen anklicken. Zum Anwenden wieder verlassen.</li>
             <li style="font-size:15px;"><b>Ansicht zentrieren:</b> Zentriert alle Stränge sofort mit der Ziel-Schaltfläche (🎯). Die Leinwandposition wird automatisch so angepasst, dass alles zentriert dargestellt wird.</li>
             <li style="font-size:15px;"><b>Schnelles Knotenschließen:</b> Rechtsklick auf einen Strang oder verbundenen Strang mit freiem Ende, um den Knoten schnell zu schließen. Das System findet automatisch den nächstgelegenen kompatiblen Strang mit freiem Ende.</li>
+            <li style="font-size:15px;"><b>Neue Sprache - Deutsch (🇩🇪):</b> Sie können jetzt unter Einstellungen → Sprache ändern Deutsch auswählen.</li>
+            <li style="font-size:15px;"><b>Neue Kategorie „Beispiele“:</b> Entdecken Sie sofort ladbare Beispielprojekte unter Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
         ''',
@@ -1085,6 +1097,8 @@ translations = {
             'sample_closed_knot': 'Nodo chiuso',
             'sample_box_stitch': 'Punto scatola',
             'sample_overhand_knot': 'Nodo semplice',
+            'sample_three_strand_braid': 'Treccia a tre capi',
+            'sample_interwoven_double_closed_knot': 'Nodo chiuso doppio intrecciato',
         'about': 'Informazioni',
         'select_theme': 'Seleziona Tema:',
         'select_language': 'Seleziona Lingua:',
@@ -1104,6 +1118,8 @@ translations = {
             <li style="font-size:15px;"><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
             <li style="font-size:15px;"><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
             <li style="font-size:15px;"><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+            <li style="font-size:15px;"><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+            <li style="font-size:15px;"><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.101</p>
         ''',
@@ -1424,6 +1440,8 @@ translations = {
             'sample_closed_knot': 'Nudo cerrado',
             'sample_box_stitch': 'Puntada de caja',
             'sample_overhand_knot': 'Nudo simple',
+            'sample_three_strand_braid': 'Trenza de tres cabos',
+            'sample_interwoven_double_closed_knot': 'Nudo cerrado doble entrelazado',
         'about': 'Acerca',
         'select_theme': 'Seleccionar Tema:',
         'select_language': 'Seleccionar Idioma:',
@@ -1443,6 +1461,8 @@ translations = {
             <li style="font-size:15px;"><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
             <li style="font-size:15px;"><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
             <li style="font-size:15px;"><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+            <li style="font-size:15px;"><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+            <li style="font-size:15px;"><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.101</p>
 
@@ -1764,6 +1784,8 @@ translations = {
             'sample_closed_knot': 'Nó fechado',
             'sample_box_stitch': 'Ponto caixa',
             'sample_overhand_knot': 'Nó simples',
+            'sample_three_strand_braid': 'Trança de três mechas',
+            'sample_interwoven_double_closed_knot': 'Nó fechado duplo entrelaçado',
         'about': 'Sobre',
         'select_theme': 'Selecionar Tema:',
         'select_language': 'Selecionar Idioma:',
@@ -1783,6 +1805,8 @@ translations = {
             <li style="font-size:15px;"><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente várias camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
             <li style="font-size:15px;"><b>Centralizar visualização:</b> Centralize instantaneamente todos os fios em sua visualização com o novo botão alvo (🎯). Isso ajusta automaticamente a posição do canvas para mostrar todo o seu trabalho centralizado na tela.</li>
             <li style="font-size:15px;"><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+            <li style="font-size:15px;"><b>Novo idioma - Alemão (🇩🇪):</b> Agora você pode alternar para alemão em Configurações → Mudar Idioma.</li>
+            <li style="font-size:15px;"><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a janela será fechada e o exemplo será carregado.</li>
         </ul>
         <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.101</p>
         ''',
@@ -2107,6 +2131,8 @@ translations = {
             'sample_closed_knot': 'קשר סגור',
             'sample_box_stitch': 'תפר קופסה',
             'sample_overhand_knot': 'קשר רגיל',
+            'sample_three_strand_braid': 'צמה משלושה חוטים',
+            'sample_interwoven_double_closed_knot': 'קשר סגור כפול משולב',
         'about': ' אודות OpenStrand Studio',
         'select_theme': 'בחר ערכת נושא:    ',
         'select_language': 'בחר שפה:',
@@ -2125,7 +2151,9 @@ translations = {
         • <b>שכפול קבוצה:</b> עכשיו אפשר לשכפל קבוצות שלמות עם כל החוטים שלהן על ידי לחיצה ימנית על כותרת הקבוצה ובחירת "שכפל קבוצה". הקבוצה המשוכפלת שומרת על כל המאפיינים של החוטים ויוצרת אוטומטית שמות שכבה ייחודיים.<br>
         • <b>מצב הסתרה:</b> מצב הסתרה חדש נגיש דרך כפתור הקוף (🙉/🙈) מאפשר להסתיר במהירות מספר שכבות בבת אחת. לחץ על הכפתור כדי להיכנס למצב הסתרה, ואז לחץ על שכבות כדי להסתיר אותן. צא ממצב הסתרה כדי להחיל את השינויים.<br>
         • <b>מרכוז תצוגה:</b> מרכז מיידית את כל החוטים בתצוגה שלך עם כפתור המטרה החדש (🎯). זה מכוונן אוטומטית את מיקום הקנבס כדי להציג את כל העבודה שלך במרכז המסך.<br>
-        • <b>סגירת קשר מהירה:</b> לחץ לחיצה ימנית על כל חוט או חוט מחובר עם קצה חופשי כדי לסגור במהירות את הקשר. המערכת מוצאת ומתחברת אוטומטית לחוט התואם הקרוב ביותר עם קצה חופשי.<br><br>
+        • <b>סגירת קשר מהירה:</b> לחץ לחיצה ימנית על כל חוט או חוט מחובר עם קצה חופשי כדי לסגור במהירות את הקשר. המערכת מוצאת ומתחברת אוטומטית לחוט התואם הקרוב ביותר עם קצה חופשי.<br>
+        • <b>שפה חדשה - גרמנית (🇩🇪):</b> עכשיו אפשר לבחור גרמנית דרך הגדרות → שינוי שפה.<br>
+        • <b>קטגוריית דוגמאות חדשה:</b> אפשר לצפות בפרויקטים לדוגמה שמוכנים לטעינה דרך הגדרות → דוגמאות. בחר דוגמה כדי ללמוד; תיבת הדו־שיח תיסגר והדוגמה תיטען.<br><br>
         © 2025 OpenStrand Studio - גרסה 1.101
         </div>
         ''',

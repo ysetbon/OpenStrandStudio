@@ -849,8 +849,8 @@ def apply_loaded_strands(canvas, strands, groups):
         # Ensure shadow color is set
         if hasattr(canvas, 'default_shadow_color') and canvas.default_shadow_color:
             strand.shadow_color = QColor(canvas.default_shadow_color)
-        # Explicitly enable shadow drawing for this strand
-        strand.should_draw_shadow = True
+        # Only enable shadow drawing if canvas has shadows enabled
+        strand.should_draw_shadow = canvas.shadow_enabled if hasattr(canvas, 'shadow_enabled') else True
         
         # Special handling for MaskedStrand shadows
         if isinstance(strand, MaskedStrand):

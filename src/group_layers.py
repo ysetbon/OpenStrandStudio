@@ -1764,7 +1764,26 @@ class GroupPanel(QWidget):
         if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
             second_duplicated = strand_mapping.get(original_strand.second_selected_strand)
         
-        # If we can't find the component strands, log warning but try to continue
+        # If direct reference lookup failed, try to find by layer_name
+        if not first_duplicated or not second_duplicated:
+            # Parse the layer_name to get component strand names
+            parts = original_strand.layer_name.split('_')
+            if len(parts) >= 4:
+                first_layer_name = f"{parts[0]}_{parts[1]}"
+                second_layer_name = f"{parts[2]}_{parts[3]}"
+                
+                # Find the duplicated strands by their layer names
+                for orig_strand, dup_strand in strand_mapping.items():
+                    if hasattr(orig_strand, 'layer_name'):
+                        if orig_strand.layer_name == first_layer_name and not first_duplicated:
+                            first_duplicated = dup_strand
+                        if orig_strand.layer_name == second_layer_name and not second_duplicated:
+                            second_duplicated = dup_strand
+                    
+                    if first_duplicated and second_duplicated:
+                        break
+        
+        # If we still can't find the component strands, log warning but try to continue
         if not first_duplicated or not second_duplicated:
             pass
             # Fall back to creating a basic strand if component strands aren't available
@@ -1937,6 +1956,38 @@ class GroupPanel(QWidget):
         if hasattr(original, 'shadow_color'):
             new_strand.shadow_color = QColor(original.shadow_color)  # Create new QColor
         
+        # Copy circle stroke colors (for transparent circles)
+        if hasattr(original, '_circle_stroke_color') and original._circle_stroke_color is not None:
+            new_strand._circle_stroke_color = QColor(original._circle_stroke_color)
+        if hasattr(original, 'circle_stroke_color') and original.circle_stroke_color is not None:
+            new_strand.circle_stroke_color = QColor(original.circle_stroke_color)
+        if hasattr(original, '_start_circle_stroke_color') and original._start_circle_stroke_color is not None:
+            new_strand._start_circle_stroke_color = QColor(original._start_circle_stroke_color)
+        if hasattr(original, 'start_circle_stroke_color') and original.start_circle_stroke_color is not None:
+            new_strand.start_circle_stroke_color = QColor(original.start_circle_stroke_color)
+        if hasattr(original, '_end_circle_stroke_color') and original._end_circle_stroke_color is not None:
+            new_strand._end_circle_stroke_color = QColor(original._end_circle_stroke_color)
+        if hasattr(original, 'end_circle_stroke_color') and original.end_circle_stroke_color is not None:
+            new_strand.end_circle_stroke_color = QColor(original.end_circle_stroke_color)
+        
+        # Copy arrow visibility properties
+        if hasattr(original, 'full_arrow_visible'):
+            new_strand.full_arrow_visible = original.full_arrow_visible
+        if hasattr(original, 'start_arrow_visible'):
+            new_strand.start_arrow_visible = original.start_arrow_visible
+        if hasattr(original, 'end_arrow_visible'):
+            new_strand.end_arrow_visible = original.end_arrow_visible
+        
+        # Copy extension visibility properties  
+        if hasattr(original, 'start_extension_visible'):
+            new_strand.start_extension_visible = original.start_extension_visible
+        if hasattr(original, 'end_extension_visible'):
+            new_strand.end_extension_visible = original.end_extension_visible
+        
+        # Copy attachable property
+        if hasattr(original, 'attachable'):
+            new_strand.attachable = original.attachable
+        
         # Initialize knot_connections for the new strand
         # Note: The actual connections will be rebuilt in update_knot_connections_for_duplicated_group
         if hasattr(original, 'knot_connections'):
@@ -1946,6 +1997,13 @@ class GroupPanel(QWidget):
         else:
             new_strand.knot_connections = {}
             new_strand._original_knot_connections = {}
+        
+        # IMPORTANT: Update side lines after copying control points to ensure correct angles
+        # The side line angles are calculated based on the tangent vectors at the strand endpoints,
+        # which are derived from the control points. We must call update_side_line() to recalculate
+        # these angles based on the copied control points.
+        if hasattr(new_strand, 'update_side_line'):
+            new_strand.update_side_line()
 
     def generate_new_layer_name(self, original_layer_name, set_mapping):
         """Generate new layer name based on set number mapping."""

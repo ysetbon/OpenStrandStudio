@@ -2093,6 +2093,13 @@ class UndoRedoManager(QObject):
                       strand.set_canvas(self.canvas)
                  # Add any other necessary post-load initialization for strands here
                  
+                 # Check if we're preserving shadow state from before the load
+                 if hasattr(self.canvas, '_preserve_shadow_state'):
+                     strand.should_draw_shadow = self.canvas._preserve_shadow_state
+                 else:
+                     # Otherwise use the canvas's current shadow_enabled state
+                     strand.should_draw_shadow = self.canvas.shadow_enabled if hasattr(self.canvas, 'shadow_enabled') else True
+                 
             # --- NEW: Restore selection AFTER applying strands --- 
             if selected_strand_name:
                 found_selected_strand = None
@@ -2983,9 +2990,20 @@ class UndoRedoManager(QObject):
             show_control_points (bool): Whether control points should be shown
         """
         
-        # Restore canvas properties first
-        self.canvas.shadow_enabled = shadow_enabled
-        self.canvas.show_control_points = show_control_points
+        # Check if we're preserving states from before the load
+        if hasattr(self.canvas, '_preserve_shadow_state'):
+            # Use preserved states instead of loaded states
+            self.canvas.shadow_enabled = self.canvas._preserve_shadow_state
+            shadow_enabled = self.canvas._preserve_shadow_state
+        else:
+            # Restore canvas properties from file
+            self.canvas.shadow_enabled = shadow_enabled
+            
+        if hasattr(self.canvas, '_preserve_control_points_state'):
+            self.canvas.show_control_points = self.canvas._preserve_control_points_state
+            show_control_points = self.canvas._preserve_control_points_state
+        else:
+            self.canvas.show_control_points = show_control_points
         
         # Try to find the main window through parent_window reference
         main_window = None

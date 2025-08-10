@@ -1435,6 +1435,15 @@ class MainWindow(QMainWindow):
         if not filename:
             return
 
+        # Save current button states before loading
+        current_control_points_state = self.toggle_control_points_button.isChecked()
+        current_shadow_state = self.toggle_shadow_button.isChecked()
+        
+        # Store the current shadow state in canvas BEFORE any loading
+        # This ensures both load paths respect the current button state
+        self.canvas._preserve_shadow_state = current_shadow_state
+        self.canvas._preserve_control_points_state = current_control_points_state
+
         # First try to treat the file as a full history export
         undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
         history_loaded = False
@@ -1450,9 +1459,27 @@ class MainWindow(QMainWindow):
             # The import_history() call already applied its current step to the canvas
             # and refreshed UI through _load_state.  We just need to ensure some
             # ancillary UI bits are correct.
+
+            
+            # Restore the original button states after history load
+            self.toggle_control_points_button.setChecked(current_control_points_state)
+            self.canvas.show_control_points = current_control_points_state
+            self.toggle_shadow_button.setChecked(current_shadow_state)
+            self.canvas.shadow_enabled = current_shadow_state
+            
+            # Update all strands' shadow drawing state to match the current button state
+            for strand in self.canvas.strands:
+                strand.should_draw_shadow = current_shadow_state
+            
+            # Clean up the preserve flags
+            if hasattr(self.canvas, '_preserve_shadow_state'):
+                delattr(self.canvas, '_preserve_shadow_state')
+            if hasattr(self.canvas, '_preserve_control_points_state'):
+                delattr(self.canvas, '_preserve_control_points_state')
+            
             if hasattr(self.canvas, 'layer_panel'):
                 self.canvas.layer_panel.refresh()
-            self.canvas.update()
+            self.canvas.update()            
             return
 
         # --- Fallback: load as simple snapshot (previous behaviour) ---
@@ -1462,6 +1489,9 @@ class MainWindow(QMainWindow):
             # Clear existing canvas state
             self.canvas.strands = []
             self.canvas.groups = {}
+            
+            # Set canvas shadow state BEFORE applying loaded strands
+            self.canvas.shadow_enabled = current_shadow_state
             
             # Clear the group panel's visual elements and internal state for a clean reload
             if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
@@ -1481,15 +1511,25 @@ class MainWindow(QMainWindow):
                 group_panel.groups_loaded_from_json = False
                 pass
 
-            # Apply the loaded strands and groups
+            # Apply the loaded strands and groups (will now use the correct shadow_enabled state)
             apply_loaded_strands(self.canvas, strands, groups)
 
-            # Restore button states from loaded data
-            self.toggle_control_points_button.setChecked(show_control_points)
-            self.canvas.show_control_points = show_control_points
+            # Preserve the current button states instead of using loaded data
+            self.toggle_control_points_button.setChecked(current_control_points_state)
+            self.canvas.show_control_points = current_control_points_state
             
-            self.toggle_shadow_button.setChecked(shadow_enabled)
-            self.canvas.shadow_enabled = shadow_enabled
+            self.toggle_shadow_button.setChecked(current_shadow_state)
+            self.canvas.shadow_enabled = current_shadow_state
+            
+            # Update all strands' shadow drawing state to match the current button state
+            for strand in self.canvas.strands:
+                strand.should_draw_shadow = current_shadow_state
+            
+            # Clean up the preserve flags
+            if hasattr(self.canvas, '_preserve_shadow_state'):
+                delattr(self.canvas, '_preserve_shadow_state')
+            if hasattr(self.canvas, '_preserve_control_points_state'):
+                delattr(self.canvas, '_preserve_control_points_state')
             
             pass
 

@@ -666,28 +666,46 @@ class MoveMode:
                     self_canvas.strands = static_strands
                     
                     # Draw the entire canvas (background, grid, static strands) to the cache
-                    painter = QtGui.QPainter(self_canvas.background_cache)
-                    RenderUtils.setup_painter(painter, enable_high_quality=True)
+                    cache_painter = QtGui.QPainter(self_canvas.background_cache)
+                    RenderUtils.setup_painter(cache_painter, enable_high_quality=True)
                     
                     # First clear the cache
-                    painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
-                    painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
-                    painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceOver)
+                    cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
+                    cache_painter.fillRect(self_canvas.background_cache.rect(), Qt.transparent)
+                    cache_painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceOver)
                     
-                    # Draw the entire canvas without truly moving strands
-                    # For edited masks, we need to ensure the original paintEvent is called with the right parameters
-                    if not perf_logger.suppress_move_logging:
-                        pass
-                    self_canvas.original_paintEvent(event)
+                    # End the cache painter before calling original paintEvent
+                    cache_painter.end()
+                    
+                    # Now draw the entire canvas without truly moving strands
+                    # Create a paint event for the background cache
+                    cache_event = QtGui.QPaintEvent(self_canvas.background_cache.rect())
+                    
+                    # Temporarily redirect painting to the background cache
+                    original_paint_device = None
+                    if hasattr(self_canvas, 'paintEvent'):
+                        # Save the original paint method and create a wrapper
+                        def paint_to_cache(evt):
+                            bg_painter = QtGui.QPainter(self_canvas.background_cache)
+                            RenderUtils.setup_painter(bg_painter, enable_high_quality=True)
+                            # Call the canvas's draw methods directly with our painter
+                            if hasattr(self_canvas, 'draw_background'):
+                                self_canvas.draw_background(bg_painter)
+                            if hasattr(self_canvas, 'draw_grid'):
+                                self_canvas.draw_grid(bg_painter)
+                            # Draw static strands
+                            for strand in static_strands:
+                                if hasattr(strand, 'draw'):
+                                    strand.draw(bg_painter, skip_painter_setup=True)
+                            bg_painter.end()
+                        
+                        paint_to_cache(cache_event)
                     
                     # Mark the cache as valid
                     self_canvas.background_cache_valid = True
                     
                     # Restore original strands
                     self_canvas.strands = original_strands
-                    
-                    if painter.isActive():
-                        painter.end()
                         
                 except Exception as e:
                     # Fallback to original paint event if caching fails

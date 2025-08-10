@@ -2559,10 +2559,8 @@ class Strand:
 
         # Draw circles directly without temporary images
         # Only draw the start circle if explicitly enabled (has_circles[0] == True)
-        print(f"[CIRCLE_DEBUG] {self.layer_name} - has_circles: {self.has_circles}, closed_connections: {getattr(self, 'closed_connections', None)}")
         pass
         if self.has_circles[0]:
-            print(f"[CIRCLE_DEBUG] Drawing START circle for {self.layer_name}")
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
 

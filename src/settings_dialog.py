@@ -2136,7 +2136,20 @@ class SettingsDialog(QDialog):
 
         # Build sample buttons for the three curated samples (static, not scanning folder)
         self.sample_buttons = []
-        samples_dir = os.path.join(os.path.dirname(__file__), 'samples')
+        # Use proper path resolution for samples directory
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            if sys.platform.startswith('darwin'):
+                # For macOS .app bundles
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                # For Windows/Linux executables
+                base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(__file__)
+        
+        samples_dir = os.path.join(base_path, 'samples')
 
         # Closed Knot
         self.sample_button_closed_knot = QPushButton(_['sample_closed_knot'] if 'sample_closed_knot' in _ else 'Closed Knot')

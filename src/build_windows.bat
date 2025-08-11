@@ -12,7 +12,7 @@ rmdir /s /q dist 2>nul
 
 REM Build with PyInstaller
 echo Building executable...
-pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-binary "C:\ProgramData\Anaconda3\Library\bin\*.dll;." main.py
+pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-data "flags;flags" --add-data "mp4;mp4" --add-data "samples;samples" --add-binary "C:\ProgramData\Anaconda3\Library\bin\*.dll;." main.py
 
 echo Build complete!
 pause

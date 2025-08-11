@@ -568,7 +568,6 @@ if __name__ == '__main__':
         
         # Emergency fallback
         try:
-            ass
             window.setAttribute(Qt.WA_DontShowOnScreen, False)
             window.setMinimumSize(677, 820)
             window.showMaximized()

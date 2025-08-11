@@ -1541,18 +1541,29 @@ class GroupPanel(QWidget):
 
             # Third pass: duplicate MaskedStrands with references to duplicated component strands
             for original_masked_strand in masked_strands_to_process:
-                new_strand = self.duplicate_masked_strand(original_masked_strand, old_to_new_set_mapping, strand_mapping)
+                new_strand = self.duplicate_masked_strand(
+                    original_masked_strand,
+                    old_to_new_set_mapping,
+                    strand_mapping,
+                )
+                # Always ensure we return something; if None, build a placeholder
+                if not new_strand:
+                    new_strand = self.create_placeholder_masked_strand(
+                        original_masked_strand,
+                        old_to_new_set_mapping,
+                    )
+
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_masked_strand] = new_strand
-                
+
                 # Check if this is a main strand (ends with _1)
                 if hasattr(new_strand, 'layer_name') and new_strand.layer_name.endswith('_1'):
                     new_main_strands.add(new_strand)
-                
+
                 # Add to canvas strands using proper method to set canvas reference
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-                    
+
                     # Update canvas color mapping
                     if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
                         self.canvas.strand_colors[new_strand.set_number] = new_strand.color
@@ -1561,14 +1572,14 @@ class GroupPanel(QWidget):
             # Note: Strands have already been added to canvas.strands in the duplication loops above
             # Now we need to create their layer buttons
             if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
-                pass
+                
                 for new_strand in duplicated_strands:
                     # Check if strand is already in canvas.strands
                     if new_strand not in self.canvas.strands:
-                        pass
+                        
                         self.canvas.strands.append(new_strand)
                     self.canvas.layer_panel.on_strand_created(new_strand)
-                    pass
+                    
             
             # Create group in canvas.groups first (required for move/rotate operations)
             if self.canvas and hasattr(self.canvas, 'groups'):
@@ -1579,23 +1590,22 @@ class GroupPanel(QWidget):
                     'control_points': {},
                     'data': []
                 }
-                pass
+                
             
             # Update knot connections for duplicated strands BEFORE creating UI elements
             # This ensures deletable state is calculated correctly when buttons are created
             self.update_knot_connections_for_duplicated_group(strand_mapping)
             
             # Use the existing group creation mechanism for UI
-            pass
-            for s in duplicated_strands:
-                pass
+            
+         
             self.create_group(new_group_name, duplicated_strands)
             
             # Force the new group widget to be visible and properly sized
             if new_group_name in self.groups and self.groups[new_group_name]['widget']:
                 new_widget = self.groups[new_group_name]['widget']
-                pass
-                pass
+                
+                
                 new_widget.update_size()
                 new_widget.update_group_display()
                 # Ensure content is visible (not collapsed)
@@ -1604,14 +1614,14 @@ class GroupPanel(QWidget):
                     new_widget.is_collapsed = False
                 # Force widget to update
                 new_widget.update()
-                pass
+                
             
             # Update LayerStateManager - simply save the current state after all strands are created
             if self.canvas and hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
                 # The strands have been added to the canvas and layer panel
                 # Now save the complete state including all duplicated strands
                 self.canvas.layer_state_manager.save_current_state()
-                pass
+                
             
 
             
@@ -1622,13 +1632,7 @@ class GroupPanel(QWidget):
             # Update canvas if available
             if self.canvas:
                 self.canvas.update()
-            
-            pass
-            pass
-            pass
-            pass
-            pass
-            pass
+    
             if new_group_name in self.groups:
                 widget = self.groups[new_group_name].get('widget')
                 if widget:
@@ -1642,11 +1646,9 @@ class GroupPanel(QWidget):
             if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                 # Use refresh_layers_no_zoom to avoid resetting the view
                 self.canvas.layer_panel.refresh_layers_no_zoom()
-                pass
+              
         except Exception as e:
-            pass
-            pass
-            import traceback
+       
             pass
 
     def generate_unique_group_name(self, base_name):
@@ -1747,7 +1749,15 @@ class GroupPanel(QWidget):
         return new_strand
 
     def duplicate_masked_strand(self, original_strand, set_mapping, strand_mapping):
-        """Duplicate a MaskedStrand object with proper component strand references."""
+        """Duplicate a MaskedStrand with best-effort component resolution.
+
+        Order of attempts:
+        1) Use duplicates from strand_mapping
+        2) Match by original components' layer_name in strand_mapping
+        3) Compute expected new layer_names using set_mapping and search mapped/canvas
+        4) Fall back to original component references
+        5) If still missing, return None (caller will create a placeholder)
+        """
         from masked_strand import MaskedStrand
         from PyQt5.QtCore import QPointF
         from PyQt5.QtGui import QColor
@@ -1764,30 +1774,77 @@ class GroupPanel(QWidget):
         if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
             second_duplicated = strand_mapping.get(original_strand.second_selected_strand)
         
-        # If direct reference lookup failed, try to find by layer_name
+        # If direct reference lookup failed, try to find by layer_name among mapped originals
         if not first_duplicated or not second_duplicated:
-            # Parse the layer_name to get component strand names
-            parts = original_strand.layer_name.split('_')
+            parts = getattr(original_strand, 'layer_name', '').split('_')
             if len(parts) >= 4:
                 first_layer_name = f"{parts[0]}_{parts[1]}"
                 second_layer_name = f"{parts[2]}_{parts[3]}"
-                
-                # Find the duplicated strands by their layer names
-                for orig_strand, dup_strand in strand_mapping.items():
-                    if hasattr(orig_strand, 'layer_name'):
-                        if orig_strand.layer_name == first_layer_name and not first_duplicated:
-                            first_duplicated = dup_strand
-                        if orig_strand.layer_name == second_layer_name and not second_duplicated:
-                            second_duplicated = dup_strand
-                    
+
+                for orig_str, dup_str in strand_mapping.items():
+                    if hasattr(orig_str, 'layer_name'):
+                        if not first_duplicated and orig_str.layer_name == first_layer_name:
+                            first_duplicated = dup_str
+                        if not second_duplicated and orig_str.layer_name == second_layer_name:
+                            second_duplicated = dup_str
                     if first_duplicated and second_duplicated:
                         break
+
+        # Try to resolve expected new layer names using set_mapping (e.g., map main set numbers)
+        def remap_layer_name(layer_name: str) -> str:
+            try:
+                p = layer_name.split('_')
+                if len(p) != 2:
+                    return layer_name
+                main_num = int(p[0])
+                sub_num = int(p[1])
+                new_main = set_mapping.get(main_num, main_num)
+                return f"{new_main}_{sub_num}"
+            except Exception:
+                return layer_name
+
+        def find_by_layer_name(target_layer_name: str):
+            # Search duplicated strands first
+            for _, dup_str in strand_mapping.items():
+                if getattr(dup_str, 'layer_name', None) == target_layer_name:
+                    return dup_str
+            # Fallback: search in canvas.strands if available
+            if self.canvas and hasattr(self.canvas, 'strands'):
+                for s in self.canvas.strands:
+                    if getattr(s, 'layer_name', None) == target_layer_name:
+                        return s
+            return None
+
+        if not first_duplicated and hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
+            remapped = remap_layer_name(getattr(original_strand.first_selected_strand, 'layer_name', ''))
+            cand = find_by_layer_name(remapped)
+            if cand:
+                first_duplicated = cand
+
+        if not second_duplicated and hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
+            remapped = remap_layer_name(getattr(original_strand.second_selected_strand, 'layer_name', ''))
+            cand = find_by_layer_name(remapped)
+            if cand:
+                second_duplicated = cand
         
-        # If we still can't find the component strands, log warning but try to continue
+        # Graceful fallback: use original components if duplicates cannot be resolved
+        if not first_duplicated and hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
+            print(
+                f"Warning: Using original first component for MaskedStrand '{getattr(original_strand, 'layer_name', '?')}'"
+            )
+            first_duplicated = original_strand.first_selected_strand
+        if not second_duplicated and hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
+            print(
+                f"Warning: Using original second component for MaskedStrand '{getattr(original_strand, 'layer_name', '?')}'"
+            )
+            second_duplicated = original_strand.second_selected_strand
+
+        # If we still can't find both components, return None (caller will generate placeholder)
         if not first_duplicated or not second_duplicated:
-            pass
-            # Fall back to creating a basic strand if component strands aren't available
-            return self.duplicate_regular_strand(original_strand, set_mapping)
+            print(
+                f"Error: Cannot duplicate MaskedStrand '{getattr(original_strand, 'layer_name', '?')}' - no valid component strands available"
+            )
+            return None
         
         # Get new set number - for MaskedStrand, use the concatenation of component set numbers
         # This matches the original MaskedStrand constructor logic
@@ -1810,17 +1867,38 @@ class GroupPanel(QWidget):
         if hasattr(original_strand, 'shadow_color'):
             new_strand.shadow_color = QColor(original_strand.shadow_color)
         
-        # Copy deletion rectangles if they exist
-        if hasattr(original_strand, 'deletion_rectangles') and original_strand.deletion_rectangles:
-            new_strand.deletion_rectangles = copy.deepcopy(original_strand.deletion_rectangles)
+        # Copy deletion rectangles if they exist (preserve corner and bbox data)
+        if hasattr(original_strand, 'deletion_rectangles') and getattr(original_strand, 'deletion_rectangles', None):
+            new_strand.deletion_rectangles = []
+            for rect in original_strand.deletion_rectangles:
+                new_rect = {}
+                for k in (
+                    'top_left', 'top_right', 'bottom_left', 'bottom_right',
+                    'x', 'y', 'width', 'height', 'offset_x', 'offset_y'
+                ):
+                    if isinstance(rect, dict) and k in rect:
+                        new_rect[k] = rect[k]
+                if new_rect:
+                    new_strand.deletion_rectangles.append(new_rect)
         
         # Copy center points if they exist
         if hasattr(original_strand, 'base_center_point') and original_strand.base_center_point:
-            new_strand.base_center_point = QPointF(original_strand.base_center_point.x(), original_strand.base_center_point.y())
+            try:
+                new_strand.base_center_point = QPointF(
+                    original_strand.base_center_point.x(),
+                    original_strand.base_center_point.y()
+                )
+            except Exception:
+                new_strand.base_center_point = QPointF(original_strand.base_center_point)
         
         if hasattr(original_strand, 'edited_center_point') and original_strand.edited_center_point:
-            new_strand.edited_center_point = QPointF(original_strand.edited_center_point.x(), original_strand.edited_center_point.y())
-        
+            try:
+                new_strand.edited_center_point = QPointF(
+                    original_strand.edited_center_point.x(),
+                    original_strand.edited_center_point.y()
+                )
+            except Exception:
+                new_strand.edited_center_point = QPointF(original_strand.edited_center_point)
         # Copy custom mask path if it exists
         if hasattr(original_strand, 'custom_mask_path') and original_strand.custom_mask_path:
             new_strand.custom_mask_path = copy.deepcopy(original_strand.custom_mask_path)
@@ -1834,13 +1912,39 @@ class GroupPanel(QWidget):
         # Copy attached strands list (just for MaskedStrand, not component strands)
         if hasattr(original_strand, '_attached_strands'):
             new_strand._attached_strands = []  # Will be populated separately if needed
-        
         # Copy selection state and other visual properties
         self.copy_strand_properties(original_strand, new_strand)
-        
-        pass
-        
         return new_strand
+
+    def create_placeholder_masked_strand(self, original_strand, set_mapping):
+        """Create a placeholder strand when MaskedStrand components are unavailable."""
+        from strand import Strand
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+
+        old_set = getattr(original_strand, 'set_number', 1)
+        new_set = set_mapping.get(old_set, old_set)
+
+        new_layer_name = self.generate_new_layer_name(getattr(original_strand, 'layer_name', ''), set_mapping)
+
+        placeholder = Strand(
+            start=QPointF(original_strand.start.x(), original_strand.start.y()),
+            end=QPointF(original_strand.end.x(), original_strand.end.y()),
+            width=getattr(original_strand, 'width', 1.0),
+            color=QColor(getattr(original_strand, 'color', QColor(0, 0, 0))),
+            stroke_color=QColor(getattr(original_strand, 'stroke_color', QColor(0, 0, 0))),
+            stroke_width=getattr(original_strand, 'stroke_width', 1.0),
+            set_number=new_set,
+            layer_name=new_layer_name,
+        )
+
+        placeholder.is_degraded_mask = True
+        placeholder.original_mask_type = 'MaskedStrand'
+
+        self.copy_strand_properties(original_strand, placeholder)
+
+        print(f"Created placeholder strand for failed MaskedStrand duplication: {new_layer_name}")
+        return placeholder
 
     def duplicate_attached_strand(self, original_strand, set_mapping, strand_mapping):
         """Duplicate an AttachedStrand while preserving its relationship to the duplicated parent strand."""

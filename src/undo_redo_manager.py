@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import glob
 import time  # Add time module for timestamp comparison
@@ -2600,8 +2601,18 @@ class UndoRedoManager(QObject):
     def setup_buttons(self, top_layout):
         """Create and add undo/redo buttons to the specified layout."""
         # Create buttons using StrokeTextButton for consistent styling
-        self.undo_button = StrokeTextButton("↩️")  # Undo emoji
-        self.redo_button = StrokeTextButton("↪️")  # Redo emoji
+        # Use symbols that render reliably across platforms
+        if sys.platform == "darwin":
+            # On macOS, the emoji variants may not render in Qt widgets
+            undo_symbol = "↶"  # anticlockwise arrow (undo)
+            redo_symbol = "↷"  # clockwise arrow (redo)
+        else:
+            # On Windows/Linux, keep the hook arrows (non-emoji for consistency)
+            undo_symbol = "↩️"
+            redo_symbol = "↪️"
+
+        self.undo_button = StrokeTextButton(undo_symbol)
+        self.redo_button = StrokeTextButton(redo_symbol)
         
         # Get current theme from parent window if available
         current_theme = "default"

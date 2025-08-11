@@ -37,64 +37,67 @@ By $PUBLISHER
 Contact: ysetbon@gmail.com
 
 New in this version (English):
-• Strand Width Control: You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.
-• Zoom In/Out: You can zoom in and out of your design to see small details or the entire diagram.
-• Pan Screen: You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.
-• Shadow-Only Mode: You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.
-• Initial Setup: When first starting the application, you'll need to click "New Strand" to begin creating your first strand.
-• General Fixes: Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.
-• Higher Quality Rendering: Improved canvas display quality and 4x higher resolution image export for crisp, professional results.
-• Removed Extended Mask Option: The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.
+• Improved Layer Management: Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.
+• Group Duplication: You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.
+• Hide Mode: New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.
+• Center View: Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.
+• Quick Knot Closing: Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.
+• New Language - German (🇩🇪): Switch to German in Settings → Change Language.
+• New Samples category: Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.
 
 Nouveautés dans cette version (Français):
-• Contrôle de la largeur des brins : Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.
-• Zoom avant/arrière : Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.
-• Déplacement de l'écran : Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.
-• Mode ombre uniquement : Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.
-• Configuration initiale : Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.
-• Corrections générales : Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.
-• Rendu de qualité supérieure : Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.
-• Suppression de l'option masque étendu : L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.
+• Gestion améliorée des couches : Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.
+• Duplication de groupe : Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.
+• Mode masquage : Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.
+• Centrer la vue : Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.
+• Fermeture rapide de nœud : Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.
+• Nouvelle langue - Allemand (🇩🇪) : Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.
+• Nouvelle catégorie Exemples : Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.
 
 Novità in questa versione (Italiano):
-• Controllo della larghezza dei trefoli: Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.
-• Zoom avanti/indietro: Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.
-• Spostamento schermo: Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.
-• Modalità solo ombra: Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.
-• Configurazione iniziale: Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.
-• Correzioni generali: Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.
-• Rendering di qualità superiore: Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.
-• Rimossa opzione maschera estesa: L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.
+• Gestione livelli migliorata: Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.
+• Duplicazione gruppo: Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.
+• Modalità nascondi: Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.
+• Centra vista: Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.
+• Chiusura rapida del nodo: Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.
+• Nuova lingua - Tedesco (🇩🇪): Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.
+• Nuova categoria Esempi: Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.
 
 Novedades en esta versión (Español):
-• Control del ancho de las hebras: Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.
-• Zoom acercar/alejar: Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.
-• Mover pantalla: Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.
-• Modo solo sombra: Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.
-• Configuración inicial: Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.
-• Correcciones generales: Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.
-• Renderizado de mayor calidad: Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.
-• Eliminada opción de máscara extendida: La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.
+• Gestión mejorada de capas: Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.
+• Duplicación de grupo: Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.
+• Modo ocultar: Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.
+• Centrar vista: Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.
+• Cierre rápido de nudo: Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.
+• Nuevo idioma - Alemán (🇩🇪): Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.
+• Nueva categoría Ejemplos: Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.
 
 Novidades nesta versão (Português):
-• Controle de largura dos fios: Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.
-• Zoom ampliar/reduzir: Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.
-• Mover tela: Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.
-• Modo apenas sombra: Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.
-• Configuração inicial: Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.
-• Correções gerais: Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.
-• Renderização de qualidade superior: Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.
-• Removida opção de máscara estendida: A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.
+• Gestão melhorada de camadas: Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.
+• Duplicação de grupo: Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.
+• Modo ocultar: Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.
+• Centralizar vista: Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.
+• Fechamento rápido de nó: Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.
+• Nova língua - Alemão (🇩🇪): Agora você pode selecionar alemão em Configurações → Alterar Idioma.
+• Nova categoria Exemplos: Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.
+
+Neu in dieser Version (Deutsch):
+• Verbesserte Ebenenverwaltung: Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.
+• Gruppenduplikation: Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.
+• Versteckmodus: Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.
+• Ansicht zentrieren: Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.
+• Schnelles Knotenschließen: Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.
+• Neue Sprache – Deutsch (🇩🇪): Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.
+• Neue Kategorie „Beispiele": Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.
 
 חדש בגרסה זו (עברית):
-• שינוי רוחב חוטים: עכשיו אפשר לשנות את העובי של כל חוט בנפרד, כך שתוכלו ליצור עיצובים יותר מגוונים.
-• הגדלה והקטנה: אפשר להתקרב ולהתרחק מהעיצוב שלכם כדי לראות פרטים קטנים או את כל הדיאגרמה.
-• הזזת המסך: אפשר לגרור את הקנבס על ידי לחיצה על כפתור היד, מה שעוזר בעבודה על דיאגרמות גדולות יותר.
-• מצב צל בלבד: עכשיו אפשר להסתיר שכבה תוך הצגת הצללים וההדגשות שלה על ידי לחיצה ימנית על כפתור שכבה ובחירת "צל בלבד". זה עוזר להמחיש אפקטי צל ללא העומס החזותי.
-• התחלת עבודה: כשפותחים את התוכנה בפעם הראשונה, צריך ללחוץ על "חוט חדש" כדי להתחיל לצייר.
-• תיקונים כלליים: תוקנו מספר תקלות ובעיות שנגרמו מגרסאות קודמות, כמו למשל כפתורי ביטול וחזרה יצרו חלון זמני ולא סיפקו חווית משתמש חלקה.
-• איכות תצוגה משופרת: שיפור באיכות תצוגת הקנבס ויצוא תמונות ברזולוציה גבוהה פי 4 לתוצאות חדות ומקצועיות.
-• הסרת אפשרות מסכה מורחבת: האפשרות למסכה מורחבת בשכבה הכללית הוסרה מכיוון שהיא הייתה נחוצה רק כגיבוי לבעיות shader בגרסאות קודמות (1.09x). עם שיפור ההצללה באופן משמעותי, אפשרות זו אינה נחוצה עוד.
+• ניהול שכבות משופר: מבנה StateLayerManager משופר לניהול טוב יותר של חיבורי קשרים ויחסים בין חוטים, המספק פעולות שכבות אמינות יותר וביצועים משופרים.
+• שכפול קבוצה: עכשיו אפשר לשכפל קבוצות שלמות עם כל החוטים שלהן על ידי לחיצה ימנית על כותרת קבוצה ובחירת "שכפל קבוצה". הקבוצה המשוכפלת שומרת על כל תכונות החוטים ומייצרת אוטומטית שמות שכבות ייחודיים.
+• מצב הסתרה: מצב הסתרה חדש נגיש דרך כפתור הקוף (🙉/🙈) מאפשר להסתיר במהירות מספר שכבות בבת אחת. לחץ על הכפתור כדי להיכנס למצב הסתרה, ואז לחץ על השכבות כדי להסתיר אותן. צא ממצב ההסתרה כדי להחיל שינויים.
+• מרכוז תצוגה: מרכז מיד את כל החוטים בתצוגה שלך עם כפתור המטרה החדש (🎯). זה מתאים אוטומטית את מיקום הקנבס כדי להראות את כל העבודה שלך ממורכזת על המסך.
+• סגירת קשר מהירה: לחץ ימני על כל חוט או חוט מחובר עם קצה חופשי כדי לסגור במהירות את הקשר. המערכת מוצאת ומחברת אוטומטית לחוט התואם הקרוב ביותר עם קצה חופשי.
+• שפה חדשה - גרמנית (🇩🇪): עכשיו אפשר לעבור לגרמנית בהגדרות → שנה שפה.
+• קטגוריית דוגמאות חדשה: חקור פרויקטי דוגמה מוכנים לטעינה בהגדרות → דוגמאות. בחר דוגמה ללמוד ממנה; הדו-שיח ייסגר והדוגמה תיטען.
 
 Installation:
 1. Drag '$APP_NAME' to the Applications folder

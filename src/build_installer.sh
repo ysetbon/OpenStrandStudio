@@ -89,26 +89,26 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>What's New in this version:</p>
     <ul>
         <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> Duplicate entire groups with all their strands via right-click → "Duplicate Group". Maintains properties and generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode via the monkey button (🙉/🙈) to quickly hide multiple layers. Enter hide mode, click layers to hide, then exit to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands with the new target button (🎯). Automatically adjusts the canvas position to show all work centered.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. Auto-connects to the nearest compatible free end.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
         <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample; the dialog will close and the sample will load.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Neu in dieser Version:</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
         <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Ganze Gruppen per Rechtsklick → "Gruppe duplizieren" duplizieren. Eigenschaften bleiben erhalten, eindeutige Ebenennamen werden erzeugt.</li>
-        <li><b>Versteckmodus:</b> Neuer Modus über die Affen-Schaltfläche (🙉/🙈), um mehrere Ebenen schnell auszublenden. Aktivieren, Ebenen anklicken, zum Anwenden verlassen.</li>
-        <li><b>Ansicht zentrieren:</b> Mit der Ziel-Schaltfläche (🎯) alle Stränge sofort zentrieren. Die Leinwandposition wird automatisch angepasst.</li>
-        <li><b>Schnelles Knotenschließen:</b> Rechtsklick auf einen Strang oder verbundenen Strang mit freiem Ende, um den Knoten schnell zu schließen. Verbindet automatisch mit dem nächstgelegenen kompatiblen freien Ende.</li>
-        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Deutsch in Einstellungen → Sprache ändern auswählen.</li>
-        <li><b>Neue Kategorie „Beispiele“:</b> Beispielprojekte in Einstellungen → Beispiele. Beispiel wählen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -116,14 +116,13 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -131,14 +130,13 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -146,14 +144,13 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -161,14 +158,13 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -177,11 +173,13 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
         <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
         <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
         <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -313,7 +311,7 @@ for lang in "${LANG_CODES[@]}"; do
     cp -f "$RESOURCES_DIR/welcome.html" "$RESOURCES_DIR/${lang}.lproj/welcome.html"
 done
 
-# French
+# Create welcome.html  (welcome French + localized sections). Updated to 1.101 what's-new.
 cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -326,44 +324,56 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>New features in this version:</p>
+    <p>What's New in this version:</p>
     <ul>
-        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+    </ul>
+    <hr>
+
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -371,14 +381,13 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -386,34 +395,148 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
     <hr>
-    <!-- Hebrew -->
+        <!-- Hebrew -->
     <div dir="rtl">
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
 </html>
 EOF
 
-# Italian
+# Create welcome.html  (welcome German + localized sections). Updated to 1.101 what's-new.
+
+cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+    </ul>
+    <hr>
+    <!-- English -->
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
+    <p>What's New in this version:</p>
+    <ul>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+    </ul>
+    <hr>
+    <!-- French -->
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
+    <p>Nouveautés dans cette version&nbsp;:</p>
+    <ul>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+    </ul>
+    <hr>    
+    <!-- Italian -->
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
+    <p>Novità in questa versione:</p>
+    <ul>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
+    </ul>
+    <hr>
+    <!-- Spanish -->
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
+    <p>Novedades en esta versión:</p>
+    <ul>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+    </ul>
+    <hr>
+    <!-- Portuguese -->
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
+    <p>Novidades nesta versão:</p>
+    <ul>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+    </ul>
+    <hr>
+        <!-- Hebrew -->
+    <div dir="rtl">
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
+    <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
+    <ul>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
+    </ul>
+    </div>
+</body>
+</html>
+EOF
+
+
+# Create welcome.html  (welcome Italian + localized sections). Updated to 1.101 what's-new.
 cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -426,29 +549,27 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
-    <!-- English -->
+        <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>New features in this version:</p>
+    <p>What's New in this version:</p>
     <ul>
-        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -456,14 +577,27 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+    </ul>
+    <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -471,49 +605,48 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
-    <!-- Portuguese -->
+        <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
     <hr>
-    <!-- Hebrew -->
+        <!-- Hebrew -->
     <div dir="rtl">
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
 </html>
 EOF
-
-# Spanish
+# Create welcome.html  (welcome Spanish + localized sections). Updated to 1.101 what's-new.
 cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -526,29 +659,27 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
-    <!-- English -->
+        <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>New features in this version:</p>
+    <p>What's New in this version:</p>
     <ul>
-        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -556,64 +687,77 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
     </ul>
     <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+    </ul>
+    <hr>    
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
-    <!-- Portuguese -->
+        <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
     <hr>
-    <!-- Hebrew -->
+        <!-- Hebrew -->
     <div dir="rtl">
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
 </html>
 EOF
+# Create welcome.html  (welcome Portuguese + localized sections). Updated to 1.101 what's-new.
 
-# Portuguese
 cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -621,34 +765,32 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <meta charset="UTF-8">
 </head>
 <body>
-    <!-- Portuguese -->
+        <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
     <hr>
-    <!-- English -->
+        <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>New features in this version:</p>
+    <p>What's New in this version:</p>
     <ul>
-        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -656,29 +798,41 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
     </ul>
     <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+    </ul>
+    <hr>    
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -686,34 +840,49 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
-    <!-- Hebrew -->
+        <!-- Portuguese -->
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
+    <p>Novidades nesta versão:</p>
+    <ul>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+    </ul>
+    <hr>
+        <!-- Hebrew -->
     <div dir="rtl">
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
 </body>
 </html>
 EOF
 
-# Hebrew
+# Create welcome.html  (welcome Hebrew + localized sections). Updated to 1.101 what's-new.
 cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html dir="rtl">
@@ -721,33 +890,34 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <meta charset="UTF-8">
 </head>
 <body>
-    <!-- Hebrew -->
+        <!-- Hebrew -->
     <div dir="rtl">
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9; &#x05E8;&#x05D5;&#x05D7;&#x05D1; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;:</b> &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05E2;&#x05D5;&#x05D1;&#x05D9; &#x05E9;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3;, &#x05DB;&#x05DA; &#x05E9;&#x05EA;&#x05D5;&#x05DB;&#x05DC;&#x05D5; &#x05DC;&#x05D9;&#x05E6;&#x05D5;&#x05E8; &#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1;&#x05D9;&#x05DD; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05DE;&#x05D2;&#x05D5;&#x05D5;&#x05E0;&#x05D9;&#x05DD;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
+        <li><b>&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05D4; &#x05E9;&#x05DC; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;:</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D4;&#x05DD; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05E2;&#x05DC; &#x05DB;&#x05EA;&#x05E8;&#x05D9;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05D9;&#x05E7;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4;. &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D4; &#x05D4;&#x05DE;&#x05D5;&#x05D3;&#x05D5;&#x05E4;&#x05DC;&#x05E7;&#x05EA; &#x05DE;&#x05D7;&#x05D6;&#x05D9;&#x05E7;&#x05D4; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D5;&#x05EA; &#x05E9;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05D9;&#x05D9;&#x05E8;&#x05D2;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E9;&#x05DE;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D9;&#x05D7;&#x05D9;&#x05D3;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;:</b> &#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D4;&#x05E0;&#x05D9;&#x05D7;&#x05D9;&#x05D4; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; (🙉/🙈) &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D1;&#x05D6;&#x05D9;&#x05D0;&#x05D4; &#x05D0;&#x05D7;&#x05D3;. &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05DB;&#x05E0;&#x05D9;&#x05E1; &#x05DC;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4;, &#x05D0;&#x05D6; &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05D4;&#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D9;&#x05DD;. &#x05E6;&#x05D0; &#x05DE;&#x05DE;&#x05D5;&#x05D3; &#x05D4;&#x05D4;&#x05E1;&#x05EA;&#x05E8;&#x05D4; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05EA; &#x05D4;&#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05DD;.</li>
+        <li><b>&#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;:</b> &#x05DE;&#x05E8;&#x05D9;&#x05D6; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05D8; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D1;&#x05D4;&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05D1;&#x05E2;&#x05D3; &#x05D4;&#x05E7;&#x05E4;&#x05D5;&#x05D3; &#x05D4;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC; &#x05D4;&#x05D8;&#x05E8;&#x05D2;&#x05D8; (🎯). &#x05D6;&#x05D4; &#x05DE;&#x05D9;&#x05D8;&#x05D9;&#x05D1; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05DE;&#x05D9;&#x05D3;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05E2;&#x05D1;&#x05D5;&#x05D4; &#x05E9;&#x05DC; &#x05DA; &#x05DEְ&#x05D5;&#x05E8;&#x05D9;&#x05D6; &#x05D1;&#x05D4;&#x05E4;&#x05E0;&#x05D4;.</li>
+        <li><b>&#x05E1;&#x05D9;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05D9;&#x05E8; &#x05E9;&#x05DC; &#x05E7;&#x05E9;&#x05E8;:</b> &#x05E2;&#x05E9;&#x05D9;&#x05E7; &#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D0;&#x05D5; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D5;&#x05D5;&#x05D2;&#x05D3; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA; &#x05D1;&#x05E2;&#x05D9;&#x05E7; &#x05D9;&#x05DE;&#x05D9;&#x05DF; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E1;&#x05D2;&#x05D5;&#x05E8; &#x05DE;&#x05D4;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E9;&#x05E8;. &#x05D4;&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05DE;&#x05D5;&#x05D0;&#x05D9;&#x05E9;&#x05EA; &#x05D5;&#x05DE;&#x05D7;&#x05D1;&#x05E8;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05D4;&#x05D7;&#x05D5;&#x05D8; &#x05D4;&#x05D0;&#x05D9;&#x05D5;&#x05D9; &#x05D4;&#x05DE;&#x05EA;&#x05D0;&#x05D9;&#x05DD; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D7;&#x05D5;&#x05E4;&#x05E9;&#x05D9;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
+        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
     </ul>
     </div>
     <hr>
-    <!-- English -->
+        <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>New features in this version:</p>
+    <p>What's New in this version:</p>
     <ul>
-        <li><b>Strand Width Control:</b> You can now dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.</li>
-        <li><b>Zoom In/Out:</b> You can zoom in and out of your design to see small details or the entire diagram.</li>
-        <li><b>Pan Screen:</b> You can drag the canvas by clicking the hand button, which helps when working on larger diagrams.</li>
-        <li><b>Shadow-Only Mode:</b> You can now hide a layer while still showing its shadows and highlights by right-clicking on a layer button and selecting "Shadow Only". This helps visualize shadow effects without the visual clutter.</li>
-        <li><b>Initial Setup:</b> When first starting the application, you'll need to click "New Strand" to begin creating your first strand.</li>
-        <li><b>General Fixes:</b> Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.</li>
-        <li><b>Higher Quality Rendering:</b> Improved canvas display quality and 4x higher resolution image export for crisp, professional results.</li>
-        <li><b>Removed Extended Mask Option:</b> The extended mask option from the general layer has been removed since it was only needed as a backup for shader issues in older versions (1.09x). With greatly improved shading, this option is no longer necessary.</li>
+        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
+        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
+        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
+        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
+        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
+        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
+        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -755,29 +925,41 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Contrôle de la largeur des brins :</b> Vous pouvez maintenant ajuster dynamiquement la largeur de chaque brin individuellement, offrant plus de flexibilité dans la création de designs de nœuds variés.</li>
-        <li><b>Zoom avant/arrière :</b> Vous pouvez zoomer et dézoomer sur votre création pour voir les petits détails ou l'ensemble du diagramme.</li>
-        <li><b>Déplacement de l'écran :</b> Vous pouvez faire glisser le canevas en cliquant sur le bouton main, ce qui aide lors du travail sur des diagrammes plus grands.</li>
-        <li><b>Mode ombre uniquement :</b> Vous pouvez maintenant masquer une couche tout en affichant ses ombres et reflets en faisant un clic droit sur un bouton de couche et en sélectionnant "Ombre uniquement". Cela aide à visualiser les effets d'ombre sans l'encombrement visuel.</li>
-        <li><b>Configuration initiale :</b> Au premier démarrage de l'application, vous devrez cliquer sur "Nouveau Brin" pour commencer à créer votre premier brin.</li>
-        <li><b>Corrections générales :</b> Correction de plusieurs bugs et problèmes des versions précédentes, comme les boutons annuler/refaire qui créaient des fenêtres temporaires et ne fournissaient pas une expérience utilisateur fluide.</li>
-        <li><b>Rendu de qualité supérieure :</b> Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.</li>
-        <li><b>Suppression de l'option masque étendu :</b> L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.</li>
+        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
+        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
+        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
+        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
+        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
+        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
+        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
     </ul>
     <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>Was ist neu in dieser Version:</p>
+    <ul>
+        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
+        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
+        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
+        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
+        <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
+        <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+    </ul>
+    <hr>    
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Controllo della larghezza dei trefoli:</b> Ora puoi regolare dinamicamente la larghezza dei singoli trefoli, offrendo maggiore flessibilità nella creazione di design di nodi variati.</li>
-        <li><b>Zoom avanti/indietro:</b> Puoi ingrandire e rimpicciolire il tuo design per vedere piccoli dettagli o l'intero diagramma.</li>
-        <li><b>Spostamento schermo:</b> Puoi trascinare il canvas cliccando il pulsante mano, che aiuta quando si lavora su diagrammi più grandi.</li>
-        <li><b>Modalità solo ombra:</b> Ora puoi nascondere un livello pur mostrando le sue ombre e luci facendo clic destro su un pulsante livello e selezionando "Solo Ombra". Questo aiuta a visualizzare gli effetti ombra senza il disordine visivo.</li>
-        <li><b>Configurazione iniziale:</b> Al primo avvio dell'applicazione, dovrai cliccare su "Nuovo Trefolo" per iniziare a creare il tuo primo trefolo.</li>
-        <li><b>Correzioni generali:</b> Corretti diversi bug e problemi dalle versioni precedenti, come i pulsanti annulla/ripeti che creavano finestre temporanee e non fornivano un'esperienza utente fluida.</li>
-        <li><b>Rendering di qualità superiore:</b> Migliorata la qualità di visualizzazione del canvas e esportazione immagini con risoluzione 4x più alta per risultati nitidi e professionali.</li>
-        <li><b>Rimossa opzione maschera estesa:</b> L'opzione maschera estesa dal livello generale è stata rimossa poiché era necessaria solo come backup per problemi di shader nelle versioni precedenti (1.09x). Con l'ombreggiatura notevolmente migliorata, questa opzione non è più necessaria.</li>
+        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
+        <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
+        <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
+        <li><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
+        <li><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
+        <li><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -785,29 +967,27 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Control del ancho de las hebras:</b> Ahora puedes ajustar dinámicamente el ancho de hebras individuales, dándote más flexibilidad en la creación de diseños de nudos variados.</li>
-        <li><b>Zoom acercar/alejar:</b> Puedes acercar y alejar tu diseño para ver pequeños detalles o todo el diagrama.</li>
-        <li><b>Mover pantalla:</b> Puedes arrastrar el lienzo haciendo clic en el botón de mano, lo que ayuda al trabajar en diagramas más grandes.</li>
-        <li><b>Modo solo sombra:</b> Ahora puedes ocultar una capa mientras sigues mostrando sus sombras y luces haciendo clic derecho en un botón de capa y seleccionando "Solo Sombra". Esto ayuda a visualizar los efectos de sombra sin el desorden visual.</li>
-        <li><b>Configuración inicial:</b> Al iniciar la aplicación por primera vez, deberás hacer clic en "Nueva Hebra" para empezar a crear tu primera hebra.</li>
-        <li><b>Correcciones generales:</b> Se corrigieron varios errores y problemas de versiones anteriores, como los botones deshacer/rehacer que creaban ventanas temporales y no proporcionaban una experiencia de usuario fluida.</li>
-        <li><b>Renderizado de mayor calidad:</b> Mejora en la calidad de visualización del lienzo y exportación de imágenes con resolución 4x más alta para resultados nítidos y profesionales.</li>
-        <li><b>Eliminada opción de máscara extendida:</b> La opción de máscara extendida de la capa general ha sido eliminada ya que solo era necesaria como respaldo para problemas de shader en versiones anteriores (1.09x). Con el sombreado considerablemente mejorado, esta opción ya no es necesaria.</li>
+        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
+        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
+        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
+        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
+        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
+        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
+        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
     </ul>
     <hr>
-    <!-- Portuguese -->
+        <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Controle de largura dos fios:</b> Agora você pode ajustar dinamicamente a largura de fios individuais, proporcionando mais flexibilidade na criação de designs de nós variados.</li>
-        <li><b>Zoom ampliar/reduzir:</b> Você pode ampliar e reduzir seu design para ver pequenos detalhes ou todo o diagrama.</li>
-        <li><b>Mover tela:</b> Você pode arrastar o canvas clicando no botão de mão, o que ajuda ao trabalhar em diagramas maiores.</li>
-        <li><b>Modo apenas sombra:</b> Agora você pode ocultar uma camada enquanto ainda mostra suas sombras e destaques clicando com o botão direito em um botão de camada e selecionando "Apenas Sombra". Isso ajuda a visualizar efeitos de sombra sem a desordem visual.</li>
-        <li><b>Configuração inicial:</b> Ao iniciar o aplicativo pela primeira vez, você precisará clicar em "Novo Fio" para começar a criar seu primeiro fio.</li>
-        <li><b>Correções gerais:</b> Corrigidos vários bugs e problemas de versões anteriores, como os botões desfazer/refazer que criavam janelas temporárias e não forneciam uma experiência de usuário fluida.</li>
-        <li><b>Renderização de qualidade superior:</b> Melhoria na qualidade de exibição do canvas e exportação de imagens com resolução 4x mais alta para resultados nítidos e profissionais.</li>
-        <li><b>Removida opção de máscara estendida:</b> A opção de máscara estendida da camada geral foi removida pois era necessária apenas como backup para problemas de shader em versões antigas (1.09x). Com o sombreamento muito melhorado, esta opção não é mais necessária.</li>
+        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
+        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
+        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
+        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
+        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
+        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
+        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
     </ul>
 </body>
 </html>

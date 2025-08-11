@@ -1,5 +1,7 @@
 # Installation Guide for Windows
 
+## Version 1.101 - Released August 11, 2025
+
 ## Prerequisites
 
 - Python 3.8 or higher

@@ -403,4 +403,34 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
     *   Amélioration de la qualité d'affichage du canevas et export d'images en résolution 4x plus élevée pour des résultats nets et professionnels.
 
 8.  **Suppression de l'option masque étendu :**
-    *   L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.
+     *   L'option masque étendu de la couche générale a été supprimée car elle était uniquement nécessaire comme solution de secours pour les problèmes de shader dans les anciennes versions (1.09x). Avec l'ombrage grandement amélioré, cette option n'est plus nécessaire.
+
+------
+
+## Version 1.101 (Sortie : 11/08/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1. **Gestion améliorée des couches :**
+   - Structure `StateLayerManager` améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.
+
+2. **Duplication de groupe :**
+   - Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant « Dupliquer le groupe ». Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.
+
+3. **Mode masquage :**
+   - Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permettant de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches à masquer. Quittez le mode masquage pour appliquer les changements.
+
+4. **Centrer la vue :**
+   - Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). La position du canevas est automatiquement ajustée pour afficher tout votre travail centré à l'écran.
+
+5. **Fermeture rapide de nœud :**
+   - Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement le brin compatible le plus proche avec une extrémité libre.
+
+6. **Support de langue :**
+   - Ajout de l'allemand (🇩🇪). Sélectionnez-la dans Paramètres → Changer la langue.
+
+7. **Exemples :**
+   - Nouvelle catégorie Exemples dans Paramètres → Exemples pour charger des projets prêts à l'emploi. Le choix d'un exemple fermera la boîte de dialogue et chargera l'exemple.
+
+------
+

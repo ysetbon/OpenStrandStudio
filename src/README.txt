@@ -406,3 +406,30 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
+
+## Version 1.101 (Released: 11/08/2025)
+
+### Improvements and New Features:
+
+1. **Improved Layer Management:**
+   - Enhanced `StateLayerManager` structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.
+
+2. **Group Duplication:**
+   - You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.
+
+3. **Hide Mode:**
+   - New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.
+
+4. **Center View:**
+   - Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.
+
+5. **Quick Knot Closing:**
+   - Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.
+
+6. **Language Support:**
+   - Added German (🇩🇪). Switch in Settings → Change Language.
+
+7. **Samples:**
+   - New Samples category in Settings → Samples to load ready-to-use projects. Selecting a sample will close the dialog and load the sample.
+
+------

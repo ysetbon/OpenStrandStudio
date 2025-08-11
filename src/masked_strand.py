@@ -305,10 +305,15 @@ class MaskedStrand(Strand):
 
         painter.save()
         
-        # When zoomed (either in or out), use direct drawing without temporary image optimization
-        # to avoid clipping issues that can occur with bounds calculations
+        # When zoomed (either in or out) OR panned, use direct drawing without temporary image
+        # optimization to avoid clipping issues that can occur with bounds calculations
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') and self.canvas else 1.0
-        if zoom_factor != 1.0:
+        is_panned = False
+        if hasattr(self, 'canvas') and self.canvas:
+            pan_x = getattr(self.canvas, 'pan_offset_x', 0)
+            pan_y = getattr(self.canvas, 'pan_offset_y', 0)
+            is_panned = (pan_x != 0 or pan_y != 0)
+        if zoom_factor != 1.0 or is_panned:
             # logging.info(f"[MaskedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")
             self._draw_direct(painter)
             painter.restore()

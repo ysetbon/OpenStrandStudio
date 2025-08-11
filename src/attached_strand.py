@@ -476,11 +476,12 @@ class AttachedStrand(Strand):
         # logging.info(f"  Painter viewport: {painter.viewport() if hasattr(painter, 'viewport') else 'No viewport'}")
         # logging.info(f"  Painter window: {painter.window() if hasattr(painter, 'window') else 'No window'}")
 
-        # When zoomed (either in or out) OR panned, use direct drawing without temporary image optimization
-        # to avoid clipping issues that can occur with bounds calculations
-        pan_offset_x = getattr(painter.device(), 'pan_offset_x', 0) if hasattr(painter.device(), 'pan_offset_x') else 0
-        pan_offset_y = getattr(painter.device(), 'pan_offset_y', 0) if hasattr(painter.device(), 'pan_offset_y') else 0
-        is_panned = (pan_offset_x != 0 or pan_offset_y != 0)
+        # When zoomed (either in or out) OR panned, use direct drawing without temporary image
+        # optimization to avoid clipping issues that can occur with bounds calculations
+        # Prefer checking the canvas pan offsets which reflect actual pan state
+        pan_x = getattr(self.canvas, 'pan_offset_x', 0) if hasattr(self, 'canvas') and self.canvas else 0
+        pan_y = getattr(self.canvas, 'pan_offset_y', 0) if hasattr(self, 'canvas') and self.canvas else 0
+        is_panned = (pan_x != 0 or pan_y != 0)
         
         if zoom_factor != 1.0 or is_panned:
             # logging.info(f"[AttachedStrand.draw] Zoomed ({zoom_factor}), using direct drawing without temp image optimization")

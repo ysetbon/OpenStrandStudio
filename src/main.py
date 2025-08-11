@@ -210,37 +210,37 @@ if __name__ == '__main__':
             # Force it to be a new QColor instance to ensure it's correctly applied
             rgb_color = QColor(shadow_color.red(), shadow_color.green(), shadow_color.blue(), shadow_color.alpha())
             window.canvas.set_shadow_color(rgb_color)
-            pass
+            
         
         # Set draw only affected strand setting for all modes
         if hasattr(window.canvas, 'move_mode'):
             window.canvas.move_mode.draw_only_affected_strand = draw_only_affected_strand
-            pass
+            
         if hasattr(window.canvas, 'rotate_mode'):
             window.canvas.rotate_mode.draw_only_affected_strand = draw_only_affected_strand
-            pass
+            
         if hasattr(window.canvas, 'angle_adjust_mode'):
             window.canvas.angle_adjust_mode.draw_only_affected_strand = draw_only_affected_strand
-            pass
+            
             
             # Connect the move_mode's mouseReleaseEvent to the undo/redo manager if layer_panel exists
             if hasattr(window, 'layer_panel') and window.layer_panel and hasattr(window.layer_panel, 'undo_redo_manager'):
                 connect_to_move_mode(window.canvas, window.layer_panel.undo_redo_manager)
-                pass
+                
                 
                 # Also connect the attach_mode if it exists
                 if hasattr(window.canvas, 'attach_mode') and window.canvas.attach_mode:
                     connect_to_attach_mode(window.canvas, window.layer_panel.undo_redo_manager)
-                    pass
+                    
                 
                 # Also connect the mask_mode if it exists
                 if hasattr(window.canvas, 'mask_mode') and window.canvas.mask_mode:
                     connect_to_mask_mode(window.canvas, window.layer_panel.undo_redo_manager)
-                    pass
+                    
         
         # Set enable third control point setting
         window.canvas.enable_third_control_point = enable_third_control_point
-        pass
+        
 
         # Set extended mask setting
         # window.canvas.use_extended_mask = use_extended_mask
@@ -264,7 +264,7 @@ if __name__ == '__main__':
         # Update LayerPanel's default colors to match the canvas
         if hasattr(window, 'layer_panel') and window.layer_panel:
             window.layer_panel.update_default_colors()
-            pass
+            
     else:
         pass
     
@@ -275,33 +275,26 @@ if __name__ == '__main__':
     
     # ================== ENHANCED MULTI-MONITOR WINDOW POSITIONING ==================
     
-    pass
-    pass
-    pass
+ 
     
     # STEP 1: Ensure window is completely hidden during setup
     window.setVisible(False)
     window.hide()
     window.setAttribute(Qt.WA_DontShowOnScreen, True)  # Extra insurance
-    pass
+    
     
     # STEP 2: Find screen where cursor is currently located
     cursor_pos = QCursor.pos()
-    pass
+    
     
     # Debug: Log all available screens first
     try:
         screens = QGuiApplication.screens()
-        pass
+        
         for i, screen in enumerate(screens):
             screen_rect = screen.geometry()
             available_rect = screen.availableGeometry()
-            pass
-            pass
-            pass
-            pass
-            pass
-            pass
+         
             
             # Check if cursor is on this screen
             if screen_rect.contains(cursor_pos):
@@ -318,27 +311,25 @@ if __name__ == '__main__':
             if screen_rect.contains(cursor_pos):
                 target_screen = screen
                 target_screen_index = i
-                pass
+                
                 break
         
         # Fallback to primary screen if cursor position doesn't match any screen
         if not target_screen:
             target_screen = QGuiApplication.primaryScreen()
             target_screen_index = 0
-            pass
+            
         
         # Get the available geometry (excluding taskbar/dock)
         available_rect = target_screen.availableGeometry()
         full_rect = target_screen.geometry()
         
-        pass
-        pass
-        pass
+        
         
         # STEP 3: Create window handle and assign to correct screen BEFORE any geometry changes
         window.setAttribute(Qt.WA_NativeWindow, True)
         window_id = window.winId()  # Force native window creation
-        pass
+        
         
         # Ensure we have a window handle before proceeding
         if not window.windowHandle():
@@ -347,11 +338,11 @@ if __name__ == '__main__':
         
         # Assign window to the target screen
         window.windowHandle().setScreen(target_screen)
-        pass
+        
         
         # STEP 4: Set minimum size constraints
         window.setMinimumSize(677, 820)
-        pass
+        
         
         # STEP 5: Set window flags for better multi-monitor support
         # Remove any flags that might interfere with proper screen placement
@@ -359,20 +350,18 @@ if __name__ == '__main__':
                             Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint)
         
         # STEP 6: DO NOT manually position - let Qt handle it when maximized
-        pass
+        
         
         # STEP 7: Process pending events
         app.processEvents()
-        pass
+        
         
         # Remove the attribute that was keeping window off-screen
         window.setAttribute(Qt.WA_DontShowOnScreen, False)
         
         # STEP 8: Show window with explicit positioning
         def show_window_on_target_screen():
-            pass
-            pass
-            pass
+           
             
             try:
                 # Ensure window is assigned to correct screen
@@ -433,17 +422,11 @@ if __name__ == '__main__':
                     actual_geom = window.geometry()
                     frame_geom = window.frameGeometry()
                     
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
+                 
                     
                     if actual_screen and actual_screen != target_screen:
                         pass
-                        pass
-                        pass
+                       
                 
                 # Ensure window is on top and focused
                 window.raise_()
@@ -454,8 +437,7 @@ if __name__ == '__main__':
                 QTimer.singleShot(100, maximize_on_correct_screen)
                 
             except Exception as e:
-                pass
-                pass
+                
                 # Emergency fallback
                 window.show()
                 window.showMaximized()
@@ -479,11 +461,7 @@ if __name__ == '__main__':
                     )
                     
                     if wrong_screen or wrong_size:
-                        pass
-                        pass
-                        pass
-                        pass
-                        pass
+                     
                         
                         # Clear all window states
                         window.setWindowState(Qt.WindowNoState)
@@ -503,15 +481,12 @@ if __name__ == '__main__':
                         window.raise_()
                         window.activateWindow()
                         
-                        pass
+                        
                     
                     # Log final state
                     final_screen = window.windowHandle().screen()
                     final_geom = window.frameGeometry()
-                    pass
-                    pass
-                    pass
-                    pass
+                 
                     
             except Exception as e:
                 pass
@@ -521,9 +496,7 @@ if __name__ == '__main__':
         
         # Final verification
         def verify_window_placement():
-            pass
-            pass
-            pass
+         
             
             try:
                 if window.isVisible() and window.windowHandle():
@@ -532,20 +505,13 @@ if __name__ == '__main__':
                     frame_geom = window.frameGeometry()
                     cursor_now = QCursor.pos()
                     
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
+               
                     
                     # Check screen
                     screen_correct = current_screen == target_screen
                     if not screen_correct:
                         pass
-                        pass
-                        pass
+                     
                     
                     # Check if properly maximized
                     expected_area = target_screen.availableGeometry()
@@ -562,15 +528,11 @@ if __name__ == '__main__':
                     )
                     
                     if not position_correct or not size_correct:
-                        pass
-                        pass
-                        pass
-                        pass
-                        pass
+                     
                         
                         # One final correction attempt
                         if not screen_correct or not size_correct:
-                            pass
+                            
                             window.hide()
                             window.setWindowState(Qt.WindowNoState)
                             window.windowHandle().setScreen(target_screen)
@@ -585,44 +547,39 @@ if __name__ == '__main__':
                     
                     if screen_correct and window.isMaximized() and position_correct and size_correct:
                         pass
-                        pass
                     else:
                         pass
                 
                 def log_final_state():
                     final_screen = window.windowHandle().screen() if window.windowHandle() else None
                     final_frame = window.frameGeometry()
-                    pass
-                    pass
-                    pass
-                    pass
+                  
                         
             except Exception as e:
                 pass
-                pass
+                
         
         # Verify after window settles
         QTimer.singleShot(500, verify_window_placement)
         
     except Exception as e:
         pass
-        pass
+        
         
         # Emergency fallback
         try:
-            pass
+            ass
             window.setAttribute(Qt.WA_DontShowOnScreen, False)
             window.setMinimumSize(677, 820)
             window.showMaximized()
             window.raise_()
             window.activateWindow()
-            pass
+            
         except Exception as e2:
             pass
     
     pass
-    pass
-    pass
+   
     
     # Add event filter to handle minimize/restore properly
     class ScreenKeeper(QObject):
@@ -697,29 +654,25 @@ if __name__ == '__main__':
             try:
                 # Prevent multiple repositioning calls during the same restore cycle
                 if self.repositioning_in_progress:
-                    pass
+                    
                     return
                 
                 if not self.window.isMinimized() and self.window.isVisible():
                     current_screen = self.window.windowHandle().screen() if self.window.windowHandle() else None
                     current_maximized = self.window.isMaximized()
-                    pass
-                    pass
-                    pass
-                    pass
-                    pass
+                
                     
                     # Determine if repositioning is needed to match startup behavior
                     needs_repositioning = False
                     
                     # Check if screen is wrong
                     if current_screen and current_screen != self.target_screen:
-                        pass
+                        
                         needs_repositioning = True
                     
                     # Check if maximization state doesn't match what was stored
                     elif self.was_maximized and not current_maximized:
-                        pass
+                        
                         needs_repositioning = True
                     
                     # For maximized windows, always ensure they're properly positioned like startup
@@ -727,9 +680,7 @@ if __name__ == '__main__':
                         current_geometry = self.window.frameGeometry()
                         available_rect = self.target_screen.availableGeometry()
                         
-                        pass
-                        pass
-                        pass
+                   
                         
                         # Check if window is properly positioned and sized
                         position_correct = (
@@ -742,22 +693,21 @@ if __name__ == '__main__':
                         )
                         
                         if not position_correct or not size_correct:
-                            pass
-                            pass
+                           
                             needs_repositioning = True
                         else:
-                            pass
+                            
                             # Even if geometry matches, ensure window is properly focused and visible
                             self.window.raise_()
                             self.window.activateWindow()
                             self.window.setFocus(Qt.OtherFocusReason)
-                            pass
+                            
                     
                     if needs_repositioning:
                         # Set flag to prevent multiple repositioning calls
                         self.repositioning_in_progress = True
                         
-                        pass
+                        
                         
                         # Get the target screen's available area
                         available_rect = self.target_screen.availableGeometry()
@@ -765,7 +715,7 @@ if __name__ == '__main__':
                         # Restore to correct screen with proper positioning
                         if self.was_maximized:
                             # For maximized windows - restore exactly like startup
-                            pass
+                            
                             
                             # Step 1: Hide window briefly to avoid visible repositioning
                             self.window.setVisible(False)
@@ -788,17 +738,17 @@ if __name__ == '__main__':
                             # Step 6: Show and maximize (exactly like showEvent in main_window.py)
                             self.window.setVisible(True)
                             self.window.setWindowState(Qt.WindowMaximized)
-                            pass
+                            
                             
                             # Step 7: Ensure window is on top and focused
                             self.window.raise_()
                             self.window.activateWindow()
                             self.window.setFocus(Qt.OtherFocusReason)
-                            pass
+                            
                             
                         else:
                             # For normal windows, restore last position
-                            pass
+                            
                             if self.window.windowHandle():
                                 self.window.windowHandle().setScreen(self.target_screen)
                             if self.last_geometry:
@@ -822,7 +772,7 @@ if __name__ == '__main__':
     # Install the event filter
     screen_keeper = ScreenKeeper(window, target_screen)
     window.installEventFilter(screen_keeper)
-    pass
+    
     
     # Set the initial splitter sizes to make the layer panel narrower
     window.set_initial_splitter_sizes()
@@ -830,6 +780,6 @@ if __name__ == '__main__':
     # Verify shadow color after everything is initialized
     if hasattr(window, 'canvas') and window.canvas:
         current_shadow = window.canvas.default_shadow_color
-        pass
+        
 
     sys.exit(app.exec_())

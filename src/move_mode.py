@@ -517,11 +517,14 @@ class MoveMode:
                 
                 # To ensure consistent rendering, force recreate the background cache
                 if hasattr(self_canvas, 'background_cache'):
-                    # Force recreation with proper dimensions
+                    # Force recreation with proper dimensions and device pixel ratio
                     viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
-                    width = max(1, viewport_rect.width())
-                    height = max(1, viewport_rect.height())
+                    dpr = self_canvas.devicePixelRatioF() if hasattr(self_canvas, 'devicePixelRatioF') else 1.0
+                    width = max(1, int(viewport_rect.width() * dpr))
+                    height = max(1, int(viewport_rect.height() * dpr))
                     self_canvas.background_cache = QtGui.QPixmap(width, height)
+                    if hasattr(self_canvas.background_cache, 'setDevicePixelRatio'):
+                        self_canvas.background_cache.setDevicePixelRatio(dpr)
                     self_canvas.background_cache.fill(Qt.transparent)
             
             # Get truly moving strands from the canvas attribute if available, otherwise create it
@@ -629,26 +632,25 @@ class MoveMode:
                     # Create or get the background cache
                     if not hasattr(self_canvas, 'background_cache'):
                         viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
-                        width = max(1, viewport_rect.width())
-                        height = max(1, viewport_rect.height())
+                        dpr = self_canvas.devicePixelRatioF() if hasattr(self_canvas, 'devicePixelRatioF') else 1.0
+                        width = max(1, int(viewport_rect.width() * dpr))
+                        height = max(1, int(viewport_rect.height() * dpr))
                         self_canvas.background_cache = QtGui.QPixmap(width, height)
+                        if hasattr(self_canvas.background_cache, 'setDevicePixelRatio'):
+                            self_canvas.background_cache.setDevicePixelRatio(dpr)
                         self_canvas.background_cache.fill(Qt.transparent)
                     
                     # Save the original strands list
                     original_strands = list(self_canvas.strands)
                     
-                    # Handle both toggle states: 
-                    # - When toggle ON: draw only affected strands (exclude non-moving strands from background)
-                    # - When toggle OFF: draw all strands with proper highlighting (exclude all strands from background, draw them on top)
+                    # Respect the toggle:
+                    # - When draw_only_affected_strand is True: do NOT draw any strands in the background cache
+                    #   (cache only background/grid). Moving strands will be drawn on top, so only affected appear.
+                    # - When False: include all non-moving strands in the cache for performance; moving are drawn on top.
                     if move_mode.draw_only_affected_strand:
-                        # Original behavior: Create a temporary list without the truly moving strands
-                        # This way, affected but not moving strands (like parent strands) 
-                        # will be drawn in their original order
-                        static_strands = [s for s in original_strands if s not in truly_moving_strands]
+                        static_strands = []
                     else:
-                        # New behavior: When toggle is OFF, exclude ALL strands from background cache
-                        # so they can all be drawn on top with proper highlighting
-                        static_strands = []  # Empty background cache (just grid/background)
+                        static_strands = [s for s in original_strands if s not in truly_moving_strands]
                     
                     # For MaskedStrand, ensure both constituent strands are handled properly
                     if isinstance(active_strand, MaskedStrand):
@@ -688,15 +690,31 @@ class MoveMode:
                         def paint_to_cache(evt):
                             bg_painter = QtGui.QPainter(self_canvas.background_cache)
                             RenderUtils.setup_painter(bg_painter, enable_high_quality=True)
-                            # Call the canvas's draw methods directly with our painter
+
+                            # Mirror the exact transform order used in StrandDrawingCanvas.paintEvent
+                            bg_painter.save()
+                            canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                            bg_painter.translate(canvas_center)
+                            bg_painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
+                            bg_painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                            bg_painter.translate(-canvas_center)
+
+                            # Draw in the exact same sequence as the normal paint path
                             if hasattr(self_canvas, 'draw_background'):
                                 self_canvas.draw_background(bg_painter)
-                            if hasattr(self_canvas, 'draw_grid'):
-                                self_canvas.draw_grid(bg_painter)
-                            # Draw static strands
+                            if hasattr(self_canvas, 'show_grid') and self_canvas.show_grid and hasattr(self_canvas, 'draw_grid'):
+                                # Ensure grid uses the full strand list, just like normal paint
+                                previous_strands = self_canvas.strands
+                                try:
+                                    self_canvas.strands = original_strands
+                                    self_canvas.draw_grid(bg_painter)
+                                finally:
+                                    self_canvas.strands = previous_strands
                             for strand in static_strands:
                                 if hasattr(strand, 'draw'):
                                     strand.draw(bg_painter, skip_painter_setup=True)
+
+                            bg_painter.restore()
                             bg_painter.end()
                         
                         paint_to_cache(cache_event)
@@ -728,7 +746,7 @@ class MoveMode:
                 if hasattr(self_canvas, 'background_cache'):
                     if not perf_logger.suppress_move_logging:
                         pass
-                    # Draw background cache without transformation since it was pre-rendered
+                    # Background cache already contains the transformed content; draw it 1:1
                     painter.save()
                     painter.resetTransform()
                     painter.drawPixmap(0, 0, self_canvas.background_cache)

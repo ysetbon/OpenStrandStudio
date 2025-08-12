@@ -2837,12 +2837,13 @@ class StrandDrawingCanvas(QWidget):
                     # Draw the stroke part in red (or transparent red if circle stroke is transparent)
                     painter.setPen(Qt.NoPen)
                     
-                    # Check if this circle has transparent stroke
+                    # Check if this circle has transparent stroke - skip drawing if transparent
                     if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
                         circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
                         if circle_stroke_color and circle_stroke_color.alpha() == 0:
-                            # Use transparent red for transparent circles
-                            painter.setBrush(QColor(255, 0, 0, 0))
+                            # Skip drawing C-shape for transparent circles
+                            painter.restore()
+                            continue
                         else:
                             # Use solid red for normal circles
                             painter.setBrush(QColor(255, 0, 0, 255))

@@ -1,10 +1,10 @@
 Theme: dark
 Language: en
 ShadowColor: 0,0,0,230
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: true
 EnableSnapToGrid: true
-NumSteps: 4
+NumSteps: 1
 MaxBlurRadius: 100.0
 ExtensionLength: 200.0
 ExtensionDashCount: 15

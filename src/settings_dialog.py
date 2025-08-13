@@ -3295,10 +3295,12 @@ class SettingsDialog(QDialog):
             if sys.platform.startswith('darwin'):
                 # For macOS .app bundles, resources are in a different location
                 base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+                base_path = os.path.realpath(base_path)
             else:
                 base_path = sys._MEIPASS
         else:
-            base_path = os.path.abspath(".")
+            # Use the directory of this file in dev mode to reliably find bundled assets
+            base_path = os.path.dirname(os.path.abspath(__file__))
 
         mp4_directory = os.path.join(base_path, 'mp4')
 
@@ -3319,12 +3321,44 @@ class SettingsDialog(QDialog):
         video_path = self.video_paths[index]
         if os.path.exists(video_path):
             try:
-                if sys.platform.startswith('win'):  # Windows
+                if sys.platform.startswith('win'):
                     os.startfile(video_path)
-                elif sys.platform.startswith('darwin'):  # macOS
-                    subprocess.run(['open', video_path], check=True)
-                else:  # Linux and other Unix-like
+                    return
+                elif sys.platform.startswith('darwin'):
+                    # Some macOS systems/QuickTime versions refuse to open files from inside app bundles.
+                    # Workaround: copy the video to a temporary folder and open it from there.
+                    try:
+                        import shutil, tempfile, subprocess as _sub
+                        temp_target = video_path
+                        # Heuristic: if file is inside the .app bundle resources, copy it out
+                        if '/Contents/Resources/' in video_path or '\\Contents\\Resources\\' in video_path:
+                            temp_dir = tempfile.mkdtemp(prefix='OpenStrandVideo_')
+                            temp_target = os.path.join(temp_dir, os.path.basename(video_path))
+                            shutil.copy2(video_path, temp_target)
+                            # Best effort: clear quarantine attribute in case it was inherited
+                            try:
+                                _sub.run(['xattr', '-d', 'com.apple.quarantine', temp_target], check=False)
+                            except Exception:
+                                pass
+                        # Prefer opening with default app
+                        subprocess.run(['open', temp_target], check=True)
+                        return
+                    except Exception:
+                        # Fallback: explicitly try QuickTime Player
+                        try:
+                            subprocess.run(['open', '-a', 'QuickTime Player', video_path], check=True)
+                            return
+                        except Exception:
+                            # Final fallback: use the built-in Qt player dialog
+                            try:
+                                dlg = VideoPlayerDialog(video_path, self)
+                                dlg.exec_()
+                                return
+                            except Exception:
+                                pass
+                else:
                     subprocess.run(['xdg-open', video_path], check=True)
+                    return
             except subprocess.SubprocessError as e:
                 QMessageBox.warning(
                     self,

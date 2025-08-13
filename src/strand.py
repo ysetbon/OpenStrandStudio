@@ -2629,7 +2629,7 @@ class Strand:
                 # Draw the stroke only if it's visible
                 if self.start_circle_stroke_color.alpha() > 0:
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.start_circle_stroke_color)
+                    painter.setBrush(self.stroke_color)
                     painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -2710,11 +2710,10 @@ class Strand:
                     outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                     outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                    # Draw the outer circle stroke only if visible
-                    if self.end_circle_stroke_color.alpha() > 0:
-                        painter.setPen(Qt.NoPen)
-                        painter.setBrush(self.end_circle_stroke_color)
-                        painter.drawPath(outer_mask_end)
+                    # Debug: draw the outer semi-circle stroke in red (regardless of alpha)
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.stroke_color)
+                    painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill
                 inner = QPainterPath()
@@ -2775,7 +2774,7 @@ class Strand:
                 outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
 
-                # Draw stroke using start_circle_stroke_color only if visible
+                # Draw stroke (debug red for outer semi-circle)
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(outer_mask_start)
@@ -2834,10 +2833,10 @@ class Strand:
                     outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
                     outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
-                    # Draw the outer circle stroke only if visible
+                    # Draw the outer circle stroke only if visible (debug red for outer semi-circle)
                     if self.end_circle_stroke_color.alpha() > 0:
                         painter.setPen(Qt.NoPen)
-                        painter.setBrush(self.end_circle_stroke_color)
+                        painter.setBrush(self.stroke_color)
                         painter.drawPath(outer_mask_end)
 
                 # Draw the inner circle fill

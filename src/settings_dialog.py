@@ -3302,13 +3302,19 @@ class SettingsDialog(QDialog):
             # Use the directory of this file in dev mode to reliably find bundled assets
             base_path = os.path.dirname(os.path.abspath(__file__))
 
-        mp4_directory = os.path.join(base_path, 'mp4')
+        # Use .mov files on Mac for better compatibility with QuickTime
+        if sys.platform.startswith('darwin'):
+            video_directory = os.path.join(base_path, 'mov')
+            video_extension = '.mov'
+        else:
+            video_directory = os.path.join(base_path, 'mp4')
+            video_extension = '.mp4'
 
         self.video_paths = [
-            os.path.join(mp4_directory, 'tutorial_1.mp4'),
-            os.path.join(mp4_directory, 'tutorial_2.mp4'),
-            os.path.join(mp4_directory, 'tutorial_3.mp4'),
-            os.path.join(mp4_directory, 'tutorial_4.mp4'),  # Previously tutorial_6.mp4
+            os.path.join(video_directory, f'tutorial_1{video_extension}'),
+            os.path.join(video_directory, f'tutorial_2{video_extension}'),
+            os.path.join(video_directory, f'tutorial_3{video_extension}'),
+            os.path.join(video_directory, f'tutorial_4{video_extension}'),  # Previously tutorial_6.mp4
         ]
 
         # Optional: Log the video paths for debugging

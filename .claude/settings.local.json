@@ -53,7 +53,9 @@
       "Bash(build_env/Scripts/python.exe final_israeli_flag.py)",
       "Bash(cp:*)",
       "Bash(conda init:*)",
-      "Bash(C:/ProgramData/Anaconda3/Scripts/conda.exe init powershell)"
+      "Bash(C:/ProgramData/Anaconda3/Scripts/conda.exe init powershell)",
+      "Bash(ffmpeg:*)",
+      "Bash(apt list:*)"
     ],
     "deny": []
   }

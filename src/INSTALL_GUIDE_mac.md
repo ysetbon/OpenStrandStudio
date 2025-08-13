@@ -26,9 +26,8 @@ From the src directory of the project, run the following command to create the a
 
 ```bash
 cd src
-pyinstaller OpenStrandStudio_mac.spec
+python3 -m PyInstaller OpenStrandStudio_mac.spec
 ```
-
 This will create the application bundle in the `dist` directory using the macOS-specific spec file that includes proper app bundle configuration and flag images.
 
 ## Step 3: Create the Installer Package

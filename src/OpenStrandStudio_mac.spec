@@ -7,7 +7,7 @@ a = Analysis(
     datas=[
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
-        ('mp4/*.mp4', 'mp4/'),  # Include tutorial videos
+        ('mov/*.mov', 'mov/'),  # Include .mov tutorial videos for Mac compatibility
         ('flags/*.png', 'flags/'),  # Include flag images
         ('samples/*.json', 'samples/')  # Include sample JSON files
     ],

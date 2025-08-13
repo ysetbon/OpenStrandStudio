@@ -1083,7 +1083,7 @@ class AttachedStrand(Strand):
 
         # Create a new color with the same alpha as the strand's color
         side_color = QColor(self.stroke_color)
-        side_color.setAlpha(self.color.alpha())
+        side_color.setAlpha(self.stroke_color.alpha())
 
         side_pen.setColor(side_color)
         painter.setPen(side_pen)
@@ -1115,7 +1115,7 @@ class AttachedStrand(Strand):
 
             # Draw the outer circle (stroke)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.start_circle_stroke_color)
+            painter.setBrush(self.stroke_color)
             painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -1226,7 +1226,7 @@ class AttachedStrand(Strand):
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
+            painter.setBrush(self.end_circle_stroke_color)
             painter.drawPath(clip)
             
             # Draw the inner circle (fill)
@@ -2520,7 +2520,7 @@ class AttachedStrand(Strand):
 
         # Create a new color with the same alpha as the strand's color
         side_color = QColor(self.stroke_color)
-        side_color.setAlpha(self.color.alpha())
+        side_color.setAlpha(self.stroke_color.alpha())
         side_pen.setColor(side_color)
         painter.setPen(side_pen)
 
@@ -2551,7 +2551,7 @@ class AttachedStrand(Strand):
 
             # Draw the outer circle (stroke)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.start_circle_stroke_color)
+            painter.setBrush(self.stroke_color)
             painter.drawPath(outer_mask)
 
             # Draw the inner circle (fill)
@@ -2646,7 +2646,7 @@ class AttachedStrand(Strand):
 
                 # Draw stroke using circle_stroke_color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.start_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
@@ -2687,7 +2687,7 @@ class AttachedStrand(Strand):
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
             clip = outer.subtracted(mask)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
+            painter.setBrush(self.start_circle_stroke_color)
             painter.drawPath(clip)
 
             # Draw the inner circle (fill)
@@ -2725,7 +2725,7 @@ class AttachedStrand(Strand):
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
+            painter.setBrush(self.end_circle_stroke_color)
             painter.drawPath(clip)
             
             # Draw the inner circle (fill)
@@ -2807,7 +2807,7 @@ class AttachedStrand(Strand):
 
                 # Draw stroke using circle_stroke_color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.start_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color

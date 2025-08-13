@@ -404,7 +404,7 @@ class Strand:
     def set_color(self, new_color):
         """Set the color of the strand and its side line."""
         self.color = new_color
-        self.side_line_color = self.color
+        self.side_line_color = self.stroke_color
 
     def update_shape(self):
         """Update the shape of the strand based on its start, end, and control points."""
@@ -1440,9 +1440,7 @@ class Strand:
             # Add side line highlighting for regular strands (not attached strands)
             # Only highlight sides that don't have attached strands
             if not hasattr(self, 'parent'):  # This is a regular strand, not an attached strand
-                pass
-                pass
-                pass
+           
                 
                 painter.save()
                 
@@ -1482,7 +1480,7 @@ class Strand:
                 end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
                 
                 # Create highlight pen for side lines
-                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
+                highlight_pen = QPen(QColor(255, 0, 0, 0), self.stroke_width + 10 , Qt.SolidLine)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 highlight_pen.setJoinStyle(Qt.MiterJoin)
                 
@@ -1531,7 +1529,7 @@ class Strand:
 
             # Create a new color with the same alpha as the strand's color
             side_color = QColor(self.stroke_color)
-            side_color.setAlpha(self.color.alpha())
+            side_color.setAlpha(self.stroke_color.alpha())
             side_pen.setColor(side_color)
 
             painter.setPen(side_pen)
@@ -2561,7 +2559,7 @@ class Strand:
 
         # Create a new color with the same alpha as the strand's color
         side_color = QColor(self.stroke_color)
-        side_color.setAlpha(self.color.alpha())
+        side_color.setAlpha(self.stroke_color.alpha())
         side_pen.setColor(side_color)
         painter.setPen(side_pen)
             # Conditionally draw start line

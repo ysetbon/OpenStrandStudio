@@ -2853,8 +2853,8 @@ class StrandDrawingCanvas(QWidget):
                         
                     painter.drawPath(stroke_c_shape)
                     
-                    # Draw the color part in black
-                    painter.setBrush(QColor(0, 0, 0, 255))
+                    # Draw the color part in transparent 
+                    painter.setBrush(QColor(0, 0, 0, 0))
                     painter.drawPath(color_c_shape)
                     
                     # Restore painter state

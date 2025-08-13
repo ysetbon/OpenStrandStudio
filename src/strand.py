@@ -1878,7 +1878,7 @@ class Strand:
             # Draw the stroke ring only if it's visible
             if self.end_circle_stroke_color.alpha() > 0:
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.end_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(ring_half)
 
             # Draw the inner circle (fill) over everything
@@ -2776,10 +2776,9 @@ class Strand:
                 outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
 
                 # Draw stroke using start_circle_stroke_color only if visible
-                if self.start_circle_stroke_color.alpha() > 0:
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.start_circle_stroke_color)
-                    painter.drawPath(outer_mask_start)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.stroke_color)
+                painter.drawPath(outer_mask_start)
 
                 # Draw fill using main color
                 inner = QPainterPath()
@@ -2879,7 +2878,7 @@ class Strand:
             # Draw the stroke only if it's visible
             if self.start_circle_stroke_color.alpha() > 0:
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.start_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(clip)
 
             # Draw the inner circle (fill)
@@ -2920,7 +2919,7 @@ class Strand:
             # Draw the stroke only if it's visible
             if self.end_circle_stroke_color.alpha() > 0:
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.end_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(clip)
 
             # Draw the inner circle (fill)

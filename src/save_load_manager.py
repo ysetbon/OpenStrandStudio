@@ -149,6 +149,17 @@ def serialize_strand(strand, canvas, index=None):
         data["circle_stroke_color"] = serialize_color(strand.circle_stroke_color)
     else:
         data["circle_stroke_color"] = None
+    
+    # Save start and end circle stroke colors separately (for closed knot transparency)
+    if hasattr(strand, 'start_circle_stroke_color'):
+        data["start_circle_stroke_color"] = serialize_color(strand.start_circle_stroke_color)
+    else:
+        data["start_circle_stroke_color"] = None
+        
+    if hasattr(strand, 'end_circle_stroke_color'):
+        data["end_circle_stroke_color"] = serialize_color(strand.end_circle_stroke_color)
+    else:
+        data["end_circle_stroke_color"] = None
 
     # Add attached_to information for AttachedStrands
     if isinstance(strand, AttachedStrand):
@@ -442,6 +453,17 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         else:
             # If the JSON did not contain circle_stroke_color, we do NOT overwrite with black
             pass
+        
+        # Load start and end circle stroke colors separately (for closed knot transparency)
+        if "start_circle_stroke_color" in data and data["start_circle_stroke_color"] is not None:
+            raw_color = data["start_circle_stroke_color"]
+            loaded_color = deserialize_color(raw_color)
+            strand.start_circle_stroke_color = loaded_color
+            
+        if "end_circle_stroke_color" in data and data["end_circle_stroke_color"] is not None:
+            raw_color = data["end_circle_stroke_color"]
+            loaded_color = deserialize_color(raw_color)
+            strand.end_circle_stroke_color = loaded_color
 
         if strand_type == "MaskedStrand" and "deletion_rectangles" in data:
             # Set a flag to prevent automatic repositioning
@@ -557,6 +579,13 @@ def load_strands(filename, canvas):
             if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
                 raw_color = strand_data["circle_stroke_color"]
                 strand.circle_stroke_color = deserialize_color(raw_color)
+
+            # --- ADD: Load start/end circle stroke colors for AttachedStrand too ---
+            if "start_circle_stroke_color" in strand_data and strand_data["start_circle_stroke_color"] is not None:
+                strand.start_circle_stroke_color = deserialize_color(strand_data["start_circle_stroke_color"])
+            if "end_circle_stroke_color" in strand_data and strand_data["end_circle_stroke_color"] is not None:
+                strand.end_circle_stroke_color = deserialize_color(strand_data["end_circle_stroke_color"])
+            # --- END ADD ---
 
             # --- NEW: Load manual circle visibility overrides ---
             if "manual_circle_visibility" in strand_data:

@@ -748,6 +748,57 @@ class UndoRedoManager(QObject):
                     elif hasattr(current_strand, 'closed_connections') != ('closed_connections' in prev_strand):
                         return False
                     # --- END ADD ---
+                    
+                    # --- ADD: Check start_circle_stroke_color and end_circle_stroke_color ---
+                    # These are used for closed knot transparency. We must treat transitions
+                    # from None (missing in previous save) to a real color as a DIFFERENCE.
+                    # Start circle comparison
+                    if 'start_circle_stroke_color' in prev_strand:
+                        prev_start = prev_strand.get('start_circle_stroke_color')
+                        if prev_start:
+                            # Previous had a real color dict – compare component-wise
+                            if hasattr(current_strand, 'start_circle_stroke_color') and current_strand.start_circle_stroke_color is not None:
+                                c = current_strand.start_circle_stroke_color
+                                if (c.red() != prev_start.get('r', 0) or
+                                    c.green() != prev_start.get('g', 0) or
+                                    c.blue() != prev_start.get('b', 0) or
+                                    c.alpha() != prev_start.get('a', 0)):
+                                    return False
+                            else:
+                                # Previously had color but now missing -> different
+                                return False
+                        else:
+                            # Previously None/empty but now present -> different
+                            if hasattr(current_strand, 'start_circle_stroke_color') and current_strand.start_circle_stroke_color is not None:
+                                return False
+                    else:
+                        # Key missing previously but attribute exists now -> different
+                        if hasattr(current_strand, 'start_circle_stroke_color') and current_strand.start_circle_stroke_color is not None:
+                            return False
+
+                    # End circle comparison
+                    if 'end_circle_stroke_color' in prev_strand:
+                        prev_end = prev_strand.get('end_circle_stroke_color')
+                        if prev_end:
+                            if hasattr(current_strand, 'end_circle_stroke_color') and current_strand.end_circle_stroke_color is not None:
+                                c = current_strand.end_circle_stroke_color
+                                if (c.red() != prev_end.get('r', 0) or
+                                    c.green() != prev_end.get('g', 0) or
+                                    c.blue() != prev_end.get('b', 0) or
+                                    c.alpha() != prev_end.get('a', 0)):
+                                    return False
+                            else:
+                                # Previously had color but now missing -> different
+                                return False
+                        else:
+                            # Previously None/empty but now present -> different
+                            if hasattr(current_strand, 'end_circle_stroke_color') and current_strand.end_circle_stroke_color is not None:
+                                return False
+                    else:
+                        # Key missing previously but attribute exists now -> different
+                        if hasattr(current_strand, 'end_circle_stroke_color') and current_strand.end_circle_stroke_color is not None:
+                            return False
+                    # --- END ADD ---
 
                 # Check for differences in locked layers
                 current_locked_layers = set()

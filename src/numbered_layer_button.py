@@ -1070,6 +1070,7 @@ class NumberedLayerButton(QPushButton):
         """
         Sets the strand's ending circle stroke color to transparent for closed connections.
         """
+        print(f"[DEBUG] set_transparent_ending_edge called for button: {self.text()}")
         self.set_end_circle_stroke_color(Qt.transparent)
 
     def reset_default_ending_stroke(self):
@@ -1160,7 +1161,10 @@ class NumberedLayerButton(QPushButton):
                 
                 # Save state for undo/redo to persist the transparent stroke color change
                 if hasattr(canvas, 'undo_redo_manager'):
+                    # Force save by resetting the debounce timer and skip flag
                     canvas.undo_redo_manager._last_save_time = 0
+                    if hasattr(canvas.undo_redo_manager, '_skip_save'):
+                        canvas.undo_redo_manager._skip_save = False
                     canvas.undo_redo_manager.save_state()
 
     def set_end_circle_stroke_color(self, color):
@@ -1172,6 +1176,10 @@ class NumberedLayerButton(QPushButton):
         if '_' not in button_text:
             print(f"Button text '{button_text}' does not have an underscore; skipping end stroke color change.")
             return
+
+        # Convert GlobalColor to QColor if needed
+        if not isinstance(color, QColor):
+            color = QColor(color)
 
         found = False
 
@@ -1236,12 +1244,15 @@ class NumberedLayerButton(QPushButton):
                         
                         # Save state for undo/redo to persist the transparent stroke color change
                         if hasattr(current_parent.canvas, 'undo_redo_manager'):
+                            # Force save by resetting the debounce timer and skip flag
                             current_parent.canvas.undo_redo_manager._last_save_time = 0
+                            if hasattr(current_parent.canvas.undo_redo_manager, '_skip_save'):
+                                current_parent.canvas.undo_redo_manager._skip_save = False
                             current_parent.canvas.undo_redo_manager.save_state()
                         
                         break
                     current_parent = current_parent.parent()
-            except Exception as e:
+            except Exception:
                 pass
 
     # NEW: Helper method to fetch the current theme from parent chain

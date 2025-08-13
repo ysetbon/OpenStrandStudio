@@ -1195,7 +1195,71 @@ class AttachedStrand(Strand):
             # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
             # For a true geometric union, reassign the result back to combined_fill_path.
             combined_fill_path = combined_fill_path.united(start_side_line_path)
-            
+        
+        if self.has_circles[1] :
+            t_end = 1.0
+            tangent_end = self.calculate_cubic_tangent(t_end)
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.end - self.start
+
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            perp_angle_end = angle_end + math.pi / 2
+            half_total_width_end = (self.width) / 2
+            dx_end = half_total_width_end * math.cos(perp_angle_end)
+            dy_end = half_total_width_end * math.sin(perp_angle_end)
+
+            half_stroke_width_end = self.stroke_width / 2
+            dx_tangent_end = half_stroke_width_end * math.cos(angle_end)
+            dy_tangent_end = half_stroke_width_end * math.sin(angle_end)
+
+            # Arrange corners in order: left-back, right-back, right-front, left-front (at end)
+            end_corner1 = QPointF(self.end.x() - dx_end - dx_tangent_end, self.end.y() - dy_end - dy_tangent_end)
+            end_corner2 = QPointF(self.end.x() + dx_end - dx_tangent_end, self.end.y() + dy_end - dy_tangent_end)
+            end_corner3 = QPointF(self.end.x() + dx_end + dx_tangent_end, self.end.y() + dy_end + dy_tangent_end)
+            end_corner4 = QPointF(self.end.x() - dx_end + dx_tangent_end, self.end.y() - dy_end + dy_tangent_end)
+
+            end_side_line_path = QPainterPath()
+            end_side_line_path.moveTo(end_corner1)
+            end_side_line_path.lineTo(end_corner2)
+            end_side_line_path.lineTo(end_corner3)
+            end_side_line_path.lineTo(end_corner4)
+            end_side_line_path.closeSubpath()
+
+            combined_fill_path = combined_fill_path.united(end_side_line_path)
+         
+        # End side cover rectangle (only when there is an end circle)
+        if self.has_circles[1]:
+            t_end = 1.0
+            tangent_end = self.calculate_cubic_tangent(t_end)
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.end - self.start
+
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            perp_angle_end = angle_end + math.pi / 2
+            half_total_width_end = (self.width) / 2
+            dx_end = half_total_width_end * math.cos(perp_angle_end)
+            dy_end = half_total_width_end * math.sin(perp_angle_end)
+
+            half_stroke_width_end = self.stroke_width / 2
+            dx_tangent_end = half_stroke_width_end * math.cos(angle_end)
+            dy_tangent_end = half_stroke_width_end * math.sin(angle_end)
+
+            # Arrange corners in order at the end anchor
+            end_corner1 = QPointF(self.end.x() - dx_end - dx_tangent_end, self.end.y() - dy_end - dy_tangent_end)
+            end_corner2 = QPointF(self.end.x() + dx_end - dx_tangent_end, self.end.y() + dy_end - dy_tangent_end)
+            end_corner3 = QPointF(self.end.x() + dx_end + dx_tangent_end, self.end.y() + dy_end + dy_tangent_end)
+            end_corner4 = QPointF(self.end.x() - dx_end + dx_tangent_end, self.end.y() - dy_end + dy_tangent_end)
+
+            end_side_line_path = QPainterPath()
+            end_side_line_path.moveTo(end_corner1)
+            end_side_line_path.lineTo(end_corner2)
+            end_side_line_path.lineTo(end_corner3)
+            end_side_line_path.lineTo(end_corner4)
+            end_side_line_path.closeSubpath()
+
+            combined_fill_path = combined_fill_path.united(end_side_line_path)
+
+   
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.stroke_color)
@@ -1205,7 +1269,7 @@ class AttachedStrand(Strand):
         painter.drawPath(combined_fill_path)
        
         # Draw the end line conditionally
-        if self.end_line_visible: # Only draw end line if visible
+        if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
             side_pen = QPen(self.stroke_color, self.stroke_width)
             side_pen.setCapStyle(Qt.FlatCap)
             side_color = QColor(self.stroke_color)
@@ -2694,7 +2758,7 @@ class AttachedStrand(Strand):
         painter.drawPath(combined_fill_path)
         
         # Draw the end line conditionally
-        if self.end_line_visible:
+        if self.end_line_visible and not self.has_circles[1]:
             side_pen = QPen(self.stroke_color, self.stroke_width)
             side_pen.setCapStyle(Qt.FlatCap)
             side_color = QColor(self.stroke_color)
@@ -2760,3 +2824,61 @@ class AttachedStrand(Strand):
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
+      # Draw ending circle ON TOP of everything if needed
+        # For attached strands, check the attachment side to determine which closed_connection to use
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]                
+        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
+            # Check for attached children that would skip circle drawing
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            if not skip_end_circle:
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                tangent_end = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+
+                # Use same implementation as start circle but with opposite angle
+                mask_rect_end = QPainterPath()
+                rect_width = total_diameter * 2
+                rect_height = total_diameter * 2
+                # Mask on the opposite side (left side instead of right side)
+                mask_rect_end.addRect(-rect_width, -rect_height / 2, rect_width, rect_height)
+
+                transform_end = QTransform()
+                transform_end.translate(self.end.x(), self.end.y())
+                # Try without 180 degrees rotation to see if this orientation works
+                transform_end.rotate(math.degrees(angle_end))
+                mask_rect_end = transform_end.map(mask_rect_end)
+
+                outer_circle_end = QPainterPath()
+                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
+
+                # Draw stroke using end_circle_stroke_color for end circle
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.end_circle_stroke_color)
+                painter.drawPath(outer_mask_end)
+
+                # Draw fill using main color
+                inner_circle_end = QPainterPath()
+                inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_circle_end)
+
+                # Draw side line that covers the inner circle (only when stroke is visible)
+                if self.end_circle_stroke_color.alpha() > 0:
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.color)
+                    just_inner_end = QPainterPath()
+                    just_inner_end.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                    tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
+                    tr_inner_end.rotate(math.degrees(angle_end))
+                    just_inner_end = tr_inner_end.map(just_inner_end)
+                    painter.drawPath(just_inner_end)

@@ -1832,7 +1832,7 @@ class Strand:
             # Draw the stroke ring only if it's visible
             if self.start_circle_stroke_color.alpha() > 0:
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.start_circle_stroke_color)
+                painter.setBrush(self.stroke_color)
                 painter.drawPath(ring_half)
 
             # Draw the inner circle (fill) over everything
@@ -2606,7 +2606,7 @@ class Strand:
                 if self.start_circle_stroke_color.alpha() > 0:
                     painter.setPen(Qt.NoPen)
                     painter.setBrush(self.start_circle_stroke_color)
-                    painter.drawPath(outer_circle)
+                    #painter.drawPath(outer_circle)
                 
                 # Draw the inner circle (fill) for closed connections
                 inner_circle = QPainterPath()
@@ -2632,21 +2632,23 @@ class Strand:
                     painter.setBrush(self.stroke_color)
                     painter.drawPath(outer_mask)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+                # Draw the inner semi-circle (fill)
+                inner = QPainterPath()
+                inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                inner_mask = inner.subtracted(mask_rect)
+                painter.setBrush(self.color)
+                painter.drawPath(inner_mask)
+
+                # Draw side line that covers the inner circle
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(self.color)
+                just_inner = QPainterPath()
+                just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width , self.width)
+                tr_inner = QTransform().translate(self.start.x(), self.start.y())
+                tr_inner.rotate(math.degrees(angle))
+                just_inner = tr_inner.map(just_inner)
+                painter.drawPath(just_inner)
             
-            # Draw side line that covers the inner circle
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.color)
-            just_inner = QPainterPath()
-            just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width , self.width)
-            tr_inner = QTransform().translate(self.start.x(), self.start.y())
-            tr_inner.rotate(math.degrees(angle))
-            just_inner = tr_inner.map(just_inner)
-            painter.drawPath(just_inner)
             
             
         # Draw ending circle if has_circles == [True, True]
@@ -2714,22 +2716,22 @@ class Strand:
                     painter.setPen(Qt.NoPen)
                     painter.setBrush(self.stroke_color)
                     painter.drawPath(outer_mask_end)
+                    # Draw the inner semi-circle fill
+                    inner = QPainterPath()
+                    inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                    inner_mask_end = inner.subtracted(mask_rect_end)
+                    painter.setBrush(self.color)
+                    painter.drawPath(inner_mask_end)
 
-                # Draw the inner circle fill
-                inner = QPainterPath()
-                inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner)
-
-                # Draw side line that covers the inner circle
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
-                tr_inner = QTransform().translate(self.end.x(), self.end.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
+                    # Draw side line that covers the inner circle
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.color)
+                    just_inner = QPainterPath()
+                    just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
+                    tr_inner = QTransform().translate(self.end.x(), self.end.y())
+                    tr_inner.rotate(math.degrees(angle_end))
+                    just_inner = tr_inner.map(just_inner)
+                    painter.drawPath(just_inner)
         # Draw ending circle if has_circles == [True, True]
         pass
         if (self.has_circles == [True, True]):
@@ -2778,12 +2780,13 @@ class Strand:
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(outer_mask_start)
-
-                # Draw fill using main color
+                
+                # Draw inner semi-circle using main color
                 inner = QPainterPath()
                 inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                inner_mask_start = inner.subtracted(mask_rect_start)
                 painter.setBrush(self.color)
-                painter.drawPath(inner)
+                painter.drawPath(inner_mask_start)
 
                 # Draw side line that covers the inner circle
                 painter.setPen(Qt.NoPen)
@@ -2791,7 +2794,7 @@ class Strand:
                 just_inner = QPainterPath()
                 just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
                 tr_inner = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner.rotate(math.degrees(angle))
+                tr_inner.rotate(math.degrees(angle_start))
                 just_inner = tr_inner.map(just_inner)
                 painter.drawPath(just_inner)
 
@@ -2838,22 +2841,23 @@ class Strand:
                         painter.setPen(Qt.NoPen)
                         painter.setBrush(self.stroke_color)
                         painter.drawPath(outer_mask_end)
+                    
+                    # Draw the inner semi-circle fill
+                    inner = QPainterPath()
+                    inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                    inner_mask_end = inner.subtracted(mask_rect_end)
+                    painter.setBrush(self.color)
+                    painter.drawPath(inner_mask_end)
 
-                # Draw the inner circle fill
-                inner = QPainterPath()
-                inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner)
-
-                # Draw side line that covers the inner circle
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
-                tr_inner = QTransform().translate(self.end.x(), self.end.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
+                    # Draw side line that covers the inner circle
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(self.color)
+                    just_inner = QPainterPath()
+                    just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
+                    tr_inner = QTransform().translate(self.end.x(), self.end.y())
+                    tr_inner.rotate(math.degrees(angle_end))
+                    just_inner = tr_inner.map(just_inner)
+                    painter.drawPath(just_inner)
 
         # --- NEW: Draw semi-circles on top for closed connections (direct drawing) ---
         # Draw semi-circle on top when start connection is closed

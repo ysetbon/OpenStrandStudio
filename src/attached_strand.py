@@ -1054,46 +1054,33 @@ class AttachedStrand(Strand):
 
 
 
-        # Draw directly on the painter
+        # Prepare combined paths for stroke and fill
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
         # Calculate the angle based on the tangent at the start point
         angle = self.calculate_start_tangent()
 
-        # Draw the main strand
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self.stroke_color)
-        # --- FIX: Use stroke_path for main stroke drawing --- 
-        painter.drawPath(stroke_path)
-        # --- END FIX ---
-
-        # Draw the fill
+        # Create combined stroke path that will include strand body + semi-circles
+        combined_stroke_path = QPainterPath()
+        combined_stroke_path.setFillRule(Qt.WindingFill)
+        combined_stroke_path.addPath(stroke_path)  # Add the main strand stroke
+        
+        # Create combined fill path
         fill_stroker = QPainterPathStroker()
         fill_stroker.setWidth(self.width)
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
-        painter.setBrush(self.color)
-        painter.drawPath(fill_path)
+        combined_fill_path = QPainterPath()
+        combined_fill_path.setFillRule(Qt.WindingFill)
+        combined_fill_path.addPath(fill_path)  # Add the main strand fill
 
-        # Draw the end line conditionally
-        side_pen = QPen(self.stroke_color, self.stroke_width)
-        side_pen.setCapStyle(Qt.FlatCap)
-
-        # Create a new color with the same alpha as the strand's color
-        side_color = QColor(self.stroke_color)
-        side_color.setAlpha(self.stroke_color.alpha())
-
-        side_pen.setColor(side_color)
-        painter.setPen(side_pen)
-
-        if self.end_line_visible: # Only draw end line if visible
-            painter.drawLine(self.end_line_start, self.end_line_end)
-
-        # Create a mask for the circle
-        # Only draw the start circle if explicitly enabled (has_circles[0] == True)
-        if self.has_circles[0]:
+        # Add start circle to combined paths if enabled
+        # Check both conditions: has_circles[0] alone OR has_circles[0] with attached children
+        has_attached_at_start = any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands)
+        
+        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
 
@@ -1113,104 +1100,27 @@ class AttachedStrand(Strand):
             outer_circle.addEllipse(self.start, circle_radius, circle_radius)
             outer_mask = outer_circle.subtracted(mask_rect)
 
-            # Draw the outer circle (stroke)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
-            painter.drawPath(outer_mask)
+            # Add outer circle to combined stroke path
+            combined_stroke_path.addPath(outer_mask)
 
-            # Draw the inner circle (fill)
+            # Add inner circle to combined fill path
             inner = QPainterPath()
             inner.addEllipse(self.start, self.width * 0.5 , self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            combined_fill_path.addPath(inner)
             
-            # Draw side line that covers the inner circle (only when stroke is visible)
+            # Add side line to combined fill path (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
                 just_inner = QPainterPath()
                 just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width , self.width)
                 tr_inner = QTransform().translate(self.start.x(), self.start.y())
                 tr_inner.rotate(math.degrees(angle))
                 just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-            
-            # Draw highlight for C-shape if selected (only when stroke is visible)
-            if (self.is_selected and not isinstance(self.parent, MaskedStrand) and 
-                self.start_circle_stroke_color.alpha() > 0):
-                
-                # Draw a red highlight around the C-shape
-                # Calculate the highlight radius (outer edge of the highlight)
-                highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
-                
-                # Create the highlight path
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask_rect)
-                
-                # Create a ring path by subtracting the normal outer circle
-                ring_path = highlight_mask.subtracted(outer_circle)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
-                painter.drawPath(ring_path)
-                
-                painter.setPen(Qt.NoPen)
-                # Check if circle stroke is transparent
-                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
-                    # Use transparent red for transparent circles
-                    painter.setBrush(QColor(255, 0, 0, 0))
-                else:
-                    # Use solid red for normal circles
-                    painter.setBrush(QColor('red'))
-               
-        # Restore painter state
-        painter.restore()
-
-
-        # NEW: Draw half-circle attachments at endpoints where there are AttachedStrand children
-        # Start endpoint half-circle (only if circle is enabled)
-        if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
-            tangent = self.calculate_cubic_tangent(0.0)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Creating Outer Circle Half-Circle
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-            tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-            outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
-            clip = outer.subtracted(mask)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
-            painter.drawPath(clip)
-
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
-
-                # Draw side line that covers the inner circle (only when stroke is visible)
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner_side = QPainterPath()
-                just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                tr_inner_side = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner_side.rotate(math.degrees(angle))
-                just_inner_side = tr_inner_side.map(just_inner_side)
-                painter.drawPath(just_inner_side)
+                combined_fill_path.addPath(just_inner)
 
         # End endpoint half-circle (only if circle is enabled)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
             tangent = self.calculate_cubic_tangent(1.0)
-            angle = math.atan2(tangent.y(), tangent.x())
+            angle_end = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
@@ -1220,45 +1130,153 @@ class AttachedStrand(Strand):
             rect_height = total_d * 2
             mask.addRect(0, -rect_height / 2, rect_width, rect_height)
             tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle - math.pi))
+            tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
             outer = QPainterPath()
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.end_circle_stroke_color)
-            painter.drawPath(clip)
+            # Add to combined stroke path - use end_circle_stroke_color for consistency
+            combined_stroke_path.addPath(clip)
             
-            # Draw the inner circle (fill)
+            # Add the inner circle (fill) to combined fill path
             inner = QPainterPath()
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            combined_fill_path.addPath(inner)
 
-            # Draw highlight around the END C-shape if this strand is selected (only when stroke is visible)
-            if (self.is_selected and not isinstance(self.parent, MaskedStrand) and 
-                self.end_circle_stroke_color.alpha() > 0):
+            # Add side line to combined fill path (only when stroke is visible)
+            if self.end_circle_stroke_color.alpha() > 0:
+                just_inner_side = QPainterPath()
+                just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_side = QTransform().translate(self.end.x(), self.end.y())
+                tr_inner_side.rotate(math.degrees(angle_end))
+                just_inner_side = tr_inner_side.map(just_inner_side)
+                combined_fill_path.addPath(just_inner_side)
+        if self.start_circle_stroke_color.alpha() == 0:        
+                    
+            
+            # Add start side cover rectangle into combined fill before painting
+            t_start = 0.0
+            t_end = 1.0
+
+            tangent_start = self.calculate_cubic_tangent(t_start)
+            tangent_end = self.calculate_cubic_tangent(t_end)
+
+            if tangent_start.manhattanLength() == 0:
+                tangent_start = self.end - self.start
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.start - self.end
+
+            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+            perp_angle_start = angle_start + math.pi / 2
+            half_total_width = (self.width) / 2
+            dx_start = half_total_width * math.cos(perp_angle_start)
+            dy_start = half_total_width * math.sin(perp_angle_start)
+
+            half_stroke_width = self.stroke_width / 2
+            dx_tangent = half_stroke_width * math.cos(angle_start)
+            dy_tangent = half_stroke_width * math.sin(angle_start)
+
+            # The "left" side is -dx_start, the "right" side is +dx_start
+            # The "back" is -dx_tangent, the "front" is +dx_tangent
+
+            # Arrange corners in order: left-back, right-back, right-front, left-front
+            corner1 = QPointF(self.start.x() - dx_start - dx_tangent, self.start.y() - dy_start - dy_tangent)  # left-back
+            corner2 = QPointF(self.start.x() + dx_start - dx_tangent, self.start.y() + dy_start - dy_tangent)  # right-back
+            corner3 = QPointF(self.start.x() + dx_start + dx_tangent, self.start.y() + dy_start + dy_tangent)  # right-front
+            corner4 = QPointF(self.start.x() - dx_start + dx_tangent, self.start.y() - dy_start + dy_tangent)  # left-front
+
+            start_side_line_path = QPainterPath()
+            start_side_line_path.moveTo(corner1)
+            start_side_line_path.lineTo(corner2)
+            start_side_line_path.lineTo(corner3)
+            start_side_line_path.lineTo(corner4)
+            start_side_line_path.closeSubpath()
+
+            # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
+            # For a true geometric union, reassign the result back to combined_fill_path.
+            combined_fill_path = combined_fill_path.united(start_side_line_path)
+            
+        # Now paint everything together - stroke first, then fill
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
+        painter.drawPath(combined_stroke_path)
+        
+        painter.setBrush(self.color)
+        painter.drawPath(combined_fill_path)
+       
+        # Draw the end line conditionally
+        if self.end_line_visible: # Only draw end line if visible
+            side_pen = QPen(self.stroke_color, self.stroke_width)
+            side_pen.setCapStyle(Qt.FlatCap)
+            side_color = QColor(self.stroke_color)
+            side_color.setAlpha(self.stroke_color.alpha())
+            side_pen.setColor(side_color)
+            painter.setPen(side_pen)
+            painter.drawLine(self.end_line_start, self.end_line_end)
+
+        # (start cover already merged into combined_fill_path above)
+        # Draw highlights for selected C-shapes after main drawing
+        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            # Start C-shape highlight
+            if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
+                angle = self.calculate_start_tangent()
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                highlight_radius = circle_radius + 5
                 
-                highlight_radius = radius + 5  # 5 pixels outside the normal circle
+                mask_rect = QPainterPath()
+                rect_width = total_diameter * 2
+                rect_height = total_diameter * 2
+                mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                transform = QTransform()
+                transform.translate(self.start.x(), self.start.y())
+                transform.rotate(math.degrees(angle))
+                mask_rect = transform.map(mask_rect)
+                
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask_rect)
+                ring_path = highlight_mask.subtracted(outer_circle)
+                
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
+            
+            # End C-shape highlight for attached children
+            if (self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+                and self.end_circle_stroke_color.alpha() > 0):
+                
+                tangent = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent.y(), tangent.x())
+                total_d = self.width + self.stroke_width * 2
+                radius = total_d / 2
+                highlight_radius = radius + 5
+                
+                mask = QPainterPath()
+                rect_width = total_d * 2
+                rect_height = total_d * 2
+                mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+                tr = QTransform().translate(self.end.x(), self.end.y())
+                tr.rotate(math.degrees(angle_end - math.pi))
+                mask = tr.map(mask)
+                
+                outer = QPainterPath()
+                outer.addEllipse(self.end, radius, radius)
+                
                 highlight_circle = QPainterPath()
                 highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
                 highlight_mask = highlight_circle.subtracted(mask)
                 ring_path = highlight_mask.subtracted(outer)
+                
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
-
-            
-                # Draw side line that covers the inner circle (only when stroke is visible)
-                if self.end_circle_stroke_color.alpha() > 0:
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.color)
-                    just_inner_side = QPainterPath()
-                    just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                    tr_inner_side = QTransform().translate(self.end.x(), self.end.y())
-                    tr_inner_side.rotate(math.degrees(angle))
-                    just_inner_side = tr_inner_side.map(just_inner_side)
-                    painter.drawPath(just_inner_side)
+        
+        # Restore painter state
+        painter.restore()
 
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
@@ -2500,36 +2518,25 @@ class AttachedStrand(Strand):
                 painter.drawPolygon(arrow_poly)
 
 
-        # Draw the main strand directly to the painter
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self.stroke_color)
-        painter.drawPath(stroke_path)
-
-        # Draw the fill
+        # Create combined paths for stroke and fill
+        combined_stroke_path = QPainterPath()
+        combined_stroke_path.setFillRule(Qt.WindingFill)
+        combined_stroke_path.addPath(stroke_path)  # Add the main strand stroke
+        
+        # Create combined fill path
         fill_stroker = QPainterPathStroker()
         fill_stroker.setWidth(self.width)
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
-        painter.setBrush(self.color)
-        painter.drawPath(fill_path)
+        combined_fill_path = QPainterPath()
+        combined_fill_path.setFillRule(Qt.WindingFill)
+        combined_fill_path.addPath(fill_path)  # Add the main strand fill
 
-        # Draw the end line conditionally
-        side_pen = QPen(self.stroke_color, self.stroke_width)
-        side_pen.setCapStyle(Qt.FlatCap)
-
-        # Create a new color with the same alpha as the strand's color
-        side_color = QColor(self.stroke_color)
-        side_color.setAlpha(self.stroke_color.alpha())
-        side_pen.setColor(side_color)
-        painter.setPen(side_pen)
-
-        if self.end_line_visible: # Only draw end line if visible
-            painter.drawLine(self.end_line_start, self.end_line_end)
-
-        # Draw circles directly without temporary images
-        # Only draw the start circle if explicitly enabled (has_circles[0] == True)
-        if self.has_circles[0]:
+        # Add start circle to combined paths if enabled
+        has_attached_at_start = any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands)
+        
+        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0 and not has_attached_at_start:
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
 
@@ -2549,128 +2556,27 @@ class AttachedStrand(Strand):
             outer_circle.addEllipse(self.start, circle_radius, circle_radius)
             outer_mask = outer_circle.subtracted(mask_rect)
 
-            # Draw the outer circle (stroke)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.stroke_color)
-            painter.drawPath(outer_mask)
+            # Add outer circle to combined stroke path
+            combined_stroke_path.addPath(outer_mask)
 
-            # Draw the inner circle (fill)
+            # Add inner circle to combined fill path
             inner_circle = QPainterPath()
             inner_circle.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner_circle)
+            combined_fill_path.addPath(inner_circle)
      
-            # Draw side line that covers the inner circle (only when stroke is visible)
+            # Add side line to combined fill path (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
                 just_inner = QPainterPath()
                 just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
                 tr_inner = QTransform().translate(self.start.x(), self.start.y())
                 tr_inner.rotate(math.degrees(angle))
                 just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-            
-            # Draw highlight for C-shape if selected (only when stroke is visible)
-            if (self.is_selected and not isinstance(self.parent, MaskedStrand) and 
-                self.start_circle_stroke_color.alpha() > 0):
-                
-                # Draw a red highlight around the C-shape
-                # Calculate the highlight radius (outer edge of the highlight)
-                highlight_radius = circle_radius + 5  # 5 pixels outside the normal circle
-                
-                # Create the highlight path
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask_rect)
-                
-                # Create a ring path by subtracting the normal outer circle
-                ring_path = highlight_mask.subtracted(outer_circle)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
-                painter.drawPath(ring_path)
-                
-                painter.setPen(Qt.NoPen)
-                # Check if circle stroke is transparent
-                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
-                    # Use transparent red for transparent circles
-                    painter.setBrush(QColor(255, 0, 0, 0))
-                else:
-                    # Use solid red for normal circles
-                    painter.setBrush(QColor('red'))
-                painter.drawPath(ring_path)
-
-        # Draw ending circle if has_circles == [True, True] or if it's a closed connection
-        # For attached strands, check the attachment side to determine which closed_connection to use
-        attachment_side = getattr(self, 'attachment_side', 1)
-        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
-        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
-            # Check for attached children that would skip circle drawing
-            skip_start_circle = any(
-                isinstance(child, AttachedStrand) and child.start == self.start
-                for child in getattr(self.parent, 'attached_strands', [])
-            ) or any(
-                isinstance(child, AttachedStrand) and child.start == self.start
-                for child in getattr(self, 'attached_strands', [])
-            )
-
-            skip_end_circle = any(
-                isinstance(child, AttachedStrand) and child.start == self.end
-                for child in getattr(self.parent, 'attached_strands', [])
-            ) or any(
-                isinstance(child, AttachedStrand) and child.start == self.end
-                for child in getattr(self, 'attached_strands', [])
-            )
-
-            total_diameter = self.width + self.stroke_width * 2
-            circle_radius = total_diameter / 2
-
-            # Draw Start Circle (if not skipped)
-            if not skip_start_circle:
-                angle_start = self.calculate_start_tangent()
-
-                mask_rect_start = QPainterPath()
-                rect_width_start = total_diameter * 2
-                rect_height_start = total_diameter * 2
-                mask_rect_start.addRect(0, -rect_height_start / 2, rect_width_start, rect_height_start)
-
-                transform_start = QTransform()
-                transform_start.translate(self.start.x(), self.start.y())
-                transform_start.rotate(math.degrees(angle_start))
-                mask_rect_start = transform_start.map(mask_rect_start)
-
-                outer_circle_start = QPainterPath()
-                outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
-                outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
-
-                # Draw stroke using circle_stroke_color
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(outer_mask_start)
-
-                # Draw fill using main color
-                inner_circle_start = QPainterPath()
-                inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner_circle_start)
-
-                # Draw side line that covers the inner circle (only when stroke is visible)
-                if self.start_circle_stroke_color.alpha() > 0:
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.color)
-                    just_inner = QPainterPath()
-                    just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
-                    tr_inner = QTransform().translate(self.start.x(), self.start.y())
-                    tr_inner.rotate(math.degrees(angle))
-                    just_inner = tr_inner.map(just_inner)
-                    painter.drawPath(just_inner)
+                combined_fill_path.addPath(just_inner)
 
 
-        # Draw half-circle attachments at endpoints where there are AttachedStrand children
-        # (This would use the same logic as in the original draw method, but directly to painter)
+        # Add half-circle attachments at endpoints where there are AttachedStrand children
         # Start endpoint half-circle
-        if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
+        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0 and has_attached_at_start:
             tangent = self.calculate_cubic_tangent(0.0)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
@@ -2685,31 +2591,28 @@ class AttachedStrand(Strand):
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
-            clip = outer.subtracted(mask)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.start_circle_stroke_color)
-            painter.drawPath(clip)
-
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
-
+            outer_half = outer.subtracted(mask)
+            # Subtract inner to make a ring half for the stroke
+            inner_full = QPainterPath(); inner_full.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            ring_half = outer_half.subtracted(inner_full)
+            # Add ring to stroke and full inner to fill
+            combined_stroke_path.addPath(ring_half)
+            combined_fill_path.addPath(inner_full)
             
-            # Draw side line that covers the inner circle
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.color)
-            just_inner_side = QPainterPath()
-            just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-            tr_inner_side = QTransform().translate(self.start.x(), self.start.y())
-            tr_inner_side.rotate(math.degrees(angle))
-            just_inner_side = tr_inner_side.map(just_inner_side)
-            painter.drawPath(just_inner_side)
-        # End endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
-        if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
+            # Add side line to combined fill path
+            if self.start_circle_stroke_color.alpha() > 0:
+                just_inner_side = QPainterPath()
+                just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_side = QTransform().translate(self.start.x(), self.start.y())
+                tr_inner_side.rotate(math.degrees(angle))
+                just_inner_side = tr_inner_side.map(just_inner_side)
+                combined_fill_path.addPath(just_inner_side)
+                
+        # End endpoint half-circle (only if circle is enabled)
+        has_attached_at_end = any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+        if self.has_circles[1] and has_attached_at_end:
             tangent = self.calculate_cubic_tangent(1.0)
-            angle = math.atan2(tangent.y(), tangent.x())
+            angle_end = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
 
@@ -2719,153 +2622,141 @@ class AttachedStrand(Strand):
             rect_height = total_d * 2
             mask.addRect(0, -rect_height / 2, rect_width, rect_height)
             tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle - math.pi))
+            tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
-            clip = outer.subtracted(mask)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.end_circle_stroke_color)
-            painter.drawPath(clip)
-            
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
+            outer_half = outer.subtracted(mask)
+            inner_full = QPainterPath(); inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            ring_half = outer_half.subtracted(inner_full)
+            combined_stroke_path.addPath(ring_half)
+            combined_fill_path.addPath(inner_full)
 
-            # Draw highlight around the END C-shape if this strand is selected
-            if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            # Add side line to combined fill path
+            if self.end_circle_stroke_color.alpha() > 0:
+                just_inner_side = QPainterPath()
+                just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                tr_inner_side = QTransform().translate(self.end.x(), self.end.y())
+                tr_inner_side.rotate(math.degrees(angle_end))
+                just_inner_side = tr_inner_side.map(just_inner_side)
+                combined_fill_path.addPath(just_inner_side)
+        
+        if self.start_circle_stroke_color.alpha() == 0:        
+                    
+            
+            # Add start side cover rectangle into combined fill before painting
+            t_start = 0.0
+            t_end = 1.0
+
+            tangent_start = self.calculate_cubic_tangent(t_start)
+            tangent_end = self.calculate_cubic_tangent(t_end)
+
+            if tangent_start.manhattanLength() == 0:
+                tangent_start = self.end - self.start
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.start - self.end
+
+            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
+            perp_angle_start = angle_start + math.pi / 2
+            half_total_width = (self.width) / 2
+            dx_start = half_total_width * math.cos(perp_angle_start)
+            dy_start = half_total_width * math.sin(perp_angle_start)
+
+            half_stroke_width = self.stroke_width / 2
+            dx_tangent = half_stroke_width * math.cos(angle_start)
+            dy_tangent = half_stroke_width * math.sin(angle_start)
+
+            # The "left" side is -dx_start, the "right" side is +dx_start
+            # The "back" is -dx_tangent, the "front" is +dx_tangent
+
+            # Arrange corners in order: left-back, right-back, right-front, left-front
+            corner1 = QPointF(self.start.x() - dx_start - dx_tangent, self.start.y() - dy_start - dy_tangent)  # left-back
+            corner2 = QPointF(self.start.x() + dx_start - dx_tangent, self.start.y() + dy_start - dy_tangent)  # right-back
+            corner3 = QPointF(self.start.x() + dx_start + dx_tangent, self.start.y() + dy_start + dy_tangent)  # right-front
+            corner4 = QPointF(self.start.x() - dx_start + dx_tangent, self.start.y() - dy_start + dy_tangent)  # left-front
+
+            start_side_line_path = QPainterPath()
+            start_side_line_path.moveTo(corner1)
+            start_side_line_path.lineTo(corner2)
+            start_side_line_path.lineTo(corner3)
+            start_side_line_path.lineTo(corner4)
+            start_side_line_path.closeSubpath()
+
+            # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
+            # For a true geometric union, reassign the result back to combined_fill_path.
+            combined_fill_path = combined_fill_path.united(start_side_line_path)
+
+        # Now paint everything together - stroke first, then fill
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.stroke_color)
+        painter.drawPath(combined_stroke_path)
+        
+        painter.setBrush(self.color)
+        painter.drawPath(combined_fill_path)
+        
+        # Draw the end line conditionally
+        if self.end_line_visible:
+            side_pen = QPen(self.stroke_color, self.stroke_width)
+            side_pen.setCapStyle(Qt.FlatCap)
+            side_color = QColor(self.stroke_color)
+            side_color.setAlpha(self.stroke_color.alpha())
+            side_pen.setColor(side_color)
+            painter.setPen(side_pen)
+            painter.drawLine(self.end_line_start, self.end_line_end)
+        # (start cover already merged into combined_fill_path above)
+        # Draw highlights for selected C-shapes after main drawing
+        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            # Start C-shape highlight
+            if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
+                angle = self.calculate_start_tangent()
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                highlight_radius = circle_radius + 5
                 
-                highlight_radius = radius + 5  # 5 pixels outside the normal circle
+                mask_rect = QPainterPath()
+                rect_width = total_diameter * 2
+                rect_height = total_diameter * 2
+                mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                transform = QTransform()
+                transform.translate(self.start.x(), self.start.y())
+                transform.rotate(math.degrees(angle))
+                mask_rect = transform.map(mask_rect)
+                
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+                highlight_mask = highlight_circle.subtracted(mask_rect)
+                ring_path = highlight_mask.subtracted(outer_circle)
+                
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor('red'))
+                painter.drawPath(ring_path)
+            
+            # End C-shape highlight
+            if self.has_circles[1] and has_attached_at_end and self.end_circle_stroke_color.alpha() > 0:
+                tangent = self.calculate_cubic_tangent(1.0)
+                angle_end = math.atan2(tangent.y(), tangent.x())
+                total_d = self.width + self.stroke_width * 2
+                radius = total_d / 2
+                highlight_radius = radius + 5
+                
+                mask = QPainterPath()
+                rect_width = total_d * 2
+                rect_height = total_d * 2
+                mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+                tr = QTransform().translate(self.end.x(), self.end.y())
+                tr.rotate(math.degrees(angle_end - math.pi))
+                mask = tr.map(mask)
+                
+                outer = QPainterPath()
+                outer.addEllipse(self.end, radius, radius)
+                
                 highlight_circle = QPainterPath()
                 highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
                 highlight_mask = highlight_circle.subtracted(mask)
                 ring_path = highlight_mask.subtracted(outer)
+                
                 painter.setPen(Qt.NoPen)
-                # Check if circle stroke is transparent
-                if self.circle_stroke_color and self.circle_stroke_color.alpha() == 0:
-                    # Use transparent red for transparent circles
-                    painter.setBrush(QColor(255, 0, 0, 0))
-                else:
-                    # Use solid red for normal circles
-                    painter.setBrush(QColor('red'))
+                painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
-
-            
-            # Draw side line that covers the inner circle
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.color)
-            just_inner_side = QPainterPath()
-            just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-            tr_inner_side = QTransform().translate(self.end.x(), self.end.y())
-            tr_inner_side.rotate(math.degrees(angle))
-            just_inner_side = tr_inner_side.map(just_inner_side)
-            painter.drawPath(just_inner_side)
-        # Draw ending circle if has_circles == [True, True] or if it's a closed connection (for _draw_direct)
-        # For attached strands, check the attachment side to determine which closed_connection to use
-        attachment_side = getattr(self, 'attachment_side', 1)
-        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
-        if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
-            # Check for attached children that would skip circle drawing
-            skip_start_circle = any(
-                isinstance(child, AttachedStrand) and child.start == self.start
-                for child in getattr(self.parent, 'attached_strands', [])
-            ) or any(
-                isinstance(child, AttachedStrand) and child.start == self.start
-                for child in getattr(self, 'attached_strands', [])
-            )
-
-            skip_end_circle = any(
-                isinstance(child, AttachedStrand) and child.start == self.end
-                for child in getattr(self.parent, 'attached_strands', [])
-            ) or any(
-                isinstance(child, AttachedStrand) and child.start == self.end
-                for child in getattr(self, 'attached_strands', [])
-            )
-
-            total_diameter = self.width + self.stroke_width * 2
-            circle_radius = total_diameter / 2
-
-            # Draw Start Circle (if not skipped)
-            if not skip_start_circle:
-                angle_start = self.calculate_start_tangent()
-
-                mask_rect_start = QPainterPath()
-                rect_width_start = total_diameter * 2
-                rect_height_start = total_diameter * 2
-                mask_rect_start.addRect(0, -rect_height_start / 2, rect_width_start, rect_height_start)
-
-                transform_start = QTransform()
-                transform_start.translate(self.start.x(), self.start.y())
-                transform_start.rotate(math.degrees(angle_start))
-                mask_rect_start = transform_start.map(mask_rect_start)
-
-                outer_circle_start = QPainterPath()
-                outer_circle_start.addEllipse(self.start, circle_radius, circle_radius)
-                outer_mask_start = outer_circle_start.subtracted(mask_rect_start)
-
-                # Draw stroke using circle_stroke_color
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(outer_mask_start)
-
-                # Draw fill using main color
-                inner_circle_start = QPainterPath()
-                inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner_circle_start)
-
-                # Draw side line that covers the inner circle
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner_start = QPainterPath()
-                just_inner_start.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                tr_inner_start = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner_start.rotate(math.degrees(angle_start))
-                just_inner_start = tr_inner_start.map(just_inner_start)
-                painter.drawPath(just_inner_start)
-
-            # Draw End Circle (if not skipped)
-            if not skip_end_circle:
-                tangent_end = self.calculate_cubic_tangent(1.0)
-                angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-
-                # Use same implementation as start circle but with opposite angle
-                mask_rect_end = QPainterPath()
-                rect_width_end = total_diameter * 2
-                rect_height_end = total_diameter * 2
-                # Mask on the opposite side (left side instead of right side)
-                mask_rect_end.addRect(-rect_width_end, -rect_height_end / 2, rect_width_end, rect_height_end)
-
-                transform_end = QTransform()
-                transform_end.translate(self.end.x(), self.end.y())
-                # Try without 180 degrees rotation to see if this orientation works
-                transform_end.rotate(math.degrees(angle_end))
-                mask_rect_end = transform_end.map(mask_rect_end)
-
-                outer_circle_end = QPainterPath()
-                outer_circle_end.addEllipse(self.end, circle_radius, circle_radius)
-                outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
-
-                # Draw stroke using end_circle_stroke_color for end circle
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.end_circle_stroke_color)
-                painter.drawPath(outer_mask_end)
-
-                # Draw fill using main color
-                inner_circle_end = QPainterPath()
-                inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner_circle_end)
-
-                # Draw side line that covers the inner circle (only when stroke is visible)
-                if self.end_circle_stroke_color.alpha() > 0:
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(self.color)
-                    just_inner_end = QPainterPath()
-                    just_inner_end.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                    tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
-                    tr_inner_end.rotate(math.degrees(angle_end))
-                    just_inner_end = tr_inner_end.map(just_inner_end)
-                    painter.drawPath(just_inner_end)

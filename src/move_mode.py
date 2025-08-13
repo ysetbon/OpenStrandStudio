@@ -3265,9 +3265,14 @@ class MoveMode:
                 
             painter.drawPath(stroke_c_shape)
             
-            # Draw the color part in black
-            painter.setBrush(QColor(0, 0, 0, 255))
-            painter.drawPath(color_c_shape)
+            # Draw the color part using the strand's fill color to avoid black artifacts
+            try:
+                strand_fill = QColor(strand.color) if hasattr(strand, 'color') and strand.color is not None else QColor(0, 0, 0, 0)
+                painter.setBrush(strand_fill)
+                #painter.drawPath(color_c_shape)
+            except Exception:
+                # Fallback: don't draw the color segment if color is unavailable
+                pass
             
             # Restore painter state
             painter.restore()

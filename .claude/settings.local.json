@@ -55,7 +55,8 @@
       "Bash(conda init:*)",
       "Bash(C:/ProgramData/Anaconda3/Scripts/conda.exe init powershell)",
       "Bash(ffmpeg:*)",
-      "Bash(apt list:*)"
+      "Bash(apt list:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }

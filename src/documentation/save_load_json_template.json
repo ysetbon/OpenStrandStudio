@@ -1,0 +1,144 @@
+{
+  "// WIDTH CALCULATION SYSTEM": {
+    "description": "OpenStrand Studio uses a grid-based width system",
+    "base_grid_unit": "46px (2 grid squares at 23px each)",
+    "default_width": "46px for NumberedLayerButton when grid=2",
+    "stroke_ratio": "81% color fill, 19% total stroke (split equally on both sides)",
+    "formula": "Color Width = Total Width × 0.81, Stroke Width = (Total Width - Color Width) / 2",
+    "example": "Width 37px = 28px color + 4.5px stroke on each side"
+  },
+  "strands": [
+    {
+      "type": "string (Strand | AttachedStrand | MaskedStrand)",
+      "index": "integer",
+      "start": {
+        "x": "float",
+        "y": "float"
+      },
+      "end": {
+        "x": "float",
+        "y": "float"
+      },
+      "width": "float (default: 46px = 2 grid units, typically 37-46px range)",
+      "color": {
+        "r": "integer (0-255)",
+        "g": "integer (0-255)",
+        "b": "integer (0-255)",
+        "a": "integer (0-255)"
+      },
+      "stroke_color": {
+        "r": "integer (0-255)",
+        "g": "integer (0-255)",
+        "b": "integer (0-255)",
+        "a": "integer (0-255)"
+      },
+      "stroke_width": "float (default: 4.5px, follows 81% color/19% stroke ratio)",
+      "has_circles": ["boolean", "boolean"],
+      "layer_name": "string (format: int_int)",
+      "set_number": "integer",
+      "is_first_strand": "boolean",
+      "is_start_side": "boolean",
+      "start_line_visible": "boolean",
+      "end_line_visible": "boolean",
+      "is_hidden": "boolean",
+      "start_extension_visible": "boolean",
+      "end_extension_visible": "boolean",
+      "start_arrow_visible": "boolean",
+      "end_arrow_visible": "boolean",
+      "full_arrow_visible": "boolean",
+      "shadow_only": "boolean",
+      "closed_connections": ["boolean", "boolean"],
+      "knot_connections": {
+        "start": {
+          "connected_strand_name": "string",
+          "connected_end": "string (start | end)",
+          "is_closing_strand": "boolean"
+        },
+        "end": {
+          "connected_strand_name": "string",
+          "connected_end": "string (start | end)",
+          "is_closing_strand": "boolean"
+        }
+      },
+      "circle_stroke_color": {
+        "r": "integer (0-255)",
+        "g": "integer (0-255)",
+        "b": "integer (0-255)",
+        "a": "integer (0-255)"
+      },
+      "start_circle_stroke_color": {
+        "r": "integer (0-255)",
+        "g": "integer (0-255)",
+        "b": "integer (0-255)",
+        "a": "integer (0-255)"
+      },
+      "end_circle_stroke_color": {
+        "r": "integer (0-255)",
+        "g": "integer (0-255)",
+        "b": "integer (0-255)",
+        "a": "integer (0-255)"
+      },
+      "control_points": [
+        {
+          "x": "float",
+          "y": "float"
+        },
+        {
+          "x": "float",
+          "y": "float"
+        }
+      ],
+      "control_point_center": {
+        "x": "float",
+        "y": "float"
+      },
+      "control_point_center_locked": "boolean",
+      "manual_circle_visibility": ["null | boolean", "null | boolean"],
+      
+      "// FOR AttachedStrand ONLY": "",
+      "attached_to": "string (parent layer_name)",
+      "attachment_side": "integer (0 | 1)",
+      "angle": "float",
+      "length": "float",
+      
+      "// FOR MaskedStrand ONLY": "",
+      "deletion_rectangles": [
+        {
+          "top_left": ["float", "float"],
+          "top_right": ["float", "float"],
+          "bottom_left": ["float", "float"],
+          "bottom_right": ["float", "float"]
+        }
+      ]
+    }
+  ],
+  "groups": {
+    "string (group_name)": {
+      "layers": ["string (layer_name format: int_int)"],
+      "main_strands": ["string (layer_name format: int_int)"],
+      "strands": ["string (layer_name format: int_int)"],
+      "control_points": {
+        "string (layer_name)": {
+          "control_point1": {
+            "x": "float",
+            "y": "float"
+          },
+          "control_point2": {
+            "x": "float",
+            "y": "float"
+          },
+          "control_point_center": {
+            "x": "float",
+            "y": "float"
+          },
+          "control_point_center_locked": "boolean"
+        }
+      }
+    }
+  },
+  "selected_strand_name": "string | null",
+  "locked_layers": ["string (layer_name format: int_int)"],
+  "lock_mode": "boolean",
+  "shadow_enabled": "boolean",
+  "show_control_points": "boolean"
+}

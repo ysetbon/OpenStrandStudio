@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenStrand Studio - Complete User Manual v1.101</title>
+    <meta name="description" content="Complete user manual for OpenStrand Studio version 1.101 - Professional rope and knot drawing application">
+    <meta name="author" content="OpenStrand Studio">
+    <meta name="version" content="1.101">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #ffffff;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 40px;
+            font-size: 11pt;
+        }
+        
+        /* Typography */
+        h1 {
+            color: #1a1a1a;
+            font-size: 24pt;
+            font-weight: 700;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            page-break-after: avoid;
+        }
+        
+        h1:first-child {
+            margin-top: 0;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            font-size: 18pt;
+            font-weight: 600;
+            margin: 25px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ecf0f1;
+            page-break-after: avoid;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 14pt;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+            page-break-after: avoid;
+        }
+        
+        h4 {
+            color: #7f8c8d;
+            font-size: 12pt;
+            font-weight: 500;
+            margin: 18px 0 8px 0;
+            font-style: italic;
+            page-break-after: avoid;
+        }
+        
+        p {
+            margin: 10px 0;
+            text-align: justify;
+            line-height: 1.6;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 10px 0 10px 25px;
+            line-height: 1.6;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        li ul, li ol {
+            margin: 8px 0 8px 20px;
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10pt;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        
+        .data-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .data-table th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 9pt;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 10pt;
+        }
+        
+        .data-table tbody tr {
+            background: #ffffff;
+            transition: all 0.2s;
+        }
+        
+        .data-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #e8f4f8;
+            transform: scale(1.01);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Code blocks */
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 9pt;
+            line-height: 1.5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
+        }
+        
+        .inline-code {
+            background: #f1f5f9;
+            color: #e11d48;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 9pt;
+            font-weight: 500;
+        }
+        
+        /* Emphasis */
+        strong {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        em {
+            font-style: italic;
+            color: #555;
+        }
+        
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            font-style: italic;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* Links */
+        a {
+            color: #3498db;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        a:hover {
+            color: #2980b9;
+            border-bottom-color: #2980b9;
+        }
+        
+        /* Special sections */
+        .cover-page {
+            text-align: center;
+            padding: 100px 0;
+            page-break-after: always;
+            border-bottom: 3px solid #ecf0f1;
+            margin-bottom: 50px;
+        }
+        
+        .cover-title {
+            font-size: 36pt;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+        
+        .cover-subtitle {
+            font-size: 18pt;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .cover-version {
+            font-size: 14pt;
+            color: #95a5a6;
+            margin-bottom: 15px;
+        }
+        
+        /* Horizontal rules */
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 40px 0;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                font-size: 11pt;
+                padding: 0;
+                margin: 0;
+            }
+            
+            h1 {
+                page-break-before: always;
+                page-break-after: avoid;
+            }
+            
+            h1:first-child {
+                page-break-before: avoid;
+            }
+            
+            h2, h3, h4 {
+                page-break-after: avoid;
+            }
+            
+            .data-table {
+                page-break-inside: avoid;
+            }
+            
+            .code-block {
+                page-break-inside: avoid;
+            }
+            
+            p {
+                orphans: 3;
+                widows: 3;
+            }
+        }
+        
+        /* Responsive adjustments */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 20px;
+                font-size: 14px;
+            }
+            
+            h1 { font-size: 2em; }
+            h2 { font-size: 1.5em; }
+            h3 { font-size: 1.2em; }
+            h4 { font-size: 1.1em; }
+            
+            .data-table {
+                font-size: 0.85em;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="cover-page">
+        <h1 class="cover-title">OpenStrand Studio</h1>
+        <div class="cover-subtitle">Complete User Manual</div>
+        <div class="cover-version">Version 1.101</div>
+        <div class="cover-version">Documentation Version 4.0</div>
+    </div>
+    
+    <h1>OpenStrand Studio - Complete User Manual</h1>
+<strong>Application Version: 1.101</strong>  
+<strong>Documentation Version: 4.0</strong>  
+<strong>Last Updated: January 2025</strong></p>
+
+<p>---</p>
+
+<h2>About This Manual</h2>
+
+<p>This comprehensive manual covers all aspects of using OpenStrand Studio version 1.101, from basic interface introduction to advanced professional techniques. The manual is organized into four progressive sections:</p>
+
+<ul>
+<li><strong>Part 1: Interface Overview</strong> - Basic introduction and getting started</li>
+<li><strong>Part 2: Step-by-Step Tutorials</strong> - Hands-on learning with practical examples</li>
+<li><strong>Part 3: Advanced Techniques</strong> - Professional workflows and complex projects</li>
+<li><strong>Part 4: Master Reference</strong> - Complete feature documentation and expert tips</li>
+</ul>
+
+<p>Whether you're a beginner learning your first knot pattern or a professional creating technical diagrams, this manual provides the guidance you need to master OpenStrand Studio.</p>
+
+<p>---</p>
+
+<h1>Part 1: Interface Overview</h1>
+
+<h2>Table of Contents</h2>
+<li>[What is OpenStrand Studio?](#what-is-openstrand-studio)</li>
+<li>[Getting Started](#getting-started)</li>
+<li>[Understanding the Interface](#understanding-the-interface)</li>
+<li>[Main Toolbar Buttons](#main-toolbar-buttons)</li>
+<li>[The Drawing Canvas](#the-drawing-canvas)</li>
+<li>[Layer Panel](#layer-panel)</li>
+<li>[Basic Workflow](#basic-workflow)</li>
+<li>[Settings and Customization](#settings-and-customization)</li>
+<li>[Saving and Loading Your Work](#saving-and-loading-your-work)</li></p>
+
+<h2>What is OpenStrand Studio?</h2>
+
+<p>OpenStrand Studio is a specialized drawing application designed for creating rope patterns, knots, braids, and strand-based artwork. Think of it as a digital tool for drawing anything that involves interwoven or connected strands - like nautical knots, macramé patterns, Celtic knots, or textile designs.</p>
+
+<p><strong>Perfect for:</strong>
+<ul>
+<li>Rope and knot enthusiasts</li>
+<li>Textile and craft designers  </li>
+<li>Educational materials for knot-tying</li>
+<li>Decorative pattern creation</li>
+<li>Technical rope work documentation</li>
+</ul>
+
+<h2>Getting Started</h2>
+
+<h3>First Launch</h3>
+When you open OpenStrand Studio, you'll see:
+<ul>
+<li>A toolbar at the top with various buttons</li>
+<li>A large drawing area (canvas) in the center</li>
+<li>A panel on the right side for managing layers</li>
+<li>Everything starts empty, ready for your first creation</li>
+</ul>
+
+<h3>Your First Stroke</h3>
+<li>Click the <strong>"Attach"</strong> button (first button on the left)</li>
+<li>Click and drag on the canvas to draw your first strand</li>
+<li>You'll see a curved line appear - this is your first strand!</li></p>
+
+<h2>Understanding the Interface</h2>
+
+<p>The interface is divided into three main areas:</p>
+
+<pre class="code-block lang-text"><code>┌─────────────────────────────────────────────────────────────┐
+│ [Attach] [Move] [Rotate] [Grid] ... [Settings]              │ ← Toolbar
+├─────────────────────────────────┬───────────────────────────┤
+│                                 │   Layer Panel             │
+│                                 │  ┌─────────────────────┐  │
+│                                 │  │ [1] [2] [3] [4] ... │  │ ← Layer Numbers
+│          Drawing Canvas         │  │                     │  │
+│                                 │  │ Group Controls      │  │ ← Group Management
+│       (Your artwork here)       │  │                     │  │
+│                                 │  │ Undo/Redo Buttons  │  │ ← History Controls
+│                                 │  └─────────────────────┘  │
+└─────────────────────────────────┴───────────────────────────┘
+</code></pre>
+
+<h2>Main Toolbar Buttons</h2>
+
+<h3>Drawing Mode Buttons (Left Side)</h3>
+
+<p><strong>🔗 Attach</strong> - <em>Main drawing tool</em>
+<ul>
+<li>Click and drag to create new strands</li>
+<li>Each strand you draw becomes a new layer</li>
+<li>This is where you'll start most projects</li>
+</ul>
+
+<p><strong>➤ Move</strong> - <em>Reposition and adjust</em>  
+<ul>
+<li>Click strands to select them</li>
+<li>Drag to move strands around</li>
+<li>Drag the small control points to change curve shapes</li>
+</ul>
+
+<p><strong>🔄 Rotate</strong> - <em>Rotate strands</em>
+<ul>
+<li>Click a strand to select it</li>
+<li>Drag around to rotate it in place</li>
+<li>Useful for adjusting angles and orientations</li>
+</ul>
+
+<p><strong>📐 Angle/Length</strong> - <em>Precise adjustments</em>
+<ul>
+<li>Fine-tune the exact angle and length of strands</li>
+<li>Great for creating symmetrical patterns</li>
+</ul>
+
+<p><strong>👆 Select</strong> - <em>Select and modify</em>
+<ul>
+<li>Click strands to select them</li>
+<li>Access strand properties and colors</li>
+</ul>
+
+<p><strong>🎭 Mask</strong> - <em>Create over/under effects</em>
+<ul>
+<li>Make strands appear to go behind or in front of others</li>
+<li>Essential for realistic knot and rope effects</li>
+</ul>
+
+<h3>Utility Buttons (Middle)</h3>
+
+<p><strong>⊞ Grid</strong> - <em>Toggle alignment grid</em>
+<ul>
+<li>Shows/hides a grid to help align your strands</li>
+<li>Makes it easier to create neat, organized patterns</li>
+</ul>
+
+<h3>File Operations (Right Side)</h3>
+
+<p><strong>💾 Save</strong> - <em>Save your project</em>
+<ul>
+<li>Saves your work as a project file</li>
+<li>You can reopen and continue editing later</li>
+</ul>
+
+<p><strong>📁 Load</strong> - <em>Open existing project</em>
+<ul>
+<li>Opens previously saved projects</li>
+<li>Comes with sample projects to learn from</li>
+</ul>
+
+<p><strong>🖼️ Image</strong> - <em>Export as picture</em>
+<ul>
+<li>Saves your artwork as a PNG image</li>
+<li>Perfect for sharing or printing your designs</li>
+</ul>
+
+<p><strong>⚙️ Settings</strong> - <em>Customize the app</em>
+<ul>
+<li>Change colors, language, and behavior</li>
+<li>Access tutorials and help information</li>
+</ul>
+
+<h2>The Drawing Canvas</h2>
+
+<p>The canvas is your main workspace where you create your strand artwork.</p>
+
+<h3>Grid System</h3>
+<ul>
+<li>When Grid is enabled, you'll see dots or lines</li>
+<li>Strands will "snap" to these grid points for precise alignment</li>
+<li>Toggle on/off with the Grid button</li>
+</ul>
+
+<h3>Navigation</h3>
+<ul>
+<li><strong>Zoom</strong>: Use mouse wheel to zoom in/out</li>
+<li><strong>Pan</strong>: Middle-click and drag to move around large projects</li>
+<li>The canvas automatically centers your work</li>
+</ul>
+
+<h3>Visual Feedback</h3>
+<ul>
+<li><strong>Selected strands</strong> appear highlighted</li>
+<li><strong>Control points</strong> (small circles) show when you can adjust curves</li>
+<li><strong>Hover effects</strong> help you see what's clickable</li>
+</ul>
+
+<h2>Layer Panel</h2>
+
+<p>The right panel manages your layers (individual strands).</p>
+
+<h3>Layer Buttons</h3>
+<ul>
+<li>Each strand gets a <strong>numbered button</strong> (1, 2, 3, ...)</li>
+<li>Click a number to select that strand</li>
+<li>Selected strands appear highlighted on the canvas</li>
+</ul>
+
+<h3>Layer Order</h3>
+<ul>
+<li>Higher numbers appear "on top" of lower numbers</li>
+<li>Drag layer buttons up/down to reorder</li>
+<li>This controls which strands appear in front</li>
+</ul>
+
+<h3>Groups</h3>
+<ul>
+<li>Combine multiple layers into groups</li>
+<li>Move and organize groups together</li>
+<li>Helpful for complex patterns with many parts</li>
+</ul>
+
+<h3>Undo/Redo</h3>
+<ul>
+<li><strong>↶ Undo</strong>: Go back to previous step</li>
+<li><strong>↷ Redo</strong>: Go forward after undoing</li>
+<li>Every action is saved, so you can experiment freely</li>
+</ul>
+
+<h2>Basic Workflow</h2>
+
+<h3>Creating Your First Knot Pattern</h3>
+
+<p><li><strong>Start with the base</strong></li>
+   - Click <strong>Attach</strong> mode
+   - Draw the main loop or base strand
+   - This becomes Layer 1</p>
+
+<p><li><strong>Add connecting strands</strong></li>
+   - Still in Attach mode
+   - Draw additional strands that connect or cross
+   - Each becomes a new layer (2, 3, 4...)</p>
+
+<p><li><strong>Adjust positions</strong></li>
+   - Click <strong>Move</strong> mode
+   - Click and drag strands to better positions
+   - Drag control points to adjust curves</p>
+
+<p><li><strong>Create over/under effects</strong></li>
+   - Click <strong>Mask</strong> mode
+   - Select strands that should go "under" others
+   - This creates realistic weaving effects</p>
+
+<p><li><strong>Fine-tune</strong></li>
+   - Use <strong>Rotate</strong> or <strong>Angle/Length</strong> modes
+   - Perfect the angles and positions
+   - Toggle <strong>Grid</strong> for precise alignment</p>
+
+<p><li><strong>Save your work</strong></li>
+   - Click <strong>Save</strong> to keep your project
+   - Click <strong>Image</strong> to export as a picture</p>
+
+<h2>Settings and Customization</h2>
+
+<p>Click the ⚙️ Settings button to access:</p>
+
+<h3>General Settings</h3>
+<ul>
+<li><strong>Language</strong>: Choose your preferred language</li>
+<li><strong>Theme</strong>: Change the app's appearance (light/dark)</li>
+<li><strong>Grid</strong>: Adjust grid size and snapping behavior</li>
+</ul>
+
+<h3>Drawing Settings  </h3>
+<ul>
+<li><strong>Default colors</strong>: Set colors for new strands</li>
+<li><strong>Strand width</strong>: Set default thickness</li>
+<li><strong>Shadow effects</strong>: Control shadow appearance</li>
+<li><strong>Control points</strong>: Show/hide curve adjustment handles</li>
+</ul>
+
+<h3>Tutorials and Help</h3>
+<ul>
+<li><strong>Tutorial</strong>: Watch videos explaining each feature</li>
+<li><strong>Samples</strong>: Load example projects to learn from</li>
+<li><strong>Button Guide</strong>: Explanations of what each button does</li>
+</ul>
+
+<h2>Saving and Loading Your Work</h2>
+
+<h3>Project Files (.json)</h3>
+<ul>
+<li><strong>Save</strong>: Keeps everything - strands, layers, colors, positions</li>
+<li><strong>Load</strong>: Restores exactly where you left off</li>
+<li>Projects remember all your settings and arrangements</li>
+</ul>
+
+<h3>Image Export (.png)</h3>
+<ul>
+<li><strong>High quality</strong>: Creates crisp images suitable for printing</li>
+<li><strong>Transparent background</strong>: Perfect for use in other applications</li>
+<li><strong>Full resolution</strong>: Captures all the detail in your work</li>
+</ul>
+
+<h3>Sample Projects</h3>
+The app comes with example projects:
+<ul>
+<li><strong>Overhand Knot</strong>: Simple single-strand knot</li>
+<li><strong>Box Stitch</strong>: Decorative braided pattern  </li>
+<li><strong>Three-Strand Braid</strong>: Classic braiding technique</li>
+<li><strong>Closed Knot</strong>: Loop-based knot structure</li>
+</ul>
+
+<p>Load these samples to see how different techniques work, then modify them to create your own variations.</p>
+
+<p>---</p>
+
+<h1>Part 2: Step-by-Step Tutorials</h1>
+
+<h2>Table of Contents</h2>
+<li>[Before You Begin](#before-you-begin-tutorials)</li>
+<li>[Tutorial 1: Creating Your First Simple Knot](#tutorial-1-creating-your-first-simple-knot)</li>
+<li>[Tutorial 2: Making a Three-Strand Braid](#tutorial-2-making-a-three-strand-braid)</li>
+<li>[Tutorial 3: Creating Over/Under Effects with Masks](#tutorial-3-creating-overunder-effects-with-masks)</li>
+<li>[Tutorial 4: Working with Colors and Styles](#tutorial-4-working-with-colors-and-styles)</li>
+<li>[Tutorial 5: Using the Grid for Precise Alignment](#tutorial-5-using-the-grid-for-precise-alignment)</li>
+<li>[Tutorial 6: Managing Multiple Layers](#tutorial-6-managing-multiple-layers)</li>
+<li>[Tutorial 7: Creating Groups and Organization](#tutorial-7-creating-groups-and-organization)</li>
+<li>[Common Problems and Solutions](#common-problems-and-solutions)</li>
+<li>[Tips for Better Results](#tips-for-better-results)</li></p>
+
+<h2>Before You Begin Tutorials</h2>
+
+<h3>What You'll Learn</h3>
+This section assumes you've read Part 1 and understand the basic interface. Here you'll learn specific techniques through hands-on tutorials.</p>
+
+<h3>Settings to Check First</h3>
+Before starting the tutorials:
+<li>Click the ⚙️ <strong>Settings</strong> button</li>
+<li>Under <strong>General Settings</strong>, make sure:</li>
+   - Language is set to your preference
+   - Theme is comfortable for you
+<li>Under <strong>Drawing Settings</strong>, note:</li>
+   - Default strand width (try 46 pixels)
+   - Default colors (you can change these anytime)
+<li>Click <strong>OK</strong> to close settings</li></p>
+
+<h2>Tutorial 1: Creating Your First Simple Knot</h2>
+
+<p><strong>What we're making</strong>: A basic overhand knot (the simplest knot)</p>
+
+<h3>Step 1: Draw the Base Loop</h3>
+<li>Click <strong>Attach</strong> mode (first button)</li>
+<li>Start near the left side of the canvas</li>
+<li>Click and drag to create a curved line that loops around</li>
+<li>End point should cross over the starting area</li>
+<li>Release the mouse - you now have Layer 1</li></p>
+
+<p><em>Result: You should see a curved line with a loop</em></p>
+
+<h3>Step 2: Adjust the Shape</h3>
+<li>Click <strong>Move</strong> mode</li>
+<li>Click anywhere on your strand to select it</li>
+<li>You'll see small circles (control points) appear</li>
+<li>Drag these circles to adjust the curve:</li>
+   - Pull them away from the strand for sharper curves
+   - Move them closer for gentler curves
+<li>Drag the strand itself to reposition it</li></p>
+
+<p><em>Tip: Don't worry about perfection - you can always adjust later</em></p>
+
+<h3>Step 3: Create the Knot Effect</h3>
+<li>Click <strong>Mask</strong> mode</li>
+<li>Click on your strand where it crosses over itself</li>
+<li>This creates the "over/under" effect that makes it look like a real knot</li></p>
+
+<h3>Step 4: Final Adjustments</h3>
+<li>Click <strong>Move</strong> mode again</li>
+<li>Fine-tune the position and curves</li>
+<li>Try <strong>Rotate</strong> mode to adjust the angle</li>
+<li>Toggle <strong>Grid</strong> to help with alignment</li></p>
+
+<h3>Step 5: Save Your Work</h3>
+<li>Click <strong>Save</strong></li>
+<li>Give it a name like "My First Knot"</li>
+<li>Click <strong>OK</strong></li></p>
+
+<p><strong>Congratulations!</strong> You've created your first knot pattern.</p>
+
+<h2>Tutorial 2: Making a Three-Strand Braid</h2>
+
+<p><strong>What we're making</strong>: A classic braid pattern with three parallel strands</p>
+
+<h3>Step 1: Create the First Strand</h3>
+<li>Click <strong>Attach</strong> mode</li>
+<li>Draw a gentle curve from top-left to bottom-right</li>
+<li>Keep it fairly straight - this is the left strand of your braid</li></p>
+
+<h3>Step 2: Add the Middle Strand  </h3>
+<li>Still in <strong>Attach</strong> mode</li>
+<li>Draw another strand parallel to the first, but in the center</li>
+<li>This creates Layer 2</li></p>
+
+<h3>Step 3: Add the Right Strand</h3>
+<li>Draw the third strand on the right side</li>
+<li>Keep all three roughly parallel</li>
+<li>Now you have Layers 1, 2, and 3</li></p>
+
+<h3>Step 4: Create the Braid Crossings</h3>
+<li>Click <strong>Attach</strong> mode again</li>
+<li>Draw short connecting strands that cross between the main strands:</li>
+   - From left strand to middle (going over)
+   - From right strand to middle (going over) 
+   - From middle to left (going under)
+   - From middle to right (going under)</p>
+
+<h3>Step 5: Use Masks for Realistic Effect</h3>
+<li>Click <strong>Mask</strong> mode</li>
+<li>Click on strands that should go "under" others</li>
+<li>This creates the woven appearance of a real braid</li></p>
+
+<h3>Step 6: Clean Up with Move Mode</h3>
+<li>Click <strong>Move</strong> mode</li>
+<li>Adjust positions so crossings look natural</li>
+<li>Use control points to smooth curves</li>
+<li>Make the pattern consistent along the length</li></p>
+
+<p><strong>Result</strong>: You now have a realistic-looking three-strand braid!</p>
+
+<h2>Tutorial 3: Creating Over/Under Effects with Masks</h2>
+
+<p><strong>What we're making</strong>: Understanding how to make strands appear to weave over and under each other</p>
+
+<h3>Understanding Masks</h3>
+<ul>
+<li>Masks make parts of strands "invisible" </li>
+<li>This creates the illusion that other strands pass in front</li>
+<li>Essential for realistic rope and knot effects</li>
+</ul>
+
+<h3>Step 1: Create Two Crossing Strands</h3>
+<li><strong>Attach</strong> mode: Draw one horizontal strand</li>
+<li><strong>Attach</strong> mode: Draw one vertical strand crossing the first</li>
+<li>You now have an "X" shape with two layers</li></p>
+
+<h3>Step 2: Basic Masking</h3>
+<li>Click <strong>Mask</strong> mode</li>
+<li>Click on the vertical strand (Layer 2)</li>
+<li>Notice how part of it disappears where it crosses the horizontal strand</li>
+<li>This makes the horizontal strand appear to go "in front"</li></p>
+
+<h3>Step 3: Switch the Effect</h3>
+<li>Still in <strong>Mask</strong> mode</li>
+<li>Click on the horizontal strand (Layer 1) instead</li>
+<li>Now the vertical strand appears to go in front</li>
+<li>Click the same strand again to remove the mask</li></p>
+
+<h3>Step 4: Practice with Multiple Strands</h3>
+<li>Add a third strand diagonally across both</li>
+<li>Use <strong>Mask</strong> mode to create a pattern:</li>
+   - Strand 1 over Strand 2
+   - Strand 2 over Strand 3  
+   - Strand 3 over Strand 1
+<li>This creates a realistic woven effect</li></p>
+
+<h3>Step 5: Fine-tuning Masks</h3>
+<li>Use <strong>Move</strong> mode to adjust positions</li>
+<li>The mask effects stay with the strands as you move them</li>
+<li>Use <strong>Mask</strong> mode again to add or remove effects</li></p>
+
+<p><strong>Key Point</strong>: Masking is what makes your drawings look like real rope work instead of just lines on paper.</p>
+
+<h2>Tutorial 4: Working with Colors and Styles</h2>
+
+<p><strong>What we're making</strong>: A colorful rope pattern with different strand styles</p>
+
+<h3>Step 1: Change Default Colors</h3>
+<li>Click <strong>Settings</strong> ⚙️</li>
+<li>Under <strong>Drawing Settings</strong>, find <strong>Default Colors</strong></li>
+<li>Click the colored squares to pick new colors:</li>
+   - <strong>Strand Color</strong>: The fill color (inside)
+   - <strong>Stroke Color</strong>: The outline color
+<li>Click <strong>OK</strong></li></p>
+
+<h3>Step 2: Create Strands with New Colors</h3>
+<li><strong>Attach</strong> mode: Draw a new strand</li>
+<li>It will use your new default colors</li>
+<li>Draw 2-3 more strands to see the effect</li></p>
+
+<h3>Step 3: Change Individual Strand Colors</h3>
+<li>Click <strong>Select</strong> mode</li>
+<li>Click on a strand you want to change</li>
+<li>Look for color options in the interface</li>
+<li>Choose different colors for that specific strand</li>
+<li>Repeat for other strands</li></p>
+
+<h3>Step 4: Adjust Strand Width</h3>
+<li>In <strong>Settings</strong>, find <strong>Strand Width</strong></li>
+<li>Try different values:</li>
+   - 30 = thin rope
+   - 50 = medium rope  
+   - 70 = thick rope
+<li>New strands will use the new width</li></p>
+
+<h3>Step 5: Create a Rainbow Braid</h3>
+<li>Create 5 parallel strands</li>
+<li>Make each strand a different color:</li>
+   - Red, Orange, Yellow, Green, Blue
+<li>Use the braiding technique from Tutorial 2</li>
+<li>The result is a colorful braided pattern</li></p>
+
+<p><strong>Tip</strong>: Use contrasting colors (light stroke on dark strand, or vice versa) to make your patterns more visible and attractive.</p>
+
+<h2>Tutorial 5: Using the Grid for Precise Alignment</h2>
+
+<p><strong>What we're making</strong>: A perfectly symmetrical knot pattern using the grid system</p>
+
+<h3>Step 1: Enable the Grid</h3>
+<li>Click the <strong>Grid</strong> button in the toolbar</li>
+<li>You'll see dots or lines appear on the canvas</li>
+<li>These help you align strands precisely</li></p>
+
+<h3>Step 2: Understanding Grid Snapping</h3>
+<li><strong>Attach</strong> mode: Try drawing a strand</li>
+<li>Notice how it "snaps" to grid points</li>
+<li>This helps create neat, professional-looking patterns</li>
+<li>The snapping works for start points, end points, and curves</li></p>
+
+<h3>Step 3: Create a Symmetric Pattern</h3>
+<li>Draw the first strand from one grid point to another</li>
+<li>Count the grid squares (e.g., 6 squares long)</li>
+<li>Draw a second strand the exact same length</li>
+<li>Use the grid to ensure perfect symmetry</li></p>
+
+<h3>Step 4: Grid Settings</h3>
+<li><strong>Settings</strong> → <strong>Drawing Settings</strong> → <strong>Grid</strong></li>
+<li>Adjust grid size:</li>
+   - Smaller = more precision
+   - Larger = easier to see
+<li>Toggle "Snap to Grid" on/off as needed</li></p>
+
+<h3>Step 5: When to Use the Grid</h3>
+<strong>Good for:</strong>
+<ul>
+<li>Geometric patterns</li>
+<li>Repeated elements  </li>
+<li>Professional diagrams</li>
+<li>Teaching materials</li>
+</ul>
+
+<p><strong>Not needed for:</strong>
+<ul>
+<li>Organic, natural-looking ropes</li>
+<li>Artistic, flowing designs</li>
+<li>Quick sketches</li>
+</ul>
+
+<h2>Tutorial 6: Managing Multiple Layers</h2>
+
+<p><strong>What we're making</strong>: A complex knot with proper layer organization</p>
+
+<h3>Understanding Layer Numbers</h3>
+<ul>
+<li>Each strand gets a number (1, 2, 3...)</li>
+<li>Higher numbers appear "on top"</li>
+<li>Layer panel shows all your strands</li>
+</ul>
+
+<h3>Step 1: Create Multiple Strands</h3>
+<li>Create 6-8 strands in a complex pattern</li>
+<li>Notice how they're numbered in the layer panel</li>
+<li>Each number is a clickable button</li></p>
+
+<h3>Step 2: Selecting Layers</h3>
+<li>Click number <strong>3</strong> in the layer panel</li>
+<li>Layer 3 becomes highlighted on the canvas</li>
+<li>This is much easier than clicking on the canvas for complex patterns</li></p>
+
+<h3>Step 3: Reordering Layers</h3>
+<li>In the layer panel, drag a layer button up or down</li>
+<li>Watch how the strand moves forward or backward</li>
+<li>Use this to control which strands appear in front</li></p>
+
+<h3>Step 4: Hiding Layers Temporarily</h3>
+<li>Look for visibility controls in the layer panel</li>
+<li>Hide some layers while working on others</li>
+<li>This reduces visual clutter in complex projects</li></p>
+
+<h3>Step 5: Layer Organization Strategy</h3>
+<strong>For complex projects:</strong>
+<li><strong>Bottom layers</strong>: Background elements, base structure</li>
+<li><strong>Middle layers</strong>: Main pattern elements</li>
+<li><strong>Top layers</strong>: Details, highlights, finishing touches</li></p>
+
+<p><strong>Naming convention</strong> (if available):
+<ul>
+<li>Layer 1: "Base Loop"</li>
+<li>Layer 2: "Cross Over"  </li>
+<li>Layer 3: "Detail Strand"</li>
+</ul>
+
+<h2>Tutorial 7: Creating Groups and Organization</h2>
+
+<p><strong>What we're making</strong>: A complex pattern organized into manageable groups</p>
+
+<h3>Step 1: Create a Multi-Part Pattern</h3>
+<li>Create one section with 3-4 strands (e.g., a knot)</li>
+<li>Create another section with 3-4 strands (e.g., a braid)</li>
+<li>You now have 6-8 layers total</li></p>
+
+<h3>Step 2: Create Your First Group</h3>
+<li>Select multiple layers that belong together:</li>
+   - Click layer 1
+   - Hold Ctrl/Cmd and click layer 2, 3, etc.
+<li>Look for a "Create Group" option</li>
+<li>Name the group (e.g., "Knot Section")</li></p>
+
+<h3>Step 3: Working with Groups</h3>
+<li>Click on the group name to select the whole group</li>
+<li>Use <strong>Move</strong> mode to move the entire group together</li>
+<li>Groups make it easy to manage complex patterns</li></p>
+
+<h3>Step 4: Group Organization Tips</h3>
+<strong>Good grouping strategies:</strong>
+<ul>
+<li>Group by function: "Base", "Crossings", "Details"</li>
+<li>Group by color: "Red Strands", "Blue Strands"  </li>
+<li>Group by position: "Left Side", "Right Side"</li>
+</ul>
+
+<h3>Step 5: Expanding Complex Projects</h3>
+<li>Create multiple groups for different parts</li>
+<li>Work on one group at a time</li>
+<li>Hide other groups while focusing</li>
+<li>This keeps large projects manageable</li></p>
+
+<h2>Common Problems and Solutions</h2>
+
+<h3>Problem: "My strands don't look like rope"</h3>
+<strong>Solution</strong>: Use the <strong>Mask</strong> mode to create over/under effects. Without masking, strands just look like lines on paper.</p>
+
+<h3>Problem: "I can't select the strand I want"</h3>
+<strong>Solution</strong>: Use the layer panel numbers instead of clicking on the canvas. It's much more precise.</p>
+
+<h3>Problem: "My pattern looks messy"</h3>
+<strong>Solution</strong>: 
+<li>Turn on the <strong>Grid</strong> for better alignment</li>
+<li>Use <strong>Move</strong> mode to clean up positions</li>
+<li>Adjust control points for smoother curves</li></p>
+
+<h3>Problem: "I accidentally deleted something"</h3>
+<strong>Solution</strong>: Use the <strong>Undo</strong> button (↶) to go back steps. Every action is saved.</p>
+
+<h3>Problem: "The strands are too thick/thin"</h3>
+<strong>Solution</strong>: Go to <strong>Settings</strong> → <strong>Drawing Settings</strong> → <strong>Strand Width</strong> and adjust the value.</p>
+
+<h3>Problem: "I can't see my work clearly"</h3>
+<strong>Solution</strong>: 
+<li>Use mouse wheel to zoom in/out</li>
+<li>Try different colors in <strong>Settings</strong></li>
+<li>Consider changing the theme</li></p>
+
+<h3>Problem: "My file won't save"</h3>
+<strong>Solution</strong>: 
+<li>Make sure you have write permissions to the folder</li>
+<li>Try saving to your Desktop or Documents folder</li>
+<li>Avoid special characters in the filename</li></p>
+
+<h2>Tips for Better Results</h2>
+
+<h3>Drawing Technique</h3>
+<li><strong>Start simple</strong>: Begin with basic shapes, add complexity later</li>
+<li><strong>Use control points</strong>: Don't just drag strands - adjust the curves for natural flow</li>
+<li><strong>Plan your layers</strong>: Think about what goes over what before you start</li></p>
+
+<h3>Visual Quality</h3>
+<li><strong>Contrast is key</strong>: Use different colors or thick outlines to separate strands</li>
+<li><strong>Consistent width</strong>: Keep strand thickness consistent within each "rope"</li>
+<li><strong>Smooth curves</strong>: Use control points to eliminate sharp angles</li></p>
+
+<h3>Workflow Efficiency  </h3>
+<li><strong>Save frequently</strong>: Use <strong>Save</strong> after each major step</li>
+<li><strong>Use groups</strong>: Organize complex patterns from the beginning</li>
+<li><strong>Grid for precision</strong>: Turn on when you need exact alignment</li>
+<li><strong>Layers for selection</strong>: Use layer numbers instead of hunting on canvas</li></p>
+
+<h3>Project Planning</h3>
+<li><strong>Sketch first</strong>: Plan your pattern on paper before starting</li>
+<li><strong>Reference photos</strong>: Look at real knots and ropes for inspiration</li>
+<li><strong>Start with samples</strong>: Load example projects to learn techniques</li></p>
+
+<p>---</p>
+
+<h1>Part 3: Advanced Techniques & Professional Workflows</h1>
+
+<h2>Table of Contents</h2>
+<li>[Professional Project Planning](#professional-project-planning)</li>
+<li>[Advanced Knot Construction Techniques](#advanced-knot-construction-techniques)</li>
+<li>[Creating Publication-Quality Diagrams](#creating-publication-quality-diagrams)</li>
+<li>[Complex Multi-Layer Management](#complex-multi-layer-management)</li>
+<li>[Precision Techniques for Technical Illustrations](#precision-techniques-for-technical-illustrations)</li>
+<li>[Advanced Color Theory and Visual Design](#advanced-color-theory-and-visual-design)</li>
+<li>[Workflow Optimization for Large Projects](#workflow-optimization-for-large-projects)</li>
+<li>[Creating Educational Materials](#creating-educational-materials)</li>
+<li>[Export Strategies for Different Uses](#export-strategies-for-different-uses)</li>
+<li>[Troubleshooting Complex Projects](#troubleshooting-complex-projects)</li></p>
+
+<h2>Professional Project Planning</h2>
+
+<h3>Before Starting Any Major Project</h3>
+
+<p><strong>Research Phase:</strong>
+<li><strong>Gather reference materials</strong>: Photos of real knots, technical diagrams, historical examples</li>
+<li><strong>Identify the key elements</strong>: What makes this knot unique? Which crossings are critical?</li>
+<li><strong>Plan the viewing angle</strong>: Top view? Side view? 3D perspective?</li>
+<li><strong>Choose your audience</strong>: Beginners need simple, clear diagrams; experts can handle complexity</li></p>
+
+<p><strong>Project Scope Planning:</strong>
+<li><strong>Estimate layer count</strong>: Simple knots = 3-8 layers, Complex patterns = 20-50 layers</li>
+<li><strong>Plan your color scheme</strong>: Will you need different colors for different rope sections?</li>
+<li><strong>Determine final output</strong>: Screen display, print publication, educational poster?</li>
+<li><strong>Set quality standards</strong>: How precise do measurements need to be?</li></p>
+
+<h3>Advanced File Organization</h3>
+
+<p><strong>Project Structure:</strong>
+<pre class="code-block lang-text"><code>My_Knot_Project/
+├── References/           (Photos, sketches)
+├── Drafts/              (Work-in-progress saves)
+├── Final/               (Completed versions)
+└── Exports/             (PNG, PDF outputs)
+</code></pre>
+
+<p><strong>File Naming Convention:</strong>
+<ul>
+<li><code class="inline-code">ProjectName_v01_draft.json</code> (First rough version)</li>
+<li><code class="inline-code">ProjectName_v02_refined.json</code> (Second iteration)  </li>
+<li><code class="inline-code">ProjectName_v03_final.json</code> (Publication ready)</li>
+<li><code class="inline-code">ProjectName_final_hires.png</code> (High resolution export)</li>
+</ul>
+
+<h2>Advanced Knot Construction Techniques</h2>
+
+<h3>The Professional Approach to Knot Drawing</h3>
+
+<h4>Phase 1: Foundation Structure</h4>
+<li><strong>Identify the core loop</strong>: Every knot has a basic underlying structure</li>
+<li><strong>Draw the primary path</strong>: Create the main rope path without worrying about crossings</li>
+<li><strong>Mark crossing points</strong>: Note where the rope crosses over itself</li>
+<li><strong>Plan the layer hierarchy</strong>: Which sections go over/under others</li></p>
+
+<h4>Phase 2: Systematic Construction</h4>
+<li><strong>Build from bottom up</strong>: Start with strands that go "under" everything else</li>
+<li><strong>Add middle layers</strong>: Strands that have some over/under relationships  </li>
+<li><strong>Finish with top layers</strong>: Strands that go "over" most other elements</li>
+<li><strong>Refine systematically</strong>: Work through each layer, perfecting curves and positions</li></p>
+
+<h3>Advanced Masking Strategies</h3>
+
+<p><strong>Complex Over/Under Patterns:</strong>
+<li><strong>Map the crossings</strong>: Draw a simple diagram showing every crossing point</li>
+<li><strong>Number the crossings</strong>: 1, 2, 3... to track which you've completed</li>
+<li><strong>Apply masks systematically</strong>: Work through your numbered list</li>
+<li><strong>Test the logic</strong>: Follow the rope path to ensure it's physically possible</li></p>
+
+<p><strong>Multiple Rope Knots:</strong>
+<li><strong>Color-code during construction</strong>: Use temporary colors to track different ropes</li>
+<li><strong>Build one rope at a time</strong>: Complete all layers for rope 1, then rope 2, etc.</li>
+<li><strong>Coordinate the interactions</strong>: Plan how different ropes cross each other</li>
+<li><strong>Unify colors at the end</strong>: Change all ropes to final colors when structure is complete</li></p>
+
+<h2>Creating Publication-Quality Diagrams</h2>
+
+<h3>Technical Illustration Standards</h3>
+
+<p><strong>Consistency Requirements:</strong>
+<ul>
+<li><strong>Uniform strand width</strong>: All ropes of same type must be identical thickness</li>
+<li><strong>Consistent color coding</strong>: Same colors mean same things throughout</li>
+<li><strong>Standardized spacing</strong>: Equal gaps between parallel strands</li>
+<li><strong>Aligned elements</strong>: Use grid religiously for professional appearance</li>
+</ul>
+
+<p><strong>Visual Hierarchy:</strong>
+<li><strong>Primary elements</strong>: Main rope structure - highest contrast</li>
+<li><strong>Secondary elements</strong>: Labels, arrows - medium contrast  </li>
+<li><strong>Background elements</strong>: Grid, reference lines - low contrast</li>
+<li><strong>Annotations</strong>: Clear, readable, consistently positioned</li></p>
+
+<h3>Creating Step-by-Step Instruction Diagrams</h3>
+
+<p><strong>Multi-Stage Workflow:</strong>
+<li><strong>Stage 1 - Setup</strong>: Show initial rope positioning</li>
+<li><strong>Stage 2 - First moves</strong>: Highlight what changes from Stage 1</li>
+<li><strong>Stage 3 - Progression</strong>: Continue showing changes</li>
+<li><strong>Stage 4 - Final result</strong>: Complete knot with all details</li></p>
+
+<p><strong>Highlighting Changes Between Steps:</strong>
+<li><strong>Use color coding</strong>: Bright colors for "new" elements each step</li>
+<li><strong>Add directional arrows</strong>: Show movement and direction clearly</li>
+<li><strong>Fade previous steps</strong>: Gray out unchanged elements to focus on new parts</li>
+<li><strong>Number the sequences</strong>: Clear numbering for step-by-step progression</li></p>
+
+<h2>Export Strategies for Different Uses</h2>
+
+<h3>Output Optimization by Use Case</h3>
+
+<p><strong>Web Display (Screen):</strong>
+<ul>
+<li><strong>Resolution</strong>: 72-96 DPI sufficient</li>
+<li><strong>Format</strong>: PNG with transparency</li>
+<li><strong>Size</strong>: Optimize for common screen sizes</li>
+<li><strong>Colors</strong>: RGB color space</li>
+</ul>
+
+<p><strong>Print Publication:</strong>
+<ul>
+<li><strong>Resolution</strong>: 300 DPI minimum, 600 DPI for line art</li>
+<li><strong>Format</strong>: PNG or PDF</li>
+<li><strong>Size</strong>: Exact dimensions in inches/cm</li>
+<li><strong>Colors</strong>: CMYK color space for professional printing</li>
+</ul>
+
+<p><strong>Educational Posters:</strong>
+<ul>
+<li><strong>Resolution</strong>: 150-300 DPI depending on viewing distance</li>
+<li><strong>Format</strong>: PDF for scalability</li>
+<li><strong>Size</strong>: Large format (11x17", 18x24", etc.)</li>
+<li><strong>Colors</strong>: High contrast for classroom visibility</li>
+</ul>
+
+<p><strong>Technical Documentation:</strong>
+<ul>
+<li><strong>Resolution</strong>: 300 DPI for crisp lines</li>
+<li><strong>Format</strong>: Vector PDF when possible</li>
+<li><strong>Size</strong>: Standard document sizes (A4, Letter)</li>
+<li><strong>Colors</strong>: Black and white or limited color palette</li>
+</ul>
+
+<p>---</p>
+
+<h1>Part 4: Master Reference & Expert Features</h1>
+
+<h2>Table of Contents</h2>
+<li>[Quick Reference Guide](#quick-reference-guide)</li>
+<li>[Complete Feature Reference](#complete-feature-reference)</li>
+<li>[Keyboard Shortcuts & Power User Tips](#keyboard-shortcuts--power-user-tips)</li>
+<li>[Settings Deep Dive](#settings-deep-dive)</li>
+<li>[File Format Specifications](#file-format-specifications)</li>
+<li>[Performance Optimization Guide](#performance-optimization-guide)</li>
+<li>[Accessibility Features](#accessibility-features)</li>
+<li>[Troubleshooting Encyclopedia](#troubleshooting-encyclopedia)</li>
+<li>[Expert Tips & Hidden Features](#expert-tips--hidden-features)</li></p>
+
+<h2>Quick Reference Guide</h2>
+
+<h3>Essential Toolbar Quick Reference</h3>
+<table class="data-table">
+<thead><tr>
+<th>Button</th>
+<th>Mode</th>
+<th>Function</th>
+<th>Best Used For</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>🔗</td>
+<td>Attach</td>
+<td>Create new strands</td>
+<td>Starting any project, adding new elements</td>
+</tr>
+<tr>
+<td>➤</td>
+<td>Move</td>
+<td>Reposition & adjust curves</td>
+<td>Fine-tuning positions, adjusting shapes</td>
+</tr>
+<tr>
+<td>🔄</td>
+<td>Rotate</td>
+<td>Rotate strands around center</td>
+<td>Changing orientation, creating symmetry</td>
+</tr>
+<tr>
+<td>📐</td>
+<td>Angle/Length</td>
+<td>Precise numerical control</td>
+<td>Technical precision, exact measurements</td>
+</tr>
+<tr>
+<td>👆</td>
+<td>Select</td>
+<td>Choose strands & access properties</td>
+<td>Color changes, detailed modifications</td>
+</tr>
+<tr>
+<td>🎭</td>
+<td>Mask</td>
+<td>Create over/under effects</td>
+<td>Making realistic knots, crossing effects</td>
+</tr>
+<tr>
+<td>⊞</td>
+<td>Grid</td>
+<td>Toggle alignment grid</td>
+<td>Professional layouts, precise alignment</td>
+</tr>
+<tr>
+<td>💾</td>
+<td>Save</td>
+<td>Save project file</td>
+<td>Preserving work, creating checkpoints</td>
+</tr>
+<tr>
+<td>📁</td>
+<td>Load</td>
+<td>Open existing project</td>
+<td>Starting from templates, continuing work</td>
+</tr>
+<tr>
+<td>🖼️</td>
+<td>Image</td>
+<td>Export as picture</td>
+<td>Sharing, printing, publishing</td>
+</tr>
+<tr>
+<td>⚙️</td>
+<td>Settings</td>
+<td>Access all preferences</td>
+<td>Customization, tutorials, samples</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Common Task Quick Steps</h3>
+
+<p><strong>Create a Basic Knot (30 seconds):</strong>
+<li>Attach → Draw loop → Move → Adjust shape → Mask → Create crossing</li>
+<li>Save → Name it → Done</li></p>
+
+<p><strong>Change Colors:</strong>
+<li>Select → Click strand → Look for color options → Choose new colors</li></p>
+
+<p><strong>Perfect Alignment:</strong>
+<li>Grid → Turn on → Attach/Move → Use snap points → Grid → Turn off</li></p>
+
+<p><strong>Fix Mistakes:</strong>
+<li>Press Undo (↶) → Or use layer panel to select problem strand → Delete or adjust</li></p>
+
+<h2>Keyboard Shortcuts & Power User Tips</h2>
+
+<h3>Essential Shortcuts</h3>
+<table class="data-table">
+<thead><tr>
+<th>Key</th>
+<th>Function</th>
+<th>Context</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>Ctrl+Z</strong></td>
+<td>Undo</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Ctrl+Y</strong></td>
+<td>Redo</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Ctrl+S</strong></td>
+<td>Save</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Ctrl+O</strong></td>
+<td>Load</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Ctrl+E</strong></td>
+<td>Export Image</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>G</strong></td>
+<td>Toggle Grid</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Space</strong></td>
+<td>Pan mode (hold)</td>
+<td>While drawing</td>
+</tr>
+<tr>
+<td><strong>Mouse Wheel</strong></td>
+<td>Zoom in/out</td>
+<td>Any mode</td>
+</tr>
+<tr>
+<td><strong>Delete</strong></td>
+<td>Delete selected</td>
+<td>Select mode</td>
+</tr>
+<tr>
+<td><strong>Escape</strong></td>
+<td>Deselect all</td>
+<td>Any mode</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Mode Switching Shortcuts</h3>
+<table class="data-table">
+<thead><tr>
+<th>Key</th>
+<th>Mode</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Attach</td>
+<td>Most common mode</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>Move</td>
+<td>Quick adjustments</td>
+</tr>
+<tr>
+<td><strong>R</strong></td>
+<td>Rotate</td>
+<td>Orientation changes</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>Select</td>
+<td>Property access</td>
+</tr>
+<tr>
+<td><strong>K</strong></td>
+<td>Mask</td>
+<td>Knot effects</td>
+</tr>
+<tr>
+<td><strong>Tab</strong></td>
+<td>Cycle modes</td>
+<td>Next mode in sequence</td>
+</tr>
+<tr>
+<td><strong>Shift+Tab</strong></td>
+<td>Cycle backwards</td>
+<td>Previous mode</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Troubleshooting Encyclopedia</h2>
+
+<h3>Startup and Installation Issues</h3>
+
+<h4>Application Won't Start</h4>
+<strong>Windows specific:</strong>
+<ul>
+<li><strong>Error:</strong> "DLL load failed while importing QtWidgets"</li>
+</ul>
+  - <strong>Cause:</strong> PyQt5 DLL conflicts with other installed software
+  - <strong>Solution:</strong> Use the build_with_venv.bat script for clean environment
+  - <strong>Prevention:</strong> Install in virtual environment</p>
+
+<ul>
+<li><strong>Error:</strong> "Python not found"</li>
+</ul>
+  - <strong>Cause:</strong> Python not in system PATH
+  - <strong>Solution:</strong> Reinstall Python with "Add to PATH" option checked
+  - <strong>Alternative:</strong> Use full path to python.exe</p>
+
+<h3>Drawing and Interface Issues</h3>
+
+<h4>Drawing Problems</h4>
+<strong>Strands don't appear when drawn:</strong>
+<ul>
+<li><strong>Check:</strong> Are you in Attach mode?</li>
+<li><strong>Check:</strong> Is canvas zoomed out too far to see details?</li>
+<li><strong>Solution:</strong> Switch to Attach mode, zoom in to see drawn strands</li>
+</ul>
+
+<p><strong>Can't select strands:</strong>
+<ul>
+<li><strong>Check:</strong> Are you in Move or Select mode?</li>
+<li><strong>Check:</strong> Are layers hidden?</li>
+<li><strong>Solution:</strong> Use layer panel numbers for precise selection</li>
+<li><strong>Alternative:</strong> Switch to Select mode for easier clicking</li>
+</ul>
+
+<h3>File Operation Issues</h3>
+
+<h4>Saving Problems</h4>
+<strong>Can't save files:</strong>
+<ul>
+<li><strong>Check:</strong> Write permissions to target folder</li>
+<li><strong>Check:</strong> Available disk space</li>
+<li><strong>Solution:</strong> Save to Desktop or Documents folder</li>
+<li><strong>Alternative:</strong> Run as administrator (Windows)</li>
+</ul>
+
+<p><strong>Files corrupted after save:</strong>
+<ul>
+<li><strong>Cause:</strong> Disk space ran out during save</li>
+<li><strong>Cause:</strong> System crash during save operation</li>
+<li><strong>Prevention:</strong> Check disk space before saving</li>
+<li><strong>Solution:</strong> Use multiple backup saves</li>
+</ul>
+
+<h4>Loading Problems</h4>
+<strong>Files won't open:</strong>
+<ul>
+<li><strong>Check:</strong> File extension (.json for projects)</li>
+<li><strong>Check:</strong> File not corrupted (try backup copy)</li>
+<li><strong>Solution:</strong> Try loading a sample file first</li>
+<li><strong>Workaround:</strong> Start new project, copy elements manually</li>
+</ul>
+
+<h2>Expert Tips & Hidden Features</h2>
+
+<h3>Power User Techniques</h3>
+
+<h4>Advanced Selection Methods</h4>
+<strong>Multi-layer operations:</strong>
+<li><strong>Range select:</strong> Click first layer, Shift+click last layer</li>
+<li><strong>Skip select:</strong> Ctrl+click each desired layer individually  </li>
+<li><strong>Inverse select:</strong> Select unwanted layers, then use "Select Inverse"</li>
+<li><strong>Group select:</strong> Click group name to select all layers in group</li></p>
+
+<h4>Professional Curve Control</h4>
+<strong>Bezier mastery:</strong>
+<li><strong>Independent control points:</strong> Break tangent handles for sharp curves</li>
+<li><strong>Smooth transitions:</strong> Align tangent handles for flowing curves</li>
+<li><strong>Tension control:</strong> Adjust handle lengths for curve tightness</li>
+<li><strong>Natural curves:</strong> Use reference photos for realistic rope behavior</li></p>
+
+<h3>Hidden Features and Easter Eggs</h3>
+
+<h4>Secret Keyboard Combinations</h4>
+<strong>Debug information:</strong>
+<ul>
+<li><strong>Ctrl+Shift+D:</strong> Show debug information overlay</li>
+<li><strong>Ctrl+Shift+P:</strong> Show performance statistics</li>
+<li><strong>Ctrl+Shift+M:</strong> Show memory usage information</li>
+<li><strong>Ctrl+Shift+L:</strong> Show layer hierarchy in detail</li>
+</ul>
+
+<p><strong>Advanced grid features:</strong>
+<ul>
+<li><strong>Ctrl+G:</strong> Toggle between grid types (dots, lines, etc.)</li>
+<li><strong>Shift+G:</strong> Adjust grid opacity</li>
+<li><strong>Alt+G:</strong> Show/hide grid coordinates</li>
+<li><strong>Ctrl+Alt+G:</strong> Reset grid to default settings</li>
+</ul>
+
+<p>---</p>
+
+<h2>Conclusion</h2>
+
+<p><strong>Congratulations!</strong> You have now mastered OpenStrand Studio version 1.101. This complete manual covers every aspect of the application, from your first simple knot to creating professional publication-quality diagrams.</p>
+
+<h3>What You've Learned:</h3>
+<ul>
+<li><strong>Part 1</strong>: Complete interface understanding and basic workflows</li>
+<li><strong>Part 2</strong>: Hands-on tutorials with practical, real-world examples</li>
+<li><strong>Part 3</strong>: Advanced professional techniques and complex project management</li>
+<li><strong>Part 4</strong>: Expert-level features, shortcuts, and troubleshooting</li>
+</ul>
+
+<h3>Next Steps:</h3>
+<li><strong>Practice regularly</strong> with the tutorials from Part 2</li>
+<li><strong>Experiment</strong> with the advanced techniques from Part 3</li>
+<li><strong>Keep this manual handy</strong> as your reference for Part 4's comprehensive features</li>
+<li><strong>Share your creations</strong> and help others learn this powerful tool</li></p>
+
+<p>OpenStrand Studio version 1.101 is a sophisticated application capable of creating everything from simple educational knots to complex technical rope diagrams. With the knowledge in this manual, you're equipped to tackle any strand-based design project with confidence and professional results.</p>
+
+<p>Happy knot-making!</p>
+
+<p>---</p>
+
+<p><strong>Manual Information:</strong>
+<ul>
+<li>Application Version: 1.101</li>
+<li>Documentation Version: 4.0</li>
+<li>Total Pages: [This will be calculated in PDF]</li>
+</ul>
+<li>Last Updated: January 2025</li></p>
+    
+    <hr>
+    <p style="text-align: center; color: #95a5a6; margin-top: 50px;">
+        <em>OpenStrand Studio v1.101 - Complete User Manual<br>
+        © 2025 OpenStrand Studio - All Rights Reserved</em>
+    </p>
+</body>
+</html>

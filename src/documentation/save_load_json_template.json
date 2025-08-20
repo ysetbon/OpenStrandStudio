@@ -78,14 +78,31 @@
         "b": "integer (0-255)",
         "a": "integer (0-255)"
       },
+      "// CONTROL POINTS - BÉZIER CURVE FUNCTIONS": {
+        "2_control_points": "Cubic Bézier: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃",
+        "2_points_mapping": "P₀=start, P₁=control_points[0], P₂=control_points[1], P₃=end",
+        "2_points_result": "Single smooth curve (U-shape, arc, gentle bend)",
+        "3_control_points": "Two connected cubic Bézier segments joined at middle point",
+        "3_points_first_segment": "From start to middle control point",
+        "3_points_second_segment": "From middle control point to end",
+        "3_points_result": "S-curve or wave with inflection point (serpentine path)",
+        "parameter_t": "t ∈ [0,1] interpolates position along curve"
+      },
       "control_points": [
         {
           "x": "float",
-          "y": "float"
+          "y": "float",
+          "// description": "First control point (P₁ in Bézier formula)"
         },
         {
-          "x": "float",
-          "y": "float"
+          "x": "float", 
+          "y": "float",
+          "// description": "Second control point (P₂ in Bézier formula)"
+        },
+        {
+          "x": "float (optional)",
+          "y": "float (optional)",
+          "// description": "Third control point for S-curves (creates two connected Bézier segments)"
         }
       ],
       "control_point_center": {

@@ -4,12 +4,12 @@
       "type": "Strand",
       "index": 0,
       "start": {
-        "x": 92.0,
-        "y": 92.0
+        "x": 300.0,
+        "y": 200.0
       },
       "end": {
-        "x": 276.0,
-        "y": 276.0
+        "x": 500.0,
+        "y": 600.0
       },
       "width": 46.0,
       "color": {
@@ -25,7 +25,7 @@
         "a": 255
       },
       "stroke_width": 4.5,
-      "has_circles": [false, false],
+      "has_circles": [true, true],
       "layer_name": "1_1",
       "set_number": 1,
       "is_first_strand": true,
@@ -39,42 +39,59 @@
       "end_arrow_visible": false,
       "full_arrow_visible": false,
       "shadow_only": false,
-      "closed_connections": [false, false],
-      "knot_connections": {},
-      "circle_stroke_color": null,
-      "start_circle_stroke_color": null,
-      "end_circle_stroke_color": null,
+      "closed_connections": [false, true],
+      "knot_connections": {
+        "end": {
+          "connected_strand_name": "1_2",
+          "connected_end": "end",
+          "is_closing_strand": false
+        }
+      },
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
       "control_points": [
         {
-          "x": 46.0,
-          "y": 184.0
+          "x": 350.0,
+          "y": 350.0
         },
         {
-          "x": 322.0,
-          "y": 184.0
+          "x": 450.0,
+          "y": 450.0
         }
       ],
       "control_point_center": {
-        "x": 184.0,
-        "y": 184.0
+        "x": 400.0,
+        "y": 400.0
       },
       "control_point_center_locked": false,
       "manual_circle_visibility": [null, null]
     },
     {
-      "type": "AttachedStrand",
+      "type": "Strand",
       "index": 1,
-      "attached_to": "1_1",
-      "attachment_side": 1,
-      "angle": 45.0,
-      "length": 130.0,
       "start": {
-        "x": 276.0,
-        "y": 276.0
+        "x": 700.0,
+        "y": 200.0
       },
       "end": {
-        "x": 368.0,
-        "y": 368.0
+        "x": 500.0,
+        "y": 600.0
       },
       "width": 46.0,
       "color": {
@@ -90,7 +107,7 @@
         "a": 255
       },
       "stroke_width": 4.5,
-      "has_circles": [false, false],
+      "has_circles": [true, true],
       "layer_name": "1_2",
       "set_number": 1,
       "is_first_strand": false,
@@ -104,30 +121,45 @@
       "end_arrow_visible": false,
       "full_arrow_visible": false,
       "shadow_only": false,
-      "closed_connections": [false, false],
+      "closed_connections": [false, true],
       "knot_connections": {
-        "start": {
+        "end": {
           "connected_strand_name": "1_1",
           "connected_end": "end",
           "is_closing_strand": false
         }
       },
-      "circle_stroke_color": null,
-      "start_circle_stroke_color": null,
-      "end_circle_stroke_color": null,
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
       "control_points": [
         {
-          "x": 230.0,
-          "y": 322.0
+          "x": 650.0,
+          "y": 350.0
         },
         {
-          "x": 414.0,
-          "y": 322.0
+          "x": 550.0,
+          "y": 450.0
         }
       ],
       "control_point_center": {
-        "x": 322.0,
-        "y": 322.0
+        "x": 600.0,
+        "y": 400.0
       },
       "control_point_center_locked": false,
       "manual_circle_visibility": [null, null]
@@ -138,5 +170,5 @@
   "locked_layers": [],
   "lock_mode": false,
   "shadow_enabled": true,
-  "show_control_points": false
+  "show_control_points": true
 }

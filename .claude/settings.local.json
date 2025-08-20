@@ -56,8 +56,13 @@
       "Bash(C:/ProgramData/Anaconda3/Scripts/conda.exe init powershell)",
       "Bash(ffmpeg:*)",
       "Bash(apt list:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(C:ProgramDataAnaconda3python.exe export_s_shape_direct.py)",
+      "Bash(mv:*)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "C:\\mnt\\c\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio"
+    ]
   }
 }

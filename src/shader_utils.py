@@ -1324,6 +1324,12 @@ def build_rendered_geometry(strand):
     if hasattr(strand, 'get_mask_path'):
         return get_proper_masked_strand_path(strand)
 
+    # Import AttachedStrand class for isinstance checks
+    try:
+        from attached_strand import AttachedStrand as AttachedStrandClass
+    except ImportError:
+        AttachedStrandClass = None
+
     try:
         # ------------------------------------------------------------------
         # 1) Base body stroke
@@ -1337,8 +1343,8 @@ def build_rendered_geometry(strand):
 
         stroker = QPainterPathStroker()
         stroker.setWidth(strand.width + strand.stroke_width * 2)
-        stroker.setJoinStyle(Qt.MiterJoin)
-        stroker.setCapStyle(Qt.FlatCap)
+        stroker.setJoinStyle(Qt.RoundJoin)  # Smooth corners at curves
+        stroker.setCapStyle(Qt.FlatCap)     # Squared ends (no false circles)
         result_path = stroker.createStroke(body_source)
 
         # ------------------------------------------------------------------
@@ -1354,14 +1360,91 @@ def build_rendered_geometry(strand):
             )
 
             if not transparent_circles:
-                radius = (strand.width + strand.stroke_width * 2) / 2.0
-                for idx, enabled in enumerate(strand.has_circles):
-                    if not enabled:
-                        continue
-                    centre = strand.start if idx == 0 else strand.end
-                    circle_path = QPainterPath()
-                    circle_path.addEllipse(centre, radius, radius)
-                    result_path = result_path.united(circle_path)
+                # Only process circles if the strand actually has attached children
+                if not (hasattr(strand, 'attached_strands') and strand.attached_strands and AttachedStrandClass):
+                    # No attachments at all, skip circle processing entirely
+                    pass
+                else:
+                    radius = (strand.width + strand.stroke_width * 2) / 2.0
+                    
+                    # Check if this is an AttachedStrand (by checking class name)
+                    is_attached_strand = strand.__class__.__name__ == 'AttachedStrand'
+                    
+                    for idx, enabled in enumerate(strand.has_circles):
+                        if not enabled:
+                            continue
+                        
+                        # Check if this specific circle has transparent stroke
+                        is_circle_transparent = False
+                        if idx == 0 and hasattr(strand, 'start_circle_stroke_color'):
+                            if strand.start_circle_stroke_color and strand.start_circle_stroke_color.alpha() == 0:
+                                is_circle_transparent = True
+                        elif idx == 1 and hasattr(strand, 'end_circle_stroke_color'):
+                            if strand.end_circle_stroke_color and strand.end_circle_stroke_color.alpha() == 0:
+                                is_circle_transparent = True
+                        
+                        # Skip transparent circles
+                        if is_circle_transparent:
+                            continue
+                        
+                        # Check if there are actual attachments at this specific point
+                        if idx == 0:  # Start point
+                            has_attachment = any(isinstance(child, AttachedStrandClass) and child.start == strand.start 
+                                               for child in strand.attached_strands)
+                        else:  # End point
+                            has_attachment = any(isinstance(child, AttachedStrandClass) and child.start == strand.end 
+                                               for child in strand.attached_strands)
+                        
+                        # Skip if no actual attachment at this point
+                        if not has_attachment:
+                            continue
+                        
+                        centre = strand.start if idx == 0 else strand.end
+                        
+                        # For AttachedStrand with actual attachments, create half-circles instead of full circles
+                        if is_attached_strand:
+                            # Create full circle first
+                            full_circle = QPainterPath()
+                            full_circle.addEllipse(centre, radius, radius)
+                            
+                            # Create masking rectangle to get half circle
+                            if idx == 0:  # Start circle
+                                # Calculate angle based on tangent at start
+                                if hasattr(strand, 'calculate_start_tangent'):
+                                    angle = strand.calculate_start_tangent()
+                                else:
+                                    angle = 0
+                            else:  # End circle
+                                # Calculate angle based on tangent at end
+                                if hasattr(strand, 'calculate_cubic_tangent'):
+                                    tangent = strand.calculate_cubic_tangent(1.0)
+                                    angle = math.atan2(tangent.y(), tangent.x())
+                                else:
+                                    angle = 0
+                            
+                            # Create masking rectangle for half circle
+                            mask_rect = QPainterPath()
+                            rect_width = radius * 4
+                            rect_height = radius * 4
+                            mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                            
+                            # Transform the mask to the correct position and angle
+                            transform = QTransform()
+                            transform.translate(centre.x(), centre.y())
+                            if idx == 0:
+                                transform.rotate(math.degrees(angle))
+                            else:
+                                transform.rotate(math.degrees(angle - math.pi))
+                            mask_rect = transform.map(mask_rect)
+                            
+                            # Get half circle by subtracting mask from full circle
+                            half_circle = full_circle.subtracted(mask_rect)
+                            result_path = result_path.united(half_circle)
+                        else:
+                            # Regular full circle for non-AttachedStrand
+                            circle_path = QPainterPath()
+                            circle_path.addEllipse(centre, radius, radius)
+                            result_path = result_path.united(circle_path)
 
         return result_path
     except Exception as e:
@@ -1497,8 +1580,8 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0, include_circles=T
         # Use actual strand width plus fixed shadow extension
         shadow_width = strand.width + strand.stroke_width * 2 + (fixed_shadow_extension * 2)
         stroker.setWidth(shadow_width)
-        stroker.setJoinStyle(Qt.MiterJoin)
-        stroker.setCapStyle(Qt.FlatCap)
+        stroker.setJoinStyle(Qt.RoundJoin)  # Smooth corners at curves
+        stroker.setCapStyle(Qt.FlatCap)     # Squared ends (no false circles)
         result_path = stroker.createStroke(body_source)
 
         # Add visible circles with same fixed extension if requested

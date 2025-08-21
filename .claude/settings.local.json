@@ -58,7 +58,11 @@
       "Bash(apt list:*)",
       "Bash(pip install:*)",
       "Bash(C:ProgramDataAnaconda3python.exe export_s_shape_direct.py)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(conda:*)",
+      "Bash(..venvScriptsActivate.ps1)",
+      "Bash(echo $PROFILE)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "additionalDirectories": [

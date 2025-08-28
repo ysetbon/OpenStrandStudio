@@ -1,0 +1,31 @@
+2025-08-21 11:47:11,804 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-08-21 11:47:11,816 - INFO - JSON validation passed
+2025-08-21 11:47:11,817 - INFO - Successfully generated JSON for: Create a V-shape with two blue strands meeting at the bottom point. The strands should start at top-left (300, 200) and top-right (700, 200) and meet at bottom center (500, 600).
+2025-08-21 11:47:11,819 - INFO - Saved JSON to: C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\output\test_v_shape.json
+2025-08-21 11:55:49,872 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-08-21 11:55:49,895 - ERROR - Validation error: Strand 1_2 should have type 'AttachedStrand'
+2025-08-21 11:55:49,895 - ERROR - Validation error: Strand 1_3 should have type 'AttachedStrand'
+2025-08-21 11:55:49,895 - ERROR - Validation error: Strand 1_4 should have type 'AttachedStrand'
+2025-08-21 11:55:49,895 - ERROR - Error generating JSON: JSON validation failed with 3 errors
+2025-08-21 11:55:49,895 - ERROR - Generation failed: JSON validation failed with 3 errors
+Traceback (most recent call last):
+  File "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\ai_strand_generator.py", line 338, in interactive_mode
+    json_data = generator.generate_json(prompt, show_control_points=show_cp)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\ai_strand_generator.py", line 196, in generate_json
+    self.validate_json(json_data)
+  File "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\ai_strand_generator.py", line 261, in validate_json
+    raise ValueError(f"JSON validation failed with {len(errors)} errors")
+ValueError: JSON validation failed with 3 errors
+2025-08-21 11:58:26,675 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-08-21 11:58:26,714 - INFO - JSON validation passed
+2025-08-21 11:58:26,714 - INFO - Successfully generated JSON for: create me an M shape using 4 strands
+2025-08-21 11:58:26,718 - INFO - Saved JSON to: C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\output\create_me_an_M_shape_using_4_s_20250821_115826.json
+2025-08-21 12:00:20,126 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-08-21 12:00:20,151 - INFO - JSON validation passed
+2025-08-21 12:00:20,151 - INFO - Successfully generated JSON for: create a strand with 3 attached strands forming a fan shape: 1_1 as main strand, 1_2 1_3 1_4 as attached strands
+2025-08-21 12:00:20,153 - INFO - Saved JSON to: C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\output\create_a_strand_with_3_attache_20250821_120020.json
+2025-08-21 12:06:07,710 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-08-21 12:06:07,734 - INFO - JSON validation passed
+2025-08-21 12:06:07,734 - INFO - Successfully generated JSON for: create me an M shape using 4 strands 1_1 1_2 1_3 1_4
+2025-08-21 12:06:07,735 - INFO - Saved JSON to: C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\json_to_png_exporter\output\create_me_an_M_shape_using_4_s_20250821_120607.json

@@ -31,6 +31,11 @@ class Strand:
         self._is_selected = False  # Indicates if the strand is selected (use private attribute for property)
         self.is_hidden = False # Indicates if the strand is hidden
         self.shadow_only = False # Indicates if the strand is in shadow-only mode
+        # Control point influence parameters
+        self.curve_response_exponent = 1.5  # Exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
+        self.control_point_base_fraction = 0.4  # Base fraction for control point influence (was 0.333, now 0.4 for 20% more influence)
+        self.distance_multiplier = 1.2  # Distance multiplication factor for additional influence boost (1.0-10.0 range)
+        self.endpoint_tension = 1.15  # Extra tension for start/end control points (1.0=normal, 1.15=15% tighter)
 
         # Initialize attachment statuses
         self.start_attached = False
@@ -544,7 +549,6 @@ class Strand:
             
         # Create the path with the extended points
         path.moveTo(self.start)
-        path.lineTo(self.start)
 
         # Only use the third control point if:
         # 1. The feature is enabled AND
@@ -568,9 +572,13 @@ class Strand:
             # Calculate the tangent at start point (pointing toward control_point1)
             start_tangent = QPointF(p1.x() - p0.x(), p1.y() - p0.y())
             
-            # Calculate the tangent at center (average of incoming and outgoing)
+            # Calculate the tangent at center (improved weighted average)
             in_tangent = QPointF(p2.x() - p1.x(), p2.y() - p1.y())
             out_tangent = QPointF(p3.x() - p2.x(), p3.y() - p2.y())
+            
+            # Get magnitudes before normalizing for weighting
+            in_magnitude = math.sqrt(in_tangent.x() ** 2 + in_tangent.y() ** 2)
+            out_magnitude = math.sqrt(out_tangent.x() ** 2 + out_tangent.y() ** 2)
             
             # Normalize tangents for better control
             def normalize_vector(v):
@@ -587,11 +595,20 @@ class Strand:
             in_tangent_normalized = normalize_vector(in_tangent)
             out_tangent_normalized = normalize_vector(out_tangent)
             
-            # Calculate center tangent as weighted average instead of simple average
-            # This makes the curve more responsive to small movements
+            # IMPROVED CENTER TANGENT CALCULATION:
+            # Weight by actual distances to make center control point more intuitive
+            total_magnitude = in_magnitude + out_magnitude
+            if total_magnitude > 0.001:
+                # Weight based on relative distances
+                in_weight = out_magnitude / total_magnitude  # Inverse weight - farther side gets less influence
+                out_weight = in_magnitude / total_magnitude
+            else:
+                in_weight = out_weight = 0.5
+            
+            # Calculate weighted center tangent
             center_tangent = QPointF(
-                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
-                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+                in_weight * in_tangent_normalized.x() + out_weight * out_tangent_normalized.x(), 
+                in_weight * in_tangent_normalized.y() + out_weight * out_tangent_normalized.y()
             )
             center_tangent_normalized = normalize_vector(center_tangent)
             
@@ -605,16 +622,63 @@ class Strand:
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Fixed fraction for influence
-            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+            # Get control point influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)  # Exponential scaling
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)  # Base influence (0.25-0.5)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)  # Distance boost (1.0-1.5)
+            
+            # COMBINED APPROACH WITH CENTER CONTROL POINT IMPROVEMENTS:
+            # 1. Apply distance multiplier for linear boost
+            # 2. Apply exponential scaling for non-linear response
+            # 3. Use configurable base fraction instead of fixed 1/3
+            # 4. Apply gentler scaling to center control point segments
+            
+            # Apply distance multiplier first (linear boost)
+            boosted_dist_p0_p1 = dist_p0_p1 * dist_multiplier
+            boosted_dist_p1_p2 = dist_p1_p2 * dist_multiplier
+            boosted_dist_p2_p3 = dist_p2_p3 * dist_multiplier
+            boosted_dist_p3_p4 = dist_p3_p4 * dist_multiplier
+            
+            # Use gentler exponent for center control point segments
+            # This prevents the center from becoming too aggressive
+            center_exponent = 1.0 + (exponent - 1.0) * 0.5  # Half the exponential effect for center
+            
+            # Then apply exponential scaling for non-linear response
+            # Normalize to avoid extreme values
+            max_dist = max(boosted_dist_p0_p1, boosted_dist_p1_p2, boosted_dist_p2_p3, boosted_dist_p3_p4, 1.0)
+            
+            # Apply different exponents: full for outer segments, reduced for center segments
+            scaled_dist_p0_p1 = (boosted_dist_p0_p1 / max_dist) ** exponent * boosted_dist_p0_p1
+            scaled_dist_p1_p2 = (boosted_dist_p1_p2 / max_dist) ** center_exponent * boosted_dist_p1_p2  # Gentler
+            scaled_dist_p2_p3 = (boosted_dist_p2_p3 / max_dist) ** center_exponent * boosted_dist_p2_p3  # Gentler
+            scaled_dist_p3_p4 = (boosted_dist_p3_p4 / max_dist) ** exponent * boosted_dist_p3_p4
 
-            # Calculate intermediate control points, incorporating p1 and p3 influence
-            # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Calculate intermediate control points with combined influence
+            # IMPROVED: Different handling for start/end vs center
+            center_damping = 0.85  # Reduce center influence by 15% for stability
+            endpoint_tension = getattr(self, 'endpoint_tension', 1.15)  # Extra tension for endpoints
+            
+            # Start/End control points: Use full influence with tension boost
+            # This makes dragging start/end control points more responsive
+            endpoint_fraction = base_fraction * endpoint_tension  # Boost endpoint influence
+            
+            # Improved calculation using actual control point positions as attractors
+            # This creates more intuitive control point behavior
+            cp1_offset = (p1 - p0) * endpoint_fraction  # Direct vector to control point
+            cp4_offset = (p3 - p4) * endpoint_fraction  # Direct vector from end
+            
+            # For start/end, blend between tangent-based and direct approaches
+            blend_factor = 0.7  # 70% direct, 30% tangent-based for more intuitive control
+            
+            cp1_tangent = start_tangent_normalized * (scaled_dist_p0_p1 * base_fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else QPointF(0, 0)
+            cp1 = p0 + (cp1_offset * blend_factor + cp1_tangent * (1 - blend_factor)) if (cp1_offset.manhattanLength() > 1e-6 or cp1_tangent.manhattanLength() > 1e-6) else p1
+            
+            # Center control points: Use damped influence (gentler)
+            cp2 = p2 - center_tangent_normalized * (scaled_dist_p1_p2 * base_fraction * center_damping) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (scaled_dist_p2_p3 * base_fraction * center_damping) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            
+            cp4_tangent = end_tangent_normalized * (scaled_dist_p3_p4 * base_fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else QPointF(0, 0)
+            cp4 = p4 + (cp4_offset * blend_factor + cp4_tangent * (1 - blend_factor)) if (cp4_offset.manhattanLength() > 1e-6 or cp4_tangent.manhattanLength() > 1e-6) else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
@@ -623,10 +687,46 @@ class Strand:
             path.cubicTo(cp3, cp4, p4)
         else:
             # Standard cubic Bezier curve when third control point is disabled or not manually positioned
-            path.cubicTo(self.control_point1, self.control_point2, self.end)
+            # Apply the same curve influence parameters as in get_path() for consistency
+            
+            # Get influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            endpoint_tension = getattr(self, 'endpoint_tension', 1.15)
+            
+            # Calculate influenced control points
+            line_vec = self.end - self.start
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0.001:
+                # Apply the improved control point influence
+                cp1_vector = self.control_point1 - self.start
+                cp2_vector = self.control_point2 - self.end
+                
+                # Apply all influence factors
+                cp1_influenced = self.start + cp1_vector * base_fraction * dist_multiplier * endpoint_tension
+                cp2_influenced = self.end + cp2_vector * base_fraction * dist_multiplier * endpoint_tension
+                
+                # Apply exponential response if needed
+                if exponent != 1.0:
+                    cp1_dist = math.sqrt(cp1_vector.x()**2 + cp1_vector.y()**2)
+                    cp2_dist = math.sqrt(cp2_vector.x()**2 + cp2_vector.y()**2)
+                    
+                    if cp1_dist > 0.001:
+                        cp1_scale = (cp1_dist / line_length) ** exponent * (line_length / cp1_dist)
+                        cp1_influenced = self.start + (cp1_influenced - self.start) * cp1_scale
+                    
+                    if cp2_dist > 0.001:
+                        cp2_scale = (cp2_dist / line_length) ** exponent * (line_length / cp2_dist)
+                        cp2_influenced = self.end + (cp2_influenced - self.end) * cp2_scale
+                
+                path.cubicTo(cp1_influenced, cp2_influenced, self.end)
+            else:
+                # Fallback for zero-length line
+                path.cubicTo(self.control_point1, self.control_point2, self.end)
         
-        # Add a line to the extended end point
-        path.lineTo(self.end)
+        # Path already ends at the correct point
             
         return path
 
@@ -696,16 +796,63 @@ class Strand:
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Fixed fraction for influence
-            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+            # Get control point influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)  # Exponential scaling
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)  # Base influence (0.25-0.5)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)  # Distance boost (1.0-1.5)
+            
+            # COMBINED APPROACH WITH CENTER CONTROL POINT IMPROVEMENTS:
+            # 1. Apply distance multiplier for linear boost
+            # 2. Apply exponential scaling for non-linear response
+            # 3. Use configurable base fraction instead of fixed 1/3
+            # 4. Apply gentler scaling to center control point segments
+            
+            # Apply distance multiplier first (linear boost)
+            boosted_dist_p0_p1 = dist_p0_p1 * dist_multiplier
+            boosted_dist_p1_p2 = dist_p1_p2 * dist_multiplier
+            boosted_dist_p2_p3 = dist_p2_p3 * dist_multiplier
+            boosted_dist_p3_p4 = dist_p3_p4 * dist_multiplier
+            
+            # Use gentler exponent for center control point segments
+            # This prevents the center from becoming too aggressive
+            center_exponent = 1.0 + (exponent - 1.0) * 0.5  # Half the exponential effect for center
+            
+            # Then apply exponential scaling for non-linear response
+            # Normalize to avoid extreme values
+            max_dist = max(boosted_dist_p0_p1, boosted_dist_p1_p2, boosted_dist_p2_p3, boosted_dist_p3_p4, 1.0)
+            
+            # Apply different exponents: full for outer segments, reduced for center segments
+            scaled_dist_p0_p1 = (boosted_dist_p0_p1 / max_dist) ** exponent * boosted_dist_p0_p1
+            scaled_dist_p1_p2 = (boosted_dist_p1_p2 / max_dist) ** center_exponent * boosted_dist_p1_p2  # Gentler
+            scaled_dist_p2_p3 = (boosted_dist_p2_p3 / max_dist) ** center_exponent * boosted_dist_p2_p3  # Gentler
+            scaled_dist_p3_p4 = (boosted_dist_p3_p4 / max_dist) ** exponent * boosted_dist_p3_p4
 
-            # Calculate intermediate control points, incorporating p1 and p3 influence
-            # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Calculate intermediate control points with combined influence
+            # IMPROVED: Different handling for start/end vs center
+            center_damping = 0.85  # Reduce center influence by 15% for stability
+            endpoint_tension = getattr(self, 'endpoint_tension', 1.15)  # Extra tension for endpoints
+            
+            # Start/End control points: Use full influence with tension boost
+            # This makes dragging start/end control points more responsive
+            endpoint_fraction = base_fraction * endpoint_tension  # Boost endpoint influence
+            
+            # Improved calculation using actual control point positions as attractors
+            # This creates more intuitive control point behavior
+            cp1_offset = (p1 - p0) * endpoint_fraction  # Direct vector to control point
+            cp4_offset = (p3 - p4) * endpoint_fraction  # Direct vector from end
+            
+            # For start/end, blend between tangent-based and direct approaches
+            blend_factor = 0.7  # 70% direct, 30% tangent-based for more intuitive control
+            
+            cp1_tangent = start_tangent_normalized * (scaled_dist_p0_p1 * base_fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else QPointF(0, 0)
+            cp1 = p0 + (cp1_offset * blend_factor + cp1_tangent * (1 - blend_factor)) if (cp1_offset.manhattanLength() > 1e-6 or cp1_tangent.manhattanLength() > 1e-6) else p1
+            
+            # Center control points: Use damped influence (gentler)
+            cp2 = p2 - center_tangent_normalized * (scaled_dist_p1_p2 * base_fraction * center_damping) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (scaled_dist_p2_p3 * base_fraction * center_damping) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            
+            cp4_tangent = end_tangent_normalized * (scaled_dist_p3_p4 * base_fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else QPointF(0, 0)
+            cp4 = p4 + (cp4_offset * blend_factor + cp4_tangent * (1 - blend_factor)) if (cp4_offset.manhattanLength() > 1e-6 or cp4_tangent.manhattanLength() > 1e-6) else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
@@ -714,7 +861,44 @@ class Strand:
             path.cubicTo(cp3, cp4, p4)
         else:
             # Standard cubic Bezier curve when third control point is disabled or not manually positioned
-            path.cubicTo(self.control_point1, self.control_point2, self.end)
+            # Apply the same curve influence parameters for consistency with shadow path
+            
+            # Get influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            endpoint_tension = getattr(self, 'endpoint_tension', 1.15)
+            
+            # Calculate influenced control points
+            line_vec = self.end - self.start
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0.001:
+                # Apply the improved control point influence
+                cp1_vector = self.control_point1 - self.start
+                cp2_vector = self.control_point2 - self.end
+                
+                # Apply all influence factors
+                cp1_influenced = self.start + cp1_vector * base_fraction * dist_multiplier * endpoint_tension
+                cp2_influenced = self.end + cp2_vector * base_fraction * dist_multiplier * endpoint_tension
+                
+                # Apply exponential response if needed
+                if exponent != 1.0:
+                    cp1_dist = math.sqrt(cp1_vector.x()**2 + cp1_vector.y()**2)
+                    cp2_dist = math.sqrt(cp2_vector.x()**2 + cp2_vector.y()**2)
+                    
+                    if cp1_dist > 0.001:
+                        cp1_scale = (cp1_dist / line_length) ** exponent * (line_length / cp1_dist)
+                        cp1_influenced = self.start + (cp1_influenced - self.start) * cp1_scale
+                    
+                    if cp2_dist > 0.001:
+                        cp2_scale = (cp2_dist / line_length) ** exponent * (line_length / cp2_dist)
+                        cp2_influenced = self.end + (cp2_influenced - self.end) * cp2_scale
+                
+                path.cubicTo(cp1_influenced, cp2_influenced, self.end)
+            else:
+                # Fallback for zero-length line
+                path.cubicTo(self.control_point1, self.control_point2, self.end)
         
         return path
 
@@ -822,13 +1006,28 @@ class Strand:
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
             
-            fraction = 1.0 / 3.0
+            # Get control point influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             
-            # Calculate intermediate control points
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Apply distance multiplier and exponential scaling
+            boosted_dist_p0_p1 = dist_p0_p1 * dist_multiplier
+            boosted_dist_p1_p2 = dist_p1_p2 * dist_multiplier
+            boosted_dist_p2_p3 = dist_p2_p3 * dist_multiplier
+            boosted_dist_p3_p4 = dist_p3_p4 * dist_multiplier
+            
+            max_dist = max(boosted_dist_p0_p1, boosted_dist_p1_p2, boosted_dist_p2_p3, boosted_dist_p3_p4, 1.0)
+            scaled_dist_p0_p1 = (boosted_dist_p0_p1 / max_dist) ** exponent * boosted_dist_p0_p1
+            scaled_dist_p1_p2 = (boosted_dist_p1_p2 / max_dist) ** exponent * boosted_dist_p1_p2
+            scaled_dist_p2_p3 = (boosted_dist_p2_p3 / max_dist) ** exponent * boosted_dist_p2_p3
+            scaled_dist_p3_p4 = (boosted_dist_p3_p4 / max_dist) ** exponent * boosted_dist_p3_p4
+            
+            # Calculate intermediate control points with combined influence
+            cp1 = p0 + start_tangent_normalized * (scaled_dist_p0_p1 * base_fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (scaled_dist_p1_p2 * base_fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (scaled_dist_p2_p3 * base_fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (scaled_dist_p3_p4 * base_fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             if t <= 0.5:
                 # First segment: start to center
@@ -931,13 +1130,28 @@ class Strand:
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
             
-            fraction = 1.0 / 3.0
+            # Get control point influence parameters
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             
-            # Calculate intermediate control points
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Apply distance multiplier and exponential scaling
+            boosted_dist_p0_p1 = dist_p0_p1 * dist_multiplier
+            boosted_dist_p1_p2 = dist_p1_p2 * dist_multiplier
+            boosted_dist_p2_p3 = dist_p2_p3 * dist_multiplier
+            boosted_dist_p3_p4 = dist_p3_p4 * dist_multiplier
+            
+            max_dist = max(boosted_dist_p0_p1, boosted_dist_p1_p2, boosted_dist_p2_p3, boosted_dist_p3_p4, 1.0)
+            scaled_dist_p0_p1 = (boosted_dist_p0_p1 / max_dist) ** exponent * boosted_dist_p0_p1
+            scaled_dist_p1_p2 = (boosted_dist_p1_p2 / max_dist) ** exponent * boosted_dist_p1_p2
+            scaled_dist_p2_p3 = (boosted_dist_p2_p3 / max_dist) ** exponent * boosted_dist_p2_p3
+            scaled_dist_p3_p4 = (boosted_dist_p3_p4 / max_dist) ** exponent * boosted_dist_p3_p4
+            
+            # Calculate intermediate control points with combined influence
+            cp1 = p0 + start_tangent_normalized * (scaled_dist_p0_p1 * base_fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (scaled_dist_p1_p2 * base_fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (scaled_dist_p2_p3 * base_fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (scaled_dist_p3_p4 * base_fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             if t <= 0.5:
                 # First segment: start to center
@@ -990,19 +1204,46 @@ class Strand:
 
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
-        # Small values near 0 and 1 to get tangents that include control points
-        t_start = 0.0
-        t_end = 1.0
+        # IMPROVED: Smart tangent calculation for proper side line angles
+        
+        # For start side line: Check if control point is at default/coincident position
+        tangent_start = self.control_point1 - self.start
+        if tangent_start.manhattanLength() < 0.001:
+            # Control point coincides with start - need to look ahead on the curve
+            # Use the actual curve tangent at a small t value to get proper direction
+            # This gives us the true curve direction even when control points are at defaults
+            t_lookahead = 0.01  # Look slightly ahead on the curve
+            point_ahead = self.point_at(t_lookahead)
+            tangent_start = point_ahead - self.start
+            
+            if tangent_start.manhattanLength() < 0.001:
+                # Still no direction - use direction to second control point or end
+                if (self.control_point2 - self.start).manhattanLength() > 0.001:
+                    tangent_start = self.control_point2 - self.start
+                else:
+                    tangent_start = self.end - self.start
+            
+        # For end side line: Check if control point is at default/coincident position
+        tangent_end = self.end - self.control_point2
+        if tangent_end.manhattanLength() < 0.001:
+            # Control point coincides with end - need to look back on the curve
+            # Use the actual curve tangent at a small t value from the end
+            t_lookback = 0.99  # Look slightly back from the end
+            point_before = self.point_at(t_lookback)
+            tangent_end = self.end - point_before
+            
+            if tangent_end.manhattanLength() < 0.001:
+                # Still no direction - use direction from first control point or start
+                if (self.end - self.control_point1).manhattanLength() > 0.001:
+                    tangent_end = self.end - self.control_point1
+                else:
+                    tangent_end = self.end - self.start
 
-        # Compute tangents near the start and end
-        tangent_start = self.calculate_cubic_tangent(t_start)
-        tangent_end = self.calculate_cubic_tangent(t_end)
-
-        # Handle zero-length tangent vectors
-        if tangent_start.manhattanLength() == 0:
-            tangent_start = self.end - self.start
-        if tangent_end.manhattanLength() == 0:
-            tangent_end = self.start - self.end
+        # Additional safety check for zero tangents
+        if tangent_start.manhattanLength() < 0.001:
+            tangent_start = QPointF(1, 0)  # Default to horizontal
+        if tangent_end.manhattanLength() < 0.001:
+            tangent_end = QPointF(1, 0)  # Default to horizontal
 
         # Calculate angles of tangents
         angle_start = math.atan2(tangent_start.y(), tangent_start.x())
@@ -1745,11 +1986,13 @@ class Strand:
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.start_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
@@ -1786,11 +2029,13 @@ class Strand:
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.end_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.end_circle_stroke_color.alpha() > 0:
@@ -1835,9 +2080,10 @@ class Strand:
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(ring_half)
 
-            # Draw the inner circle (fill) over everything
-            painter.setBrush(self.color)
-            painter.drawPath(inner_full)
+            # Draw the inner circle (fill) over everything only if visible
+            if self.start_circle_stroke_color.alpha() > 0:
+                painter.setBrush(self.color)
+                painter.drawPath(inner_full)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
@@ -1881,9 +2127,10 @@ class Strand:
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(ring_half)
 
-            # Draw the inner circle (fill) over everything
-            painter.setBrush(self.color)
-            painter.drawPath(inner_full)
+            # Draw the inner circle (fill) over everything only if visible
+            if self.end_circle_stroke_color.alpha() > 0:
+                painter.setBrush(self.color)
+                painter.drawPath(inner_full)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.end_circle_stroke_color.alpha() > 0:
@@ -2608,11 +2855,12 @@ class Strand:
                     painter.setBrush(self.start_circle_stroke_color)
                     #painter.drawPath(outer_circle)
                 
-                # Draw the inner circle (fill) for closed connections
-                inner_circle = QPainterPath()
-                inner_circle.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-                painter.setBrush(self.color)
-                painter.drawPath(inner_circle)
+                # Draw the inner circle (fill) for closed connections only if visible
+                if self.start_circle_stroke_color.alpha() > 0:
+                    inner_circle = QPainterPath()
+                    inner_circle.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                    painter.setBrush(self.color)
+                    painter.drawPath(inner_circle)
             else:
                 # Create the masking rectangle for half circle
                 mask_rect = QPainterPath()
@@ -2693,11 +2941,12 @@ class Strand:
                         painter.setBrush(self.end_circle_stroke_color)
                         painter.drawPath(outer_circle_end)
                     
-                    # Draw the inner circle (fill) for closed connections
-                    inner_circle_end = QPainterPath()
-                    inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                    painter.setBrush(self.color)
-                    painter.drawPath(inner_circle_end)
+                    # Draw the inner circle (fill) for closed connections only if visible
+                    if self.end_circle_stroke_color.alpha() > 0:
+                        inner_circle_end = QPainterPath()
+                        inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                        painter.setBrush(self.color)
+                        painter.drawPath(inner_circle_end)
                 else:
                     # Creating Outer Circle Half-Circle
                     mask_rect_end = QPainterPath()
@@ -2817,11 +3066,12 @@ class Strand:
                         painter.setBrush(self.end_circle_stroke_color)
                         painter.drawPath(outer_circle_end)
                     
-                    # Draw the inner circle (fill) for closed connections
-                    inner_circle_end = QPainterPath()
-                    inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-                    painter.setBrush(self.color)
-                    painter.drawPath(inner_circle_end)
+                    # Draw the inner circle (fill) for closed connections only if visible
+                    if self.end_circle_stroke_color.alpha() > 0:
+                        inner_circle_end = QPainterPath()
+                        inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                        painter.setBrush(self.color)
+                        painter.drawPath(inner_circle_end)
                 else:
                     # Creating Outer Circle Half-Circle
                     mask_rect_end = QPainterPath()
@@ -2884,11 +3134,13 @@ class Strand:
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.start_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
@@ -2925,11 +3177,13 @@ class Strand:
                 painter.setBrush(self.stroke_color)
                 painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.end_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.end_circle_stroke_color.alpha() > 0:
@@ -2967,11 +3221,13 @@ class Strand:
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.start_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
@@ -3006,11 +3262,13 @@ class Strand:
             painter.setBrush(self.stroke_color)
             painter.drawPath(clip)
 
-            # Draw the inner circle (fill)
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            painter.setBrush(self.color)
-            painter.drawPath(inner)
+            # Draw the inner circle (fill) only if stroke is visible
+            # When stroke is transparent, don't draw any part of the circle
+            if self.end_circle_stroke_color.alpha() > 0:
+                inner = QPainterPath()
+                inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                painter.setBrush(self.color)
+                painter.drawPath(inner)
 
             # Draw side line that covers the inner circle (only when stroke is visible)
             if self.end_circle_stroke_color.alpha() > 0:

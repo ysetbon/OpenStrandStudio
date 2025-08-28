@@ -1455,6 +1455,69 @@ class SettingsDialog(QDialog):
             self.blur_radius_layout.addWidget(self.blur_radius_spinbox)
             self.blur_radius_layout.addStretch()
         general_layout.addLayout(self.blur_radius_layout)
+        
+        # Add Control Point Base Fraction
+        self.base_fraction_layout = QHBoxLayout()
+        self.base_fraction_label = QLabel(_['base_fraction'] if 'base_fraction' in _ else "Control Point Influence:")
+        self.base_fraction_spinbox = QDoubleSpinBox()
+        self.base_fraction_spinbox.setRange(0.25, 0.5)
+        self.base_fraction_spinbox.setSingleStep(0.05)
+        self.base_fraction_spinbox.setDecimals(2)
+        default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 0.4) if self.canvas else 0.4
+        self.base_fraction_spinbox.setValue(default_base_fraction)
+        self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.333=original, 0.4=default, 0.5=strong)")
+        
+        if self.is_rtl_language(self.current_language):
+            self.base_fraction_layout.addStretch()
+            self.base_fraction_layout.addWidget(self.base_fraction_spinbox)
+            self.base_fraction_layout.addWidget(self.base_fraction_label)
+        else:
+            self.base_fraction_layout.addWidget(self.base_fraction_label)
+            self.base_fraction_layout.addWidget(self.base_fraction_spinbox)
+            self.base_fraction_layout.addStretch()
+        general_layout.addLayout(self.base_fraction_layout)
+        
+        # Add Distance Multiplier
+        self.distance_mult_layout = QHBoxLayout()
+        self.distance_mult_label = QLabel(_['distance_multiplier'] if 'distance_multiplier' in _ else "Distance Boost:")
+        self.distance_mult_spinbox = QDoubleSpinBox()
+        self.distance_mult_spinbox.setRange(1.0, 10.0)
+        self.distance_mult_spinbox.setSingleStep(0.5)
+        self.distance_mult_spinbox.setDecimals(1)
+        default_distance_mult = getattr(self.canvas, 'distance_multiplier', 1.2) if self.canvas else 1.2
+        self.distance_mult_spinbox.setValue(default_distance_mult)
+        self.distance_mult_spinbox.setToolTip(_['distance_mult_tooltip'] if 'distance_mult_tooltip' in _ else "Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost, 10.0=10x boost)")
+        
+        if self.is_rtl_language(self.current_language):
+            self.distance_mult_layout.addStretch()
+            self.distance_mult_layout.addWidget(self.distance_mult_spinbox)
+            self.distance_mult_layout.addWidget(self.distance_mult_label)
+        else:
+            self.distance_mult_layout.addWidget(self.distance_mult_label)
+            self.distance_mult_layout.addWidget(self.distance_mult_spinbox)
+            self.distance_mult_layout.addStretch()
+        general_layout.addLayout(self.distance_mult_layout)
+        
+        # Add Curve Response Exponent
+        self.curve_response_layout = QHBoxLayout()
+        self.curve_response_label = QLabel(_['curve_response'] if 'curve_response' in _ else "Curve Type:")
+        self.curve_response_spinbox = QDoubleSpinBox()
+        self.curve_response_spinbox.setRange(1.0, 3.0)
+        self.curve_response_spinbox.setSingleStep(0.1)
+        self.curve_response_spinbox.setDecimals(1)
+        default_curve_response = getattr(self.canvas, 'curve_response_exponent', 1.5) if self.canvas else 1.5
+        self.curve_response_spinbox.setValue(default_curve_response)
+        self.curve_response_spinbox.setToolTip(_['curve_response_tooltip'] if 'curve_response_tooltip' in _ else "Curve response type: 1.0=linear, 1.5=mild quadratic, 2.0=quadratic, 3.0=cubic")
+        
+        if self.is_rtl_language(self.current_language):
+            self.curve_response_layout.addStretch()
+            self.curve_response_layout.addWidget(self.curve_response_spinbox)
+            self.curve_response_layout.addWidget(self.curve_response_label)
+        else:
+            self.curve_response_layout.addWidget(self.curve_response_label)
+            self.curve_response_layout.addWidget(self.curve_response_spinbox)
+            self.curve_response_layout.addStretch()
+        general_layout.addLayout(self.curve_response_layout)
 
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
@@ -2758,6 +2821,31 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.num_steps = self.num_steps
             self.canvas.max_blur_radius = self.max_blur_radius
+            
+        # Apply Control Point Influence Settings
+        base_fraction_value = self.base_fraction_spinbox.value()
+        distance_mult_value = self.distance_mult_spinbox.value()
+        curve_response_value = self.curve_response_spinbox.value()
+        
+        if self.canvas:
+            self.canvas.control_point_base_fraction = base_fraction_value
+            self.canvas.distance_multiplier = distance_mult_value
+            self.canvas.curve_response_exponent = curve_response_value
+            
+            # Update all existing strands with new control point parameters
+            for strand in self.canvas.strands:
+                strand.control_point_base_fraction = base_fraction_value
+                strand.distance_multiplier = distance_mult_value
+                strand.curve_response_exponent = curve_response_value
+                
+                # Update attached strands as well
+                for attached in strand.attached_strands:
+                    attached.control_point_base_fraction = base_fraction_value
+                    attached.distance_multiplier = distance_mult_value
+                    attached.curve_response_exponent = curve_response_value
+                    
+                # Trigger shape update to apply new parameters
+                strand.update_shape()
 
         # Apply Extension Line Settings
         self.extension_length = self.extension_length_spinbox.value()

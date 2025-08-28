@@ -1,0 +1,136 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": true,
+      "is_start_side": true,
+      "start": {
+        "x": 400.0,
+        "y": 300.0
+      },
+      "end": {
+        "x": 600.0,
+        "y": 300.0
+      },
+      "width": 46.0,
+      "stroke_width": 4.5,
+      "color": {
+        "r": 100,
+        "g": 150,
+        "b": 255,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "has_circles": [
+        false,
+        false
+      ],
+      "control_points": [
+        {
+          "x": 466.7,
+          "y": 300.0
+        },
+        {
+          "x": 533.3,
+          "y": 300.0
+        }
+      ],
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "is_hidden": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "manual_circle_visibility": [
+        null,
+        null
+      ]
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": false,
+      "attached_to": "1_1",
+      "attachment_side": 1,
+      "angle": 45.0,
+      "length": 200.0,
+      "start": {
+        "x": 600.0,
+        "y": 300.0
+      },
+      "end": {
+        "x": 741.4,
+        "y": 441.4
+      },
+      "width": 46.0,
+      "stroke_width": 4.5,
+      "color": {
+        "r": 100,
+        "g": 150,
+        "b": 255,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 255
+      },
+      "has_circles": [
+        false,
+        false
+      ],
+      "control_points": [
+        {
+          "x": 647.1,
+          "y": 347.1
+        },
+        {
+          "x": 694.3,
+          "y": 394.3
+        }
+      ],
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "is_hidden": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "manual_circle_visibility": [
+        null,
+        null
+      ]
+    }
+  ],
+  "groups": {},
+  "selected_strand_name": null,
+  "locked_layers": [],
+  "lock_mode": false,
+  "shadow_enabled": true,
+  "show_control_points": true
+}

@@ -34,25 +34,57 @@ When exporting to images, ensure these canvas settings:
 
 ### 3. Color Conventions
 
-#### Layer Naming and Colors
-**CRITICAL RULE**: All strands in the same set must use the same color!
+#### Layer Naming and Strand Types
+**CRITICAL RULES**: 
+1. All strands in the same set must use the same color!
+2. **STRAND TYPE CONVENTION**:
+   - `x_1` (e.g., `1_1`, `2_1`, `3_1`) = Main Strand (type: "Strand")
+   - `x_y` where y ≠ 1 (e.g., `1_2`, `1_3`, `2_2`) = AttachedStrand (type: "AttachedStrand")
+
+**IMPORTANT FOR AttachedStrands**:
+- MUST have `type: "AttachedStrand"`
+- MUST have `attached_to` field (parent strand layer_name)
+- MUST have `attachment_side` (0=start of parent, 1=end of parent)
+- MUST have `angle` (degrees from parent's end)
+- MUST have `length` (length of the attached strand)
+- **STILL MUST HAVE `start` and `end` coordinates** (calculated from parent position + angle + length)
+- Can be chained: 1_3 can attach to 1_2, which attaches to 1_1
 
 Examples:
-- `1_1`, `1_2`, `1_3` → All use the same color (e.g., blue)
-- `2_1`, `2_2`, `2_3` → All use the same color (e.g., red)
-- `3_1`, `3_2`, `3_3` → All use the same color (e.g., green)
+- `1_1` → Main Strand (blue) with start/end coordinates
+- `1_2` → AttachedStrand to `1_1` (same blue) with start/end AND attachment info
+- `1_3` → AttachedStrand to `1_2` (same blue) forming a chain
+- `2_1` → Main Strand (red)
+- `2_2` → AttachedStrand to `2_1` (same red)
 
 ```json
-// Correct: Both 1_x strands use same color
+// Correct structure with AttachedStrand - COMPLETE EXAMPLE
 "strands": [
   {
+    "type": "Strand",  // Main strand
     "layer_name": "1_1",
     "color": {"r": 100, "g": 150, "b": 255, "a": 255},  // Blue
+    "start": {"x": 100.0, "y": 100.0},
+    "end": {"x": 200.0, "y": 200.0},
+    "width": 46.0,
+    "stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
+    "stroke_width": 4.5,
+    "control_points": [{"x": 150.0, "y": 120.0}, {"x": 180.0, "y": 180.0}],
     ...
   },
   {
+    "type": "AttachedStrand",  // MUST be AttachedStrand for x_2, x_3, etc.
     "layer_name": "1_2", 
-    "color": {"r": 100, "g": 150, "b": 255, "a": 255},  // Same blue
+    "color": {"r": 100, "g": 150, "b": 255, "a": 255},  // MUST be same blue
+    "attached_to": "1_1",  // Parent strand layer_name
+    "attachment_side": 1,  // 0=start of parent, 1=end of parent
+    "angle": 45.0,  // Angle in degrees from parent's end
+    "length": 100.0,  // Length of this attached strand
+    "start": {"x": 200.0, "y": 200.0},  // REQUIRED: Calculated from parent's end
+    "end": {"x": 270.7, "y": 270.7},    // REQUIRED: Calculated using angle & length
+    "width": 46.0,
+    "stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
+    "stroke_width": 4.5,
     ...
   }
 ]
@@ -66,6 +98,14 @@ Examples:
 - **`stroke_color`**: Usually black `{"r": 0, "g": 0, "b": 0, "a": 255}`
 - **`has_circles`**: `[start_circle, end_circle]` - Shows circles at endpoints
 - **`shadow_only`**: Must be `false` for normal strands
+
+#### Line Visibility Settings for Clean Export
+- **`start_line_visible`**: Set to `true` (shows side line at start)
+- **`end_line_visible`**: Set to `true` (shows side line at end)
+- **`start_extension_visible`**: Set to `false` (NO extension dashes at start)
+- **`end_extension_visible`**: Set to `false` (NO extension dashes at end)
+- **`start_arrow_visible`**: Set to `false` (no arrow at start)
+- **`end_arrow_visible`**: Set to `false` (no arrow at end)
 
 #### Connections
 - **`closed_connections`**: `[start_closed, end_closed]` - Indicates if endpoints are connected

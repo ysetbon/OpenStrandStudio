@@ -860,6 +860,10 @@ class AttachMode(QObject):
         new_strand.stroke_color = parent_strand.stroke_color  # Copy stroke color from parent
         new_strand.set_number = parent_strand.set_number
         new_strand.is_start_side = False
+        # Apply control point influence parameters from canvas settings
+        new_strand.curve_response_exponent = self.canvas.curve_response_exponent
+        new_strand.control_point_base_fraction = self.canvas.control_point_base_fraction
+        new_strand.distance_multiplier = self.canvas.distance_multiplier
         
         # Ensure the color is properly set in the canvas's color management system
         if hasattr(self.canvas, 'strand_colors'):

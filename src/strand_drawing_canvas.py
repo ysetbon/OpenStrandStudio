@@ -103,6 +103,10 @@ class StrandDrawingCanvas(QWidget):
         # --- Load Shadow Blur Settings --- 
         self.num_steps = 3 # Default
         self.max_blur_radius = 29.99 # Default
+        # Control point influence parameters
+        self.curve_response_exponent = 1.5 # Default exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
+        self.control_point_base_fraction = 0.4 # Default base fraction (was 0.333, now 0.4 for 20% more influence)
+        self.distance_multiplier = 1.2 # Default distance boost (1.0=no boost, up to 10.0=10x boost)
         self.load_shadow_blur_settings() # Call helper to load from file
         # --- End Load Shadow Blur Settings ---
         # In strand_drawing_canvas.py
@@ -825,6 +829,10 @@ class StrandDrawingCanvas(QWidget):
         new_strand = Strand(start, end, self.strand_width, self.default_strand_color, self.default_stroke_color, self.stroke_width)
         new_strand.set_number = set_number
         new_strand.layer_name = f"{set_number}_{len([s for s in self.strands if s.set_number == set_number]) + 1}"
+        # Apply control point influence parameters from canvas settings
+        new_strand.curve_response_exponent = self.curve_response_exponent
+        new_strand.control_point_base_fraction = self.control_point_base_fraction
+        new_strand.distance_multiplier = self.distance_multiplier
         # Set the shadow color to the default shadow color
         if hasattr(self, 'default_shadow_color') and self.default_shadow_color:
             # Create a fresh QColor instance to avoid reference issues
@@ -4033,6 +4041,10 @@ class StrandDrawingCanvas(QWidget):
             new_strand.set_color(self.strand_colors[self.new_strand_set_number])
             new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
             new_strand.is_start_side = True
+            # Apply control point influence parameters from canvas settings
+            new_strand.curve_response_exponent = self.curve_response_exponent
+            new_strand.control_point_base_fraction = self.control_point_base_fraction
+            new_strand.distance_multiplier = self.distance_multiplier
             # Set the shadow color to the default shadow color
             new_strand.shadow_color = self.default_shadow_color
             

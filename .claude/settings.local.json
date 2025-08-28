@@ -62,7 +62,22 @@
       "Bash(conda:*)",
       "Bash(..venvScriptsActivate.ps1)",
       "Bash(echo $PROFILE)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(../src/build_env/Scripts/python.exe ai_json_generator.py)",
+      "Bash(build_env/Scripts/pip.exe install requests)",
+      "Bash(../src/build_env/Scripts/python.exe generate_w_shape.py)",
+      "Bash(../src/build_env/Scripts/python.exe generate_w_shape_with_ai.py)",
+      "Bash(../src/build_env/Scripts/python.exe generate_w_shape_attached.py)",
+      "Bash(../src/build_env/Scripts/python.exe test_guidelines_integration.py)",
+      "Bash(../src/build_env/Scripts/python.exe test_guidelines_simple.py)",
+      "Bash(../src/build_env/Scripts/python.exe test_w_shape_gpt5.py)",
+      "Bash(../src/build_env/Scripts/python.exe test_ai_generator.py)",
+      "Bash(../src/build_env/Scripts/python.exe -c \"from export_json_to_image import process_json_file; process_json_file(''output/test_simple.json'', ''output/test_simple.png'')\")",
+      "Bash(../src/build_env/Scripts/python.exe test_no_dash_lines.py)",
+      "Bash(../src/build_env/Scripts/python.exe -c \"from export_json_to_image import process_json_file; process_json_file(''output/test_simple.json'', ''output/test_simple_clean.png'')\")",
+      "Bash(../src/build_env/Scripts/python.exe -c \"from export_json_to_image import process_json_file; process_json_file(''output/test_simple.json'', ''output/test_simple_correct.png'')\")",
+      "Bash(../src/build_env/Scripts/python.exe ai_strand_generator.py --test)",
+      "Bash(../src/build_env/Scripts/pip.exe install anthropic)"
     ],
     "deny": [],
     "additionalDirectories": [

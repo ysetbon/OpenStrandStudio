@@ -1102,6 +1102,33 @@ class SettingsDialog(QDialog):
                                 self.max_blur_radius = float(line.split(':', 1)[1].strip())
                             except ValueError:
                                 pass
+                        elif line.startswith('ControlPointBaseFraction:'):
+                            try:
+                                value = float(line.split(':', 1)[1].strip())
+                                # Store the value to apply later after UI is created
+                                self.loaded_base_fraction = value
+                                if self.canvas:
+                                    self.canvas.control_point_base_fraction = value
+                            except ValueError:
+                                pass
+                        elif line.startswith('DistanceMultiplier:'):
+                            try:
+                                value = float(line.split(':', 1)[1].strip())
+                                # Store the value to apply later after UI is created
+                                self.loaded_distance_multiplier = value
+                                if self.canvas:
+                                    self.canvas.distance_multiplier = value
+                            except ValueError:
+                                pass
+                        elif line.startswith('CurveResponseExponent:'):
+                            try:
+                                value = float(line.split(':', 1)[1].strip())
+                                # Store the value to apply later after UI is created
+                                self.loaded_curve_response = value
+                                if self.canvas:
+                                    self.canvas.curve_response_exponent = value
+                            except ValueError:
+                                pass
                         elif line.startswith('ExtensionLength:'):
                             try:
                                 self.extension_length = float(line.split(':', 1)[1].strip())
@@ -1460,12 +1487,16 @@ class SettingsDialog(QDialog):
         self.base_fraction_layout = QHBoxLayout()
         self.base_fraction_label = QLabel(_['base_fraction'] if 'base_fraction' in _ else "Control Point Influence:")
         self.base_fraction_spinbox = QDoubleSpinBox()
-        self.base_fraction_spinbox.setRange(0.25, 0.5)
+        self.base_fraction_spinbox.setRange(0.25, 3.0)
         self.base_fraction_spinbox.setSingleStep(0.05)
         self.base_fraction_spinbox.setDecimals(2)
-        default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 0.4) if self.canvas else 0.4
-        self.base_fraction_spinbox.setValue(default_base_fraction)
-        self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.333=original, 0.4=default, 0.5=strong)")
+        # Use loaded value if it exists, otherwise use canvas value or default
+        if hasattr(self, 'loaded_base_fraction'):
+            self.base_fraction_spinbox.setValue(self.loaded_base_fraction)
+        else:
+            default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 0.4) if self.canvas else 0.4
+            self.base_fraction_spinbox.setValue(default_base_fraction)
+        self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.4=default, 1.0=normal, 3.0=very strong)")
         
         if self.is_rtl_language(self.current_language):
             self.base_fraction_layout.addStretch()
@@ -1484,8 +1515,12 @@ class SettingsDialog(QDialog):
         self.distance_mult_spinbox.setRange(1.0, 10.0)
         self.distance_mult_spinbox.setSingleStep(0.5)
         self.distance_mult_spinbox.setDecimals(1)
-        default_distance_mult = getattr(self.canvas, 'distance_multiplier', 1.2) if self.canvas else 1.2
-        self.distance_mult_spinbox.setValue(default_distance_mult)
+        # Use loaded value if it exists, otherwise use canvas value or default
+        if hasattr(self, 'loaded_distance_multiplier'):
+            self.distance_mult_spinbox.setValue(self.loaded_distance_multiplier)
+        else:
+            default_distance_mult = getattr(self.canvas, 'distance_multiplier', 1.2) if self.canvas else 1.2
+            self.distance_mult_spinbox.setValue(default_distance_mult)
         self.distance_mult_spinbox.setToolTip(_['distance_mult_tooltip'] if 'distance_mult_tooltip' in _ else "Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost, 10.0=10x boost)")
         
         if self.is_rtl_language(self.current_language):
@@ -1505,8 +1540,12 @@ class SettingsDialog(QDialog):
         self.curve_response_spinbox.setRange(1.0, 3.0)
         self.curve_response_spinbox.setSingleStep(0.1)
         self.curve_response_spinbox.setDecimals(1)
-        default_curve_response = getattr(self.canvas, 'curve_response_exponent', 1.5) if self.canvas else 1.5
-        self.curve_response_spinbox.setValue(default_curve_response)
+        # Use loaded value if it exists, otherwise use canvas value or default
+        if hasattr(self, 'loaded_curve_response'):
+            self.curve_response_spinbox.setValue(self.loaded_curve_response)
+        else:
+            default_curve_response = getattr(self.canvas, 'curve_response_exponent', 1.5) if self.canvas else 1.5
+            self.curve_response_spinbox.setValue(default_curve_response)
         self.curve_response_spinbox.setToolTip(_['curve_response_tooltip'] if 'curve_response_tooltip' in _ else "Curve response type: 1.0=linear, 1.5=mild quadratic, 2.0=quadratic, 3.0=cubic")
         
         if self.is_rtl_language(self.current_language):
@@ -1518,6 +1557,23 @@ class SettingsDialog(QDialog):
             self.curve_response_layout.addWidget(self.curve_response_spinbox)
             self.curve_response_layout.addStretch()
         general_layout.addLayout(self.curve_response_layout)
+        
+        # Add Reset Curvature Settings button
+        self.reset_curvature_layout = QHBoxLayout()
+        self.reset_curvature_label = QLabel(_['reset_curvature_settings'] if 'reset_curvature_settings' in _ else "Reset Curvature Settings:")
+        self.reset_curvature_button = QPushButton(_['reset'] if 'reset' in _ else "Reset")
+        self.reset_curvature_button.clicked.connect(self.reset_curvature_settings)
+        self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
+        
+        if self.is_rtl_language(self.current_language):
+            self.reset_curvature_layout.addStretch()
+            self.reset_curvature_layout.addWidget(self.reset_curvature_button)
+            self.reset_curvature_layout.addWidget(self.reset_curvature_label)
+        else:
+            self.reset_curvature_layout.addWidget(self.reset_curvature_label)
+            self.reset_curvature_layout.addWidget(self.reset_curvature_button)
+            self.reset_curvature_layout.addStretch()
+        general_layout.addLayout(self.reset_curvature_layout)
 
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
@@ -2307,7 +2363,8 @@ class SettingsDialog(QDialog):
             *self.video_buttons,  # Unpack video buttons list
             self.load_history_button, # Style history buttons
             self.clear_history_button,
-            self.default_strand_width_button  # ensure this specific button is included
+            self.default_strand_width_button,  # ensure this specific button is included
+            self.reset_curvature_button  # Add the reset curvature button
         ]
         # Include sample buttons if present
         if hasattr(self, 'sample_buttons'):
@@ -2838,14 +2895,29 @@ class SettingsDialog(QDialog):
                 strand.distance_multiplier = distance_mult_value
                 strand.curve_response_exponent = curve_response_value
                 
+                # Invalidate any cached path
+                if hasattr(strand, '_path'):
+                    delattr(strand, '_path')
+                
                 # Update attached strands as well
                 for attached in strand.attached_strands:
                     attached.control_point_base_fraction = base_fraction_value
                     attached.distance_multiplier = distance_mult_value
                     attached.curve_response_exponent = curve_response_value
                     
+                    # Invalidate any cached path
+                    if hasattr(attached, '_path'):
+                        delattr(attached, '_path')
+                    
+                    # Also update shape for attached strands
+                    attached.update_shape()
+                    
                 # Trigger shape update to apply new parameters
                 strand.update_shape()
+            
+            # Force canvas update to redraw with new curvature settings
+            self.canvas.update()
+            self.canvas.repaint()
 
         # Apply Extension Line Settings
         self.extension_length = self.extension_length_spinbox.value()
@@ -2967,6 +3039,9 @@ class SettingsDialog(QDialog):
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
+        self.reset_curvature_label.setText(_['reset_curvature_settings'] if 'reset_curvature_settings' in _ else "Reset Curvature Settings:")
+        self.reset_curvature_button.setText(_['reset'] if 'reset' in _ else "Reset")
+        self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.layer_panel_ok_button.setText(_['ok'])
@@ -3314,6 +3389,10 @@ class SettingsDialog(QDialog):
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
+                # Save curvature settings
+                file.write(f"ControlPointBaseFraction: {self.base_fraction_spinbox.value():.2f}\n")
+                file.write(f"DistanceMultiplier: {self.distance_mult_spinbox.value():.1f}\n")
+                file.write(f"CurveResponseExponent: {self.curve_response_spinbox.value():.1f}\n")
                 # file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
                 file.write(f"ExtensionLength: {self.extension_length}\n")
                 file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
@@ -3347,6 +3426,10 @@ class SettingsDialog(QDialog):
                     local_file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
+                    # Save curvature settings
+                    local_file.write(f"ControlPointBaseFraction: {self.base_fraction_spinbox.value():.2f}\n")
+                    local_file.write(f"DistanceMultiplier: {self.distance_mult_spinbox.value():.1f}\n")
+                    local_file.write(f"CurveResponseExponent: {self.curve_response_spinbox.value():.1f}\n")
                     # local_file.write(f"UseExtendedMask: {str(self.use_extended_mask).lower()}\n")
                     local_file.write(f"ExtensionLength: {self.extension_length}\n")
                     local_file.write(f"ExtensionDashCount: {self.extension_dash_count}\n")
@@ -3675,6 +3758,52 @@ class SettingsDialog(QDialog):
         pixmap.fill(self.shadow_color)
         self.shadow_color_button.setIcon(QIcon(pixmap))
         self.shadow_color_button.setIconSize(pixmap.size())
+        
+    def reset_curvature_settings(self):
+        """Reset all curvature settings to their default values."""
+        # Reset to default values
+        self.base_fraction_spinbox.setValue(0.4)  # Default base fraction
+        self.distance_mult_spinbox.setValue(1.2)  # Default distance multiplier
+        self.curve_response_spinbox.setValue(1.5)  # Default curve response
+        
+        # Apply the reset values to canvas
+        if self.canvas:
+            self.canvas.control_point_base_fraction = 0.4
+            self.canvas.distance_multiplier = 1.2
+            self.canvas.curve_response_exponent = 1.5
+            
+            # Update all existing strands with reset parameters
+            for strand in self.canvas.strands:
+                strand.control_point_base_fraction = 0.4
+                strand.distance_multiplier = 1.2
+                strand.curve_response_exponent = 1.5
+                
+                # Invalidate any cached path
+                if hasattr(strand, '_path'):
+                    delattr(strand, '_path')
+                
+                # Update attached strands as well
+                for attached in strand.attached_strands:
+                    attached.control_point_base_fraction = 0.4
+                    attached.distance_multiplier = 1.2
+                    attached.curve_response_exponent = 1.5
+                    
+                    # Invalidate any cached path
+                    if hasattr(attached, '_path'):
+                        delattr(attached, '_path')
+                    
+                    # Update shape for attached strands
+                    attached.update_shape()
+                    
+                # Trigger shape update to apply new parameters
+                strand.update_shape()
+            
+            # Refresh the canvas
+            self.canvas.update()
+            self.canvas.repaint()
+        
+        # Save the reset settings to file
+        self.save_settings_to_file()
         
     def choose_shadow_color(self):
         """Open a color dialog to choose a new shadow color."""

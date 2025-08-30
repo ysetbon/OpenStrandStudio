@@ -46,6 +46,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Number of steps for the shadow fade effect',
         'shadow_blur_radius': 'Shadow Blur Radius:',
         'shadow_blur_radius_tooltip': 'Shadow blur radius in pixels (range: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Reset Curvature Settings:',
+        'reset': 'Reset',
+        'reset_curvature_tooltip': 'Reset all curvature settings to default values',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -390,6 +393,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Nombre d\'étapes pour l\'effet de fondu d\'ombre',
         'shadow_blur_radius': 'Rayon de flou d\'ombre:',
         'shadow_blur_radius_tooltip': 'Rayon de flou d\'ombre en pixels (plage: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Réinitialiser les paramètres de courbure:',
+        'reset': 'Réinitialiser',
+        'reset_curvature_tooltip': 'Réinitialiser tous les paramètres de courbure aux valeurs par défaut',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>
@@ -731,6 +737,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Anzahl der Schritte für den Schatten-Verlaufseffekt',
         'shadow_blur_radius': 'Schatten-Unschärferadius:',
         'shadow_blur_radius_tooltip': 'Schatten-Unschärferadius in Pixeln (Bereich: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Krümmungseinstellungen zurücksetzen:',
+        'reset': 'Zurücksetzen',
+        'reset_curvature_tooltip': 'Alle Krümmungseinstellungen auf Standardwerte zurücksetzen',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Erklärung der Layer-Statusinformationen:</b><br>
@@ -1066,6 +1075,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Numero di passi per l\'effetto di dissolvenza dell\'ombra',
         'shadow_blur_radius': 'Raggio di sfocatura dell\'ombra:',
         'shadow_blur_radius_tooltip': 'Raggio di sfocatura dell\'ombra in pixel (intervallo: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Ripristina impostazioni curvatura:',
+        'reset': 'Ripristina',
+        'reset_curvature_tooltip': 'Ripristina tutte le impostazioni di curvatura ai valori predefiniti',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Spiegazione delle informazioni sullo stato dei livelli:</b><br>
@@ -1409,6 +1421,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Número de pasos para el efecto de desvanecimiento de sombra',
         'shadow_blur_radius': 'Radio de desenfoque de sombra:',
         'shadow_blur_radius_tooltip': 'Radio de desenfoque de sombra en píxeles (rango: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Restablecer configuración de curvatura:',
+        'reset': 'Restablecer',
+        'reset_curvature_tooltip': 'Restablecer toda la configuración de curvatura a los valores predeterminados',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicación de la Información de Estado de Capas:</b><br>
@@ -1753,6 +1768,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'Número de passos para o efeito de desvanecimento da sombra',
         'shadow_blur_radius': 'Raio de desfoque de sombra:',
         'shadow_blur_radius_tooltip': 'Raio de desfoque da sombra em pixels (faixa: 0.0 - 360.0)',
+        'reset_curvature_settings': 'Redefinir configurações de curvatura:',
+        'reset': 'Redefinir',
+        'reset_curvature_tooltip': 'Redefinir todas as configurações de curvatura para valores padrão',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicação das Informações de Estado das Camadas:</b><br>
@@ -2100,6 +2118,9 @@ translations = {
         'shadow_blur_steps_tooltip': 'מספר צעדים לאפקט דהייה של צל',
         'shadow_blur_radius': 'רדיוס טשטוש צל:',
         'shadow_blur_radius_tooltip': 'רדיוס טשטוש צל בפיקסלים (טווח: 0.0 - 360.0)',
+        'reset_curvature_settings': 'איפוס הגדרות עקמומיות:',
+        'reset': 'איפוס',
+        'reset_curvature_tooltip': 'איפוס כל הגדרות העקמומיות לערכי ברירת המחדל',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>הסבר על מידע מצב השכבות:</b><br>

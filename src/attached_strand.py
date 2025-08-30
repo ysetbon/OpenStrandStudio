@@ -1878,8 +1878,12 @@ class AttachedStrand(Strand):
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Fixed fraction for influence
-            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+            # Get curvature parameters to influence the curve
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            
+            # Apply curvature settings to the fraction
+            fraction = min((1.0 / 3.0) * base_fraction * dist_multiplier, 0.45)  # Cap at 0.45
 
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
@@ -1896,7 +1900,90 @@ class AttachedStrand(Strand):
             path.cubicTo(cp3, cp4, p4)
         else:
             # Standard cubic Bezier curve when third control point is disabled or not manually positioned
-            path.cubicTo(self.control_point1, self.control_point2, self.end)
+            # Check if control points are at their default positions (both at start - not moved)
+            cp1_at_start = (abs(self.control_point1.x() - self.start.x()) < 1.0 and 
+                           abs(self.control_point1.y() - self.start.y()) < 1.0)
+            cp2_at_start = (abs(self.control_point2.x() - self.start.x()) < 1.0 and 
+                           abs(self.control_point2.y() - self.start.y()) < 1.0)
+            
+            if cp1_at_start and cp2_at_start:
+                # Control points haven't been moved (both still at start) - draw a straight line
+                path.lineTo(self.end)
+            else:
+                # Control points have been moved - treat as if there's a virtual 3rd control point
+                # at the center between the two control points
+                
+                # Extract the key points
+                p0 = self.start
+                p1 = self.control_point1
+                # Virtual center point between the two control points
+                p2 = QPointF(
+                    (self.control_point1.x() + self.control_point2.x()) / 2,
+                    (self.control_point1.y() + self.control_point2.y()) / 2
+                )
+                p3 = self.control_point2
+                p4 = self.end
+                
+                # Use the same logic as 3rd control point
+                # Calculate tangent at the center point for smooth transition
+                in_vector = p2 - p1
+                out_vector = p3 - p2
+                
+                # Normalize and average for center tangent
+                def normalize_vector(v):
+                    length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                    if length < 0.001:
+                        return QPointF(0, 0)
+                    return QPointF(v.x() / length, v.y() / length)
+                
+                in_norm = normalize_vector(in_vector)
+                out_norm = normalize_vector(out_vector)
+                center_tangent = QPointF(
+                    (in_norm.x() + out_norm.x()) * 0.5,
+                    (in_norm.y() + out_norm.y()) * 0.5
+                )
+                
+                # Calculate distances for scaling
+                dist1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+                dist2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+                dist3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+                dist4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
+                
+                # Get curvature parameters to influence the curve
+                base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+                dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+                exponent = getattr(self, 'curve_response_exponent', 1.5)
+                
+                # Apply curvature settings to the fractions
+                # Scale the default 0.666 and 0.333 by the curvature parameters
+                influence_factor = base_fraction * dist_multiplier
+                frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
+                frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+                
+                # Create control points for smooth bezier segments
+                # These ensure the curve passes smoothly through all 5 control points
+                cp1 = QPointF(
+                    p0.x() + (p1.x() - p0.x()) * frac1,
+                    p0.y() + (p1.y() - p0.y()) * frac1
+                )
+                cp2 = QPointF(
+                    p2.x() - center_tangent.x() * dist2 * frac2,
+                    p2.y() - center_tangent.y() * dist2 * frac2
+                )
+                cp3 = QPointF(
+                    p2.x() + center_tangent.x() * dist3 * frac2,
+                    p2.y() + center_tangent.y() * dist3 * frac2
+                )
+                cp4 = QPointF(
+                    p4.x() + (p3.x() - p4.x()) * frac2,
+                    p4.y() + (p3.y() - p4.y()) * frac2
+                )
+                
+                # First segment: start to center
+                path.cubicTo(cp1, cp2, p2)
+                
+                # Second segment: center to end
+                path.cubicTo(cp3, cp4, p4)
         
         # Add a line to the extended end point
         path.lineTo(self.end)
@@ -1969,8 +2056,12 @@ class AttachedStrand(Strand):
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
 
-            # Fixed fraction for influence
-            fraction = 1.0 / 3.0 # Experiment with this value (e.g., 0.5, 0.4)
+            # Get curvature parameters to influence the curve
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            
+            # Apply curvature settings to the fraction
+            fraction = min((1.0 / 3.0) * base_fraction * dist_multiplier, 0.45)  # Cap at 0.45
 
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
@@ -1987,7 +2078,90 @@ class AttachedStrand(Strand):
             path.cubicTo(cp3, cp4, p4)
         else:
             # Standard cubic Bezier curve when third control point is disabled or not manually positioned
-            path.cubicTo(self.control_point1, self.control_point2, self.end)
+            # Check if control points are at their default positions (both at start - not moved)
+            cp1_at_start = (abs(self.control_point1.x() - self.start.x()) < 1.0 and 
+                           abs(self.control_point1.y() - self.start.y()) < 1.0)
+            cp2_at_start = (abs(self.control_point2.x() - self.start.x()) < 1.0 and 
+                           abs(self.control_point2.y() - self.start.y()) < 1.0)
+            
+            if cp1_at_start and cp2_at_start:
+                # Control points haven't been moved (both still at start) - draw a straight line
+                path.lineTo(self.end)
+            else:
+                # Control points have been moved - treat as if there's a virtual 3rd control point
+                # at the center between the two control points
+                
+                # Extract the key points
+                p0 = self.start
+                p1 = self.control_point1
+                # Virtual center point between the two control points
+                p2 = QPointF(
+                    (self.control_point1.x() + self.control_point2.x()) / 2,
+                    (self.control_point1.y() + self.control_point2.y()) / 2
+                )
+                p3 = self.control_point2
+                p4 = self.end
+                
+                # Use the same logic as 3rd control point
+                # Calculate tangent at the center point for smooth transition
+                in_vector = p2 - p1
+                out_vector = p3 - p2
+                
+                # Normalize and average for center tangent
+                def normalize_vector(v):
+                    length = math.sqrt(v.x() * v.x() + v.y() * v.y())
+                    if length < 0.001:
+                        return QPointF(0, 0)
+                    return QPointF(v.x() / length, v.y() / length)
+                
+                in_norm = normalize_vector(in_vector)
+                out_norm = normalize_vector(out_vector)
+                center_tangent = QPointF(
+                    (in_norm.x() + out_norm.x()) * 0.5,
+                    (in_norm.y() + out_norm.y()) * 0.5
+                )
+                
+                # Calculate distances for scaling
+                dist1 = math.sqrt((p1.x() - p0.x())**2 + (p1.y() - p0.y())**2)
+                dist2 = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+                dist3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
+                dist4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
+                
+                # Get curvature parameters to influence the curve
+                base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+                dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+                exponent = getattr(self, 'curve_response_exponent', 1.5)
+                
+                # Apply curvature settings to the fractions
+                # Scale the default 0.666 and 0.333 by the curvature parameters
+                influence_factor = base_fraction * dist_multiplier
+                frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
+                frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+                
+                # Create control points for smooth bezier segments
+                # These ensure the curve passes smoothly through all 5 control points
+                cp1 = QPointF(
+                    p0.x() + (p1.x() - p0.x()) * frac1,
+                    p0.y() + (p1.y() - p0.y()) * frac1
+                )
+                cp2 = QPointF(
+                    p2.x() - center_tangent.x() * dist2 * frac2,
+                    p2.y() - center_tangent.y() * dist2 * frac2
+                )
+                cp3 = QPointF(
+                    p2.x() + center_tangent.x() * dist3 * frac2,
+                    p2.y() + center_tangent.y() * dist3 * frac2
+                )
+                cp4 = QPointF(
+                    p4.x() + (p3.x() - p4.x()) * frac2,
+                    p4.y() + (p3.y() - p4.y()) * frac2
+                )
+                
+                # First segment: start to center
+                path.cubicTo(cp1, cp2, p2)
+                
+                # Second segment: center to end
+                path.cubicTo(cp3, cp4, p4)
         
         return path
     def update_angle_length_from_geometry(self):

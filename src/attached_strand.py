@@ -215,6 +215,37 @@ class AttachedStrand(Strand):
         self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
         self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
 
+    def force_path_update(self):
+        """Force the path to be recalculated without modifying control points."""
+        # Clear any cached path
+        if hasattr(self, '_path'):
+            delattr(self, '_path')
+        
+        # Special handling for 3rd control point strands
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            # For 3rd control point strands, we need to ensure the curvature parameters
+            # are properly applied to the curve calculation
+            # Also call update_shape() to ensure all aspects are updated
+            self.update_shape()
+        else:
+            # For regular strands, just recalculate the path
+            self._path = self.get_path()
+            # Update side lines if the method exists
+            if hasattr(self, 'update_side_line'):
+                self.update_side_line()
+        
+        # Force canvas redraw if we have a canvas reference
+        if hasattr(self, 'canvas') and self.canvas:
+            # Invalidate any cached bounding rects
+            if hasattr(self, '_bounding_rect_cache'):
+                delattr(self, '_bounding_rect_cache')
+            # Force canvas update to redraw with new curvature settings
+            self.canvas.update()
+    
     def update_end(self):
         """Update the end point based on the current angle and length."""
         angle_rad = math.radians(self.angle)
@@ -1576,7 +1607,15 @@ class AttachedStrand(Strand):
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
             
-            fraction = 1.0 / 3.0
+            # Get curvature parameters to influence the curve
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            
+            # Apply curvature settings to the fraction
+            influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
+            fraction = min((1.0 / 3.0) * influence_factor, 0.45)  # Cap at 0.45
             
             # Calculate intermediate control points
             cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
@@ -1680,7 +1719,15 @@ class AttachedStrand(Strand):
             dist_p2_p3 = math.sqrt((p3.x() - p2.x())**2 + (p3.y() - p2.y())**2)
             dist_p3_p4 = math.sqrt((p4.x() - p3.x())**2 + (p4.y() - p3.y())**2)
             
-            fraction = 1.0 / 3.0
+            # Get curvature parameters to influence the curve
+            base_fraction = getattr(self, 'control_point_base_fraction', 0.4)
+            dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
+            exponent = getattr(self, 'curve_response_exponent', 1.5)
+            
+            # Apply curvature settings to the fraction
+            influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
+            fraction = min((1.0 / 3.0) * influence_factor, 0.45)  # Cap at 0.45
             
             # Calculate intermediate control points
             cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
@@ -1883,7 +1930,9 @@ class AttachedStrand(Strand):
             dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             
             # Apply curvature settings to the fraction
-            fraction = min((1.0 / 3.0) * base_fraction * dist_multiplier, 0.45)  # Cap at 0.45
+            influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, getattr(self, 'curve_response_exponent', 1.5))  # Apply exponential scaling
+            fraction = min((1.0 / 3.0) * influence_factor, 0.45)  # Cap at 0.45
 
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
@@ -1956,7 +2005,9 @@ class AttachedStrand(Strand):
                 
                 # Apply curvature settings to the fractions
                 # Scale the default 0.666 and 0.333 by the curvature parameters
+                # Apply the exponent to create non-linear response
                 influence_factor = base_fraction * dist_multiplier
+                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
                 frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
                 frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
                 
@@ -2061,7 +2112,9 @@ class AttachedStrand(Strand):
             dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             
             # Apply curvature settings to the fraction
-            fraction = min((1.0 / 3.0) * base_fraction * dist_multiplier, 0.45)  # Cap at 0.45
+            influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, getattr(self, 'curve_response_exponent', 1.5))  # Apply exponential scaling
+            fraction = min((1.0 / 3.0) * influence_factor, 0.45)  # Cap at 0.45
 
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
@@ -2134,7 +2187,9 @@ class AttachedStrand(Strand):
                 
                 # Apply curvature settings to the fractions
                 # Scale the default 0.666 and 0.333 by the curvature parameters
+                # Apply the exponent to create non-linear response
                 influence_factor = base_fraction * dist_multiplier
+                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
                 frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
                 frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
                 

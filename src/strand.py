@@ -605,6 +605,7 @@ class Strand:
             # Apply curvature settings to the fractions
             # Scale the default 0.666 and 0.333 by the curvature parameters
             influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
             frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
             frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
             
@@ -690,9 +691,12 @@ class Strand:
                 dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
                 exponent = getattr(self, 'curve_response_exponent', 1.5)
                 
+                
                 # Apply curvature settings to the fractions
                 # Scale the default 0.666 and 0.333 by the curvature parameters
+                # Apply the exponent to create non-linear response
                 influence_factor = base_fraction * dist_multiplier
+                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
                 frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
                 frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
                 
@@ -787,6 +791,7 @@ class Strand:
             # Apply curvature settings to the fractions
             # Scale the default 0.666 and 0.333 by the curvature parameters
             influence_factor = base_fraction * dist_multiplier
+            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
             frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
             frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
             
@@ -871,9 +876,12 @@ class Strand:
                 dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
                 exponent = getattr(self, 'curve_response_exponent', 1.5)
                 
+                
                 # Apply curvature settings to the fractions
                 # Scale the default 0.666 and 0.333 by the curvature parameters
+                # Apply the exponent to create non-linear response
                 influence_factor = base_fraction * dist_multiplier
+                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
                 frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
                 frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
                 
@@ -1204,6 +1212,37 @@ class Strand:
 
         return tangent
 
+    def force_path_update(self):
+        """Force the path to be recalculated without modifying control points."""
+        # Clear any cached path
+        if hasattr(self, '_path'):
+            delattr(self, '_path')
+        
+        # Special handling for 3rd control point strands
+        if (hasattr(self, 'canvas') and self.canvas and 
+            hasattr(self.canvas, 'enable_third_control_point') and 
+            self.canvas.enable_third_control_point and
+            hasattr(self, 'control_point_center_locked') and 
+            self.control_point_center_locked):
+            # For 3rd control point strands, we need to ensure the curvature parameters
+            # are properly applied to the curve calculation
+            # The get_path() method will use these parameters when recalculating
+            # Also call update_shape() to ensure all aspects are updated
+            self.update_shape()
+        else:
+            # For regular strands, just recalculate the path
+            self._path = self.get_path()
+            # Update side lines
+            self.update_side_line()
+        
+        # Force canvas redraw if we have a canvas reference
+        if hasattr(self, 'canvas') and self.canvas:
+            # Invalidate any cached bounding rects
+            if hasattr(self, '_bounding_rect_cache'):
+                delattr(self, '_bounding_rect_cache')
+            # Force canvas update to redraw with new curvature settings
+            self.canvas.update()
+    
     def update_side_line(self):
         """Update side lines considering the curve's shape near the ends."""
         # IMPROVED: Smart tangent calculation for proper side line angles

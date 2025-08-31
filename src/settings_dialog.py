@@ -2895,29 +2895,36 @@ class SettingsDialog(QDialog):
                 strand.distance_multiplier = distance_mult_value
                 strand.curve_response_exponent = curve_response_value
                 
-                # Invalidate any cached path
-                if hasattr(strand, '_path'):
-                    delattr(strand, '_path')
+                # Force updating_position to False to ensure updates work
+                if hasattr(strand, 'updating_position'):
+                    strand.updating_position = False
                 
-                # Update attached strands as well
-                for attached in strand.attached_strands:
-                    attached.control_point_base_fraction = base_fraction_value
-                    attached.distance_multiplier = distance_mult_value
-                    attached.curve_response_exponent = curve_response_value
-                    
-                    # Invalidate any cached path
-                    if hasattr(attached, '_path'):
-                        delattr(attached, '_path')
-                    
-                    # Also update shape for attached strands
-                    attached.update_shape()
-                    
-                # Trigger shape update to apply new parameters
-                strand.update_shape()
+                # Use the new force_path_update method if available
+                if hasattr(strand, 'force_path_update'):
+                    strand.force_path_update()
+                else:
+                    # Fallback: manually invalidate cached path
+                    if hasattr(strand, '_path'):
+                        delattr(strand, '_path')
+                
+                # Also update all attached strands recursively
+                self.update_attached_strands_curvature(strand, base_fraction_value, distance_mult_value, curve_response_value)
+                
+                # Force path recalculation by invalidating boundingRect cache if it exists
+                if hasattr(strand, '_bounding_rect_cache'):
+                    delattr(strand, '_bounding_rect_cache')
+            
+            # Clear render buffer to force complete recreation
+            if hasattr(self.canvas, 'render_buffer'):
+                self.canvas.render_buffer = None
             
             # Force canvas update to redraw with new curvature settings
             self.canvas.update()
-            self.canvas.repaint()
+            # Force a complete redraw
+            if hasattr(self.canvas, 'force_redraw'):
+                self.canvas.force_redraw()
+            else:
+                self.canvas.repaint()
 
         # Apply Extension Line Settings
         self.extension_length = self.extension_length_spinbox.value()
@@ -3012,6 +3019,29 @@ class SettingsDialog(QDialog):
                             #strand.force_shadow_update()
         if self.canvas:
             self.canvas.update()
+
+    def update_attached_strands_curvature(self, strand, base_fraction, distance_mult, curve_response):
+        """Recursively update curvature settings for all attached strands."""
+        if hasattr(strand, 'attached_strands'):
+            for attached in strand.attached_strands:
+                attached.control_point_base_fraction = base_fraction
+                attached.distance_multiplier = distance_mult
+                attached.curve_response_exponent = curve_response
+                
+                # Force updating_position to False
+                if hasattr(attached, 'updating_position'):
+                    attached.updating_position = False
+                
+                # Use force_path_update if available
+                if hasattr(attached, 'force_path_update'):
+                    attached.force_path_update()
+                else:
+                    # Fallback: invalidate cached path
+                    if hasattr(attached, '_path'):
+                        delattr(attached, '_path')
+                
+                # Recursively update any strands attached to this attached strand
+                self.update_attached_strands_curvature(attached, base_fraction, distance_mult, curve_response)
 
     def change_category(self, item):
         index = self.categories_list.row(item)
@@ -3778,25 +3808,20 @@ class SettingsDialog(QDialog):
                 strand.distance_multiplier = 1.2
                 strand.curve_response_exponent = 1.5
                 
-                # Invalidate any cached path
-                if hasattr(strand, '_path'):
-                    delattr(strand, '_path')
+                # Force updating_position to False
+                if hasattr(strand, 'updating_position'):
+                    strand.updating_position = False
                 
-                # Update attached strands as well
-                for attached in strand.attached_strands:
-                    attached.control_point_base_fraction = 0.4
-                    attached.distance_multiplier = 1.2
-                    attached.curve_response_exponent = 1.5
-                    
-                    # Invalidate any cached path
-                    if hasattr(attached, '_path'):
-                        delattr(attached, '_path')
-                    
-                    # Update shape for attached strands
-                    attached.update_shape()
-                    
-                # Trigger shape update to apply new parameters
-                strand.update_shape()
+                # Use force_path_update if available
+                if hasattr(strand, 'force_path_update'):
+                    strand.force_path_update()
+                else:
+                    # Fallback: invalidate cached path
+                    if hasattr(strand, '_path'):
+                        delattr(strand, '_path')
+                
+                # Also update all attached strands recursively
+                self.update_attached_strands_curvature(strand, 0.4, 1.2, 1.5)
             
             # Refresh the canvas
             self.canvas.update()

@@ -6,9 +6,9 @@ EnableThirdControlPoint: true
 EnableSnapToGrid: true
 NumSteps: 1
 MaxBlurRadius: 100.0
-ControlPointBaseFraction: 2.60
-DistanceMultiplier: 5.7
-CurveResponseExponent: 2.4
+ControlPointBaseFraction: 2.90
+DistanceMultiplier: 3.2
+CurveResponseExponent: 1.6
 ExtensionLength: 100.0
 ExtensionDashCount: 10
 ExtensionDashWidth: 2.0

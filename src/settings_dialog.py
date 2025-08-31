@@ -1487,7 +1487,7 @@ class SettingsDialog(QDialog):
         self.base_fraction_layout = QHBoxLayout()
         self.base_fraction_label = QLabel(_['base_fraction'] if 'base_fraction' in _ else "Control Point Influence:")
         self.base_fraction_spinbox = QDoubleSpinBox()
-        self.base_fraction_spinbox.setRange(0.25, 1.3)
+        self.base_fraction_spinbox.setRange(0.25, 10.0)
         self.base_fraction_spinbox.setSingleStep(0.05)
         self.base_fraction_spinbox.setDecimals(2)
         # Use loaded value if it exists, otherwise use canvas value or default
@@ -1515,7 +1515,7 @@ class SettingsDialog(QDialog):
         self.distance_mult_layout = QHBoxLayout()
         self.distance_mult_label = QLabel(_['distance_multiplier'] if 'distance_multiplier' in _ else "Distance Boost:")
         self.distance_mult_spinbox = QDoubleSpinBox()
-        self.distance_mult_spinbox.setRange(1.0, 2.0)
+        self.distance_mult_spinbox.setRange(1.0, 10.0)
         self.distance_mult_spinbox.setSingleStep(0.1)
         self.distance_mult_spinbox.setDecimals(1)
         # Use loaded value if it exists, otherwise use canvas value or default

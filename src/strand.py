@@ -606,13 +606,13 @@ class Strand:
             # Use values directly from spinboxes without normalization
             # base_fraction range: 0.25-3.0 (use directly for influence)
             # Map to control point influence fractions
-            frac1 = min(0.1 + (base_fraction * 0.3), 0.99)  # Direct scaling
-            frac2 = min(0.05 + (base_fraction * 0.15), 0.49)  # Direct scaling
+            frac1 = min(0.1 + (base_fraction * 0.3), 8.33)  # Direct scaling
+            frac2 = min(0.05 + (base_fraction * 0.15), 3.77)  # Direct scaling
             
             # Distance boost: 1.0-10.0 range (use full range)
             # Apply distance multiplier directly
-            frac1 = min(frac1 * dist_multiplier, 0.99)
-            frac2 = min(frac2 * dist_multiplier, 0.49)
+            frac1 = min(frac1 * dist_multiplier, 8.33)
+            frac2 = min(frac2 * dist_multiplier, 8.33)
             
             # Apply exponent to shape the curve (1.0-3.0 range)
             # Direct power application for curve shaping
@@ -706,13 +706,13 @@ class Strand:
                 
                 # Each parameter has 100% independent influence on the curve
                 # Use values directly from spinboxes
-                # base_fraction range: 0.25-3.0 (use directly)
-                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
-                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                # base_fraction range: 0.25-10.0 (use directly)
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 2.34)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
                 
                 # Apply distance multiplier (1.0-10.0) directly
-                frac1 = min(base_frac1 * dist_multiplier, 0.99)
-                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                frac1 = min(base_frac1 * dist_multiplier, 8.33)
+                frac2 = min(base_frac2 * dist_multiplier, 8.33)
                 
                 # Apply exponent (1.0-3.0) to shape the curve
                 if exponent != 1.0:
@@ -811,13 +811,13 @@ class Strand:
             # Use values directly from spinboxes without normalization
             # base_fraction range: 0.25-3.0 (use directly for influence)
             # Map to control point influence fractions
-            frac1 = min(0.1 + (base_fraction * 0.3), 0.99)  # Direct scaling
-            frac2 = min(0.05 + (base_fraction * 0.15), 0.49)  # Direct scaling
+            frac1 = min(0.1 + (base_fraction * 0.3), 8.33)  # Direct scaling
+            frac2 = min(0.05 + (base_fraction * 0.15), 3.77)  # Direct scaling
             
             # Distance boost: 1.0-10.0 range (use full range)
             # Apply distance multiplier directly
-            frac1 = min(frac1 * dist_multiplier, 0.99)
-            frac2 = min(frac2 * dist_multiplier, 0.49)
+            frac1 = min(frac1 * dist_multiplier, 8.33)
+            frac2 = min(frac2 * dist_multiplier, 8.33)
             
             # Apply exponent to shape the curve (1.0-3.0 range)
             # Direct power application for curve shaping
@@ -910,13 +910,13 @@ class Strand:
                 
                 # Each parameter has 100% independent influence on the curve
                 # Use values directly from spinboxes
-                # base_fraction range: 0.25-3.0 (use directly)
-                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
-                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                # base_fraction range: 0.25-10.0 (use directly)
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 2.34)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
                 
                 # Apply distance multiplier (1.0-10.0) directly
-                frac1 = min(base_frac1 * dist_multiplier, 0.99)
-                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                frac1 = min(base_frac1 * dist_multiplier, 8.33)
+                frac2 = min(base_frac2 * dist_multiplier, 8.33)
                 
                 # Apply exponent (1.0-3.0) to shape the curve
                 if exponent != 1.0:

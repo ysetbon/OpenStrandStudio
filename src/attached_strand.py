@@ -1621,7 +1621,7 @@ class AttachedStrand(Strand):
             # Each parameter has 100% independent influence
             # Use values directly from spinboxes
             # Base curve fraction (controlled by base_fraction)
-            base_frac = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+            base_frac = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
             
             # Apply distance multiplier (1.0-10.0) directly
             fraction = min(base_frac * dist_multiplier, 0.49)
@@ -1740,7 +1740,7 @@ class AttachedStrand(Strand):
             # Each parameter has 100% independent influence
             # Use values directly from spinboxes
             # Base curve fraction (controlled by base_fraction)
-            base_frac = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+            base_frac = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
             
             # Apply distance multiplier (1.0-10.0) directly
             fraction = min(base_frac * dist_multiplier, 0.49)
@@ -1952,7 +1952,7 @@ class AttachedStrand(Strand):
             
             # Direct linear mapping for full range utilization
             # Use values directly from spinboxes
-            fraction = min(0.1 + (base_fraction * 0.13), 0.49)  # Direct scaling
+            fraction = min(0.1 + (base_fraction * 0.13), 3.77)  # Direct scaling
             
             # Distance boost: 1.0-10.0 range (use full range)
             # Apply distance multiplier directly
@@ -2035,12 +2035,12 @@ class AttachedStrand(Strand):
                 # Each parameter has 100% independent influence
                 # Use values directly from spinboxes
                 # Base curve fractions (controlled by base_fraction)
-                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
-                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 2.34)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
                 
                 # Apply distance multiplier (1.0-10.0) directly
-                frac1 = min(base_frac1 * dist_multiplier, 0.99)
-                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                frac1 = min(base_frac1 * dist_multiplier, 8.33)
+                frac2 = min(base_frac2 * dist_multiplier, 8.33)
                 
                 # Apply exponent shaping
                 if exponent != 1.0:
@@ -2150,7 +2150,7 @@ class AttachedStrand(Strand):
             
             # Direct linear mapping for full range utilization
             # Use values directly from spinboxes
-            fraction = min(0.1 + (base_fraction * 0.13), 0.49)  # Direct scaling
+            fraction = min(0.1 + (base_fraction * 0.13), 3.77)  # Direct scaling
             
             # Distance boost: 1.0-10.0 range (use full range)
             # Apply distance multiplier directly
@@ -2233,12 +2233,12 @@ class AttachedStrand(Strand):
                 # Each parameter has 100% independent influence
                 # Use values directly from spinboxes
                 # Base curve fractions (controlled by base_fraction)
-                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
-                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 2.34)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 1.17)  # Direct scaling
                 
                 # Apply distance multiplier (1.0-10.0) directly
-                frac1 = min(base_frac1 * dist_multiplier, 0.99)
-                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                frac1 = min(base_frac1 * dist_multiplier, 8.33)
+                frac2 = min(base_frac2 * dist_multiplier, 8.33)
                 
                 # Apply exponent shaping
                 if exponent != 1.0:

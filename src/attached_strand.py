@@ -37,6 +37,12 @@ class AttachedStrand(Strand):
         self.shadow_color = parent.shadow_color
         # Initialize shadow_only property
         self.shadow_only = False
+        
+        # Inherit curvature parameters from parent
+        self.control_point_base_fraction = getattr(parent, 'control_point_base_fraction', 0.4)
+        self.distance_multiplier = getattr(parent, 'distance_multiplier', 1.2)
+        self.curve_response_exponent = getattr(parent, 'curve_response_exponent', 1.5)
+        
         self.update_end()
 
         # Initialize control points at 1/3 and 2/3 along the strand

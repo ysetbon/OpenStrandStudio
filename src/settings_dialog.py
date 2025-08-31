@@ -2894,10 +2894,14 @@ class SettingsDialog(QDialog):
                 strand.control_point_base_fraction = base_fraction_value
                 strand.distance_multiplier = distance_mult_value
                 strand.curve_response_exponent = curve_response_value
-                
+                           
                 # Force updating_position to False to ensure updates work
                 if hasattr(strand, 'updating_position'):
                     strand.updating_position = False
+                
+                # Update the shape to recalculate control points with new curvature
+                if hasattr(strand, 'update_shape'):
+                    strand.update_shape()
                 
                 # Use the new force_path_update method if available
                 if hasattr(strand, 'force_path_update'):
@@ -3032,6 +3036,10 @@ class SettingsDialog(QDialog):
                 if hasattr(attached, 'updating_position'):
                     attached.updating_position = False
                 
+                # Update the shape to recalculate control points with new curvature
+                if hasattr(attached, 'update_shape'):
+                    attached.update_shape()
+                
                 # Use force_path_update if available
                 if hasattr(attached, 'force_path_update'):
                     attached.force_path_update()
@@ -3039,6 +3047,10 @@ class SettingsDialog(QDialog):
                     # Fallback: invalidate cached path
                     if hasattr(attached, '_path'):
                         delattr(attached, '_path')
+                
+                # Force path recalculation by invalidating boundingRect cache if it exists
+                if hasattr(attached, '_bounding_rect_cache'):
+                    delattr(attached, '_bounding_rect_cache')
                 
                 # Recursively update any strands attached to this attached strand
                 self.update_attached_strands_curvature(attached, base_fraction, distance_mult, curve_response)

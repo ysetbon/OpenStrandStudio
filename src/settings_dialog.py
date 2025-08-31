@@ -1487,7 +1487,7 @@ class SettingsDialog(QDialog):
         self.base_fraction_layout = QHBoxLayout()
         self.base_fraction_label = QLabel(_['base_fraction'] if 'base_fraction' in _ else "Control Point Influence:")
         self.base_fraction_spinbox = QDoubleSpinBox()
-        self.base_fraction_spinbox.setRange(0.25, 3.0)
+        self.base_fraction_spinbox.setRange(0.25, 1.3)
         self.base_fraction_spinbox.setSingleStep(0.05)
         self.base_fraction_spinbox.setDecimals(2)
         # Use loaded value if it exists, otherwise use canvas value or default
@@ -1497,6 +1497,9 @@ class SettingsDialog(QDialog):
             default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 0.4) if self.canvas else 0.4
             self.base_fraction_spinbox.setValue(default_base_fraction)
         self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.4=default, 1.0=normal, 3.0=very strong)")
+        # Connect using lambda to ensure proper connection
+        self.base_fraction_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
+        print(f"DEBUG: Connected base_fraction_spinbox signal")
         
         if self.is_rtl_language(self.current_language):
             self.base_fraction_layout.addStretch()
@@ -1512,8 +1515,8 @@ class SettingsDialog(QDialog):
         self.distance_mult_layout = QHBoxLayout()
         self.distance_mult_label = QLabel(_['distance_multiplier'] if 'distance_multiplier' in _ else "Distance Boost:")
         self.distance_mult_spinbox = QDoubleSpinBox()
-        self.distance_mult_spinbox.setRange(1.0, 10.0)
-        self.distance_mult_spinbox.setSingleStep(0.5)
+        self.distance_mult_spinbox.setRange(1.0, 2.0)
+        self.distance_mult_spinbox.setSingleStep(0.1)
         self.distance_mult_spinbox.setDecimals(1)
         # Use loaded value if it exists, otherwise use canvas value or default
         if hasattr(self, 'loaded_distance_multiplier'):
@@ -1522,6 +1525,9 @@ class SettingsDialog(QDialog):
             default_distance_mult = getattr(self.canvas, 'distance_multiplier', 1.2) if self.canvas else 1.2
             self.distance_mult_spinbox.setValue(default_distance_mult)
         self.distance_mult_spinbox.setToolTip(_['distance_mult_tooltip'] if 'distance_mult_tooltip' in _ else "Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost, 10.0=10x boost)")
+        # Connect using lambda to ensure proper connection
+        self.distance_mult_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
+        print(f"DEBUG: Connected distance_mult_spinbox signal")
         
         if self.is_rtl_language(self.current_language):
             self.distance_mult_layout.addStretch()
@@ -1547,6 +1553,9 @@ class SettingsDialog(QDialog):
             default_curve_response = getattr(self.canvas, 'curve_response_exponent', 1.5) if self.canvas else 1.5
             self.curve_response_spinbox.setValue(default_curve_response)
         self.curve_response_spinbox.setToolTip(_['curve_response_tooltip'] if 'curve_response_tooltip' in _ else "Curve response type: 1.0=linear, 1.5=mild quadratic, 2.0=quadratic, 3.0=cubic")
+        # Connect using lambda to ensure proper connection
+        self.curve_response_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
+        print(f"DEBUG: Connected curve_response_spinbox signal")
         
         if self.is_rtl_language(self.current_language):
             self.curve_response_layout.addStretch()
@@ -2889,7 +2898,7 @@ class SettingsDialog(QDialog):
             self.canvas.distance_multiplier = distance_mult_value
             self.canvas.curve_response_exponent = curve_response_value
             
-            # Update all existing strands with new control point parameters
+            # First pass: Update all parameters on all strands WITHOUT triggering updates
             for strand in self.canvas.strands:
                 strand.control_point_base_fraction = base_fraction_value
                 strand.distance_multiplier = distance_mult_value
@@ -2898,29 +2907,26 @@ class SettingsDialog(QDialog):
                 # Force updating_position to False to ensure updates work
                 if hasattr(strand, 'updating_position'):
                     strand.updating_position = False
-                
+            
+            # Second pass: Now trigger the actual updates after ALL strands have new parameters
+            for strand in self.canvas.strands:
                 # Notify Qt that the geometry is about to change
                 if hasattr(strand, 'prepareGeometryChange'):
                     strand.prepareGeometryChange()
+                
+                # Clear any cached paths first
+                if hasattr(strand, '_path'):
+                    delattr(strand, '_path')
+                if hasattr(strand, '_bounding_rect_cache'):
+                    delattr(strand, '_bounding_rect_cache')
                 
                 # Update the shape to recalculate control points with new curvature
                 if hasattr(strand, 'update_shape'):
                     strand.update_shape()
                 
-                # Use the new force_path_update method if available
+                # Force path update if available (this should use the new parameters)
                 if hasattr(strand, 'force_path_update'):
                     strand.force_path_update()
-                else:
-                    # Fallback: manually invalidate cached path
-                    if hasattr(strand, '_path'):
-                        delattr(strand, '_path')
-                
-                # Also update all attached strands recursively
-                self.update_attached_strands_curvature(strand, base_fraction_value, distance_mult_value, curve_response_value)
-                
-                # Force path recalculation by invalidating boundingRect cache if it exists
-                if hasattr(strand, '_bounding_rect_cache'):
-                    delattr(strand, '_bounding_rect_cache')
             
             # Clear render buffer to force complete recreation
             if hasattr(self.canvas, 'render_buffer'):
@@ -3809,46 +3815,90 @@ class SettingsDialog(QDialog):
         self.shadow_color_button.setIcon(QIcon(pixmap))
         self.shadow_color_button.setIconSize(pixmap.size())
         
-    def reset_curvature_settings(self):
-        """Reset all curvature settings to their default values."""
-        # Reset to default values
-        self.base_fraction_spinbox.setValue(0.4)  # Default base fraction
-        self.distance_mult_spinbox.setValue(1.2)  # Default distance multiplier
-        self.curve_response_spinbox.setValue(1.5)  # Default curve response
+    def on_curvature_changed(self, value=None):
+        """Handle immediate updates when any curvature spinbox value changes."""
+        # Import QApplication for processEvents
+        from PyQt5.QtWidgets import QApplication
         
-        # Apply the reset values to canvas
+        # Get current values directly from spinboxes
+        base_fraction_value = self.base_fraction_spinbox.value()
+        distance_mult_value = self.distance_mult_spinbox.value()
+        curve_response_value = self.curve_response_spinbox.value()
+        
+        print(f"DEBUG: on_curvature_changed called")
+        print(f"  Spinbox values - base: {base_fraction_value}, dist: {distance_mult_value}, curve: {curve_response_value}")
+        print(f"  Canvas values before - base: {getattr(self.canvas, 'control_point_base_fraction', 'N/A')}, dist: {getattr(self.canvas, 'distance_multiplier', 'N/A')}, curve: {getattr(self.canvas, 'curve_response_exponent', 'N/A')}")
+        
+        # Apply to canvas immediately (same as reset button)
         if self.canvas:
-            self.canvas.control_point_base_fraction = 0.4
-            self.canvas.distance_multiplier = 1.2
-            self.canvas.curve_response_exponent = 1.5
+            self.canvas.control_point_base_fraction = base_fraction_value
+            self.canvas.distance_multiplier = distance_mult_value
+            self.canvas.curve_response_exponent = curve_response_value
             
-            # Update all existing strands with reset parameters
+            # Update all existing strands with new parameters
+            # First update all strands (including attached ones that are in the list)
             for strand in self.canvas.strands:
-                strand.control_point_base_fraction = 0.4
-                strand.distance_multiplier = 1.2
-                strand.curve_response_exponent = 1.5
+                strand.control_point_base_fraction = base_fraction_value
+                strand.distance_multiplier = distance_mult_value
+                strand.curve_response_exponent = curve_response_value
                 
                 # Force updating_position to False
                 if hasattr(strand, 'updating_position'):
                     strand.updating_position = False
                 
-                # Use force_path_update if available
+                # Prepare geometry change for Qt
+                if hasattr(strand, 'prepareGeometryChange'):
+                    strand.prepareGeometryChange()
+                
+                # Clear any cached paths first
+                if hasattr(strand, '_path'):
+                    delattr(strand, '_path')
+                if hasattr(strand, '_bounding_rect_cache'):
+                    delattr(strand, '_bounding_rect_cache')
+                
+                # Update shape
+                if hasattr(strand, 'update_shape'):
+                    strand.update_shape()
+                
+                # Force path update
                 if hasattr(strand, 'force_path_update'):
                     strand.force_path_update()
-                else:
-                    # Fallback: invalidate cached path
-                    if hasattr(strand, '_path'):
-                        delattr(strand, '_path')
                 
-                # Also update all attached strands recursively
-                self.update_attached_strands_curvature(strand, 0.4, 1.2, 1.5)
+                # Update all attached strands recursively
+                self.update_attached_strands_curvature(strand, base_fraction_value, distance_mult_value, curve_response_value)
+            
+            # Clear render buffer to force recreation
+            if hasattr(self.canvas, 'render_buffer'):
+                self.canvas.render_buffer = None
             
             # Refresh the canvas
             self.canvas.update()
             self.canvas.repaint()
+            
+            # If canvas has a scene (QGraphicsScene), update it too
+            if hasattr(self.canvas, 'scene') and hasattr(self.canvas.scene, 'update'):
+                self.canvas.scene.update()
+            
+            # Force redraw if available
+            if hasattr(self.canvas, 'force_redraw'):
+                self.canvas.force_redraw()
+            
+            # Force immediate processing of paint events
+            QApplication.processEvents()
+            
+            print(f"DEBUG: Canvas updated with {len(self.canvas.strands)} strands")
         
-        # Save the reset settings to file
+        # Save settings immediately
         self.save_settings_to_file()
+        print(f"DEBUG: Settings saved")
+    
+    def reset_curvature_settings(self):
+        """Reset all curvature settings to their default values."""
+        # Don't disconnect signals - just set values and let them trigger naturally
+        # Reset to default values
+        self.base_fraction_spinbox.setValue(0.4)  # Default base fraction
+        self.distance_mult_spinbox.setValue(1.2)  # Default distance multiplier
+        self.curve_response_spinbox.setValue(1.5)  # Default curve response
         
     def choose_shadow_color(self):
         """Open a color dialog to choose a new shadow color."""

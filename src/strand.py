@@ -602,12 +602,24 @@ class Strand:
             dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             exponent = getattr(self, 'curve_response_exponent', 1.5)
             
-            # Apply curvature settings to the fractions
-            # Scale the default 0.666 and 0.333 by the curvature parameters
-            influence_factor = base_fraction * dist_multiplier
-            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
-            frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
-            frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+            # Each parameter has 100% independent influence on the curve
+            # Use values directly from spinboxes without normalization
+            # base_fraction range: 0.25-3.0 (use directly for influence)
+            # Map to control point influence fractions
+            frac1 = min(0.1 + (base_fraction * 0.3), 0.99)  # Direct scaling
+            frac2 = min(0.05 + (base_fraction * 0.15), 0.49)  # Direct scaling
+            
+            # Distance boost: 1.0-10.0 range (use full range)
+            # Apply distance multiplier directly
+            frac1 = min(frac1 * dist_multiplier, 0.99)
+            frac2 = min(frac2 * dist_multiplier, 0.49)
+            
+            # Apply exponent to shape the curve (1.0-3.0 range)
+            # Direct power application for curve shaping
+            if exponent != 1.0:
+                # Direct exponential shaping: higher values = sharper curves
+                frac1 = pow(frac1, 1.0 / exponent)  # Inverse power for more intuitive control
+                frac2 = pow(frac2, 1.0 / exponent)
             
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
@@ -692,13 +704,20 @@ class Strand:
                 exponent = getattr(self, 'curve_response_exponent', 1.5)
                 
                 
-                # Apply curvature settings to the fractions
-                # Scale the default 0.666 and 0.333 by the curvature parameters
-                # Apply the exponent to create non-linear response
-                influence_factor = base_fraction * dist_multiplier
-                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
-                frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
-                frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+                # Each parameter has 100% independent influence on the curve
+                # Use values directly from spinboxes
+                # base_fraction range: 0.25-3.0 (use directly)
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                
+                # Apply distance multiplier (1.0-10.0) directly
+                frac1 = min(base_frac1 * dist_multiplier, 0.99)
+                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                
+                # Apply exponent (1.0-3.0) to shape the curve
+                if exponent != 1.0:
+                    frac1 = pow(frac1, 1.0 / exponent)
+                    frac2 = pow(frac2, 1.0 / exponent)
                 
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
@@ -788,12 +807,24 @@ class Strand:
             dist_multiplier = getattr(self, 'distance_multiplier', 1.2)
             exponent = getattr(self, 'curve_response_exponent', 1.5)
             
-            # Apply curvature settings to the fractions
-            # Scale the default 0.666 and 0.333 by the curvature parameters
-            influence_factor = base_fraction * dist_multiplier
-            influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
-            frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
-            frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+            # Each parameter has 100% independent influence on the curve
+            # Use values directly from spinboxes without normalization
+            # base_fraction range: 0.25-3.0 (use directly for influence)
+            # Map to control point influence fractions
+            frac1 = min(0.1 + (base_fraction * 0.3), 0.99)  # Direct scaling
+            frac2 = min(0.05 + (base_fraction * 0.15), 0.49)  # Direct scaling
+            
+            # Distance boost: 1.0-10.0 range (use full range)
+            # Apply distance multiplier directly
+            frac1 = min(frac1 * dist_multiplier, 0.99)
+            frac2 = min(frac2 * dist_multiplier, 0.49)
+            
+            # Apply exponent to shape the curve (1.0-3.0 range)
+            # Direct power application for curve shaping
+            if exponent != 1.0:
+                # Direct exponential shaping: higher values = sharper curves
+                frac1 = pow(frac1, 1.0 / exponent)  # Inverse power for more intuitive control
+                frac2 = pow(frac2, 1.0 / exponent)
             
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
@@ -877,13 +908,20 @@ class Strand:
                 exponent = getattr(self, 'curve_response_exponent', 1.5)
                 
                 
-                # Apply curvature settings to the fractions
-                # Scale the default 0.666 and 0.333 by the curvature parameters
-                # Apply the exponent to create non-linear response
-                influence_factor = base_fraction * dist_multiplier
-                influence_factor = pow(influence_factor, exponent)  # Apply exponential scaling
-                frac1 = min(0.666 * influence_factor, 0.95)  # Cap at 0.95 to avoid overshooting
-                frac2 = min(0.333 * influence_factor, 0.45)  # Cap at 0.45 for smooth curves
+                # Each parameter has 100% independent influence on the curve
+                # Use values directly from spinboxes
+                # base_fraction range: 0.25-3.0 (use directly)
+                base_frac1 = min(0.1 + (base_fraction * 0.2), 0.7)  # Direct scaling
+                base_frac2 = min(0.05 + (base_fraction * 0.1), 0.35)  # Direct scaling
+                
+                # Apply distance multiplier (1.0-10.0) directly
+                frac1 = min(base_frac1 * dist_multiplier, 0.99)
+                frac2 = min(base_frac2 * dist_multiplier, 0.49)
+                
+                # Apply exponent (1.0-3.0) to shape the curve
+                if exponent != 1.0:
+                    frac1 = pow(frac1, 1.0 / exponent)
+                    frac2 = pow(frac2, 1.0 / exponent)
                 
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points

@@ -2899,6 +2899,10 @@ class SettingsDialog(QDialog):
                 if hasattr(strand, 'updating_position'):
                     strand.updating_position = False
                 
+                # Notify Qt that the geometry is about to change
+                if hasattr(strand, 'prepareGeometryChange'):
+                    strand.prepareGeometryChange()
+                
                 # Update the shape to recalculate control points with new curvature
                 if hasattr(strand, 'update_shape'):
                     strand.update_shape()
@@ -3035,6 +3039,10 @@ class SettingsDialog(QDialog):
                 # Force updating_position to False
                 if hasattr(attached, 'updating_position'):
                     attached.updating_position = False
+                
+                # Notify Qt that the geometry is about to change
+                if hasattr(attached, 'prepareGeometryChange'):
+                    attached.prepareGeometryChange()
                 
                 # Update the shape to recalculate control points with new curvature
                 if hasattr(attached, 'update_shape'):

@@ -1987,6 +1987,30 @@ class StrandDrawingCanvas(QWidget):
                         square_control_size
                     )
                     
+                # Bias control yellow highlight when moving them
+                elif selected_side == 'bias_triangle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
+                    bias_square_size = 30
+                    bias_half_size = bias_square_size / 2
+                    tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
+                    if tp:
+                        yellow_rectangle = QRectF(
+                            tp.x() - bias_half_size,
+                            tp.y() - bias_half_size,
+                            bias_square_size,
+                            bias_square_size
+                        )
+                elif selected_side == 'bias_circle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
+                    bias_square_size = 30
+                    bias_half_size = bias_square_size / 2
+                    tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
+                    if cp:
+                        yellow_rectangle = QRectF(
+                            cp.x() - bias_half_size,
+                            cp.y() - bias_half_size,
+                            bias_square_size,
+                            bias_square_size
+                        )
+
             elif isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
                 # Fall back to using MoveMode's selected rectangle if needed
                 yellow_rectangle = self.current_mode.selected_rectangle
@@ -2127,6 +2151,21 @@ class StrandDrawingCanvas(QWidget):
                                         painter.drawRect(cp2_rect)
                                     elif selected_side == 'control_point_center' and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
                                         painter.drawRect(cp3_rect)
+                                    # Bias controls when moving them
+                                    elif selected_side == 'bias_triangle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
+                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                        if tp:
+                                            bias_square_size = 30
+                                            bias_half_size = bias_square_size / 2
+                                            bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            painter.drawRect(bt_rect)
+                                    elif selected_side == 'bias_circle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
+                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                        if cp:
+                                            bias_square_size = 30
+                                            bias_half_size = bias_square_size / 2
+                                            bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            painter.drawRect(bc_rect)
                                 else:
                                     # Normal drawing when not moving a control point
                                     if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
@@ -2136,6 +2175,19 @@ class StrandDrawingCanvas(QWidget):
                                         painter.drawRect(cp2_rect)
                                     if cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
                                         painter.drawRect(cp3_rect)
+                                    # Also draw bias control rectangles (transparent green baseline)
+                                    if hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control and hasattr(strand, 'bias_control') and strand.bias_control:
+                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                        if tp:
+                                            bias_square_size = 30
+                                            bias_half_size = bias_square_size / 2
+                                            bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            painter.drawRect(bt_rect)
+                                        if cp:
+                                            bias_square_size = 30
+                                            bias_half_size = bias_square_size / 2
+                                            bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            painter.drawRect(bc_rect)
             # Draw the selected rectangle with yellow color
             if self.current_mode.selected_rectangle:
                 # Set up semi-transparent yellow color
@@ -5153,6 +5205,11 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QBrush(strand.color))
                     painter.drawRect(inner_square_rect)
                 # --- End Replacement ---
+                
+                # Draw curvature bias controls if enabled (for affected strand)
+                if (hasattr(strand, 'bias_control') and strand.bias_control and 
+                    hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
+                    strand.bias_control.draw_bias_controls(painter, strand)
 
                 continue # Move to the next strand after drawing the points for the affected strand
 
@@ -5284,6 +5341,11 @@ class StrandDrawingCanvas(QWidget):
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QBrush(strand.color))
                 painter.drawRect(inner_square_rect)
+            
+            # Draw curvature bias controls if enabled
+            if (hasattr(strand, 'bias_control') and strand.bias_control and 
+                hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
+                strand.bias_control.draw_bias_controls(painter, strand)
 
         painter.restore()
 

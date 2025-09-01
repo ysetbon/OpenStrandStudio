@@ -14,6 +14,8 @@ from PyQt5.QtGui import (
 )
 from strand import Strand
 from masked_strand import MaskedStrand
+from curvature_bias_control import CurvatureBiasControl
+
 class AttachedStrand(Strand):
     """
     Represents a strand attached to another strand.
@@ -75,6 +77,13 @@ class AttachedStrand(Strand):
 
         if hasattr(parent, 'canvas'):
             self.canvas = parent.canvas
+            # Initialize curvature bias control if canvas supports it
+            if hasattr(self.canvas, 'enable_curvature_bias_control'):
+                self.bias_control = CurvatureBiasControl(self.canvas)
+            else:
+                self.bias_control = None
+        else:
+            self.bias_control = None
 
         # Add line visibility flags (only end matters for attached)
         self.start_line_visible = True # Still needed for attribute checks
@@ -1927,12 +1936,26 @@ class AttachedStrand(Strand):
             in_tangent_normalized = normalize_vector(in_tangent)
             out_tangent_normalized = normalize_vector(out_tangent)
             
-            # Calculate center tangent as weighted average instead of simple average
-            # This makes the curve more responsive to small movements
-            center_tangent = QPointF(
-                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
-                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
-            )
+            # Calculate center tangent with bias weights if bias control is enabled
+            if (hasattr(self, 'bias_control') and self.bias_control and 
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get bias weights from the bias control
+                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
+                
+                # Apply bias weights to the center tangent calculation
+                # Triangle (control_point1) gets more influence with higher triangle_weight
+                # Circle (control_point2) gets more influence with higher circle_weight
+                center_tangent = QPointF(
+                    triangle_weight * in_tangent_normalized.x() + circle_weight * out_tangent_normalized.x(), 
+                    triangle_weight * in_tangent_normalized.y() + circle_weight * out_tangent_normalized.y()
+                )
+            else:
+                # Default: equal weights (0.5 each)
+                center_tangent = QPointF(
+                    0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                    0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+                )
             center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
@@ -1963,13 +1986,34 @@ class AttachedStrand(Strand):
                 # Direct exponential shaping: higher values = sharper curves
                 fraction = pow(fraction, 1.0 / exponent)
 
+            # Apply bias to fractions if bias control is enabled
+            fraction1 = fraction  # For first segment
+            fraction2 = fraction  # For second segment
+            
+            if (hasattr(self, 'bias_control') and self.bias_control and 
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get bias weights
+                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
+                
+                # Adjust fractions based on bias
+                # Higher triangle weight = tighter curve near triangle control point
+                # Higher circle weight = tighter curve near circle control point
+                bias_factor = 1.5  # Amplification factor for bias effect
+                fraction1 = fraction * (1.0 + (triangle_weight - 0.5) * bias_factor)
+                fraction2 = fraction * (1.0 + (circle_weight - 0.5) * bias_factor)
+                
+                # Clamp to reasonable range
+                fraction1 = max(0.1, min(0.49, fraction1))
+                fraction2 = max(0.1, min(0.49, fraction2))
+            
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction1) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction1) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
 
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction2) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction2) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
@@ -2125,12 +2169,26 @@ class AttachedStrand(Strand):
             in_tangent_normalized = normalize_vector(in_tangent)
             out_tangent_normalized = normalize_vector(out_tangent)
             
-            # Calculate center tangent as weighted average instead of simple average
-            # This makes the curve more responsive to small movements
-            center_tangent = QPointF(
-                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
-                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
-            )
+            # Calculate center tangent with bias weights if bias control is enabled
+            if (hasattr(self, 'bias_control') and self.bias_control and 
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get bias weights from the bias control
+                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
+                
+                # Apply bias weights to the center tangent calculation
+                # Triangle (control_point1) gets more influence with higher triangle_weight
+                # Circle (control_point2) gets more influence with higher circle_weight
+                center_tangent = QPointF(
+                    triangle_weight * in_tangent_normalized.x() + circle_weight * out_tangent_normalized.x(), 
+                    triangle_weight * in_tangent_normalized.y() + circle_weight * out_tangent_normalized.y()
+                )
+            else:
+                # Default: equal weights (0.5 each)
+                center_tangent = QPointF(
+                    0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                    0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+                )
             center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
@@ -2161,13 +2219,34 @@ class AttachedStrand(Strand):
                 # Direct exponential shaping: higher values = sharper curves
                 fraction = pow(fraction, 1.0 / exponent)
 
+            # Apply bias to fractions if bias control is enabled
+            fraction1 = fraction  # For first segment
+            fraction2 = fraction  # For second segment
+            
+            if (hasattr(self, 'bias_control') and self.bias_control and 
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get bias weights
+                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
+                
+                # Adjust fractions based on bias
+                # Higher triangle weight = tighter curve near triangle control point
+                # Higher circle weight = tighter curve near circle control point
+                bias_factor = 1.5  # Amplification factor for bias effect
+                fraction1 = fraction * (1.0 + (triangle_weight - 0.5) * bias_factor)
+                fraction2 = fraction * (1.0 + (circle_weight - 0.5) * bias_factor)
+                
+                # Clamp to reasonable range
+                fraction1 = max(0.1, min(0.49, fraction1))
+                fraction2 = max(0.1, min(0.49, fraction2))
+            
             # Calculate intermediate control points, incorporating p1 and p3 influence
             # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction1) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction1) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
 
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction2) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction2) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)

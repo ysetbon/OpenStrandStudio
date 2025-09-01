@@ -1,0 +1,76 @@
+{
+  "name": "Curvature Bias Test Configuration",
+  "description": "Test configuration to experiment with the new curvature bias control feature",
+  "instructions": [
+    "1. Open OpenStrandStudio",
+    "2. Go to Settings > General",
+    "3. Enable 'Enable third control point at center'",
+    "4. Enable 'Enable curvature bias controls'",
+    "5. Apply settings and close dialog",
+    "6. Create a new strand (or load this test file)",
+    "7. Move the third control point to see it lock in place",
+    "8. Two bias control squares should appear near the third control point",
+    "9. Drag the triangle-square left/right to bias curve toward triangle control point",
+    "10. Drag the circle-square left/right to bias curve toward circle control point"
+  ],
+  "test_strand": {
+    "type": "attached_strand",
+    "start": {"x": 200, "y": 200},
+    "end": {"x": 400, "y": 400},
+    "control_point1": {"x": 150, "y": 300},
+    "control_point2": {"x": 450, "y": 300},
+    "control_point_center": {"x": 300, "y": 300},
+    "control_point_center_locked": true,
+    "width": 46,
+    "color": "#C8AAEF",
+    "stroke_color": "#000000",
+    "stroke_width": 4
+  },
+  "expected_behavior": {
+    "bias_controls_visible": "When third control point is enabled and locked",
+    "triangle_bias_control": {
+      "appearance": "Square with triangle icon inside",
+      "default_position": "Perpendicular to control1-control2 line, near third control point",
+      "effect": "Dragging right increases bias toward triangle control point (tighter curve near triangle)",
+      "color_indication": "Red tint shows triangle bias strength"
+    },
+    "circle_bias_control": {
+      "appearance": "Square with circle icon inside",
+      "default_position": "Opposite side from triangle control",
+      "effect": "Dragging right increases bias toward circle control point (tighter curve near circle)",
+      "color_indication": "Blue tint shows circle bias strength"
+    },
+    "curve_changes": {
+      "neutral": "Both biases at 0.5 - symmetric curve",
+      "triangle_biased": "Triangle bias > 0.5 - curve pulls more toward triangle control point",
+      "circle_biased": "Circle bias > 0.5 - curve pulls more toward circle control point",
+      "asymmetric": "Different bias values create asymmetric curves with different curvatures on each side"
+    }
+  },
+  "test_cases": [
+    {
+      "name": "Neutral bias",
+      "triangle_bias": 0.5,
+      "circle_bias": 0.5,
+      "expected": "Symmetric curve, equal curvature on both sides"
+    },
+    {
+      "name": "Strong triangle bias",
+      "triangle_bias": 0.8,
+      "circle_bias": 0.2,
+      "expected": "Curve strongly biased toward triangle control point, tighter curve near triangle"
+    },
+    {
+      "name": "Strong circle bias",
+      "triangle_bias": 0.2,
+      "circle_bias": 0.8,
+      "expected": "Curve strongly biased toward circle control point, tighter curve near circle"
+    },
+    {
+      "name": "Slight triangle preference",
+      "triangle_bias": 0.6,
+      "circle_bias": 0.4,
+      "expected": "Subtle bias toward triangle, slightly asymmetric curve"
+    }
+  ]
+}

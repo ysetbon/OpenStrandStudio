@@ -42,6 +42,7 @@ def load_user_settings():
     shadow_color = QColor(0, 0, 0, 150)  # Default shadow color (black with 59% opacity)
     draw_only_affected_strand = False  # Default to drawing all strands
     enable_third_control_point = False  # Default to two control points
+    enable_curvature_bias_control = False  # Default to no bias controls
     # use_extended_mask = False  # Default exact mask
     # Initialize arrow settings defaults
     arrow_head_length = 20.0
@@ -99,6 +100,10 @@ def load_user_settings():
                     elif line.startswith('EnableThirdControlPoint:'):
                         value = line.strip().split(':', 1)[1].strip().lower()
                         enable_third_control_point = (value == 'true')
+                        pass
+                    elif line.startswith('EnableCurvatureBiasControl:'):
+                        value = line.strip().split(':', 1)[1].strip().lower()
+                        enable_curvature_bias_control = (value == 'true')
                         pass
                     # elif line.startswith('UseExtendedMask:'):
                     #     value = line.strip().split(':', 1)[1].strip().lower()
@@ -171,7 +176,7 @@ def load_user_settings():
     else:
         pass
 
-    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color
+    return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color
 
 if __name__ == '__main__':
     pass
@@ -187,7 +192,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Load user settings
-    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color = load_user_settings()
+    theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color = load_user_settings()
     # logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
 
     # Initialize the main window with settings
@@ -241,6 +246,8 @@ if __name__ == '__main__':
         # Set enable third control point setting
         window.canvas.enable_third_control_point = enable_third_control_point
         
+        # Set enable curvature bias control setting
+        window.canvas.enable_curvature_bias_control = enable_curvature_bias_control
 
         # Set extended mask setting
         # window.canvas.use_extended_mask = use_extended_mask

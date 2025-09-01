@@ -38,6 +38,7 @@ translations = {
         'shadow_color': 'Shadow Color',
         'draw_only_affected_strand': 'Draw only affected strand when dragging',
         'enable_third_control_point': 'Enable third control point at center',
+        'enable_curvature_bias_control': 'Enable curvature bias controls',
         'enable_snap_to_grid': 'Enable snap to grid',
         'use_extended_mask': 'Use extended mask (wider overlap)',
         'use_extended_mask_tooltip': 'If you want to use shadows, toggle on; if you don\'t want shadows, toggle off.',

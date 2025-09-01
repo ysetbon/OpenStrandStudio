@@ -50,6 +50,7 @@ class SettingsDialog(QDialog):
         self.shadow_color = QColor(0, 0, 0, 150)  # Default shadow color
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
+        self.enable_curvature_bias_control = False  # Default to no curvature bias controls
         self.snap_to_grid_enabled = True  # Default to snap to grid enabled
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
@@ -1085,6 +1086,10 @@ class SettingsDialog(QDialog):
                             value = line.split(':', 1)[1].strip().lower()
                             self.enable_third_control_point = (value == 'true')
                             
+                        elif line.startswith('EnableCurvatureBiasControl:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.enable_curvature_bias_control = (value == 'true')
+                            
                         elif line.startswith('EnableSnapToGrid:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.snap_to_grid_enabled = (value == 'true')
@@ -1392,6 +1397,31 @@ class SettingsDialog(QDialog):
             self.third_control_layout.addWidget(self.third_control_checkbox)
             self.third_control_layout.addStretch()
 
+        # Curvature Bias Control Option (only show when third control point is enabled)
+        if not hasattr(self, 'curvature_bias_layout'):
+            self.curvature_bias_layout = QHBoxLayout()
+        self.curvature_bias_label = QLabel(_['enable_curvature_bias_control'] if 'enable_curvature_bias_control' in _ else "Enable curvature bias controls")
+        self.curvature_bias_checkbox = QCheckBox()
+        self.curvature_bias_checkbox.setChecked(self.enable_curvature_bias_control)
+        
+        # Only enable if third control point is enabled
+        self.curvature_bias_checkbox.setEnabled(self.enable_third_control_point)
+        
+        # Connect third control checkbox to enable/disable curvature bias
+        self.third_control_checkbox.stateChanged.connect(
+            lambda state: self.curvature_bias_checkbox.setEnabled(state == Qt.Checked)
+        )
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.curvature_bias_layout.addStretch()
+            self.curvature_bias_layout.addWidget(self.curvature_bias_checkbox)
+            self.curvature_bias_layout.addWidget(self.curvature_bias_label)
+        else:
+            self.curvature_bias_layout.addWidget(self.curvature_bias_label)
+            self.curvature_bias_layout.addWidget(self.curvature_bias_checkbox)
+            self.curvature_bias_layout.addStretch()
+
         # Snap to Grid Option
         if not hasattr(self, 'snap_to_grid_layout'):
             self.snap_to_grid_layout = QHBoxLayout()
@@ -1440,6 +1470,7 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(self.shadow_layout)
         general_layout.addLayout(self.performance_layout)
         general_layout.addLayout(self.third_control_layout)
+        general_layout.addLayout(self.curvature_bias_layout)
         general_layout.addLayout(self.snap_to_grid_layout)
         # general_layout.addLayout(self.extended_mask_layout)
 
@@ -2871,6 +2902,12 @@ class SettingsDialog(QDialog):
             if previous_third_control_point != self.enable_third_control_point:
                 pass
 
+        # Apply Curvature Bias Control Setting
+        self.enable_curvature_bias_control = self.curvature_bias_checkbox.isChecked()
+        if self.canvas:
+            # Set the new value in canvas
+            self.canvas.enable_curvature_bias_control = self.enable_curvature_bias_control
+        
         # Apply Snap to Grid Setting
         self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
         
@@ -3455,6 +3492,8 @@ class SettingsDialog(QDialog):
                 file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                 # Save enable third control point setting
                 file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
+                # Save enable curvature bias control setting
+                file.write(f"EnableCurvatureBiasControl: {str(self.enable_curvature_bias_control).lower()}\n")
                 # Save enable snap to grid setting
                 file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
                 # Save shadow blur settings

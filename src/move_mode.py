@@ -973,6 +973,9 @@ class MoveMode:
         base_square_control_size = 50
         square_control_size = base_square_control_size 
         half_control_size = square_control_size / 2
+        # Smaller rectangle for bias controls
+        bias_square_size = 30
+        half_bias_size = bias_square_size / 2
         
         # Only draw the currently moving point's selection square
         if self.moving_side == 0:  # Start point
@@ -1018,6 +1021,26 @@ class MoveMode:
                 square_control_size
             )
             painter.drawRect(yellow_rect)
+        elif self.moving_side == 'bias_triangle' and hasattr(self.affected_strand, 'bias_control') and self.affected_strand.bias_control:
+            tp, cp = self.affected_strand.bias_control.get_bias_control_positions(self.affected_strand)
+            if tp:
+                yellow_rect = QRectF(
+                    tp.x() - half_bias_size,
+                    tp.y() - half_bias_size,
+                    bias_square_size,
+                    bias_square_size
+                )
+                painter.drawRect(yellow_rect)
+        elif self.moving_side == 'bias_circle' and hasattr(self.affected_strand, 'bias_control') and self.affected_strand.bias_control:
+            tp, cp = self.affected_strand.bias_control.get_bias_control_positions(self.affected_strand)
+            if cp:
+                yellow_rect = QRectF(
+                    cp.x() - half_bias_size,
+                    cp.y() - half_bias_size,
+                    bias_square_size,
+                    bias_square_size
+                )
+                painter.drawRect(yellow_rect)
 
 
     def invalidate_background_cache(self):
@@ -1172,7 +1195,7 @@ class MoveMode:
         control_point_moved = False
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False):
-                if self.try_move_control_points(strand, pos):
+                if self.try_move_control_points(strand, pos, event):
                     control_point_moved = True
                     
                     # For control point movement, we'll temporarily clear visible selections
@@ -1199,7 +1222,7 @@ class MoveMode:
                     current_selection_states[attached] = attached.is_selected
         
         # Handle strand selection and movement
-        self.handle_strand_movement(pos)
+        self.handle_strand_movement(pos, event)
         
         # If no movement was initiated, restore selection states
         # BUT only if we're not in the middle of setting up movement highlighting
@@ -1522,6 +1545,16 @@ class MoveMode:
         """
         from PyQt5.QtCore import QPointF, QTimer
 
+        # Handle bias control release if active, but allow common selection restore below
+        if hasattr(self, 'is_moving_bias_control') and self.is_moving_bias_control:
+            if hasattr(self, 'bias_control_strand') and self.bias_control_strand:
+                # Finalize drag on the bias control itself
+                self.bias_control_strand.bias_control.handle_mouse_release(event)
+            # Clear bias flags and continue to selection restoration logic
+            self.is_moving_bias_control = False
+            self.bias_control_strand = None
+            # Do not return; fall through to common restore
+        
         # Store relevant state before resetting
         was_moving = self.is_moving
         final_pos = event.pos()
@@ -1681,12 +1714,13 @@ class MoveMode:
             # If we've reached the target, stop the timer
             self.move_timer.stop()
 
-    def handle_strand_movement(self, pos):
+    def handle_strand_movement(self, pos, event=None):
         """
         Handle the movement of strands.
 
         Args:
             pos (QPointF): The position of the mouse click.
+            event (QMouseEvent): The mouse event (optional, for bias controls).
         """
         self.is_moving = False  # Reset this flag at the start
         
@@ -1694,7 +1728,7 @@ class MoveMode:
         # First pass: Check all control points for all strands (excluding masked strands)
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand):
-                if self.try_move_control_points(strand, pos):
+                if self.try_move_control_points(strand, pos, event):
                     return
                 if self.try_move_attached_strands_control_points(strand.attached_strands, pos):
                     return
@@ -1808,13 +1842,14 @@ class MoveMode:
                     return True
         return False
 
-    def try_move_control_points(self, strand, pos):
+    def try_move_control_points(self, strand, pos, event=None):
         """
         Try to move a strand's control points if the position is within their selection areas.
 
         Args:
             strand (Strand): The strand to try moving.
             pos (QPointF): The position to check.
+            event (QMouseEvent): The mouse event (optional, for bias controls).
 
         Returns:
             bool: True if a control point was moved, False otherwise.
@@ -1834,6 +1869,42 @@ class MoveMode:
 
         control_point1_rect = self.get_control_point_rectangle(strand, 1)
         control_point2_rect = self.get_control_point_rectangle(strand, 2)
+        
+        # Check bias controls first if they're enabled and event is provided
+        if (event and hasattr(strand, 'bias_control') and strand.bias_control and 
+            hasattr(self.canvas, 'enable_curvature_bias_control') and 
+            self.canvas.enable_curvature_bias_control):
+            
+            pos = event.pos() if event else QPointF()
+            triangle_pos, circle_pos = strand.bias_control.get_bias_control_positions(strand)
+            
+            if triangle_pos and circle_pos:
+                triangle_rect = strand.bias_control.get_control_rect(triangle_pos)
+                circle_rect = strand.bias_control.get_control_rect(circle_pos)
+                
+                # Check if clicking on triangle bias control
+                if triangle_rect.contains(pos):
+                    self.start_movement(strand, 'bias_triangle', triangle_rect, pos)
+                    self.is_moving_control_point = True
+                    self.is_moving_bias_control = True
+                    self.bias_control_strand = strand
+                    self.bias_control_type = 'triangle'
+                    self.bias_start_value = strand.bias_control.triangle_bias
+                    if hasattr(self.canvas, 'truly_moving_strands'):
+                        self.canvas.truly_moving_strands = [strand]
+                    return True
+                    
+                # Check if clicking on circle bias control
+                elif circle_rect.contains(pos):
+                    self.start_movement(strand, 'bias_circle', circle_rect, pos)
+                    self.is_moving_control_point = True
+                    self.is_moving_bias_control = True
+                    self.bias_control_strand = strand
+                    self.bias_control_type = 'circle'
+                    self.bias_start_value = strand.bias_control.circle_bias
+                    if hasattr(self.canvas, 'truly_moving_strands'):
+                        self.canvas.truly_moving_strands = [strand]
+                    return True
         
         # Only get the center control point rectangle if it's enabled
         control_point_center_rect = None
@@ -2092,8 +2163,8 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = area
         self.is_moving = True
-        # Set the flag if we're moving a control point
-        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center']
+        # Set the flag if we're moving a control point (include bias controls)
+        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_triangle', 'bias_circle']
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
         
@@ -2405,6 +2476,33 @@ class MoveMode:
             self.affected_strand.is_selected = False
             self.canvas.selected_attached_strand = None
             self.highlighted_strand = None
+            
+        elif self.moving_side == 'bias_triangle' or self.moving_side == 'bias_circle':
+            # Handle bias control movement
+            if hasattr(self.affected_strand, 'bias_control') and self.affected_strand.bias_control:
+                # Calculate horizontal movement from original position
+                if hasattr(self, 'initial_pos'):
+                    dx = new_pos.x() - self.initial_pos.x()
+                    # Convert to bias change (scale for sensitivity)
+                    bias_change = dx / 200.0
+                    
+                    if self.moving_side == 'bias_triangle':
+                        # Update triangle bias
+                        if hasattr(self, 'bias_start_value'):
+                            new_bias = self.bias_start_value + bias_change
+                        else:
+                            new_bias = self.affected_strand.bias_control.triangle_bias + bias_change
+                        self.affected_strand.bias_control.triangle_bias = max(0.0, min(1.0, new_bias))
+                    else:  # bias_circle
+                        # Update circle bias
+                        if hasattr(self, 'bias_start_value'):
+                            new_bias = self.bias_start_value + bias_change
+                        else:
+                            new_bias = self.affected_strand.bias_control.circle_bias + bias_change
+                        self.affected_strand.bias_control.circle_bias = max(0.0, min(1.0, new_bias))
+                    
+                    # Update the strand shape to reflect the bias change
+                    self.affected_strand.update_shape()
 
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point
@@ -3413,6 +3511,17 @@ class MoveMode:
             pass
         # --- END ADDED ---
 
+        # Handle bias control movement if active
+        if hasattr(self, 'is_moving_bias_control') and self.is_moving_bias_control:
+            if hasattr(self, 'bias_control_strand') and self.bias_control_strand:
+                if self.bias_control_strand.bias_control.handle_mouse_move(event, self.bias_control_strand):
+                    # Update strand geometry so the curve reflects bias changes in real-time
+                    self.bias_control_strand.update_shape()
+                    if hasattr(self.bias_control_strand, 'update_side_line'):
+                        self.bias_control_strand.update_side_line()
+                    self.canvas.update()
+                    return
+        
         # If we're not in a moving state, do nothing
         if not self.is_moving:
             return

@@ -2352,7 +2352,7 @@ class StrandDrawingCanvas(QWidget):
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 0):
-                        circle_color = QColor(255, 255, 20, 100)  # Yellow highlight
+                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency
                     else:
                         circle_color = QColor(255, 0, 0, 60)  # Default red
 
@@ -2373,7 +2373,7 @@ class StrandDrawingCanvas(QWidget):
                     # Highlight if currently affected
                     if (getattr(self.current_mode, 'affected_strand', None) == strand and 
                         getattr(self.current_mode, 'affected_point', None) == 1):
-                        circle_color = QColor(255, 255, 20, 100)  # Yellow highlight
+                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency
                     else:
                         circle_color = QColor(0, 0, 255, 60)  # Default blue
 
@@ -5137,7 +5137,7 @@ class StrandDrawingCanvas(QWidget):
                     if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
                         highlight_size = 50
                         painter.setPen(Qt.NoPen)
-                        painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                        painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
                         painter.drawRect(QRectF(
                             strand.control_point2.x() - highlight_size / 2,
                             strand.control_point2.y() - highlight_size / 2,
@@ -5163,7 +5163,7 @@ class StrandDrawingCanvas(QWidget):
                     if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
                         highlight_size = 50
                         painter.setPen(Qt.NoPen)
-                        painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                        painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
                         painter.drawRect(QRectF(
                             strand.control_point1.x() - highlight_size / 2,
                             strand.control_point1.y() - highlight_size / 2,
@@ -5320,7 +5320,7 @@ class StrandDrawingCanvas(QWidget):
                 if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
                     highlight_size = 50
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                    painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
                     painter.drawRect(QRectF(
                         strand.control_point2.x() - highlight_size / 2,
                         strand.control_point2.y() - highlight_size / 2,
@@ -5347,7 +5347,7 @@ class StrandDrawingCanvas(QWidget):
                 if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
                     highlight_size = 50
                     painter.setPen(Qt.NoPen)
-                    painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                    painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
                     painter.drawRect(QRectF(
                         strand.control_point1.x() - highlight_size / 2,
                         strand.control_point1.y() - highlight_size / 2,

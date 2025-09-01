@@ -49,6 +49,12 @@ translations = {
         'reset_curvature_settings': 'Reset Curvature Settings:',
         'reset': 'Reset',
         'reset_curvature_tooltip': 'Reset all curvature settings to default values',
+        'base_fraction': 'Control Point Influence:',
+        'base_fraction_tooltip': 'Control point influence strength (1.0=normal, 2.0=strong, 3.0=very strong)',
+        'distance_multiplier': 'Distance Boost:',
+        'distance_mult_tooltip': 'Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost)',
+        'curve_response': 'Curvature Type:',
+        'curve_response_tooltip': 'Curve response type (1.0=linear, 1.5=mild curve, 2.0=quadratic, 3.0=cubic)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explanation of Layer State Information:</b><br>
@@ -98,6 +104,7 @@ translations = {
         'layer_panel_buttons': 'Layer Panel Buttons',
         'main_window_buttons': 'Main Window Buttons',
         'group_buttons': 'Group Buttons',
+        'general_settings_buttons': 'General Settings',
         'draw_names_desc': 'Draw Names - Shows/hides strand names on the canvas',
         'lock_layers_desc': 'Lock Layers - Enters lock mode to lock/unlock strands from editing',
         'add_new_strand_desc': 'New Strand - Adds a new strand to your design',
@@ -136,6 +143,18 @@ translations = {
         'rotate_group_desc': 'Rotate Group - Rotate all strands in the group',
         'edit_strand_angles_desc': 'Edit Strand Angles - Aligns all strand angles in the group to be parallel with a single click',
         'duplicate_group_desc': 'Duplicate Group - Create a copy of this group and its strands',
+        # General settings descriptions
+        'theme_select_desc': 'Theme Selection - Choose between light and dark themes for the interface',
+        'shadow_color_desc': 'Shadow Color - Set the color and opacity for strand shadows',
+        'draw_only_affected_desc': 'Draw Only Affected Strand - When enabled, only shows the strand being edited during drag operations',
+        'enable_third_cp_desc': 'Enable Third Control Point - Adds an additional control point at the center for more complex curves',
+        'enable_snap_desc': 'Enable Snap to Grid - Automatically aligns strands to grid points when moving',
+        'shadow_blur_steps_desc': 'Shadow Blur Steps - Number of steps for creating smooth shadow fade effect (1-10)',
+        'shadow_blur_radius_desc': 'Shadow Blur Radius - Controls the spread of the shadow blur in pixels',
+        'control_point_influence_desc': 'Control Point Influence - Adjusts how strongly control points affect curve shape (1.0=normal)',
+        'distance_boost_desc': 'Distance Boost - Multiplies the distance influence for stronger curves (2.0=double strength)',
+        'curvature_type_desc': 'Curvature Type - Changes the mathematical curve response (1.0=linear, 2.0=quadratic, 3.0=cubic)',
+        'reset_curvature_desc': 'Reset Curvature - Restores all curvature settings to default values (1.0, 2.0, 2.0)',
         'whats_new_info': '''
         <h2>What's New in Version 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -396,6 +415,12 @@ translations = {
         'reset_curvature_settings': 'Réinitialiser les paramètres de courbure:',
         'reset': 'Réinitialiser',
         'reset_curvature_tooltip': 'Réinitialiser tous les paramètres de courbure aux valeurs par défaut',
+        'base_fraction': 'Influence du point de contrôle:',
+        'base_fraction_tooltip': 'Force d\'influence du point de contrôle (1.0=normal, 2.0=fort, 3.0=très fort)',
+        'distance_multiplier': 'Amplification de distance:',
+        'distance_mult_tooltip': 'Facteur de multiplication de distance (1.0=aucune amplification, 2.0=2x, 5.0=5x)',
+        'curve_response': 'Type de courbure:',
+        'curve_response_tooltip': 'Type de réponse de courbe (1.0=linéaire, 1.5=courbe douce, 2.0=quadratique, 3.0=cubique)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explication des informations sur l'état des couches :</b><br>
@@ -740,6 +765,12 @@ translations = {
         'reset_curvature_settings': 'Krümmungseinstellungen zurücksetzen:',
         'reset': 'Zurücksetzen',
         'reset_curvature_tooltip': 'Alle Krümmungseinstellungen auf Standardwerte zurücksetzen',
+        'base_fraction': 'Kontrollpunkt-Einfluss:',
+        'base_fraction_tooltip': 'Kontrollpunkt-Einflussstärke (1.0=normal, 2.0=stark, 3.0=sehr stark)',
+        'distance_multiplier': 'Distanzverstärkung:',
+        'distance_mult_tooltip': 'Distanz-Multiplikationsfaktor (1.0=keine Verstärkung, 2.0=2x, 5.0=5x)',
+        'curve_response': 'Krümmungstyp:',
+        'curve_response_tooltip': 'Kurvenreaktionstyp (1.0=linear, 1.5=sanfte Kurve, 2.0=quadratisch, 3.0=kubisch)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Erklärung der Layer-Statusinformationen:</b><br>
@@ -1078,6 +1109,12 @@ translations = {
         'reset_curvature_settings': 'Ripristina impostazioni curvatura:',
         'reset': 'Ripristina',
         'reset_curvature_tooltip': 'Ripristina tutte le impostazioni di curvatura ai valori predefiniti',
+        'base_fraction': 'Influenza punto di controllo:',
+        'base_fraction_tooltip': 'Forza influenza punto di controllo (1.0=normale, 2.0=forte, 3.0=molto forte)',
+        'distance_multiplier': 'Aumento distanza:',
+        'distance_mult_tooltip': 'Fattore di moltiplicazione distanza (1.0=nessun aumento, 2.0=2x, 5.0=5x)',
+        'curve_response': 'Tipo di curvatura:',
+        'curve_response_tooltip': 'Tipo di risposta curva (1.0=lineare, 1.5=curva lieve, 2.0=quadratica, 3.0=cubica)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Spiegazione delle informazioni sullo stato dei livelli:</b><br>
@@ -1424,6 +1461,12 @@ translations = {
         'reset_curvature_settings': 'Restablecer configuración de curvatura:',
         'reset': 'Restablecer',
         'reset_curvature_tooltip': 'Restablecer toda la configuración de curvatura a los valores predeterminados',
+        'base_fraction': 'Influencia del punto de control:',
+        'base_fraction_tooltip': 'Fuerza de influencia del punto de control (1.0=normal, 2.0=fuerte, 3.0=muy fuerte)',
+        'distance_multiplier': 'Aumento de distancia:',
+        'distance_mult_tooltip': 'Factor de multiplicación de distancia (1.0=sin aumento, 2.0=2x, 5.0=5x)',
+        'curve_response': 'Tipo de curvatura:',
+        'curve_response_tooltip': 'Tipo de respuesta de curva (1.0=lineal, 1.5=curva suave, 2.0=cuadrática, 3.0=cúbica)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicación de la Información de Estado de Capas:</b><br>
@@ -1771,6 +1814,12 @@ translations = {
         'reset_curvature_settings': 'Redefinir configurações de curvatura:',
         'reset': 'Redefinir',
         'reset_curvature_tooltip': 'Redefinir todas as configurações de curvatura para valores padrão',
+        'base_fraction': 'Influência do ponto de controle:',
+        'base_fraction_tooltip': 'Força de influência do ponto de controle (1.0=normal, 2.0=forte, 3.0=muito forte)',
+        'distance_multiplier': 'Aumento de distância:',
+        'distance_mult_tooltip': 'Fator de multiplicação de distância (1.0=sem aumento, 2.0=2x, 5.0=5x)',
+        'curve_response': 'Tipo de curvatura:',
+        'curve_response_tooltip': 'Tipo de resposta da curva (1.0=linear, 1.5=curva suave, 2.0=quadrática, 3.0=cúbica)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>Explicação das Informações de Estado das Camadas:</b><br>
@@ -2121,6 +2170,12 @@ translations = {
         'reset_curvature_settings': 'איפוס הגדרות עקמומיות:',
         'reset': 'איפוס',
         'reset_curvature_tooltip': 'איפוס כל הגדרות העקמומיות לערכי ברירת המחדל',
+        'base_fraction': 'השפעת נקודת בקרה:',
+        'base_fraction_tooltip': 'עוצמת השפעת נקודת בקרה (1.0=רגיל, 2.0=חזק, 3.0=חזק מאוד)',
+        'distance_multiplier': 'הגברת מרחק:',
+        'distance_mult_tooltip': 'מקדם הכפלת מרחק (1.0=ללא הגברה, 2.0=פי 2, 5.0=פי 5)',
+        'curve_response': 'סוג עקמומיות:',
+        'curve_response_tooltip': 'סוג תגובת עקומה (1.0=לינארי, 1.5=עקומה עדינה, 2.0=ריבועי, 3.0=קובי)',
         # Layer State Info Text
         'layer_state_info_text': '''
 <b>הסבר על מידע מצב השכבות:</b><br>

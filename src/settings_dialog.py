@@ -1494,7 +1494,7 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'loaded_base_fraction'):
             self.base_fraction_spinbox.setValue(self.loaded_base_fraction)
         else:
-            default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 0.4) if self.canvas else 0.4
+            default_base_fraction = getattr(self.canvas, 'control_point_base_fraction', 1.0) if self.canvas else 1.0
             self.base_fraction_spinbox.setValue(default_base_fraction)
         self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.4=default, 1.0=normal, 3.0=very strong)")
         # Connect using lambda to ensure proper connection
@@ -1522,7 +1522,7 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'loaded_distance_multiplier'):
             self.distance_mult_spinbox.setValue(self.loaded_distance_multiplier)
         else:
-            default_distance_mult = getattr(self.canvas, 'distance_multiplier', 1.2) if self.canvas else 1.2
+            default_distance_mult = getattr(self.canvas, 'distance_multiplier', 2.0) if self.canvas else 2.0
             self.distance_mult_spinbox.setValue(default_distance_mult)
         self.distance_mult_spinbox.setToolTip(_['distance_mult_tooltip'] if 'distance_mult_tooltip' in _ else "Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost, 10.0=10x boost)")
         # Connect using lambda to ensure proper connection
@@ -1550,7 +1550,7 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'loaded_curve_response'):
             self.curve_response_spinbox.setValue(self.loaded_curve_response)
         else:
-            default_curve_response = getattr(self.canvas, 'curve_response_exponent', 1.5) if self.canvas else 1.5
+            default_curve_response = getattr(self.canvas, 'curve_response_exponent', 2.0) if self.canvas else 2.0
             self.curve_response_spinbox.setValue(default_curve_response)
         self.curve_response_spinbox.setToolTip(_['curve_response_tooltip'] if 'curve_response_tooltip' in _ else "Curve response type: 1.0=linear, 1.5=mild quadratic, 2.0=quadratic, 3.0=cubic")
         # Connect using lambda to ensure proper connection
@@ -2187,6 +2187,21 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+        </ul>
+        
+        <h2>{_['general_settings_buttons'] if 'general_settings_buttons' in _ else 'General Settings'}</h2>
+        <ul>
+            <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0] if 'theme_select_desc' in _ else 'Theme Selection'}</span> - {_['theme_select_desc'].split(' - ')[1] if 'theme_select_desc' in _ else 'Choose between light and dark themes for the interface'}</li>
+            <li><span class="button-name">{_['shadow_color_desc'].split(' - ')[0] if 'shadow_color_desc' in _ else 'Shadow Color'}</span> - {_['shadow_color_desc'].split(' - ')[1] if 'shadow_color_desc' in _ else 'Set the color and opacity for strand shadows'}</li>
+            <li><span class="button-name">{_['draw_only_affected_desc'].split(' - ')[0] if 'draw_only_affected_desc' in _ else 'Draw Only Affected Strand'}</span> - {_['draw_only_affected_desc'].split(' - ')[1] if 'draw_only_affected_desc' in _ else 'When enabled, only shows the strand being edited during drag operations'}</li>
+            <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0] if 'enable_third_cp_desc' in _ else 'Enable Third Control Point'}</span> - {_['enable_third_cp_desc'].split(' - ')[1] if 'enable_third_cp_desc' in _ else 'Adds an additional control point at the center for more complex curves'}</li>
+            <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0] if 'enable_snap_desc' in _ else 'Enable Snap to Grid'}</span> - {_['enable_snap_desc'].split(' - ')[1] if 'enable_snap_desc' in _ else 'Automatically aligns strands to grid points when moving'}</li>
+            <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0] if 'shadow_blur_steps_desc' in _ else 'Shadow Blur Steps'}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1] if 'shadow_blur_steps_desc' in _ else 'Number of steps for creating smooth shadow fade effect (1-10)'}</li>
+            <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0] if 'shadow_blur_radius_desc' in _ else 'Shadow Blur Radius'}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1] if 'shadow_blur_radius_desc' in _ else 'Controls the spread of the shadow blur in pixels'}</li>
+            <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0] if 'control_point_influence_desc' in _ else 'Control Point Influence'}</span> - {_['control_point_influence_desc'].split(' - ')[1] if 'control_point_influence_desc' in _ else 'Adjusts how strongly control points affect curve shape (1.0=normal)'}</li>
+            <li><span class="button-name">{_['distance_boost_desc'].split(' - ')[0] if 'distance_boost_desc' in _ else 'Distance Boost'}</span> - {_['distance_boost_desc'].split(' - ')[1] if 'distance_boost_desc' in _ else 'Multiplies the distance influence for stronger curves (2.0=double strength)'}</li>
+            <li><span class="button-name">{_['curvature_type_desc'].split(' - ')[0] if 'curvature_type_desc' in _ else 'Curvature Type'}</span> - {_['curvature_type_desc'].split(' - ')[1] if 'curvature_type_desc' in _ else 'Changes the mathematical curve response (1.0=linear, 2.0=quadratic, 3.0=cubic)'}</li>
+            <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0] if 'reset_curvature_desc' in _ else 'Reset Curvature'}</span> - {_['reset_curvature_desc'].split(' - ')[1] if 'reset_curvature_desc' in _ else 'Restores all curvature settings to default values (1.0, 2.0, 2.0)'}</li>
         </ul>
         '''
         
@@ -3896,9 +3911,9 @@ class SettingsDialog(QDialog):
         """Reset all curvature settings to their default values."""
         # Don't disconnect signals - just set values and let them trigger naturally
         # Reset to default values
-        self.base_fraction_spinbox.setValue(0.4)  # Default base fraction
-        self.distance_mult_spinbox.setValue(1.2)  # Default distance multiplier
-        self.curve_response_spinbox.setValue(1.5)  # Default curve response
+        self.base_fraction_spinbox.setValue(1.0)  # Default control point influence
+        self.distance_mult_spinbox.setValue(2.0)  # Default distance boost
+        self.curve_response_spinbox.setValue(2.0)  # Default curvature type
         
     def choose_shadow_color(self):
         """Open a color dialog to choose a new shadow color."""

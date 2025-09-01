@@ -1940,26 +1940,12 @@ class AttachedStrand(Strand):
             in_tangent_normalized = normalize_vector(in_tangent)
             out_tangent_normalized = normalize_vector(out_tangent)
             
-            # Calculate center tangent with bias weights if bias control is enabled
-            if (hasattr(self, 'bias_control') and self.bias_control and 
-                hasattr(self.canvas, 'enable_curvature_bias_control') and 
-                self.canvas.enable_curvature_bias_control):
-                # Get bias weights from the bias control
-                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
-                
-                # Apply bias weights to the center tangent calculation
-                # Triangle (control_point1) gets more influence with higher triangle_weight
-                # Circle (control_point2) gets more influence with higher circle_weight
-                center_tangent = QPointF(
-                    triangle_weight * in_tangent_normalized.x() + circle_weight * out_tangent_normalized.x(), 
-                    triangle_weight * in_tangent_normalized.y() + circle_weight * out_tangent_normalized.y()
-                )
-            else:
-                # Default: equal weights (0.5 each)
-                center_tangent = QPointF(
-                    0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
-                    0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
-                )
+            # Calculate center tangent (average of incoming and outgoing)
+            # This will be adjusted by bias later through the fraction values
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+            )
             center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
@@ -1990,34 +1976,45 @@ class AttachedStrand(Strand):
                 # Direct exponential shaping: higher values = sharper curves
                 fraction = pow(fraction, 1.0 / exponent)
 
-            # Apply bias to fractions if bias control is enabled
-            fraction1 = fraction  # For first segment
-            fraction2 = fraction  # For second segment
+            # Apply bias control weights if enabled
+            bias_triangle = 0.5  # Default neutral bias
+            bias_circle = 0.5    # Default neutral bias
             
-            if (hasattr(self, 'bias_control') and self.bias_control and 
+            if (hasattr(self, 'bias_control') and self.bias_control and
                 hasattr(self.canvas, 'enable_curvature_bias_control') and 
                 self.canvas.enable_curvature_bias_control):
-                # Get bias weights
-                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
-                
-                # Adjust fractions based on bias
-                # Higher triangle weight = tighter curve near triangle control point
-                # Higher circle weight = tighter curve near circle control point
-                bias_factor = 1.5  # Amplification factor for bias effect
-                fraction1 = fraction * (1.0 + (triangle_weight - 0.5) * bias_factor)
-                fraction2 = fraction * (1.0 + (circle_weight - 0.5) * bias_factor)
-                
-                # Clamp to reasonable range
-                fraction1 = max(0.1, min(0.49, fraction1))
-                fraction2 = max(0.1, min(0.49, fraction2))
+                # Get the current bias values (not normalized weights)
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
             
-            # Calculate intermediate control points, incorporating p1 and p3 influence
-            # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction1) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction1) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction2) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction2) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Apply bias to control point positions
+            # Bias affects how much influence each control point has on the curve
+            # Triangle bias affects the first half, circle bias affects the second half
+            
+            # Modify frac1 and frac2 based on bias values
+            # Bias range is 0.0 to 1.0, where 0.5 is neutral
+            # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+            frac1_biased = fraction * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+            frac2_biased = fraction * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+            
+            # Create control points for smooth bezier segments
+            # These ensure the curve passes smoothly through all 5 control points
+            cp1 = QPointF(
+                p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                p0.y() + (p1.y() - p0.y()) * frac1_biased
+            )
+            cp2 = QPointF(
+                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * fraction * (0.5 + bias_triangle),
+                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * fraction * (0.5 + bias_triangle)
+            )
+            cp3 = QPointF(
+                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * fraction * (0.5 + bias_circle),
+                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * fraction * (0.5 + bias_circle)
+            )
+            cp4 = QPointF(
+                p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                p4.y() + (p3.y() - p4.y()) * frac2_biased
+            )
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
@@ -2095,23 +2092,42 @@ class AttachedStrand(Strand):
                     frac1 = pow(frac1, 1.0 / exponent)
                     frac2 = pow(frac2, 1.0 / exponent)
                 
+                # Apply bias control weights if enabled
+                bias_triangle = 0.5  # Default neutral bias
+                bias_circle = 0.5    # Default neutral bias
+                
+                if (hasattr(self, 'bias_control') and self.bias_control and
+                    hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                    self.canvas.enable_curvature_bias_control):
+                    # Get the current bias values (not normalized weights)
+                    bias_triangle = self.bias_control.triangle_bias
+                    bias_circle = self.bias_control.circle_bias
+                
+                # Apply bias to control point positions
+                # Bias affects how much influence each control point has on the curve
+                # Modify frac1 and frac2 based on bias values
+                # Bias range is 0.0 to 1.0, where 0.5 is neutral
+                # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+                frac1_biased = frac1 * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+                frac2_biased = frac2 * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+                
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
                 cp1 = QPointF(
-                    p0.x() + (p1.x() - p0.x()) * frac1,
-                    p0.y() + (p1.y() - p0.y()) * frac1
+                    p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                    p0.y() + (p1.y() - p0.y()) * frac1_biased
                 )
                 cp2 = QPointF(
-                    p2.x() - center_tangent.x() * dist2 * frac2,
-                    p2.y() - center_tangent.y() * dist2 * frac2
+                    p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
+                    p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
                 )
                 cp3 = QPointF(
-                    p2.x() + center_tangent.x() * dist3 * frac2,
-                    p2.y() + center_tangent.y() * dist3 * frac2
+                    p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
+                    p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
                 )
                 cp4 = QPointF(
-                    p4.x() + (p3.x() - p4.x()) * frac2,
-                    p4.y() + (p3.y() - p4.y()) * frac2
+                    p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                    p4.y() + (p3.y() - p4.y()) * frac2_biased
                 )
                 
                 # First segment: start to center
@@ -2173,26 +2189,12 @@ class AttachedStrand(Strand):
             in_tangent_normalized = normalize_vector(in_tangent)
             out_tangent_normalized = normalize_vector(out_tangent)
             
-            # Calculate center tangent with bias weights if bias control is enabled
-            if (hasattr(self, 'bias_control') and self.bias_control and 
-                hasattr(self.canvas, 'enable_curvature_bias_control') and 
-                self.canvas.enable_curvature_bias_control):
-                # Get bias weights from the bias control
-                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
-                
-                # Apply bias weights to the center tangent calculation
-                # Triangle (control_point1) gets more influence with higher triangle_weight
-                # Circle (control_point2) gets more influence with higher circle_weight
-                center_tangent = QPointF(
-                    triangle_weight * in_tangent_normalized.x() + circle_weight * out_tangent_normalized.x(), 
-                    triangle_weight * in_tangent_normalized.y() + circle_weight * out_tangent_normalized.y()
-                )
-            else:
-                # Default: equal weights (0.5 each)
-                center_tangent = QPointF(
-                    0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
-                    0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
-                )
+            # Calculate center tangent (average of incoming and outgoing)
+            # This will be adjusted by bias later through the fraction values
+            center_tangent = QPointF(
+                0.5 * in_tangent_normalized.x() + 0.5 * out_tangent_normalized.x(), 
+                0.5 * in_tangent_normalized.y() + 0.5 * out_tangent_normalized.y()
+            )
             center_tangent_normalized = normalize_vector(center_tangent)
             
             # Calculate end tangent
@@ -2223,34 +2225,45 @@ class AttachedStrand(Strand):
                 # Direct exponential shaping: higher values = sharper curves
                 fraction = pow(fraction, 1.0 / exponent)
 
-            # Apply bias to fractions if bias control is enabled
-            fraction1 = fraction  # For first segment
-            fraction2 = fraction  # For second segment
+            # Apply bias control weights if enabled
+            bias_triangle = 0.5  # Default neutral bias
+            bias_circle = 0.5    # Default neutral bias
             
-            if (hasattr(self, 'bias_control') and self.bias_control and 
+            if (hasattr(self, 'bias_control') and self.bias_control and
                 hasattr(self.canvas, 'enable_curvature_bias_control') and 
                 self.canvas.enable_curvature_bias_control):
-                # Get bias weights
-                triangle_weight, circle_weight = self.bias_control.get_bias_weights()
-                
-                # Adjust fractions based on bias
-                # Higher triangle weight = tighter curve near triangle control point
-                # Higher circle weight = tighter curve near circle control point
-                bias_factor = 1.5  # Amplification factor for bias effect
-                fraction1 = fraction * (1.0 + (triangle_weight - 0.5) * bias_factor)
-                fraction2 = fraction * (1.0 + (circle_weight - 0.5) * bias_factor)
-                
-                # Clamp to reasonable range
-                fraction1 = max(0.1, min(0.49, fraction1))
-                fraction2 = max(0.1, min(0.49, fraction2))
+                # Get the current bias values (not normalized weights)
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
             
-            # Calculate intermediate control points, incorporating p1 and p3 influence
-            # Ensure tangents are non-zero before using them
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction1) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction1) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction2) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction2) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Apply bias to control point positions
+            # Bias affects how much influence each control point has on the curve
+            # Triangle bias affects the first half, circle bias affects the second half
+            
+            # Modify frac1 and frac2 based on bias values
+            # Bias range is 0.0 to 1.0, where 0.5 is neutral
+            # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+            frac1_biased = fraction * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+            frac2_biased = fraction * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+            
+            # Create control points for smooth bezier segments
+            # These ensure the curve passes smoothly through all 5 control points
+            cp1 = QPointF(
+                p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                p0.y() + (p1.y() - p0.y()) * frac1_biased
+            )
+            cp2 = QPointF(
+                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * fraction * (0.5 + bias_triangle),
+                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * fraction * (0.5 + bias_triangle)
+            )
+            cp3 = QPointF(
+                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * fraction * (0.5 + bias_circle),
+                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * fraction * (0.5 + bias_circle)
+            )
+            cp4 = QPointF(
+                p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                p4.y() + (p3.y() - p4.y()) * frac2_biased
+            )
             
             # First segment: start to center
             path.cubicTo(cp1, cp2, p2)
@@ -2328,23 +2341,42 @@ class AttachedStrand(Strand):
                     frac1 = pow(frac1, 1.0 / exponent)
                     frac2 = pow(frac2, 1.0 / exponent)
                 
+                # Apply bias control weights if enabled
+                bias_triangle = 0.5  # Default neutral bias
+                bias_circle = 0.5    # Default neutral bias
+                
+                if (hasattr(self, 'bias_control') and self.bias_control and
+                    hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                    self.canvas.enable_curvature_bias_control):
+                    # Get the current bias values (not normalized weights)
+                    bias_triangle = self.bias_control.triangle_bias
+                    bias_circle = self.bias_control.circle_bias
+                
+                # Apply bias to control point positions
+                # Bias affects how much influence each control point has on the curve
+                # Modify frac1 and frac2 based on bias values
+                # Bias range is 0.0 to 1.0, where 0.5 is neutral
+                # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+                frac1_biased = frac1 * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+                frac2_biased = frac2 * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+                
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
                 cp1 = QPointF(
-                    p0.x() + (p1.x() - p0.x()) * frac1,
-                    p0.y() + (p1.y() - p0.y()) * frac1
+                    p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                    p0.y() + (p1.y() - p0.y()) * frac1_biased
                 )
                 cp2 = QPointF(
-                    p2.x() - center_tangent.x() * dist2 * frac2,
-                    p2.y() - center_tangent.y() * dist2 * frac2
+                    p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
+                    p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
                 )
                 cp3 = QPointF(
-                    p2.x() + center_tangent.x() * dist3 * frac2,
-                    p2.y() + center_tangent.y() * dist3 * frac2
+                    p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
+                    p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
                 )
                 cp4 = QPointF(
-                    p4.x() + (p3.x() - p4.x()) * frac2,
-                    p4.y() + (p3.y() - p4.y()) * frac2
+                    p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                    p4.y() + (p3.y() - p4.y()) * frac2_biased
                 )
                 
                 # First segment: start to center

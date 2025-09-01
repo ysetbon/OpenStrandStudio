@@ -2481,6 +2481,8 @@ class MoveMode:
             # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()
+            # Force canvas update to redraw shadows with new control point position
+            self.canvas.update()
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 1)
             # Keep the strand deselected to prevent highlighting during control point movement
@@ -2495,6 +2497,8 @@ class MoveMode:
             # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()  # Call again to ensure it's updated
+            # Force canvas update to redraw shadows with new control point position
+            self.canvas.update()
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 2)
             # Keep the strand deselected to prevent highlighting during control point movement
@@ -2509,6 +2513,8 @@ class MoveMode:
             # Update the strand shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()
+            # Force canvas update to redraw shadows with new control point position
+            self.canvas.update()
             # Update the selection rectangle to the new position
             self.selected_rectangle = self.get_control_point_rectangle(self.affected_strand, 3)
             # Keep the strand deselected to prevent highlighting during control point movement

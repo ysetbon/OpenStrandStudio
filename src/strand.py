@@ -41,25 +41,32 @@ class Strand:
         self.start_attached = False
         self.end_attached = False
 
+        # Initialize control points at proper positions along the strand
+        dx = 0
+        dy = 0
+        
         self.control_point1 = QPointF(
-            self.start.x(),
-            self.start.y()
+            self._start.x() + dx / 3,
+            self._start.y() + dy / 3
         )
         self.control_point2 = QPointF(
-            self.start.x(),
-            self.start.y()
+            self._start.x() + 2 * dx / 3,
+            self._start.y() + 2 * dy / 3
         )
         
         # Add the center control point (midpoint between control_point1 and control_point2)
         self.control_point_center = QPointF(
-            self.start.x(),
-            self.start.y()
+            (self.control_point1.x() + self.control_point2.x()) / 2,
+            (self.control_point1.y() + self.control_point2.y()) / 2
         )
         # Flag to track if the center control point has been manually positioned
         self.control_point_center_locked = False
 
         # Add canvas reference
-        self.canvas = None
+        self._canvas = None
+        
+        # Initialize bias control (will be properly set when canvas is assigned)
+        self.bias_control = None
 
         # Add line visibility flags
         self.start_line_visible = True
@@ -89,6 +96,21 @@ class Strand:
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
 
+    @property
+    def canvas(self):
+        """Getter for the canvas reference."""
+        return self._canvas
+    
+    @canvas.setter
+    def canvas(self, value):
+        """Setter for the canvas reference."""
+        self._canvas = value
+        # Initialize bias control when canvas is set
+        if value and hasattr(value, 'enable_curvature_bias_control'):
+            from curvature_bias_control import CurvatureBiasControl
+            if self.bias_control is None:
+                self.bias_control = CurvatureBiasControl(value)
+    
     @property
     def start(self):
         """Getter for the start point."""
@@ -621,23 +643,44 @@ class Strand:
                 frac1 = pow(frac1, 1.0 / exponent)  # Inverse power for more intuitive control
                 frac2 = pow(frac2, 1.0 / exponent)
             
+            # Apply bias control weights if enabled
+            bias_triangle = 0.5  # Default neutral bias
+            bias_circle = 0.5    # Default neutral bias
+            
+            if (hasattr(self, 'bias_control') and self.bias_control and
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get the current bias values
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
+            
+            # Apply bias to control point positions
+            # Bias affects how much influence each control point has on the curve
+            # Triangle bias affects the first half, circle bias affects the second half
+            
+            # Modify frac1 and frac2 based on bias values
+            # Bias range is 0.0 to 1.0, where 0.5 is neutral
+            # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+            frac1_biased = frac1 * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+            frac2_biased = frac2 * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+            
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
             cp1 = QPointF(
-                p0.x() + (p1.x() - p0.x()) * frac1,
-                p0.y() + (p1.y() - p0.y()) * frac1
+                p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent.x() * dist2 * frac2,
-                p2.y() - center_tangent.y() * dist2 * frac2
+                p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
+                p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
             )
             cp3 = QPointF(
-                p2.x() + center_tangent.x() * dist3 * frac2,
-                p2.y() + center_tangent.y() * dist3 * frac2
+                p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
+                p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
             )
             cp4 = QPointF(
-                p4.x() + (p3.x() - p4.x()) * frac2,
-                p4.y() + (p3.y() - p4.y()) * frac2
+                p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                p4.y() + (p3.y() - p4.y()) * frac2_biased
             )
             
             # First segment: start to center
@@ -826,23 +869,44 @@ class Strand:
                 frac1 = pow(frac1, 1.0 / exponent)  # Inverse power for more intuitive control
                 frac2 = pow(frac2, 1.0 / exponent)
             
+            # Apply bias control weights if enabled
+            bias_triangle = 0.5  # Default neutral bias
+            bias_circle = 0.5    # Default neutral bias
+            
+            if (hasattr(self, 'bias_control') and self.bias_control and
+                hasattr(self.canvas, 'enable_curvature_bias_control') and 
+                self.canvas.enable_curvature_bias_control):
+                # Get the current bias values
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
+            
+            # Apply bias to control point positions
+            # Bias affects how much influence each control point has on the curve
+            # Triangle bias affects the first half, circle bias affects the second half
+            
+            # Modify frac1 and frac2 based on bias values
+            # Bias range is 0.0 to 1.0, where 0.5 is neutral
+            # Scale the fractions based on bias (0.0 = less influence, 1.0 = more influence)
+            frac1_biased = frac1 * (0.5 + bias_triangle)  # Scale from 0.5x to 1.5x
+            frac2_biased = frac2 * (0.5 + bias_circle)     # Scale from 0.5x to 1.5x
+            
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
             cp1 = QPointF(
-                p0.x() + (p1.x() - p0.x()) * frac1,
-                p0.y() + (p1.y() - p0.y()) * frac1
+                p0.x() + (p1.x() - p0.x()) * frac1_biased,
+                p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent.x() * dist2 * frac2,
-                p2.y() - center_tangent.y() * dist2 * frac2
+                p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
+                p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
             )
             cp3 = QPointF(
-                p2.x() + center_tangent.x() * dist3 * frac2,
-                p2.y() + center_tangent.y() * dist3 * frac2
+                p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
+                p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
             )
             cp4 = QPointF(
-                p4.x() + (p3.x() - p4.x()) * frac2,
-                p4.y() + (p3.y() - p4.y()) * frac2
+                p4.x() + (p3.x() - p4.x()) * frac2_biased,
+                p4.y() + (p3.y() - p4.y()) * frac2_biased
             )
             
             # First segment: start to center

@@ -1,12 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
+    "ask": [],
     "additionalDirectories": [
       "C:\\mnt\\c\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio"
-    ],
-    "ask": []
+    ]
   }
 }

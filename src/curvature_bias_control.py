@@ -22,6 +22,7 @@ class CurvatureBiasControl:
         # Visual properties
         self.control_size = 12  # Smaller bias control squares to match subtle highlight
         self.icon_size = 8      # Size of triangle/circle icons inside squares
+        self.selection_size = 50  # Larger clickable area for easier selection (same as green highlight square)
         
         # Active drag state
         self.dragging_triangle = False
@@ -50,7 +51,6 @@ class CurvatureBiasControl:
         if self.triangle_position is None or self.circle_position is None:
             self.update_positions_from_biases(strand)
             if self.triangle_position is None or self.circle_position is None:
-                print(f"[ERROR] Could not initialize positions!")
                 return None, None
         
         # Check if any of the main control points have moved
@@ -99,7 +99,6 @@ class CurvatureBiasControl:
         else:
             # Only initialize if needed when not dragging
             if self.triangle_position is None or self.circle_position is None:
-                print(f"[draw] Initializing positions for first draw")
                 # Use update_positions_from_biases to set positions based on actual bias values
                 self.update_positions_from_biases(strand)
                 
@@ -204,6 +203,7 @@ class CurvatureBiasControl:
         # 1. Curvature bias control is enabled
         # 2. Third control point is enabled  
         # 3. Control points are being shown (which means strand is relevant for editing)
+        # 4. The center control point must be locked (manually positioned)
         
         if not hasattr(self.canvas, 'enable_curvature_bias_control'):
             return False
@@ -215,6 +215,10 @@ class CurvatureBiasControl:
             return False
             
         if not self.canvas.enable_third_control_point:
+            return False
+        
+        # Check if the center control point is locked (required for bias controls to work)
+        if not hasattr(strand, 'control_point_center_locked') or not strand.control_point_center_locked:
             return False
         
         # Always show if control points are visible OR if we're in test mode
@@ -231,12 +235,13 @@ class CurvatureBiasControl:
     def get_control_rect(self, pos):
         """
         Get the rectangle for a control point at the given position.
+        Uses selection_size for the clickable area, not the visual control_size.
         """
         return QRectF(
-            pos.x() - self.control_size / 2,
-            pos.y() - self.control_size / 2,
-            self.control_size,
-            self.control_size
+            pos.x() - self.selection_size / 2,
+            pos.y() - self.selection_size / 2,
+            self.selection_size,
+            self.selection_size
         )
         
     def handle_mouse_press(self, event, strand):
@@ -253,7 +258,6 @@ class CurvatureBiasControl:
         if self.triangle_position is None or self.circle_position is None:
             # Initialize with proper positions based on current bias values
             self.update_positions_from_biases(strand)
-            print(f"[INIT] First click - initialized positions with bias values")
         
         # Ensure positions are synced with current bias values
         # This is important if bias values were changed programmatically
@@ -274,7 +278,6 @@ class CurvatureBiasControl:
             self.drag_start_bias = self.triangle_bias
             # Don't store offset for line-constrained movement
             self.drag_offset = QPointF(0, 0)
-            print(f"[START DRAG] TRIANGLE - bias: {self.triangle_bias}")
             return True
             
         # Check circle control
@@ -285,7 +288,6 @@ class CurvatureBiasControl:
             self.drag_start_bias = self.circle_bias
             # Don't store offset for line-constrained movement
             self.drag_offset = QPointF(0, 0)
-            print(f"[START DRAG] CIRCLE - bias: {self.circle_bias}")
             return True
             
         return False
@@ -327,7 +329,6 @@ class CurvatureBiasControl:
                 
                 # Calculate bias based on position along the line (0 at center, 1 at control point)
                 self.triangle_bias = projection_length / line_length
-                print(f"[DRAG] Triangle at {self.triangle_position}, bias={self.triangle_bias:.2f}")
                 
         elif self.dragging_circle:
             # Constrain movement along the line from center to control_point2
@@ -355,7 +356,6 @@ class CurvatureBiasControl:
                 
                 # Calculate bias based on position along the line (0 at center, 1 at control point)
                 self.circle_bias = projection_length / line_length
-                print(f"[DRAG] Circle at {self.circle_position}, bias={self.circle_bias:.2f}")
                 
         return True
     

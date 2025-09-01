@@ -1867,85 +1867,101 @@ class MoveMode:
                 # logging.info(f"Skipping control point movement for locked strand {strand.layer_name}")
                 return False
 
-        control_point1_rect = self.get_control_point_rectangle(strand, 1)
-        control_point2_rect = self.get_control_point_rectangle(strand, 2)
+        # Check if control points exist
+        if not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
+            print(f"Strand {getattr(strand, 'layer_name', 'unknown')} missing control points")
+            return False
         
         # Check bias controls first if they're enabled and event is provided
         if (event and hasattr(strand, 'bias_control') and strand.bias_control and 
             hasattr(self.canvas, 'enable_curvature_bias_control') and 
             self.canvas.enable_curvature_bias_control):
             
-            pos = event.pos() if event else QPointF()
-            triangle_pos, circle_pos = strand.bias_control.get_bias_control_positions(strand)
-            
-            if triangle_pos and circle_pos:
-                triangle_rect = strand.bias_control.get_control_rect(triangle_pos)
-                circle_rect = strand.bias_control.get_control_rect(circle_pos)
-                
-                # Check if clicking on triangle bias control
-                if triangle_rect.contains(pos):
-                    self.start_movement(strand, 'bias_triangle', triangle_rect, pos)
-                    self.is_moving_control_point = True
-                    self.is_moving_bias_control = True
-                    self.bias_control_strand = strand
-                    self.bias_control_type = 'triangle'
-                    self.bias_start_value = strand.bias_control.triangle_bias
-                    if hasattr(self.canvas, 'truly_moving_strands'):
-                        self.canvas.truly_moving_strands = [strand]
-                    return True
-                    
-                # Check if clicking on circle bias control
-                elif circle_rect.contains(pos):
-                    self.start_movement(strand, 'bias_circle', circle_rect, pos)
-                    self.is_moving_control_point = True
-                    self.is_moving_bias_control = True
-                    self.bias_control_strand = strand
-                    self.bias_control_type = 'circle'
-                    self.bias_start_value = strand.bias_control.circle_bias
-                    if hasattr(self.canvas, 'truly_moving_strands'):
-                        self.canvas.truly_moving_strands = [strand]
-                    return True
+            # Let the bias control handle the mouse press and see if it accepts it
+            if strand.bias_control.handle_mouse_press(event, strand):
+                # The bias control is now handling the drag
+                self.start_movement(strand, 'bias_control', None, event.pos())
+                self.is_moving_control_point = True
+                self.is_moving_bias_control = True
+                self.bias_control_strand = strand
+                if hasattr(self.canvas, 'truly_moving_strands'):
+                    self.canvas.truly_moving_strands = [strand]
+                return True
         
-        # Only get the center control point rectangle if it's enabled
-        control_point_center_rect = None
-        if hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point:
-            control_point_center_rect = self.get_control_point_rectangle(strand, 3)
+        # Check if third control point is enabled
+        third_cp_enabled = hasattr(self.canvas, 'enable_third_control_point') and self.canvas.enable_third_control_point
+        center_is_locked = getattr(strand, 'control_point_center_locked', False)
+        
+        # Control point movement logic:
+        # 1. When third CP is disabled: Always allow moving end control points (classic mode)
+        # 2. When third CP is enabled:
+        #    - Initially (center_is_locked = False): Only end control points are movable, center is NOT selectable
+        #    - After moving an end control point: Center becomes locked and movable
+        #    - Both end and center control points remain movable after that
+        
+        # ALWAYS check end control points first - they should be the primary way to control the curve
+        # Allow override with Shift to force-select a small control point
+        shift_held = False
+        try:
+            from PyQt5.QtWidgets import QApplication
+            shift_held = QApplication.keyboardModifiers() & Qt.ShiftModifier
+        except Exception:
+            shift_held = False
+            
+        cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and
+                        abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+        cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and
+                        abs(strand.control_point2.y() - strand.start.y()) < 1.0)
 
-        if control_point1_rect.contains(pos):
-            self.start_movement(strand, 'control_point1', control_point1_rect, pos)
-            # Mark that we're moving a control point
-            self.is_moving_control_point = True
-            # Store the strand explicitly in truly_moving_strands for proper z-ordering
-            if hasattr(self.canvas, 'truly_moving_strands'):
-                self.canvas.truly_moving_strands = [strand]
-            else:
-                self.canvas.truly_moving_strands = [strand]
-            # Clear any existing highlighting
-            self.highlighted_strand = None
-            return True
-        elif control_point2_rect.contains(pos):
-            self.start_movement(strand, 'control_point2', control_point2_rect, pos)
-            # Mark that we're moving a control point
-            self.is_moving_control_point = True
-            if hasattr(self.canvas, 'truly_moving_strands'):
-                self.canvas.truly_moving_strands = [strand]
-            else:
-                self.canvas.truly_moving_strands = [strand]
-            # Clear any existing highlighting
-            self.highlighted_strand = None
-            return True
-        # Only check center control point if it's enabled
-        elif control_point_center_rect is not None and control_point_center_rect.contains(pos):
-            self.start_movement(strand, 'control_point_center', control_point_center_rect, pos)
-            # Mark that we're moving a control point
-            self.is_moving_control_point = True
-            if hasattr(self.canvas, 'truly_moving_strands'):
-                self.canvas.truly_moving_strands = [strand]
-            else:
-                self.canvas.truly_moving_strands = [strand]
-            # Clear any existing highlighting
-            self.highlighted_strand = None
-            return True
+        # Check end control points - these are always the priority
+        # Skip them only if third CP is disabled AND both are at start AND shift not held
+        if third_cp_enabled or shift_held or not (cp1_at_start and cp2_at_start):
+            control_point1_rect = self.get_control_point_rectangle(strand, 1)
+            control_point2_rect = self.get_control_point_rectangle(strand, 2)
+
+            if control_point1_rect.contains(pos):
+                self.start_movement(strand, 'control_point1', control_point1_rect, pos)
+                self.is_moving_control_point = True
+                # Do NOT lock the center when moving end control points
+                # Let it update automatically to stay at the midpoint
+                if hasattr(self.canvas, 'truly_moving_strands'):
+                    self.canvas.truly_moving_strands = [strand]
+                else:
+                    self.canvas.truly_moving_strands = [strand]
+                self.highlighted_strand = None
+                return True
+            elif control_point2_rect.contains(pos):
+                self.start_movement(strand, 'control_point2', control_point2_rect, pos)
+                self.is_moving_control_point = True
+                # Do NOT lock the center when moving end control points
+                # Let it update automatically to stay at the midpoint
+                if hasattr(self.canvas, 'truly_moving_strands'):
+                    self.canvas.truly_moving_strands = [strand]
+                else:
+                    self.canvas.truly_moving_strands = [strand]
+                self.highlighted_strand = None
+                return True
+        
+        # Check center control point - it can be selected whether locked or not
+        # When not locked: selecting it locks it for manual control
+        # When locked: allows re-moving it
+        if third_cp_enabled:
+            control_point_center_rect = self.get_control_point_rectangle(strand, 3)
+            
+            if control_point_center_rect is not None and control_point_center_rect.contains(pos):
+                self.start_movement(strand, 'control_point_center', control_point_center_rect, pos)
+                # Mark that we're moving a control point
+                self.is_moving_control_point = True
+                # Lock the center when it's manually moved
+                if not center_is_locked:
+                    strand.control_point_center_locked = True
+                if hasattr(self.canvas, 'truly_moving_strands'):
+                    self.canvas.truly_moving_strands = [strand]
+                else:
+                    self.canvas.truly_moving_strands = [strand]
+                # Clear any existing highlighting
+                self.highlighted_strand = None
+                return True
         return False
 
     def try_move_strand(self, strand, pos, strand_index):
@@ -2135,6 +2151,9 @@ class MoveMode:
             strand_pos = QPointF(strand.control_point2)
         elif side == 'control_point_center':
             strand_pos = QPointF(strand.control_point_center)
+        elif side == 'bias_control':
+            # For bias controls, use the click position directly since the bias control handles its own movement
+            strand_pos = QPointF(actual_click_pos) if actual_click_pos else QPointF(0, 0)
         else:
             strand_pos = QPointF(0, 0)
         
@@ -2164,7 +2183,7 @@ class MoveMode:
         self.selected_rectangle = area
         self.is_moving = True
         # Set the flag if we're moving a control point (include bias controls)
-        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_triangle', 'bias_circle']
+        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_control']
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
         

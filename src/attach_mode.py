@@ -468,6 +468,28 @@ class AttachMode(QObject):
         
         if self.canvas.current_mode == "move":
             return
+        
+        # Check for control point interaction FIRST (before strand creation or attachment)
+        # This allows control points to be moved in attach mode
+        canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
+        if hasattr(self.canvas, 'move_mode') and self.canvas.move_mode:
+            # Try to handle control points using the move mode's logic
+            for strand in self.canvas.strands:
+                if not getattr(strand, 'deleted', False):
+                    if self.canvas.move_mode.try_move_control_points(strand, canvas_pos, event):
+                        # Control point was clicked, switch to move mode temporarily
+                        self.canvas.current_mode = self.canvas.move_mode
+                        self.canvas.move_mode.mousePressEvent(event)
+                        return
+                    # Also check attached strands
+                    if hasattr(strand, 'attached_strands'):
+                        for attached in strand.attached_strands:
+                            if not getattr(attached, 'deleted', False):
+                                if self.canvas.move_mode.try_move_control_points(attached, canvas_pos, event):
+                                    # Control point was clicked, switch to move mode temporarily
+                                    self.canvas.current_mode = self.canvas.move_mode
+                                    self.canvas.move_mode.mousePressEvent(event)
+                                    return
 
         # Check if we're in new strand creation mode (initiated by button)
         if hasattr(self.canvas, 'is_drawing_new_strand') and self.canvas.is_drawing_new_strand:

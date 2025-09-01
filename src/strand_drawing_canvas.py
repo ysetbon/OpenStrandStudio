@@ -178,7 +178,7 @@ class StrandDrawingCanvas(QWidget):
         #logging.info(f"Initialized default shadow color to: {self.default_shadow_color.red()},{self.default_shadow_color.green()},{self.default_shadow_color.blue()},{self.default_shadow_color.alpha()}")
         
         # Initialize the flag for the third control point
-        self.enable_third_control_point = False
+        self.enable_third_control_point = True
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10
@@ -1249,7 +1249,7 @@ class StrandDrawingCanvas(QWidget):
         pass
         
         # Initialize the flag for the third control point
-        self.enable_third_control_point = False
+        self.enable_third_control_point = True
         # Initialize snap to grid setting
         self.snap_to_grid_enabled = True  # Default to enabled
         # Default extension line settings
@@ -5084,90 +5084,120 @@ class StrandDrawingCanvas(QWidget):
             # Draw All Points for Affected Strand (when moving CP with Draw Only ON)
             if draw_only_setting_on and moving_control_point and strand == affected_strand:
                 # --- Start Replacement: Draw ALL control points/lines for the affected strand ---
+                # Check if small control points should be visible
+                center_is_locked = getattr(strand, 'control_point_center_locked', False)
+                third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+                
                 control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
                 painter.setPen(control_line_pen)
-                painter.drawLine(strand.start, strand.control_point1)
-                # Use points_are_close for robustness
-                if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                     painter.drawLine(strand.start, strand.control_point2)
-                else:
-                     painter.drawLine(strand.end, strand.control_point2)
+                
+                # Draw lines to small control points (always visible when third CP is enabled)
+                if third_cp_enabled or center_is_locked:
+                    painter.drawLine(strand.start, strand.control_point1)
+                    # Use points_are_close for robustness
+                    if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                         painter.drawLine(strand.start, strand.control_point2)
+                    else:
+                         painter.drawLine(strand.end, strand.control_point2)
 
-                # Draw center control point lines if enabled
-                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                    painter.drawLine(strand.control_point_center, strand.control_point1)
-                    painter.drawLine(strand.control_point_center, strand.control_point2)
+                    # Draw center control point lines if enabled
+                    if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                        painter.drawLine(strand.control_point_center, strand.control_point1)
+                        painter.drawLine(strand.control_point_center, strand.control_point2)
 
                 # Draw control points with stroke
                 stroke_pen = QPen(stroke_color, 5)
                 control_point_pen = QPen(QColor('green'), 1)
                 painter.setBrush(QBrush(QColor('green')))
+                
+                # Only draw small control points when:
+                # - Third control point is enabled AND center has been manually moved (locked), OR
+                # - Third control point is disabled AND small control points are not both at the start
+                center_is_locked = getattr(strand, 'control_point_center_locked', False)
+                third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+                cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and 
+                                abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+                cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and 
+                                abs(strand.control_point2.y() - strand.start.y()) < 1.0)
+                # Allow Shift to force show small control points even when both are at start
+                try:
+                    from PyQt5.QtWidgets import QApplication
+                    shift_held = QApplication.keyboardModifiers() & Qt.ShiftModifier
+                except Exception:
+                    shift_held = False
+
+                show_small_cps = (
+                    third_cp_enabled or  # Always show small control points when third CP is enabled
+                    (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
+                )
 
                 # Draw control_point2 (circle)
-                painter.setPen(stroke_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-                painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
-                # Draw inner circle with strand's color
-                inner_radius = (control_point_radius - 1) * 0.5
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(strand.color))
-                painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
+                if show_small_cps:
+                    painter.setPen(stroke_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+                    painter.setPen(control_point_pen)
+                    painter.setBrush(QBrush(QColor('green')))
+                    painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+                    # Draw inner circle with strand's color
+                    inner_radius = (control_point_radius - 1) * 0.5
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(strand.color))
+                    painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
                 # Draw control_point1 (triangle)
-                triangle = QPolygonF()
-                center_x = strand.control_point1.x()
-                # Adjust y slightly for better visual centering of triangle
-                center_y = strand.control_point1.y() + 1.06 * 1.333
+                if show_small_cps:
+                    triangle = QPolygonF()
+                    center_x = strand.control_point1.x()
+                    # Adjust y slightly for better visual centering of triangle
+                    center_y = strand.control_point1.y() + 1.06 * 1.333
 
-                # Create triangle vertices
-                angle1 = math.radians(270)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06 * math.cos(angle1),
-                    center_y + control_point_radius*1.06  * math.sin(angle1)
-                ))
-                angle2 = math.radians(30)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06  * math.cos(angle2),
-                    center_y + control_point_radius*1.06  * math.sin(angle2)
-                ))
-                angle3 = math.radians(150)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06  * math.cos(angle3),
-                    center_y + control_point_radius*1.06  * math.sin(angle3)
-                ))
-
-                # Draw stroke
-                painter.setPen(stroke_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPolygon(triangle)
-
-                # Draw fill
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-
-                # Create smaller triangle for fill
-                filled_triangle = QPolygonF()
-                scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
-                for point in triangle:
-                    vec_x = point.x() - center_x
-                    vec_y = point.y() - center_y
-                    filled_triangle.append(QPointF(
-                        center_x + vec_x * scale_factor,
-                        center_y + vec_y * scale_factor
+                    # Create triangle vertices
+                    angle1 = math.radians(270)
+                    triangle.append(QPointF(
+                        center_x + control_point_radius*1.06 * math.cos(angle1),
+                        center_y + control_point_radius*1.06  * math.sin(angle1)
                     ))
-                painter.drawPolygon(filled_triangle)
-                # Draw inner triangle with strand's color
-                inner_triangle = QPolygonF()
-                for pt in filled_triangle:
-                    dx = pt.x() - center_x
-                    dy = pt.y() - center_y
-                    inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(strand.color))
-                painter.drawPolygon(inner_triangle)
+                    angle2 = math.radians(30)
+                    triangle.append(QPointF(
+                        center_x + control_point_radius*1.06  * math.cos(angle2),
+                        center_y + control_point_radius*1.06  * math.sin(angle2)
+                    ))
+                    angle3 = math.radians(150)
+                    triangle.append(QPointF(
+                        center_x + control_point_radius*1.06  * math.cos(angle3),
+                        center_y + control_point_radius*1.06  * math.sin(angle3)
+                    ))
+
+                    # Draw stroke
+                    painter.setPen(stroke_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPolygon(triangle)
+
+                    # Draw fill
+                    painter.setPen(control_point_pen)
+                    painter.setBrush(QBrush(QColor('green')))
+
+                    # Create smaller triangle for fill
+                    filled_triangle = QPolygonF()
+                    scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
+                    for point in triangle:
+                        vec_x = point.x() - center_x
+                        vec_y = point.y() - center_y
+                        filled_triangle.append(QPointF(
+                            center_x + vec_x * scale_factor,
+                            center_y + vec_y * scale_factor
+                        ))
+                    painter.drawPolygon(filled_triangle)
+                    # Draw inner triangle with strand's color
+                    inner_triangle = QPolygonF()
+                    for pt in filled_triangle:
+                        dx = pt.x() - center_x
+                        dy = pt.y() - center_y
+                        inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(strand.color))
+                    painter.drawPolygon(inner_triangle)
 
                 # Draw control_point_center (square) if enabled
                 if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
@@ -5218,21 +5248,42 @@ class StrandDrawingCanvas(QWidget):
             # 1. "Draw only" is OFF, regardless of movement.
             # 2. "Draw only" is ON, but we are NOT moving.
             # 3. "Draw only" is ON, we ARE moving a strand point, and this IS the affected strand OR a connected strand.
-            # Draw control point lines
+            # Check if small control points should be visible
+            center_is_locked = getattr(strand, 'control_point_center_locked', False)
+            third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+            cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and 
+                            abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+            cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and 
+                            abs(strand.control_point2.y() - strand.start.y()) < 1.0)
+            # Allow Shift to force show small control points even when both are at start
+            try:
+                from PyQt5.QtWidgets import QApplication
+                shift_held = QApplication.keyboardModifiers() & Qt.ShiftModifier
+            except Exception:
+                shift_held = False
+
+            show_small_cps = (
+                third_cp_enabled or  # Always show small control points when third CP is enabled
+                (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
+            )
+            
+            # Draw control point lines - only if small control points are visible
             control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
             painter.setPen(control_line_pen)
-            painter.drawLine(strand.start, strand.control_point1)
-            if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                # print("control_point2 is close to start") # Keep debug print?
-                painter.drawLine(strand.start, strand.control_point2)
-            else:
-                # print("control_point2 is not close to start") # Keep debug print?
-                painter.drawLine(strand.end, strand.control_point2)
+            
+            if show_small_cps:
+                painter.drawLine(strand.start, strand.control_point1)
+                if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                    # print("control_point2 is close to start") # Keep debug print?
+                    painter.drawLine(strand.start, strand.control_point2)
+                else:
+                    # print("control_point2 is not close to start") # Keep debug print?
+                    painter.drawLine(strand.end, strand.control_point2)
 
-            # Draw center control point lines if enabled
-            if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                painter.drawLine(strand.control_point_center, strand.control_point1)
-                painter.drawLine(strand.control_point_center, strand.control_point2)
+                # Draw center control point lines if enabled
+                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                    painter.drawLine(strand.control_point_center, strand.control_point1)
+                    painter.drawLine(strand.control_point_center, strand.control_point2)
 
             # Draw control points with stroke
             stroke_pen = QPen(stroke_color, 5)
@@ -5240,70 +5291,72 @@ class StrandDrawingCanvas(QWidget):
             painter.setBrush(QBrush(QColor('green')))
 
             # Draw control_point2 (circle)
-            painter.setPen(stroke_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+            if show_small_cps:
+                painter.setPen(stroke_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
 
-            painter.setPen(control_point_pen)
-            painter.setBrush(QBrush(QColor('green')))
-            painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
-            # Draw inner circle with strand's color
-            inner_radius = (control_point_radius - 1) * 0.5
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(strand.color))
-            painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+                painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+                # Draw inner circle with strand's color
+                inner_radius = (control_point_radius - 1) * 0.5
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
             # Draw control_point1 (triangle)
-            triangle = QPolygonF()
-            center_x = strand.control_point1.x()
-            center_y = strand.control_point1.y()+1.06
+            if show_small_cps:
+                triangle = QPolygonF()
+                center_x = strand.control_point1.x()
+                center_y = strand.control_point1.y()+1.06
 
-            # Create triangle vertices
-            angle1 = math.radians(270)
-            triangle.append(QPointF(
-                center_x + control_point_radius*1.06 * math.cos(angle1),
-                center_y + control_point_radius*1.06  * math.sin(angle1)
-            ))
-            angle2 = math.radians(30)
-            triangle.append(QPointF(
-                center_x + control_point_radius*1.06  * math.cos(angle2),
-                center_y + control_point_radius*1.06  * math.sin(angle2)
-            ))
-            angle3 = math.radians(150)
-            triangle.append(QPointF(
-                center_x + control_point_radius*1.06  * math.cos(angle3),
-                center_y + control_point_radius*1.06  * math.sin(angle3)
-            ))
-
-            # Draw stroke
-            painter.setPen(stroke_pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPolygon(triangle)
-
-            # Draw fill
-            painter.setPen(control_point_pen)
-            painter.setBrush(QBrush(QColor('green')))
-
-            # Create smaller triangle for fill
-            filled_triangle = QPolygonF()
-            scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
-            for point in triangle:
-                vec_x = point.x() - center_x
-                vec_y = point.y() - center_y
-                filled_triangle.append(QPointF(
-                    center_x + vec_x * scale_factor,
-                    center_y + vec_y * scale_factor
+                # Create triangle vertices
+                angle1 = math.radians(270)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06 * math.cos(angle1),
+                    center_y + control_point_radius*1.06  * math.sin(angle1)
                 ))
-            painter.drawPolygon(filled_triangle)
-            # Draw inner triangle with strand's color
-            inner_triangle = QPolygonF()
-            for pt in filled_triangle:
-                dx = pt.x() - center_x
-                dy = pt.y() - center_y
-                inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(strand.color))
-            painter.drawPolygon(inner_triangle)
+                angle2 = math.radians(30)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06  * math.cos(angle2),
+                    center_y + control_point_radius*1.06  * math.sin(angle2)
+                ))
+                angle3 = math.radians(150)
+                triangle.append(QPointF(
+                    center_x + control_point_radius*1.06  * math.cos(angle3),
+                    center_y + control_point_radius*1.06  * math.sin(angle3)
+                ))
+
+                # Draw stroke
+                painter.setPen(stroke_pen)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPolygon(triangle)
+
+                # Draw fill
+                painter.setPen(control_point_pen)
+                painter.setBrush(QBrush(QColor('green')))
+
+                # Create smaller triangle for fill
+                filled_triangle = QPolygonF()
+                scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
+                for point in triangle:
+                    vec_x = point.x() - center_x
+                    vec_y = point.y() - center_y
+                    filled_triangle.append(QPointF(
+                        center_x + vec_x * scale_factor,
+                        center_y + vec_y * scale_factor
+                    ))
+                painter.drawPolygon(filled_triangle)
+                # Draw inner triangle with strand's color
+                inner_triangle = QPolygonF()
+                for pt in filled_triangle:
+                    dx = pt.x() - center_x
+                    dy = pt.y() - center_y
+                    inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawPolygon(inner_triangle)
 
             # Draw control_point_center (square) if enabled
             if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:

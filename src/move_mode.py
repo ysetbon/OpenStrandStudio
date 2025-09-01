@@ -1887,8 +1887,20 @@ class MoveMode:
                     side_name = 'bias_circle'
                 else:
                     side_name = 'bias_control'
-                    
-                self.start_movement(strand, side_name, None, event.pos())
+                # Build a selection rectangle for the specific bias control so yellow highlight draws
+                bias_square_size = 50
+                half_bias = bias_square_size / 2
+                rect = None
+                try:
+                    tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                    if side_name == 'bias_triangle' and tp:
+                        rect = QRectF(tp.x() - half_bias, tp.y() - half_bias, bias_square_size, bias_square_size)
+                    elif side_name == 'bias_circle' and cp:
+                        rect = QRectF(cp.x() - half_bias, cp.y() - half_bias, bias_square_size, bias_square_size)
+                except Exception:
+                    rect = None
+
+                self.start_movement(strand, side_name, rect, event.pos())
                 self.is_moving_control_point = True
                 self.is_moving_bias_control = True
                 self.bias_control_strand = strand
@@ -2191,7 +2203,7 @@ class MoveMode:
         self.selected_rectangle = area
         self.is_moving = True
         # Set the flag if we're moving a control point (include bias controls)
-        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_control']
+        self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_control', 'bias_triangle', 'bias_circle']
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
         
@@ -2530,6 +2542,17 @@ class MoveMode:
                     
                     # Update the strand shape to reflect the bias change
                     self.affected_strand.update_shape()
+                    # Keep the yellow selection rectangle in sync with the moving bias control
+                    try:
+                        bias_square_size = 50
+                        half_bias = bias_square_size / 2
+                        tp, cp = self.affected_strand.bias_control.get_bias_control_positions(self.affected_strand)
+                        if self.moving_side == 'bias_triangle' and tp:
+                            self.selected_rectangle = QRectF(tp.x() - half_bias, tp.y() - half_bias, bias_square_size, bias_square_size)
+                        elif self.moving_side == 'bias_circle' and cp:
+                            self.selected_rectangle = QRectF(cp.x() - half_bias, cp.y() - half_bias, bias_square_size, bias_square_size)
+                    except Exception:
+                        pass
 
         elif self.moving_side == 0 or self.moving_side == 1:
             # Moving start or end point

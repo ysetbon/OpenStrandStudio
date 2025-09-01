@@ -47,54 +47,25 @@ class AttachedStrand(Strand):
         
         self.update_end()
 
-        # Initialize control points at 1/3 and 2/3 along the strand
-        # Always create proper initial positions even if length is 0
-        if self.length > 1:  # Use a small threshold instead of 0
-            dx = 0
-            dy = 0
-            
-            self.control_point1 = QPointF(
-                self.start.x(),
-                self.start.y()
-            )
-            self.control_point2 = QPointF(
-                self.start.x(),
-                self.start.y()
-            )
-            
-            # Add the center control point (midpoint between control_point1 and control_point2)
-            self.control_point_center = QPointF(
-                self.start.x(),
-                self.start.y()
-            )
-            # Initialize control point lock state - starts unlocked
-            self.control_point_center_locked = False
-        else:
-            # Create default offsets based on the angle to provide proper vectors for bias controls
-            import math
-            angle_rad = math.radians(self.angle if self.angle != 0 else 90)  # Default to downward if angle is 0
-            default_length = 30  # Default distance for control points
-            
-            # Place control points along the intended direction
-            dx = default_length * math.cos(angle_rad)
-            dy = default_length * math.sin(angle_rad)
-            
-            self.control_point1 = QPointF(
-                self.start.x() + dx / 3,
-                self.start.y() + dy / 3
-            )
-            self.control_point2 = QPointF(
-                self.start.x() + 2 * dx / 3,
-                self.start.y() + 2 * dy / 3
-            )
-            
-            # Add the center control point (midpoint between control_point1 and control_point2)
-            self.control_point_center = QPointF(
-                (self.control_point1.x() + self.control_point2.x()) / 2,
-                (self.control_point1.y() + self.control_point2.y()) / 2
-            )
-            # Initialize control point lock state - starts unlocked
-            self.control_point_center_locked = False
+        # Initialize control points at proper positions along the strand
+        dx = 0
+        dy = 0
+        
+        self.control_point1 = QPointF(
+            self._start.x() + dx / 3,
+            self._start.y() + dy / 3
+        )
+        self.control_point2 = QPointF(
+            self._start.x() + 2 * dx / 3,
+            self._start.y() + 2 * dy / 3
+        )
+        
+        # Add the center control point (midpoint between control_point1 and control_point2)
+        self.control_point_center = QPointF(
+            (self.control_point1.x() + self.control_point2.x()) / 2,
+            (self.control_point1.y() + self.control_point2.y()) / 2
+        )
+        self.control_point_center_locked = False
         
         # Initialize attachment statuses
         self.start_attached = True  # Attached at start to parent strand

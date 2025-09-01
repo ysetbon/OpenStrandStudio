@@ -5133,18 +5133,7 @@ class StrandDrawingCanvas(QWidget):
 
                 # Draw control_point2 (circle)
                 if show_small_cps:
-                    # Draw yellow highlight if this control point is being moved
-                    if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
-                        highlight_size = 50
-                        painter.setPen(Qt.NoPen)
-                        painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
-                        painter.drawRect(QRectF(
-                            strand.control_point2.x() - highlight_size / 2,
-                            strand.control_point2.y() - highlight_size / 2,
-                            highlight_size,
-                            highlight_size
-                        ))
-                        
+
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
@@ -5159,18 +5148,7 @@ class StrandDrawingCanvas(QWidget):
 
                 # Draw control_point1 (triangle)
                 if show_small_cps:
-                    # Draw yellow highlight if this control point is being moved
-                    if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
-                        highlight_size = 50
-                        painter.setPen(Qt.NoPen)
-                        painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
-                        painter.drawRect(QRectF(
-                            strand.control_point1.x() - highlight_size / 2,
-                            strand.control_point1.y() - highlight_size / 2,
-                            highlight_size,
-                            highlight_size
-                        ))
-                        
+
                     triangle = QPolygonF()
                     center_x = strand.control_point1.x()
                     # Adjust y slightly for better visual centering of triangle
@@ -5316,18 +5294,7 @@ class StrandDrawingCanvas(QWidget):
 
             # Draw control_point2 (circle)
             if show_small_cps:
-                # Draw yellow highlight if this control point is being moved
-                if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
-                    highlight_size = 50
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
-                    painter.drawRect(QRectF(
-                        strand.control_point2.x() - highlight_size / 2,
-                        strand.control_point2.y() - highlight_size / 2,
-                        highlight_size,
-                        highlight_size
-                    ))
-                    
+
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
@@ -5343,18 +5310,7 @@ class StrandDrawingCanvas(QWidget):
 
             # Draw control_point1 (triangle)
             if show_small_cps:
-                # Draw yellow highlight if this control point is being moved
-                if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
-                    highlight_size = 50
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(QBrush(QColor(255, 230, 160, 0)))  # Yellow with transparency
-                    painter.drawRect(QRectF(
-                        strand.control_point1.x() - highlight_size / 2,
-                        strand.control_point1.y() - highlight_size / 2,
-                        highlight_size,
-                        highlight_size
-                    ))
-                    
+
                 triangle = QPolygonF()
                 center_x = strand.control_point1.x()
                 center_y = strand.control_point1.y()+1.06

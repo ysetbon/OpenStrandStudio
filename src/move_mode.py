@@ -974,7 +974,7 @@ class MoveMode:
         square_control_size = base_square_control_size 
         half_control_size = square_control_size / 2
         # Smaller rectangle for bias controls
-        bias_square_size = 30
+        bias_square_size = 50  # Same size as regular control points
         half_bias_size = bias_square_size / 2
         
         # Only draw the currently moving point's selection square
@@ -1880,7 +1880,15 @@ class MoveMode:
             # Let the bias control handle the mouse press and see if it accepts it
             if strand.bias_control.handle_mouse_press(event, strand):
                 # The bias control is now handling the drag
-                self.start_movement(strand, 'bias_control', None, event.pos())
+                # Determine which bias control is being dragged
+                if strand.bias_control.dragging_triangle:
+                    side_name = 'bias_triangle'
+                elif strand.bias_control.dragging_circle:
+                    side_name = 'bias_circle'
+                else:
+                    side_name = 'bias_control'
+                    
+                self.start_movement(strand, side_name, None, event.pos())
                 self.is_moving_control_point = True
                 self.is_moving_bias_control = True
                 self.bias_control_strand = strand

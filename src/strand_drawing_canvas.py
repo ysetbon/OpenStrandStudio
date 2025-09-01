@@ -1989,7 +1989,7 @@ class StrandDrawingCanvas(QWidget):
                     
                 # Bias control yellow highlight when moving them
                 elif selected_side == 'bias_triangle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
-                    bias_square_size = 30
+                    bias_square_size = 50  # Same size as regular control points
                     bias_half_size = bias_square_size / 2
                     tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
                     if tp:
@@ -2000,7 +2000,7 @@ class StrandDrawingCanvas(QWidget):
                             bias_square_size
                         )
                 elif selected_side == 'bias_circle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
-                    bias_square_size = 30
+                    bias_square_size = 50  # Same size as regular control points
                     bias_half_size = bias_square_size / 2
                     tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
                     if cp:
@@ -2155,14 +2155,14 @@ class StrandDrawingCanvas(QWidget):
                                     elif selected_side == 'bias_triangle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if tp:
-                                            bias_square_size = 30
+                                            bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bt_rect)
                                     elif selected_side == 'bias_circle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if cp:
-                                            bias_square_size = 30
+                                            bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bc_rect)
@@ -2179,12 +2179,12 @@ class StrandDrawingCanvas(QWidget):
                                     if hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control and hasattr(strand, 'bias_control') and strand.bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if tp:
-                                            bias_square_size = 30
+                                            bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bt_rect)
                                         if cp:
-                                            bias_square_size = 30
+                                            bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bc_rect)
@@ -5133,6 +5133,18 @@ class StrandDrawingCanvas(QWidget):
 
                 # Draw control_point2 (circle)
                 if show_small_cps:
+                    # Draw yellow highlight if this control point is being moved
+                    if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
+                        highlight_size = 50
+                        painter.setPen(Qt.NoPen)
+                        painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                        painter.drawRect(QRectF(
+                            strand.control_point2.x() - highlight_size / 2,
+                            strand.control_point2.y() - highlight_size / 2,
+                            highlight_size,
+                            highlight_size
+                        ))
+                        
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
@@ -5147,6 +5159,18 @@ class StrandDrawingCanvas(QWidget):
 
                 # Draw control_point1 (triangle)
                 if show_small_cps:
+                    # Draw yellow highlight if this control point is being moved
+                    if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
+                        highlight_size = 50
+                        painter.setPen(Qt.NoPen)
+                        painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                        painter.drawRect(QRectF(
+                            strand.control_point1.x() - highlight_size / 2,
+                            strand.control_point1.y() - highlight_size / 2,
+                            highlight_size,
+                            highlight_size
+                        ))
+                        
                     triangle = QPolygonF()
                     center_x = strand.control_point1.x()
                     # Adjust y slightly for better visual centering of triangle
@@ -5292,6 +5316,18 @@ class StrandDrawingCanvas(QWidget):
 
             # Draw control_point2 (circle)
             if show_small_cps:
+                # Draw yellow highlight if this control point is being moved
+                if moving_control_point and strand == affected_strand and moving_side == 'control_point2':
+                    highlight_size = 50
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                    painter.drawRect(QRectF(
+                        strand.control_point2.x() - highlight_size / 2,
+                        strand.control_point2.y() - highlight_size / 2,
+                        highlight_size,
+                        highlight_size
+                    ))
+                    
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
@@ -5307,6 +5343,18 @@ class StrandDrawingCanvas(QWidget):
 
             # Draw control_point1 (triangle)
             if show_small_cps:
+                # Draw yellow highlight if this control point is being moved
+                if moving_control_point and strand == affected_strand and moving_side == 'control_point1':
+                    highlight_size = 50
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Yellow with alpha=100
+                    painter.drawRect(QRectF(
+                        strand.control_point1.x() - highlight_size / 2,
+                        strand.control_point1.y() - highlight_size / 2,
+                        highlight_size,
+                        highlight_size
+                    ))
+                    
                 triangle = QPolygonF()
                 center_x = strand.control_point1.x()
                 center_y = strand.control_point1.y()+1.06

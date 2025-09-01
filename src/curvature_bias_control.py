@@ -41,35 +41,47 @@ class CurvatureBiasControl:
         Calculate the positions of the bias control points based on the strand's control points.
         Returns (triangle_pos, circle_pos) as QPointF objects.
         """
-        # Don't reinitialize during dragging
+        # Don't update during dragging
         if self.dragging_triangle or self.dragging_circle:
             # Return current positions without modification
             return self.triangle_position, self.circle_position
             
-        # If positions haven't been initialized, set them to base positions
+        # If positions haven't been initialized, initialize them based on bias values
         if self.triangle_position is None or self.circle_position is None:
-            triangle_base, circle_base = self.get_base_positions(strand)
-            if triangle_base is None or circle_base is None:
-                print(f"[ERROR] Could not calculate base positions!")
+            self.update_positions_from_biases(strand)
+            if self.triangle_position is None or self.circle_position is None:
+                print(f"[ERROR] Could not initialize positions!")
                 return None, None
-            self.triangle_position = triangle_base
-            self.circle_position = circle_base
         
-        # Check if we need to update positions (e.g., if center point moved)
-        # This is important to keep bias controls relative to the center point
+        # Check if any of the main control points have moved
+        # and update bias control positions accordingly
+        needs_update = False
+        
         if hasattr(self, '_last_center') and hasattr(strand, 'control_point_center'):
             if self._last_center != strand.control_point_center:
-                # Center moved, update positions relatively
-                delta = strand.control_point_center - self._last_center
-                if self.triangle_position:
-                    self.triangle_position += delta
-                if self.circle_position:
-                    self.circle_position += delta
-                self._last_center = QPointF(strand.control_point_center)
-        elif hasattr(strand, 'control_point_center'):
-            self._last_center = QPointF(strand.control_point_center)
+                needs_update = True
         
-        # Use stored positions (which get updated when dragging)
+        if hasattr(self, '_last_control1') and hasattr(strand, 'control_point1'):
+            if self._last_control1 != strand.control_point1:
+                needs_update = True
+                
+        if hasattr(self, '_last_control2') and hasattr(strand, 'control_point2'):
+            if self._last_control2 != strand.control_point2:
+                needs_update = True
+        
+        # Update positions if any control point has moved
+        if needs_update:
+            self.update_positions_from_biases(strand)
+        
+        # Store current control point positions for next comparison
+        if hasattr(strand, 'control_point_center'):
+            self._last_center = QPointF(strand.control_point_center)
+        if hasattr(strand, 'control_point1'):
+            self._last_control1 = QPointF(strand.control_point1)
+        if hasattr(strand, 'control_point2'):
+            self._last_control2 = QPointF(strand.control_point2)
+        
+        # Return stored positions
         return self.triangle_position, self.circle_position
         
     def draw_bias_controls(self, painter, strand):
@@ -88,11 +100,8 @@ class CurvatureBiasControl:
             # Only initialize if needed when not dragging
             if self.triangle_position is None or self.circle_position is None:
                 print(f"[draw] Initializing positions for first draw")
-                triangle_base, circle_base = self.get_base_positions(strand)
-                if triangle_base is None or circle_base is None:
-                    return
-                self.triangle_position = triangle_base
-                self.circle_position = circle_base
+                # Use update_positions_from_biases to set positions based on actual bias values
+                self.update_positions_from_biases(strand)
                 
             triangle_pos, circle_pos = self.get_bias_control_positions(strand)
             
@@ -240,14 +249,16 @@ class CurvatureBiasControl:
             
         pos = event.pos()
         
-        # Make sure positions are initialized before checking
+        # Make sure positions are initialized and properly updated before checking
         if self.triangle_position is None or self.circle_position is None:
-            triangle_base, circle_base = self.get_base_positions(strand)
-            if triangle_base is None or circle_base is None:
-                return False
-            self.triangle_position = triangle_base
-            self.circle_position = circle_base
-            print(f"[INIT] First click - initialized positions")
+            # Initialize with proper positions based on current bias values
+            self.update_positions_from_biases(strand)
+            print(f"[INIT] First click - initialized positions with bias values")
+        
+        # Ensure positions are synced with current bias values
+        # This is important if bias values were changed programmatically
+        if not (self.dragging_triangle or self.dragging_circle):
+            self.update_positions_from_biases(strand)
         
         triangle_pos = self.triangle_position
         circle_pos = self.circle_position
@@ -261,9 +272,9 @@ class CurvatureBiasControl:
             self.dragging_triangle = True
             self.drag_start_pos = pos
             self.drag_start_bias = self.triangle_bias
-            # Store the offset between click position and control center
-            self.drag_offset = triangle_pos - pos
-            print(f"[START DRAG] TRIANGLE - offset: {self.drag_offset}")
+            # Don't store offset for line-constrained movement
+            self.drag_offset = QPointF(0, 0)
+            print(f"[START DRAG] TRIANGLE - bias: {self.triangle_bias}")
             return True
             
         # Check circle control
@@ -272,9 +283,9 @@ class CurvatureBiasControl:
             self.dragging_circle = True
             self.drag_start_pos = pos
             self.drag_start_bias = self.circle_bias
-            # Store the offset between click position and control center
-            self.drag_offset = circle_pos - pos
-            print(f"[START DRAG] CIRCLE - offset: {self.drag_offset}")
+            # Don't store offset for line-constrained movement
+            self.drag_offset = QPointF(0, 0)
+            print(f"[START DRAG] CIRCLE - bias: {self.circle_bias}")
             return True
             
         return False
@@ -288,38 +299,69 @@ class CurvatureBiasControl:
             return False
             
         pos = event.pos()
-        
-        # Make the control points follow the mouse with the stored offset
-        # This prevents the control from jumping to the mouse position
-        new_position = pos + self.drag_offset
+        center = strand.control_point_center
         
         if self.dragging_triangle:
-            # Update the triangle position to follow the mouse with offset
-            self.triangle_position = QPointF(new_position)
+            # Constrain movement along the line from center to control_point1
+            control1 = strand.control_point1
             
-            # Calculate bias value based on distance from center
-            center = strand.control_point_center
-            distance = math.sqrt((new_position.x() - center.x())**2 + (new_position.y() - center.y())**2)
-            # Map distance to bias (closer = lower bias, farther = higher bias)
-            self.triangle_bias = max(0.0, min(1.0, distance / 100.0))
-            print(f"[DRAG] Triangle at {self.triangle_position}, bias={self.triangle_bias:.2f}")
+            # Project mouse position onto the line from center to control1
+            line_vec = control1 - center
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0:
+                # Normalize the line vector
+                line_vec_norm = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
+                
+                # Get vector from center to mouse position
+                mouse_vec = pos - center
+                
+                # Project mouse position onto the line (dot product)
+                projection_length = mouse_vec.x() * line_vec_norm.x() + mouse_vec.y() * line_vec_norm.y()
+                
+                # Clamp the projection to be between center (0) and control point (line_length)
+                projection_length = max(0, min(line_length, projection_length))
+                
+                # Calculate the new position on the line
+                self.triangle_position = center + line_vec_norm * projection_length
+                
+                # Calculate bias based on position along the line (0 at center, 1 at control point)
+                self.triangle_bias = projection_length / line_length
+                print(f"[DRAG] Triangle at {self.triangle_position}, bias={self.triangle_bias:.2f}")
                 
         elif self.dragging_circle:
-            # Update the circle position to follow the mouse with offset
-            self.circle_position = QPointF(new_position)
+            # Constrain movement along the line from center to control_point2
+            control2 = strand.control_point2
             
-            # Calculate bias value based on distance from center
-            center = strand.control_point_center
-            distance = math.sqrt((new_position.x() - center.x())**2 + (new_position.y() - center.y())**2)
-            # Map distance to bias (closer = lower bias, farther = higher bias)
-            self.circle_bias = max(0.0, min(1.0, distance / 100.0))
-            print(f"[DRAG] Circle at {self.circle_position}, bias={self.circle_bias:.2f}")
+            # Project mouse position onto the line from center to control2
+            line_vec = control2 - center
+            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
+            
+            if line_length > 0:
+                # Normalize the line vector
+                line_vec_norm = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
+                
+                # Get vector from center to mouse position
+                mouse_vec = pos - center
+                
+                # Project mouse position onto the line (dot product)
+                projection_length = mouse_vec.x() * line_vec_norm.x() + mouse_vec.y() * line_vec_norm.y()
+                
+                # Clamp the projection to be between center (0) and control point (line_length)
+                projection_length = max(0, min(line_length, projection_length))
+                
+                # Calculate the new position on the line
+                self.circle_position = center + line_vec_norm * projection_length
+                
+                # Calculate bias based on position along the line (0 at center, 1 at control point)
+                self.circle_bias = projection_length / line_length
+                print(f"[DRAG] Circle at {self.circle_position}, bias={self.circle_bias:.2f}")
                 
         return True
     
     def get_base_positions(self, strand):
         """
-        Get the base positions of bias controls without any drag offsets.
+        Get the base positions of bias controls on the lines between center and control points.
         """
         if not hasattr(strand, 'control_point_center'):
             return None, None
@@ -328,24 +370,17 @@ class CurvatureBiasControl:
         control1 = strand.control_point1
         control2 = strand.control_point2
         
-        # Calculate the angle from control1 to control2
-        dx = control2.x() - control1.x()
-        dy = control2.y() - control1.y()
-        angle = math.atan2(dy, dx)
+        # Position triangle bias control on the line from center to control_point1
+        # Start at 50% of the distance (neutral position)
+        triangle_vec = control1 - center
+        triangle_base = center + triangle_vec * 0.5  # 50% along the line for neutral bias
         
-        # Position bias controls perpendicular to the control1-control2 line
-        perpendicular_angle = angle + math.pi / 2
+        # Position circle bias control on the line from center to control_point2
+        # Start at 50% of the distance (neutral position)
+        circle_vec = control2 - center
+        circle_base = center + circle_vec * 0.5  # 50% along the line for neutral bias
         
-        # Default distance from center
-        distance = 40
-        
-        # Calculate base positions
-        triangle_x = center.x() + distance * math.cos(perpendicular_angle)
-        triangle_y = center.y() + distance * math.sin(perpendicular_angle)
-        circle_x = center.x() - distance * math.cos(perpendicular_angle)
-        circle_y = center.y() - distance * math.sin(perpendicular_angle)
-        
-        return QPointF(triangle_x, triangle_y), QPointF(circle_x, circle_y)
+        return triangle_base, circle_base
         
     def handle_mouse_release(self, event):
         """
@@ -388,3 +423,26 @@ class CurvatureBiasControl:
         # Reset positions to None so they'll be recalculated
         self.triangle_position = None
         self.circle_position = None
+    
+    def update_positions_from_biases(self, strand):
+        """
+        Update the positions of bias controls based on their bias values.
+        This is used when bias values are changed programmatically.
+        """
+        if not hasattr(strand, 'control_point_center'):
+            return
+        
+        if not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
+            return
+            
+        center = strand.control_point_center
+        control1 = strand.control_point1
+        control2 = strand.control_point2
+        
+        # Update triangle position based on triangle_bias
+        triangle_vec = control1 - center
+        self.triangle_position = center + triangle_vec * self.triangle_bias
+        
+        # Update circle position based on circle_bias
+        circle_vec = control2 - center
+        self.circle_position = center + circle_vec * self.circle_bias

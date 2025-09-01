@@ -67,13 +67,21 @@ def create_test_strand():
     strand.control_point2 = QPointF(500, 400)  # Circle - below
     
     # Position the center control point
-    strand.control_point_center = QPointF(400, 300)
+    # Keep center slightly off the default midpoint to prevent auto-unlock
+    strand.control_point_center = QPointF(400, 301)
     strand.control_point_center_locked = True  # Lock it to enable bias controls
+    # Ensure geometry is computed so side line angle is correct on first paint
+    strand.update_shape()
+    if hasattr(strand, 'update_side_line'):
+        strand.update_side_line()
     
     # Make sure bias control is initialized
     from curvature_bias_control import CurvatureBiasControl
     if not hasattr(strand, 'bias_control') or strand.bias_control is None:
         strand.bias_control = CurvatureBiasControl(canvas)
+    else:
+        # Sync bias control visual positions with current geometry
+        strand.bias_control.update_positions_from_biases(strand)
     
     # Ensure the strand has proper update methods
     if not hasattr(strand, 'update_shape'):
@@ -83,8 +91,7 @@ def create_test_strand():
                 strand._create_path()
         strand.update_shape = update_shape
     
-    if not hasattr(strand, 'update_side_line'):
-        strand.update_side_line = lambda: None  # Stub for test
+    # AttachedStrand already has update_side_line method, don't override it
     
     # Add the strand to canvas
     canvas.strands.append(strand)
@@ -148,14 +155,14 @@ def create_test_strand():
                 # Convert to canvas coordinates and forward to MoveMode so it can draw yellow highlight
                 canvas_pos = self.screen_to_canvas(event.pos())
                 new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
+                # Always update bias control logic and strand shape first
+                self.bias_control_strand.bias_control.handle_mouse_move(new_event, self.bias_control_strand)
+                self.bias_control_strand.update_shape()
+                self.bias_control_strand.update_side_line()
+                # Forward to current mode for highlight/selection visuals if present
                 if hasattr(self, 'current_mode') and self.current_mode:
                     self.current_mode.mouseMoveEvent(new_event)
-                else:
-                    # Fallback
-                    self.bias_control_strand.bias_control.handle_mouse_move(new_event, self.bias_control_strand)
-                    self.bias_control_strand.update_shape()
-                    self.bias_control_strand.update_side_line()
-                    self.update()
+                self.update()
                 return
         
         # Call the original implementation
@@ -174,11 +181,10 @@ def create_test_strand():
                 # Convert to canvas coordinates for consistency
                 canvas_pos = canvas.screen_to_canvas(event.pos())
                 new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
-                # Route to MoveMode so yellow->green flows identically to other controls
+                # Route to MoveMode for visuals, and always clear bias drag state
                 if hasattr(canvas, 'current_mode') and canvas.current_mode:
                     canvas.current_mode.mouseReleaseEvent(new_event)
-                else:
-                    canvas.bias_control_strand.bias_control.handle_mouse_release(new_event)
+                canvas.bias_control_strand.bias_control.handle_mouse_release(new_event)
             canvas.is_moving_bias_control = False
             canvas.bias_control_strand = None
             canvas.update()
@@ -216,28 +222,43 @@ def create_test_strand():
     def increase_triangle_bias():
         if strand.bias_control:
             strand.bias_control.triangle_bias = min(1.0, strand.bias_control.triangle_bias + 0.1)
+            strand.bias_control.update_positions_from_biases(strand)
+            strand.update_shape()
+            strand.update_side_line()
             canvas.update()
     
     def decrease_triangle_bias():
         if strand.bias_control:
             strand.bias_control.triangle_bias = max(0.0, strand.bias_control.triangle_bias - 0.1)
+            strand.bias_control.update_positions_from_biases(strand)
+            strand.update_shape()
+            strand.update_side_line()
             canvas.update()
     
     # W/S keys for circle bias
     def increase_circle_bias():
         if strand.bias_control:
             strand.bias_control.circle_bias = min(1.0, strand.bias_control.circle_bias + 0.1)
+            strand.bias_control.update_positions_from_biases(strand)
+            strand.update_shape()
+            strand.update_side_line()
             canvas.update()
     
     def decrease_circle_bias():
         if strand.bias_control:
             strand.bias_control.circle_bias = max(0.0, strand.bias_control.circle_bias - 0.1)
+            strand.bias_control.update_positions_from_biases(strand)
+            strand.update_shape()
+            strand.update_side_line()
             canvas.update()
     
     # R key to reset biases
     def reset_biases():
         if strand.bias_control:
             strand.bias_control.reset_biases()
+            strand.bias_control.update_positions_from_biases(strand)
+            strand.update_shape()
+            strand.update_side_line()
             canvas.update()
     
     # Set up shortcuts

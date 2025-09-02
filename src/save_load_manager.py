@@ -209,6 +209,15 @@ def serialize_strand(strand, canvas, index=None):
         if hasattr(strand, 'control_point_center'):
             data["control_point_center"] = serialize_point(strand.control_point_center)
             data["control_point_center_locked"] = getattr(strand, 'control_point_center_locked', False)
+        
+        # Add bias control (small control points) if it exists
+        if hasattr(strand, 'bias_control') and strand.bias_control:
+            data["bias_control"] = {
+                "triangle_bias": strand.bias_control.triangle_bias,
+                "circle_bias": strand.bias_control.circle_bias,
+                "triangle_position": serialize_point(strand.bias_control.triangle_position) if strand.bias_control.triangle_position else None,
+                "circle_position": serialize_point(strand.bias_control.circle_position) if strand.bias_control.circle_position else None
+            }
 
     if isinstance(strand, MaskedStrand):
         # Save deletion rectangles with movement offset applied
@@ -437,6 +446,50 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             # Also set the locked state if available
             if "control_point_center_locked" in data:
                 strand.control_point_center_locked = data["control_point_center_locked"]
+        
+        # Handle bias control (small control points)
+        # Import here to avoid circular dependency
+        from curvature_bias_control import CurvatureBiasControl
+        
+        # Check if bias controls should be enabled
+        if canvas and getattr(canvas, 'enable_curvature_bias_control', False):
+            # Always create bias control for strands when the feature is enabled
+            if not hasattr(strand, 'bias_control') or not strand.bias_control:
+                strand.bias_control = CurvatureBiasControl(canvas)
+            
+            # If bias control data exists in the saved state, restore it
+            if "bias_control" in data and data["bias_control"]:
+                # Restore bias values
+                strand.bias_control.triangle_bias = data["bias_control"].get("triangle_bias", 0.5)
+                strand.bias_control.circle_bias = data["bias_control"].get("circle_bias", 0.5)
+                
+                # Restore positions if available
+                if data["bias_control"].get("triangle_position"):
+                    strand.bias_control.triangle_position = deserialize_point(data["bias_control"]["triangle_position"])
+                else:
+                    strand.bias_control.triangle_position = None
+                    
+                if data["bias_control"].get("circle_position"):
+                    strand.bias_control.circle_position = deserialize_point(data["bias_control"]["circle_position"])
+                else:
+                    strand.bias_control.circle_position = None
+            else:
+                # No saved bias control data, reset to defaults
+                strand.bias_control.triangle_bias = 0.5
+                strand.bias_control.circle_bias = 0.5
+                strand.bias_control.triangle_position = None
+                strand.bias_control.circle_position = None
+            
+            # Always update positions based on the bias values
+            strand.bias_control.update_positions_from_biases(strand)
+            # Update the strand's shape to reflect the bias changes
+            if hasattr(strand, 'update_shape'):
+                strand.update_shape()
+            if hasattr(strand, 'update_side_line'):
+                strand.update_side_line()
+        elif hasattr(strand, 'bias_control'):
+            # If bias controls are disabled but strand has them, remove them
+            strand.bias_control = None
 
         # NEW: Circle stroke color logic similar to control_points
         if "circle_stroke_color" in data and data["circle_stroke_color"] is not None:
@@ -621,6 +674,46 @@ def load_strands(filename, canvas):
                 strand.control_point_center = deserialize_point(strand_data["control_point_center"])
                 if "control_point_center_locked" in strand_data:
                     strand.control_point_center_locked = strand_data["control_point_center_locked"]
+            
+            # Handle bias control for AttachedStrand
+            from curvature_bias_control import CurvatureBiasControl
+            
+            if canvas and getattr(canvas, 'enable_curvature_bias_control', False):
+                # Always create bias control for strands when the feature is enabled
+                if not hasattr(strand, 'bias_control') or not strand.bias_control:
+                    strand.bias_control = CurvatureBiasControl(canvas)
+                
+                # If bias control data exists in the saved state, restore it
+                if "bias_control" in strand_data and strand_data["bias_control"]:
+                    strand.bias_control.triangle_bias = strand_data["bias_control"].get("triangle_bias", 0.5)
+                    strand.bias_control.circle_bias = strand_data["bias_control"].get("circle_bias", 0.5)
+                    
+                    if strand_data["bias_control"].get("triangle_position"):
+                        strand.bias_control.triangle_position = deserialize_point(strand_data["bias_control"]["triangle_position"])
+                    else:
+                        strand.bias_control.triangle_position = None
+                        
+                    if strand_data["bias_control"].get("circle_position"):
+                        strand.bias_control.circle_position = deserialize_point(strand_data["bias_control"]["circle_position"])
+                    else:
+                        strand.bias_control.circle_position = None
+                else:
+                    # No saved bias control data, reset to defaults
+                    strand.bias_control.triangle_bias = 0.5
+                    strand.bias_control.circle_bias = 0.5
+                    strand.bias_control.triangle_position = None
+                    strand.bias_control.circle_position = None
+                
+                # Always update positions based on the bias values
+                strand.bias_control.update_positions_from_biases(strand)
+                # Update the strand's shape to reflect the bias changes
+                if hasattr(strand, 'update_shape'):
+                    strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+            elif hasattr(strand, 'bias_control'):
+                # If bias controls are disabled but strand has them, remove them
+                strand.bias_control = None
 
             # Layer state manager connections
             if hasattr(canvas, 'layer_state_manager'):

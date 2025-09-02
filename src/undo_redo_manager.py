@@ -545,6 +545,56 @@ class UndoRedoManager(QObject):
                             abs(current_strand.control_point_center.y() - prev_strand['control_point_center']['y']) > 0.1):
                             return False
 
+                    # Fallback: compare "control_points" array if present in saved JSON
+                    if ('control_points' in prev_strand and isinstance(prev_strand['control_points'], list) and
+                        len(prev_strand['control_points']) == 2 and
+                        hasattr(current_strand, 'control_point1') and hasattr(current_strand, 'control_point2')):
+                        cp1 = prev_strand['control_points'][0]
+                        cp2 = prev_strand['control_points'][1]
+                        if cp1 is not None:
+                            if (abs(current_strand.control_point1.x() - cp1.get('x', 0)) > 0.1 or
+                                abs(current_strand.control_point1.y() - cp1.get('y', 0)) > 0.1):
+                                return False
+                        if cp2 is not None:
+                            if (abs(current_strand.control_point2.x() - cp2.get('x', 0)) > 0.1 or
+                                abs(current_strand.control_point2.y() - cp2.get('y', 0)) > 0.1):
+                                return False
+
+                    # Compare curvature bias control values and positions when present
+                    prev_bias = prev_strand.get('bias_control')
+                    has_current_bias = hasattr(current_strand, 'bias_control') and bool(getattr(current_strand, 'bias_control'))
+                    if prev_bias is not None or has_current_bias:
+                        # If presence differs, consider it a difference
+                        if (prev_bias is None) != (has_current_bias):
+                            return False
+                        if has_current_bias and isinstance(prev_bias, dict):
+                            # Compare bias values
+                            current_triangle_bias = getattr(current_strand.bias_control, 'triangle_bias', None)
+                            current_circle_bias = getattr(current_strand.bias_control, 'circle_bias', None)
+                            if current_triangle_bias is not None and abs(current_triangle_bias - prev_bias.get('triangle_bias', current_triangle_bias)) > 1e-3:
+                                return False
+                            if current_circle_bias is not None and abs(current_circle_bias - prev_bias.get('circle_bias', current_circle_bias)) > 1e-3:
+                                return False
+                            # Compare positions if available
+                            prev_tri_pos = prev_bias.get('triangle_position')
+                            prev_circ_pos = prev_bias.get('circle_position')
+                            curr_tri_pos = getattr(current_strand.bias_control, 'triangle_position', None)
+                            curr_circ_pos = getattr(current_strand.bias_control, 'circle_position', None)
+                            # triangle position
+                            if (prev_tri_pos is None) != (curr_tri_pos is None):
+                                return False
+                            if prev_tri_pos is not None and curr_tri_pos is not None:
+                                if (abs(curr_tri_pos.x() - prev_tri_pos.get('x', 0)) > 0.1 or
+                                    abs(curr_tri_pos.y() - prev_tri_pos.get('y', 0)) > 0.1):
+                                    return False
+                            # circle position
+                            if (prev_circ_pos is None) != (curr_circ_pos is None):
+                                return False
+                            if prev_circ_pos is not None and curr_circ_pos is not None:
+                                if (abs(curr_circ_pos.x() - prev_circ_pos.get('x', 0)) > 0.1 or
+                                    abs(curr_circ_pos.y() - prev_circ_pos.get('y', 0)) > 0.1):
+                                    return False
+
                     # Compare colors
                     if hasattr(current_strand, 'color') and 'color' in prev_strand:
                         # Assuming save_strands saves color like {'r': R, 'g': G, 'b': B, 'a': A}
@@ -1131,6 +1181,41 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END ADD ---
                             
+                            # --- ADD: Compare curvature bias control ---
+                            if hasattr(new_strand, 'bias_control') or hasattr(original_strand, 'bias_control'):
+                                new_bc = getattr(new_strand, 'bias_control', None)
+                                orig_bc = getattr(original_strand, 'bias_control', None)
+                                if (new_bc is None) != (orig_bc is None):
+                                    has_visual_difference = True
+                                    break
+                                if new_bc is not None and orig_bc is not None:
+                                    # Compare bias values
+                                    if (
+                                        abs(getattr(new_bc, 'triangle_bias', 0.0) - getattr(orig_bc, 'triangle_bias', 0.0)) > 1e-3 or
+                                        abs(getattr(new_bc, 'circle_bias', 0.0) - getattr(orig_bc, 'circle_bias', 0.0)) > 1e-3
+                                    ):
+                                        has_visual_difference = True
+                                        break
+                                    # Compare positions if both present
+                                    nt = getattr(new_bc, 'triangle_position', None)
+                                    ot = getattr(orig_bc, 'triangle_position', None)
+                                    if (nt is None) != (ot is None):
+                                        has_visual_difference = True
+                                        break
+                                    if nt is not None and ot is not None:
+                                        if abs(nt.x() - ot.x()) > 0.1 or abs(nt.y() - ot.y()) > 0.1:
+                                            has_visual_difference = True
+                                            break
+                                    nc = getattr(new_bc, 'circle_position', None)
+                                    oc = getattr(orig_bc, 'circle_position', None)
+                                    if (nc is None) != (oc is None):
+                                        has_visual_difference = True
+                                        break
+                                    if nc is not None and oc is not None:
+                                        if abs(nc.x() - oc.x()) > 0.1 or abs(nc.y() - oc.y()) > 0.1:
+                                            has_visual_difference = True
+                                            break
+
                             # --- ADD: Compare deletion rectangles for MaskedStrands ---
                             if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):
                                 new_rects = getattr(new_strand, 'deletion_rectangles', [])
@@ -1553,6 +1638,41 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END ADD ---
                             
+                            # --- ADD: Compare curvature bias control ---
+                            if hasattr(new_strand, 'bias_control') or hasattr(original_strand, 'bias_control'):
+                                new_bc = getattr(new_strand, 'bias_control', None)
+                                orig_bc = getattr(original_strand, 'bias_control', None)
+                                if (new_bc is None) != (orig_bc is None):
+                                    has_visual_difference = True
+                                    break
+                                if new_bc is not None and orig_bc is not None:
+                                    # Compare bias values
+                                    if (
+                                        abs(getattr(new_bc, 'triangle_bias', 0.0) - getattr(orig_bc, 'triangle_bias', 0.0)) > 1e-3 or
+                                        abs(getattr(new_bc, 'circle_bias', 0.0) - getattr(orig_bc, 'circle_bias', 0.0)) > 1e-3
+                                    ):
+                                        has_visual_difference = True
+                                        break
+                                    # Compare positions if both present
+                                    nt = getattr(new_bc, 'triangle_position', None)
+                                    ot = getattr(orig_bc, 'triangle_position', None)
+                                    if (nt is None) != (ot is None):
+                                        has_visual_difference = True
+                                        break
+                                    if nt is not None and ot is not None:
+                                        if abs(nt.x() - ot.x()) > 0.1 or abs(nt.y() - ot.y()) > 0.1:
+                                            has_visual_difference = True
+                                            break
+                                    nc = getattr(new_bc, 'circle_position', None)
+                                    oc = getattr(orig_bc, 'circle_position', None)
+                                    if (nc is None) != (oc is None):
+                                        has_visual_difference = True
+                                        break
+                                    if nc is not None and oc is not None:
+                                        if abs(nc.x() - oc.x()) > 0.1 or abs(nc.y() - oc.y()) > 0.1:
+                                            has_visual_difference = True
+                                            break
+
                             # --- ADD: Compare deletion rectangles for MaskedStrands ---
                             if isinstance(new_strand, MaskedStrand) and isinstance(original_strand, MaskedStrand):
                                 new_rects = getattr(new_strand, 'deletion_rectangles', [])
@@ -3119,14 +3239,17 @@ def connect_to_move_mode(canvas, undo_redo_manager):
         def enhanced_mouse_release(event):
             # Check if a move was actually in progress *before* calling the original release event
             was_moving = getattr(canvas.move_mode, 'is_moving', False)
+            # IMPORTANT: Capture control point flags BEFORE they get reset
+            was_moving_control_point = getattr(canvas.move_mode, 'is_moving_control_point', False)
+            was_moving_bias_control = getattr(canvas.move_mode, 'is_moving_bias_control', False)
             
             # Call the original function first to finalize the move and reset flags
             original_mouse_release(event)
             
             # Now, save state only if a move actually happened during the drag
             if was_moving:
-                # If a control point was being moved, reset the last save time to force a new state
-                if getattr(canvas.move_mode, 'is_moving_control_point', False):
+                # If a control point was being moved (including bias controls), reset the last save time to force a new state
+                if was_moving_control_point or was_moving_bias_control:
                     undo_redo_manager._last_save_time = 0
                 undo_redo_manager.save_state()
             else:

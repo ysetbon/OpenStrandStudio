@@ -1237,61 +1237,7 @@ def get_side_line_exclusion_path(strand, shadow_width_multiplier=None):
         
 
         
-        # Create exclusion area exactly at the end point
-        if hasattr(strand, 'end') and hasattr(strand, 'end_line_start') and hasattr(strand, 'end_line_end'):
-            # Use the actual side line positions to create a precise exclusion zone
-            end_exclusion = QPainterPath()
-            end_exclusion.moveTo(strand.end_line_start)
-            end_exclusion.lineTo(strand.end_line_end)
-            
-            # Extend the exclusion area perpendicular to the side line by shadow_width
-            line_vec = strand.end_line_end - strand.end_line_start
-            line_length = math.sqrt(line_vec.x()**2 + line_vec.y()**2)
-            
-            if line_length > 0:
-                # Normalize line vector
-                norm_line = QPointF(line_vec.x() / line_length, line_vec.y() / line_length)
-                # Perpendicular vector pointing away from strand
-                perp_vec = QPointF(-norm_line.y(), norm_line.x())
-                
-                # Determine which direction extends BEYOND the strand endpoint
-                # Calculate direction from strand start toward strand end to find the "forward" direction
-                strand_direction = strand.end - strand.start
-                strand_length = math.sqrt(strand_direction.x()**2 + strand_direction.y()**2)
-                
-                if strand_length > 0:
-                    # Normalize strand direction vector
-                    norm_strand_dir = QPointF(strand_direction.x() / strand_length, strand_direction.y() / strand_length)
-                    
-                    # At the end point, we want to extend in the SAME direction (beyond the end)
-                    beyond_end_vec = norm_strand_dir
-                else:
-                    # Fallback: extend perpendicular to side line
-                    beyond_end_vec = perp_vec
-                
-                # Create wider rectangle extending BEYOND the end point to cover all shadow width
-                # Scale the extended width based on strand thickness
-                stroke_width = getattr(strand, 'stroke_width', 2)
-                total_strand_width = strand.width + stroke_width * 2
-                # Simple scaling: wider strands need proportionally wider exclusion zones
-                extended_width = total_strand_width + shadow_width
-                half_extended_width = extended_width / 2.0
-                
-                # Create corners that extend both along the strand direction AND perpendicular to cover full shadow
-                corner3 = QPointF(
-                    strand.end_line_end.x() + beyond_end_vec.x() * shadow_width + norm_line.x() * half_extended_width,
-                    strand.end_line_end.y() + beyond_end_vec.y() * shadow_width + norm_line.y() * half_extended_width
-                )
-                corner4 = QPointF(
-                    strand.end_line_start.x() + beyond_end_vec.x() * shadow_width - norm_line.x() * half_extended_width,
-                    strand.end_line_start.y() + beyond_end_vec.y() * shadow_width - norm_line.y() * half_extended_width
-                )
-                
-                end_exclusion.lineTo(corner3)
-                end_exclusion.lineTo(corner4)
-                end_exclusion.closeSubpath()
-                
-                exclusion_path = exclusion_path.united(end_exclusion)
+ 
         
         pass
         
@@ -1658,4 +1604,5 @@ def get_shadow_blocker_path(mask_strand, blur_px):
     except Exception:
         # On any error just return an empty path so we never block painting.
         return QPainterPath()
+
 

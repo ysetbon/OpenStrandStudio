@@ -52,18 +52,18 @@ class AttachedStrand(Strand):
         dy = 0
         
         self.control_point1 = QPointF(
-            self._start.x() + dx / 3,
-            self._start.y() + dy / 3
+            self._start.x(),
+            self._start.y()
         )
         self.control_point2 = QPointF(
-            self._start.x() + 2 * dx / 3,
-            self._start.y() + 2 * dy / 3
+            self._start.x(),
+            self._start.y()
         )
         
         # Add the center control point (midpoint between control_point1 and control_point2)
         self.control_point_center = QPointF(
-            (self.control_point1.x() + self.control_point2.x()) / 2,
-            (self.control_point1.y() + self.control_point2.y()) / 2
+            self._start.x(),
+            self._start.y()
         )
         self.control_point_center_locked = False
         

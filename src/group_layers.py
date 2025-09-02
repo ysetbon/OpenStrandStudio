@@ -2096,6 +2096,47 @@ class GroupPanel(QWidget):
         # Note: The actual connections will be rebuilt in update_knot_connections_for_duplicated_group
         if hasattr(original, 'knot_connections'):
             new_strand.knot_connections = {}  # Initialize empty, will be populated later
+        
+        # Copy bias control properties for small control points (triangle and circle)
+        if hasattr(original, 'bias_control') and original.bias_control is not None:
+            # Import the CurvatureBiasControl class
+            from curvature_bias_control import CurvatureBiasControl
+            
+            # Create a new bias control object for the new strand
+            if self.canvas and hasattr(self.canvas, 'enable_curvature_bias_control'):
+                new_strand.bias_control = CurvatureBiasControl(self.canvas)
+                
+                # Copy the bias values (0.5 = neutral position)
+                new_strand.bias_control.triangle_bias = original.bias_control.triangle_bias
+                new_strand.bias_control.circle_bias = original.bias_control.circle_bias
+                
+                # Copy the actual positions if they have been manually moved
+                if hasattr(original.bias_control, 'triangle_position') and original.bias_control.triangle_position is not None:
+                    new_strand.bias_control.triangle_position = QPointF(
+                        original.bias_control.triangle_position.x(),
+                        original.bias_control.triangle_position.y()
+                    )
+                
+                if hasattr(original.bias_control, 'circle_position') and original.bias_control.circle_position is not None:
+                    new_strand.bias_control.circle_position = QPointF(
+                        original.bias_control.circle_position.x(),
+                        original.bias_control.circle_position.y()
+                    )
+                
+                # Copy drag offsets if they exist
+                if hasattr(original.bias_control, 'triangle_drag_offset'):
+                    new_strand.bias_control.triangle_drag_offset = QPointF(
+                        original.bias_control.triangle_drag_offset.x(),
+                        original.bias_control.triangle_drag_offset.y()
+                    )
+                
+                if hasattr(original.bias_control, 'circle_drag_offset'):
+                    new_strand.bias_control.circle_drag_offset = QPointF(
+                        original.bias_control.circle_drag_offset.x(),
+                        original.bias_control.circle_drag_offset.y()
+                    )
+            else:
+                new_strand.bias_control = None
             # Store original connections for later remapping
             new_strand._original_knot_connections = original.knot_connections.copy() if original.knot_connections else {}
         else:

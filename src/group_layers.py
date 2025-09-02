@@ -2074,6 +2074,16 @@ class GroupPanel(QWidget):
         if hasattr(original, 'end_circle_stroke_color') and original.end_circle_stroke_color is not None:
             new_strand.end_circle_stroke_color = QColor(original.end_circle_stroke_color)
         
+        # Copy curvature settings
+        if hasattr(original, 'curve_response_exponent'):
+            new_strand.curve_response_exponent = original.curve_response_exponent
+        if hasattr(original, 'control_point_base_fraction'):
+            new_strand.control_point_base_fraction = original.control_point_base_fraction
+        if hasattr(original, 'distance_multiplier'):
+            new_strand.distance_multiplier = original.distance_multiplier
+        if hasattr(original, 'endpoint_tension'):
+            new_strand.endpoint_tension = original.endpoint_tension
+        
         # Copy arrow visibility properties
         if hasattr(original, 'full_arrow_visible'):
             new_strand.full_arrow_visible = original.full_arrow_visible

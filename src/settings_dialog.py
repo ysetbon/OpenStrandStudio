@@ -1408,9 +1408,14 @@ class SettingsDialog(QDialog):
         self.curvature_bias_checkbox.setEnabled(self.enable_third_control_point)
         
         # Connect third control checkbox to enable/disable curvature bias
-        self.third_control_checkbox.stateChanged.connect(
-            lambda state: self.curvature_bias_checkbox.setEnabled(state == Qt.Checked)
-        )
+        def on_third_control_changed(state):
+            is_checked = (state == Qt.Checked)
+            self.curvature_bias_checkbox.setEnabled(is_checked)
+            # Auto-uncheck curvature bias when third control point is disabled
+            if not is_checked:
+                self.curvature_bias_checkbox.setChecked(False)
+        
+        self.third_control_checkbox.stateChanged.connect(on_third_control_changed)
         
         # Add widgets in proper order for current language
         if self.is_rtl_language(self.current_language):

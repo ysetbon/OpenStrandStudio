@@ -50,11 +50,11 @@ translations = {
         'reset_curvature_settings': 'Reset Curvature Settings:',
         'reset': 'Reset',
         'reset_curvature_tooltip': 'Reset all curvature settings to default values',
-        'base_fraction': 'Control Point Influence:',
+        'base_fraction': 'Control Point Influence (pull strength):',
         'base_fraction_tooltip': 'Control point influence strength (1.0=normal, 2.0=strong, 3.0=very strong)',
-        'distance_multiplier': 'Distance Boost:',
+        'distance_multiplier': 'Distance Boost (magnifies curves):',
         'distance_mult_tooltip': 'Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost)',
-        'curve_response': 'Curvature Type:',
+        'curve_response': 'Curve Shape (1=sharp, 3=smooth):',
         'curve_response_tooltip': 'Curve response type (1.0=linear, 1.5=mild curve, 2.0=quadratic, 3.0=cubic)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -416,11 +416,11 @@ translations = {
         'reset_curvature_settings': 'Réinitialiser les paramètres de courbure:',
         'reset': 'Réinitialiser',
         'reset_curvature_tooltip': 'Réinitialiser tous les paramètres de courbure aux valeurs par défaut',
-        'base_fraction': 'Influence du point de contrôle:',
+        'base_fraction': 'Influence (force de traction):',
         'base_fraction_tooltip': 'Force d\'influence du point de contrôle (1.0=normal, 2.0=fort, 3.0=très fort)',
-        'distance_multiplier': 'Amplification de distance:',
+        'distance_multiplier': 'Amplification (agrandit courbes):',
         'distance_mult_tooltip': 'Facteur de multiplication de distance (1.0=aucune amplification, 2.0=2x, 5.0=5x)',
-        'curve_response': 'Type de courbure:',
+        'curve_response': 'Forme courbe (1=angulaire, 3=lisse):',
         'curve_response_tooltip': 'Type de réponse de courbe (1.0=linéaire, 1.5=courbe douce, 2.0=quadratique, 3.0=cubique)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -766,11 +766,11 @@ translations = {
         'reset_curvature_settings': 'Krümmungseinstellungen zurücksetzen:',
         'reset': 'Zurücksetzen',
         'reset_curvature_tooltip': 'Alle Krümmungseinstellungen auf Standardwerte zurücksetzen',
-        'base_fraction': 'Kontrollpunkt-Einfluss:',
+        'base_fraction': 'Einfluss (Zugkraft):',
         'base_fraction_tooltip': 'Kontrollpunkt-Einflussstärke (1.0=normal, 2.0=stark, 3.0=sehr stark)',
-        'distance_multiplier': 'Distanzverstärkung:',
+        'distance_multiplier': 'Verstärkung (vergrößert Kurven):',
         'distance_mult_tooltip': 'Distanz-Multiplikationsfaktor (1.0=keine Verstärkung, 2.0=2x, 5.0=5x)',
-        'curve_response': 'Krümmungstyp:',
+        'curve_response': 'Kurvenform (1=scharf, 3=glatt):',
         'curve_response_tooltip': 'Kurvenreaktionstyp (1.0=linear, 1.5=sanfte Kurve, 2.0=quadratisch, 3.0=kubisch)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -1110,11 +1110,11 @@ translations = {
         'reset_curvature_settings': 'Ripristina impostazioni curvatura:',
         'reset': 'Ripristina',
         'reset_curvature_tooltip': 'Ripristina tutte le impostazioni di curvatura ai valori predefiniti',
-        'base_fraction': 'Influenza punto di controllo:',
+        'base_fraction': 'Influenza (forza di trazione):',
         'base_fraction_tooltip': 'Forza influenza punto di controllo (1.0=normale, 2.0=forte, 3.0=molto forte)',
-        'distance_multiplier': 'Aumento distanza:',
+        'distance_multiplier': 'Amplificazione (ingrandisce curve):',
         'distance_mult_tooltip': 'Fattore di moltiplicazione distanza (1.0=nessun aumento, 2.0=2x, 5.0=5x)',
-        'curve_response': 'Tipo di curvatura:',
+        'curve_response': 'Forma curva (1=spigolosa, 3=liscia):',
         'curve_response_tooltip': 'Tipo di risposta curva (1.0=lineare, 1.5=curva lieve, 2.0=quadratica, 3.0=cubica)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -1462,11 +1462,11 @@ translations = {
         'reset_curvature_settings': 'Restablecer configuración de curvatura:',
         'reset': 'Restablecer',
         'reset_curvature_tooltip': 'Restablecer toda la configuración de curvatura a los valores predeterminados',
-        'base_fraction': 'Influencia del punto de control:',
+        'base_fraction': 'Influencia (fuerza de tracción):',
         'base_fraction_tooltip': 'Fuerza de influencia del punto de control (1.0=normal, 2.0=fuerte, 3.0=muy fuerte)',
-        'distance_multiplier': 'Aumento de distancia:',
+        'distance_multiplier': 'Amplificación (agranda curvas):',
         'distance_mult_tooltip': 'Factor de multiplicación de distancia (1.0=sin aumento, 2.0=2x, 5.0=5x)',
-        'curve_response': 'Tipo de curvatura:',
+        'curve_response': 'Forma curva (1=angular, 3=suave):',
         'curve_response_tooltip': 'Tipo de respuesta de curva (1.0=lineal, 1.5=curva suave, 2.0=cuadrática, 3.0=cúbica)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -1815,11 +1815,11 @@ translations = {
         'reset_curvature_settings': 'Redefinir configurações de curvatura:',
         'reset': 'Redefinir',
         'reset_curvature_tooltip': 'Redefinir todas as configurações de curvatura para valores padrão',
-        'base_fraction': 'Influência do ponto de controle:',
+        'base_fraction': 'Influência (força de tração):',
         'base_fraction_tooltip': 'Força de influência do ponto de controle (1.0=normal, 2.0=forte, 3.0=muito forte)',
-        'distance_multiplier': 'Aumento de distância:',
+        'distance_multiplier': 'Amplificação (amplia curvas):',
         'distance_mult_tooltip': 'Fator de multiplicação de distância (1.0=sem aumento, 2.0=2x, 5.0=5x)',
-        'curve_response': 'Tipo de curvatura:',
+        'curve_response': 'Forma curva (1=angular, 3=suave):',
         'curve_response_tooltip': 'Tipo de resposta da curva (1.0=linear, 1.5=curva suave, 2.0=quadrática, 3.0=cúbica)',
         # Layer State Info Text
         'layer_state_info_text': '''
@@ -2171,11 +2171,11 @@ translations = {
         'reset_curvature_settings': 'איפוס הגדרות עקמומיות:',
         'reset': 'איפוס',
         'reset_curvature_tooltip': 'איפוס כל הגדרות העקמומיות לערכי ברירת המחדל',
-        'base_fraction': 'השפעת נקודת בקרה:',
+        'base_fraction': 'השפעה (עוצמת משיכה):',
         'base_fraction_tooltip': 'עוצמת השפעת נקודת בקרה (1.0=רגיל, 2.0=חזק, 3.0=חזק מאוד)',
-        'distance_multiplier': 'הגברת מרחק:',
+        'distance_multiplier': 'הגברה (מגדיל עקומות):',
         'distance_mult_tooltip': 'מקדם הכפלת מרחק (1.0=ללא הגברה, 2.0=פי 2, 5.0=פי 5)',
-        'curve_response': 'סוג עקמומיות:',
+        'curve_response': 'צורת עקומה (1=חד, 3=חלק):',
         'curve_response_tooltip': 'סוג תגובת עקומה (1.0=לינארי, 1.5=עקומה עדינה, 2.0=ריבועי, 3.0=קובי)',
         # Layer State Info Text
         'layer_state_info_text': '''

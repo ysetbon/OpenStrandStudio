@@ -336,6 +336,12 @@ class SettingsDialog(QDialog):
             if hasattr(self, 'tutorial_label'):
                 self.tutorial_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
                 self.tutorial_label.setTextFormat(Qt.PlainText)
+        if hasattr(self, 'button_explanations_widget'):
+            self.button_explanations_widget.setLayoutDirection(direction)
+            # Ensure button_guide_label remains center-aligned and handles RTL properly
+            if hasattr(self, 'button_guide_label'):
+                self.button_guide_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+                self.button_guide_label.setTextFormat(Qt.PlainText)
         if hasattr(self, 'about_widget'):
             self.about_widget.setLayoutDirection(direction)
         if hasattr(self, 'whats_new_widget'):

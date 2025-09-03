@@ -248,6 +248,16 @@ class SettingsDialog(QDialog):
                     self.num_steps_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'blur_radius_label'):
                     self.blur_radius_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'curvature_bias_label'):
+                    self.curvature_bias_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'base_fraction_label'):
+                    self.base_fraction_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'distance_mult_label'):
+                    self.distance_mult_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'curve_response_label'):
+                    self.curve_response_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'reset_curvature_label'):
+                    self.reset_curvature_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             else:
                 # For LTR languages, align labels to the left
                 if hasattr(self, 'theme_label'):
@@ -270,12 +280,25 @@ class SettingsDialog(QDialog):
                     self.num_steps_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'blur_radius_label'):
                     self.blur_radius_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'curvature_bias_label'):
+                    self.curvature_bias_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'base_fraction_label'):
+                    self.base_fraction_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'distance_mult_label'):
+                    self.distance_mult_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'curve_response_label'):
+                    self.curve_response_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'reset_curvature_label'):
+                    self.reset_curvature_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
                 'third_control_layout', 'snap_to_grid_layout', # 'extended_mask_layout', 
-                'num_steps_layout', 'blur_radius_layout'
+                'num_steps_layout', 'blur_radius_layout',
+                'curvature_bias_layout', 'base_fraction_layout',
+                'distance_mult_layout', 'curve_response_layout',
+                'reset_curvature_layout'
             ]
             for layout_name in general_setting_layouts:
                 if hasattr(self, layout_name):
@@ -657,6 +680,81 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.blur_radius_layout.invalidate()
             self.blur_radius_layout.activate()
+                
+        # Curvature bias control layout reorganization
+        if hasattr(self, 'curvature_bias_layout') and hasattr(self, 'curvature_bias_label') and hasattr(self, 'curvature_bias_checkbox'):
+            self.clear_layout(self.curvature_bias_layout)
+            if is_rtl:
+                self.curvature_bias_layout.addStretch()
+                self.curvature_bias_layout.addWidget(self.curvature_bias_checkbox)
+                self.curvature_bias_layout.addWidget(self.curvature_bias_label)
+            else:
+                self.curvature_bias_layout.addWidget(self.curvature_bias_label)
+                self.curvature_bias_layout.addWidget(self.curvature_bias_checkbox)
+                self.curvature_bias_layout.addStretch()
+            # Force immediate update
+            self.curvature_bias_layout.invalidate()
+            self.curvature_bias_layout.activate()
+                
+        # Base fraction layout reorganization
+        if hasattr(self, 'base_fraction_layout') and hasattr(self, 'base_fraction_label') and hasattr(self, 'base_fraction_spinbox'):
+            self.clear_layout(self.base_fraction_layout)
+            if is_rtl:
+                self.base_fraction_layout.addStretch()
+                self.base_fraction_layout.addWidget(self.base_fraction_spinbox)
+                self.base_fraction_layout.addWidget(self.base_fraction_label)
+            else:
+                self.base_fraction_layout.addWidget(self.base_fraction_label)
+                self.base_fraction_layout.addWidget(self.base_fraction_spinbox)
+                self.base_fraction_layout.addStretch()
+            # Force immediate update
+            self.base_fraction_layout.invalidate()
+            self.base_fraction_layout.activate()
+                
+        # Distance multiplier layout reorganization
+        if hasattr(self, 'distance_mult_layout') and hasattr(self, 'distance_mult_label') and hasattr(self, 'distance_mult_spinbox'):
+            self.clear_layout(self.distance_mult_layout)
+            if is_rtl:
+                self.distance_mult_layout.addStretch()
+                self.distance_mult_layout.addWidget(self.distance_mult_spinbox)
+                self.distance_mult_layout.addWidget(self.distance_mult_label)
+            else:
+                self.distance_mult_layout.addWidget(self.distance_mult_label)
+                self.distance_mult_layout.addWidget(self.distance_mult_spinbox)
+                self.distance_mult_layout.addStretch()
+            # Force immediate update
+            self.distance_mult_layout.invalidate()
+            self.distance_mult_layout.activate()
+                
+        # Curve response layout reorganization
+        if hasattr(self, 'curve_response_layout') and hasattr(self, 'curve_response_label') and hasattr(self, 'curve_response_spinbox'):
+            self.clear_layout(self.curve_response_layout)
+            if is_rtl:
+                self.curve_response_layout.addStretch()
+                self.curve_response_layout.addWidget(self.curve_response_spinbox)
+                self.curve_response_layout.addWidget(self.curve_response_label)
+            else:
+                self.curve_response_layout.addWidget(self.curve_response_label)
+                self.curve_response_layout.addWidget(self.curve_response_spinbox)
+                self.curve_response_layout.addStretch()
+            # Force immediate update
+            self.curve_response_layout.invalidate()
+            self.curve_response_layout.activate()
+                
+        # Reset curvature layout reorganization
+        if hasattr(self, 'reset_curvature_layout') and hasattr(self, 'reset_curvature_label') and hasattr(self, 'reset_curvature_button'):
+            self.clear_layout(self.reset_curvature_layout)
+            if is_rtl:
+                self.reset_curvature_layout.addStretch()
+                self.reset_curvature_layout.addWidget(self.reset_curvature_button)
+                self.reset_curvature_layout.addWidget(self.reset_curvature_label)
+            else:
+                self.reset_curvature_layout.addWidget(self.reset_curvature_label)
+                self.reset_curvature_layout.addWidget(self.reset_curvature_button)
+                self.reset_curvature_layout.addStretch()
+            # Force immediate update
+            self.reset_curvature_layout.invalidate()
+            self.reset_curvature_layout.activate()
                 
         # Button color layout reorganization (this was missing!)
         if hasattr(self, 'button_color_container') and hasattr(self, 'button_color_label') and hasattr(self, 'default_arrow_color_button'):
@@ -3148,10 +3246,14 @@ class SettingsDialog(QDialog):
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
         self.affected_strand_label.setText(_['draw_only_affected_strand'] if 'draw_only_affected_strand' in _ else "Draw only affected strand when dragging")
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
+        self.curvature_bias_label.setText(_['enable_curvature_bias_control'] if 'enable_curvature_bias_control' in _ else "Enable curvature bias controls")
         self.snap_to_grid_label.setText(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
+        self.base_fraction_label.setText(_['base_fraction'] if 'base_fraction' in _ else "Control Point Influence:")
+        self.distance_mult_label.setText(_['distance_multiplier'] if 'distance_multiplier' in _ else "Distance Boost:")
+        self.curve_response_label.setText(_['curve_response'] if 'curve_response' in _ else "Curve Type:")
         self.reset_curvature_label.setText(_['reset_curvature_settings'] if 'reset_curvature_settings' in _ else "Reset Curvature Settings:")
         self.reset_curvature_button.setText(_['reset'] if 'reset' in _ else "Reset")
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")

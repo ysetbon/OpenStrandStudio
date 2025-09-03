@@ -156,6 +156,20 @@ translations = {
         'distance_boost_desc': 'Distance Boost - Multiplies the distance influence for stronger curves (2.0=double strength)',
         'curvature_type_desc': 'Curvature Type - Changes the mathematical curve response (1.0=linear, 2.0=quadratic, 3.0=cubic)',
         'reset_curvature_desc': 'Reset Curvature - Restores all curvature settings to default values (1.0, 2.0, 2.0)',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'General Settings',
+        'theme_selection_desc': 'Theme Selection - Choose between Default, Light, or Dark themes for the interface',
+        'shadow_color_desc': 'Shadow Color - Set the color used for strand shadows',
+        'shadow_blur_steps_desc': 'Shadow Blur Steps - Number of blur iterations (higher = smoother shadows)',
+        'shadow_blur_radius_desc': 'Shadow Blur Radius - Size of the blur effect (higher = softer edges)',
+        'draw_affected_strand_desc': 'Draw Only Affected Strand - When enabled, only shows the strand being dragged during editing',
+        'third_control_point_desc': 'Enable Third Control Point - Adds a center control point for more complex curves',
+        'curvature_bias_desc': 'Enable Curvature Bias Controls - Adds small triangle/circle controls to fine-tune curve shape',
+        'snap_to_grid_desc': 'Enable Snap to Grid - Automatically aligns points to the grid when moving',
+        'control_influence_full_desc': 'Control Point Influence - Sets how strongly control points pull the curve (0.25=weak, 1.0=normal, 3.0=very strong)',
+        'distance_boost_full_desc': 'Distance Boost - Multiplies the curve strength to make curves more pronounced (1.0=normal, 10.0=maximum)',
+        'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
+        'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
         <h2>What's New in Version 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -405,6 +419,7 @@ translations = {
         'shadow_color': 'Couleur d\'ombre',
         'draw_only_affected_strand': 'Afficher uniquement le brin affecté lors du déplacement',
         'enable_third_control_point': 'Activer le troisième point de contrôle au centre',
+        'enable_curvature_bias_control': 'Activer les contrôles de biais de courbure',
         'enable_snap_to_grid': 'Activer l\'alignement sur la grille',
         'use_extended_mask': 'Utiliser une extension de masque (surposition plus large)',
         'use_extended_mask_tooltip': "Si vous voulez utiliser des ombres, cochez ; si vous ne voulez pas d'ombre, décochez.",
@@ -470,6 +485,20 @@ translations = {
         'button_guide_info': 'Découvrez les différents boutons et leurs fonctions dans OpenStrand Studio.\n\nAstuce : Vous pouvez cliquer sur les icônes emoji du panneau des calques pour voir leurs explications !',
         'layer_panel_buttons': 'Boutons du Panneau de Calques',
         'main_window_buttons': 'Boutons de la Fenêtre Principale',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'Paramètres Généraux',
+        'theme_selection_desc': 'Sélection du Thème - Choisir entre les thèmes Par défaut, Clair ou Sombre',
+        'shadow_color_desc': "Couleur de l'Ombre - Définir la couleur utilisée pour les ombres des brins",
+        'shadow_blur_steps_desc': "Étapes de Flou d'Ombre - Nombre d'itérations de flou (plus = ombres plus lisses)",
+        'shadow_blur_radius_desc': "Rayon de Flou d'Ombre - Taille de l'effet de flou (plus = bords plus doux)",
+        'draw_affected_strand_desc': 'Dessiner Uniquement le Brin Affecté - Affiche uniquement le brin en cours de glissement',
+        'third_control_point_desc': 'Activer le Troisième Point de Contrôle - Ajoute un point de contrôle central pour des courbes complexes',
+        'curvature_bias_desc': 'Activer les Contrôles de Biais de Courbure - Ajoute de petits contrôles triangle/cercle pour affiner la forme',
+        'snap_to_grid_desc': "Activer l'Alignement sur la Grille - Aligne automatiquement les points sur la grille lors du déplacement",
+        'control_influence_full_desc': "Influence du Point de Contrôle - Définit la force de traction des points de contrôle (0.25=faible, 1.0=normal, 3.0=très fort)",
+        'distance_boost_full_desc': 'Amplification de Distance - Multiplie la force de la courbe pour des courbes plus prononcées (1.0=normal, 10.0=maximum)',
+        'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
+        'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
         <h2>Nouveautés de la version 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -755,6 +784,7 @@ translations = {
         'shadow_color': 'Schattenfarbe',
         'draw_only_affected_strand': 'Nur den betroffenen Strang beim Ziehen zeichnen',
         'enable_third_control_point': 'Dritten Kontrollpunkt in der Mitte aktivieren',
+        'enable_curvature_bias_control': 'Krümmungsvoreinstellungen aktivieren',
         'enable_snap_to_grid': 'Am Raster ausrichten aktivieren',
         'use_extended_mask': 'Erweiterte Maske verwenden (breitere Überlappung)',
         'use_extended_mask_tooltip': 'Wenn Sie Schatten verwenden möchten, einschalten; wenn nicht, ausschalten.',
@@ -821,6 +851,20 @@ translations = {
         'layer_panel_buttons': 'Ebenenpanel-Schaltflächen',
         'main_window_buttons': 'Hauptfenster-Schaltflächen',
         'group_buttons': 'Gruppenschaltflächen',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'Allgemeine Einstellungen',
+        'theme_selection_desc': 'Thema-Auswahl - Wählen zwischen Standard, Hell oder Dunkel Themen',
+        'shadow_color_desc': 'Schattenfarbe - Farbe für Strängenschatten festlegen',
+        'shadow_blur_steps_desc': 'Schatten-Unschärfe-Schritte - Anzahl der Unschärfe-Iterationen (höher = glattere Schatten)',
+        'shadow_blur_radius_desc': 'Schatten-Unschärfe-Radius - Größe des Unschärfe-Effekts (höher = weichere Kanten)',
+        'draw_affected_strand_desc': 'Nur Betroffenen Strang Zeichnen - Zeigt nur den gezogenen Strang beim Bearbeiten',
+        'third_control_point_desc': 'Dritten Kontrollpunkt Aktivieren - Fügt einen zentralen Kontrollpunkt für komplexe Kurven hinzu',
+        'curvature_bias_desc': 'Krümmungs-Bias-Kontrollen Aktivieren - Fügt kleine Dreieck/Kreis-Kontrollen zur Feinabstimmung hinzu',
+        'snap_to_grid_desc': 'Am Raster Ausrichten Aktivieren - Richtet Punkte automatisch am Raster beim Verschieben aus',
+        'control_influence_full_desc': 'Kontrollpunkt-Einfluss - Legt fest, wie stark Kontrollpunkte die Kurve ziehen (0.25=schwach, 1.0=normal, 3.0=sehr stark)',
+        'distance_boost_full_desc': 'Distanzverstärkung - Multipliziert die Kurvenstärke für ausgeprägtere Kurven (1.0=normal, 10.0=maximum)',
+        'curve_shape_full_desc': 'Kurvenform - Steuert den mathematischen Kurventyp (1.0=scharfe Winkel, 2.0=glatte Kurven, 3.0=sehr glatt)',
+        'reset_curvature_full_desc': 'Krümmungseinstellungen Zurücksetzen - Stellt Einfluss, Verstärkung und Form auf Standard zurück',
         # Button descriptions for settings dialog
         'draw_names_desc': 'Namen zeichnen - Zeigt/verbirgt Strangnamen auf der Leinwand',
         'lock_layers_desc': 'Ebenen sperren - Wechselt in den Sperrmodus zum Sperren/Entsperren gegen Bearbeitung',
@@ -1099,6 +1143,7 @@ translations = {
         'shadow_color': 'Colore Ombra',
         'draw_only_affected_strand': 'Disegna solo il trefolo interessato durante il trascinamento',
         'enable_third_control_point': 'Abilita il terzo punto di controllo al centro',
+        'enable_curvature_bias_control': 'Abilita controlli di bias di curvatura',
         'enable_snap_to_grid': 'Abilita l\'aggancio alla griglia',
         'use_extended_mask': 'Usa estensione di maschera (sovrapposizione più larga)',
         'use_extended_mask_tooltip': 'Se vuoi usare le ombre, attiva; se non vuoi ombre, disattiva.',
@@ -1164,6 +1209,20 @@ translations = {
         'button_guide_info': 'Scopri i diversi pulsanti e le loro funzioni in OpenStrand Studio.\n\nSuggerimento: Puoi cliccare sulle icone emoji del pannello dei livelli per vedere le loro spiegazioni!',
         'layer_panel_buttons': 'Pulsanti del Pannello Livelli',
         'main_window_buttons': 'Pulsanti della Finestra Principale',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'Impostazioni Generali',
+        'theme_selection_desc': 'Selezione Tema - Scegli tra i temi Predefinito, Chiaro o Scuro',
+        'shadow_color_desc': "Colore Ombra - Imposta il colore usato per le ombre dei fili",
+        'shadow_blur_steps_desc': "Passi Sfocatura Ombra - Numero di iterazioni di sfocatura (più alto = ombre più lisce)",
+        'shadow_blur_radius_desc': "Raggio Sfocatura Ombra - Dimensione dell'effetto sfocatura (più alto = bordi più morbidi)",
+        'draw_affected_strand_desc': 'Disegna Solo Filo Interessato - Mostra solo il filo trascinato durante la modifica',
+        'third_control_point_desc': 'Abilita Terzo Punto di Controllo - Aggiunge un punto di controllo centrale per curve complesse',
+        'curvature_bias_desc': 'Abilita Controlli Bias Curvatura - Aggiunge piccoli controlli triangolo/cerchio per rifinire la forma',
+        'snap_to_grid_desc': 'Abilita Allineamento alla Griglia - Allinea automaticamente i punti alla griglia durante lo spostamento',
+        'control_influence_full_desc': 'Influenza Punto di Controllo - Imposta quanto i punti di controllo tirano la curva (0.25=debole, 1.0=normale, 3.0=molto forte)',
+        'distance_boost_full_desc': 'Amplificazione Distanza - Moltiplica la forza della curva per curve più pronunciate (1.0=normale, 10.0=massimo)',
+        'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
+        'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
         <h2>Novità della versione 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -1451,6 +1510,7 @@ translations = {
         'shadow_color': 'Color de Sombra',
         'draw_only_affected_strand': 'Dibujar solo el cordón afectado al arrastrar',
         'enable_third_control_point': 'Habilitar tercer punto de control en el centro',
+        'enable_curvature_bias_control': 'Habilitar controles de sesgo de curvatura',
         'enable_snap_to_grid': 'Habilitar ajuste a la cuadrícula',
         'use_extended_mask': 'Usar extensión de máscara (superposición más ancha)',
         'use_extended_mask_tooltip': 'Si quieres usar sombras, activa; si no quieres sombras, desactiva.',
@@ -1516,6 +1576,20 @@ translations = {
         'button_guide_info': 'Aprende sobre los diferentes botones y sus funciones en OpenStrand Studio.\n\n¡Consejo: Puedes hacer clic en los iconos emoji del panel de capas para ver sus explicaciones!',
         'layer_panel_buttons': 'Botones del Panel de Capas',
         'main_window_buttons': 'Botones de la Ventana Principal',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'Configuración General',
+        'theme_selection_desc': 'Selección de Tema - Elegir entre los temas Predeterminado, Claro u Oscuro',
+        'shadow_color_desc': 'Color de Sombra - Establecer el color usado para las sombras de las hebras',
+        'shadow_blur_steps_desc': 'Pasos de Desenfoque de Sombra - Número de iteraciones de desenfoque (mayor = sombras más suaves)',
+        'shadow_blur_radius_desc': 'Radio de Desenfoque de Sombra - Tamaño del efecto de desenfoque (mayor = bordes más suaves)',
+        'draw_affected_strand_desc': 'Dibujar Solo Hebra Afectada - Muestra solo la hebra arrastrada durante la edición',
+        'third_control_point_desc': 'Habilitar Tercer Punto de Control - Añade un punto de control central para curvas complejas',
+        'curvature_bias_desc': 'Habilitar Controles de Sesgo de Curvatura - Añade pequeños controles triángulo/círculo para afinar la forma',
+        'snap_to_grid_desc': 'Habilitar Ajuste a la Cuadrícula - Alinea automáticamente los puntos a la cuadrícula al mover',
+        'control_influence_full_desc': 'Influencia del Punto de Control - Establece cuánto los puntos de control tiran de la curva (0.25=débil, 1.0=normal, 3.0=muy fuerte)',
+        'distance_boost_full_desc': 'Amplificación de Distancia - Multiplica la fuerza de la curva para curvas más pronunciadas (1.0=normal, 10.0=máximo)',
+        'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
+        'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
         <h2>Novedades de la versión 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -1804,6 +1878,7 @@ translations = {
         'shadow_color': 'Cor da Sombra',
         'draw_only_affected_strand': 'Desenhar apenas a mecha afetada ao arrastar',
         'enable_third_control_point': 'Habilitar terceiro ponto de controle no centro',
+        'enable_curvature_bias_control': 'Habilitar controles de viés de curvatura',
         'enable_snap_to_grid': 'Habilitar encaixe na grade',
         'use_extended_mask': 'Usar extensão de máscara (superposição mais larga)',
         'use_extended_mask_tooltip': 'Se você quiser usar sombras, ligue; se não quiser sombras, desligue.',
@@ -1869,6 +1944,20 @@ translations = {
         'button_guide_info': 'Aprenda sobre os diferentes botões e suas funções no OpenStrand Studio.\n\nDica: Você pode clicar nos ícones emoji do painel de camadas para ver suas explicações!',
         'layer_panel_buttons': 'Botões do Painel de Camadas',
         'main_window_buttons': 'Botões da Janela Principal',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'Configurações Gerais',
+        'theme_selection_desc': 'Seleção de Tema - Escolher entre os temas Padrão, Claro ou Escuro',
+        'shadow_color_desc': 'Cor da Sombra - Definir a cor usada para as sombras dos fios',
+        'shadow_blur_steps_desc': 'Passos de Desfoque de Sombra - Número de iterações de desfoque (maior = sombras mais suaves)',
+        'shadow_blur_radius_desc': 'Raio de Desfoque de Sombra - Tamanho do efeito de desfoque (maior = bordas mais suaves)',
+        'draw_affected_strand_desc': 'Desenhar Apenas Fio Afetado - Mostra apenas o fio arrastado durante a edição',
+        'third_control_point_desc': 'Ativar Terceiro Ponto de Controle - Adiciona um ponto de controle central para curvas complexas',
+        'curvature_bias_desc': 'Ativar Controles de Viés de Curvatura - Adiciona pequenos controles triângulo/círculo para refinar a forma',
+        'snap_to_grid_desc': 'Ativar Ajuste à Grade - Alinha automaticamente os pontos à grade ao mover',
+        'control_influence_full_desc': 'Influência do Ponto de Controle - Define o quanto os pontos de controle puxam a curva (0.25=fraco, 1.0=normal, 3.0=muito forte)',
+        'distance_boost_full_desc': 'Amplificação de Distância - Multiplica a força da curva para curvas mais pronunciadas (1.0=normal, 10.0=máximo)',
+        'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
+        'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
         <h2>Novidades da versão 1.101</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
@@ -2160,6 +2249,7 @@ translations = {
         'shadow_color': 'צבע צל',
         'draw_only_affected_strand': 'צייר רק את החוט המושפע בעת גרירה',
         'enable_third_control_point': 'הפעל נקודת בקרה שלישית במרכז',
+        'enable_curvature_bias_control': 'הפעל בקרות הטיית עקמומיות',
         'enable_snap_to_grid': 'הפעל הצמדה לרשת',
         'use_extended_mask': 'השימוש במסכה המורחבת (הסובב מרחב יותר)',
         'use_extended_mask_tooltip': 'אם אתה רוצה להשתמש בצללים, הפעל; אם אתה לא רוצה צללים, כבה.',
@@ -2225,6 +2315,20 @@ translations = {
         'button_guide_info': 'למד על הכפתורים השונים והפונקציות שלהם ב-OpenStrand Studio.\n\nטיפ: אתה יכול ללחוץ על אייקוני האימוג׳י בפאנל השכבות כדי לראות הסברים!',
         'layer_panel_buttons': 'כפתורי פאנל השכבות',
         'main_window_buttons': 'כפתורי החלון הראשי',
+        # General Settings descriptions for button guide
+        'general_settings_header': 'הגדרות כלליות',
+        'theme_selection_desc': 'בחירת ערכת נושא - בחר בין ברירת מחדל, בהיר או כהה',
+        'shadow_color_desc': 'צבע צל - הגדר את הצבע המשמש לצללי חוטים',
+        'shadow_blur_steps_desc': 'שלבי טשטוש צל - מספר חזרות טשטוש (יותר = צללים חלקים יותר)',
+        'shadow_blur_radius_desc': 'רדיוס טשטוש צל - גודל אפקט הטשטוש (יותר = קצוות רכים יותר)',
+        'draw_affected_strand_desc': 'צייר רק חוט מושפע - מציג רק את החוט הנגרר בעת עריכה',
+        'third_control_point_desc': 'הפעל נקודת בקרה שלישית - מוסיף נקודת בקרה מרכזית לעקומות מורכבות',
+        'curvature_bias_desc': 'הפעל בקרות הטיית עקמומיות - מוסיף בקרות משולש/עיגול קטנות לכיוונון עדין',
+        'snap_to_grid_desc': 'הפעל הצמדה לרשת - מיישר אוטומטית נקודות לרשת בעת הזזה',
+        'control_influence_full_desc': 'השפעת נקודת בקרה - קובע כמה חזק נקודות הבקרה מושכות את העקומה (0.25=חלש, 1.0=רגיל, 3.0=חזק מאוד)',
+        'distance_boost_full_desc': 'הגברת מרחק - מכפיל את עוצמת העקומה לעקומות בולטות יותר (1.0=רגיל, 10.0=מקסימום)',
+        'curve_shape_full_desc': 'צורת עקומה - שולט בסוג העקומה המתמטי (1.0=זוויות חדות, 2.0=עקומות חלקות, 3.0=חלק מאוד)',
+        'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
         <b>מה חדש בגרסה 1.101</b><br><br>

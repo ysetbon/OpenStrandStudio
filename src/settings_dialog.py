@@ -32,7 +32,7 @@ except ImportError:
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None, canvas=None, undo_redo_manager=None):
+    def __init__(self, parent=None, canvas=None, undo_redo_manager=None, layer_panel=None):
         super(SettingsDialog, self).__init__(parent)
         
         # Set window flags directly in the constructor - explicitly remove help button
@@ -40,6 +40,7 @@ class SettingsDialog(QDialog):
         self.setWindowFlags(flags)
         
         self.canvas = canvas
+        self.layer_panel = layer_panel
         self.parent_window = parent
         
         # Initialize with default values
@@ -3055,57 +3056,27 @@ class SettingsDialog(QDialog):
         curve_response_value = self.curve_response_spinbox.value()
         
         if self.canvas:
+            # Update canvas curvature values
             self.canvas.control_point_base_fraction = base_fraction_value
             self.canvas.distance_multiplier = distance_mult_value
             self.canvas.curve_response_exponent = curve_response_value
             
-            # First pass: Update all parameters on all strands WITHOUT triggering updates
+            # Update all strands with new curvature values
             for strand in self.canvas.strands:
                 strand.control_point_base_fraction = base_fraction_value
                 strand.distance_multiplier = distance_mult_value
                 strand.curve_response_exponent = curve_response_value
-                           
-                # Force updating_position to False to ensure updates work
-                if hasattr(strand, 'updating_position'):
-                    strand.updating_position = False
             
-            # Second pass: Now trigger the actual updates after ALL strands have new parameters
-            for strand in self.canvas.strands:
-                # Notify Qt that the geometry is about to change
-                if hasattr(strand, 'prepareGeometryChange'):
-                    strand.prepareGeometryChange()
-                
-                # Clear any cached paths first
-                try:
-                    if hasattr(strand, '_path'):
-                        delattr(strand, '_path')
-                except AttributeError:
-                    pass  # Attribute was removed between check and delete
-                try:
-                    if hasattr(strand, '_bounding_rect_cache'):
-                        delattr(strand, '_bounding_rect_cache')
-                except AttributeError:
-                    pass  # Attribute was removed between check and delete
-                
-                # Update the shape to recalculate control points with new curvature
-                if hasattr(strand, 'update_shape'):
-                    strand.update_shape()
-                
-                # Force path update if available (this should use the new parameters)
-                if hasattr(strand, 'force_path_update'):
-                    strand.force_path_update()
-            
-            # Clear render buffer to force complete recreation
-            if hasattr(self.canvas, 'render_buffer'):
-                self.canvas.render_buffer = None
-            
-            # Force canvas update to redraw with new curvature settings
-            self.canvas.update()
-            # Force a complete redraw
-            if hasattr(self.canvas, 'force_redraw'):
-                self.canvas.force_redraw()
+            # Use the refresh button functionality to update everything properly
+            if hasattr(self.layer_panel, 'simulate_refresh_button_click'):
+                # This preserves zoom and properly updates everything
+                self.layer_panel.simulate_refresh_button_click()
+            elif hasattr(self.canvas, 'refresh_canvas'):
+                # Fallback to direct canvas refresh
+                self.canvas.refresh_canvas()
             else:
-                self.canvas.repaint()
+                # Final fallback
+                self.canvas.update()
 
         # Apply Extension Line Settings
         self.extension_length = self.extension_length_spinbox.value()

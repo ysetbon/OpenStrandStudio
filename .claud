@@ -1,0 +1,19 @@
+# Claude Code Configuration
+
+# Auto-approve common read operations
+auto_approve:
+  - Read: "**/*.py"  # Auto-approve reading any Python file
+  - Read: "**/*.md"   # Auto-approve reading any Markdown file
+  - Grep: "*"        # Auto-approve all grep searches
+  - Glob: "*"        # Auto-approve all glob patterns
+  - Bash: "ls *"     # Auto-approve ls commands
+  - Bash: "pwd"      # Auto-approve pwd command
+  - Bash: "git status" # Auto-approve git status
+  - Bash: "git diff"   # Auto-approve git diff
+  - Edit: "**/*.py"   # Auto-approve editing Python files
+  - Write: "**/*.py"  # Auto-approve writing Python files
+  - MultiEdit: "**/*.py" # Auto-approve multi-edits on Python files
+
+# You can also use wildcards and patterns:
+# - Read: "/src/**"  # Auto-approve reading anything in src folder
+# - Edit: "*.config" # Auto-approve editing config files

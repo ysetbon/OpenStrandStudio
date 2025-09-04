@@ -62,9 +62,9 @@ class MainWindow(QMainWindow):
         pass
 
         # Create settings dialog
-        # Pass the undo_redo_manager from the layer_panel
+        # Pass the undo_redo_manager and layer_panel for refresh functionality
         undo_manager = self.layer_panel.undo_redo_manager if hasattr(self.layer_panel, 'undo_redo_manager') else None
-        self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager)
+        self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager, layer_panel=self.layer_panel)
 
         # Initialize translations for all widgets
         self.layer_panel.update_translations()

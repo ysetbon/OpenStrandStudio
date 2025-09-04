@@ -3076,10 +3076,16 @@ class SettingsDialog(QDialog):
                     strand.prepareGeometryChange()
                 
                 # Clear any cached paths first
-                if hasattr(strand, '_path'):
-                    delattr(strand, '_path')
-                if hasattr(strand, '_bounding_rect_cache'):
-                    delattr(strand, '_bounding_rect_cache')
+                try:
+                    if hasattr(strand, '_path'):
+                        delattr(strand, '_path')
+                except AttributeError:
+                    pass  # Attribute was removed between check and delete
+                try:
+                    if hasattr(strand, '_bounding_rect_cache'):
+                        delattr(strand, '_bounding_rect_cache')
+                except AttributeError:
+                    pass  # Attribute was removed between check and delete
                 
                 # Update the shape to recalculate control points with new curvature
                 if hasattr(strand, 'update_shape'):
@@ -3220,12 +3226,18 @@ class SettingsDialog(QDialog):
                     attached.force_path_update()
                 else:
                     # Fallback: invalidate cached path
-                    if hasattr(attached, '_path'):
-                        delattr(attached, '_path')
+                    try:
+                        if hasattr(attached, '_path'):
+                            delattr(attached, '_path')
+                    except AttributeError:
+                        pass  # Attribute was removed between check and delete
                 
                 # Force path recalculation by invalidating boundingRect cache if it exists
-                if hasattr(attached, '_bounding_rect_cache'):
-                    delattr(attached, '_bounding_rect_cache')
+                try:
+                    if hasattr(attached, '_bounding_rect_cache'):
+                        delattr(attached, '_bounding_rect_cache')
+                except AttributeError:
+                    pass  # Attribute was removed between check and delete
                 
                 # Recursively update any strands attached to this attached strand
                 self.update_attached_strands_curvature(attached, base_fraction, distance_mult, curve_response)
@@ -4018,10 +4030,16 @@ class SettingsDialog(QDialog):
                     strand.prepareGeometryChange()
                 
                 # Clear any cached paths first
-                if hasattr(strand, '_path'):
-                    delattr(strand, '_path')
-                if hasattr(strand, '_bounding_rect_cache'):
-                    delattr(strand, '_bounding_rect_cache')
+                try:
+                    if hasattr(strand, '_path'):
+                        delattr(strand, '_path')
+                except AttributeError:
+                    pass  # Attribute was removed between check and delete
+                try:
+                    if hasattr(strand, '_bounding_rect_cache'):
+                        delattr(strand, '_bounding_rect_cache')
+                except AttributeError:
+                    pass  # Attribute was removed between check and delete
                 
                 # Update shape
                 if hasattr(strand, 'update_shape'):

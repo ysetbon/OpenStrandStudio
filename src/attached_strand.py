@@ -237,8 +237,11 @@ class AttachedStrand(Strand):
     def force_path_update(self):
         """Force the path to be recalculated without modifying control points."""
         # Clear any cached path
-        if hasattr(self, '_path'):
-            delattr(self, '_path')
+        try:
+            if hasattr(self, '_path'):
+                delattr(self, '_path')
+        except AttributeError:
+            pass  # Attribute was removed between check and delete
         
         # Special handling for 3rd control point strands
         if (hasattr(self, 'canvas') and self.canvas and 

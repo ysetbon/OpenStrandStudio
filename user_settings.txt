@@ -1,10 +1,10 @@
-Theme: default
-Language: he
-ShadowColor: 0,0,0,100
+Theme: dark
+Language: en
+ShadowColor: 0,0,0,200
 DrawOnlyAffectedStrand: true
 EnableThirdControlPoint: true
 EnableSnapToGrid: true
-NumSteps: 1
+NumSteps: 6
 MaxBlurRadius: 100.0
 ControlPointBaseFraction: 1.00
 DistanceMultiplier: 2.0

@@ -179,6 +179,8 @@ class StrandDrawingCanvas(QWidget):
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = True
+        # Initialize show move highlights setting
+        self.show_move_highlights = True  # Default to showing indicators
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10
@@ -428,6 +430,15 @@ class StrandDrawingCanvas(QWidget):
             snap_to_grid_setting = self.load_snap_to_grid_setting()
             if snap_to_grid_setting is not None:
                 self.snap_to_grid_enabled = snap_to_grid_setting
+                pass
+        except Exception as e:
+            pass
+        
+        # Apply show_move_highlights setting from user settings if available
+        try:
+            show_highlights_setting = self.load_show_highlights_setting()
+            if show_highlights_setting is not None:
+                self.show_move_highlights = show_highlights_setting
                 pass
         except Exception as e:
             pass
@@ -1364,6 +1375,38 @@ class StrandDrawingCanvas(QWidget):
         except Exception as e:
             pass
             return None
+    
+    def load_show_highlights_setting(self):
+        """Load show_move_highlights setting from user_settings.txt if available."""
+        try:
+            import os
+            import sys
+            from PyQt5.QtCore import QStandardPaths
+            
+            # Use the appropriate directory for each OS
+            app_name = "OpenStrand Studio"
+            if sys.platform == 'darwin':  # macOS
+                program_data_dir = os.path.expanduser('~/Library/Application Support')
+                settings_dir = os.path.join(program_data_dir, app_name)
+            else:
+                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+            file_path = os.path.join(settings_dir, 'user_settings.txt')
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('ShowMoveHighlights:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            show_highlights_setting = (value == 'true')
+                            return show_highlights_setting
+                
+            return None
+        except Exception as e:
+            pass
+            return None
 
     def show_control_points(self, visible):
         """Show or hide control points on the canvas."""
@@ -1888,8 +1931,8 @@ class StrandDrawingCanvas(QWidget):
             temp_strand.canvas = self
             temp_strand.draw(painter, skip_painter_setup=True)
 
-        # Draw the connection circle last (always on top)
-        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand:
+        # Draw the connection circle last (always on top) - if highlights are enabled
+        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
             if self.current_mode.affected_point == 0:
                 circle_color = QColor(255, 0, 0, 60)  # Red for start point
             else:
@@ -2018,9 +2061,12 @@ class StrandDrawingCanvas(QWidget):
             # Track positions where rectangles have been drawn to avoid duplicates
             drawn_rectangle_positions = []
 
-            # Skip drawing all rectangles if in optimized drawing mode
+            # Skip drawing all rectangles if in optimized drawing mode or if highlights are disabled
             if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
                 # When draw_only_affected_strand is enabled, don't draw any control point rectangles
+                pass
+            # Skip drawing if show_move_highlights is disabled
+            elif hasattr(self, 'show_move_highlights') and not self.show_move_highlights:
                 pass
             # Draw squares around each strand's start/end
             else:
@@ -2188,8 +2234,8 @@ class StrandDrawingCanvas(QWidget):
                                             bias_half_size = bias_square_size / 2
                                             bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bc_rect)
-            # Draw the selected rectangle with yellow color
-            if self.current_mode.selected_rectangle:
+            # Draw the selected rectangle with yellow color (if highlights are enabled)
+            if self.current_mode.selected_rectangle and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
                 # Set up semi-transparent yellow color
                 square_color = QColor(255, 230, 160, 140)  # Yellow with transparency
                 painter.setBrush(QBrush(square_color))
@@ -2339,8 +2385,8 @@ class StrandDrawingCanvas(QWidget):
            (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
             painter.setClipping(False)
 
-        # Draw attach-mode circles on top
-        if isinstance(self.current_mode, AttachMode):
+        # Draw attach-mode circles on top (if highlights are enabled)
+        if isinstance(self.current_mode, AttachMode) and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
             painter.save()
             for strand in self.strands:
                 if isinstance(strand, MaskedStrand):

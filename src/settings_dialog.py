@@ -53,6 +53,7 @@ class SettingsDialog(QDialog):
         self.enable_third_control_point = False  # Default to two control points
         self.enable_curvature_bias_control = False  # Default to no curvature bias controls
         self.snap_to_grid_enabled = True  # Default to snap to grid enabled
+        self.show_move_highlights = True  # Default to showing highlights in move modes
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -295,7 +296,7 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
-                'third_control_layout', 'snap_to_grid_layout', # 'extended_mask_layout', 
+                'third_control_layout', 'snap_to_grid_layout', 'show_highlights_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
                 'distance_mult_layout', 'curve_response_layout',
@@ -1198,6 +1199,10 @@ class SettingsDialog(QDialog):
                         elif line.startswith('EnableSnapToGrid:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.snap_to_grid_enabled = (value == 'true')
+                        
+                        elif line.startswith('ShowMoveHighlights:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.show_move_highlights = (value == 'true')
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -1582,6 +1587,25 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(self.third_control_layout)
         general_layout.addLayout(self.curvature_bias_layout)
         general_layout.addLayout(self.snap_to_grid_layout)
+        
+        # Show Move Highlights Option
+        if not hasattr(self, 'show_highlights_layout'):
+            self.show_highlights_layout = QHBoxLayout()
+        self.show_highlights_label = QLabel(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
+        self.show_highlights_checkbox = QCheckBox()
+        self.show_highlights_checkbox.setChecked(self.show_move_highlights)
+        
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.show_highlights_layout.addStretch()
+            self.show_highlights_layout.addWidget(self.show_highlights_checkbox)
+            self.show_highlights_layout.addWidget(self.show_highlights_label)
+        else:
+            self.show_highlights_layout.addWidget(self.show_highlights_label)
+            self.show_highlights_layout.addWidget(self.show_highlights_checkbox)
+            self.show_highlights_layout.addStretch()
+        
+        general_layout.addLayout(self.show_highlights_layout)
         # general_layout.addLayout(self.extended_mask_layout)
 
         # Add Shadow Blur Steps
@@ -3024,6 +3048,13 @@ class SettingsDialog(QDialog):
         if self.canvas:
             # Set the new value in canvas
             self.canvas.snap_to_grid_enabled = self.snap_to_grid_enabled
+        
+        # Apply Show Move Highlights Setting
+        self.show_move_highlights = self.show_highlights_checkbox.isChecked()
+        
+        if self.canvas:
+            # Set the new value in canvas
+            self.canvas.show_move_highlights = self.show_move_highlights
 
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
@@ -3237,6 +3268,7 @@ class SettingsDialog(QDialog):
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
         self.curvature_bias_label.setText(_['enable_curvature_bias_control'] if 'enable_curvature_bias_control' in _ else "Enable curvature bias controls")
         self.snap_to_grid_label.setText(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
+        self.show_highlights_label.setText(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
@@ -3592,6 +3624,8 @@ class SettingsDialog(QDialog):
                 file.write(f"EnableCurvatureBiasControl: {str(self.enable_curvature_bias_control).lower()}\n")
                 # Save enable snap to grid setting
                 file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
+                # Save show move highlights setting
+                file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
@@ -3630,6 +3664,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
                     local_file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
+                    local_file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                     # Save curvature settings

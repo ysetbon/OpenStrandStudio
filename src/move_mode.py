@@ -959,6 +959,10 @@ class MoveMode:
         """Draw the yellow selection square for the currently selected point."""
         if not self.is_moving or not self.selected_rectangle or not self.affected_strand:
             return
+        
+        # Check if highlights are disabled in settings
+        if hasattr(self.canvas, 'show_move_highlights') and not self.canvas.show_move_highlights:
+            return
             
         # Set up semi-transparent yellow color
         square_color = QColor(255, 230, 160, 70)  # Yellow with transparency

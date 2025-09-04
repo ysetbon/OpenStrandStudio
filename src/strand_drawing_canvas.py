@@ -179,8 +179,7 @@ class StrandDrawingCanvas(QWidget):
         
         # Initialize the flag for the third control point
         self.enable_third_control_point = True
-        # Initialize show move highlights setting
-        self.show_move_highlights = True  # Default to showing indicators
+        # Don't initialize show_move_highlights here - it will be set later
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10
@@ -435,11 +434,12 @@ class StrandDrawingCanvas(QWidget):
             pass
         
         # Apply show_move_highlights setting from user settings if available
+        # Initialize with default first, then override if setting exists
+        self.show_move_highlights = True  # Default value
         try:
             show_highlights_setting = self.load_show_highlights_setting()
             if show_highlights_setting is not None:
                 self.show_move_highlights = show_highlights_setting
-                pass
         except Exception as e:
             pass
 

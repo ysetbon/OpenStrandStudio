@@ -1317,11 +1317,8 @@ class Strand:
     def force_path_update(self):
         """Force the path to be recalculated without modifying control points."""
         # Clear any cached path
-        try:
-            if hasattr(self, '_path'):
-                delattr(self, '_path')
-        except AttributeError:
-            pass  # Attribute was removed between check and delete
+        if hasattr(self, '_path'):
+            delattr(self, '_path')
         
         # Special handling for 3rd control point strands
         if (hasattr(self, 'canvas') and self.canvas and 
@@ -1352,44 +1349,38 @@ class Strand:
         """Update side lines considering the curve's shape near the ends."""
         # IMPROVED: Smart tangent calculation for proper side line angles
         
-        # Handle MaskedStrand or strands without control points
-        if self.control_point1 is None or self.control_point2 is None:
-            # For strands without control points (like MaskedStrand), use straight line tangent
-            tangent_start = self.end - self.start
-            tangent_end = tangent_start
-        else:
-            # For start side line: Check if control point is at default/coincident position
-            tangent_start = self.control_point1 - self.start
+        # For start side line: Check if control point is at default/coincident position
+        tangent_start = self.control_point1 - self.start
+        if tangent_start.manhattanLength() < 0.001:
+            # Control point coincides with start - need to look ahead on the curve
+            # Use the actual curve tangent at a small t value to get proper direction
+            # This gives us the true curve direction even when control points are at defaults
+            t_lookahead = 0.01  # Look slightly ahead on the curve
+            point_ahead = self.point_at(t_lookahead)
+            tangent_start = point_ahead - self.start
+            
             if tangent_start.manhattanLength() < 0.001:
-                # Control point coincides with start - need to look ahead on the curve
-                # Use the actual curve tangent at a small t value to get proper direction
-                # This gives us the true curve direction even when control points are at defaults
-                t_lookahead = 0.01  # Look slightly ahead on the curve
-                point_ahead = self.point_at(t_lookahead)
-                tangent_start = point_ahead - self.start
-                
-                if tangent_start.manhattanLength() < 0.001:
-                    # Still no direction - use direction to second control point or end
-                    if (self.control_point2 - self.start).manhattanLength() > 0.001:
-                        tangent_start = self.control_point2 - self.start
-                    else:
-                        tangent_start = self.end - self.start
-                
-            # For end side line: Check if control point is at default/coincident position
-            tangent_end = self.end - self.control_point2
+                # Still no direction - use direction to second control point or end
+                if (self.control_point2 - self.start).manhattanLength() > 0.001:
+                    tangent_start = self.control_point2 - self.start
+                else:
+                    tangent_start = self.end - self.start
+            
+        # For end side line: Check if control point is at default/coincident position
+        tangent_end = self.end - self.control_point2
+        if tangent_end.manhattanLength() < 0.001:
+            # Control point coincides with end - need to look back on the curve
+            # Use the actual curve tangent at a small t value from the end
+            t_lookback = 0.99  # Look slightly back from the end
+            point_before = self.point_at(t_lookback)
+            tangent_end = self.end - point_before
+            
             if tangent_end.manhattanLength() < 0.001:
-                # Control point coincides with end - need to look back on the curve
-                # Use the actual curve tangent at a small t value from the end
-                t_lookback = 0.99  # Look slightly back from the end
-                point_before = self.point_at(t_lookback)
-                tangent_end = self.end - point_before
-                
-                if tangent_end.manhattanLength() < 0.001:
-                    # Still no direction - use direction from first control point or start
-                    if (self.end - self.control_point1).manhattanLength() > 0.001:
-                        tangent_end = self.end - self.control_point1
-                    else:
-                        tangent_end = self.end - self.start
+                # Still no direction - use direction from first control point or start
+                if (self.end - self.control_point1).manhattanLength() > 0.001:
+                    tangent_end = self.end - self.control_point1
+                else:
+                    tangent_end = self.end - self.start
 
         # Additional safety check for zero tangents
         if tangent_start.manhattanLength() < 0.001:
@@ -3485,4 +3476,3 @@ class Strand:
         if reset_control_points:
             self.update_control_points_from_geometry()
         self.update_shape()
-

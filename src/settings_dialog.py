@@ -1640,7 +1640,7 @@ class SettingsDialog(QDialog):
         self.base_fraction_spinbox.setToolTip(_['base_fraction_tooltip'] if 'base_fraction_tooltip' in _ else "Base fraction for control point influence (0.25=weak, 0.4=default, 1.0=normal, 3.0=very strong)")
         # Connect using lambda to ensure proper connection
         self.base_fraction_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
-        print(f"DEBUG: Connected base_fraction_spinbox signal")
+        # DEBUG: Connected base_fraction_spinbox signal
         
         if self.is_rtl_language(self.current_language):
             self.base_fraction_layout.addStretch()
@@ -1668,7 +1668,7 @@ class SettingsDialog(QDialog):
         self.distance_mult_spinbox.setToolTip(_['distance_mult_tooltip'] if 'distance_mult_tooltip' in _ else "Distance multiplication factor (1.0=no boost, 2.0=2x boost, 5.0=5x boost, 10.0=10x boost)")
         # Connect using lambda to ensure proper connection
         self.distance_mult_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
-        print(f"DEBUG: Connected distance_mult_spinbox signal")
+        # DEBUG: Connected distance_mult_spinbox signal
         
         if self.is_rtl_language(self.current_language):
             self.distance_mult_layout.addStretch()
@@ -1696,7 +1696,7 @@ class SettingsDialog(QDialog):
         self.curve_response_spinbox.setToolTip(_['curve_response_tooltip'] if 'curve_response_tooltip' in _ else "Curve response type: 1.0=linear, 1.5=mild quadratic, 2.0=quadratic, 3.0=cubic")
         # Connect using lambda to ensure proper connection
         self.curve_response_spinbox.valueChanged.connect(lambda v: self.on_curvature_changed(v))
-        print(f"DEBUG: Connected curve_response_spinbox signal")
+        # DEBUG: Connected curve_response_spinbox signal
         
         if self.is_rtl_language(self.current_language):
             self.curve_response_layout.addStretch()
@@ -3565,7 +3565,7 @@ class SettingsDialog(QDialog):
         settings_dir = self.get_settings_directory()
         
         # Print the settings directory to help with troubleshooting
-        print(f"Saving settings to directory: {settings_dir}")
+        # Saving settings to directory: {settings_dir}
         
         # Ensure directory exists with proper permissions
         if not os.path.exists(settings_dir):
@@ -3575,7 +3575,7 @@ class SettingsDialog(QDialog):
                 return
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
-        print(f"Full settings file path: {file_path}")
+        # Full settings file path: {file_path}
         
         # Write the settings to the file with error handling
         try:
@@ -3618,7 +3618,7 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                 file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                 file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
-            print(f"Settings saved to {file_path} with Shadow Color: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}, Draw Only Affected Strand: {self.draw_only_affected_strand}, Enable Third Control Point: {self.enable_third_control_point}, Num Steps: {self.num_steps}, Max Blur Radius: {self.max_blur_radius}")
+            # Settings saved to {file_path}
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -3655,7 +3655,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                     local_file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                     local_file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
-                print(f"Created copy of settings at: {local_file_path}")
+                # Created copy of settings at: {local_file_path}
             except Exception as e:
                 print(f"Could not create settings copy: {e}")
                 

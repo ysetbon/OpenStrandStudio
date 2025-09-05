@@ -1873,7 +1873,6 @@ class MoveMode:
 
         # Check if control points exist
         if not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
-            print(f"Strand {getattr(strand, 'layer_name', 'unknown')} missing control points")
             return False
         
         # Check bias controls first if they're enabled and event is provided

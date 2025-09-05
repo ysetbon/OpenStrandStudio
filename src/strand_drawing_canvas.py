@@ -5950,7 +5950,6 @@ class StrandDrawingCanvas(QWidget):
                 self.update_non_group_attached_strands(attached_strand, dx, dy, updated_strands, group_layers)
 
     def move_strand_and_update(self, strand, dx, dy, updated_strands):
-        print(f"Moving strand {strand.layer_name} by dx={dx}, dy={dy}")
 
         if not hasattr(strand, 'original_start'):
             strand.original_start = QPointF(strand.start)

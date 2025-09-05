@@ -1119,7 +1119,6 @@ class MainWindow(QMainWindow):
         
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
                 # Unpress the button since we can't use it for masked strands
                 self.unpress_angle_adjust_button()
                 return
@@ -1128,7 +1127,6 @@ class MainWindow(QMainWindow):
             self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
             self.update_mode("angle_adjust")
         else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
             pass
             
             # Unpress the button immediately since no strand is selected
@@ -1730,7 +1728,6 @@ class MainWindow(QMainWindow):
     def set_angle_adjust_mode(self):
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
                 return
             
             # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
@@ -1747,13 +1744,11 @@ class MainWindow(QMainWindow):
             if lock_mode_was_active:
                 self.layer_panel._suppress_lock_mode_temporarily = False
         else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
             pass
 
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
                 return
             
             if self.canvas.is_angle_adjusting:
@@ -1766,7 +1761,6 @@ class MainWindow(QMainWindow):
                 self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
                 self.update_mode("angle_adjust")
         else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
             pass
 
     def deselect_angle_adjust_button(self):
@@ -2208,7 +2202,6 @@ class MainWindow(QMainWindow):
     def toggle_angle_adjust_mode(self):
         if self.canvas.selected_strand:
             if isinstance(self.canvas.selected_strand, MaskedStrand):
-                print("Angle adjustment is not available for masked layers.")
                 return
             
             if self.canvas.is_angle_adjusting:
@@ -2221,7 +2214,6 @@ class MainWindow(QMainWindow):
                 self.canvas.toggle_angle_adjust_mode(self.canvas.selected_strand)
                 self.update_mode("angle_adjust")
         else:
-            print("No strand selected. Please select a strand before adjusting its angle.")
             pass
 
     def select_strand(self, index, emit_signal=True):

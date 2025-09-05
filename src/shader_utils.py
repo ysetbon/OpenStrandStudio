@@ -165,7 +165,6 @@ def draw_mask_strand_shadow(
         shading_path = intersection_path
 
     # Follow the EXACT same pattern as draw_strand_shadow for consistent layering
-    painter.save()
     painter.setRenderHint(QPainter.Antialiasing, True)
     painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
     painter.setPen(Qt.NoPen)  # We are stroking, not filling
@@ -214,7 +213,6 @@ def draw_mask_strand_shadow(
         painter.setPen(pen)
         painter.strokePath(shading_path, pen)
 
-    painter.restore()  # Release all painter state
 
     # Define core_color for the additional layers you added back
     core_color = QColor(base_color)

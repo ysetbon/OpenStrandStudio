@@ -368,8 +368,8 @@ class AttachedStrand(Strand):
                 self.start.y()
             )
             self.control_point2 = QPointF(
-                self.end.x(),
-                self.end.y()
+                self.start.x(),
+                self.start.y()
             )
             # Also update the center control point when resetting
             self.control_point_center = QPointF(

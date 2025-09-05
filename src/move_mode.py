@@ -2212,10 +2212,10 @@ class MoveMode:
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
         
-        # AUTO-ADJUST CONTROL POINTS: When initially moving any point (control point or strand endpoint),
+        # AUTO-ADJUST CONTROL POINTS: Only when initially moving control_point1,
         # check if control points are at their initial position (both at start, forming a triangle).
-        # If so, automatically move the circle control point (control_point2) to the ending point.
-        # Apply this to the main strand and all connected strands that will move together.
+        # If so, automatically move the circle control point (control_point2) near the ending point.
+        # Apply this only for the main strand (attached children are handled recursively inside).
         
         # Helper function to auto-adjust control points for a strand
         def auto_adjust_control_points(s):
@@ -2230,7 +2230,7 @@ class MoveMode:
                     # Move circle control point (control_point2) near the ending point
                     # Use tiny epsilon offset to avoid degeneracy when CP2 == end
                     try:
-                        epsilon = 0.1
+                        epsilon = 1
                         # Derive a direction from current geometry if possible
                         base_vec = QPointF(s.end.x() - s.start.x(), s.end.y() - s.start.y())
                         length = math.hypot(base_vec.x(), base_vec.y())
@@ -2242,7 +2242,7 @@ class MoveMode:
                         s.control_point2 = QPointF(s.end.x() - dir_x * epsilon, s.end.y() - dir_y * epsilon)
                     except Exception:
                         # Safe fallback: tiny horizontal nudge
-                        s.control_point2 = QPointF(s.end.x() - 0.1, s.end.y())
+                        s.control_point2 = QPointF(s.end.x() - 1, s.end.y())
                     
                     # If third control point (rectangle) is enabled and active, move it to center
                     if (hasattr(self.canvas, 'enable_third_control_point') and 
@@ -2274,16 +2274,11 @@ class MoveMode:
                     return True  # Indicates adjustment was made
             return False  # No adjustment needed
         
-        # Apply auto-adjustment to the main strand
-        main_adjustment_made = auto_adjust_control_points(strand)
-        
-        # If we're moving an endpoint (not control point), also auto-adjust connected strands
-        if side in [0, 1]:  # Moving start or end point
-            # Get all strands connected at this point
-            connected_info = self.get_connected_strands(strand.layer_name, side)
-            for connected_strand, connected_side in connected_info:
-                if connected_strand and connected_strand != strand:
-                    auto_adjust_control_points(connected_strand)
+        # Apply auto-adjustment only when initially moving control_point1
+        if side == 'control_point1':
+            main_adjustment_made = auto_adjust_control_points(strand)
+        else:
+            main_adjustment_made = False
         
         # Force canvas update if any adjustments were made
         if main_adjustment_made:

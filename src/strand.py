@@ -61,6 +61,9 @@ class Strand:
         )
         # Flag to track if the center control point has been manually positioned
         self.control_point_center_locked = False
+        
+        # Flag to track if the triangle control point has been moved
+        self.triangle_has_moved = False
 
         # Add canvas reference
         self._canvas = None

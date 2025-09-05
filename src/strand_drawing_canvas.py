@@ -5133,12 +5133,13 @@ class StrandDrawingCanvas(QWidget):
                 # Check if small control points should be visible
                 center_is_locked = getattr(strand, 'control_point_center_locked', False)
                 third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
                 
                 control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
                 painter.setPen(control_line_pen)
                 
-                # Draw lines to small control points (always visible when third CP is enabled)
-                if third_cp_enabled or center_is_locked:
+                # Draw lines to small control points (only after triangle has moved)
+                if triangle_has_moved and (third_cp_enabled or center_is_locked):
                     painter.drawLine(strand.start, strand.control_point1)
                     # Use points_are_close for robustness
                     if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
@@ -5146,8 +5147,8 @@ class StrandDrawingCanvas(QWidget):
                     else:
                          painter.drawLine(strand.end, strand.control_point2)
 
-                    # Draw center control point lines if enabled
-                    if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                    # Draw center control point lines if enabled and triangle has moved
+                    if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                         painter.drawLine(strand.control_point_center, strand.control_point1)
                         painter.drawLine(strand.control_point_center, strand.control_point2)
 
@@ -5176,9 +5177,13 @@ class StrandDrawingCanvas(QWidget):
                     third_cp_enabled or  # Always show small control points when third CP is enabled
                     (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
                 )
+                
+                # Initially only show the triangle, show other control points after triangle moves
+                show_circle_cp = triangle_has_moved and show_small_cps
+                show_triangle_cp = True  # Always show triangle when control points are enabled
 
-                # Draw control_point2 (circle)
-                if show_small_cps:
+                # Draw control_point2 (circle) - only after triangle has moved
+                if show_circle_cp:
 
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -5192,8 +5197,8 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QBrush(strand.color))
                     painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
-                # Draw control_point1 (triangle)
-                if show_small_cps:
+                # Draw control_point1 (triangle) - always visible initially
+                if show_triangle_cp:
 
                     triangle = QPolygonF()
                     center_x = strand.control_point1.x()
@@ -5247,8 +5252,8 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QBrush(strand.color))
                     painter.drawPolygon(inner_triangle)
 
-                # Draw control_point_center (square) if enabled
-                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                # Draw control_point_center (square) if enabled and triangle has moved
+                if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                     # Draw stroke square
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -5310,16 +5315,30 @@ class StrandDrawingCanvas(QWidget):
             except Exception:
                 shift_held = False
 
+            # Check if the triangle has been moved from initial position
+            triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+            
             show_small_cps = (
                 third_cp_enabled or  # Always show small control points when third CP is enabled
                 (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
             )
             
-            # Draw control point lines - only if small control points are visible
+            # Initially only show the triangle, show other control points after triangle moves
+            show_circle_cp = triangle_has_moved and show_small_cps
+            show_triangle_cp = True  # Always show triangle when control points are enabled
+            
+            # Check if the triangle has been moved from initial position
+            triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+            
+            # Initially only show the triangle, show other control points after triangle moves
+            show_circle_cp = triangle_has_moved and show_small_cps
+            show_triangle_cp = True  # Always show triangle when control points are enabled
+            
+            # Draw control point lines - only after triangle has moved
             control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
             painter.setPen(control_line_pen)
             
-            if show_small_cps:
+            if triangle_has_moved and show_small_cps:
                 painter.drawLine(strand.start, strand.control_point1)
                 if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
                     # print("control_point2 is close to start") # Keep debug print?
@@ -5328,8 +5347,8 @@ class StrandDrawingCanvas(QWidget):
                     # print("control_point2 is not close to start") # Keep debug print?
                     painter.drawLine(strand.end, strand.control_point2)
 
-                # Draw center control point lines if enabled
-                if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                # Draw center control point lines if enabled and triangle has moved
+                if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                     painter.drawLine(strand.control_point_center, strand.control_point1)
                     painter.drawLine(strand.control_point_center, strand.control_point2)
 
@@ -5338,8 +5357,8 @@ class StrandDrawingCanvas(QWidget):
             control_point_pen = QPen(QColor('green'), 1)
             painter.setBrush(QBrush(QColor('green')))
 
-            # Draw control_point2 (circle)
-            if show_small_cps:
+            # Draw control_point2 (circle) - only after triangle has moved
+            if show_circle_cp:
 
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)
@@ -5354,8 +5373,8 @@ class StrandDrawingCanvas(QWidget):
                 painter.setBrush(QBrush(strand.color))
                 painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
 
-            # Draw control_point1 (triangle)
-            if show_small_cps:
+            # Draw control_point1 (triangle) - always visible initially
+            if show_triangle_cp:
 
                 triangle = QPolygonF()
                 center_x = strand.control_point1.x()
@@ -5408,8 +5427,8 @@ class StrandDrawingCanvas(QWidget):
                 painter.setBrush(QBrush(strand.color))
                 painter.drawPolygon(inner_triangle)
 
-            # Draw control_point_center (square) if enabled
-            if self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+            # Draw control_point_center (square) if enabled and triangle has moved
+            if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
                 # Draw stroke square
                 painter.setPen(stroke_pen)
                 painter.setBrush(Qt.NoBrush)

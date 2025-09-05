@@ -67,6 +67,9 @@ class AttachedStrand(Strand):
         )
         self.control_point_center_locked = False
         
+        # Flag to track if the triangle control point has been moved
+        self.triangle_has_moved = False
+        
         # Initialize attachment statuses
         self.start_attached = True  # Attached at start to parent strand
         self.end_attached = False

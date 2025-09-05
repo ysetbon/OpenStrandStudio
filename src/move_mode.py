@@ -1945,6 +1945,8 @@ class MoveMode:
             if control_point1_rect.contains(pos):
                 self.start_movement(strand, 'control_point1', control_point1_rect, pos)
                 self.is_moving_control_point = True
+                # Mark that the triangle has been moved
+                strand.triangle_has_moved = True
                 # Do NOT lock the center when moving end control points
                 # Let it update automatically to stay at the midpoint
                 if hasattr(self.canvas, 'truly_moving_strands'):

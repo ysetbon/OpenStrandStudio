@@ -2210,6 +2210,69 @@ class MoveMode:
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
         
+        # AUTO-ADJUST CONTROL POINTS: When initially moving any point (control point or strand endpoint),
+        # check if control points are at their initial position (both at start, forming a triangle).
+        # If so, automatically move the circle control point (control_point2) to the ending point.
+        # Apply this to the main strand and all connected strands that will move together.
+        
+        # Helper function to auto-adjust control points for a strand
+        def auto_adjust_control_points(s):
+            if hasattr(s, 'control_point1') and hasattr(s, 'control_point2'):
+                cp1_at_start = (abs(s.control_point1.x() - s.start.x()) < 1.0 and
+                               abs(s.control_point1.y() - s.start.y()) < 1.0)
+                cp2_at_start = (abs(s.control_point2.x() - s.start.x()) < 1.0 and
+                               abs(s.control_point2.y() - s.start.y()) < 1.0)
+                
+                # If both control points are at start (initial triangle state), auto-adjust them
+                if cp1_at_start and cp2_at_start:
+                    # Move circle control point (control_point2) to the ending point
+                    s.control_point2 = QPointF(s.end)
+                    
+                    # If third control point (rectangle) is enabled and active, move it to center
+                    if (hasattr(self.canvas, 'enable_third_control_point') and 
+                        self.canvas.enable_third_control_point and
+                        hasattr(s, 'control_point_center')):
+                        # Calculate midpoint between the two control points
+                        midpoint = QPointF(
+                            (s.control_point1.x() + s.control_point2.x()) / 2,
+                            (s.control_point1.y() + s.control_point2.y()) / 2
+                        )
+                        s.control_point_center = midpoint
+                        # Mark that the center has been manually positioned (locked)
+                        s.control_point_center_locked = True
+                    
+                    # Update the strand's shape to reflect the new control point positions
+                    s.update_shape()
+                    
+                    # IMPORTANT: Update side lines and ensure they get properly highlighted
+                    if hasattr(s, 'update_side_line'):
+                        s.update_side_line()
+                    
+                    # Also update any attached strands' side lines recursively
+                    if hasattr(s, 'attached_strands'):
+                        for attached in s.attached_strands:
+                            if attached and not getattr(attached, 'deleted', False):
+                                # Auto-adjust the attached strand as well
+                                auto_adjust_control_points(attached)
+                    
+                    return True  # Indicates adjustment was made
+            return False  # No adjustment needed
+        
+        # Apply auto-adjustment to the main strand
+        main_adjustment_made = auto_adjust_control_points(strand)
+        
+        # If we're moving an endpoint (not control point), also auto-adjust connected strands
+        if side in [0, 1]:  # Moving start or end point
+            # Get all strands connected at this point
+            connected_info = self.get_connected_strands(strand.layer_name, side)
+            for connected_strand, connected_side in connected_info:
+                if connected_strand and connected_strand != strand:
+                    auto_adjust_control_points(connected_strand)
+        
+        # Force canvas update if any adjustments were made
+        if main_adjustment_made:
+            self.canvas.update()
+        
         # Set initial positions to the strand position
         self.last_snapped_pos = strand_pos
         self.target_pos = strand_pos

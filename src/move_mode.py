@@ -2225,8 +2225,22 @@ class MoveMode:
                 
                 # If both control points are at start (initial triangle state), auto-adjust them
                 if cp1_at_start and cp2_at_start:
-                    # Move circle control point (control_point2) to the ending point
-                    s.control_point2 = QPointF(s.end)
+                    # Move circle control point (control_point2) near the ending point
+                    # Use tiny epsilon offset to avoid degeneracy when CP2 == end
+                    try:
+                        epsilon = 0.1
+                        # Derive a direction from current geometry if possible
+                        base_vec = QPointF(s.end.x() - s.start.x(), s.end.y() - s.start.y())
+                        length = math.hypot(base_vec.x(), base_vec.y())
+                        if length < 1e-6:
+                            # Fallback direction
+                            dir_x, dir_y = 1.0, 0.0
+                        else:
+                            dir_x, dir_y = base_vec.x() / length, base_vec.y() / length
+                        s.control_point2 = QPointF(s.end.x() - dir_x * epsilon, s.end.y() - dir_y * epsilon)
+                    except Exception:
+                        # Safe fallback: tiny horizontal nudge
+                        s.control_point2 = QPointF(s.end.x() - 0.1, s.end.y())
                     
                     # If third control point (rectangle) is enabled and active, move it to center
                     if (hasattr(self.canvas, 'enable_third_control_point') and 

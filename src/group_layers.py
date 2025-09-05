@@ -853,6 +853,22 @@ class GroupPanel(QWidget):
         pass
         pass
         pass
+        
+        # Log group creation details
+        print(f"\n=== Creating Group '{group_name}' ===")
+        print(f"  Total strands to add: {len(strands)}")
+        for strand in strands:
+            strand_type = strand.__class__.__name__
+            layer_name = getattr(strand, 'layer_name', 'unknown')
+            print(f"    - {layer_name} ({strand_type})")
+            if strand_type == 'MaskedStrand':
+                first_comp = getattr(strand, 'first_selected_strand', None)
+                second_comp = getattr(strand, 'second_selected_strand', None)
+                print(f"      Components: {getattr(first_comp, 'layer_name', 'None')}, {getattr(second_comp, 'layer_name', 'None')}")
+            elif strand_type == 'AttachedStrand':
+                parent = getattr(strand, 'parent', None)
+                print(f"      Parent: {getattr(parent, 'layer_name', 'None')}")
+        print("=== End Group Creation ===\n")
                 
         if not strands:
             pass
@@ -1463,6 +1479,78 @@ class GroupPanel(QWidget):
             # Get the original group data
             original_group = self.groups[group_name]
             original_strands = original_group['strands']
+            
+            # Log what we're starting with
+            print(f"\n=== Duplicating Group '{group_name}' ===")
+            print(f"  Original group contains {len(original_strands)} strands:")
+            for strand in original_strands:
+                strand_type = strand.__class__.__name__
+                layer_name = getattr(strand, 'layer_name', 'unknown')
+                print(f"    - {layer_name} ({strand_type})")
+            
+            # Ensure all component strands of masked strands are included
+            # This is critical because masked strands reference component strands that may not be in the group
+            from masked_strand import MaskedStrand
+            from attached_strand import AttachedStrand
+            
+            additional_strands = []
+            processed_components = set()  # Track what we've already added to avoid duplicates
+            
+            # Recursively find all component strands
+            def collect_component_strands(strand, depth=0):
+                if depth > 5:  # Prevent infinite recursion
+                    return
+                    
+                if isinstance(strand, MaskedStrand):
+                    # Add first component
+                    if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
+                        comp = strand.first_selected_strand
+                        comp_id = id(comp)
+                        if comp not in original_strands and comp_id not in processed_components:
+                            additional_strands.append(comp)
+                            processed_components.add(comp_id)
+                            print(f"  Adding missing component: {getattr(comp, 'layer_name', '?')} for masked strand {getattr(strand, 'layer_name', '?')}")
+                            # Recursively check if this component is also a masked strand
+                            collect_component_strands(comp, depth + 1)
+                    
+                    # Add second component  
+                    if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
+                        comp = strand.second_selected_strand
+                        comp_id = id(comp)
+                        if comp not in original_strands and comp_id not in processed_components:
+                            additional_strands.append(comp)
+                            processed_components.add(comp_id)
+                            print(f"  Adding missing component: {getattr(comp, 'layer_name', '?')} for masked strand {getattr(strand, 'layer_name', '?')}")
+                            # Recursively check if this component is also a masked strand
+                            collect_component_strands(comp, depth + 1)
+                
+                # Also check attached strands for their parent
+                if isinstance(strand, AttachedStrand):
+                    if hasattr(strand, 'parent') and strand.parent:
+                        parent = strand.parent
+                        parent_id = id(parent)
+                        if parent not in original_strands and parent_id not in processed_components:
+                            additional_strands.append(parent)
+                            processed_components.add(parent_id)
+                            print(f"  Adding missing parent: {getattr(parent, 'layer_name', '?')} for attached strand {getattr(strand, 'layer_name', '?')}")
+                            collect_component_strands(parent, depth + 1)
+            
+            # Process all strands in the group
+            for strand in original_strands:
+                collect_component_strands(strand)
+            
+            # Add any missing component strands to the list
+            if additional_strands:
+                original_strands = list(original_strands) + additional_strands
+                print(f"  Added {len(additional_strands)} missing component/parent strands")
+                print(f"  Total strands to duplicate: {len(original_strands)}")
+                for strand in additional_strands:
+                    strand_type = strand.__class__.__name__
+                    layer_name = getattr(strand, 'layer_name', 'unknown')
+                    print(f"    + {layer_name} ({strand_type})")
+            else:
+                print(f"  No missing components found")
+            
             pass
             pass
             
@@ -1499,7 +1587,17 @@ class GroupPanel(QWidget):
             masked_strands_to_process = []      # Will be handled after attached strands
             attached_strands_to_process = []    # Will be handled after regular strands
 
+            # Log the duplication plan
+            print(f"\n  Duplication phases:")
+            regular_count = sum(1 for s in original_strands if s.__class__.__name__ not in ['MaskedStrand', 'AttachedStrand'])
+            attached_count = sum(1 for s in original_strands if s.__class__.__name__ == 'AttachedStrand')
+            masked_count = sum(1 for s in original_strands if s.__class__.__name__ == 'MaskedStrand')
+            print(f"    Phase 1: {regular_count} regular strands")
+            print(f"    Phase 2: {attached_count} attached strands")
+            print(f"    Phase 3: {masked_count} masked strands")
+
             # First pass: duplicate ONLY regular strands (skip masked & attached)
+            print(f"\n  Phase 1: Duplicating regular strands...")
             for original_strand in original_strands:
                 cls_name = getattr(original_strand.__class__, '__name__', '')
                 if cls_name == 'MaskedStrand':
@@ -1511,6 +1609,7 @@ class GroupPanel(QWidget):
 
                 # Regular strand
                 new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+                print(f"    Duplicated: {getattr(original_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
 
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_strand] = new_strand
@@ -1526,8 +1625,10 @@ class GroupPanel(QWidget):
                         self.canvas.strand_colors[new_strand.set_number] = new_strand.color
 
             # Second pass: duplicate AttachedStrands now that parent strands exist
+            print(f"\n  Phase 2: Duplicating attached strands...")
             for original_attached_strand in attached_strands_to_process:
                 new_strand = self.duplicate_attached_strand(original_attached_strand, old_to_new_set_mapping, strand_mapping)
+                print(f"    Duplicated: {getattr(original_attached_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_attached_strand] = new_strand
 
@@ -1540,7 +1641,9 @@ class GroupPanel(QWidget):
                         self.canvas.strand_colors[new_strand.set_number] = new_strand.color
 
             # Third pass: duplicate MaskedStrands with references to duplicated component strands
+            print(f"\n  Phase 3: Duplicating masked strands...")
             for original_masked_strand in masked_strands_to_process:
+                print(f"    Processing: {getattr(original_masked_strand, 'layer_name', '?')}")
                 new_strand = self.duplicate_masked_strand(
                     original_masked_strand,
                     old_to_new_set_mapping,
@@ -1548,10 +1651,13 @@ class GroupPanel(QWidget):
                 )
                 # Always ensure we return something; if None, build a placeholder
                 if not new_strand:
+                    print(f"    WARNING: Failed to duplicate, creating placeholder")
                     new_strand = self.create_placeholder_masked_strand(
                         original_masked_strand,
                         old_to_new_set_mapping,
                     )
+                else:
+                    print(f"    Successfully duplicated: {getattr(original_masked_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
 
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_masked_strand] = new_strand
@@ -1624,6 +1730,16 @@ class GroupPanel(QWidget):
                 
             
 
+            
+            # Log summary of duplication
+            print(f"\n  Duplication completed:")
+            print(f"    New group name: {new_group_name}")
+            print(f"    Total duplicated strands: {len(duplicated_strands)}")
+            for strand in duplicated_strands:
+                strand_type = strand.__class__.__name__
+                layer_name = getattr(strand, 'layer_name', 'unknown')
+                print(f"      - {layer_name} ({strand_type})")
+            print(f"=== End Duplication ===\n")
             
             # Emit group operation signal for the new group
             layer_names = [strand.layer_name for strand in duplicated_strands if hasattr(strand, 'layer_name')]
@@ -1767,84 +1883,135 @@ class GroupPanel(QWidget):
         first_duplicated = None
         second_duplicated = None
         
+        # Debug: Show what we're looking for
+        print(f"      Looking for components of {getattr(original_strand, 'layer_name', '?')}:")
+        if hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
+            print(f"        First component: {getattr(original_strand.first_selected_strand, 'layer_name', '?')} (id: {id(original_strand.first_selected_strand)})")
+        if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
+            print(f"        Second component: {getattr(original_strand.second_selected_strand, 'layer_name', '?')} (id: {id(original_strand.second_selected_strand)})")
+        
+        # Debug: Show what's in strand_mapping
+        print(f"      Available in strand_mapping:")
+        for orig, dup in strand_mapping.items():
+            print(f"        {getattr(orig, 'layer_name', '?')} (id: {id(orig)}) -> {getattr(dup, 'layer_name', '?')}")
+        
         # Look up the duplicated versions of the component strands
         if hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
             first_duplicated = strand_mapping.get(original_strand.first_selected_strand)
+            print(f"      First lookup result: {'Found' if first_duplicated else 'Not found'}")
         
         if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
             second_duplicated = strand_mapping.get(original_strand.second_selected_strand)
+            print(f"      Second lookup result: {'Found' if second_duplicated else 'Not found'}")
         
         # If direct reference lookup failed, try to find by layer_name among mapped originals
         if not first_duplicated or not second_duplicated:
-            parts = getattr(original_strand, 'layer_name', '').split('_')
-            if len(parts) >= 4:
-                first_layer_name = f"{parts[0]}_{parts[1]}"
-                second_layer_name = f"{parts[2]}_{parts[3]}"
-
+            # Get the original component layer names from the stored strand references
+            first_orig_name = None
+            second_orig_name = None
+            
+            if hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
+                first_orig_name = getattr(original_strand.first_selected_strand, 'layer_name', None)
+            if hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
+                second_orig_name = getattr(original_strand.second_selected_strand, 'layer_name', None)
+            
+            # If we don't have the references, parse from the masked strand's name
+            if not first_orig_name or not second_orig_name:
+                parts = getattr(original_strand, 'layer_name', '').split('_')
+                if len(parts) >= 4:
+                    first_orig_name = first_orig_name or f"{parts[0]}_{parts[1]}"
+                    second_orig_name = second_orig_name or f"{parts[2]}_{parts[3]}"
+            
+            # Search for strands with matching original layer names in strand_mapping keys
+            if first_orig_name or second_orig_name:
                 for orig_str, dup_str in strand_mapping.items():
                     if hasattr(orig_str, 'layer_name'):
-                        if not first_duplicated and orig_str.layer_name == first_layer_name:
+                        if not first_duplicated and orig_str.layer_name == first_orig_name:
                             first_duplicated = dup_str
-                        if not second_duplicated and orig_str.layer_name == second_layer_name:
+                        if not second_duplicated and orig_str.layer_name == second_orig_name:
                             second_duplicated = dup_str
                     if first_duplicated and second_duplicated:
                         break
 
-        # Try to resolve expected new layer names using set_mapping (e.g., map main set numbers)
-        def remap_layer_name(layer_name: str) -> str:
-            try:
-                p = layer_name.split('_')
-                if len(p) != 2:
-                    return layer_name
-                main_num = int(p[0])
-                sub_num = int(p[1])
-                new_main = set_mapping.get(main_num, main_num)
-                return f"{new_main}_{sub_num}"
-            except Exception:
-                return layer_name
-
-        def find_by_layer_name(target_layer_name: str):
-            # Search duplicated strands first
-            for _, dup_str in strand_mapping.items():
-                if getattr(dup_str, 'layer_name', None) == target_layer_name:
-                    return dup_str
-            # Fallback: search in canvas.strands if available
-            if self.canvas and hasattr(self.canvas, 'strands'):
-                for s in self.canvas.strands:
-                    if getattr(s, 'layer_name', None) == target_layer_name:
-                        return s
-            return None
-
-        if not first_duplicated and hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
-            remapped = remap_layer_name(getattr(original_strand.first_selected_strand, 'layer_name', ''))
-            cand = find_by_layer_name(remapped)
-            if cand:
-                first_duplicated = cand
-
-        if not second_duplicated and hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
-            remapped = remap_layer_name(getattr(original_strand.second_selected_strand, 'layer_name', ''))
-            cand = find_by_layer_name(remapped)
-            if cand:
-                second_duplicated = cand
+        # Enhanced resolution: Try to find by expected new layer names
+        if not first_duplicated or not second_duplicated:
+            # Helper to compute the expected new layer name based on set_mapping
+            def compute_new_layer_name(original_layer_name: str) -> str:
+                if not original_layer_name:
+                    return None
+                try:
+                    parts = original_layer_name.split('_')
+                    if len(parts) != 2:
+                        return None
+                    main_num = int(parts[0])
+                    sub_num = int(parts[1])
+                    new_main = set_mapping.get(main_num, main_num)
+                    return f"{new_main}_{sub_num}"
+                except Exception:
+                    return None
+            
+            # Helper to find strand by layer name in all available strands
+            def find_strand_by_name(target_name: str):
+                if not target_name:
+                    return None
+                # First check duplicated strands in strand_mapping values
+                for dup_str in strand_mapping.values():
+                    if getattr(dup_str, 'layer_name', None) == target_name:
+                        return dup_str
+                # Then check canvas strands
+                if self.canvas and hasattr(self.canvas, 'strands'):
+                    for s in self.canvas.strands:
+                        if getattr(s, 'layer_name', None) == target_name:
+                            return s
+                return None
+            
+            # Try to find first component by its expected new name
+            if not first_duplicated and hasattr(original_strand, 'first_selected_strand'):
+                orig_name = getattr(original_strand.first_selected_strand, 'layer_name', None)
+                if orig_name:
+                    new_name = compute_new_layer_name(orig_name)
+                    if new_name:
+                        first_duplicated = find_strand_by_name(new_name)
+            
+            # Try to find second component by its expected new name
+            if not second_duplicated and hasattr(original_strand, 'second_selected_strand'):
+                orig_name = getattr(original_strand.second_selected_strand, 'layer_name', None)
+                if orig_name:
+                    new_name = compute_new_layer_name(orig_name)
+                    if new_name:
+                        second_duplicated = find_strand_by_name(new_name)
         
-        # Graceful fallback: use original components if duplicates cannot be resolved
-        if not first_duplicated and hasattr(original_strand, 'first_selected_strand') and original_strand.first_selected_strand:
-            print(
-                f"Warning: Using original first component for MaskedStrand '{getattr(original_strand, 'layer_name', '?')}'"
-            )
-            first_duplicated = original_strand.first_selected_strand
-        if not second_duplicated and hasattr(original_strand, 'second_selected_strand') and original_strand.second_selected_strand:
-            print(
-                f"Warning: Using original second component for MaskedStrand '{getattr(original_strand, 'layer_name', '?')}'"
-            )
-            second_duplicated = original_strand.second_selected_strand
+        # Last resort: If still missing, check if the original component strands 
+        # are in the group being duplicated but weren't found due to reference mismatch
+        if not first_duplicated and hasattr(original_strand, 'first_selected_strand'):
+            orig_comp = original_strand.first_selected_strand
+            orig_name = getattr(orig_comp, 'layer_name', None)
+            if orig_name:
+                # Search all original strands in the group for matching layer_name
+                for orig_str, dup_str in strand_mapping.items():
+                    if getattr(orig_str, 'layer_name', None) == orig_name:
+                        first_duplicated = dup_str
+                        break
+        
+        if not second_duplicated and hasattr(original_strand, 'second_selected_strand'):
+            orig_comp = original_strand.second_selected_strand
+            orig_name = getattr(orig_comp, 'layer_name', None)
+            if orig_name:
+                # Search all original strands in the group for matching layer_name
+                for orig_str, dup_str in strand_mapping.items():
+                    if getattr(orig_str, 'layer_name', None) == orig_name:
+                        second_duplicated = dup_str
+                        break
 
         # If we still can't find both components, return None (caller will generate placeholder)
         if not first_duplicated or not second_duplicated:
             print(
-                f"Error: Cannot duplicate MaskedStrand '{getattr(original_strand, 'layer_name', '?')}' - no valid component strands available"
+                f"Error: Cannot duplicate MaskedStrand '{getattr(original_strand, 'layer_name', '?')}' - "
+                f"missing components (first: {first_duplicated is not None}, second: {second_duplicated is not None})"
             )
             return None
+        
+        print(f"      Both components found! Creating new masked strand...")
         
         # Get new set number - for MaskedStrand, use the concatenation of component set numbers
         # This matches the original MaskedStrand constructor logic
@@ -1852,69 +2019,94 @@ class GroupPanel(QWidget):
         second_new_set = second_duplicated.set_number if hasattr(second_duplicated, 'set_number') else 1
         new_set = int(f"{first_new_set}{second_new_set}")
         
-        # Create new masked strand with proper component strand references
-        new_strand = MaskedStrand(
-            first_selected_strand=first_duplicated,
-            second_selected_strand=second_duplicated,
-            set_number=new_set
-        )
+        print(f"      Component set numbers: {first_new_set}, {second_new_set} -> Combined: {new_set}")
+        print(f"      Creating MaskedStrand with components: {getattr(first_duplicated, 'layer_name', '?')}, {getattr(second_duplicated, 'layer_name', '?')}")
         
-        # Copy MaskedStrand specific properties
-        if hasattr(original_strand, 'is_hidden'):
-            new_strand.is_hidden = original_strand.is_hidden
-        if hasattr(original_strand, 'shadow_only'):
-            new_strand.shadow_only = original_strand.shadow_only
-        if hasattr(original_strand, 'shadow_color'):
-            new_strand.shadow_color = QColor(original_strand.shadow_color)
+        try:
+            # Create new masked strand with proper component strand references
+            new_strand = MaskedStrand(
+                first_selected_strand=first_duplicated,
+                second_selected_strand=second_duplicated,
+                set_number=new_set
+            )
+            print(f"      MaskedStrand created successfully: {getattr(new_strand, 'layer_name', '?')}")
+        except Exception as e:
+            print(f"      ERROR creating MaskedStrand: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
         
-        # Copy deletion rectangles if they exist (preserve corner and bbox data)
-        if hasattr(original_strand, 'deletion_rectangles') and getattr(original_strand, 'deletion_rectangles', None):
-            new_strand.deletion_rectangles = []
-            for rect in original_strand.deletion_rectangles:
-                new_rect = {}
-                for k in (
-                    'top_left', 'top_right', 'bottom_left', 'bottom_right',
-                    'x', 'y', 'width', 'height', 'offset_x', 'offset_y'
-                ):
-                    if isinstance(rect, dict) and k in rect:
-                        new_rect[k] = rect[k]
-                if new_rect:
-                    new_strand.deletion_rectangles.append(new_rect)
-        
-        # Copy center points if they exist
-        if hasattr(original_strand, 'base_center_point') and original_strand.base_center_point:
-            try:
-                new_strand.base_center_point = QPointF(
-                    original_strand.base_center_point.x(),
-                    original_strand.base_center_point.y()
-                )
-            except Exception:
-                new_strand.base_center_point = QPointF(original_strand.base_center_point)
-        
-        if hasattr(original_strand, 'edited_center_point') and original_strand.edited_center_point:
-            try:
-                new_strand.edited_center_point = QPointF(
-                    original_strand.edited_center_point.x(),
-                    original_strand.edited_center_point.y()
-                )
-            except Exception:
-                new_strand.edited_center_point = QPointF(original_strand.edited_center_point)
-        # Copy custom mask path if it exists
-        if hasattr(original_strand, 'custom_mask_path') and original_strand.custom_mask_path:
-            new_strand.custom_mask_path = copy.deepcopy(original_strand.custom_mask_path)
-        
-        # Copy other common properties
-        if hasattr(original_strand, 'type'):
-            new_strand.type = original_strand.type
-        if hasattr(original_strand, 'index'):
-            new_strand.index = getattr(original_strand, 'index', 0)
-        
-        # Copy attached strands list (just for MaskedStrand, not component strands)
-        if hasattr(original_strand, '_attached_strands'):
-            new_strand._attached_strands = []  # Will be populated separately if needed
-        # Copy selection state and other visual properties
-        self.copy_strand_properties(original_strand, new_strand)
-        return new_strand
+        print(f"      Copying properties to new masked strand...")
+        try:
+            # Copy MaskedStrand specific properties
+            if hasattr(original_strand, 'is_hidden'):
+                new_strand.is_hidden = original_strand.is_hidden
+            if hasattr(original_strand, 'shadow_only'):
+                new_strand.shadow_only = original_strand.shadow_only
+            if hasattr(original_strand, 'shadow_color'):
+                new_strand.shadow_color = QColor(original_strand.shadow_color)
+            
+            # Copy deletion rectangles if they exist (preserve corner and bbox data)
+            if hasattr(original_strand, 'deletion_rectangles') and getattr(original_strand, 'deletion_rectangles', None):
+                new_strand.deletion_rectangles = []
+                for rect in original_strand.deletion_rectangles:
+                    new_rect = {}
+                    for k in (
+                        'top_left', 'top_right', 'bottom_left', 'bottom_right',
+                        'x', 'y', 'width', 'height', 'offset_x', 'offset_y'
+                    ):
+                        if isinstance(rect, dict) and k in rect:
+                            new_rect[k] = rect[k]
+                    if new_rect:
+                        new_strand.deletion_rectangles.append(new_rect)
+            
+            # Copy center points if they exist
+            if hasattr(original_strand, 'base_center_point') and original_strand.base_center_point:
+                try:
+                    new_strand.base_center_point = QPointF(
+                        original_strand.base_center_point.x(),
+                        original_strand.base_center_point.y()
+                    )
+                except Exception as e:
+                    print(f"      Warning: Could not copy base_center_point: {e}")
+                    new_strand.base_center_point = QPointF(original_strand.base_center_point)
+            
+            if hasattr(original_strand, 'edited_center_point') and original_strand.edited_center_point:
+                try:
+                    new_strand.edited_center_point = QPointF(
+                        original_strand.edited_center_point.x(),
+                        original_strand.edited_center_point.y()
+                    )
+                except Exception as e:
+                    print(f"      Warning: Could not copy edited_center_point: {e}")
+                    new_strand.edited_center_point = QPointF(original_strand.edited_center_point)
+            
+            # Copy custom mask path if it exists
+            if hasattr(original_strand, 'custom_mask_path') and original_strand.custom_mask_path:
+                new_strand.custom_mask_path = copy.deepcopy(original_strand.custom_mask_path)
+            
+            # Copy other common properties
+            if hasattr(original_strand, 'type'):
+                new_strand.type = original_strand.type
+            if hasattr(original_strand, 'index'):
+                new_strand.index = getattr(original_strand, 'index', 0)
+            
+            # Copy attached strands list (just for MaskedStrand, not component strands)
+            if hasattr(original_strand, '_attached_strands'):
+                new_strand._attached_strands = []  # Will be populated separately if needed
+            
+            # Copy selection state and other visual properties
+            print(f"      Calling copy_strand_properties...")
+            self.copy_strand_properties(original_strand, new_strand)
+            
+            print(f"      Successfully created and configured masked strand: {getattr(new_strand, 'layer_name', '?')}")
+            return new_strand
+            
+        except Exception as e:
+            print(f"      ERROR during property copying: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def create_placeholder_masked_strand(self, original_strand, set_mapping):
         """Create a placeholder strand when MaskedStrand components are unavailable."""
@@ -1955,11 +2147,22 @@ class GroupPanel(QWidget):
         # Locate the duplicated parent strand
         new_parent = None
         if hasattr(original_strand, 'parent'):
+            # First try direct reference lookup
             new_parent = strand_mapping.get(original_strand.parent)
+            
+            # If not found, try to find by layer_name
+            if not new_parent and hasattr(original_strand.parent, 'layer_name'):
+                parent_layer_name = original_strand.parent.layer_name
+                # Search for the duplicated parent by matching original layer_name
+                for orig_str, dup_str in strand_mapping.items():
+                    if getattr(orig_str, 'layer_name', None) == parent_layer_name:
+                        new_parent = dup_str
+                        print(f"Found parent for attached strand by layer_name: {parent_layer_name}")
+                        break
         
         # If we cannot resolve a parent, fall back to a regular duplication
         if new_parent is None:
-            pass
+            print(f"Warning: Could not find parent for attached strand {getattr(original_strand, 'layer_name', '?')}, falling back to regular duplication")
             return self.duplicate_regular_strand(original_strand, set_mapping)
         
         # Determine on which side the attachment occurs (0 = start, 1 = end). Default to 0 if missing.
@@ -2157,7 +2360,9 @@ class GroupPanel(QWidget):
         # The side line angles are calculated based on the tangent vectors at the strand endpoints,
         # which are derived from the control points. We must call update_side_line() to recalculate
         # these angles based on the copied control points.
-        if hasattr(new_strand, 'update_side_line'):
+        # NOTE: Skip for MaskedStrand as it has control_point1 and control_point2 set to None by design
+        from masked_strand import MaskedStrand
+        if hasattr(new_strand, 'update_side_line') and not isinstance(new_strand, MaskedStrand):
             new_strand.update_side_line()
 
     def generate_new_layer_name(self, original_layer_name, set_mapping):

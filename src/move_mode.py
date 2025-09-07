@@ -1937,8 +1937,8 @@ class MoveMode:
                         abs(strand.control_point2.y() - strand.start.y()) < 1.0)
 
         # Check end control points - these are always the priority
-        # Skip them only if third CP is disabled AND both are at start AND shift not held
-        if third_cp_enabled or shift_held or not (cp1_at_start and cp2_at_start):
+        # Always allow moving control points, regardless of their position
+        if True:  # Always check control points
             control_point1_rect = self.get_control_point_rectangle(strand, 1)
             control_point2_rect = self.get_control_point_rectangle(strand, 2)
 

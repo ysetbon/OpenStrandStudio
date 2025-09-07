@@ -75,7 +75,7 @@ cat > "$WORKING_DIR/Distribution.xml" << EOF
 </installer-gui-script>
 EOF
 
-# Create welcome.html (English + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html (English + localized sections). Updated to 1.102 what's-new.
 cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -88,16 +88,10 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -105,35 +99,35 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -143,46 +137,37 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;:</b> &#x05DE;&#x05D1;&#x05E0;&#x05D4; StateLayerManager &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05D8;&#x05D5;&#x05D1; &#x05D1;&#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8; &#x05D7;&#x05D9;&#x05D1;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D7;&#x05E1;&#x05D9;&#x05DD; &#x05D1;&#x05D9;&#x05BF; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05DE;&#x05D9;&#x05D1;&#x05D9;&#x05D0; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05D9;&#x05D1;&#x05D5;&#x05D9;&#x05DD; &#x05D0;&#x05DE;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D5;&#x05D9;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05D7;&#x05D3;.</li>
-        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05DC;&#x05D4; &#x05D5;&#x05D4;&#x05E7;&#x05D8;&#x05E0;&#x05D4;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05EA;&#x05E7;&#x05E8;&#x05D1; &#x05D5;&#x05DC;&#x05D4;&#x05EA;&#x05E8;&#x05D7;&#x05E7; &#x05DE;&#x05D4;&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E9;&#x05DC;&#x05DB;&#x05DD; &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E4;&#x05E8;&#x05D8;&#x05D9;&#x05DD; &#x05E7;&#x05D8;&#x05E0;&#x05D9;&#x05DD; &#x05D0;&#x05D5; &#x05D0;&#x05EA; &#x05DB;&#x05DC; &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D4;.</li>
-        <li><b>&#x05D4;&#x05D6;&#x05D6;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DA;:</b> &#x05D0;&#x05E4;&#x05E9;&#x05E8; &#x05DC;&#x05D4;&#x05D6;&#x05D9;&#x05D6; &#x05D0;&#x05EA; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E2;&#x05DC; &#x05D9;&#x05D3;&#x05D9; &#x05DC;&#x05D7;&#x05D9;&#x05E6;&#x05D4; &#x05E2;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05D9;&#x05D3;, &#x05DE;&#x05D4; &#x05E9;&#x05E2;&#x05D5;&#x05D6;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DC; &#x05D3;&#x05D9;&#x05D0;&#x05D2;&#x05E8;&#x05DE;&#x05D5;&#x05EA; &#x05D2;&#x05D3;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
-        <li><b>&#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05EA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4;:</b> &#x05DB;&#x05E9;&#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05D9;&#x05DD; &#x05D0;&#x05EA; &#x05D4;&#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D4;, &#x05E6;&#x05E8;&#x05D9;&#x05DA; &#x05DC;&#x05DC;&#x05D7;&#x05D5;&#x05E5; &#x05E2;&#x05DC; "&#x05D7;&#x05D5;&#x05D8; &#x05D7;&#x05D3;&#x05E9;" &#x05DB;&#x05D3;&#x05D9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05DC;&#x05E6;&#x05D9;&#x05D9;&#x05E8;.</li>
-        <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9;&#x05DD; &#x05DB;&#x05DC;&#x05DC;&#x05D9;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05EA;&#x05E7;&#x05DC;&#x05D5;&#x05EA; &#x05D5;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05E0;&#x05D2;&#x05E8;&#x05DE;&#x05D5; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;, &#x05DB;&#x05DE;&#x05D5; &#x05DC;&#x05DE;&#x05E9;&#x05DC; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D5;&#x05D7;&#x05D6;&#x05E8;&#x05D4; &#x05D9;&#x05E6;&#x05E8;&#x05D5; &#x05D7;&#x05DC;&#x05D5;&#x05DF; &#x05D6;&#x05DE;&#x05E0;&#x05D9; &#x05D5;&#x05DC;&#x05D0; &#x05E1;&#x05D9;&#x05E4;&#x05E7;&#x05D5; &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05D7;&#x05DC;&#x05E7;&#x05D4;.</li>
-        <li><b>&#x05E9;&#x05E4;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; - &#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; (🇩🇪):</b> &#x05D0;&#x05EA;&#x05D4; &#x05D9;&#x05DB;&#x05D5;&#x05DC; &#x05DC;&#x05D1;&#x05D7;&#x05D5;&#x05E8; &#x05DC;&#x05D2;&#x05E8;&#x05DE;&#x05E0;&#x05D9;&#x05EA; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05E9;&#x05E0;&#x05D9;&#x05EA; &#x05E9;&#x05E4;&#x05D4;.</li>
-        <li><b>&#x05E7;&#x05D8;&#x05D2;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05E9;&#x05DC; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;:</b> &#x05D7;&#x05E7;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05E4;&#x05E8;&#x05D5;&#x05D9;&#x05D9;&#x05E7;&#x05D8;&#x05D9;&#x05DD; &#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD; &#x05D4;&#x05E8;&#x05D9;&#x05D9;&#x05DD; &#x05DC;&#x05D8;&#x05D5;&#x05D7;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; → &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D9;&#x05DD;. &#x05D1;&#x05D7;&#x05E7;&#x05E8; &#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05DC;&#x05DC;&#x05DE;&#x05D9;&#x05D3; - &#x05D4;&#x05D3;&#x05D9;&#x05D0;&#x05DC;&#x05D5;&#x05D2; &#x05D9;&#x05D9;&#x05E1;&#x05D5;&#x05D2; &#x05D5;&#x05D4;&#x05D3;&#x05D5;&#x05D2;&#x05DE;&#x05D4; &#x05D9;&#x05D8;&#x05D5;&#x05D7;&#x05D4;.</li>
+        <li><b>&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05D8;&#x05D9;&#x05D9;&#x05EA; &#x05E2;&#x05E7;&#x05DE;&#x05D5;&#x05DE;&#x05D9;&#x05D5;&#x05EA;:</b> &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05D8;&#x05D9;&#x05D4; &#x05D1;&#x05D9;&#x05DF; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D4;&#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9;&#x05EA; &#x05D5;&#x05D4;&#x05E7;&#x05E6;&#x05D4; &#x05DC;&#x05DB;&#x05D5;&#x05D5;&#x05E0;&#x05D5;&#x05DF; &#x05DE;&#x05D3;&#x05D5;&#x05D9;&#x05E7; &#x05E9;&#x05DC; &#x05D4;&#x05E2;&#x05E7;&#x05DE;&#x05D5;&#x05DE;&#x05D9;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05E2;&#x05E7;&#x05DE;&#x05D5;&#x05DE;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DE;&#x05D5;&#x05EA;:</b> &#x05E9;&#x05DC;&#x05D5;&#x05E9;&#x05D4; &#x05E4;&#x05E8;&#x05DE;&#x05D8;&#x05E8;&#x05D9;&#x05DD; &#x05D7;&#x05D3;&#x05E9;&#x05D9;&#x05DD; - &#x05D4;&#x05E9;&#x05E4;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;, &#x05D4;&#x05D2;&#x05D1;&#x05E8;&#x05EA; &#x05DE;&#x05E8;&#x05D7;&#x05E7; &#x05D5;&#x05E6;&#x05D5;&#x05E8;&#x05EA; &#x05E2;&#x05E7;&#x05D5;&#x05DE;&#x05D4; &#x05DC;&#x05E9;&#x05DC;&#x05D9;&#x05D8;&#x05D4; &#x05DE;&#x05DC;&#x05D0;&#x05D4; &#x05E2;&#x05DC; &#x05E2;&#x05E7;&#x05D5;&#x05DE;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DE;&#x05EA;:</b> &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05D5;&#x05E4;&#x05D9;&#x05E2;&#x05D5;&#x05EA; &#x05D1;&#x05D4;&#x05D3;&#x05E8;&#x05D2;&#x05D4; &#x05DC;&#x05D4;&#x05E4;&#x05D7;&#x05EA;&#x05EA; &#x05E2;&#x05D5;&#x05DE;&#x05E1; &#x05D5;&#x05D5;&#x05D9;&#x05D6;&#x05D5;&#x05D0;&#x05DC;&#x05D9; &#x05D1;&#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DD; &#x05D4;&#x05E8;&#x05D0;&#x05E9;&#x05D5;&#x05E0;&#x05D9;.</li>
+        <li><b>&#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D4; &#x05E9;&#x05D5;&#x05E0;&#x05D5;&#x05EA; &#x05DC;&#x05D0;&#x05D9;&#x05DB;&#x05D5;&#x05EA; &#x05D5;&#x05D5;&#x05D9;&#x05D6;&#x05D5;&#x05D0;&#x05DC;&#x05D9;&#x05EA; &#x05D8;&#x05D5;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -314,7 +299,7 @@ for lang in "${LANG_CODES[@]}"; do
     cp -f "$RESOURCES_DIR/welcome.html" "$RESOURCES_DIR/${lang}.lproj/welcome.html"
 done
 
-# Create welcome.html  (welcome French + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome French + localized sections). Updated to 1.102 what's-new.
 cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -323,17 +308,14 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -341,16 +323,10 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -358,10 +334,10 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
@@ -369,11 +345,14 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <hr>
 
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -383,36 +362,30 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -429,7 +402,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 </html>
 EOF
 
-# Create welcome.html  (welcome German + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome German + localized sections). Updated to 1.102 what's-new.
 
 cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
@@ -443,10 +416,10 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
@@ -457,38 +430,32 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>    
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -498,36 +465,30 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -545,7 +506,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 EOF
 
 
-# Create welcome.html  (welcome Italian + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome Italian + localized sections). Updated to 1.102 what's-new.
 cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -554,11 +515,14 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -572,30 +536,21 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -603,46 +558,40 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
         <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -658,7 +607,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
 </body>
 </html>
 EOF
-# Create welcome.html  (welcome Spanish + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome Spanish + localized sections). Updated to 1.102 what's-new.
 cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html>
@@ -667,17 +616,14 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
         <!-- English -->
@@ -685,30 +631,21 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -716,21 +653,24 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>    
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -740,22 +680,19 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
         <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -771,7 +708,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
 </body>
 </html>
 EOF
-# Create welcome.html  (welcome Portuguese + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome Portuguese + localized sections). Updated to 1.102 what's-new.
 
 cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
@@ -781,17 +718,14 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
 </head>
 <body>
         <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- English -->
@@ -799,30 +733,21 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -830,21 +755,24 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>    
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -854,36 +782,30 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
         <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
     <hr>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -900,7 +822,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
 </html>
 EOF
 
-# Create welcome.html  (welcome Hebrew + localized sections). Updated to 1.101 what's-new.
+# Create welcome.html  (welcome Hebrew + localized sections). Updated to 1.102 what's-new.
 cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
 <!DOCTYPE html>
 <html dir="rtl">
@@ -910,7 +832,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
 <body>
         <!-- Hebrew -->
     <div dir="rtl">
-    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.101</h2>
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 1.102</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
@@ -929,30 +851,21 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
-        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
-        <li><b>Translation improvements</b> for canvas guide elements.</li>
-        <li><b>Improved color consistency</b> for button explanation titles.</li>
-    </ul>
-    <p>Previous updates (1.101):</p>
-    <ul>
-        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
-        <li>New Language - German (🇩🇪)</li>
-        <li>New Samples category</li>
+        <li><b>Enhanced Curvature Bias Controls:</b> New bias control points between center and end control points for fine-tuned curvature adjustment.</li>
+        <li><b>Advanced Curvature Settings:</b> Three new parameters - Control Point Influence, Distance Boost, and Curve Shape for complete curve control.</li>
+        <li><b>Progressive Control Point Display:</b> Control points appear progressively to reduce visual clutter during initial strand placement.</li>
+        <li><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality.</li>
     </ul>
     <hr>
     <!-- French -->
-    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.102</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-        <li><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-        <li><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-        <li><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-        <li><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-        <li><b>Nouvelle langue - Allemand (🇩🇪) :</b> Vous pouvez maintenant sélectionner l'allemand dans Paramètres → Changer la langue.</li>
-        <li><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d'exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l'exemple sera chargé.</li>
+        <li><b>Contrôles de biais de courbure améliorés :</b> Nouveaux points de contrôle de biais entre les points de contrôle central et d'extrémité pour un ajustement précis de la courbure.</li>
+        <li><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres - Influence du point de contrôle, Amplification de distance et Forme de courbe pour un contrôle complet des courbes.</li>
+        <li><b>Affichage progressif des points de contrôle :</b> Les points de contrôle apparaissent progressivement pour réduire l'encombrement visuel lors du placement initial.</li>
+        <li><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -960,21 +873,24 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, mit stabileren Operationen und besserer Performance.</li>
-        <li><b>Gruppenduplikation:</b> Sie können jetzt ganze Gruppen mit allen ihren Strängen duplizieren, indem Sie mit der rechten Maustaste auf eine Gruppenüberschrift klicken und "Gruppe duplizieren" auswählen. Die duplizierte Gruppe behält alle Strangeigenschaften bei und generiert automatisch eindeutige Ebenennamen.</li>
-        <li><b>Versteckmodus:</b> Neuer Versteckmodus, der über die Affen-Schaltfläche (🙉/🙈) zugänglich ist, ermöglicht es Ihnen, mehrere Ebenen schnell gleichzeitig auszublenden. Klicken Sie auf die Schaltfläche, um in den Versteckmodus zu wechseln, klicken Sie dann auf Ebenen, um sie auszublenden. Verlassen Sie den Versteckmodus, um die Änderungen zu übernehmen.</li>
-        <li><b>Ansicht zentrieren:</b> Zentrieren Sie sofort alle Stränge in Ihrer Ansicht mit der neuen Ziel-Schaltfläche (🎯). Dies passt automatisch die Leinwandposition an, um alle Ihre Arbeit zentriert auf dem Bildschirm anzuzeigen.</li>
+        <li><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen mittlerem und End-Kontrollpunkten für präzise Krümmungsanpassung.</li>
+        <li><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Parameter - Kontrollpunkt-Einfluss, Distanz-Verstärkung und Kurvenform für vollständige Kurvenkontrolle.</li>
+        <li><b>Progressive Kontrollpunkt-Anzeige:</b> Kontrollpunkte erscheinen progressiv, um visuelle Unordnung bei der anfänglichen Strangplatzierung zu reduzieren.</li>
+        <li><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme behoben für bessere visuelle Qualität.</li>
         <li><b>Schnelles Knotenschließen:</b> Klicken Sie mit der rechten Maustaste auf einen beliebigen Strang oder verbundenen Strang mit einem freien Ende, um den Knoten schnell zu schließen. Das System findet und verbindet automatisch mit dem nächstgelegenen kompatiblen Strang mit einem freien Ende.</li>
         <li><b>Neue Sprache – Deutsch (🇩🇪):</b> Sie können jetzt zu Deutsch in Einstellungen → Sprache ändern wechseln.</li>
         <li><b>Neue Kategorie „Beispiele" :</b> Entdecken Sie bereit-zu-ladende Beispielprojekte in Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
     </ul>
     <hr>    
     <!-- Italian -->
-    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.102</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
+        <li><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias tra i punti di controllo centrale e finali per una regolazione fine della curvatura.</li>
+        <li><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri - Influenza del punto di controllo, Amplificazione della distanza e Forma della curva per il controllo completo delle curve.</li>
+        <li><b>Visualizzazione progressiva dei punti di controllo:</b> I punti di controllo appaiono progressivamente per ridurre il disordine visivo durante il posizionamento iniziale.</li>
+        <li><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva.</li>
         <li><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
         <li><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
         <li><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
@@ -984,31 +900,25 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- Spanish -->
-    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.102</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-        <li><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-        <li><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-        <li><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-        <li><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-        <li><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-        <li><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+        <li><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo entre los puntos de control central y finales para un ajuste fino de la curvatura.</li>
+        <li><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros - Influencia del punto de control, Amplificación de distancia y Forma de curva para control completo de curvas.</li>
+        <li><b>Visualización progresiva de puntos de control:</b> Los puntos de control aparecen progresivamente para reducir el desorden visual durante la colocación inicial.</li>
+        <li><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para mejor calidad visual.</li>
     </ul>
     <hr>
         <!-- Portuguese -->
-    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.102</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Gestão melhorada de camadas:</b> Estrutura StateLayerManager melhorada para melhor gestão de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-        <li><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar Grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-        <li><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente múltiplas camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-        <li><b>Centralizar vista:</b> Centralize instantaneamente todos os fios na sua vista com o novo botão alvo (🎯). Isso ajusta automaticamente a posição da tela para mostrar todo o seu trabalho centralizado na tela.</li>
-        <li><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-        <li><b>Nova língua - Alemão (🇩🇪):</b> Agora você pode selecionar alemão em Configurações → Alterar Idioma.</li>
-        <li><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a caixa de diálogo fechará e o exemplo será carregado.</li>
+        <li><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés entre os pontos de controle central e finais para ajuste fino de curvatura.</li>
+        <li><b>Configurações de curvatura avançadas:</b> Três novos parâmetros - Influência do ponto de controle, Amplificação de distância e Forma da curva para controle completo das curvas.</li>
+        <li><b>Exibição progressiva de pontos de controle:</b> Os pontos de controle aparecem progressivamente para reduzir a desordem visual durante o posicionamento inicial.</li>
+        <li><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento corrigidos para melhor qualidade visual.</li>
     </ul>
 </body>
 </html>

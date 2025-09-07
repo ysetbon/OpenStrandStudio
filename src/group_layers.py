@@ -2083,7 +2083,11 @@ class GroupPanel(QWidget):
             
             # Copy custom mask path if it exists
             if hasattr(original_strand, 'custom_mask_path') and original_strand.custom_mask_path:
-                new_strand.custom_mask_path = copy.deepcopy(original_strand.custom_mask_path)
+                # QPainterPath cannot be deep copied, so we create a new one
+                from PyQt5.QtGui import QPainterPath
+                new_path = QPainterPath()
+                new_path.addPath(original_strand.custom_mask_path)
+                new_strand.custom_mask_path = new_path
             
             # Copy other common properties
             if hasattr(original_strand, 'type'):

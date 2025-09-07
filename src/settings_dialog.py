@@ -2299,10 +2299,17 @@ class SettingsDialog(QDialog):
         self.button_explanations_text_browser.setOpenExternalLinks(False)
         
         # Build the HTML content for button explanations
+        # Determine title color based on theme
+        title_color = '#333'  # Default for light theme
+        if self.current_theme == 'dark':
+            title_color = '#ffffff'  # White for dark theme
+        elif self.current_theme == 'light':
+            title_color = '#000000'  # Black for light theme
+            
         button_html = f'''
         <style>
             body {{ font-family: Arial, sans-serif; padding: 10px; }}
-            h2 {{ color: #333; margin-top: 15px; margin-bottom: 10px; }}
+            h2 {{ color: {title_color}; margin-top: 15px; margin-bottom: 10px; }}
             ul {{ margin-top: 5px; margin-bottom: 15px; }}
             li {{ margin-bottom: 8px; }}
             .button-name {{ font-weight: bold; }}
@@ -2987,6 +2994,75 @@ class SettingsDialog(QDialog):
         self.setStyleSheet(button_style)
         self.style_dialog_buttons()
 
+    def refresh_button_explanations_html(self):
+        """Refresh the button explanations HTML with current theme colors"""
+        _ = translations[self.current_language]
+        
+        # Determine title color based on theme
+        title_color = '#333'  # Default for light theme
+        if self.current_theme == 'dark':
+            title_color = '#ffffff'  # White for dark theme
+        elif self.current_theme == 'light':
+            title_color = '#000000'  # Black for light theme
+            
+        button_html = f'''
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 10px; }}
+            h2 {{ color: {title_color}; margin-top: 15px; margin-bottom: 10px; }}
+            ul {{ margin-top: 5px; margin-bottom: 15px; }}
+            li {{ margin-bottom: 8px; }}
+            .button-name {{ font-weight: bold; }}
+        </style>
+        
+        <h2>{_['layer_panel_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
+        </ul>
+        
+        <h2>{_['main_window_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['move_mode_desc'].split(' - ')[0]}</span> - {_['move_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rotate_mode_desc'].split(' - ')[0]}</span> - {_['rotate_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_grid_desc'].split(' - ')[0]}</span> - {_['toggle_grid_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['angle_adjust_desc'].split(' - ')[0]}</span> - {_['angle_adjust_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['save_desc'].split(' - ')[0]}</span> - {_['save_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['load_desc'].split(' - ')[0]}</span> - {_['load_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['save_image_desc'].split(' - ')[0]}</span> - {_['save_image_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['select_strand_desc'].split(' - ')[0]}</span> - {_['select_strand_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['mask_mode_desc'].split(' - ')[0]}</span> - {_['mask_mode_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['settings_desc'].split(' - ')[0]}</span> - {_['settings_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_control_points_desc'].split(' - ')[0]}</span> - {_['toggle_control_points_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['toggle_shadow_desc'].split(' - ')[0]}</span> - {_['toggle_shadow_desc'].split(' - ')[1]}</li>
+        </ul>
+        
+        <h2>{_['group_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['create_group_desc'].split(' - ')[0]}</span> - {_['create_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['group_header_desc'].split(' - ')[0]}</span> - {_['group_header_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['select_group_desc'].split(' - ')[0]}</span> - {_['select_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['move_group_desc'].split(' - ')[0]}</span> - {_['move_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rotate_group_desc'].split(' - ')[0]}</span> - {_['rotate_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['edit_strand_angles_desc'].split(' - ')[0]}</span> - {_['edit_strand_angles_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+        </ul>
+        '''
+        
+        self.button_explanations_text_browser.setHtml(button_html)
+    
     def apply_all_settings(self):
         # Capture previous extended mask setting to detect changes
         # previous_use_extended_mask = self.use_extended_mask
@@ -3001,6 +3077,10 @@ class SettingsDialog(QDialog):
 
         # Emit signal to notify main window of theme change
         self.theme_changed.emit(selected_theme)
+        
+        # Update button explanations HTML with new theme colors
+        if hasattr(self, 'button_explanations_text_browser'):
+            self.refresh_button_explanations_html()
         
         # Apply Shadow Color Settings
         if self.canvas:
@@ -3358,10 +3438,17 @@ class SettingsDialog(QDialog):
             
         # Update the button explanations text browser content
         if hasattr(self, 'button_explanations_text_browser'):
+            # Determine title color based on theme
+            title_color = '#333'  # Default for light theme
+            if self.current_theme == 'dark':
+                title_color = '#ffffff'  # White for dark theme
+            elif self.current_theme == 'light':
+                title_color = '#000000'  # Black for light theme
+                
             button_html = f'''
             <style>
                 body {{ font-family: Arial, sans-serif; padding: 10px; }}
-                h2 {{ color: #333; margin-top: 15px; margin-bottom: 10px; }}
+                h2 {{ color: {title_color}; margin-top: 15px; margin-bottom: 10px; }}
                 ul {{ margin-top: 5px; margin-bottom: 15px; }}
                 li {{ margin-bottom: 8px; }}
                 .button-name {{ font-weight: bold; }}

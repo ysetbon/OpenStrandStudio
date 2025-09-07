@@ -20,8 +20,8 @@ class CurvatureBiasControl:
         self.circle_position = None     # Will be set to actual position
         
         # Visual properties
-        self.control_size = 12  # Smaller bias control squares to match subtle highlight
-        self.icon_size = 8      # Size of triangle/circle icons inside squares
+        self.control_size = 16  # Smaller bias control squares to match subtle highlight
+        self.icon_size = 9      # Size of triangle/circle icons inside squares
         self.selection_size = 50  # Larger clickable area for easier selection (same as green highlight square)
         
         # Active drag state

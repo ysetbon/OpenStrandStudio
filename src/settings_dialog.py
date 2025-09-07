@@ -630,6 +630,21 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.snap_to_grid_layout.invalidate()
             self.snap_to_grid_layout.activate()
+        
+        # Show highlights layout reorganization (for move/attach mode indicator)
+        if hasattr(self, 'show_highlights_layout') and hasattr(self, 'show_highlights_label') and hasattr(self, 'show_highlights_checkbox'):
+            self.clear_layout(self.show_highlights_layout)
+            if is_rtl:
+                self.show_highlights_layout.addStretch()
+                self.show_highlights_layout.addWidget(self.show_highlights_checkbox)
+                self.show_highlights_layout.addWidget(self.show_highlights_label)
+            else:
+                self.show_highlights_layout.addWidget(self.show_highlights_label)
+                self.show_highlights_layout.addWidget(self.show_highlights_checkbox)
+                self.show_highlights_layout.addStretch()
+            # Force immediate update
+            self.show_highlights_layout.invalidate()
+            self.show_highlights_layout.activate()
                 
         # Default arrow color checkbox layout reorganization
         if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_label') and hasattr(self, 'default_arrow_color_checkbox'):

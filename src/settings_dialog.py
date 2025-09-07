@@ -2440,32 +2440,34 @@ class SettingsDialog(QDialog):
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF9999; font-size: 18px; font-weight: bold;">□</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #90EE90; font-size: 18px; font-weight: bold;">□</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FFFF00; font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
         
-        <h2>{_['general_settings_buttons'] if 'general_settings_buttons' in _ else 'General Settings'}</h2>
+        <h2>{_['general_settings_buttons']}</h2>
         <ul>
-            <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0] if 'theme_select_desc' in _ else 'Theme Selection'}</span> - {_['theme_select_desc'].split(' - ')[1] if 'theme_select_desc' in _ else 'Choose between light and dark themes for the interface'}</li>
-            <li><span class="button-name">{_['shadow_color_desc'].split(' - ')[0] if 'shadow_color_desc' in _ else 'Shadow Color'}</span> - {_['shadow_color_desc'].split(' - ')[1] if 'shadow_color_desc' in _ else 'Set the color and opacity for strand shadows'}</li>
-            <li><span class="button-name">{_['draw_only_affected_desc'].split(' - ')[0] if 'draw_only_affected_desc' in _ else 'Draw Only Affected Strand'}</span> - {_['draw_only_affected_desc'].split(' - ')[1] if 'draw_only_affected_desc' in _ else 'When enabled, only shows the strand being edited during drag operations'}</li>
-            <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0] if 'enable_third_cp_desc' in _ else 'Enable Third Control Point'}</span> - {_['enable_third_cp_desc'].split(' - ')[1] if 'enable_third_cp_desc' in _ else 'Adds an additional control point at the center for more complex curves'}</li>
-            <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0] if 'enable_snap_desc' in _ else 'Enable Snap to Grid'}</span> - {_['enable_snap_desc'].split(' - ')[1] if 'enable_snap_desc' in _ else 'Automatically aligns strands to grid points when moving'}</li>
-            <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0] if 'shadow_blur_steps_desc' in _ else 'Shadow Blur Steps'}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1] if 'shadow_blur_steps_desc' in _ else 'Number of steps for creating smooth shadow fade effect (1-10)'}</li>
-            <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0] if 'shadow_blur_radius_desc' in _ else 'Shadow Blur Radius'}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1] if 'shadow_blur_radius_desc' in _ else 'Controls the spread of the shadow blur in pixels'}</li>
-            <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0] if 'control_point_influence_desc' in _ else 'Control Point Influence'}</span> - {_['control_point_influence_desc'].split(' - ')[1] if 'control_point_influence_desc' in _ else 'Adjusts how strongly control points affect curve shape (1.0=normal)'}</li>
-            <li><span class="button-name">{_['distance_boost_desc'].split(' - ')[0] if 'distance_boost_desc' in _ else 'Distance Boost'}</span> - {_['distance_boost_desc'].split(' - ')[1] if 'distance_boost_desc' in _ else 'Multiplies the distance influence for stronger curves (2.0=double strength)'}</li>
-            <li><span class="button-name">{_['curvature_type_desc'].split(' - ')[0] if 'curvature_type_desc' in _ else 'Curvature Type'}</span> - {_['curvature_type_desc'].split(' - ')[1] if 'curvature_type_desc' in _ else 'Changes the mathematical curve response (1.0=linear, 2.0=quadratic, 3.0=cubic)'}</li>
-            <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0] if 'reset_curvature_desc' in _ else 'Reset Curvature'}</span> - {_['reset_curvature_desc'].split(' - ')[1] if 'reset_curvature_desc' in _ else 'Restores all curvature settings to default values (1.0, 2.0, 2.0)'}</li>
+            <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_color_desc'].split(' - ')[0]}</span> - {_['shadow_color_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['draw_only_affected_desc'].split(' - ')[0]}</span> - {_['draw_only_affected_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0]}</span> - {_['enable_third_cp_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['distance_boost_desc'].split(' - ')[0]}</span> - {_['distance_boost_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['curvature_type_desc'].split(' - ')[0]}</span> - {_['curvature_type_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0]}</span> - {_['reset_curvature_desc'].split(' - ')[1]}</li>
         </ul>
         '''
         
@@ -3216,17 +3218,34 @@ class SettingsDialog(QDialog):
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF9999; font-size: 18px; font-weight: bold;">□</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #90EE90; font-size: 18px; font-weight: bold;">□</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FFFF00; font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
+        </ul>
+        
+        <h2>{_['general_settings_buttons']}</h2>
+        <ul>
+            <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_color_desc'].split(' - ')[0]}</span> - {_['shadow_color_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['draw_only_affected_desc'].split(' - ')[0]}</span> - {_['draw_only_affected_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0]}</span> - {_['enable_third_cp_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['distance_boost_desc'].split(' - ')[0]}</span> - {_['distance_boost_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['curvature_type_desc'].split(' - ')[0]}</span> - {_['curvature_type_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0]}</span> - {_['reset_curvature_desc'].split(' - ')[1]}</li>
         </ul>
         '''
         
@@ -3708,17 +3727,34 @@ class SettingsDialog(QDialog):
                     <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 0, 0, 0.6); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(0, 255, 0, 0.6); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 255, 0, 0.9); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
                 </li>
+            </ul>
+            
+            <h2>{_['general_settings_buttons']}</h2>
+            <ul>
+                <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shadow_color_desc'].split(' - ')[0]}</span> - {_['shadow_color_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['draw_only_affected_desc'].split(' - ')[0]}</span> - {_['draw_only_affected_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0]}</span> - {_['enable_third_cp_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['distance_boost_desc'].split(' - ')[0]}</span> - {_['distance_boost_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['curvature_type_desc'].split(' - ')[0]}</span> - {_['curvature_type_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0]}</span> - {_['reset_curvature_desc'].split(' - ')[1]}</li>
             </ul>
             '''
             

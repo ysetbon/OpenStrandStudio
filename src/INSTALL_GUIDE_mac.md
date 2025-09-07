@@ -1,6 +1,6 @@
 # OpenStrand Studio - macOS Installation Guide
 
-## Version 1.101 - Released August 11, 2025
+## Version 1.102 - Released September 7, 2025
 
 This guide provides instructions for building and packaging OpenStrand Studio for macOS.
 
@@ -48,9 +48,9 @@ This will create an installer package in the `installer_output` directory.
 
 ## Step 4: Distribute the Application
 
-You can distribute the installer package (`OpenStrand Studio_1_101.pkg`) to users. When they run it, it will:
+You can distribute the installer package (`OpenStrand Studio_1_102.pkg`) to users. When they run it, it will:
 
-1. Install the application to their Applications folder
+1. Install the application to their Applications folder (including SVG resources)
 2. Create a desktop icon
 3. Offer to launch the application after installation
 
@@ -67,7 +67,11 @@ If you encounter issues with missing dependencies:
 
 ### Missing Flag Images
 
-If language selection doesn't show flag images, ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png) is in the src directory before building
+If language selection doesn't show flag images, ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png, de.png) is in the src directory before building
+
+### Missing SVG Shapes
+
+If shapes don't appear correctly, ensure the `images` directory with SVG files (circle.svg, square.svg, triangle.svg, bias_circle.svg, bias_triangle.svg) is in the src directory before building
 
 ## Optional: Updating the Application
 

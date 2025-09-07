@@ -2,8 +2,8 @@
 
 # Set variables
 APP_NAME="OpenStrandStudio"
-VERSION="1_101"
-APP_DATE="13_August_2025"
+VERSION="1_102"
+APP_DATE="07_September_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 
@@ -84,21 +84,24 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -334,21 +337,24 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -433,7 +439,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
 </head>
 <body>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -447,17 +453,20 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- French -->
@@ -559,17 +568,20 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
         <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- French -->
@@ -587,7 +599,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -669,17 +681,20 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
         <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- French -->
@@ -697,7 +712,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -780,17 +795,20 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
         <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- French -->
@@ -808,7 +826,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>
@@ -907,17 +925,20 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </div>
     <hr>
         <!-- English -->
-    <h2 dir="ltr">Welcome to OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Welcome to OpenStrandStudio 1.102</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p>What's New in this version:</p>
+    <p>What's New in Version 1.102:</p>
     <ul>
-        <li><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-        <li><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-        <li><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-        <li><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-        <li><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-        <li><b>New Language - German (🇩🇪):</b> Switch to German in Settings → Change Language.</li>
-        <li><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+        <li><b>SVG Shape Support:</b> Added new SVG-based shapes (circle, square, triangle) for improved rendering quality and scalability. These shapes now load correctly in both the application and exported executables.</li>
+        <li><b>Enhanced Canvas Guides:</b> New control point SVG guides for better visual feedback when manipulating canvas elements.</li>
+        <li><b>Translation improvements</b> for canvas guide elements.</li>
+        <li><b>Improved color consistency</b> for button explanation titles.</li>
+    </ul>
+    <p>Previous updates (1.101):</p>
+    <ul>
+        <li>Improved Layer Management, Group Duplication, Hide Mode, Center View, Quick Knot Closing</li>
+        <li>New Language - German (🇩🇪)</li>
+        <li>New Samples category</li>
     </ul>
     <hr>
     <!-- French -->
@@ -935,7 +956,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     </ul>
     <hr>
     <!-- German -->
-    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.101</h2>
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.102</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Was ist neu in dieser Version:</p>
     <ul>

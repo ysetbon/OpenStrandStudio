@@ -9,7 +9,8 @@ a = Analysis(
         ('settings_icon.png', '.'),
         ('mov/*.mov', 'mov/'),  # Include .mov tutorial videos for Mac compatibility
         ('flags/*.png', 'flags/'),  # Include flag images
-        ('samples/*.json', 'samples/')  # Include sample JSON files
+        ('samples/*.json', 'samples/'),  # Include sample JSON files
+        ('images/*.svg', 'images/')  # Include SVG images
     ],
     hiddenimports=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.QtMultimedia', 'PyQt5.QtMultimediaWidgets', 'numpy', 'PIL', 'Pillow'],
     hookspath=[],
@@ -59,8 +60,8 @@ app = BUNDLE(
         'CFBundleDisplayName': 'OpenStrandStudio',
         'CFBundleName': 'OpenStrandStudio',
         'CFBundlePackageType': 'APPL',
-        'CFBundleShortVersionString': '1.101',
-        'CFBundleVersion': '1.101',
+        'CFBundleShortVersionString': '1.102',
+        'CFBundleVersion': '1.102',
         'CFBundleExecutable': 'OpenStrandStudio',
         'CFBundleIconFile': 'box_stitch.icns',
         'NSHighResolutionCapable': True,

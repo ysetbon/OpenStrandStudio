@@ -5,8 +5,10 @@ from PyQt5.QtWidgets import (
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
     QSpinBox, QDoubleSpinBox, QStyleOptionButton # Add these
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer
-from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF
+from PyQt5.QtSvg import QSvgRenderer
+import base64
+from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics, QPolygonF
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
@@ -2361,6 +2363,81 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
         </ul>
         
+        <h2>{_['canvas_indicators_title']}</h2>
+        
+        <h3 style="margin-top: 12px;">{_['control_points_title']}</h3>
+        <table style="margin-bottom: 15px;">
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{self.svg_to_data_url('images/triangle.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/triangle.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['triangle_control_name']}</span><br>
+                    {_['triangle_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{self.svg_to_data_url('images/circle.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/circle.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['circle_control_name']}</span><br>
+                    {_['circle_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{self.svg_to_data_url('images/square.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/square.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['square_control_name']}</span><br>
+                    {_['square_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{self.svg_to_data_url('images/bias_triangle.svg', 24, 24) or QUrl.fromLocalFile(self.get_asset_path('images/bias_triangle.svg')).toString()}" width="24" height="24" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['bias_triangle_name']}</span><br>
+                    {_['bias_triangle_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{self.svg_to_data_url('images/bias_circle.svg', 24, 24) or QUrl.fromLocalFile(self.get_asset_path('images/bias_circle.svg')).toString()}" width="24" height="24" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['bias_circle_name']}</span><br>
+                    {_['bias_circle_desc']}
+                </td>
+            </tr>
+        </table>
+        
+        <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
+        <ul>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FF9999; font-size: 18px; font-weight: bold;">□</span>
+                <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #90EE90; font-size: 18px; font-weight: bold;">□</span>
+                <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FFFF00; font-size: 18px; font-weight: bold;">■</span>
+                <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+            </li>
+        </ul>
+        
         <h2>{_['general_settings_buttons'] if 'general_settings_buttons' in _ else 'General Settings'}</h2>
         <ul>
             <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0] if 'theme_select_desc' in _ else 'Theme Selection'}</span> - {_['theme_select_desc'].split(' - ')[1] if 'theme_select_desc' in _ else 'Choose between light and dark themes for the interface'}</li>
@@ -2376,6 +2453,8 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['reset_curvature_desc'].split(' - ')[0] if 'reset_curvature_desc' in _ else 'Reset Curvature'}</span> - {_['reset_curvature_desc'].split(' - ')[1] if 'reset_curvature_desc' in _ else 'Restores all curvature settings to default values (1.0, 2.0, 2.0)'}</li>
         </ul>
         '''
+        
+        # SVG content is now directly embedded in the HTML above
         
         self.button_explanations_text_browser.setHtml(button_html)
         button_explanations_layout.addWidget(self.button_explanations_text_browser)
@@ -3059,7 +3138,84 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
         </ul>
+        
+        <h2>{_['canvas_indicators_title']}</h2>
+        
+        <h3 style="margin-top: 12px;">{_['control_points_title']}</h3>
+        <table style="margin-bottom: 15px;">
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{QUrl.fromLocalFile(self.get_asset_path('images/triangle.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['triangle_control_name']}</span><br>
+                    {_['triangle_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{QUrl.fromLocalFile(self.get_asset_path('images/circle.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['circle_control_name']}</span><br>
+                    {_['circle_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{QUrl.fromLocalFile(self.get_asset_path('images/square.svg')).toString()}" width="30" height="30" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['square_control_name']}</span><br>
+                    {_['square_control_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{QUrl.fromLocalFile(self.get_asset_path('images/bias_triangle.svg')).toString()}" width="24" height="24" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['bias_triangle_name']}</span><br>
+                    {_['bias_triangle_desc']}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; vertical-align: middle;">
+                    <img src="{QUrl.fromLocalFile(self.get_asset_path('images/bias_circle.svg')).toString()}" width="24" height="24" />
+                </td>
+                <td style="padding: 10px;">
+                    <span class="button-name">{_['bias_circle_name']}</span><br>
+                    {_['bias_circle_desc']}
+                </td>
+            </tr>
+        </table>
+        
+        <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
+        <ul>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FF9999; font-size: 18px; font-weight: bold;">□</span>
+                <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #90EE90; font-size: 18px; font-weight: bold;">□</span>
+                <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+            </li>
+            <li style="margin-bottom: 12px;">
+                <span style="color: #FFFF00; font-size: 18px; font-weight: bold;">■</span>
+                <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+            </li>
+        </ul>
         '''
+        
+        # SVG content is now directly embedded in the HTML above
         
         self.button_explanations_text_browser.setHtml(button_html)
     
@@ -3499,7 +3655,60 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
             </ul>
+            
+            <h2>{_['canvas_indicators_title']}</h2>
+            
+            <h3 style="margin-top: 12px;">{_['control_points_title']}</h3>
+            <ul>
+                <li style="margin-bottom: 12px;">
+                    <img src="{self.svg_to_data_url('images/triangle.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/triangle.svg')).toString()}" width="30" height="30" style="vertical-align: middle; margin-right: 8px;" />
+                    <span class="button-name">{_['triangle_control_name']}</span> - {_['triangle_control_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <img src="{self.svg_to_data_url('images/circle.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/circle.svg')).toString()}" width="30" height="30" style="vertical-align: middle; margin-right: 8px;" />
+                    <span class="button-name">{_['circle_control_name']}</span> - {_['circle_control_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <img src="{self.svg_to_data_url('images/square.svg', 30, 30) or QUrl.fromLocalFile(self.get_asset_path('images/square.svg')).toString()}" width="30" height="30" style="vertical-align: middle; margin-right: 8px;" />
+                    <span class="button-name">{_['square_control_name']}</span> - {_['square_control_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <img src="{self.svg_to_data_url('images/bias_triangle.svg', 24, 24) or QUrl.fromLocalFile(self.get_asset_path('images/bias_triangle.svg')).toString()}" width="24" height="24" style="vertical-align: middle; margin-right: 8px;" />
+                    <span class="button-name">{_['bias_triangle_name']}</span> - {_['bias_triangle_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <img src="{self.svg_to_data_url('images/bias_circle.svg', 24, 24) or QUrl.fromLocalFile(self.get_asset_path('images/bias_circle.svg')).toString()}" width="24" height="24" style="vertical-align: middle; margin-right: 8px;" />
+                    <span class="button-name">{_['bias_circle_name']}</span> - {_['bias_circle_desc']}
+                </li>
+            </ul>
+            
+            <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
+            <ul>
+                <li style="margin-bottom: 12px;">
+                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <span style="color: rgba(255, 0, 0, 0.6); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <span style="color: rgba(0, 255, 0, 0.6); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+                </li>
+                <li style="margin-bottom: 12px;">
+                    <span style="color: rgba(255, 255, 0, 0.9); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+                </li>
+            </ul>
             '''
+            
+            # SVG content is already directly embedded in the HTML above
+            
             self.button_explanations_text_browser.setHtml(button_html)
         # Update history page elements
         self.history_explanation_label.setText(_['history_explanation'])
@@ -3933,6 +4142,42 @@ class SettingsDialog(QDialog):
         flag_path = os.path.join(base_path, 'flags', flag_filename)
         return flag_path
     
+    def get_asset_path(self, relative_path):
+        """Resolve an asset path (works for dev and frozen executable)."""
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            if sys.platform.startswith('darwin'):
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_path, relative_path)
+
+    def svg_to_data_url(self, relative_path, width, height):
+        """Render an SVG to a PNG data URL for QTextBrowser if file URLs are blocked."""
+        try:
+            svg_path = self.get_asset_path(relative_path)
+            if not os.path.exists(svg_path):
+                return ''
+            renderer = QSvgRenderer(svg_path)
+            if not renderer.isValid():
+                return ''
+            # Render to pixmap
+            pixmap = QPixmap(width, height)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            renderer.render(painter)
+            painter.end()
+            # Encode to PNG base64
+            buffer = QBuffer()
+            buffer.open(QBuffer.WriteOnly)
+            pixmap.save(buffer, 'PNG')
+            b64 = base64.b64encode(buffer.data()).decode('ascii')
+            return f'data:image/png;base64,{b64}'
+        except Exception:
+            return ''
+    
     def render_whats_new_html(self, html):
         """Replace emoji flags with inline images to ensure consistent rendering in QTextBrowser."""
         try:
@@ -4330,6 +4575,21 @@ class SettingsDialog(QDialog):
                 pass
         except:
             pass
+
+    def generate_control_point_svg(self, control_type):
+        """Return an <img> tag pointing at a bundled SVG icon for the given control type."""
+        mapping = {
+            'triangle': ('images/triangle.svg', 30, 30),
+            'circle': ('images/circle.svg', 30, 30),
+            'square': ('images/square.svg', 30, 30),
+            'bias_triangle': ('images/bias_triangle.svg', 24, 24),
+            'bias_circle': ('images/bias_circle.svg', 24, 24),
+        }
+        if control_type in mapping:
+            rel, w, h = mapping[control_type]
+            url = QUrl.fromLocalFile(self.get_asset_path(rel)).toString()
+            return f'<img src="{url}" width="{w}" height="{h}" />'
+        return ''
 
     def open_default_width_dialog(self):
         """Open a dialog to configure default strand width."""

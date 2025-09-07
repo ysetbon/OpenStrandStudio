@@ -1,0 +1,9 @@
+<svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
+  <!-- Outer black stroke -->
+  <rect x="6" y="6" width="18" height="18" fill="none" stroke="black" stroke-width="5"/>
+  <!-- Green filled square (size-2) -->
+  <rect x="8" y="8" width="14" height="14" fill="#008000" stroke="#008000" stroke-width="1"/>
+  <!-- Inner strand-colored square (50% of green size) -->
+  <rect x="11.5" y="11.5" width="7" height="7" fill="currentColor"/>
+</svg>
+

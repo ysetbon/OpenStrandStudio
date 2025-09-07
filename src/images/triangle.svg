@@ -1,0 +1,9 @@
+<svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
+  <!-- Outer black stroke -->
+  <polygon points="15,4 24.56,22 5.44,22" fill="none" stroke="black" stroke-width="5"/>
+  <!-- Green filled triangle -->
+  <polygon points="15,6 23,21 7,21" fill="#008000" stroke="#008000" stroke-width="1"/>
+  <!-- Inner strand-colored triangle (50% scale of green) -->
+  <polygon points="15,11 19,18 11,18" fill="currentColor"/>
+</svg>
+

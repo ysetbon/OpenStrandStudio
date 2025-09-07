@@ -4,6 +4,6 @@
   <!-- Green filled square (size-2) -->
   <rect x="8" y="8" width="14" height="14" fill="#008000" stroke="#008000" stroke-width="1"/>
   <!-- Inner strand-colored square (50% of green size) -->
-  <rect x="11.5" y="11.5" width="7" height="7" fill="currentColor"/>
+  <rect x="11.5" y="11.5" width="7" height="7" fill="#C8AAE6"/>
 </svg>
 

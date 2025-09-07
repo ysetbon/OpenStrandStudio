@@ -4,6 +4,6 @@
   <!-- Green filled triangle -->
   <polygon points="15,6 23,21 7,21" fill="#008000" stroke="#008000" stroke-width="1"/>
   <!-- Inner strand-colored triangle (50% scale of green) -->
-  <polygon points="15,11 19,18 11,18" fill="currentColor"/>
+  <polygon points="15,11 19,18 11,18" fill="#C8AAE6"/>
 </svg>
 

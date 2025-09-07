@@ -4,6 +4,6 @@
   <!-- Green filled circle -->
   <circle cx="15" cy="15" r="10" fill="#008000" stroke="#008000" stroke-width="1"/>
   <!-- Inner strand-colored circle (50% of green radius) -->
-  <circle cx="15" cy="15" r="5" fill="currentColor"/>
+  <circle cx="15" cy="15" r="5" fill="#C8AAE6"/>
 </svg>
 

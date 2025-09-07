@@ -218,6 +218,10 @@ def serialize_strand(strand, canvas, index=None):
                 "triangle_position": serialize_point(strand.bias_control.triangle_position) if strand.bias_control.triangle_position else None,
                 "circle_position": serialize_point(strand.bias_control.circle_position) if strand.bias_control.circle_position else None
             }
+        
+        # Save triangle_has_moved flag to determine control point visibility
+        if hasattr(strand, 'triangle_has_moved'):
+            data["triangle_has_moved"] = strand.triangle_has_moved
 
     if isinstance(strand, MaskedStrand):
         # Save deletion rectangles with movement offset applied
@@ -447,6 +451,19 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             if "control_point_center_locked" in data:
                 strand.control_point_center_locked = data["control_point_center_locked"]
         
+        # Restore or determine triangle_has_moved flag
+        if "triangle_has_moved" in data:
+            strand.triangle_has_moved = data["triangle_has_moved"]
+        else:
+            # If not saved, determine based on whether control_point1 is different from start
+            if hasattr(strand, 'control_point1') and strand.control_point1 and hasattr(strand, 'start'):
+                # Check if control_point1 (triangle) has moved from start position
+                distance = ((strand.control_point1.x() - strand.start.x()) ** 2 + 
+                           (strand.control_point1.y() - strand.start.y()) ** 2) ** 0.5
+                strand.triangle_has_moved = distance > 1.0  # More than 1 pixel away
+            else:
+                strand.triangle_has_moved = False
+        
         # Handle bias control (small control points)
         # Import here to avoid circular dependency
         from curvature_bias_control import CurvatureBiasControl
@@ -482,6 +499,14 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             
             # Always update positions based on the bias values
             strand.bias_control.update_positions_from_biases(strand)
+            
+            # Check if bias control points have been moved from their default positions
+            if strand.bias_control.triangle_position:
+                # If triangle position exists and is not None, it has been moved
+                if hasattr(strand, 'bias_control') and canvas and getattr(canvas, 'enable_curvature_bias_control', False):
+                    # Mark triangle as moved if bias triangle has been positioned
+                    strand.triangle_has_moved = True
+            
             # Update the strand's shape to reflect the bias changes
             if hasattr(strand, 'update_shape'):
                 strand.update_shape()
@@ -675,6 +700,19 @@ def load_strands(filename, canvas):
                 if "control_point_center_locked" in strand_data:
                     strand.control_point_center_locked = strand_data["control_point_center_locked"]
             
+            # Restore or determine triangle_has_moved flag for AttachedStrand
+            if "triangle_has_moved" in strand_data:
+                strand.triangle_has_moved = strand_data["triangle_has_moved"]
+            else:
+                # If not saved, determine based on whether control_point1 is different from start
+                if hasattr(strand, 'control_point1') and strand.control_point1 and hasattr(strand, 'start'):
+                    # Check if control_point1 (triangle) has moved from start position
+                    distance = ((strand.control_point1.x() - strand.start.x()) ** 2 + 
+                               (strand.control_point1.y() - strand.start.y()) ** 2) ** 0.5
+                    strand.triangle_has_moved = distance > 1.0  # More than 1 pixel away
+                else:
+                    strand.triangle_has_moved = False
+            
             # Handle bias control for AttachedStrand
             from curvature_bias_control import CurvatureBiasControl
             
@@ -706,6 +744,14 @@ def load_strands(filename, canvas):
                 
                 # Always update positions based on the bias values
                 strand.bias_control.update_positions_from_biases(strand)
+                
+                # Check if bias control points have been moved from their default positions
+                if strand.bias_control.triangle_position:
+                    # If triangle position exists and is not None, it has been moved
+                    if hasattr(strand, 'bias_control') and canvas and getattr(canvas, 'enable_curvature_bias_control', False):
+                        # Mark triangle as moved if bias triangle has been positioned
+                        strand.triangle_has_moved = True
+                
                 # Update the strand's shape to reflect the bias changes
                 if hasattr(strand, 'update_shape'):
                     strand.update_shape()

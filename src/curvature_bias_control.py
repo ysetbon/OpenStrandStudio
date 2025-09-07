@@ -278,6 +278,9 @@ class CurvatureBiasControl:
             self.drag_start_bias = self.triangle_bias
             # Don't store offset for line-constrained movement
             self.drag_offset = QPointF(0, 0)
+            # Mark that triangle has been moved to show other control points
+            if hasattr(strand, 'triangle_has_moved'):
+                strand.triangle_has_moved = True
             return True
             
         # Check circle control

@@ -172,17 +172,20 @@ translations = {
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.101</h2>
+        <h2>What's New in Version 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Improved Layer Management:</b> Enhanced StateLayerManager structure for better handling of knot connections and strand relationships, providing more reliable layer operations and improved performance.</li>
-            <li style="font-size:15px;"><b>Group Duplication:</b> You can now duplicate entire groups with all their strands by right-clicking on a group header and selecting "Duplicate Group". The duplicated group maintains all strand properties and automatically generates unique layer names.</li>
-            <li style="font-size:15px;"><b>Hide Mode:</b> New hide mode accessible via the monkey button (🙉/🙈) allows you to quickly hide multiple layers at once. Click the button to enter hide mode, then click on layers to hide them. Exit hide mode to apply changes.</li>
-            <li style="font-size:15px;"><b>Center View:</b> Instantly center all strands in your view with the new target button (🎯). This automatically adjusts the canvas position to show all your work centered on screen.</li>
-            <li style="font-size:15px;"><b>Quick Knot Closing:</b> Right-click on any strand or attached strand with one free end to quickly close the knot. The system automatically finds and connects to the nearest compatible strand with a free end.</li>
-            <li style="font-size:15px;"><b>New Language - German (🇩🇪):</b> You can now switch to German in Settings → Change Language.</li>
-            <li style="font-size:15px;"><b>New Samples category:</b> Explore ready-to-load sample projects in Settings → Samples. Choose a sample to learn from; the dialog will close and the sample will be loaded.</li>
+            <li style="font-size:15px;"><b>Enhanced Curvature Bias Controls:</b> New bias control points positioned between the center control point and the two end control points provide fine-tuned curvature adjustment. These controls appear as small squares with either a triangle or circle icon inside, allowing you to independently adjust the curve influence from each side toward the center for more precise strand shaping.</li>
+            <li style="font-size:15px;"><b>Advanced Curvature Settings:</b> Three new curvature parameters give you complete control over strand curves:
+                <ul style="margin-left: 20px;">
+                    <li><b>Control Point Influence:</b> Adjusts the pull strength of control points (1.0=normal, up to 3.0=very strong)</li>
+                    <li><b>Distance Boost:</b> Magnifies curves by multiplying the distance factor (1.0=no boost, up to 5.0=5x boost)</li>
+                    <li><b>Curve Shape:</b> Controls curve response type (1.0=sharp/linear, 3.0=smooth/cubic)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Progressive Control Point Display:</b> When creating new strands, only the starting control point is initially visible. Additional control points (end points, center point, and bias controls) appear progressively as you begin moving the strand, reducing visual clutter during initial placement.</li>
+            <li style="font-size:15px;"><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality and more accurate shadow representation across all strand configurations.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
         ''',
 
 
@@ -502,17 +505,20 @@ translations = {
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.101</h2>
+        <h2>Nouveautés de la version 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Gestion améliorée des couches :</b> Structure StateLayerManager améliorée pour une meilleure gestion des connexions de nœuds et des relations entre brins, offrant des opérations de couches plus fiables et de meilleures performances.</li>
-            <li style="font-size:15px;"><b>Duplication de groupe :</b> Vous pouvez maintenant dupliquer des groupes entiers avec tous leurs brins en faisant un clic droit sur l'en-tête d'un groupe et en sélectionnant "Dupliquer le groupe". Le groupe dupliqué conserve toutes les propriétés des brins et génère automatiquement des noms de couches uniques.</li>
-            <li style="font-size:15px;"><b>Mode masquage :</b> Nouveau mode masquage accessible via le bouton singe (🙉/🙈) permet de masquer rapidement plusieurs couches à la fois. Cliquez sur le bouton pour entrer en mode masquage, puis cliquez sur les couches pour les masquer. Quittez le mode masquage pour appliquer les changements.</li>
-            <li style="font-size:15px;"><b>Centrer la vue :</b> Centrez instantanément tous les brins dans votre vue avec le nouveau bouton cible (🎯). Cela ajuste automatiquement la position du canevas pour afficher tout votre travail centré à l'écran.</li>
-            <li style="font-size:15px;"><b>Fermeture rapide de nœud :</b> Cliquez avec le bouton droit sur n'importe quel brin ou brin attaché avec une extrémité libre pour fermer rapidement le nœud. Le système trouve et connecte automatiquement au brin compatible le plus proche avec une extrémité libre.</li>
-            <li style="font-size:15px;"><b>Nouvelle langue - allemand (🇩🇪) :</b> Vous pouvez maintenant passer à l’allemand dans Paramètres → Changer la langue.</li>
-            <li style="font-size:15px;"><b>Nouvelle catégorie Exemples :</b> Découvrez des projets d’exemple prêts à charger dans Paramètres → Exemples. Choisissez un exemple pour apprendre ; la boîte de dialogue se fermera et l’exemple sera chargé.</li>
+            <li style="font-size:15px;"><b>Contrôles de biais de courbure améliorés :</b> De nouveaux points de contrôle de biais positionnés entre le point de contrôle central et les deux points de contrôle d'extrémité permettent un ajustement précis de la courbure. Ces contrôles apparaissent sous forme de petits carrés avec une icône de triangle ou de cercle à l'intérieur, vous permettant d'ajuster indépendamment l'influence de la courbe de chaque côté vers le centre pour un façonnage plus précis des brins.</li>
+            <li style="font-size:15px;"><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres de courbure vous donnent un contrôle complet sur les courbes des brins :
+                <ul style="margin-left: 20px;">
+                    <li><b>Influence du point de contrôle :</b> Ajuste la force d'attraction des points de contrôle (1.0=normal, jusqu'à 3.0=très fort)</li>
+                    <li><b>Amplification de distance :</b> Amplifie les courbes en multipliant le facteur de distance (1.0=pas d'amplification, jusqu'à 5.0=amplification 5x)</li>
+                    <li><b>Forme de courbe :</b> Contrôle le type de réponse de courbe (1.0=net/linéaire, 3.0=lisse/cubique)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Affichage progressif des points de contrôle :</b> Lors de la création de nouveaux brins, seul le point de contrôle de départ est initialement visible. Les points de contrôle supplémentaires (points d'extrémité, point central et contrôles de biais) apparaissent progressivement lorsque vous commencez à déplacer le brin, réduisant l'encombrement visuel lors du placement initial.</li>
+            <li style="font-size:15px;"><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle et une représentation plus précise des ombres dans toutes les configurations de brins.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
         ''',
 
 
@@ -898,17 +904,20 @@ translations = {
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.101</h2>
+        <h2>Neu in Version 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Verbesserte Ebenenverwaltung:</b> Verbesserte StateLayerManager-Struktur für ein zuverlässigeres Handling von Knotenverbindungen und Strangbeziehungen, was stabilere Operationen und bessere Performance bietet.</li>
-            <li style="font-size:15px;"><b>Gruppenduplikation:</b> Ganze Gruppen mit allen Strängen per Rechtsklick auf den Gruppen-Header und Auswahl von "Gruppe duplizieren" duplizieren. Die duplizierte Gruppe behält alle Eigenschaften und erzeugt automatisch eindeutige Ebenennamen.</li>
-            <li style="font-size:15px;"><b>Versteckmodus:</b> Neuer Modus über die Affen-Schaltfläche (🙉/🙈), um mehrere Ebenen schnell auszublenden. Klicken, um zu aktivieren, dann Ebenen anklicken. Zum Anwenden wieder verlassen.</li>
-            <li style="font-size:15px;"><b>Ansicht zentrieren:</b> Zentriert alle Stränge sofort mit der Ziel-Schaltfläche (🎯). Die Leinwandposition wird automatisch so angepasst, dass alles zentriert dargestellt wird.</li>
-            <li style="font-size:15px;"><b>Schnelles Knotenschließen:</b> Rechtsklick auf einen Strang oder verbundenen Strang mit freiem Ende, um den Knoten schnell zu schließen. Das System findet automatisch den nächstgelegenen kompatiblen Strang mit freiem Ende.</li>
-            <li style="font-size:15px;"><b>Neue Sprache - Deutsch (🇩🇪):</b> Sie können jetzt unter Einstellungen → Sprache ändern Deutsch auswählen.</li>
-            <li style="font-size:15px;"><b>Neue Kategorie „Beispiele“:</b> Entdecken Sie sofort ladbare Beispielprojekte unter Einstellungen → Beispiele. Wählen Sie ein Beispiel zum Lernen; der Dialog schließt sich und das Beispiel wird geladen.</li>
+            <li style="font-size:15px;"><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen dem mittleren Kontrollpunkt und den beiden End-Kontrollpunkten ermöglichen eine präzise Krümmungsanpassung. Diese Steuerungen erscheinen als kleine Quadrate mit einem Dreieck- oder Kreissymbol im Inneren und ermöglichen es Ihnen, den Kurveneinfluss von jeder Seite zur Mitte unabhängig anzupassen für eine präzisere Strangformung.</li>
+            <li style="font-size:15px;"><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Krümmungsparameter geben Ihnen vollständige Kontrolle über Strangkurven:
+                <ul style="margin-left: 20px;">
+                    <li><b>Kontrollpunkt-Einfluss:</b> Passt die Zugkraft der Kontrollpunkte an (1.0=normal, bis zu 3.0=sehr stark)</li>
+                    <li><b>Distanz-Verstärkung:</b> Vergrößert Kurven durch Multiplikation des Distanzfaktors (1.0=keine Verstärkung, bis zu 5.0=5-fache Verstärkung)</li>
+                    <li><b>Kurvenform:</b> Steuert den Kurvenreaktionstyp (1.0=scharf/linear, 3.0=glatt/kubisch)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Progressive Kontrollpunkt-Anzeige:</b> Bei der Erstellung neuer Stränge ist zunächst nur der Start-Kontrollpunkt sichtbar. Zusätzliche Kontrollpunkte (Endpunkte, Mittelpunkt und Bias-Steuerungen) erscheinen progressiv, wenn Sie beginnen, den Strang zu bewegen, was die visuelle Unordnung bei der anfänglichen Platzierung reduziert.</li>
+            <li style="font-size:15px;"><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme wurden behoben für bessere visuelle Qualität und genauere Schattendarstellung in allen Strangkonfigurationen.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
         ''',
         # About translations
         'about_info': '''
@@ -1228,17 +1237,20 @@ translations = {
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.101</h2>
+        <h2>Novità della versione 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Gestione livelli migliorata:</b> Struttura StateLayerManager migliorata per una migliore gestione delle connessioni dei nodi e delle relazioni tra trefoli, offrendo operazioni sui livelli più affidabili e prestazioni migliorate.</li>
-            <li style="font-size:15px;"><b>Duplicazione gruppo:</b> Ora puoi duplicare interi gruppi con tutti i loro trefoli facendo clic destro sull'intestazione di un gruppo e selezionando "Duplica gruppo". Il gruppo duplicato mantiene tutte le proprietà dei trefoli e genera automaticamente nomi di livelli unici.</li>
-            <li style="font-size:15px;"><b>Modalità nascondi:</b> Nuova modalità nascondi accessibile tramite il pulsante scimmia (🙉/🙈) permette di nascondere rapidamente più livelli contemporaneamente. Clicca sul pulsante per entrare in modalità nascondi, poi clicca sui livelli per nasconderli. Esci dalla modalità nascondi per applicare le modifiche.</li>
-            <li style="font-size:15px;"><b>Centra vista:</b> Centra istantaneamente tutti i trefoli nella tua vista con il nuovo pulsante bersaglio (🎯). Questo regola automaticamente la posizione del canvas per mostrare tutto il tuo lavoro centrato sullo schermo.</li>
-            <li style="font-size:15px;"><b>Chiusura rapida del nodo:</b> Fai clic destro su qualsiasi trefolo o trefolo attaccato con un'estremità libera per chiudere rapidamente il nodo. Il sistema trova e connette automaticamente al trefolo compatibile più vicino con un'estremità libera.</li>
-            <li style="font-size:15px;"><b>Nuova lingua - Tedesco (🇩🇪):</b> Ora puoi selezionare il tedesco in Impostazioni → Cambia Lingua.</li>
-            <li style="font-size:15px;"><b>Nuova categoria Esempi:</b> Scopri progetti di esempio pronti al caricamento in Impostazioni → Esempi. Scegli un esempio da cui imparare; la finestra si chiuderà e l'esempio verrà caricato.</li>
+            <li style="font-size:15px;"><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias posizionati tra il punto di controllo centrale e i due punti di controllo finali forniscono una regolazione fine della curvatura. Questi controlli appaiono come piccoli quadrati con un'icona triangolare o circolare all'interno, permettendoti di regolare indipendentemente l'influenza della curva da ciascun lato verso il centro per una modellazione più precisa dei trefoli.</li>
+            <li style="font-size:15px;"><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri di curvatura ti danno il controllo completo sulle curve dei trefoli:
+                <ul style="margin-left: 20px;">
+                    <li><b>Influenza del punto di controllo:</b> Regola la forza di attrazione dei punti di controllo (1.0=normale, fino a 3.0=molto forte)</li>
+                    <li><b>Amplificazione della distanza:</b> Ingrandisce le curve moltiplicando il fattore di distanza (1.0=nessuna amplificazione, fino a 5.0=amplificazione 5x)</li>
+                    <li><b>Forma della curva:</b> Controlla il tipo di risposta della curva (1.0=netto/lineare, 3.0=liscio/cubico)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Visualizzazione progressiva dei punti di controllo:</b> Durante la creazione di nuovi trefoli, inizialmente è visibile solo il punto di controllo iniziale. I punti di controllo aggiuntivi (punti finali, punto centrale e controlli di bias) appaiono progressivamente quando inizi a muovere il trefolo, riducendo il disordine visivo durante il posizionamento iniziale.</li>
+            <li style="font-size:15px;"><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva e una rappresentazione più accurata delle ombre in tutte le configurazioni dei trefoli.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.102</p>
         ''',
 
 
@@ -1596,17 +1608,20 @@ translations = {
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.101</h2>
+        <h2>Novedades de la versión 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Gestión mejorada de capas:</b> Estructura StateLayerManager mejorada para un mejor manejo de las conexiones de nudos y relaciones entre hebras, ofreciendo operaciones de capas más confiables y mejor rendimiento.</li>
-            <li style="font-size:15px;"><b>Duplicación de grupo:</b> Ahora puedes duplicar grupos completos con todas sus hebras haciendo clic derecho en el encabezado de un grupo y seleccionando "Duplicar grupo". El grupo duplicado mantiene todas las propiedades de las hebras y genera automáticamente nombres de capas únicos.</li>
-            <li style="font-size:15px;"><b>Modo ocultar:</b> Nuevo modo ocultar accesible a través del botón mono (🙉/🙈) permite ocultar rápidamente múltiples capas a la vez. Haz clic en el botón para entrar en modo ocultar, luego haz clic en las capas para ocultarlas. Sal del modo ocultar para aplicar los cambios.</li>
-            <li style="font-size:15px;"><b>Centrar vista:</b> Centra instantáneamente todas las hebras en tu vista con el nuevo botón diana (🎯). Esto ajusta automáticamente la posición del lienzo para mostrar todo tu trabajo centrado en la pantalla.</li>
-            <li style="font-size:15px;"><b>Cierre rápido de nudo:</b> Haz clic derecho en cualquier hebra o hebra adjunta con un extremo libre para cerrar rápidamente el nudo. El sistema encuentra y conecta automáticamente a la hebra compatible más cercana con un extremo libre.</li>
-            <li style="font-size:15px;"><b>Nuevo idioma - Alemán (🇩🇪):</b> Ahora puedes cambiar a alemán en Configuración → Cambiar Idioma.</li>
-            <li style="font-size:15px;"><b>Nueva categoría Ejemplos:</b> Explora proyectos de ejemplo listos para cargar en Configuración → Ejemplos. Elige un ejemplo para aprender; el cuadro de diálogo se cerrará y el ejemplo se cargará.</li>
+            <li style="font-size:15px;"><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo posicionados entre el punto de control central y los dos puntos de control finales proporcionan un ajuste fino de la curvatura. Estos controles aparecen como pequeños cuadrados con un icono de triángulo o círculo en su interior, permitiéndote ajustar independientemente la influencia de la curva desde cada lado hacia el centro para un modelado más preciso de las hebras.</li>
+            <li style="font-size:15px;"><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros de curvatura te dan control completo sobre las curvas de las hebras:
+                <ul style="margin-left: 20px;">
+                    <li><b>Influencia del punto de control:</b> Ajusta la fuerza de atracción de los puntos de control (1.0=normal, hasta 3.0=muy fuerte)</li>
+                    <li><b>Amplificación de distancia:</b> Magnifica las curvas multiplicando el factor de distancia (1.0=sin amplificación, hasta 5.0=amplificación 5x)</li>
+                    <li><b>Forma de curva:</b> Controla el tipo de respuesta de curva (1.0=agudo/lineal, 3.0=suave/cúbico)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Visualización progresiva de puntos de control:</b> Al crear nuevas hebras, inicialmente solo es visible el punto de control inicial. Los puntos de control adicionales (puntos finales, punto central y controles de sesgo) aparecen progresivamente cuando comienzas a mover la hebra, reduciendo el desorden visual durante la colocación inicial.</li>
+            <li style="font-size:15px;"><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para obtener mejor calidad visual y una representación más precisa de las sombras en todas las configuraciones de hebras.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.102</p>
 
         ''',
  
@@ -1965,17 +1980,20 @@ translations = {
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.101</h2>
+        <h2>Novidades da versão 1.102</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Gerenciamento de camadas aprimorado:</b> Estrutura StateLayerManager aprimorada para melhor gerenciamento de conexões de nós e relações entre fios, oferecendo operações de camadas mais confiáveis e melhor desempenho.</li>
-            <li style="font-size:15px;"><b>Duplicação de grupo:</b> Agora você pode duplicar grupos inteiros com todos os seus fios clicando com o botão direito no cabeçalho de um grupo e selecionando "Duplicar grupo". O grupo duplicado mantém todas as propriedades dos fios e gera automaticamente nomes de camadas únicos.</li>
-            <li style="font-size:15px;"><b>Modo ocultar:</b> Novo modo ocultar acessível através do botão macaco (🙉/🙈) permite ocultar rapidamente várias camadas de uma vez. Clique no botão para entrar no modo ocultar, depois clique nas camadas para ocultá-las. Saia do modo ocultar para aplicar as mudanças.</li>
-            <li style="font-size:15px;"><b>Centralizar visualização:</b> Centralize instantaneamente todos os fios em sua visualização com o novo botão alvo (🎯). Isso ajusta automaticamente a posição do canvas para mostrar todo o seu trabalho centralizado na tela.</li>
-            <li style="font-size:15px;"><b>Fechamento rápido de nó:</b> Clique com o botão direito em qualquer fio ou fio anexado com uma extremidade livre para fechar rapidamente o nó. O sistema encontra e conecta automaticamente ao fio compatível mais próximo com uma extremidade livre.</li>
-            <li style="font-size:15px;"><b>Novo idioma - Alemão (🇩🇪):</b> Agora você pode alternar para alemão em Configurações → Mudar Idioma.</li>
-            <li style="font-size:15px;"><b>Nova categoria Exemplos:</b> Explore projetos de exemplo prontos para carregar em Configurações → Exemplos. Escolha um exemplo para aprender; a janela será fechada e o exemplo será carregado.</li>
+            <li style="font-size:15px;"><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés posicionados entre o ponto de controle central e os dois pontos de controle finais fornecem ajuste fino de curvatura. Esses controles aparecem como pequenos quadrados com um ícone de triângulo ou círculo dentro, permitindo ajustar independentemente a influência da curva de cada lado em direção ao centro para modelagem mais precisa dos fios.</li>
+            <li style="font-size:15px;"><b>Configurações de curvatura avançadas:</b> Três novos parâmetros de curvatura dão controle completo sobre as curvas dos fios:
+                <ul style="margin-left: 20px;">
+                    <li><b>Influência do ponto de controle:</b> Ajusta a força de atração dos pontos de controle (1.0=normal, até 3.0=muito forte)</li>
+                    <li><b>Amplificação de distância:</b> Amplifica as curvas multiplicando o fator de distância (1.0=sem amplificação, até 5.0=amplificação 5x)</li>
+                    <li><b>Forma da curva:</b> Controla o tipo de resposta da curva (1.0=acentuado/linear, 3.0=suave/cúbico)</li>
+                </ul>
+            </li>
+            <li style="font-size:15px;"><b>Exibição progressiva de pontos de controle:</b> Ao criar novos fios, apenas o ponto de controle inicial é visível inicialmente. Pontos de controle adicionais (pontos finais, ponto central e controles de viés) aparecem progressivamente quando você começa a mover o fio, reduzindo a desordem visual durante o posicionamento inicial.</li>
+            <li style="font-size:15px;"><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento foram corrigidos para melhor qualidade visual e representação mais precisa de sombras em todas as configurações de fios.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.101</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.102</p>
         ''',
 
 
@@ -2346,7 +2364,7 @@ translations = {
         • <b>סגירת קשר מהירה:</b> לחץ לחיצה ימנית על כל חוט או חוט מחובר עם קצה חופשי כדי לסגור במהירות את הקשר. המערכת מוצאת ומתחברת אוטומטית לחוט התואם הקרוב ביותר עם קצה חופשי.<br>
         • <b>שפה חדשה - גרמנית (🇩🇪):</b> עכשיו אפשר לבחור גרמנית דרך הגדרות → שינוי שפה.<br>
         • <b>קטגוריית דוגמאות חדשה:</b> אפשר לצפות בפרויקטים לדוגמה שמוכנים לטעינה דרך הגדרות → דוגמאות. בחר דוגמה כדי ללמוד; תיבת הדו־שיח תיסגר והדוגמה תיטען.<br><br>
-        © 2025 OpenStrand Studio - גרסה 1.101
+        © 2025 OpenStrand Studio - גרסה 1.102
         </div>
         ''',
 

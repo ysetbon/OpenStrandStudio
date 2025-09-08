@@ -3,7 +3,7 @@
 # Set variables to match ISS configuration
 APP_NAME="OpenStrandStudio"
 VERSION="1.102"
-APP_DATE="08_September_2025"
+APP_DATE="09_September_2025"
 PUBLISHER="Yonatan Setbon"
 DMG_NAME="OpenStrandStudioSetup_${APP_DATE}_${VERSION}"
 

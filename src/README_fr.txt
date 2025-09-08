@@ -434,7 +434,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.102 (Sortie : 08/09/2025)
+## Version 1.102 (Sortie : 09/09/2025)
 
 ### Améliorations et Nouvelles Fonctionnalités :
 

@@ -434,3 +434,27 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
+## Version 1.102 (Sortie : 08/09/2025)
+
+### Améliorations et Nouvelles Fonctionnalités :
+
+1. **Améliorations des brins attachés :**
+   - Correction des problèmes de peinture pour les brins attachés similaires aux brins réguliers
+   - Résolution des problèmes de mouvement lorsque tout est désactivé avec les points de contrôle
+   - Correction du comportement de mouvement initial lorsque seul le point de contrôle de fin est activé
+
+2. **Améliorations des points de contrôle :**
+   - Meilleure gestion du troisième point de contrôle désactivé pour permettre uniquement le mouvement du point de contrôle de fin
+   - Meilleur comportement des points de contrôle lors de la manipulation initiale des brins
+
+3. **Optimisation du système de construction :**
+   - Processus de construction optimisé pour une taille d'exécutable réduite en utilisant un environnement virtuel
+   - Suppression des dépendances de bibliothèques scientifiques inutiles de l'application principale
+   - Amélioration de la cohérence de construction entre les plateformes Windows et macOS
+
+4. **Améliorations des performances :**
+   - Taille d'application réduite en excluant les packages scientifiques Anaconda non utilisés
+   - Démarrage plus rapide de l'application avec un exécutable plus léger
+
+------
+

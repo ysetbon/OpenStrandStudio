@@ -1,6 +1,6 @@
 # Installation Guide for Windows
 
-## Version 1.101 - Released August 11, 2025
+## Version 1.102 - Released September 8, 2025
 
 ## Prerequisites
 
@@ -59,13 +59,13 @@
 
 ## Building Executable (.exe)
 
-### Method 1: Using spec file with virtual environment (BEST METHOD - Recommended)
+### Method 1: Using spec file with virtual environment 
 
 1. Open Command Prompt or PowerShell and navigate to the src directory:
    ```bash
    cd C:\path\to\OpenStrandStudio\src
    ```
-
+**(BEST METHOD - Recommended)**:
 2. Run the provided build script:
    - In Command Prompt:
      ```cmd

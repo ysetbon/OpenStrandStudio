@@ -433,3 +433,27 @@ These updates focus on performance improvements and visual enhancements to provi
    - New Samples category in Settings → Samples to load ready-to-use projects. Selecting a sample will close the dialog and load the sample.
 
 ------
+
+## Version 1.102 (Released: 08/09/2025)
+
+### Improvements and New Features:
+
+1. **Attached Strand Improvements:**
+   - Fixed painting issues for attached strands that were similar to regular strands
+   - Resolved movement issues when everything is disabled with control points
+   - Fixed initial movement behavior when only ending control point is enabled
+
+2. **Control Point Enhancements:**
+   - Improved handling of disabled third control point to allow only ending control point movement
+   - Better control point behavior during initial strand manipulation
+
+3. **Build System Optimization:**
+   - Optimized build process for smaller executable size using virtual environment
+   - Removed unnecessary scientific library dependencies from main application
+   - Improved build consistency between Windows and macOS platforms
+
+4. **Performance Improvements:**
+   - Reduced application size by excluding unused Anaconda scientific packages
+   - Faster application startup with leaner executable
+
+------

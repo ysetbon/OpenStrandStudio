@@ -59,7 +59,7 @@
 
 ## Building Executable (.exe)
 
-### Method 1: Using batch script with virtual environment (Recommended)
+### Method 1: Using spec file with virtual environment (BEST METHOD - Recommended)
 
 1. Open Command Prompt or PowerShell and navigate to the src directory:
    ```bash
@@ -79,8 +79,15 @@
    This script will:
    - Create a clean virtual environment
    - Install required dependencies
-   - Build the executable using PyInstaller
+   - Build the executable using the OpenStrandStudio.spec file
+   - Include all resources (icons, flags, mp4, samples, SVG images)
    - Place the .exe in the `dist` folder
+
+   **Why this is the BEST method:**
+   - Uses a spec file for consistent builds
+   - Automatically includes all SVG files from images folder
+   - Clean virtual environment prevents DLL conflicts
+   - All resources properly bundled in one executable
 
 ### Method 2: Using Anaconda environment
 
@@ -101,10 +108,11 @@
 
    This script will:
    - Set up the proper PATH for Anaconda's Qt libraries
-   - Build the executable with all required DLLs
+   - Build the executable using the OpenStrandStudio.spec file
+   - Include all resources (icons, flags, mp4, samples, SVG images)
    - Place the .exe in the `dist` folder
 
-### Method 3: Manual PyInstaller build
+### Method 3: Manual PyInstaller build using spec file
 
 1. If using Anaconda, first set the PATH:
    ```powershell
@@ -116,10 +124,17 @@
    pip install pyinstaller
    ```
 
-3. Build the executable:
+3. Build the executable using the spec file:
    ```bash
-   pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-data "flags;flags" main.py
+   pyinstaller OpenStrandStudio.spec
    ```
+   
+   Note: The spec file includes all necessary resources:
+   - Icons (box_stitch.ico, settings_icon.png)
+   - Flags folder with country flags
+   - MP4 tutorial videos
+   - Sample JSON files
+   - SVG images (shapes and guides)
 
 ## Troubleshooting
 
@@ -148,11 +163,30 @@ Ensure `box_stitch.ico` and `settings_icon.png` are in the same directory as `ma
 
 Ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png) is in the same directory as `main.py`
 
-## Creating an Installer
+## Creating a Windows Installer
 
-After building the .exe, you can create an installer using tools like:
+After building the .exe, create a professional installer using Inno Setup (Recommended):
+
+### Using Inno Setup (RECOMMENDED)
+
+1. Install Inno Setup from https://jrsoftware.org/isdl.php
+
+2. Use the provided Inno Setup script:
+   - Navigate to `src\inno setup\`
+   - Open `OpenStrand Studio1_102.iss` in Inno Setup Compiler
+   - Click "Compile" to create the installer
+
+3. The installer will be created in the `dist` folder with features:
+   - Multi-language support (7 languages)
+   - Start Menu shortcuts
+   - Desktop icon (optional)
+   - File associations for .oss project files
+   - Clean uninstall
+   - User or admin installation options
+
+### Alternative installer tools:
 - NSIS (Nullsoft Scriptable Install System)
-- Inno Setup
 - WiX Toolset
+- InstallShield
 
 The executable will be in the `dist` folder after a successful build.

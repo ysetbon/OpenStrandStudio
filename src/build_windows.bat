@@ -10,9 +10,9 @@ echo Cleaning previous builds...
 rmdir /s /q build 2>nul
 rmdir /s /q dist 2>nul
 
-REM Build with PyInstaller
+REM Build with PyInstaller using spec file
 echo Building executable...
-pyinstaller --onefile --windowed --name OpenStrandStudio --icon=box_stitch.ico --add-data "box_stitch.ico;." --add-data "settings_icon.png;." --add-data "flags;flags" --add-data "mp4;mp4" --add-data "samples;samples" --add-binary "C:\ProgramData\Anaconda3\Library\bin\*.dll;." main.py
+pyinstaller OpenStrandStudio.spec
 
 echo Build complete!
 pause

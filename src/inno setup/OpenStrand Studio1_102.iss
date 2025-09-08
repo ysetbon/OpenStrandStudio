@@ -2,7 +2,7 @@
 #define MyAppVersion "1.102"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "07_Sep_2025"
+#define MyAppDate "08_Sep_2025"
 #define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src"
 #define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
 
@@ -24,7 +24,8 @@ LZMABlockSize=65536
 SolidCompression=yes
 DiskSpanning=no
 MinVersion=6.1sp1
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
 UninstallDisplayIcon={app}\box_stitch.ico
 SetupIconFile={#SourcePath}\box_stitch.ico
 
@@ -49,9 +50,20 @@ Source: "{#SourcePath}\images\*.svg"; DestDir: "{app}\images"; Flags: ignorevers
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"; MinVersion: 0,1
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"; Tasks: desktopicon; MinVersion: 0,1
+Name: "{userprograms}\{#MyAppName}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"
+Name: "{userprograms}\{#MyAppName}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: checked
+
+[Registry]
+Root: HKCR; Subkey: ".oss"; ValueType: string; ValueData: "OpenStrandStudioFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "OpenStrandStudioFile"; ValueType: string; ValueData: "OpenStrand Studio Project"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "OpenStrandStudioFile\DefaultIcon"; ValueType: string; ValueData: "{app}\box_stitch.ico"
+Root: HKCR; Subkey: "OpenStrandStudioFile\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{userappdata}\OpenStrandStudio"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchAfterInstall}"; Flags: nowait postinstall skipifsilent

@@ -894,13 +894,13 @@ class AttachedStrand(Strand):
                     # Create stroker for the shortened highlight path
                     highlight_stroker = QPainterPathStroker()
                     highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
+                    highlight_stroker.setJoinStyle(Qt.MiterJoin)
                     highlight_stroker.setCapStyle(Qt.FlatCap)
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
                     highlight_pen = QPen(QColor('red'), 10)
-                    highlight_pen.setJoinStyle(Qt.RoundJoin)
+                    highlight_pen.setJoinStyle(Qt.MiterJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -908,7 +908,7 @@ class AttachedStrand(Strand):
             else:
                 # If path is too short, draw normal highlight
                 highlight_pen = QPen(QColor('red'), 10)
-                highlight_pen.setJoinStyle(Qt.RoundJoin)
+                highlight_pen.setJoinStyle(Qt.MiterJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
                 painter.setPen(highlight_pen)
@@ -2784,13 +2784,13 @@ class AttachedStrand(Strand):
                     # Create stroker for the shortened highlight path
                     highlight_stroker = QPainterPathStroker()
                     highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
+                    highlight_stroker.setJoinStyle(Qt.MiterJoin)
                     highlight_stroker.setCapStyle(Qt.FlatCap)
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
                     highlight_pen = QPen(QColor('red'), 10)
-                    highlight_pen.setJoinStyle(Qt.RoundJoin)
+                    highlight_pen.setJoinStyle(Qt.MiterJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -2798,7 +2798,7 @@ class AttachedStrand(Strand):
             else:
                 # If path is too short, draw normal highlight
                 highlight_pen = QPen(QColor('red'), 10)
-                highlight_pen.setJoinStyle(Qt.RoundJoin)
+                highlight_pen.setJoinStyle(Qt.MiterJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
                 painter.setPen(highlight_pen)

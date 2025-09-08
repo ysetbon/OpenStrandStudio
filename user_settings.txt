@@ -1,7 +1,7 @@
 Theme: dark
 Language: en
 ShadowColor: 0,0,0,200
-DrawOnlyAffectedStrand: true
+DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: false
 EnableSnapToGrid: true
 ShowMoveHighlights: true

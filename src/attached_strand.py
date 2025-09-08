@@ -811,6 +811,7 @@ class AttachedStrand(Strand):
 
         # Draw shadow for overlapping strands - using the utility function
         # This must be called before drawing the strand itself
+        painter.save()  # Protect painter state from shadow drawing modifications
         try:
             # Import is inside try block to handle potential import errors
             from shader_utils import draw_strand_shadow, draw_circle_shadow
@@ -835,31 +836,8 @@ class AttachedStrand(Strand):
         except Exception as e:
             # Log the error but continue with the rendering
             pass
-        
-        # --- simple safety: skip if path is degenerate (moving) ---
-        dx = self.end.x() - self.start.x()
-        dy = self.end.y() - self.start.y()
-        if (dx*dx + dy*dy) < 1.0:
-            painter.restore()
-            return
-
-        # --- always paint body after shadow (unless shadow_only) ---
-        if not getattr(self, 'shadow_only', False):
-            center_path = self.get_path()
-
-            # body (purple fill)
-            body_stroker = QPainterPathStroker()
-            body_stroker.setWidth(self.width)
-            body_stroker.setJoinStyle(Qt.MiterJoin)
-            body_stroker.setCapStyle(Qt.FlatCap)   # squared end for attached
-            body_path = body_stroker.createStroke(center_path)
-
-            painter.save()
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.setPen(Qt.NoPen)               # ensure it's a FILL
-            painter.setBrush(self.color)           # your purple
-            painter.drawPath(body_path)
-            painter.restore()
+        finally:
+            painter.restore()  # Restore painter state after shadow drawing
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -2729,6 +2707,7 @@ class AttachedStrand(Strand):
         stroke_path = stroke_stroker.createStroke(path)
 
         # Draw shadow for overlapping strands - using the utility function
+        painter.save()  # Protect painter state from shadow drawing modifications
         try:
             # Import is inside try block to handle potential import errors
             from shader_utils import draw_strand_shadow, draw_circle_shadow
@@ -2753,30 +2732,8 @@ class AttachedStrand(Strand):
         except Exception as e:
             # Log the error but continue with the rendering
             pass
-
-        # --- simple safety: skip if path is degenerate (moving) ---
-        dx = self.end.x() - self.start.x()
-        dy = self.end.y() - self.start.y()
-        if (dx*dx + dy*dy) < 1.0:
-            return
-
-        # --- always paint body after shadow (unless shadow_only) ---
-        if not getattr(self, 'shadow_only', False):
-            center_path = self.get_path()
-
-            # body (purple fill)
-            body_stroker = QPainterPathStroker()
-            body_stroker.setWidth(self.width)
-            body_stroker.setJoinStyle(Qt.MiterJoin)
-            body_stroker.setCapStyle(Qt.FlatCap)   # squared end for attached
-            body_path = body_stroker.createStroke(center_path)
-
-            painter.save()
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.setPen(Qt.NoPen)               # ensure it's a FILL
-            painter.setBrush(self.color)           # your purple
-            painter.drawPath(body_path)
-            painter.restore()
+        finally:
+            painter.restore()  # Restore painter state after shadow drawing
 
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):

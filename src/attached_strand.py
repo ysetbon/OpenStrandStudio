@@ -1205,16 +1205,22 @@ class AttachedStrand(Strand):
                     
             
             # Add start side cover rectangle into combined fill before painting
-            t_start = 0.0
-            t_end = 1.0
+            # Sample the curve at a small offset to get better tangent for curved paths
+            # This handles cases where control points create sharp curves
+            t_sample = 0.001  # Small offset for more accurate direction
 
-            tangent_start = self.calculate_cubic_tangent(t_start)
-            tangent_end = self.calculate_cubic_tangent(t_end)
-
-            if tangent_start.manhattanLength() == 0:
-                tangent_start = self.end - self.start
-            if tangent_end.manhattanLength() == 0:
-                tangent_end = self.start - self.end
+            # Get a point slightly along the curve to calculate direction
+            point_at_start = self.start
+            point_at_sample = self.point_at(t_sample)
+            
+            # Calculate tangent from actual curve points for better accuracy
+            tangent_start = point_at_sample - point_at_start
+            
+            # If the tangent is too small, use the derivative calculation
+            if tangent_start.manhattanLength() < 0.01:
+                tangent_start = self.calculate_cubic_tangent(0.0)
+                if tangent_start.manhattanLength() == 0:
+                    tangent_start = self.end - self.start
 
             angle_start = math.atan2(tangent_start.y(), tangent_start.x())
             perp_angle_start = angle_start + math.pi / 2

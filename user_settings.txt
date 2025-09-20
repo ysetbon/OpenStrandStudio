@@ -15,8 +15,8 @@ ExtensionDashCount: 10
 ExtensionDashWidth: 2.0
 ExtensionDashGapLength: 5.0
 ExtensionLineWidth: 2.0
-ArrowHeadLength: 20.0
-ArrowHeadWidth: 10.0
+ArrowHeadLength: 70.0
+ArrowHeadWidth: 70.0
 ArrowHeadStrokeWidth: 4
 ArrowGapLength: 10.0
 ArrowLineLength: 20.0

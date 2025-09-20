@@ -668,7 +668,7 @@ class NumberedLayerButton(QPushButton):
                 shadow_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
 
                 shadow_checkbox = QCheckBox()
-                shadow_checkbox.setChecked(getattr(strand, 'arrow_casts_shadow', False))
+                shadow_checkbox.setChecked(getattr(strand, 'arrow_casts_shadow', True))
                 shadow_checkbox.toggled.connect(lambda checked: self.set_arrow_casts_shadow(strand, checked, layer_panel))
 
                 shadow_layout.addWidget(shadow_label)

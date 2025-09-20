@@ -654,12 +654,29 @@ class NumberedLayerButton(QPushButton):
                 head_layout.addStretch()
                 head_layout.addWidget(head_checkbox)
 
+                # Arrow Casts Shadow Checkbox
+                shadow_layout = QHBoxLayout()
+                shadow_label = QLabel(_['arrow_casts_shadow'] if 'arrow_casts_shadow' in _ else 'Arrow Casts Shadow')
+                if is_hebrew:
+                    shadow_label.setLayoutDirection(Qt.RightToLeft)
+                    shadow_label.setAlignment(Qt.AlignRight)
+                shadow_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                shadow_checkbox = QCheckBox()
+                shadow_checkbox.setChecked(getattr(strand, 'arrow_casts_shadow', False))
+                shadow_checkbox.toggled.connect(lambda checked: self.set_arrow_casts_shadow(strand, checked, layer_panel))
+
+                shadow_layout.addWidget(shadow_label)
+                shadow_layout.addStretch()
+                shadow_layout.addWidget(shadow_checkbox)
+
                 # Add all layouts to the main layout
                 arrow_custom_layout.addLayout(color_layout)
                 arrow_custom_layout.addLayout(transparency_layout)
                 arrow_custom_layout.addLayout(texture_layout)
                 arrow_custom_layout.addLayout(shaft_layout)
                 arrow_custom_layout.addLayout(head_layout)
+                arrow_custom_layout.addLayout(shadow_layout)
 
                 arrow_custom_widget.setLayout(arrow_custom_layout)
                 arrow_custom_widget.setStyleSheet(f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
@@ -2116,6 +2133,15 @@ class NumberedLayerButton(QPushButton):
     def set_arrow_head_visible(self, strand, visible, layer_panel):
         """Sets whether the arrow head is visible."""
         strand.arrow_head_visible = visible
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+
+    def set_arrow_casts_shadow(self, strand, casts_shadow, layer_panel):
+        """Sets whether the arrow casts shadow like a strand layer."""
+        strand.arrow_casts_shadow = casts_shadow
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
             if hasattr(layer_panel.canvas, 'undo_redo_manager'):

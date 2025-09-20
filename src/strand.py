@@ -608,6 +608,131 @@ class Strand:
             # No texture, solid fill
             painter.setBrush(fill_color)
 
+    def get_arrow_path(self, for_receiving_shadows=False):
+        """Get the arrow path (shaft + head) for shadow rendering.
+
+        Args:
+            for_receiving_shadows: If True, returns arrow path regardless of arrow_casts_shadow setting
+                                 (for receiving shadows ON the arrow)
+        """
+        if not getattr(self, 'full_arrow_visible', False):
+            return QPainterPath()
+
+        # Only check arrow_casts_shadow if not for receiving shadows
+        if not for_receiving_shadows and not getattr(self, 'arrow_casts_shadow', False):
+            return QPainterPath()
+
+        arrow_path = QPainterPath()
+
+        try:
+            # Get the shaft path (entire strand path)
+            shaft_path = self.get_path()
+
+            # Create stroked version of shaft with arrow line width
+            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+            stroker = QPainterPathStroker()
+            stroker.setWidth(full_arrow_shaft_line_width)
+            stroker.setJoinStyle(Qt.MiterJoin)
+            stroker.setCapStyle(Qt.FlatCap)
+            arrow_path = stroker.createStroke(shaft_path)
+
+            # Add arrow head if visible
+            if getattr(self, 'arrow_head_visible', True):
+                # Calculate arrow head geometry
+                arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+                arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+                # Calculate the tangent at the endpoint
+                tangent_at_end = self.calculate_cubic_tangent(0.999)
+                len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+                if len_at_end > 0:
+                    # Unit vector pointing along the curve at the endpoint
+                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
+                    # Perpendicular vector to the shaft direction (for arrow width)
+                    perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+
+                    # Calculate the two base corners at the endpoint
+                    left_point = self.end + perp_vector * (arrow_head_width / 2)
+                    right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                    # Calculate tip position extending outward from the endpoint
+                    tip = self.end + unit_vector_shaft * arrow_head_len
+
+                    # Create arrow head polygon path
+                    head_path = QPainterPath()
+                    head_path.moveTo(tip)
+                    head_path.lineTo(left_point)
+                    head_path.lineTo(right_point)
+                    head_path.closeSubpath()
+
+                    # Unite with arrow shaft
+                    arrow_path = arrow_path.united(head_path)
+        except Exception as e:
+            pass
+            return QPainterPath()
+
+        return arrow_path
+
+    def get_arrow_shadow_path(self):
+        """Get the arrow path (shaft + head) for shadow rendering when arrow_casts_shadow is enabled."""
+        if not getattr(self, 'full_arrow_visible', False) or not getattr(self, 'arrow_casts_shadow', False):
+            return QPainterPath()
+
+        arrow_path = QPainterPath()
+
+        try:
+            # Get the shaft path (entire strand path)
+            shaft_path = self.get_path()
+
+            # Create stroked version of shaft with arrow line width
+            full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+            stroker = QPainterPathStroker()
+            stroker.setWidth(full_arrow_shaft_line_width)
+            stroker.setJoinStyle(Qt.MiterJoin)
+            stroker.setCapStyle(Qt.FlatCap)
+            arrow_path = stroker.createStroke(shaft_path)
+
+            # Add arrow head if visible
+            if getattr(self, 'arrow_head_visible', True):
+                # Calculate arrow head geometry
+                arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+                arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+                # Calculate the tangent at the endpoint
+                tangent_at_end = self.calculate_cubic_tangent(0.999)
+                len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+                if len_at_end > 0:
+                    # Unit vector pointing along the curve at the endpoint
+                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
+                    # Perpendicular vector to the shaft direction (for arrow width)
+                    perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+
+                    # Calculate the two base corners at the endpoint
+                    left_point = self.end + perp_vector * (arrow_head_width / 2)
+                    right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                    # Calculate tip position extending outward from the endpoint
+                    tip = self.end + unit_vector_shaft * arrow_head_len
+
+                    # Create arrow head polygon path
+                    head_path = QPainterPath()
+                    head_path.moveTo(tip)
+                    head_path.lineTo(left_point)
+                    head_path.lineTo(right_point)
+                    head_path.closeSubpath()
+
+                    # Unite with arrow shaft
+                    arrow_path = arrow_path.united(head_path)
+        except Exception as e:
+            pass
+            return QPainterPath()
+
+        return arrow_path
+
     def get_shadow_path(self):
         """Get the path with extensions for shadow rendering, extending 10px beyond start/end."""
         path = QPainterPath()
@@ -1576,8 +1701,27 @@ class Strand:
             painter.restore() # Top Level Restore
             return
 
-        # --- START: Handle hidden state --- 
+        # --- START: Handle hidden state ---
         if self.is_hidden:
+            # Draw arrow shadow first if arrow casts shadow is enabled
+            if getattr(self, 'full_arrow_visible', False) and getattr(self, 'arrow_casts_shadow', False):
+                painter.save()
+                try:
+                    from shader_utils import draw_strand_shadow
+                    # Draw arrow shadow even when strand is hidden
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        self.shadow_color = QColor(shadow_color)
+
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                except Exception as e:
+                    pass
+                finally:
+                    painter.restore()
+
             # --- NEW: Draw full strand arrow when strand is hidden ---
             if getattr(self, 'full_arrow_visible', False):
                 painter.save()
@@ -1772,6 +1916,9 @@ class Strand:
         # --- END: Handle hidden state ---
 
         # Note: Shadow-only mode handled later - need to cast shadows first
+
+        # Check shadow-only mode for non-hidden strands as well
+        shadow_only_mode = getattr(self, 'shadow_only', False)
 
         # Import necessary classes locally to avoid potential circular imports
         from masked_strand import MaskedStrand
@@ -2466,6 +2613,25 @@ class Strand:
         
         # --- Handle hidden state comprehensively ---
         if self.is_hidden:
+            # Draw arrow shadow first if arrow casts shadow is enabled
+            if getattr(self, 'full_arrow_visible', False) and getattr(self, 'arrow_casts_shadow', False):
+                painter.save()
+                try:
+                    from shader_utils import draw_strand_shadow
+                    # Draw arrow shadow even when strand is hidden
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        self.shadow_color = QColor(shadow_color)
+
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                except Exception as e:
+                    pass
+                finally:
+                    painter.restore()
+
             # Draw full arrow if requested
             if getattr(self, 'full_arrow_visible', False):
                 painter.save() # Specific save for this drawing operation

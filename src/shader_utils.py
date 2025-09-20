@@ -267,7 +267,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
-    
+
     Args:
         painter: The QPainter to draw with
         strand: The strand to draw shadow for
@@ -275,8 +275,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     """
     # Check if the strand is hidden - hidden strands should not cast shadows
     if hasattr(strand, 'is_hidden') and strand.is_hidden:
-        pass
-        return
+        # Exception: arrow can cast shadow even when strand is hidden
+        if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
+            pass
+            return
     
     # Auto-calculate blur radius based on strand thickness if not provided
     if max_blur_radius is None:
@@ -322,8 +324,20 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # the raw strand outline, then build a geometry path that already contains the strand body **and** any
     # visible end-circles.  This single path will be used for all subsequent
     # shadow computations, eliminating the need for special-casing circles.
-    path = get_proper_masked_strand_path(strand)
-    shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
+
+    # Check if arrow shading is enabled and use arrow path instead
+    if getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False):
+        # Use the arrow path for shadow casting
+        arrow_shadow_path = strand.get_arrow_shadow_path() if hasattr(strand, 'get_arrow_shadow_path') else QPainterPath()
+        if not arrow_shadow_path.isEmpty():
+            path = arrow_shadow_path
+            shadow_path = arrow_shadow_path  # Use arrow path directly as shadow path
+        else:
+            path = get_proper_masked_strand_path(strand)
+            shadow_path = build_shadow_geometry(strand, 0, include_circles=False)
+    else:
+        path = get_proper_masked_strand_path(strand)
+        shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
         
     # --------------------------------------------------
     # If this strand has a *transparent* circle at either end, the circle is
@@ -419,12 +433,21 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         for other_strand in canvas.strands:
             # logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
             # Skip self or strands without layer names
-            if other_strand is strand or not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+            # Note: Arrow shadows should not cast on their own strand body
+            if other_strand is strand:
+                # Special case: arrow can cast shadow on its own layer IF arrow_casts_shadow is disabled
+                # (normal behavior - strand doesn't shadow itself)
+                continue
+            if not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
                 continue
             # Skip hidden strands - hidden strands should not receive shadows
+            # EXCEPT if they have a visible full arrow that should receive shadows
             if hasattr(other_strand, 'is_hidden') and other_strand.is_hidden:
-                pass
-                continue
+                # Only skip if there's NO full arrow visible
+                if not getattr(other_strand, 'full_arrow_visible', False):
+                    pass
+                    continue
+                # If it has a visible full arrow, continue to allow it to receive shadows on the arrow
             # Skip masked strands
             if other_strand.__class__.__name__ == 'MaskedStrand':
                 continue
@@ -559,11 +582,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             except Exception as oc_e:
                                 # logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
                                 pass
-                        
+
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
-                        circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
-                        intersection = intersection.united(circle_shadow_path)
+                        # Only add circle shadows if not using arrow shadow
+                        if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
+                            circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
+                            intersection = intersection.united(circle_shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         
@@ -838,9 +863,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 continue
             
             # Skip hidden strands - hidden strands should not receive shadows on their circles
+            # EXCEPT if they have a visible full arrow that should receive shadows
             if hasattr(other_strand, 'is_hidden') and other_strand.is_hidden:
-                pass
-                continue
+                # Only skip if there's NO full arrow visible
+                if not getattr(other_strand, 'full_arrow_visible', False):
+                    pass
+                    continue
 
             other_layer = other_strand.layer_name
             if other_layer not in layer_order:
@@ -1082,8 +1110,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
              # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
              return # Nothing to draw
 
-        circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius)
-        total_shadow_path = total_shadow_path.united(circle_shadow_path)
+        # Only add circle shadows if not using arrow shadow
+        if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
+            circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius)
+            total_shadow_path = total_shadow_path.united(circle_shadow_path)
 
         # Reduced high-frequency logging for performance during moves
         # logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
@@ -1166,13 +1196,22 @@ def get_proper_masked_strand_path(strand):
     """
     Helper function to get the proper path for a masked strand.
     This ensures we use the actual mask path that accounts for all deletions.
-    
+
     Args:
         strand: The strand to get path from, which might be a MaskedStrand
-        
+
     Returns:
         QPainterPath: The correct path to use for the strand
     """
+    # Check if strand is hidden with a visible arrow that casts shadows
+    if (getattr(strand, 'is_hidden', False) and
+        getattr(strand, 'full_arrow_visible', False) and
+        getattr(strand, 'arrow_casts_shadow', False)):
+        # Use arrow path for shadow casting when strand is hidden
+        arrow_path = strand.get_arrow_shadow_path() if hasattr(strand, 'get_arrow_shadow_path') else QPainterPath()
+        if not arrow_path.isEmpty():
+            return arrow_path
+
     # Check if this is a masked strand
     if hasattr(strand, 'get_mask_path'):
         try:
@@ -1187,13 +1226,13 @@ def get_proper_masked_strand_path(strand):
         except Exception as e:
             # logging.error(f"Error getting mask path: {e}, falling back to standard path")
             pass
-    
+
     # For normal strands or fallback, use the regular path
     if hasattr(strand, 'get_shadow_path'):
         path = strand.get_shadow_path()
     else:
         path = QPainterPath()  # Empty path as last resort
-        
+
     return path 
 
 # --------------------------------------------------
@@ -1252,6 +1291,7 @@ def build_rendered_geometry(strand):
       • The stroked body path (taking `width` & `stroke_width` into account)
       • Every *visible* end-circle (if `has_circles` is set and the circle
         stroke colour is not fully transparent).
+      • The arrow path if full_arrow_visible is True (for receiving shadows on arrow)
 
     Having one consistent geometry for both the casting and receiving side of
     the shadow calculation removes the need for the separate
@@ -1267,6 +1307,20 @@ def build_rendered_geometry(strand):
     # shadow around the mask edges otherwise.
     if hasattr(strand, 'get_mask_path'):
         return get_proper_masked_strand_path(strand)
+
+    # Check if we should use arrow path for receiving shadows
+    # The arrow should receive shadows regardless of arrow_casts_shadow setting
+    # arrow_casts_shadow only controls if arrow casts shadows, not if it receives them
+    if getattr(strand, 'full_arrow_visible', False):
+        # Get the arrow path which includes shaft and head (for receiving shadows)
+        arrow_path = strand.get_arrow_path(for_receiving_shadows=True) if hasattr(strand, 'get_arrow_path') else QPainterPath()
+
+        if not arrow_path.isEmpty():
+            # If strand is hidden, only return arrow path
+            if getattr(strand, 'is_hidden', False):
+                return arrow_path
+            # If strand is visible, combine arrow with strand body
+            # Continue to build the normal strand geometry and unite with arrow
 
     # Import AttachedStrand class for isinstance checks
     try:
@@ -1389,6 +1443,12 @@ def build_rendered_geometry(strand):
                             circle_path = QPainterPath()
                             circle_path.addEllipse(centre, radius, radius)
                             result_path = result_path.united(circle_path)
+
+        # Unite arrow path with result if we have one (for visible strands)
+        if getattr(strand, 'full_arrow_visible', False) and not getattr(strand, 'is_hidden', False):
+            arrow_path = strand.get_arrow_path(for_receiving_shadows=True) if hasattr(strand, 'get_arrow_path') else QPainterPath()
+            if not arrow_path.isEmpty():
+                result_path = result_path.united(arrow_path)
 
         return result_path
     except Exception as e:

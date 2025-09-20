@@ -540,6 +540,25 @@ class AttachedStrand(Strand):
 
         # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
+            # Draw arrow shadow first if arrow casts shadow is enabled
+            if getattr(self, 'full_arrow_visible', False) and getattr(self, 'arrow_casts_shadow', False):
+                painter.save()
+                try:
+                    from shader_utils import draw_strand_shadow
+                    # Draw arrow shadow even when strand is hidden
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        self.shadow_color = QColor(shadow_color)
+
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                except Exception as e:
+                    pass
+                finally:
+                    painter.restore()
+
             # Draw full arrow if requested
             if getattr(self, 'full_arrow_visible', False):
                 painter.save() # Specific save for this drawing operation
@@ -609,36 +628,46 @@ class AttachedStrand(Strand):
                     # The tip should be arrow_head_len away from base_center along the shaft direction
                     tip = base_center + unit_vector_shaft * arrow_head_len
                     
-                    # --- Draw Shaft (following the Bézier curve up to base_center) ---
+                    # --- Draw Shaft (using the actual Bézier curve with control points) ---
                     full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-                    shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-                    shaft_pen.setCapStyle(Qt.FlatCap)
-                    shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
-                    painter.setPen(shaft_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    
-                    # Create a path that follows the curve but stops at base_center
-                    shaft_path = QPainterPath()
-                    shaft_path.moveTo(self.start)
-                    
-                    # Sample points along the curve up to best_t
-                    num_shaft_samples = 100
-                    for j in range(1, num_shaft_samples + 1):
-                        sample_t = best_t * (j / float(num_shaft_samples))
-                        sample_point = self.point_at(sample_t)
-                        shaft_path.lineTo(sample_point)
-                    
-                    painter.drawPath(shaft_path)
+                    # Use custom arrow color for shaft if set
+                    shaft_color = getattr(self, 'arrow_color', self.stroke_color)
+                    if hasattr(self, 'arrow_transparency'):
+                        shaft_color = QColor(shaft_color)
+                        shaft_color.setAlphaF(self.arrow_transparency / 100.0)
+
+                    # Use the exact strand path as the shaft (includes control points and bias)
+                    shaft_path = self.get_path()  # This uses all the control points and bias settings
+
+                    # Draw the shaft with pattern (entire strand path)
+                    if hasattr(self, 'draw_arrow_shaft_with_pattern'):
+                        self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
+                    else:
+                        # Fallback to simple drawing if pattern method not available
+                        shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
+                        shaft_pen.setCapStyle(Qt.FlatCap)
+                        shaft_pen.setJoinStyle(Qt.RoundJoin)
+                        painter.setPen(shaft_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawPath(shaft_path)
                     # --- End Shaft ---
                     
                     # Create the arrow polygon
                     arrow_head_poly = QPolygonF([tip, left_point, right_point])
-                    
-                    # Fill the arrow
-                    painter.setPen(Qt.NoPen); painter.setBrush(arrow_head_fill_color); painter.drawPolygon(arrow_head_poly)
-                    
-                    # Draw the border
-                    painter.setPen(arrow_head_border_pen); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_head_poly)
+
+                    # Fill the arrow with optional texture (only if arrow head is visible)
+                    if getattr(self, 'arrow_head_visible', True):
+                        painter.setPen(Qt.NoPen)
+                        if hasattr(self, 'apply_arrow_texture_brush'):
+                            self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
+                        else:
+                            painter.setBrush(arrow_head_fill_color)
+                        painter.drawPolygon(arrow_head_poly)
+
+                        # Draw the border (only if arrow head is visible)
+                        painter.setPen(arrow_head_border_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawPolygon(arrow_head_poly)
                 painter.restore() # Specific restore for full arrow
 
             # Draw dashed extension lines if requested when hidden
@@ -1468,40 +1497,46 @@ class AttachedStrand(Strand):
                 # The tip should be arrow_head_len away from base_center along the shaft direction
                 tip = base_center + unit_vector_shaft * arrow_head_len
                 
-                # --- Draw Shaft (following the Bézier curve up to base_center) ---
+                # --- Draw Shaft (using the actual Bézier curve with control points) ---
                 full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-                shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-                shaft_pen.setCapStyle(Qt.FlatCap)
-                shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
-                painter.setPen(shaft_pen)
-                painter.setBrush(Qt.NoBrush)
-                
-                # Create a path that follows the curve but stops at base_center
-                shaft_path = QPainterPath()
-                shaft_path.moveTo(self.start)
-                
-                # Sample points along the curve up to best_t
-                num_shaft_samples = 100
-                for j in range(1, num_shaft_samples + 1):
-                    sample_t = best_t * (j / float(num_shaft_samples))
-                    sample_point = self.point_at(sample_t)
-                    shaft_path.lineTo(sample_point)
-                
-                painter.drawPath(shaft_path)
+                # Use custom arrow color for shaft if set
+                shaft_color = getattr(self, 'arrow_color', self.stroke_color)
+                if hasattr(self, 'arrow_transparency'):
+                    shaft_color = QColor(shaft_color)
+                    shaft_color.setAlphaF(self.arrow_transparency / 100.0)
+
+                # Use the exact strand path as the shaft (includes control points and bias)
+                shaft_path = self.get_path()  # This uses all the control points and bias settings
+
+                # Draw the shaft with pattern (entire strand path)
+                if hasattr(self, 'draw_arrow_shaft_with_pattern'):
+                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
+                else:
+                    # Fallback to simple drawing if pattern method not available
+                    shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
+                    shaft_pen.setCapStyle(Qt.FlatCap)
+                    shaft_pen.setJoinStyle(Qt.RoundJoin)
+                    painter.setPen(shaft_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPath(shaft_path)
                 # --- End Shaft ---
                 
                 # Create the arrow polygon
                 arrow_head_poly = QPolygonF([tip, left_point, right_point])
-                
-                # Fill the arrow
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(arrow_head_fill_color)
-                painter.drawPolygon(arrow_head_poly)
-                
-                # Draw the border
-                painter.setPen(arrow_head_border_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPolygon(arrow_head_poly)
+
+                # Fill the arrow with optional texture (only if arrow head is visible)
+                if getattr(self, 'arrow_head_visible', True):
+                    painter.setPen(Qt.NoPen)
+                    if hasattr(self, 'apply_arrow_texture_brush'):
+                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
+                    else:
+                        painter.setBrush(arrow_head_fill_color)
+                    painter.drawPolygon(arrow_head_poly)
+
+                    # Draw the border (only if arrow head is visible)
+                    painter.setPen(arrow_head_border_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPolygon(arrow_head_poly)
             painter.restore()
         # --- END Draw full strand arrow on TOP ---
 
@@ -2450,6 +2485,25 @@ class AttachedStrand(Strand):
         
         # --- Handle hidden state comprehensively ---
         if self.is_hidden:
+            # Draw arrow shadow first if arrow casts shadow is enabled
+            if getattr(self, 'full_arrow_visible', False) and getattr(self, 'arrow_casts_shadow', False):
+                painter.save()
+                try:
+                    from shader_utils import draw_strand_shadow
+                    # Draw arrow shadow even when strand is hidden
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        self.shadow_color = QColor(shadow_color)
+
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                except Exception as e:
+                    pass
+                finally:
+                    painter.restore()
+
             # Draw full arrow if requested
             if getattr(self, 'full_arrow_visible', False):
                 painter.save() # Specific save for this drawing operation
@@ -2519,36 +2573,46 @@ class AttachedStrand(Strand):
                     # The tip should be arrow_head_len away from base_center along the shaft direction
                     tip = base_center + unit_vector_shaft * arrow_head_len
                     
-                    # --- Draw Shaft (following the Bézier curve up to base_center) ---
+                    # --- Draw Shaft (using the actual Bézier curve with control points) ---
                     full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
-                    shaft_pen = QPen(self.stroke_color, full_arrow_shaft_line_width)
-                    shaft_pen.setCapStyle(Qt.FlatCap)
-                    shaft_pen.setJoinStyle(Qt.RoundJoin)  # Smooth joins for curves
-                    painter.setPen(shaft_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    
-                    # Create a path that follows the curve but stops at base_center
-                    shaft_path = QPainterPath()
-                    shaft_path.moveTo(self.start)
-                    
-                    # Sample points along the curve up to best_t
-                    num_shaft_samples = 100
-                    for j in range(1, num_shaft_samples + 1):
-                        sample_t = best_t * (j / float(num_shaft_samples))
-                        sample_point = self.point_at(sample_t)
-                        shaft_path.lineTo(sample_point)
-                    
-                    painter.drawPath(shaft_path)
+                    # Use custom arrow color for shaft if set
+                    shaft_color = getattr(self, 'arrow_color', self.stroke_color)
+                    if hasattr(self, 'arrow_transparency'):
+                        shaft_color = QColor(shaft_color)
+                        shaft_color.setAlphaF(self.arrow_transparency / 100.0)
+
+                    # Use the exact strand path as the shaft (includes control points and bias)
+                    shaft_path = self.get_path()  # This uses all the control points and bias settings
+
+                    # Draw the shaft with pattern (entire strand path)
+                    if hasattr(self, 'draw_arrow_shaft_with_pattern'):
+                        self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
+                    else:
+                        # Fallback to simple drawing if pattern method not available
+                        shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
+                        shaft_pen.setCapStyle(Qt.FlatCap)
+                        shaft_pen.setJoinStyle(Qt.RoundJoin)
+                        painter.setPen(shaft_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawPath(shaft_path)
                     # --- End Shaft ---
                     
                     # Create the arrow polygon
                     arrow_head_poly = QPolygonF([tip, left_point, right_point])
-                    
-                    # Fill the arrow
-                    painter.setPen(Qt.NoPen); painter.setBrush(arrow_head_fill_color); painter.drawPolygon(arrow_head_poly)
-                    
-                    # Draw the border
-                    painter.setPen(arrow_head_border_pen); painter.setBrush(Qt.NoBrush); painter.drawPolygon(arrow_head_poly)
+
+                    # Fill the arrow with optional texture (only if arrow head is visible)
+                    if getattr(self, 'arrow_head_visible', True):
+                        painter.setPen(Qt.NoPen)
+                        if hasattr(self, 'apply_arrow_texture_brush'):
+                            self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
+                        else:
+                            painter.setBrush(arrow_head_fill_color)
+                        painter.drawPolygon(arrow_head_poly)
+
+                        # Draw the border (only if arrow head is visible)
+                        painter.setPen(arrow_head_border_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawPolygon(arrow_head_poly)
                 painter.restore() # Specific restore for full arrow
 
             # Draw dashed extension lines if requested when hidden

@@ -1,4 +1,4 @@
-Theme: dark
+Theme: default
 Language: en
 ShadowColor: 0,0,0,200
 DrawOnlyAffectedStrand: false
@@ -20,7 +20,7 @@ ArrowHeadWidth: 10.0
 ArrowHeadStrokeWidth: 4
 ArrowGapLength: 10.0
 ArrowLineLength: 20.0
-ArrowLineWidth: 10.0
+ArrowLineWidth: 40.0
 UseDefaultArrowColor: false
 DefaultArrowColor: 0,0,0,255
 DefaultStrandColor: 200,170,230,255

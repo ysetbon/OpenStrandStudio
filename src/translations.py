@@ -370,6 +370,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Show Full Arrow",
         'hide_full_arrow': "Hide Full Arrow",
+        'arrow_color': "Arrow Color",
+        'arrow_transparency': "Arrow Transparency",
+        'arrow_texture': "Arrow Head Texture",
+        'arrow_shaft_style': "Arrow Shaft Style",
+        'show_arrow_head': "Show Arrow Head",
+        'texture_none': "None",
+        'texture_stripes': "Stripes",
+        'texture_dots': "Dots",
+        'texture_crosshatch': "Crosshatch",
+        'shaft_solid': "Solid",
+        'shaft_stripes': "Stripes",
+        'shaft_dots': "Dots",
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
@@ -565,6 +577,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Afficher la flèche complète",
         'hide_full_arrow': "Masquer la flèche complète",
+        'arrow_color': "Couleur de la flèche",
+        'arrow_transparency': "Transparence de la flèche",
+        'arrow_texture': "Texture de la tête",
+        'arrow_shaft_style': "Style de la ligne",
+        'show_arrow_head': "Afficher la tête",
+        'texture_none': "Aucune",
+        'texture_stripes': "Rayures",
+        'texture_dots': "Points",
+        'texture_crosshatch': "Hachures",
+        'shaft_solid': "Solide",
+        'shaft_stripes': "Rayures",
+        'shaft_dots': "Points",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Angle',
@@ -1025,6 +1049,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': 'Vollständigen Pfeil anzeigen',
         'hide_full_arrow': 'Vollständigen Pfeil ausblenden',
+        'arrow_color': 'Pfeilfarbe',
+        'arrow_transparency': 'Pfeiltransparenz',
+        'arrow_texture': 'Pfeilspitzen-Textur',
+        'arrow_shaft_style': 'Pfeillinien-Muster',
+        'show_arrow_head': 'Pfeilspitze anzeigen',
+        'texture_none': 'Keine',
+        'texture_stripes': 'Streifen',
+        'texture_dots': 'Punkte',
+        'texture_crosshatch': 'Schraffur',
+        'shaft_solid': 'Durchgehend',
+        'shaft_stripes': 'Gestreift',
+        'shaft_dots': 'Gepunktet',
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Winkel/Länge anpassen',
@@ -1375,6 +1411,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Mostra freccia completa",
         'hide_full_arrow': "Nascondi freccia completa",
+        'arrow_color': "Colore freccia",
+        'arrow_transparency': "Trasparenza freccia",
+        'arrow_texture': "Texture punta",
+        'arrow_shaft_style': "Stile linea",
+        'show_arrow_head': "Mostra punta",
+        'texture_none': "Nessuna",
+        'texture_stripes': "Strisce",
+        'texture_dots': "Punti",
+        'texture_crosshatch': "Tratteggio",
+        'shaft_solid': "Solida",
+        'shaft_stripes': "A strisce",
+        'shaft_dots': "A punti",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Regola Ang.',
@@ -1786,6 +1834,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Mostrar flecha completa",
         'hide_full_arrow': "Ocultar flecha completa",
+        'arrow_color': "Color de flecha",
+        'arrow_transparency': "Transparencia de flecha",
+        'arrow_texture': "Textura de punta",
+        'arrow_shaft_style': "Estilo de línea",
+        'show_arrow_head': "Mostrar punta",
+        'texture_none': "Ninguna",
+        'texture_stripes': "Rayas",
+        'texture_dots': "Puntos",
+        'texture_crosshatch': "Tramado",
+        'shaft_solid': "Sólida",
+        'shaft_stripes': "Rayas",
+        'shaft_dots': "Puntos",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Áng.',
@@ -2196,6 +2256,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "Mostrar seta completa",
         'hide_full_arrow': "Ocultar seta completa",
+        'arrow_color': "Cor da seta",
+        'arrow_transparency': "Transparência da seta",
+        'arrow_texture': "Textura da ponta",
+        'arrow_shaft_style': "Estilo da linha",
+        'show_arrow_head': "Mostrar ponta",
+        'texture_none': "Nenhuma",
+        'texture_stripes': "Listras",
+        'texture_dots': "Pontos",
+        'texture_crosshatch': "Hachurado",
+        'shaft_solid': "Sólida",
+        'shaft_stripes': "Listras",
+        'shaft_dots': "Pontos",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Âng.',
@@ -2613,6 +2685,18 @@ translations = {
         # --- NEW: Full Arrow translations ---
         'show_full_arrow': "הצג חץ מלא",
         'hide_full_arrow': "הסתר חץ מלא",
+        'arrow_color': "צבע חץ",
+        'arrow_transparency': "שקיפות חץ",
+        'arrow_texture': "מרקם ראש חץ",
+        'arrow_shaft_style': "סגנון קו חץ",
+        'show_arrow_head': "הצג ראש חץ",
+        'texture_none': "ללא",
+        'texture_stripes': "פסים",
+        'texture_dots': "נקודות",
+        'texture_crosshatch': "בכיס צלב",
+        'shaft_solid': "רציף",
+        'shaft_stripes': "פסים",
+        'shaft_dots': "נקודות",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',

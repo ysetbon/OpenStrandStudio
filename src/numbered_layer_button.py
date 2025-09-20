@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
@@ -536,8 +536,142 @@ class NumberedLayerButton(QPushButton):
                 )
             )
             context_menu.addAction(full_arrow_action)
+
+            # --- Arrow Customization Widget (only show if arrow is visible) ---
+            if getattr(strand, 'full_arrow_visible', False):
+                # Add separator
+                context_menu.addSeparator()
+
+                # Create a container widget for arrow customization
+                arrow_custom_widget = QWidget()
+                arrow_custom_layout = QVBoxLayout()
+                arrow_custom_layout.setContentsMargins(10, 5, 10, 5)
+                arrow_custom_layout.setSpacing(5)
+
+                # Arrow Color
+                color_layout = QHBoxLayout()
+                color_label = QLabel(_['arrow_color'])
+                if is_hebrew:
+                    color_label.setLayoutDirection(Qt.RightToLeft)
+                    color_label.setAlignment(Qt.AlignRight)
+                color_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                # Get current arrow color (default to stroke color if not set)
+                arrow_color = getattr(strand, 'arrow_color', None)
+                if arrow_color is None:
+                    arrow_color = strand.stroke_color
+                color_btn = QPushButton()
+                color_btn.setFixedSize(30, 20)
+                color_btn.setStyleSheet(f"background-color: {arrow_color.name() if arrow_color else '#000000'}; border: 1px solid #666;")
+                color_btn.clicked.connect(lambda: self.choose_arrow_color(strand, color_btn, layer_panel))
+
+                color_layout.addWidget(color_label)
+                color_layout.addStretch()
+                color_layout.addWidget(color_btn)
+
+                # Arrow Transparency
+                transparency_layout = QHBoxLayout()
+                transparency_label = QLabel(_['arrow_transparency'])
+                if is_hebrew:
+                    transparency_label.setLayoutDirection(Qt.RightToLeft)
+                    transparency_label.setAlignment(Qt.AlignRight)
+                transparency_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                transparency_slider = QSlider(Qt.Horizontal)
+                transparency_slider.setRange(0, 100)
+                transparency_slider.setValue(getattr(strand, 'arrow_transparency', 100))
+                transparency_slider.setMaximumWidth(100)
+                transparency_slider.valueChanged.connect(lambda value: self.set_arrow_transparency(strand, value, layer_panel))
+
+                transparency_value = QLabel(f"{transparency_slider.value()}%")
+                transparency_value.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+                transparency_slider.valueChanged.connect(lambda value: transparency_value.setText(f"{value}%"))
+
+                transparency_layout.addWidget(transparency_label)
+                transparency_layout.addStretch()
+                transparency_layout.addWidget(transparency_slider)
+                transparency_layout.addWidget(transparency_value)
+
+                # Arrow Texture
+                texture_layout = QHBoxLayout()
+                texture_label = QLabel(_['arrow_texture'])
+                if is_hebrew:
+                    texture_label.setLayoutDirection(Qt.RightToLeft)
+                    texture_label.setAlignment(Qt.AlignRight)
+                texture_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                texture_combo = QComboBox()
+                texture_combo.addItems([_['texture_none'], _['texture_stripes'], _['texture_dots'], _['texture_crosshatch']])
+                texture_combo.setMaximumWidth(100)
+
+                # Set current texture
+                current_texture = getattr(strand, 'arrow_texture', 'none')
+                texture_map = {'none': 0, 'stripes': 1, 'dots': 2, 'crosshatch': 3}
+                texture_combo.setCurrentIndex(texture_map.get(current_texture, 0))
+
+                texture_combo.currentIndexChanged.connect(lambda index: self.set_arrow_texture(strand, ['none', 'stripes', 'dots', 'crosshatch'][index], layer_panel))
+
+                texture_layout.addWidget(texture_label)
+                texture_layout.addStretch()
+                texture_layout.addWidget(texture_combo)
+
+                # Arrow Shaft Style
+                shaft_layout = QHBoxLayout()
+                shaft_label = QLabel(_['arrow_shaft_style'])
+                if is_hebrew:
+                    shaft_label.setLayoutDirection(Qt.RightToLeft)
+                    shaft_label.setAlignment(Qt.AlignRight)
+                shaft_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                shaft_combo = QComboBox()
+                shaft_combo.addItems([_['shaft_solid'], _['shaft_stripes'], _['shaft_dots']])
+                shaft_combo.setMaximumWidth(100)
+
+                # Set current shaft style
+                current_shaft = getattr(strand, 'arrow_shaft_style', 'solid')
+                shaft_map = {'solid': 0, 'stripes': 1, 'dots': 2}
+                shaft_combo.setCurrentIndex(shaft_map.get(current_shaft, 0))
+
+                shaft_combo.currentIndexChanged.connect(lambda index: self.set_arrow_shaft_style(strand, ['solid', 'stripes', 'dots'][index], layer_panel))
+
+                shaft_layout.addWidget(shaft_label)
+                shaft_layout.addStretch()
+                shaft_layout.addWidget(shaft_combo)
+
+                # Show Arrow Head Checkbox
+                head_layout = QHBoxLayout()
+                head_label = QLabel(_['show_arrow_head'])
+                if is_hebrew:
+                    head_label.setLayoutDirection(Qt.RightToLeft)
+                    head_label.setAlignment(Qt.AlignRight)
+                head_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                head_checkbox = QCheckBox()
+                head_checkbox.setChecked(getattr(strand, 'arrow_head_visible', True))
+                head_checkbox.toggled.connect(lambda checked: self.set_arrow_head_visible(strand, checked, layer_panel))
+
+                head_layout.addWidget(head_label)
+                head_layout.addStretch()
+                head_layout.addWidget(head_checkbox)
+
+                # Add all layouts to the main layout
+                arrow_custom_layout.addLayout(color_layout)
+                arrow_custom_layout.addLayout(transparency_layout)
+                arrow_custom_layout.addLayout(texture_layout)
+                arrow_custom_layout.addLayout(shaft_layout)
+                arrow_custom_layout.addLayout(head_layout)
+
+                arrow_custom_widget.setLayout(arrow_custom_layout)
+                arrow_custom_widget.setStyleSheet(f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
+
+                # Add the widget to the context menu
+                arrow_custom_action = QWidgetAction(self)
+                arrow_custom_action.setDefaultWidget(arrow_custom_widget)
+                context_menu.addAction(arrow_custom_action)
+            # --- END Arrow Customization ---
+
             # --- END NEW ---
-            
+
             # --- NEW: Add Close the Knot option for strands with exactly 1 free end ---
             # Count free ends (ends without circles - for knot connections, we ignore attachment status)
             free_ends = 0
@@ -1929,6 +2063,65 @@ class NumberedLayerButton(QPushButton):
                         pass
                     else:
                         pass
+
+    # --- Arrow Customization Methods ---
+    def choose_arrow_color(self, strand, color_btn, layer_panel):
+        """Opens a color dialog to choose arrow color."""
+        language = getattr(layer_panel, 'language', None)
+        if not language and layer_panel and hasattr(layer_panel, 'canvas'):
+            language = getattr(layer_panel.canvas, 'language', 'en')
+        if not language:
+            language = 'en'
+        _ = translations.get(language, translations['en'])
+        current_color = getattr(strand, 'arrow_color', None)
+        if current_color is None:
+            current_color = strand.stroke_color
+        color = QColorDialog.getColor(current_color, self, _['arrow_color'])
+        if color.isValid():
+            strand.arrow_color = color
+            color_btn.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #666;")
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update()
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    layer_panel.canvas.undo_redo_manager.save_state()
+
+    def set_arrow_transparency(self, strand, value, layer_panel):
+        """Sets the arrow transparency (0-100, where 100 is opaque)."""
+        strand.arrow_transparency = value
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+
+    def set_arrow_texture(self, strand, texture, layer_panel):
+        """Sets the arrow texture pattern."""
+        strand.arrow_texture = texture
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+
+    def set_arrow_shaft_style(self, strand, style, layer_panel):
+        """Sets the arrow shaft style (solid, dashed, dotted)."""
+        strand.arrow_shaft_style = style
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+
+    def set_arrow_head_visible(self, strand, visible, layer_panel):
+        """Sets whether the arrow head is visible."""
+        strand.arrow_head_visible = visible
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
+            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+    # --- END Arrow Customization Methods ---
 
 
 class WidthConfigDialog(QDialog):

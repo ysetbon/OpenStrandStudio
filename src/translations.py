@@ -383,6 +383,7 @@ translations = {
         'shaft_solid': "Solid",
         'shaft_stripes': "Stripes",
         'shaft_dots': "Dots",
+        'shaft_tiles': "Tiles",
         # --- END NEW ---
         # Group-related translations
         'group_exists': 'Group Exists',
@@ -591,6 +592,7 @@ translations = {
         'shaft_solid': "Solide",
         'shaft_stripes': "Rayures",
         'shaft_dots': "Points",
+        'shaft_tiles': "Carreaux",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Angle',
@@ -1064,6 +1066,7 @@ translations = {
         'shaft_solid': 'Durchgehend',
         'shaft_stripes': 'Gestreift',
         'shaft_dots': 'Gepunktet',
+        'shaft_tiles': 'Kacheln',
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Winkel/Länge anpassen',
@@ -1427,6 +1430,7 @@ translations = {
         'shaft_solid': "Solida",
         'shaft_stripes': "A strisce",
         'shaft_dots': "A punti",
+        'shaft_tiles': "Piastrelle",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Regola Ang.',
@@ -1851,6 +1855,7 @@ translations = {
         'shaft_solid': "Sólida",
         'shaft_stripes': "Rayas",
         'shaft_dots': "Puntos",
+        'shaft_tiles': "Azulejos",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Áng.',
@@ -2274,6 +2279,7 @@ translations = {
         'shaft_solid': "Sólida",
         'shaft_stripes': "Listras",
         'shaft_dots': "Pontos",
+        'shaft_tiles': "Telhas",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'Ajust. Âng.',
@@ -2704,6 +2710,7 @@ translations = {
         'shaft_solid': "רציף",
         'shaft_stripes': "פסים",
         'shaft_dots': "נקודות",
+        'shaft_tiles': "אריחים",
         # --- END NEW ---
         # Additional texts
         'adjust_angle_and_length': 'התאם זווית ואורך',

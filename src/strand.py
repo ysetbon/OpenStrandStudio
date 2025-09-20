@@ -513,7 +513,7 @@ class Strand:
         painter.drawPath(shaft_path)
 
         if shaft_style == 'tiles':
-            # Stripe pattern using a tiled brush to guarantee full coverage inside the stroke
+            # Tiles pattern using a tiled brush to guarantee full coverage inside the stroke
             painter.save()
 
             # Build stroke shape to paint inside
@@ -523,7 +523,7 @@ class Strand:
             stroker.setJoinStyle(Qt.RoundJoin)
             stroke_path = stroker.createStroke(shaft_path)
 
-            # Create a diagonal stripe pixmap tile
+            # Create a diagonal tiles pixmap tile
             from PyQt5.QtGui import QPixmap
             tile_size = 12
             pixmap = QPixmap(tile_size, tile_size)

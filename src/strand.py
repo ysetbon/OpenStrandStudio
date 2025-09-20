@@ -512,58 +512,117 @@ class Strand:
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(shaft_path)
 
-        if shaft_style == 'stripes':
-            # Add stripe pattern overlay
+        if shaft_style == 'tiles':
+            # Stripe pattern using a tiled brush to guarantee full coverage inside the stroke
             painter.save()
 
-            # Create clipping region along the path with line width
+            # Build stroke shape to paint inside
             stroker = QPainterPathStroker()
             stroker.setWidth(line_width)
-            stroker.setCapStyle(Qt.FlatCap)  # Flat caps
+            stroker.setCapStyle(Qt.FlatCap)
             stroker.setJoinStyle(Qt.RoundJoin)
             stroke_path = stroker.createStroke(shaft_path)
-            painter.setClipPath(stroke_path)
 
-            # Draw diagonal stripes
-            stripe_color = QColor(255, 255, 255, 80)  # Semi-transparent white
+            # Create a diagonal stripe pixmap tile
+            from PyQt5.QtGui import QPixmap
+            tile_size = 12
+            pixmap = QPixmap(tile_size, tile_size)
+            pixmap.fill(Qt.transparent)
+            tile_painter = QPainter(pixmap)
+            stripe_color = QColor(255, 255, 255, 80)
             stripe_pen = QPen(stripe_color, 3)
-            painter.setPen(stripe_pen)
+            stripe_pen.setCapStyle(Qt.FlatCap)
+            tile_painter.setPen(stripe_pen)
+            # Draw two diagonals to ensure seamless tiling
+            tile_painter.drawLine(0, tile_size, tile_size, 0)
+            tile_painter.drawLine(-tile_size//2, tile_size, tile_size//2, 0)
+            tile_painter.end()
 
-            bounds = stroke_path.boundingRect()
-            stripe_spacing = 8
-            for i in range(int(bounds.left() - bounds.height()), int(bounds.right() + bounds.height()), stripe_spacing):
-                painter.drawLine(QPointF(i, bounds.top() - 50), QPointF(i + bounds.height() + 100, bounds.bottom() + 50))
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(pixmap))
+            painter.drawPath(stroke_path)
+            painter.restore()
 
+
+        elif shaft_style == 'stripes':
+            # Alternating brighter/darker diagonal stripes using a tiled brush
+            painter.save()
+
+            # Build stroke shape to paint inside
+            stroker = QPainterPathStroker()
+            stroker.setWidth(line_width)
+            stroker.setCapStyle(Qt.FlatCap)
+            stroker.setJoinStyle(Qt.RoundJoin)
+            stroke_path = stroker.createStroke(shaft_path)
+
+            from PyQt5.QtGui import QPixmap
+            # Compact, thin slashes: tighter spacing and slimmer strokes
+            stripe_width = max(2, min(6, int(line_width * 0.22)))
+            spacing = max(int(stripe_width * 1.6), 5)  # closer distance for more /// density
+            tile_size = spacing * 2  # guarantee perfect tiling period
+            pixmap = QPixmap(tile_size, tile_size)
+            pixmap.fill(Qt.transparent)
+            tile_painter = QPainter(pixmap)
+            tile_painter.setRenderHint(QPainter.Antialiasing, True)
+
+            # Two pens: brighter (white) and darker (black) overlays
+            bright_pen = QPen(QColor(255, 255, 255, 80), stripe_width)
+            dark_pen = QPen(QColor(0, 0, 0, 80), stripe_width)
+            bright_pen.setCapStyle(Qt.FlatCap)
+            dark_pen.setCapStyle(Qt.FlatCap)
+
+            # Draw bright lines (every 2*spacing so alternating with dark)
+            tile_painter.setPen(bright_pen)
+            margin = stripe_width
+            for i in range(-tile_size - margin, tile_size * 2 + margin, spacing * 2):
+                tile_painter.drawLine(QPointF(i - margin, tile_size + margin), QPointF(i + tile_size + margin, -margin))
+
+            # Draw dark lines offset by half spacing
+            tile_painter.setPen(dark_pen)
+            half = spacing
+            for i in range(-tile_size + half - margin, tile_size * 2 + half + margin, spacing * 2):
+                tile_painter.drawLine(QPointF(i - margin, tile_size + margin), QPointF(i + tile_size + margin, -margin))
+
+            tile_painter.end()
+
+            painter.setPen(Qt.NoPen)
+            brush = QBrush(pixmap)
+            painter.setBrushOrigin(0, 0)
+            painter.setBrush(brush)
+            painter.drawPath(stroke_path)
             painter.restore()
 
         elif shaft_style == 'dots':
-            # Add dots pattern overlay (same approach as stripes)
+            # Dots pattern using a tiled brush to guarantee full coverage inside the stroke
             painter.save()
 
-            # Create clipping region along the path with line width
+            # Build stroke shape to paint inside
             stroker = QPainterPathStroker()
             stroker.setWidth(line_width)
-            stroker.setCapStyle(Qt.FlatCap)  # Flat caps
+            stroker.setCapStyle(Qt.FlatCap)
             stroker.setJoinStyle(Qt.RoundJoin)
             stroke_path = stroker.createStroke(shaft_path)
-            painter.setClipPath(stroke_path)
 
-            # Draw dots grid pattern
-            dot_color = QColor(255, 255, 255, 80)  # Semi-transparent white
+            # Create a dot pixmap tile
+            from PyQt5.QtGui import QPixmap
+            tile_size = 12
+            pixmap = QPixmap(tile_size, tile_size)
+            pixmap.fill(Qt.transparent)
+            tile_painter = QPainter(pixmap)
+            dot_color = QColor(255, 255, 255, 80)
+            tile_painter.setPen(Qt.NoPen)
+            tile_painter.setBrush(dot_color)
+            radius = 2
+            # Hex-like staggered dots for nicer pattern
+            for x in range(2, tile_size, 6):
+                for y in range(2, tile_size, 6):
+                    offset = 3 if ((y // 6) % 2 == 1) else 0
+                    tile_painter.drawEllipse(x + offset, y, radius*2, radius*2)
+            tile_painter.end()
+
             painter.setPen(Qt.NoPen)
-            painter.setBrush(dot_color)
-
-            bounds = stroke_path.boundingRect()
-            dot_spacing = 10  # Space between dots
-            dot_radius = 2.5  # Radius of each dot
-
-            # Create a grid of dots
-            for x in range(int(bounds.left() - 20), int(bounds.right() + 20), dot_spacing):
-                for y in range(int(bounds.top() - 20), int(bounds.bottom() + 20), dot_spacing):
-                    # Add some offset to every other row for better pattern
-                    offset = 0 if ((y - int(bounds.top())) // dot_spacing) % 2 == 0 else dot_spacing // 2
-                    painter.drawEllipse(QPointF(x + offset, y), dot_radius, dot_radius)
-
+            painter.setBrush(QBrush(pixmap))
+            painter.drawPath(stroke_path)
             painter.restore()
 
     def apply_arrow_texture_brush(self, painter, fill_color):

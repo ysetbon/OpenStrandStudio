@@ -624,15 +624,20 @@ class NumberedLayerButton(QPushButton):
                 shaft_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
 
                 shaft_combo = QComboBox()
-                shaft_combo.addItems([_['shaft_solid'], _['shaft_stripes'], _['shaft_dots']])
+                shaft_combo.addItems([
+                    _['shaft_solid'],
+                    _['shaft_tiles'],
+                    _['shaft_dots'],
+                    _['shaft_stripes'] if 'shaft_stripes' in _ else 'Stripes'
+                ])
                 shaft_combo.setMaximumWidth(100)
 
                 # Set current shaft style
                 current_shaft = getattr(strand, 'arrow_shaft_style', 'solid')
-                shaft_map = {'solid': 0, 'stripes': 1, 'dots': 2}
+                shaft_map = {'solid': 0, 'tiles': 1, 'dots': 2, 'stripes': 3}
                 shaft_combo.setCurrentIndex(shaft_map.get(current_shaft, 0))
 
-                shaft_combo.currentIndexChanged.connect(lambda index: self.set_arrow_shaft_style(strand, ['solid', 'stripes', 'dots'][index], layer_panel))
+                shaft_combo.currentIndexChanged.connect(lambda index: self.set_arrow_shaft_style(strand, ['solid', 'stripes', 'dots', 'stripes_alt', 'stripes_dual'][index], layer_panel))
 
                 shaft_layout.addWidget(shaft_label)
                 shaft_layout.addStretch()

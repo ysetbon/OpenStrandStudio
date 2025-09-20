@@ -97,6 +97,12 @@ class AttachedStrand(Strand):
         self.end_line_visible = True
         # --- NEW: Full arrow visibility flag ---
         self.full_arrow_visible = False
+        # Arrow customization properties (inherited from Strand)
+        self.arrow_color = None  # Will use stroke_color if None
+        self.arrow_transparency = 100  # 100% = fully opaque
+        self.arrow_texture = 'none'  # Options: 'none', 'stripes', 'dots', 'crosshatch'
+        self.arrow_shaft_style = 'solid'  # Options: 'solid', 'stripes', 'dots'
+        self.arrow_head_visible = True  # Whether to show arrow head
         # --- END NEW ---
 
         # Set circle stroke color to canvas default if available
@@ -567,66 +573,41 @@ class AttachedStrand(Strand):
                 arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
                 arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
+                # Match Strand: prefer explicit arrow_color, otherwise canvas default or strand color
                 default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
-                arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
-                
+                if hasattr(self, 'arrow_color'):
+                    arrow_head_fill_color = self.arrow_color
+                else:
+                    arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+
+                # Apply transparency if set (percentage 0-100)
+                if hasattr(self, 'arrow_transparency'):
+                    arrow_head_fill_color = QColor(arrow_head_fill_color)
+                    arrow_head_fill_color.setAlphaF(self.arrow_transparency / 100.0)
+
                 arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
                 arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
                 arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-                # Find the point on the curve where straight-line distance to end equals arrow_head_len
-                end_point = self.end
-                best_t = 1.0
-                best_distance = 0.0
-                
-                # Search backwards along the curve
-                num_samples = 1000  # High precision sampling
-                for i in range(1, num_samples):
-                    t = 1.0 - (i / float(num_samples))
-                    point = self.point_at(t)
-                    
-                    # Calculate straight-line distance from this point to the end
-                    distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
-                    
-                    if distance >= arrow_head_len:
-                        # We've gone far enough - interpolate to get exact position
-                        if i > 1:
-                            # Previous point was closer to target distance
-                            t_prev = 1.0 - ((i - 1) / float(num_samples))
-                            point_prev = self.point_at(t_prev)
-                            dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
-                            
-                            # Linear interpolation between the two t values
-                            if distance - dist_prev != 0:
-                                fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
-                                best_t = t_prev + fraction * (t - t_prev)
-                            else:
-                                best_t = t
-                        else:
-                            best_t = t
-                        break
-                
-                # Calculate the tangent at the base position
-                tangent_at_base = self.calculate_cubic_tangent(best_t)
-                len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
-                
-                if len_at_base > 0:
-                    # Unit vector pointing along the curve at the base position
-                    unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
-                    
-                    # Calculate the base center position on the curve
-                    base_center = self.point_at(best_t)
-                    
+                # Calculate the tangent at the endpoint to determine arrow direction
+                # Use a point very close to the end to get the tangent
+                tangent_at_end = self.calculate_cubic_tangent(0.999)
+                len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+                if len_at_end > 0:
+                    # Unit vector pointing along the curve at the endpoint
+                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
                     # Perpendicular vector to the shaft direction (for arrow width)
                     perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
-                    
-                    # Calculate the two base corners
-                    left_point = base_center + perp_vector * (arrow_head_width / 2)
-                    right_point = base_center - perp_vector * (arrow_head_width / 2)
-                    
-                    # Calculate tip position for isosceles triangle
-                    # The tip should be arrow_head_len away from base_center along the shaft direction
-                    tip = base_center + unit_vector_shaft * arrow_head_len
+
+                    # Calculate the two base corners at the endpoint
+                    left_point = self.end + perp_vector * (arrow_head_width / 2)
+                    right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                    # Calculate tip position extending outward from the endpoint
+                    # The tip should be arrow_head_len away from the endpoint along the shaft direction
+                    tip = self.end + unit_vector_shaft * arrow_head_len
                     
                     # --- Draw Shaft (using the actual Bézier curve with control points) ---
                     full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
@@ -639,17 +620,8 @@ class AttachedStrand(Strand):
                     # Use the exact strand path as the shaft (includes control points and bias)
                     shaft_path = self.get_path()  # This uses all the control points and bias settings
 
-                    # Draw the shaft with pattern (entire strand path)
-                    if hasattr(self, 'draw_arrow_shaft_with_pattern'):
-                        self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
-                    else:
-                        # Fallback to simple drawing if pattern method not available
-                        shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
-                        shaft_pen.setCapStyle(Qt.FlatCap)
-                        shaft_pen.setJoinStyle(Qt.RoundJoin)
-                        painter.setPen(shaft_pen)
-                        painter.setBrush(Qt.NoBrush)
-                        painter.drawPath(shaft_path)
+                    # Draw the shaft with pattern (entire strand path) — exactly like Strand
+                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
                     # --- End Shaft ---
                     
                     # Create the arrow polygon
@@ -658,10 +630,7 @@ class AttachedStrand(Strand):
                     # Fill the arrow with optional texture (only if arrow head is visible)
                     if getattr(self, 'arrow_head_visible', True):
                         painter.setPen(Qt.NoPen)
-                        if hasattr(self, 'apply_arrow_texture_brush'):
-                            self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
-                        else:
-                            painter.setBrush(arrow_head_fill_color)
+                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
                         painter.drawPolygon(arrow_head_poly)
 
                         # Draw the border (only if arrow head is visible)
@@ -1432,72 +1401,48 @@ class AttachedStrand(Strand):
         if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
             
-            # --- Draw Arrowhead first to calculate base position ---
+            # --- Draw Arrowhead extending outward from the endpoint ---
             arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
             arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
+            # Use custom arrow color if set, otherwise default to strand color
             default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
-            arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+            if hasattr(self, 'arrow_color'):
+                arrow_head_fill_color = self.arrow_color
+            else:
+                arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+
+            # Apply transparency if set
+            if hasattr(self, 'arrow_transparency'):
+                transparency = self.arrow_transparency / 100.0  # Convert from percentage to 0-1
+                arrow_head_fill_color = QColor(arrow_head_fill_color)
+                arrow_head_fill_color.setAlphaF(transparency)
             
             arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
             arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
             arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-            # Find the point on the curve where straight-line distance to end equals arrow_head_len
-            end_point = self.end
-            best_t = 1.0
-            best_distance = 0.0
-            
-            # Search backwards along the curve
-            num_samples = 1000  # High precision sampling
-            for i in range(1, num_samples):
-                t = 1.0 - (i / float(num_samples))
-                point = self.point_at(t)
-                
-                # Calculate straight-line distance from this point to the end
-                distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
-                
-                if distance >= arrow_head_len:
-                    # We've gone far enough - interpolate to get exact position
-                    if i > 1:
-                        # Previous point was closer to target distance
-                        t_prev = 1.0 - ((i - 1) / float(num_samples))
-                        point_prev = self.point_at(t_prev)
-                        dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
-                        
-                        # Linear interpolation between the two t values
-                        if distance - dist_prev != 0:
-                            fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
-                            best_t = t_prev + fraction * (t - t_prev)
-                        else:
-                            best_t = t
-                    else:
-                        best_t = t
-                    break
-            
-            # Calculate the tangent at the base position
-            tangent_at_base = self.calculate_cubic_tangent(best_t)
-            len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
-            
-            if len_at_base > 0:
-                # Unit vector pointing along the curve at the base position
-                unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
-                
-                # Calculate the base center position on the curve
-                base_center = self.point_at(best_t)
-                
+            # Calculate the tangent at the endpoint to determine arrow direction
+            # Use a point very close to the end to get the tangent
+            tangent_at_end = self.calculate_cubic_tangent(0.999)
+            len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+            if len_at_end > 0:
+                # Unit vector pointing along the curve at the endpoint
+                unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
                 # Perpendicular vector to the shaft direction (for arrow width)
                 perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+
+                # Calculate the two base corners at the endpoint
+                left_point = self.end + perp_vector * (arrow_head_width / 2)
+                right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                # Calculate tip position extending outward from the endpoint
+                # The tip should be arrow_head_len away from the endpoint along the shaft direction
+                tip = self.end + unit_vector_shaft * arrow_head_len
                 
-                # Calculate the two base corners
-                left_point = base_center + perp_vector * (arrow_head_width / 2)
-                right_point = base_center - perp_vector * (arrow_head_width / 2)
-                
-                # Calculate tip position for isosceles triangle
-                # The tip should be arrow_head_len away from base_center along the shaft direction
-                tip = base_center + unit_vector_shaft * arrow_head_len
-                
-                # --- Draw Shaft (using the actual Bézier curve with control points) ---
+                # --- Draw Shaft (the entire strand path) ---
                 full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
                 # Use custom arrow color for shaft if set
                 shaft_color = getattr(self, 'arrow_color', self.stroke_color)
@@ -1505,20 +1450,11 @@ class AttachedStrand(Strand):
                     shaft_color = QColor(shaft_color)
                     shaft_color.setAlphaF(self.arrow_transparency / 100.0)
 
-                # Use the exact strand path as the shaft (includes control points and bias)
+                # Use the exact strand path as the shaft
                 shaft_path = self.get_path()  # This uses all the control points and bias settings
 
                 # Draw the shaft with pattern (entire strand path)
-                if hasattr(self, 'draw_arrow_shaft_with_pattern'):
-                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
-                else:
-                    # Fallback to simple drawing if pattern method not available
-                    shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
-                    shaft_pen.setCapStyle(Qt.FlatCap)
-                    shaft_pen.setJoinStyle(Qt.RoundJoin)
-                    painter.setPen(shaft_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPath(shaft_path)
+                self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
                 # --- End Shaft ---
                 
                 # Create the arrow polygon
@@ -1527,13 +1463,10 @@ class AttachedStrand(Strand):
                 # Fill the arrow with optional texture (only if arrow head is visible)
                 if getattr(self, 'arrow_head_visible', True):
                     painter.setPen(Qt.NoPen)
-                    if hasattr(self, 'apply_arrow_texture_brush'):
-                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
-                    else:
-                        painter.setBrush(arrow_head_fill_color)
+                    self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
                     painter.drawPolygon(arrow_head_poly)
 
-                    # Draw the border (only if arrow head is visible)
+                    # Draw the border
                     painter.setPen(arrow_head_border_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPolygon(arrow_head_poly)
@@ -1678,7 +1611,7 @@ class AttachedStrand(Strand):
                 # The tip should be arrow_head_len away from base_center along the shaft direction
                 tip = base_center + unit_vector_shaft * arrow_head_len
 
-                # --- Draw Shaft (using the actual Bézier curve with control points) ---
+                # --- Draw Shaft (the entire strand path) ---
                 full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
                 # Use custom arrow color for shaft if set
                 shaft_color = getattr(self, 'arrow_color', self.stroke_color)
@@ -1686,35 +1619,23 @@ class AttachedStrand(Strand):
                     shaft_color = QColor(shaft_color)
                     shaft_color.setAlphaF(self.arrow_transparency / 100.0)
 
-                # Use the exact strand path as the shaft (includes control points and bias)
+                # Use the exact strand path as the shaft
                 shaft_path = self.get_path()  # This uses all the control points and bias settings
 
                 # Draw the shaft with pattern (entire strand path)
-                if hasattr(self, 'draw_arrow_shaft_with_pattern'):
-                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
-                else:
-                    # Fallback to simple drawing if pattern method not available
-                    shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
-                    shaft_pen.setCapStyle(Qt.FlatCap)
-                    shaft_pen.setJoinStyle(Qt.RoundJoin)
-                    painter.setPen(shaft_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPath(shaft_path)
+                self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
                 # --- End Shaft ---
-
+                
                 # Create the arrow polygon
                 arrow_head_poly = QPolygonF([tip, left_point, right_point])
 
                 # Fill the arrow with optional texture (only if arrow head is visible)
                 if getattr(self, 'arrow_head_visible', True):
                     painter.setPen(Qt.NoPen)
-                    if hasattr(self, 'apply_arrow_texture_brush'):
-                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
-                    else:
-                        painter.setBrush(arrow_head_fill_color)
+                    self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
                     painter.drawPolygon(arrow_head_poly)
 
-                    # Draw the border (only if arrow head is visible)
+                    # Draw the border
                     painter.setPen(arrow_head_border_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPolygon(arrow_head_poly)
@@ -2633,66 +2554,41 @@ class AttachedStrand(Strand):
                 arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
                 arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
+                # Match Strand: prefer explicit arrow_color, otherwise canvas default or strand color
                 default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
-                arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
-                
+                if hasattr(self, 'arrow_color'):
+                    arrow_head_fill_color = self.arrow_color
+                else:
+                    arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+
+                # Apply transparency if set (percentage 0-100)
+                if hasattr(self, 'arrow_transparency'):
+                    arrow_head_fill_color = QColor(arrow_head_fill_color)
+                    arrow_head_fill_color.setAlphaF(self.arrow_transparency / 100.0)
+
                 arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
                 arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
                 arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-                # Find the point on the curve where straight-line distance to end equals arrow_head_len
-                end_point = self.end
-                best_t = 1.0
-                best_distance = 0.0
-                
-                # Search backwards along the curve
-                num_samples = 1000  # High precision sampling
-                for i in range(1, num_samples):
-                    t = 1.0 - (i / float(num_samples))
-                    point = self.point_at(t)
-                    
-                    # Calculate straight-line distance from this point to the end
-                    distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
-                    
-                    if distance >= arrow_head_len:
-                        # We've gone far enough - interpolate to get exact position
-                        if i > 1:
-                            # Previous point was closer to target distance
-                            t_prev = 1.0 - ((i - 1) / float(num_samples))
-                            point_prev = self.point_at(t_prev)
-                            dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
-                            
-                            # Linear interpolation between the two t values
-                            if distance - dist_prev != 0:
-                                fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
-                                best_t = t_prev + fraction * (t - t_prev)
-                            else:
-                                best_t = t
-                        else:
-                            best_t = t
-                        break
-                
-                # Calculate the tangent at the base position
-                tangent_at_base = self.calculate_cubic_tangent(best_t)
-                len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
-                
-                if len_at_base > 0:
-                    # Unit vector pointing along the curve at the base position
-                    unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
-                    
-                    # Calculate the base center position on the curve
-                    base_center = self.point_at(best_t)
-                    
+                # Calculate the tangent at the endpoint to determine arrow direction
+                # Use a point very close to the end to get the tangent
+                tangent_at_end = self.calculate_cubic_tangent(0.999)
+                len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+                if len_at_end > 0:
+                    # Unit vector pointing along the curve at the endpoint
+                    unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
                     # Perpendicular vector to the shaft direction (for arrow width)
                     perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
-                    
-                    # Calculate the two base corners
-                    left_point = base_center + perp_vector * (arrow_head_width / 2)
-                    right_point = base_center - perp_vector * (arrow_head_width / 2)
-                    
-                    # Calculate tip position for isosceles triangle
-                    # The tip should be arrow_head_len away from base_center along the shaft direction
-                    tip = base_center + unit_vector_shaft * arrow_head_len
+
+                    # Calculate the two base corners at the endpoint
+                    left_point = self.end + perp_vector * (arrow_head_width / 2)
+                    right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                    # Calculate tip position extending outward from the endpoint
+                    # The tip should be arrow_head_len away from the endpoint along the shaft direction
+                    tip = self.end + unit_vector_shaft * arrow_head_len
                     
                     # --- Draw Shaft (using the actual Bézier curve with control points) ---
                     full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
@@ -2705,17 +2601,8 @@ class AttachedStrand(Strand):
                     # Use the exact strand path as the shaft (includes control points and bias)
                     shaft_path = self.get_path()  # This uses all the control points and bias settings
 
-                    # Draw the shaft with pattern (entire strand path)
-                    if hasattr(self, 'draw_arrow_shaft_with_pattern'):
-                        self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
-                    else:
-                        # Fallback to simple drawing if pattern method not available
-                        shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
-                        shaft_pen.setCapStyle(Qt.FlatCap)
-                        shaft_pen.setJoinStyle(Qt.RoundJoin)
-                        painter.setPen(shaft_pen)
-                        painter.setBrush(Qt.NoBrush)
-                        painter.drawPath(shaft_path)
+                    # Draw the shaft with pattern (entire strand path) — exactly like Strand
+                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
                     # --- End Shaft ---
                     
                     # Create the arrow polygon
@@ -2724,10 +2611,7 @@ class AttachedStrand(Strand):
                     # Fill the arrow with optional texture (only if arrow head is visible)
                     if getattr(self, 'arrow_head_visible', True):
                         painter.setPen(Qt.NoPen)
-                        if hasattr(self, 'apply_arrow_texture_brush'):
-                            self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
-                        else:
-                            painter.setBrush(arrow_head_fill_color)
+                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
                         painter.drawPolygon(arrow_head_poly)
 
                         # Draw the border (only if arrow head is visible)
@@ -3483,7 +3367,7 @@ class AttachedStrand(Strand):
         if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
 
-            # --- Draw Arrowhead first to calculate base position ---
+            # --- Draw Arrowhead extending outward from the endpoint ---
             arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
             arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
 
@@ -3504,61 +3388,27 @@ class AttachedStrand(Strand):
             arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
             arrow_head_border_pen.setCapStyle(Qt.FlatCap)
 
-            # Find the point on the curve where straight-line distance to end equals arrow_head_len
-            end_point = self.end
-            best_t = 1.0
-            best_distance = 0.0
+            # Calculate the tangent at the endpoint to determine arrow direction
+            # Use a point very close to the end to get the tangent
+            tangent_at_end = self.calculate_cubic_tangent(0.999)
+            len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
 
-            # Search backwards along the curve
-            num_samples = 1000  # High precision sampling
-            for i in range(1, num_samples):
-                t = 1.0 - (i / float(num_samples))
-                point = self.point_at(t)
-
-                # Calculate straight-line distance from this point to the end
-                distance = math.hypot(point.x() - end_point.x(), point.y() - end_point.y())
-
-                if distance >= arrow_head_len:
-                    # We've gone far enough - interpolate to get exact position
-                    if i > 1:
-                        # Previous point was closer to target distance
-                        t_prev = 1.0 - ((i - 1) / float(num_samples))
-                        point_prev = self.point_at(t_prev)
-                        dist_prev = math.hypot(point_prev.x() - end_point.x(), point_prev.y() - end_point.y())
-
-                        # Linear interpolation between the two t values
-                        if distance - dist_prev != 0:
-                            fraction = (arrow_head_len - dist_prev) / (distance - dist_prev)
-                            best_t = t_prev + fraction * (t - t_prev)
-                        else:
-                            best_t = t
-                    else:
-                        best_t = t
-                    break
-
-            # Calculate the tangent at the base position
-            tangent_at_base = self.calculate_cubic_tangent(best_t)
-            len_at_base = math.hypot(tangent_at_base.x(), tangent_at_base.y())
-
-            if len_at_base > 0:
-                # Unit vector pointing along the curve at the base position
-                unit_vector_shaft = QPointF(tangent_at_base.x() / len_at_base, tangent_at_base.y() / len_at_base)
-
-                # Calculate the base center position on the curve
-                base_center = self.point_at(best_t)
+            if len_at_end > 0:
+                # Unit vector pointing along the curve at the endpoint
+                unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
 
                 # Perpendicular vector to the shaft direction (for arrow width)
                 perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
 
-                # Calculate the two base corners
-                left_point = base_center + perp_vector * (arrow_head_width / 2)
-                right_point = base_center - perp_vector * (arrow_head_width / 2)
+                # Calculate the two base corners at the endpoint
+                left_point = self.end + perp_vector * (arrow_head_width / 2)
+                right_point = self.end - perp_vector * (arrow_head_width / 2)
 
-                # Calculate tip position for isosceles triangle
-                # The tip should be arrow_head_len away from base_center along the shaft direction
-                tip = base_center + unit_vector_shaft * arrow_head_len
+                # Calculate tip position extending outward from the endpoint
+                # The tip should be arrow_head_len away from the endpoint along the shaft direction
+                tip = self.end + unit_vector_shaft * arrow_head_len
 
-                # --- Draw Shaft (using the actual Bézier curve with control points) ---
+                # --- Draw Shaft (the entire strand path) ---
                 full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
                 # Use custom arrow color for shaft if set
                 shaft_color = getattr(self, 'arrow_color', self.stroke_color)
@@ -3566,20 +3416,11 @@ class AttachedStrand(Strand):
                     shaft_color = QColor(shaft_color)
                     shaft_color.setAlphaF(self.arrow_transparency / 100.0)
 
-                # Use the exact strand path as the shaft (includes control points and bias)
+                # Use the exact strand path as the shaft
                 shaft_path = self.get_path()  # This uses all the control points and bias settings
 
                 # Draw the shaft with pattern (entire strand path)
-                if hasattr(self, 'draw_arrow_shaft_with_pattern'):
-                    self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
-                else:
-                    # Fallback to simple drawing if pattern method not available
-                    shaft_pen = QPen(shaft_color, full_arrow_shaft_line_width)
-                    shaft_pen.setCapStyle(Qt.FlatCap)
-                    shaft_pen.setJoinStyle(Qt.RoundJoin)
-                    painter.setPen(shaft_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPath(shaft_path)
+                self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
                 # --- End Shaft ---
 
                 # Create the arrow polygon
@@ -3588,14 +3429,11 @@ class AttachedStrand(Strand):
                 # Fill the arrow with optional texture (only if arrow head is visible)
                 if getattr(self, 'arrow_head_visible', True):
                     painter.setPen(Qt.NoPen)
-                    if hasattr(self, 'apply_arrow_texture_brush'):
-                        self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
-                    else:
-                        painter.setBrush(arrow_head_fill_color)
+                    self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
                     painter.drawPolygon(arrow_head_poly)
 
-                    # Draw the border (only if arrow head is visible)
+                    # Draw the border
                     painter.setPen(arrow_head_border_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPolygon(arrow_head_poly)
-            painter.restore() # Specific restore for full arrow
+            painter.restore()

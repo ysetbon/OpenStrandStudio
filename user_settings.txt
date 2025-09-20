@@ -4,7 +4,7 @@ ShadowColor: 0,0,0,200
 DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: true
 EnableSnapToGrid: true
-ShowMoveHighlights: true
+ShowMoveHighlights: false
 NumSteps: 5
 MaxBlurRadius: 100.0
 ControlPointBaseFraction: 1.00

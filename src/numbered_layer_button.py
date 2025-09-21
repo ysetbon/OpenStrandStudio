@@ -1421,17 +1421,27 @@ class NumberedLayerButton(QPushButton):
         return "default"
 
     def translate_color_dialog(self, dialog, translations_dict):
-        """Translate QColorDialog buttons to the current language and set RTL if needed."""
+        """Translate QColorDialog buttons to the current language, set RTL if needed, and apply theme styling."""
         # Check if language is Hebrew for RTL support
         language_code = None
+        theme_name = None
         parent = self.parent()
         while parent:
             if hasattr(parent, 'language_code'):
                 language_code = parent.language_code
+            if hasattr(parent, 'current_theme'):
+                theme_name = parent.current_theme
+            if language_code and theme_name:
                 break
             parent = parent.parent()
 
+        # Get theme if not found in parent hierarchy
+        if not theme_name:
+            theme_name = self.get_current_theme()
+
         is_rtl = language_code == 'he'
+        is_dark_mode = theme_name == 'dark'
+        is_light_mode = theme_name == 'light'
 
         # Debug: Print what translations we have
         print(f"DEBUG NLB translate_color_dialog: Language code: {language_code}")
@@ -1451,6 +1461,166 @@ class NumberedLayerButton(QPushButton):
         else:
             dialog.setLayoutDirection(Qt.LeftToRight)
 
+        # Apply theme-based styling to the dialog
+        if is_dark_mode:
+            # Dark theme stylesheet for color dialog - matching group dialog style
+            dialog_stylesheet = """
+                QColorDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QColorDialog QWidget {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QColorDialog QPushButton {
+                    background-color: #252525 !important;
+                    color: white !important;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 15px;
+                    border-radius: 4px;
+                    min-width: 60px;
+                }
+                QColorDialog QPushButton:hover {
+                    background-color: #505050 !important;
+                    color: white !important;
+                    border: 2px solid #000000;
+                }
+                QColorDialog QPushButton:pressed {
+                    background-color: #151515 !important;
+                    color: white !important;
+                    border: 2px solid #000000;
+                }
+                QColorDialog QDialogButtonBox QPushButton {
+                    background-color: #252525 !important;
+                    color: white !important;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 15px;
+                    border-radius: 4px;
+                    min-width: 60px;
+                }
+                QColorDialog QDialogButtonBox QPushButton:hover {
+                    background-color: #505050 !important;
+                    color: white !important;
+                    border: 2px solid #000000;
+                }
+                QColorDialog QDialogButtonBox QPushButton:pressed {
+                    background-color: #151515 !important;
+                    color: white !important;
+                    border: 2px solid #000000;
+                }
+                QLabel {
+                    color: white;
+                    background-color: transparent;
+                }
+                QSpinBox, QDoubleSpinBox, QLineEdit {
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #555;
+                    padding: 3px;
+                    border-radius: 2px;
+                }
+                QSpinBox:focus, QDoubleSpinBox:focus, QLineEdit:focus {
+                    border: 1px solid #777;
+                    background-color: #404040;
+                }
+            """
+        elif is_light_mode:
+            # Light theme stylesheet for color dialog - matching group dialog style
+            dialog_stylesheet = """
+                QColorDialog {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QColorDialog QWidget {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QColorDialog QPushButton {
+                    background-color: #F0F0F0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #BBBBBB;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    min-width: 60px;
+                    font-weight: normal;
+                }
+                QColorDialog QPushButton:hover {
+                    background-color: #E0E0E0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #999999;
+                }
+                QColorDialog QPushButton:pressed {
+                    background-color: #D0D0D0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #888888;
+                }
+                QColorDialog QDialogButtonBox QPushButton {
+                    background-color: #F0F0F0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #BBBBBB;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    min-width: 60px;
+                    font-weight: normal;
+                }
+                QColorDialog QDialogButtonBox QPushButton:hover {
+                    background-color: #E0E0E0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #999999;
+                }
+                QColorDialog QDialogButtonBox QPushButton:pressed {
+                    background-color: #D0D0D0 !important;
+                    color: #000000 !important;
+                    border: 1px solid #888888;
+                }
+                QLabel {
+                    color: #000000;
+                    background-color: transparent;
+                }
+                QSpinBox, QDoubleSpinBox, QLineEdit {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: 1px solid #CCCCCC;
+                    padding: 3px;
+                    border-radius: 2px;
+                }
+                QSpinBox:focus, QDoubleSpinBox:focus, QLineEdit:focus {
+                    border: 1px solid #4A90E2;
+                    background-color: #F8F8F8;
+                }
+            """
+        else:
+            # Default theme stylesheet for color dialog
+            dialog_stylesheet = """
+                QColorDialog QPushButton {
+                    padding: 8px 15px;
+                    border-radius: 3px;
+                    min-width: 60px;
+                    background-color: #F0F0F0 !important;
+                    color: #000000 !important;
+                }
+                QColorDialog QPushButton:hover {
+                    background-color: #E0E0E0 !important;
+                    color: #000000 !important;
+                }
+                QColorDialog QDialogButtonBox QPushButton {
+                    background-color: #F0F0F0 !important;
+                    color: #000000 !important;
+                    padding: 8px 15px;
+                    border-radius: 3px;
+                    min-width: 60px;
+                }
+                QColorDialog QDialogButtonBox QPushButton:hover {
+                    background-color: #E0E0E0 !important;
+                    color: #000000 !important;
+                }
+            """
+
+        dialog.setStyleSheet(dialog_stylesheet)
+
         # Find and translate the button box
         button_box = dialog.findChild(QDialogButtonBox)
         if button_box:
@@ -1458,14 +1628,104 @@ class NumberedLayerButton(QPushButton):
             if is_rtl:
                 button_box.setLayoutDirection(Qt.RightToLeft)
 
-            # Translate standard buttons
+            # Translate standard buttons and force theme styling
             ok_button = button_box.button(QDialogButtonBox.Ok)
             if ok_button:
                 ok_button.setText(translations_dict.get('ok', 'OK'))
+                # Force override any inline styles with theme colors
+                if is_dark_mode:
+                    ok_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #252525 !important;
+                            color: white !important;
+                            font-weight: bold;
+                            border: 2px solid #000000;
+                            padding: 8px 15px;
+                            border-radius: 4px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #505050 !important;
+                            color: white !important;
+                        }
+                    """)
+                elif is_light_mode:
+                    ok_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #F0F0F0 !important;
+                            color: #000000 !important;
+                            border: 1px solid #BBBBBB;
+                            border-radius: 5px;
+                            padding: 8px 15px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #E0E0E0 !important;
+                            color: #000000 !important;
+                        }
+                    """)
+                else:
+                    ok_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #F0F0F0 !important;
+                            color: #000000 !important;
+                            padding: 8px 15px;
+                            border-radius: 3px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #E0E0E0 !important;
+                        }
+                    """)
 
             cancel_button = button_box.button(QDialogButtonBox.Cancel)
             if cancel_button:
                 cancel_button.setText(translations_dict.get('cancel', 'Cancel'))
+                # Force override any inline styles with theme colors
+                if is_dark_mode:
+                    cancel_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #252525 !important;
+                            color: white !important;
+                            font-weight: bold;
+                            border: 2px solid #000000;
+                            padding: 8px 15px;
+                            border-radius: 4px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #505050 !important;
+                            color: white !important;
+                        }
+                    """)
+                elif is_light_mode:
+                    cancel_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #F0F0F0 !important;
+                            color: #000000 !important;
+                            border: 1px solid #BBBBBB;
+                            border-radius: 5px;
+                            padding: 8px 15px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #E0E0E0 !important;
+                            color: #000000 !important;
+                        }
+                    """)
+                else:
+                    cancel_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #F0F0F0 !important;
+                            color: #000000 !important;
+                            padding: 8px 15px;
+                            border-radius: 3px;
+                            min-width: 60px;
+                        }
+                        QPushButton:hover {
+                            background-color: #E0E0E0 !important;
+                        }
+                    """)
 
         # Find and translate all QPushButtons in the dialog
         from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox
@@ -1493,7 +1753,7 @@ class NumberedLayerButton(QPushButton):
             # Check if this is likely a hex/color input field
             text = lineedit.text()
             if text.startswith('#') or (text and all(c in '0123456789abcdefABCDEF#' for c in text)):
-                lineedit.setLayoutDirection(Qt.LeftToRight)
+                lineedit.setLayoutDirection(Qt.RightToLeft)
                 lineedit.setAlignment(Qt.AlignLeft)
 
         # Find and translate labels

@@ -3708,6 +3708,14 @@ class GroupLayerManager:
                             # because we check if it's already checked)
                             if not checkbox_dict[related_strand].isChecked():
                                 checkbox_dict[related_strand].setChecked(True)
+            else:
+                # When unchecking, also uncheck related strands that are part of masks
+                if main_strand_num in masked_strand_components:
+                    for related_strand in masked_strand_components[main_strand_num]:
+                        if related_strand in checkbox_dict:
+                            # Auto-uncheck the related strand
+                            if checkbox_dict[related_strand].isChecked():
+                                checkbox_dict[related_strand].setChecked(False)
 
         for main_strand in main_strands:
             checkbox = QCheckBox(str(main_strand))

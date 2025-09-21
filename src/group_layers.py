@@ -3674,14 +3674,53 @@ class GroupLayerManager:
             info_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(info_label)
 
+        # Find all masked strands and their component strands
+        masked_strand_components = {}  # Map: component_strand -> list of other components it's masked with
+        for strand in self.canvas.strands:
+            if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
+                # Extract the main strand numbers from the mask
+                layer_parts = strand.layer_name.split('_')
+                if len(layer_parts) >= 4:
+                    first_main = layer_parts[0]
+                    second_main = layer_parts[2]
+
+                    # Store the relationship both ways
+                    if first_main not in masked_strand_components:
+                        masked_strand_components[first_main] = set()
+                    if second_main not in masked_strand_components:
+                        masked_strand_components[second_main] = set()
+
+                    masked_strand_components[first_main].add(second_main)
+                    masked_strand_components[second_main].add(first_main)
+
         checkboxes = []
+        checkbox_dict = {}  # Map: main_strand -> checkbox
+
+        # Function to handle checkbox state changes
+        def on_checkbox_changed(main_strand_num):
+            checkbox = checkbox_dict[main_strand_num]
+            if checkbox.isChecked():
+                # If this strand is part of any masks, auto-check the related strands
+                if main_strand_num in masked_strand_components:
+                    for related_strand in masked_strand_components[main_strand_num]:
+                        if related_strand in checkbox_dict:
+                            # Auto-check the related strand (this won't trigger infinite recursion
+                            # because we check if it's already checked)
+                            if not checkbox_dict[related_strand].isChecked():
+                                checkbox_dict[related_strand].setChecked(True)
+
         for main_strand in main_strands:
             checkbox = QCheckBox(str(main_strand))
             # Set proper alignment for Hebrew RTL
             if self.language_code == 'he':
                 checkbox.setLayoutDirection(Qt.RightToLeft)
+
+            # Connect the state change handler
+            checkbox.stateChanged.connect(lambda state, ms=main_strand: on_checkbox_changed(ms))
+
             layout.addWidget(checkbox)
             checkboxes.append((main_strand, checkbox))
+            checkbox_dict[main_strand] = checkbox
 
         buttons_layout = QHBoxLayout()
         ok_button = QPushButton(_['ok'])

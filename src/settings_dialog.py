@@ -350,6 +350,14 @@ class SettingsDialog(QDialog):
             self.about_widget.setLayoutDirection(direction)
         if hasattr(self, 'whats_new_widget'):
             self.whats_new_widget.setLayoutDirection(direction)
+        if hasattr(self, 'history_widget'):
+            self.history_widget.setLayoutDirection(direction)
+            # Set proper text alignment for history explanation label
+            if hasattr(self, 'history_explanation_label'):
+                if is_rtl:
+                    self.history_explanation_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                else:
+                    self.history_explanation_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             
         # Also set direction for specific sub-layouts
         if hasattr(self, 'performance_layout'):
@@ -3766,6 +3774,8 @@ class SettingsDialog(QDialog):
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
         self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
+        # Refresh history list to apply new language translations and RTL formatting
+        self.populate_history_list()
         # Update What's New page elements
         self.whats_new_text_browser.setHtml(self.render_whats_new_html(_['whats_new_info']))
         # Update about text browser instead of label
@@ -5032,12 +5042,39 @@ class SettingsDialog(QDialog):
                 try:
                     # Format the session_id (YYYYMMDDHHMMSS) into a readable string
                     dt = QDateTime.fromString(session_id, "yyyyMMddHHmmss")
-                    display_text = dt.toString("yyyy-MM-dd hh:mm:ss") + f" (State {data['step']})"
+
+                    # Get translated state label
+                    state_label = _.get('history_state_label', 'State')
+
+                    # For RTL languages (Hebrew), format date and text appropriately
+                    if self.is_rtl_language(self.current_language):
+                        # For Hebrew, use RTL-friendly format with proper alignment
+                        display_text = f"({state_label} {data['step']}) " + dt.toString("hh:mm:ss dd-MM-yyyy")
+                    else:
+                        # For LTR languages, use standard format
+                        display_text = dt.toString("yyyy-MM-dd hh:mm:ss") + f" ({state_label} {data['step']})"
+
                     item = QListWidgetItem(display_text)
                     item.setData(Qt.UserRole, data['filepath']) # Store filepath
+
+                    # Set text alignment based on language direction
+                    if self.is_rtl_language(self.current_language):
+                        item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    else:
+                        item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
                     self.history_list.addItem(item)
                 except Exception as parse_e:
-                    item = QListWidgetItem(f"{session_id} (State {data['step']}) - Invalid Date Format")
+                    # Get translated state label for error case
+                    state_label = _.get('history_state_label', 'State')
+
+                    if self.is_rtl_language(self.current_language):
+                        item = QListWidgetItem(f"תאריך לא תקין - ({state_label} {data['step']}) {session_id}")
+                        item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    else:
+                        item = QListWidgetItem(f"{session_id} ({state_label} {data['step']}) - Invalid Date Format")
+                        item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
                     item.setData(Qt.UserRole, data['filepath'])
                     self.history_list.addItem(item)
             self.clear_history_button.setEnabled(True) # Enable clear if history exists

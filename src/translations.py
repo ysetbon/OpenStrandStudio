@@ -412,6 +412,7 @@ translations = {
         'no_history_found': 'No past history sessions found.',
         'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
         'history_list_tooltip': 'Select a session to load its final state',
+        'history_state_label': 'State',  # For history list display
         # About translations
         'about': 'About',
         'about_info': '''
@@ -766,6 +767,7 @@ translations = {
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
         'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
         'history_list_tooltip': 'Sélectionnez une session à charger dans son état final',
+        'history_state_label': 'État',  # For history list display
         'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',
         'extension_dash_gap_length_tooltip': 'Espace entre l\'extrémité du brin et le début des tirets',
         'width_preview_label': 'Total : {total}px | Couleur : {color}px | Contour : {stroke}px de chaque côté',
@@ -1254,6 +1256,7 @@ translations = {
         'no_history_found': 'Keine bisherigen Verlaufssitzungen gefunden.',
         'history_explanation': 'Wählen Sie eine frühere Sitzung aus und klicken Sie auf "Ausgewählten laden", um den Endzustand wiederherzustellen.\nWarnung: Das Laden des Verlaufs löscht Ihre aktuellen Rückgängig/Wiederholen-Schritte.',
         'history_list_tooltip': 'Eine Sitzung auswählen, um ihren Endzustand zu laden',
+        'history_state_label': 'Zustand',  # For history list display
         'width_preview_label': 'Gesamt: {total}px | Farbe: {color}px | Kontur: {stroke}px je Seite',
         'percent_available_color': '% des verfügbaren Farbraums',
         'total_thickness_label': 'Gesamtdicke (Rasterfelder):',
@@ -1629,6 +1632,7 @@ translations = {
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
         'history_list_tooltip': 'Seleziona una sessione da caricare nel suo stato finale',
+        'history_state_label': 'Stato',  # For history list display
         'extension_dash_gap_length': 'Lunghezza dello spazio tra la fine del filo e l\'inizio dei trattini',
         'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
         'width_preview_label': 'Totale: {total}px | Colore: {color}px | Contorno: {stroke}px per lato',
@@ -2066,6 +2070,7 @@ translations = {
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
         'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
         'history_list_tooltip': 'Selecciona una sesión para cargar su estado final',
+        'history_state_label': 'Estado',  # For history list display
         'extension_dash_gap_length': 'Longitud del espacio entre el extremo del cordón y el inicio de los guiones',
         'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
         'width_preview_label': 'Total: {total}px | Color: {color}px | Contorno: {stroke}px cada lado',
@@ -2501,6 +2506,7 @@ translations = {
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
         'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.',
         'history_list_tooltip': 'Selecione uma sessão para carregar seu estado final',
+        'history_state_label': 'Estado',  # For history list display
         'extension_dash_gap_length': 'Comprimento do espaço entre a extremidade da mecha e o início dos traços',
         'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
         'width_preview_label': 'Total: {total}px | Cor: {color}px | Contorno: {stroke}px de cada lado',
@@ -2946,6 +2952,7 @@ translations = {
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
             'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
         'history_list_tooltip': 'בחר הפעלה לטעינת המצב הסופי שלה',
+        'history_state_label': 'מצב',  # For history list display
         # About translations
         'about': 'אודות',
         'about_info': '''

@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF, QLocale
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
 from translations import translations
@@ -1420,6 +1420,186 @@ class NumberedLayerButton(QPushButton):
             parent = parent.parent()
         return "default"
 
+    def translate_color_dialog(self, dialog, translations_dict):
+        """Translate QColorDialog buttons to the current language and set RTL if needed."""
+        # Check if language is Hebrew for RTL support
+        language_code = None
+        parent = self.parent()
+        while parent:
+            if hasattr(parent, 'language_code'):
+                language_code = parent.language_code
+                break
+            parent = parent.parent()
+
+        is_rtl = language_code == 'he'
+
+        # Set RTL layout for Hebrew
+        if is_rtl:
+            dialog.setLayoutDirection(Qt.RightToLeft)
+            # Apply RTL to all child widgets recursively
+            self._apply_rtl_to_widgets(dialog, is_rtl)
+        else:
+            dialog.setLayoutDirection(Qt.LeftToRight)
+
+        # Find and translate the button box
+        button_box = dialog.findChild(QDialogButtonBox)
+        if button_box:
+            # Set button order for RTL
+            if is_rtl:
+                button_box.setLayoutDirection(Qt.RightToLeft)
+
+            # Translate standard buttons
+            ok_button = button_box.button(QDialogButtonBox.Ok)
+            if ok_button:
+                ok_button.setText(translations_dict.get('ok', 'OK'))
+
+            cancel_button = button_box.button(QDialogButtonBox.Cancel)
+            if cancel_button:
+                cancel_button.setText(translations_dict.get('cancel', 'Cancel'))
+
+        # Find and translate all QPushButtons in the dialog
+        from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox
+        buttons = dialog.findChildren(QPushButton)
+        for button in buttons:
+            button_text = button.text()
+            # Translate Pick Screen Color button
+            if 'Pick Screen Color' in button_text or 'pick' in button_text.lower():
+                button.setText(translations_dict.get('pick_screen_color', 'Pick Screen Color'))
+            # Translate Add to Custom Colors button
+            elif 'Add to Custom' in button_text or ('add' in button_text.lower() and 'custom' in button_text.lower()):
+                button.setText(translations_dict.get('add_to_custom_colors', 'Add to Custom Colors'))
+
+        # Force LTR for numeric input fields (hex values, RGB values)
+        for widget in dialog.findChildren(QSpinBox):
+            widget.setLayoutDirection(Qt.LeftToRight)
+            widget.setAlignment(Qt.AlignLeft)
+
+        for widget in dialog.findChildren(QDoubleSpinBox):
+            widget.setLayoutDirection(Qt.LeftToRight)
+            widget.setAlignment(Qt.AlignLeft)
+
+        # Force LTR for hex/color input fields
+        for lineedit in dialog.findChildren(QLineEdit):
+            # Check if this is likely a hex/color input field
+            text = lineedit.text()
+            if text.startswith('#') or (text and all(c in '0123456789abcdefABCDEF#' for c in text)):
+                lineedit.setLayoutDirection(Qt.LeftToRight)
+                lineedit.setAlignment(Qt.AlignLeft)
+
+        # Find and translate labels
+        labels = dialog.findChildren(QLabel)
+        for label in labels:
+            label_text = label.text().strip()
+            label_text_lower = label_text.lower()
+
+            # Skip empty labels
+            if not label_text:
+                continue
+
+            # Set RTL alignment for all labels in Hebrew
+            if is_rtl:
+                label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+            # Check for "Alpha channel" FIRST (before other checks) - handle various formats
+            if ('alpha channel' in label_text_lower or
+                'alpha-channel' in label_text_lower or
+                'alphachannel' in label_text_lower or
+                label_text in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
+                label_text_lower.startswith('alpha channel') or
+                label_text_lower.startswith('alpha-channel')):
+                translated_text = translations_dict.get('alpha_channel', 'Alpha channel')
+                label.setText(translated_text + ':' if label_text.endswith(':') else translated_text)
+            # Translate Basic colors label
+            elif 'basic' in label_text_lower:
+                label.setText(translations_dict.get('basic_colors', 'Basic colors'))
+            # Translate Custom colors label
+            elif 'custom' in label_text_lower:
+                label.setText(translations_dict.get('custom_colors', 'Custom colors'))
+            # Translate color component labels with colons
+            elif 'hue' in label_text_lower or label_text in ['Hu:', 'H:', 'Hue:', 'Hu'] or label_text.startswith('Hu'):
+                translated_text = translations_dict.get('hue', 'Hue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'sat' in label_text_lower or label_text in ['Sa:', 'S:', 'Sat:', 'Sa', 'S'] or label_text.startswith('Sa'):
+                translated_text = translations_dict.get('sat', 'Sat')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'val' in label_text_lower or 'value' in label_text_lower or label_text in ['Va:', 'V:', 'Val:', 'Va', 'V'] or label_text.startswith('Va'):
+                translated_text = translations_dict.get('val', 'Val')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'red' in label_text_lower or label_text in ['R:', 'R', 'Red:', 'Red']:
+                translated_text = translations_dict.get('red', 'Red')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'green' in label_text_lower or label_text in ['G:', 'G', 'Green:', 'Green']:
+                translated_text = translations_dict.get('green', 'Green')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'blue' in label_text_lower or label_text in ['B:', 'B', 'Blue:', 'Blue', 'Bl:', 'Bl'] or label_text.startswith('Bl'):
+                translated_text = translations_dict.get('blue', 'Blue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'alpha' in label_text_lower or label_text in ['A:', 'A', 'Alpha:', 'Alpha', 'Al:', 'Al'] or label_text.startswith('Al'):
+                translated_text = translations_dict.get('alpha', 'Alpha')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'html' in label_text_lower or label_text in ['#', 'HTML:', 'HTML', '#:']:
+                label.setText('HTML:')
+            # Additional catch for any Blue/Alpha labels that might have been missed
+            elif label_text in ['Blue', 'Blue:', 'Blu:', 'Bl', 'Bl:']:
+                translated_text = translations_dict.get('blue', 'Blue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif ('alpha channel' in label_text_lower or
+                  'alpha-channel' in label_text_lower or
+                  'alphachannel' in label_text_lower or
+                  label_text in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:'] or
+                  label_text_lower.startswith('alpha channel') or
+                  label_text_lower.startswith('alpha-channel')):
+                translated_text = translations_dict.get('alpha_channel', 'Alpha channel')
+                label.setText(translated_text + ':' if label_text.endswith(':') else translated_text)
+            elif label_text in ['Alpha', 'Alpha:', 'Al', 'Al:']:
+                translated_text = translations_dict.get('alpha', 'Alpha')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            # Debug fallback: Check for single letter labels that might be color components
+            else:
+                # Handle single letter labels (like 'B' for Blue, 'A' for Alpha)
+                if len(label_text) <= 3 and label_text.replace(':', '').strip():
+                    original = label_text.replace(':', '').strip().upper()
+                    if original == 'B':
+                        translated_text = translations_dict.get('blue', 'Blue')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'A':
+                        translated_text = translations_dict.get('alpha', 'Alpha')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'R':
+                        translated_text = translations_dict.get('red', 'Red')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'G':
+                        translated_text = translations_dict.get('green', 'Green')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'S':
+                        translated_text = translations_dict.get('sat', 'Sat')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'V':
+                        translated_text = translations_dict.get('val', 'Val')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'H':
+                        translated_text = translations_dict.get('hue', 'Hue')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+
+    def _apply_rtl_to_widgets(self, parent_widget, is_rtl):
+        """Recursively apply RTL layout to child widgets."""
+        from PyQt5.QtWidgets import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit
+
+        for child in parent_widget.findChildren(QWidget):
+            # Skip numeric input widgets - they should stay LTR
+            if isinstance(child, (QSpinBox, QDoubleSpinBox)):
+                continue
+
+            # Skip hex/color input fields - they should stay LTR
+            if isinstance(child, QLineEdit):
+                text = child.text()
+                if text.startswith('#') or (text and all(c in '0123456789abcdefABCDEF#' for c in text)):
+                    continue
+
+            # Apply RTL to other widgets
+            if is_rtl:
+                child.setLayoutDirection(Qt.RightToLeft)
+
     def change_color(self):
         """Open a color dialog to change the button's color."""
         # Find the layer panel to get translations
@@ -1430,18 +1610,40 @@ class NumberedLayerButton(QPushButton):
                 layer_panel = parent
                 break
             parent = parent.parent()
-        
-        _ = translations.get(layer_panel.language_code, translations['en'])
+
+        _ = translations.get(layer_panel.language_code if layer_panel else 'en', translations['en'])
+
+        # Set Qt locale to match application language
+        language_code = layer_panel.language_code if layer_panel else 'en'
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language_code in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language_code]))
 
         color_dialog = QColorDialog(self)
         color_dialog.setWindowTitle(_.get('change_color', "Change Color"))
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
-        color = color_dialog.getColor(initial=self.color, options=QColorDialog.ShowAlphaChannel)
-        if color.isValid():
-            self.set_color(color)
-            # Extract the set number from the button's text
-            set_number = int(self.text().split('_')[0])
-            self.color_changed.emit(set_number, color)
+        # Use non-native dialog to ensure consistent behavior across languages
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+        color_dialog.setCurrentColor(self.color)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_() == QColorDialog.Accepted:
+            color = color_dialog.currentColor()
+            if color.isValid():
+                self.set_color(color)
+                # Extract the set number from the button's text
+                set_number = int(self.text().split('_')[0])
+                self.color_changed.emit(set_number, color)
 
     def set_masked_mode(self, masked):
         """
@@ -1766,19 +1968,40 @@ class NumberedLayerButton(QPushButton):
         """Open a color dialog to change the strand's stroke color."""
         # Get translations
         _ = translations.get(layer_panel.language_code, translations['en'])
-        
+
+        # Set Qt locale to match application language
+        language_code = layer_panel.language_code if layer_panel else 'en'
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language_code in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language_code]))
+
         color_dialog = QColorDialog(self)
         color_dialog.setWindowTitle(_.get('change_stroke_color', "Change Stroke Color"))
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
-        
+        # Use non-native dialog to ensure consistent behavior across languages
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
         # Get current stroke color
         current_color = strand.stroke_color if hasattr(strand, 'stroke_color') else QColor(0, 0, 0, 255)
-        
-        color = color_dialog.getColor(initial=current_color, options=QColorDialog.ShowAlphaChannel)
-        if color.isValid():
-            # Set the stroke color on the strand
-            if hasattr(strand, 'stroke_color'):
-                strand.stroke_color = color
+        color_dialog.setCurrentColor(current_color)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_() == QColorDialog.Accepted:
+            color = color_dialog.currentColor()
+            if color.isValid():
+                # Set the stroke color on the strand
+                if hasattr(strand, 'stroke_color'):
+                    strand.stroke_color = color
                 
                 # Request canvas repaint
                 if layer_panel and hasattr(layer_panel, 'canvas'):
@@ -2089,21 +2312,46 @@ class NumberedLayerButton(QPushButton):
     # --- Arrow Customization Methods ---
     def choose_arrow_color(self, strand, color_btn, layer_panel):
         """Opens a color dialog to choose arrow color."""
-        language = getattr(layer_panel, 'language', None)
+        language = getattr(layer_panel, 'language_code', None)
         if not language and layer_panel and hasattr(layer_panel, 'canvas'):
-            language = getattr(layer_panel.canvas, 'language', 'en')
+            language = getattr(layer_panel.canvas, 'language_code', 'en')
         if not language:
             language = 'en'
         _ = translations.get(language, translations['en'])
+
+        # Set Qt locale to match application language
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language]))
+
         current_color = getattr(strand, 'arrow_color', None)
         if current_color is None:
             current_color = strand.stroke_color
-        color = QColorDialog.getColor(current_color, self, _['arrow_color'])
-        if color.isValid():
-            strand.arrow_color = color
-            color_btn.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #666;")
-            if layer_panel and hasattr(layer_panel, 'canvas'):
-                layer_panel.canvas.update()
+
+        color_dialog = QColorDialog(self)
+        color_dialog.setWindowTitle(_.get('arrow_color', "Arrow Color"))
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+        color_dialog.setCurrentColor(current_color)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_() == QColorDialog.Accepted:
+            color = color_dialog.currentColor()
+            if color.isValid():
+                strand.arrow_color = color
+                color_btn.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #666;")
+                if layer_panel and hasattr(layer_panel, 'canvas'):
+                    layer_panel.canvas.update()
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
                     layer_panel.canvas.undo_redo_manager.save_state()

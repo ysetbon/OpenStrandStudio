@@ -1,4 +1,4 @@
-Theme: default
+Theme: dark
 Language: he
 ShadowColor: 0,0,0,200
 DrawOnlyAffectedStrand: false

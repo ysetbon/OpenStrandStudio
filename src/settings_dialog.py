@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
     QSpinBox, QDoubleSpinBox, QStyleOptionButton # Add these
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF, QLocale
 from PyQt5.QtSvg import QSvgRenderer
 import base64
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics, QPolygonF
@@ -4474,12 +4474,264 @@ class SettingsDialog(QDialog):
         self.distance_mult_spinbox.setValue(2.0)  # Default distance boost
         self.curve_response_spinbox.setValue(2.0)  # Default curvature type
         
+    def get_language_code(self):
+        """Return the effective language code for this dialog."""
+        # Prefer the dialog's current_language if present
+        if hasattr(self, 'current_language') and self.current_language:
+            return self.current_language
+        # Fallback to parent window's language if available
+        if hasattr(self, 'parent_window') and hasattr(self.parent_window, 'language_code'):
+            return self.parent_window.language_code
+        return 'en'
+
+    def set_qt_locale(self):
+        """Set Qt locale to match application language."""
+        language_code = self.get_language_code()
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language_code in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language_code]))
+
+    def translate_color_dialog(self, dialog, translations_dict):
+        """Translate QColorDialog buttons to the current language and set RTL if needed."""
+        # Check if language is Hebrew for RTL support
+        language_code = self.get_language_code()
+        is_rtl = language_code == 'he'
+
+        # Set RTL layout for Hebrew
+        if is_rtl:
+            dialog.setLayoutDirection(Qt.RightToLeft)
+            # Apply RTL to all child widgets recursively
+            self._apply_rtl_to_widgets(dialog, is_rtl)
+        else:
+            dialog.setLayoutDirection(Qt.LeftToRight)
+
+        # Find and translate the button box
+        button_box = dialog.findChild(QDialogButtonBox)
+        if button_box:
+            # Set button order for RTL
+            if is_rtl:
+                button_box.setLayoutDirection(Qt.RightToLeft)
+
+            # Translate standard buttons
+            ok_button = button_box.button(QDialogButtonBox.Ok)
+            if ok_button:
+                ok_button.setText(translations_dict.get('ok', 'OK'))
+
+            cancel_button = button_box.button(QDialogButtonBox.Cancel)
+            if cancel_button:
+                cancel_button.setText(translations_dict.get('cancel', 'Cancel'))
+
+        # Find and translate all QPushButtons in the dialog
+        from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QGroupBox
+        buttons = dialog.findChildren(QPushButton)
+        for button in buttons:
+            button_text = button.text()
+            # Translate Pick Screen Color button
+            if 'Pick Screen Color' in button_text or 'pick' in button_text.lower():
+                button.setText(translations_dict.get('pick_screen_color', 'Pick Screen Color'))
+            # Translate Add to Custom Colors button
+            elif 'Add to Custom' in button_text or ('add' in button_text.lower() and 'custom' in button_text.lower()):
+                button.setText(translations_dict.get('add_to_custom_colors', 'Add to Custom Colors'))
+
+        # Force LTR for numeric input fields (hex values, RGB values)
+        for widget in dialog.findChildren(QSpinBox):
+            widget.setLayoutDirection(Qt.LeftToRight)
+            widget.setAlignment(Qt.AlignLeft)
+
+        for widget in dialog.findChildren(QDoubleSpinBox):
+            widget.setLayoutDirection(Qt.LeftToRight)
+            widget.setAlignment(Qt.AlignLeft)
+
+        # Force LTR for hex/color input fields
+        for lineedit in dialog.findChildren(QLineEdit):
+            # Check if this is likely a hex/color input field
+            text = lineedit.text()
+            if text.startswith('#') or (text and all(c in '0123456789abcdefABCDEF#' for c in text)):
+                lineedit.setLayoutDirection(Qt.LeftToRight)
+                lineedit.setAlignment(Qt.AlignLeft)
+
+        # Find and translate labels
+        labels = dialog.findChildren(QLabel)
+        for label in labels:
+            label_text = label.text().strip()
+            label_text_lower = label_text.lower()
+
+            # Skip empty labels
+            if not label_text:
+                continue
+
+            # Set RTL alignment for all labels in Hebrew
+            if is_rtl:
+                label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+            # Debug: Print all label texts to understand what we're seeing
+            print(f"DEBUG: Color dialog label found: '{label_text}' (len={len(label_text)})")
+
+            # Check for "Alpha channel" FIRST (before other checks) - handle various formats
+            if ('alpha channel' in label_text_lower or
+                'alpha-channel' in label_text_lower or
+                'alphachannel' in label_text_lower or
+                label_text in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
+                label_text_lower.startswith('alpha channel') or
+                label_text_lower.startswith('alpha-channel')):
+                translated_text = translations_dict.get('alpha_channel', 'Alpha channel')
+                print(f"DEBUG: Translating 'Alpha channel' from '{label_text}' to '{translated_text}'")
+                label.setText(translated_text + ':' if label_text.endswith(':') else translated_text)
+            # Translate Basic colors label
+            elif 'basic' in label_text_lower:
+                label.setText(translations_dict.get('basic_colors', 'Basic colors'))
+            # Translate Custom colors label
+            elif 'custom' in label_text_lower:
+                label.setText(translations_dict.get('custom_colors', 'Custom colors'))
+            # Translate color component labels with colons
+            elif 'hue' in label_text_lower or label_text in ['Hu:', 'H:', 'Hue:', 'Hu'] or label_text.startswith('Hu'):
+                translated_text = translations_dict.get('hue', 'Hue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'sat' in label_text_lower or label_text in ['Sa:', 'S:', 'Sat:', 'Sa', 'S'] or label_text.startswith('Sa'):
+                translated_text = translations_dict.get('sat', 'Sat')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'val' in label_text_lower or 'value' in label_text_lower or label_text in ['Va:', 'V:', 'Val:', 'Va', 'V'] or label_text.startswith('Va'):
+                translated_text = translations_dict.get('val', 'Val')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'red' in label_text_lower or label_text in ['R:', 'R', 'Red:', 'Red']:
+                translated_text = translations_dict.get('red', 'Red')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'green' in label_text_lower or label_text in ['G:', 'G', 'Green:', 'Green']:
+                translated_text = translations_dict.get('green', 'Green')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'blue' in label_text_lower or label_text in ['B:', 'B', 'Blue:', 'Blue', 'Bl:', 'Bl'] or label_text.startswith('Bl'):
+                translated_text = translations_dict.get('blue', 'Blue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'alpha' in label_text_lower or label_text in ['A:', 'A', 'Alpha:', 'Alpha', 'Al:', 'Al'] or label_text.startswith('Al'):
+                translated_text = translations_dict.get('alpha', 'Alpha')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif 'html' in label_text_lower or label_text in ['#', 'HTML:', 'HTML', '#:']:
+                label.setText('HTML:')
+            # Additional catch for any Blue/Alpha labels that might have been missed
+            elif label_text in ['Blue', 'Blue:', 'Blu:', 'Bl', 'Bl:']:
+                translated_text = translations_dict.get('blue', 'Blue')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            elif label_text in ['Alpha', 'Alpha:', 'Al', 'Al:']:
+                translated_text = translations_dict.get('alpha', 'Alpha')
+                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+            # Debug fallback: Check for single letter labels that might be color components
+            else:
+                # Handle single letter labels (like 'B' for Blue, 'A' for Alpha)
+                if len(label_text) <= 3 and label_text.replace(':', '').strip():
+                    original = label_text.replace(':', '').strip().upper()
+                    if original == 'B':
+                        translated_text = translations_dict.get('blue', 'Blue')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'A':
+                        translated_text = translations_dict.get('alpha', 'Alpha')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'R':
+                        translated_text = translations_dict.get('red', 'Red')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'G':
+                        translated_text = translations_dict.get('green', 'Green')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'S':
+                        translated_text = translations_dict.get('sat', 'Sat')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'V':
+                        translated_text = translations_dict.get('val', 'Val')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                    elif original == 'H':
+                        translated_text = translations_dict.get('hue', 'Hue')
+                        label.setText(translated_text + ':' if ':' in label_text else translated_text)
+
+        # Some Qt styles place "Alpha channel" as a QGroupBox title rather than a QLabel
+        group_boxes = dialog.findChildren(QGroupBox)
+        for gb in group_boxes:
+            title = gb.title().strip()
+            title_lower = title.lower()
+            normalized = title_lower.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+            print(f"DEBUG: Group box title found: '{title}' (normalized: '{normalized}')")
+            if (normalized == 'alpha channel' or
+                normalized == 'alpha-channel' or
+                normalized == 'alphachannel' or
+                normalized.startswith('alpha channel') or
+                normalized.startswith('alpha-channel') or
+                title in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                translated_title = translations_dict.get('alpha_channel', 'Alpha channel')
+                print(f"DEBUG: Translating group box title from '{title}' to '{translated_title}'")
+                gb.setTitle(translated_title)
+
+        # Run a delayed pass because Qt may create/update these widgets after exec_ starts
+        from PyQt5.QtCore import QTimer
+        def delayed_alpha_fix():
+            # Relabel QLabel instances
+            for label in dialog.findChildren(QLabel):
+                txt = label.text().strip()
+                lower = txt.lower()
+                norm = lower.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+                if (('alpha channel' in lower) or norm in ['alpha channel', 'alpha-channel', 'alphachannel'] or
+                    lower.startswith('alpha channel') or lower.startswith('alpha-channel') or
+                    txt in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                    new_txt = translations_dict.get('alpha_channel', 'Alpha channel')
+                    label.setText(new_txt + (':' if txt.endswith(':') else ''))
+                    if is_rtl:
+                        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            # Relabel QGroupBox titles
+            for gb in dialog.findChildren(QGroupBox):
+                t = gb.title().strip()
+                l = t.lower()
+                n = l.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+                if (n in ['alpha channel', 'alpha-channel', 'alphachannel'] or
+                    l.startswith('alpha channel') or l.startswith('alpha-channel') or
+                    t in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                    gb.setTitle(translations_dict.get('alpha_channel', 'Alpha channel'))
+        # Schedule multiple passes to be extra safe across styles
+        QTimer.singleShot(0, delayed_alpha_fix)
+        QTimer.singleShot(50, delayed_alpha_fix)
+        QTimer.singleShot(150, delayed_alpha_fix)
+
+    def _apply_rtl_to_widgets(self, parent_widget, is_rtl):
+        """Recursively apply RTL layout to child widgets."""
+        from PyQt5.QtWidgets import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QHBoxLayout, QVBoxLayout
+
+        for child in parent_widget.findChildren(QWidget):
+            # Skip numeric input widgets - they should stay LTR
+            if isinstance(child, (QSpinBox, QDoubleSpinBox)):
+                continue
+
+            # Skip hex/color input fields - they should stay LTR
+            if isinstance(child, QLineEdit):
+                text = child.text()
+                if text.startswith('#') or (text and all(c in '0123456789abcdefABCDEF#' for c in text)):
+                    continue
+
+            # Apply RTL to other widgets
+            if is_rtl:
+                child.setLayoutDirection(Qt.RightToLeft)
+
     def choose_shadow_color(self):
         """Open a color dialog to choose a new shadow color."""
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+
         color_dialog = QColorDialog(self)
         color_dialog.setCurrentColor(self.shadow_color)
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
-        
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
+        # Debug: Print current language and translation
+        current_lang = self.get_language_code()
+        print(f"DEBUG: Current language: {current_lang}")
+        print(f"DEBUG: Alpha channel translation: '{_.get('alpha_channel', 'MISSING')}'")
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
         if color_dialog.exec_():
             self.shadow_color = color_dialog.currentColor()
             self.update_shadow_color_button()
@@ -4508,9 +4760,17 @@ class SettingsDialog(QDialog):
 
     def choose_default_arrow_color(self):
         """Open a color dialog to choose a new default arrow color."""
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+
         color_dialog = QColorDialog(self)
         color_dialog.setCurrentColor(self.default_arrow_fill_color)
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
         if color_dialog.exec_():
             self.default_arrow_fill_color = color_dialog.currentColor()
             self.update_default_arrow_color_button()
@@ -4541,9 +4801,17 @@ class SettingsDialog(QDialog):
 
     def choose_default_strand_color(self):
         """Open a color dialog to choose a new default strand color."""
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+
         color_dialog = QColorDialog(self)
         color_dialog.setCurrentColor(self.default_strand_color)
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
         if color_dialog.exec_():
             self.default_strand_color = color_dialog.currentColor()
             self.update_default_strand_color_button()
@@ -4567,9 +4835,17 @@ class SettingsDialog(QDialog):
 
     def choose_default_stroke_color(self):
         """Open a color dialog to choose a new default stroke color."""
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+
         color_dialog = QColorDialog(self)
         color_dialog.setCurrentColor(self.default_stroke_color)
         color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
         if color_dialog.exec_():
             self.default_stroke_color = color_dialog.currentColor()
             self.update_default_stroke_color_button()

@@ -481,7 +481,6 @@ class SettingsDialog(QDialog):
                 self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
 
         # Remove the duplicate language_combobox section below this
-
         # Apply RTL adjustments to layer panel rows
         if hasattr(self, 'layer_panel_rows'):
             # Keep the layer panel settings widget with content direction
@@ -975,7 +974,6 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.dash_count_layout.invalidate()
             self.dash_count_layout.activate()
-                
         if hasattr(self, 'extension_dash_width_layout') and hasattr(self, 'extension_dash_width_label') and hasattr(self, 'extension_dash_width_spinbox'):
             self.clear_layout(self.extension_dash_width_layout)
             if is_rtl:
@@ -1366,7 +1364,6 @@ class SettingsDialog(QDialog):
                 pass
         else:
             pass
-
     def setup_ui(self):
         _ = translations[self.current_language]
         main_layout = QHBoxLayout(self)
@@ -1863,7 +1860,6 @@ class SettingsDialog(QDialog):
             self.gap_length_layout.addWidget(self.extension_dash_gap_length_spinbox)
             self.gap_length_layout.addStretch()
         layer_panel_layout.addLayout(self.gap_length_layout)
-
         # --- NEW: Arrow head settings ---
         self.arrow_len_layout = QHBoxLayout()  # Store as instance attribute
         self.layer_panel_rows.append(self.arrow_len_layout)
@@ -2355,7 +2351,6 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
         </ul>
-        
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -2671,7 +2666,11 @@ class SettingsDialog(QDialog):
             buttons.extend(self.sample_buttons)
         
         for button in buttons:
-            button.setFixedHeight(32)  # Match MainWindow button height
+            # Increase height specifically for sample project buttons to better fit tall glyphs like 'ק'
+            if hasattr(self, 'sample_buttons') and button in self.sample_buttons:
+                button.setFixedHeight(40)  # Taller height for sample project buttons
+            else:
+                button.setFixedHeight(32)  # Default height for other dialog buttons
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             # Dynamically set minimum width based on the button text length
             # Use boundingRect for more accurate width and add generous padding (20 px each side)
@@ -2840,7 +2839,6 @@ class SettingsDialog(QDialog):
             
             # Force update to ensure styling is applied
             checkbox.update()
-
     def apply_dialog_theme(self, theme_name):
         """Apply theme to dialog components"""
         # Update current theme for dropdown arrow colors
@@ -3260,7 +3258,6 @@ class SettingsDialog(QDialog):
         # SVG content is now directly embedded in the HTML above
         
         self.button_explanations_text_browser.setHtml(button_html)
-    
     def apply_all_settings(self):
         # Capture previous extended mask setting to detect changes
         # previous_use_extended_mask = self.use_extended_mask
@@ -3633,7 +3630,6 @@ class SettingsDialog(QDialog):
         # Update button explanations page
         if hasattr(self, 'button_guide_label'):
             self.button_guide_label.setText(_['button_guide_info'])
-            
         # Update the button explanations text browser content
         if hasattr(self, 'button_explanations_text_browser'):
             # Determine title color based on theme
@@ -4090,8 +4086,6 @@ class SettingsDialog(QDialog):
         for path in self.video_paths:
             if not os.path.exists(path):
                 pass
-
-
     def play_video(self, index):
         video_path = self.video_paths[index]
         if os.path.exists(video_path):
@@ -4508,7 +4502,6 @@ class SettingsDialog(QDialog):
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))
-
     def translate_color_dialog(self, dialog, translations_dict):
         """Translate QColorDialog buttons to the current language and set RTL if needed."""
         # Check if language is Hebrew for RTL support
@@ -4986,7 +4979,6 @@ class SettingsDialog(QDialog):
             if self.canvas:
                 self.canvas.strand_width = new_width
                 self.canvas.stroke_width = new_stroke_width
-
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""
         self.history_list.clear()
@@ -5467,7 +5459,6 @@ class SettingsDialog(QDialog):
                 pass
 
         QTimer.singleShot(0, _load)
-
 class VideoPlayerDialog(QDialog):
     def __init__(self, video_path, parent=None):
         super(VideoPlayerDialog, self).__init__(parent)

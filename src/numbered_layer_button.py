@@ -1433,6 +1433,16 @@ class NumberedLayerButton(QPushButton):
 
         is_rtl = language_code == 'he'
 
+        # Debug: Print what translations we have
+        print(f"DEBUG NLB translate_color_dialog: Language code: {language_code}")
+        print(f"DEBUG NLB translate_color_dialog: Is RTL: {is_rtl}")
+        print(f"DEBUG NLB translate_color_dialog: Has 'alpha_channel' key: {'alpha_channel' in translations_dict}")
+        if 'alpha_channel' in translations_dict:
+            print(f"DEBUG NLB translate_color_dialog: 'alpha_channel' = '{translations_dict['alpha_channel']}'")
+        print(f"DEBUG NLB translate_color_dialog: Has 'alpha' key: {'alpha' in translations_dict}")
+        if 'alpha' in translations_dict:
+            print(f"DEBUG NLB translate_color_dialog: 'alpha' = '{translations_dict['alpha']}')")
+
         # Set RTL layout for Hebrew
         if is_rtl:
             dialog.setLayoutDirection(Qt.RightToLeft)
@@ -1488,13 +1498,18 @@ class NumberedLayerButton(QPushButton):
 
         # Find and translate labels
         labels = dialog.findChildren(QLabel)
-        for label in labels:
+        print(f"DEBUG NLB: Found {len(labels)} labels in the dialog")
+        for i, label in enumerate(labels):
             label_text = label.text().strip()
-            label_text_lower = label_text.lower()
+            # Remove ampersand for pattern matching (Qt uses & for keyboard shortcuts)
+            label_text_normalized = label_text.replace('&', '')
+            label_text_lower = label_text_normalized.lower()
 
             # Skip empty labels
             if not label_text:
                 continue
+
+            print(f"DEBUG NLB: Label {i}: '{label_text}' (normalized: '{label_text_normalized}')")
 
             # Set RTL alignment for all labels in Hebrew
             if is_rtl:
@@ -1504,39 +1519,55 @@ class NumberedLayerButton(QPushButton):
             if ('alpha channel' in label_text_lower or
                 'alpha-channel' in label_text_lower or
                 'alphachannel' in label_text_lower or
-                label_text in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
+                label_text_normalized in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
                 label_text_lower.startswith('alpha channel') or
                 label_text_lower.startswith('alpha-channel')):
                 translated_text = translations_dict.get('alpha_channel', 'Alpha channel')
-                label.setText(translated_text + ':' if label_text.endswith(':') else translated_text)
+                print(f"DEBUG NLB: Found Alpha channel label: '{label_text}'")
+                print(f"DEBUG NLB: Translation dict has alpha_channel: {'alpha_channel' in translations_dict}")
+                print(f"DEBUG NLB: Translating to: '{translated_text}'")
+                # Ensure the label has a colon if the original had one
+                if ':' in label_text and ':' not in translated_text:
+                    label.setText(translated_text + ':')
+                else:
+                    label.setText(translated_text)
+                print(f"DEBUG NLB: Label text after setting: '{label.text()}'")
             # Translate Basic colors label
             elif 'basic' in label_text_lower:
                 label.setText(translations_dict.get('basic_colors', 'Basic colors'))
             # Translate Custom colors label
             elif 'custom' in label_text_lower:
                 label.setText(translations_dict.get('custom_colors', 'Custom colors'))
-            # Translate color component labels with colons
-            elif 'hue' in label_text_lower or label_text in ['Hu:', 'H:', 'Hue:', 'Hu'] or label_text.startswith('Hu'):
+            # Translate color component labels with colons (using normalized text without ampersands)
+            elif 'hue' in label_text_lower or label_text_normalized in ['Hu:', 'H:', 'Hue:', 'Hu'] or label_text_normalized.startswith('Hu'):
                 translated_text = translations_dict.get('hue', 'Hue')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'sat' in label_text_lower or label_text in ['Sa:', 'S:', 'Sat:', 'Sa', 'S'] or label_text.startswith('Sa'):
+            elif 'sat' in label_text_lower or label_text_normalized in ['Sa:', 'S:', 'Sat:', 'Sa', 'S'] or label_text_normalized.startswith('Sa'):
                 translated_text = translations_dict.get('sat', 'Sat')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'val' in label_text_lower or 'value' in label_text_lower or label_text in ['Va:', 'V:', 'Val:', 'Va', 'V'] or label_text.startswith('Va'):
+            elif 'val' in label_text_lower or 'value' in label_text_lower or label_text_normalized in ['Va:', 'V:', 'Val:', 'Va', 'V'] or label_text_normalized.startswith('Va'):
                 translated_text = translations_dict.get('val', 'Val')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'red' in label_text_lower or label_text in ['R:', 'R', 'Red:', 'Red']:
+            elif 'red' in label_text_lower or label_text_normalized in ['R:', 'R', 'Red:', 'Red']:
                 translated_text = translations_dict.get('red', 'Red')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'green' in label_text_lower or label_text in ['G:', 'G', 'Green:', 'Green']:
+            elif 'green' in label_text_lower or label_text_normalized in ['G:', 'G', 'Green:', 'Green']:
                 translated_text = translations_dict.get('green', 'Green')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'blue' in label_text_lower or label_text in ['B:', 'B', 'Blue:', 'Blue', 'Bl:', 'Bl'] or label_text.startswith('Bl'):
+            elif 'blue' in label_text_lower or label_text_normalized in ['B:', 'B', 'Blue:', 'Blue', 'Bl:', 'Bl'] or label_text_normalized.startswith('Bl'):
                 translated_text = translations_dict.get('blue', 'Blue')
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
-            elif 'alpha' in label_text_lower or label_text in ['A:', 'A', 'Alpha:', 'Alpha', 'Al:', 'Al'] or label_text.startswith('Al'):
+            elif 'alpha' in label_text_lower or label_text_normalized in ['A:', 'A', 'Alpha:', 'Alpha', 'Al:', 'Al'] or label_text_normalized.startswith('Al'):
                 translated_text = translations_dict.get('alpha', 'Alpha')
-                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                print(f"DEBUG NLB: Found standalone Alpha label: '{label_text}'")
+                print(f"DEBUG NLB: Translation dict has alpha: {'alpha' in translations_dict}")
+                print(f"DEBUG NLB: Translating to: '{translated_text}'")
+                # Ensure the label has a colon if the original had one
+                if ':' in label_text and ':' not in translated_text:
+                    label.setText(translated_text + ':')
+                else:
+                    label.setText(translated_text)
+                print(f"DEBUG NLB: Label text after setting: '{label.text()}'")
             elif 'html' in label_text_lower or label_text in ['#', 'HTML:', 'HTML', '#:']:
                 label.setText('HTML:')
             # Additional catch for any Blue/Alpha labels that might have been missed
@@ -1580,6 +1611,75 @@ class NumberedLayerButton(QPushButton):
                     elif original == 'H':
                         translated_text = translations_dict.get('hue', 'Hue')
                         label.setText(translated_text + ':' if ':' in label_text else translated_text)
+
+        # Some Qt styles place "Alpha channel" as a QGroupBox title rather than a QLabel
+        from PyQt5.QtWidgets import QGroupBox
+        group_boxes = dialog.findChildren(QGroupBox)
+        print(f"DEBUG NLB: Found {len(group_boxes)} group boxes in the dialog")
+        for gb in group_boxes:
+            title = gb.title().strip()
+            title_lower = title.lower()
+            normalized = title_lower.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+            print(f"DEBUG NLB: Group box title found: '{title}' (normalized: '{normalized}')")
+            if (normalized == 'alpha channel' or
+                normalized == 'alpha-channel' or
+                normalized == 'alphachannel' or
+                normalized.startswith('alpha channel') or
+                normalized.startswith('alpha-channel') or
+                title in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                translated_title = translations_dict.get('alpha_channel', 'Alpha channel')
+                print(f"DEBUG NLB: Translating group box title from '{title}' to '{translated_title}'")
+                gb.setTitle(translated_title)
+
+        # Run a delayed pass because Qt may create/update these widgets after exec_ starts
+        from PyQt5.QtCore import QTimer
+        def delayed_alpha_fix():
+            # Relabel QLabel instances
+            labels = dialog.findChildren(QLabel)
+            print(f"DEBUG NLB delayed_alpha_fix: Checking {len(labels)} labels")
+            for label in labels:
+                txt = label.text().strip()
+                # Remove ampersands for pattern matching
+                txt_no_amp = txt.replace('&', '')
+                lower = txt_no_amp.lower()
+                norm = lower.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+
+                if txt and ('alpha' in lower or 'channel' in lower):
+                    print(f"DEBUG NLB delayed_alpha_fix: Checking label: '{txt}' (without &: '{txt_no_amp}')")
+
+                # Check for "Alpha channel" compound term first
+                if (('alpha channel' in lower) or norm in ['alpha channel', 'alpha-channel', 'alphachannel'] or
+                    lower.startswith('alpha channel') or lower.startswith('alpha-channel') or
+                    txt in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                    new_txt = translations_dict.get('alpha_channel', 'Alpha channel')
+                    print(f"DEBUG NLB delayed_alpha_fix: Found Alpha channel: '{txt}' -> '{new_txt}'")
+                    label.setText(new_txt + (':' if txt.endswith(':') else ''))
+                    if is_rtl:
+                        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                # Also check for standalone "Alpha" label
+                elif (norm in ['alpha', 'a'] or txt in ['Alpha', 'Alpha:', 'A', 'A:', 'Al', 'Al:'] or
+                      (norm.startswith('alpha') and 'channel' not in norm)):
+                    new_txt = translations_dict.get('alpha', 'Alpha')
+                    print(f"DEBUG NLB delayed_alpha_fix: Found standalone Alpha: '{txt}' -> '{new_txt}'")
+                    label.setText(new_txt + (':' if txt.endswith(':') else ''))
+                    if is_rtl:
+                        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+            # Also check QGroupBox titles
+            for gb in dialog.findChildren(QGroupBox):
+                t = gb.title().strip()
+                l = t.lower()
+                n = l.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+                if (n in ['alpha channel', 'alpha-channel', 'alphachannel'] or
+                    l.startswith('alpha channel') or l.startswith('alpha-channel') or
+                    t in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
+                    gb.setTitle(translations_dict.get('alpha_channel', 'Alpha channel'))
+                    print(f"DEBUG NLB delayed_alpha_fix: Set QGroupBox title to '{translations_dict.get('alpha_channel', 'Alpha channel')}'")
+
+        # Schedule multiple passes to be extra safe across styles
+        QTimer.singleShot(0, delayed_alpha_fix)
+        QTimer.singleShot(50, delayed_alpha_fix)
+        QTimer.singleShot(150, delayed_alpha_fix)
 
     def _apply_rtl_to_widgets(self, parent_widget, is_rtl):
         """Recursively apply RTL layout to child widgets."""

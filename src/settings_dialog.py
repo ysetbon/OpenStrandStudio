@@ -4505,6 +4505,16 @@ class SettingsDialog(QDialog):
         language_code = self.get_language_code()
         is_rtl = language_code == 'he'
 
+        # Debug: Print what translations we have
+        print(f"DEBUG translate_color_dialog: Language code: {language_code}")
+        print(f"DEBUG translate_color_dialog: Is RTL: {is_rtl}")
+        print(f"DEBUG translate_color_dialog: Has 'alpha_channel' key: {'alpha_channel' in translations_dict}")
+        if 'alpha_channel' in translations_dict:
+            print(f"DEBUG translate_color_dialog: 'alpha_channel' = '{translations_dict['alpha_channel']}'")
+        print(f"DEBUG translate_color_dialog: Has 'alpha' key: {'alpha' in translations_dict}")
+        if 'alpha' in translations_dict:
+            print(f"DEBUG translate_color_dialog: 'alpha' = '{translations_dict['alpha']}')")
+
         # Set RTL layout for Hebrew
         if is_rtl:
             dialog.setLayoutDirection(Qt.RightToLeft)
@@ -4562,7 +4572,9 @@ class SettingsDialog(QDialog):
         labels = dialog.findChildren(QLabel)
         for label in labels:
             label_text = label.text().strip()
-            label_text_lower = label_text.lower()
+            # Remove ampersand for pattern matching (Qt uses & for keyboard shortcuts)
+            label_text_normalized = label_text.replace('&', '')
+            label_text_lower = label_text_normalized.lower()
 
             # Skip empty labels
             if not label_text:
@@ -4579,12 +4591,20 @@ class SettingsDialog(QDialog):
             if ('alpha channel' in label_text_lower or
                 'alpha-channel' in label_text_lower or
                 'alphachannel' in label_text_lower or
-                label_text in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
+                label_text_normalized in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:', 'Alpha channel:'] or
                 label_text_lower.startswith('alpha channel') or
                 label_text_lower.startswith('alpha-channel')):
                 translated_text = translations_dict.get('alpha_channel', 'Alpha channel')
-                print(f"DEBUG: Translating 'Alpha channel' from '{label_text}' to '{translated_text}'")
-                label.setText(translated_text + ':' if label_text.endswith(':') else translated_text)
+                print(f"DEBUG: Found Alpha channel label: '{label_text}'")
+                print(f"DEBUG: Language code: {language_code if 'language_code' in locals() else 'unknown'}")
+                print(f"DEBUG: Translation dict has alpha_channel: {'alpha_channel' in translations_dict}")
+                print(f"DEBUG: Translating to: '{translated_text}'")
+                # Ensure the label has a colon if the original had one
+                if ':' in label_text and ':' not in translated_text:
+                    label.setText(translated_text + ':')
+                else:
+                    label.setText(translated_text)
+                print(f"DEBUG: Label text after setting: '{label.text()}'")
             # Translate Basic colors label
             elif 'basic' in label_text_lower:
                 label.setText(translations_dict.get('basic_colors', 'Basic colors'))
@@ -4612,7 +4632,15 @@ class SettingsDialog(QDialog):
                 label.setText(translated_text + ':' if ':' in label_text else translated_text)
             elif 'alpha' in label_text_lower or label_text in ['A:', 'A', 'Alpha:', 'Alpha', 'Al:', 'Al'] or label_text.startswith('Al'):
                 translated_text = translations_dict.get('alpha', 'Alpha')
-                label.setText(translated_text + ':' if ':' in label_text else translated_text)
+                print(f"DEBUG: Found standalone Alpha label: '{label_text}'")
+                print(f"DEBUG: Translation dict has alpha: {'alpha' in translations_dict}")
+                print(f"DEBUG: Translating to: '{translated_text}'")
+                # Ensure the label has a colon if the original had one
+                if ':' in label_text and ':' not in translated_text:
+                    label.setText(translated_text + ':')
+                else:
+                    label.setText(translated_text)
+                print(f"DEBUG: Label text after setting: '{label.text()}'")
             elif 'html' in label_text_lower or label_text in ['#', 'HTML:', 'HTML', '#:']:
                 label.setText('HTML:')
             # Additional catch for any Blue/Alpha labels that might have been missed
@@ -4672,12 +4700,25 @@ class SettingsDialog(QDialog):
             # Relabel QLabel instances
             for label in dialog.findChildren(QLabel):
                 txt = label.text().strip()
-                lower = txt.lower()
+                # Remove ampersands for pattern matching
+                txt_no_amp = txt.replace('&', '')
+                lower = txt_no_amp.lower()
                 norm = lower.replace(':', '').replace('\u200e', '').replace('\u200f', '').strip()
+
+                # Check for "Alpha channel" compound term first
                 if (('alpha channel' in lower) or norm in ['alpha channel', 'alpha-channel', 'alphachannel'] or
                     lower.startswith('alpha channel') or lower.startswith('alpha-channel') or
                     txt in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
                     new_txt = translations_dict.get('alpha_channel', 'Alpha channel')
+                    print(f"DEBUG delayed_alpha_fix: Found Alpha channel: '{txt}' -> '{new_txt}'")
+                    label.setText(new_txt + (':' if txt.endswith(':') else ''))
+                    if is_rtl:
+                        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                # Also check for standalone "Alpha" label
+                elif (norm in ['alpha', 'a'] or txt in ['Alpha', 'Alpha:', 'A', 'A:', 'Al', 'Al:'] or
+                      (norm.startswith('alpha') and 'channel' not in norm)):
+                    new_txt = translations_dict.get('alpha', 'Alpha')
+                    print(f"DEBUG delayed_alpha_fix: Found standalone Alpha: '{txt}' -> '{new_txt}'")
                     label.setText(new_txt + (':' if txt.endswith(':') else ''))
                     if is_rtl:
                         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)

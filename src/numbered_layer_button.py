@@ -1568,8 +1568,14 @@ class NumberedLayerButton(QPushButton):
                 else:
                     label.setText(translated_text)
                 print(f"DEBUG NLB: Label text after setting: '{label.text()}'")
-            elif 'html' in label_text_lower or label_text in ['#', 'HTML:', 'HTML', '#:']:
-                label.setText('HTML:')
+            elif 'html' in label_text_lower or label_text_normalized in ['#', 'HTML:', 'HTML', '#:']:
+                # For RTL languages, put colon on the left and align right
+                if is_rtl:
+                    label.setText(':HTML')
+                    label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                else:
+                    label.setText('HTML:')
+                    label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             # Additional catch for any Blue/Alpha labels that might have been missed
             elif label_text in ['Blue', 'Blue:', 'Blu:', 'Bl', 'Bl:']:
                 translated_text = translations_dict.get('blue', 'Blue')

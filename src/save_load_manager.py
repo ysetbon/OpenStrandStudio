@@ -652,6 +652,7 @@ def load_strands(filename, canvas):
             strand.end_extension_visible = strand_data.get("end_extension_visible", False)
             strand.start_arrow_visible = strand_data.get("start_arrow_visible", False)
             strand.end_arrow_visible = strand_data.get("end_arrow_visible", False)
+            strand.full_arrow_visible = strand_data.get("full_arrow_visible", False)
 
             # Circle stroke color
             if "circle_stroke_color" in strand_data and strand_data["circle_stroke_color"] is not None:
@@ -807,6 +808,7 @@ def load_strands(filename, canvas):
                 strand.end_extension_visible = masked_data.get("end_extension_visible", False)
                 strand.start_arrow_visible = masked_data.get("start_arrow_visible", False)
                 strand.end_arrow_visible = masked_data.get("end_arrow_visible", False)
+                strand.full_arrow_visible = masked_data.get("full_arrow_visible", False)
                 
                 if "deletion_rectangles" in masked_data:
                     # Set a flag to prevent automatic repositioning

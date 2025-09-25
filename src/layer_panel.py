@@ -1408,6 +1408,12 @@ class LayerPanel(QWidget):
 
             self.canvas.update() # Redraw canvas to reflect the change
 
+            # Save state for undo/redo functionality
+            if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+                # Force save by resetting timing check to ensure visibility changes are captured
+                self.canvas.undo_redo_manager._last_save_time = 0
+                self.canvas.undo_redo_manager.save_state()
+
         else:
             pass
     # --- END NEW ---

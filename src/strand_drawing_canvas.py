@@ -1258,7 +1258,12 @@ class StrandDrawingCanvas(QWidget):
         # Always create a fresh QColor instance for the default shadow color
         self.default_shadow_color = QColor(0, 0, 0, 150)  # Default shadow color for new strands (black at 59% opacity)
         pass
-        
+
+        # Initialize curve parameters with defaults (will be overridden by user settings in main.py)
+        self.control_point_base_fraction = 0.4  # Default base fraction for control point influence
+        self.distance_multiplier = 1.2  # Default distance multiplication factor
+        self.curve_response_exponent = 1.5  # Default exponential response
+
         # Initialize the flag for the third control point
         self.enable_third_control_point = True
         # Initialize snap to grid setting
@@ -3591,9 +3596,13 @@ class StrandDrawingCanvas(QWidget):
         elif self.current_mode == self.attach_mode:
             # Create new strand
             if event.button() == Qt.LeftButton:
-                self.current_strand = Strand(canvas_pos, canvas_pos, self.strand_width, 
+                self.current_strand = Strand(canvas_pos, canvas_pos, self.strand_width,
                                            self.default_strand_color, self.default_stroke_color, self.stroke_width)
                 self.current_strand.canvas = self  # Set canvas reference immediately
+                # Apply curve parameters from canvas settings
+                self.current_strand.curve_response_exponent = self.curve_response_exponent
+                self.current_strand.control_point_base_fraction = self.control_point_base_fraction
+                self.current_strand.distance_multiplier = self.distance_multiplier
                 self.is_drawing_new_strand = True
                 pass
                 self.update()

@@ -31,10 +31,10 @@ class Strand:
         self._is_selected = False  # Indicates if the strand is selected (use private attribute for property)
         self.is_hidden = False # Indicates if the strand is hidden
         self.shadow_only = False # Indicates if the strand is in shadow-only mode
-        # Control point influence parameters
-        self.curve_response_exponent = 1.5  # Exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
-        self.control_point_base_fraction = 0.4  # Base fraction for control point influence (was 0.333, now 0.4 for 20% more influence)
-        self.distance_multiplier = 1.2  # Distance multiplication factor for additional influence boost (1.0-10.0 range)
+        # Control point influence parameters - will be overridden by canvas settings if available
+        self.curve_response_exponent = 1.5  # Default: Exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
+        self.control_point_base_fraction = 0.4  # Default: Base fraction for control point influence
+        self.distance_multiplier = 1.2  # Default: Distance multiplication factor (1.0-10.0 range)
         self.endpoint_tension = 1.15  # Extra tension for start/end control points (1.0=normal, 1.15=15% tighter)
 
         # Initialize attachment statuses

@@ -917,6 +917,14 @@ def load_strands(filename, canvas):
             strand.shadow_color = QColor(canvas.default_shadow_color)
         # Explicitly enable shadow drawing for this strand
         strand.should_draw_shadow = True
+
+        # Apply current canvas curve settings to loaded strands
+        if hasattr(canvas, 'control_point_base_fraction'):
+            strand.control_point_base_fraction = canvas.control_point_base_fraction
+        if hasattr(canvas, 'distance_multiplier'):
+            strand.distance_multiplier = canvas.distance_multiplier
+        if hasattr(canvas, 'curve_response_exponent'):
+            strand.curve_response_exponent = canvas.curve_response_exponent
         
         # Special handling for MaskedStrand shadows
         if isinstance(strand, MaskedStrand):
@@ -1021,6 +1029,14 @@ def apply_loaded_strands(canvas, strands, groups):
             strand.shadow_color = QColor(canvas.default_shadow_color)
         # Only enable shadow drawing if canvas has shadows enabled
         strand.should_draw_shadow = canvas.shadow_enabled if hasattr(canvas, 'shadow_enabled') else True
+
+        # Apply current canvas curve settings to loaded strands
+        if hasattr(canvas, 'control_point_base_fraction'):
+            strand.control_point_base_fraction = canvas.control_point_base_fraction
+        if hasattr(canvas, 'distance_multiplier'):
+            strand.distance_multiplier = canvas.distance_multiplier
+        if hasattr(canvas, 'curve_response_exponent'):
+            strand.curve_response_exponent = canvas.curve_response_exponent
         
         # Special handling for MaskedStrand shadows
         if isinstance(strand, MaskedStrand):

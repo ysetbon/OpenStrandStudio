@@ -479,7 +479,6 @@ class SettingsDialog(QDialog):
             else:
                 # For LTR, use default left alignment and standard padding
                 self.set_combobox_text_alignment(self.language_combobox, Qt.AlignLeft | Qt.AlignVCenter)
-
         # Remove the duplicate language_combobox section below this
         # Apply RTL adjustments to layer panel rows
         if hasattr(self, 'layer_panel_rows'):
@@ -2666,9 +2665,12 @@ class SettingsDialog(QDialog):
             buttons.extend(self.sample_buttons)
         
         for button in buttons:
-            # Increase height specifically for sample project buttons to better fit tall glyphs like 'ק'
-            if hasattr(self, 'sample_buttons') and button in self.sample_buttons:
-                button.setFixedHeight(40)  # Taller height for sample project buttons
+            # Increase height for sample project and history buttons to better fit tall glyphs like 'ק'
+            if (
+                (hasattr(self, 'sample_buttons') and button in self.sample_buttons) or
+                button in (self.load_history_button, self.clear_history_button)
+            ):
+                button.setFixedHeight(40)  # Taller height for these specific buttons
             else:
                 button.setFixedHeight(32)  # Default height for other dialog buttons
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -2728,7 +2730,6 @@ class SettingsDialog(QDialog):
                 indicator_width = indicator_rect_from_style.width()
                 indicator_height = indicator_rect_from_style.height()
                 
-
                 
                 # Use the actual indicator rectangle from Qt
                 indicator_rect = QRect(indicator_x, indicator_y, indicator_width, indicator_height)

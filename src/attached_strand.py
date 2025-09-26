@@ -791,6 +791,7 @@ class AttachedStrand(Strand):
                 
                 painter.restore()
 
+            painter.restore() # Top Level Restore - MUST restore before returning!
             return # Skip drawing strand body etc.
         # --- END MODIFIED ---
 
@@ -967,8 +968,9 @@ class AttachedStrand(Strand):
             painter.restore()  # Top Level Restore 
             return
         # --- END: Skip visual rendering in shadow-only mode ---
-        
+
         # NEW: Draw dashed extension lines for attached strands
+        painter.save()  # Save state before modifying for extensions/arrows
         ext_len = getattr(self.canvas, 'extension_length', 100)
         dash_count = getattr(self.canvas, 'extension_dash_count', 10)
         dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
@@ -1100,7 +1102,7 @@ class AttachedStrand(Strand):
                 painter.drawPolygon(arrow_poly)
         # --- END NEW ---
 
-
+        painter.restore()  # Restore state after extensions/arrows drawing
 
         # Prepare combined paths for stroke and fill
         painter.save()

@@ -189,8 +189,22 @@ class NumberedLayerButton(QPushButton):
         # Get translations from the layer panel
         _ = translations.get(layer_panel.language_code, translations['en'])
 
-        # Check if this is a masked layer 
-        is_masked_layer = isinstance(strand, MaskedStrand) 
+        # Check if this is a masked layer
+        is_masked_layer = isinstance(strand, MaskedStrand)
+
+        # Save initial arrow state before showing menu
+        initial_arrow_state = None
+        if hasattr(strand, 'full_arrow_visible') and strand.full_arrow_visible:
+            initial_arrow_state = {
+                'full_arrow_visible': strand.full_arrow_visible,
+                'arrow_color': getattr(strand, 'arrow_color', None),
+                'arrow_transparency': getattr(strand, 'arrow_transparency', 100),
+                'arrow_texture': getattr(strand, 'arrow_texture', 'none'),
+                'arrow_shaft_style': getattr(strand, 'arrow_shaft_style', 'solid'),
+                'arrow_head_visible': getattr(strand, 'arrow_head_visible', True),
+                'arrow_casts_shadow': getattr(strand, 'arrow_casts_shadow', False)
+            }
+            print(f"Initial arrow state before menu: shaft={initial_arrow_state['arrow_shaft_style']}, texture={initial_arrow_state['arrow_texture']}")
 
         # Create the context menu
         context_menu = QMenu(self)
@@ -951,6 +965,46 @@ class NumberedLayerButton(QPushButton):
         # Fix multi-monitor positioning by getting screen-aware global position
         global_pos = self.get_screen_aware_global_pos(pos)
         context_menu.exec_(global_pos)
+
+        # After menu closes, check if arrow state changed and save if needed
+        if hasattr(strand, 'full_arrow_visible'):
+            current_arrow_state = {
+                'full_arrow_visible': strand.full_arrow_visible,
+                'arrow_color': getattr(strand, 'arrow_color', None),
+                'arrow_transparency': getattr(strand, 'arrow_transparency', 100),
+                'arrow_texture': getattr(strand, 'arrow_texture', 'none'),
+                'arrow_shaft_style': getattr(strand, 'arrow_shaft_style', 'solid'),
+                'arrow_head_visible': getattr(strand, 'arrow_head_visible', True),
+                'arrow_casts_shadow': getattr(strand, 'arrow_casts_shadow', False)
+            }
+
+            # Check if state changed
+            state_changed = False
+            if initial_arrow_state is None and current_arrow_state['full_arrow_visible']:
+                # Arrow was just enabled
+                state_changed = True
+                print(f"Arrow was enabled with: shaft={current_arrow_state['arrow_shaft_style']}, texture={current_arrow_state['arrow_texture']}")
+            elif initial_arrow_state is not None and not current_arrow_state['full_arrow_visible']:
+                # Arrow was disabled
+                state_changed = True
+                print(f"Arrow was disabled")
+            elif initial_arrow_state is not None and current_arrow_state['full_arrow_visible']:
+                # Check if any property changed
+                for key in initial_arrow_state:
+                    if initial_arrow_state[key] != current_arrow_state[key]:
+                        state_changed = True
+                        print(f"Arrow property '{key}' changed from {initial_arrow_state[key]} to {current_arrow_state[key]}")
+                        break
+
+            if state_changed and layer_panel and hasattr(layer_panel, 'canvas'):
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    # Force save with detailed logging
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    print(f"Saving arrow state after menu close: visible={current_arrow_state['full_arrow_visible']}, shaft={current_arrow_state['arrow_shaft_style']}, texture={current_arrow_state['arrow_texture']}")
+                    layer_panel.canvas.undo_redo_manager.save_state()
+                    print(f"State saved for strand {strand.layer_name}")
+            elif not state_changed:
+                print(f"No arrow state changes detected for strand {strand.layer_name}")
     def setText(self, text):
         """
         Set the text of the button and trigger a repaint.
@@ -2272,17 +2326,12 @@ class NumberedLayerButton(QPushButton):
         attr_name = "full_arrow_visible"
         if hasattr(strand, attr_name):
             current_visibility = getattr(strand, attr_name)
-            setattr(strand, attr_name, not current_visibility)
-            print(f"Set {strand.layer_name} {attr_name} to {not current_visibility}") # Debug print
+            new_visibility = not current_visibility
+            setattr(strand, attr_name, new_visibility)
+            print(f"Set {strand.layer_name} {attr_name} to {new_visibility}") # Debug print
+
             if layer_panel and hasattr(layer_panel, 'canvas'):
                 layer_panel.canvas.update() # Request canvas repaint
-                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    print(f"Reset _last_save_time to force save for toggling {attr_name}")
-                    layer_panel.canvas.undo_redo_manager.save_state()
-                    print(f"Undo/Redo state saved after toggling {attr_name}")
-                else:
-                    print("Warning: Could not find undo_redo_manager on canvas to save state.")
             else:
                  print("Warning: Could not find canvas to update after toggling full arrow visibility.")
                  self.update() # Fallback update
@@ -2718,45 +2767,30 @@ class NumberedLayerButton(QPushButton):
                 color_btn.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #666;")
                 if layer_panel and hasattr(layer_panel, 'canvas'):
                     layer_panel.canvas.update()
-                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    layer_panel.canvas.undo_redo_manager.save_state()
 
     def set_arrow_transparency(self, strand, value, layer_panel):
         """Sets the arrow transparency (0-100, where 100 is opaque)."""
         strand.arrow_transparency = value
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
-            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
 
     def set_arrow_texture(self, strand, texture, layer_panel):
         """Sets the arrow texture pattern."""
         strand.arrow_texture = texture
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
-            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
 
     def set_arrow_shaft_style(self, strand, style, layer_panel):
         """Sets the arrow shaft style (solid, dashed, dotted)."""
         strand.arrow_shaft_style = style
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
-            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
 
     def set_arrow_head_visible(self, strand, visible, layer_panel):
         """Sets whether the arrow head is visible."""
         strand.arrow_head_visible = visible
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
-            if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
 
     def set_arrow_casts_shadow(self, strand, casts_shadow, layer_panel):
         """Sets whether the arrow casts shadow like a strand layer."""

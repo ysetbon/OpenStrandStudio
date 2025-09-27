@@ -461,6 +461,49 @@ class UndoRedoManager(QObject):
                     return False
                 # --- END NEW CHECK ---
 
+                # --- NEW CHECK: Compare arrow properties for each strand ---
+                for i, strand in enumerate(self.canvas.strands):
+                    if i < len(prev_data.get('strands', [])):
+                        prev_strand_data = prev_data['strands'][i]
+
+                        # Check full arrow visibility
+                        if getattr(strand, 'full_arrow_visible', False) != prev_strand_data.get('full_arrow_visible', False):
+                            print(f"Arrow visibility changed for {strand.layer_name}: {prev_strand_data.get('full_arrow_visible', False)} -> {getattr(strand, 'full_arrow_visible', False)}")
+                            return False
+
+                        # If arrow is visible, check arrow properties
+                        if getattr(strand, 'full_arrow_visible', False):
+                            arrow_props = [
+                                ('arrow_shaft_style', 'solid'),
+                                ('arrow_texture', 'none'),
+                                ('arrow_transparency', 100),
+                                ('arrow_head_visible', True),
+                                ('arrow_casts_shadow', False)
+                            ]
+
+                            for prop_name, default_val in arrow_props:
+                                current_val = getattr(strand, prop_name, default_val)
+                                prev_val = prev_strand_data.get(prop_name, default_val)
+                                if current_val != prev_val:
+                                    print(f"Arrow property '{prop_name}' changed for {strand.layer_name}: {prev_val} -> {current_val}")
+                                    return False
+
+                            # Check arrow color separately (it's a QColor object)
+                            current_color = getattr(strand, 'arrow_color', None)
+                            prev_color_data = prev_strand_data.get('arrow_color', None)
+                            if (current_color is None) != (prev_color_data is None):
+                                print(f"Arrow color existence changed for {strand.layer_name}")
+                                return False
+                            if current_color is not None and prev_color_data is not None:
+                                # Compare color values
+                                if (current_color.red() != prev_color_data.get('r', 0) or
+                                    current_color.green() != prev_color_data.get('g', 0) or
+                                    current_color.blue() != prev_color_data.get('b', 0) or
+                                    current_color.alpha() != prev_color_data.get('a', 255)):
+                                    print(f"Arrow color changed for {strand.layer_name}")
+                                    return False
+                # --- END NEW CHECK ---
+
                 # Compare groups - this is a critical check
                 current_groups = getattr(self.canvas, 'groups', {})
                 prev_groups = prev_data.get('groups', {})

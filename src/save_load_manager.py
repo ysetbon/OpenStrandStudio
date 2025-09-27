@@ -127,6 +127,13 @@ def serialize_strand(strand, canvas, index=None):
         "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
         "shadow_only": getattr(strand, 'shadow_only', False),
         "closed_connections": getattr(strand, 'closed_connections', [False, False]),
+        # Arrow customization properties
+        "arrow_color": serialize_color(getattr(strand, 'arrow_color', None)) if hasattr(strand, 'arrow_color') and strand.arrow_color else None,
+        "arrow_transparency": getattr(strand, 'arrow_transparency', 100),
+        "arrow_texture": getattr(strand, 'arrow_texture', 'none'),
+        "arrow_shaft_style": getattr(strand, 'arrow_shaft_style', 'solid'),
+        "arrow_head_visible": getattr(strand, 'arrow_head_visible', True),
+        "arrow_casts_shadow": getattr(strand, 'arrow_casts_shadow', False),
     }
     
     # Save knot connections - we need to save the layer names instead of strand references
@@ -426,7 +433,18 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.start_arrow_visible = data.get("start_arrow_visible", False)
         strand.end_arrow_visible = data.get("end_arrow_visible", False)
         strand.full_arrow_visible = data.get("full_arrow_visible", False)
-        
+
+        # Restore arrow customization properties
+        if data.get("arrow_color"):
+            strand.arrow_color = deserialize_color(data["arrow_color"])
+        else:
+            strand.arrow_color = None
+        strand.arrow_transparency = data.get("arrow_transparency", 100)
+        strand.arrow_texture = data.get("arrow_texture", 'none')
+        strand.arrow_shaft_style = data.get("arrow_shaft_style", 'solid')
+        strand.arrow_head_visible = data.get("arrow_head_visible", True)
+        strand.arrow_casts_shadow = data.get("arrow_casts_shadow", False)
+
         # Initialize knot connections - we'll restore the actual references later
         strand.knot_connections = {}
         # Store the raw knot connection data for later processing

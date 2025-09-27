@@ -186,20 +186,23 @@ translations = {
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.102</h2>
+        <h2>What's New in Version 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Enhanced Curvature Bias Controls:</b> New bias control points positioned between the center control point and the two end control points provide fine-tuned curvature adjustment. These controls appear as small squares with either a triangle or circle icon inside, allowing you to independently adjust the curve influence from each side toward the center for more precise strand shaping.</li>
-            <li style="font-size:15px;"><b>Advanced Curvature Settings:</b> Three new curvature parameters give you complete control over strand curves:
+            <li style="font-size:15px;"><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties:
                 <ul style="margin-left: 20px;">
-                    <li><b>Control Point Influence:</b> Adjusts the pull strength of control points (1.0=normal, up to 3.0=very strong)</li>
-                    <li><b>Distance Boost:</b> Magnifies curves by multiplying the distance factor (1.0=no boost, up to 5.0=5x boost)</li>
-                    <li><b>Curve Shape:</b> Controls curve response type (1.0=sharp/linear, 3.0=smooth/cubic)</li>
+                    <li><b>Arrow Color:</b> Independent color control for arrows, separate from strand color</li>
+                    <li><b>Arrow Transparency:</b> Adjustable arrow opacity (0-100%)</li>
+                    <li><b>Arrow Head Texture:</b> Multiple texture options (None, Stripes, Dots, Crosshatch)</li>
+                    <li><b>Arrow Shaft Style:</b> Various shaft patterns (Solid, Stripes, Dots, Tiles)</li>
+                    <li><b>Shadow Support:</b> Arrows can cast shadows with "Arrow Casts Shadow" option</li>
+                    <li><b>Head Visibility:</b> Option to show/hide arrow heads independently</li>
+                    <li><b>Dimension Controls:</b> Arrow head width/length, shaft width, and gap settings</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Progressive Control Point Display:</b> When creating new strands, only the starting control point is initially visible. Additional control points (end points, center point, and bias controls) appear progressively as you begin moving the strand, reducing visual clutter during initial placement.</li>
-            <li style="font-size:15px;"><b>Improved Shading Rendering:</b> Fixed various shading issues for better visual quality and more accurate shadow representation across all strand configurations.</li>
+            <li style="font-size:15px;"><b>Smart Mask Group Selection:</b> When creating groups with masked strands (e.g., 1_1_2_1), selecting one component automatically includes its mask partner. For instance, selecting strand "1" will automatically include strand "2" when they share a mask, ensuring mask integrity is maintained in grouped operations.</li>
+            <li style="font-size:15px;"><b>Enhanced Painting System:</b> Fixed rendering issues where strand paths and attached strands weren't properly painted during draw operations. The painter now correctly renders both the strand's Bézier path and its stroke outline, ensuring consistent visual representation during all editing operations.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.103</p>
         ''',
 
 
@@ -571,20 +574,23 @@ translations = {
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.102</h2>
+        <h2>Nouveautés de la version 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Contrôles de biais de courbure améliorés :</b> De nouveaux points de contrôle de biais positionnés entre le point de contrôle central et les deux points de contrôle d'extrémité permettent un ajustement précis de la courbure. Ces contrôles apparaissent sous forme de petits carrés avec une icône de triangle ou de cercle à l'intérieur, vous permettant d'ajuster indépendamment l'influence de la courbe de chaque côté vers le centre pour un façonnage plus précis des brins.</li>
-            <li style="font-size:15px;"><b>Paramètres de courbure avancés :</b> Trois nouveaux paramètres de courbure vous donnent un contrôle complet sur les courbes des brins :
+            <li style="font-size:15px;"><b>Système de flèches complet :</b> Fonctionnalité de flèche complète avec multiples propriétés personnalisables :
                 <ul style="margin-left: 20px;">
-                    <li><b>Influence du point de contrôle :</b> Ajuste la force d'attraction des points de contrôle (1.0=normal, jusqu'à 3.0=très fort)</li>
-                    <li><b>Amplification de distance :</b> Amplifie les courbes en multipliant le facteur de distance (1.0=pas d'amplification, jusqu'à 5.0=amplification 5x)</li>
-                    <li><b>Forme de courbe :</b> Contrôle le type de réponse de courbe (1.0=net/linéaire, 3.0=lisse/cubique)</li>
+                    <li><b>Couleur de flèche :</b> Contrôle de couleur indépendant pour les flèches, séparé de la couleur du brin</li>
+                    <li><b>Transparence de flèche :</b> Opacité de flèche ajustable (0-100%)</li>
+                    <li><b>Texture de tête de flèche :</b> Multiples options de texture (Aucune, Rayures, Points, Hachures)</li>
+                    <li><b>Style de ligne de flèche :</b> Divers motifs de ligne (Solide, Rayures, Points, Carreaux)</li>
+                    <li><b>Support d'ombre :</b> Les flèches peuvent projeter des ombres avec l'option "La flèche projette une ombre"</li>
+                    <li><b>Visibilité de la tête :</b> Option pour afficher/masquer les têtes de flèche indépendamment</li>
+                    <li><b>Contrôles de dimension :</b> Largeur/longueur de tête de flèche, largeur de ligne et paramètres d'espacement</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Affichage progressif des points de contrôle :</b> Lors de la création de nouveaux brins, seul le point de contrôle de départ est initialement visible. Les points de contrôle supplémentaires (points d'extrémité, point central et contrôles de biais) apparaissent progressivement lorsque vous commencez à déplacer le brin, réduisant l'encombrement visuel lors du placement initial.</li>
-            <li style="font-size:15px;"><b>Rendu d'ombrage amélioré :</b> Correction de divers problèmes d'ombrage pour une meilleure qualité visuelle et une représentation plus précise des ombres dans toutes les configurations de brins.</li>
+            <li style="font-size:15px;"><b>Sélection intelligente de groupe de masques :</b> Lors de la création de groupes avec des brins masqués (par ex., 1_1_2_1), la sélection d'un composant inclut automatiquement son partenaire de masque. Par exemple, sélectionner le brin "1" inclura automatiquement le brin "2" lorsqu'ils partagent un masque, garantissant que l'intégrité du masque est maintenue dans les opérations groupées.</li>
+            <li style="font-size:15px;"><b>Système de peinture amélioré :</b> Correction des problèmes de rendu où les chemins de brins et les brins attachés n'étaient pas correctement peints pendant les opérations de dessin. Le peintre rend maintenant correctement à la fois le chemin de Bézier du brin et son contour de trait, assurant une représentation visuelle cohérente pendant toutes les opérations d'édition.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.103</p>
         ''',
 
 
@@ -1036,20 +1042,23 @@ translations = {
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.102</h2>
+        <h2>Neu in Version 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Erweiterte Krümmungs-Bias-Steuerung:</b> Neue Bias-Kontrollpunkte zwischen dem mittleren Kontrollpunkt und den beiden End-Kontrollpunkten ermöglichen eine präzise Krümmungsanpassung. Diese Steuerungen erscheinen als kleine Quadrate mit einem Dreieck- oder Kreissymbol im Inneren und ermöglichen es Ihnen, den Kurveneinfluss von jeder Seite zur Mitte unabhängig anzupassen für eine präzisere Strangformung.</li>
-            <li style="font-size:15px;"><b>Erweiterte Krümmungseinstellungen:</b> Drei neue Krümmungsparameter geben Ihnen vollständige Kontrolle über Strangkurven:
+            <li style="font-size:15px;"><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften:
                 <ul style="margin-left: 20px;">
-                    <li><b>Kontrollpunkt-Einfluss:</b> Passt die Zugkraft der Kontrollpunkte an (1.0=normal, bis zu 3.0=sehr stark)</li>
-                    <li><b>Distanz-Verstärkung:</b> Vergrößert Kurven durch Multiplikation des Distanzfaktors (1.0=keine Verstärkung, bis zu 5.0=5-fache Verstärkung)</li>
-                    <li><b>Kurvenform:</b> Steuert den Kurvenreaktionstyp (1.0=scharf/linear, 3.0=glatt/kubisch)</li>
+                    <li><b>Pfeilfarbe:</b> Unabhängige Farbsteuerung für Pfeile, getrennt von der Strangfarbe</li>
+                    <li><b>Pfeiltransparenz:</b> Einstellbare Pfeilopazität (0-100%)</li>
+                    <li><b>Pfeilspitzen-Textur:</b> Mehrere Texturoptionen (Keine, Streifen, Punkte, Schraffur)</li>
+                    <li><b>Pfeillinien-Stil:</b> Verschiedene Linienmuster (Durchgehend, Gestreift, Gepunktet, Kacheln)</li>
+                    <li><b>Schatten-Unterstützung:</b> Pfeile können Schatten werfen mit der Option "Pfeil wirft Schatten"</li>
+                    <li><b>Spitzen-Sichtbarkeit:</b> Option zum unabhängigen Anzeigen/Verbergen von Pfeilspitzen</li>
+                    <li><b>Dimensionssteuerungen:</b> Pfeilspitzenbreite/-länge, Linienbreite und Abstandseinstellungen</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Progressive Kontrollpunkt-Anzeige:</b> Bei der Erstellung neuer Stränge ist zunächst nur der Start-Kontrollpunkt sichtbar. Zusätzliche Kontrollpunkte (Endpunkte, Mittelpunkt und Bias-Steuerungen) erscheinen progressiv, wenn Sie beginnen, den Strang zu bewegen, was die visuelle Unordnung bei der anfänglichen Platzierung reduziert.</li>
-            <li style="font-size:15px;"><b>Verbesserte Schattierungsdarstellung:</b> Verschiedene Schattierungsprobleme wurden behoben für bessere visuelle Qualität und genauere Schattendarstellung in allen Strangkonfigurationen.</li>
+            <li style="font-size:15px;"><b>Intelligente Maskengruppen-Auswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen (z.B. 1_1_2_1) schließt die Auswahl einer Komponente automatisch ihren Maskenpartner ein. Zum Beispiel wird die Auswahl von Strang "1" automatisch Strang "2" einschließen, wenn sie eine Maske teilen, um die Maskenintegrität bei gruppierten Operationen zu erhalten.</li>
+            <li style="font-size:15px;"><b>Verbessertes Mal-System:</b> Behebung von Rendering-Problemen, bei denen Strangpfade und angehängte Stränge während Zeichenoperationen nicht richtig gemalt wurden. Der Maler rendert jetzt sowohl den Bézier-Pfad des Strangs als auch seinen Strichumriss korrekt, was eine konsistente visuelle Darstellung während aller Bearbeitungsvorgänge gewährleistet.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.103</p>
         ''',
         # About translations
         'about_info': '''
@@ -1435,20 +1444,23 @@ translations = {
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.102</h2>
+        <h2>Novità della versione 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Controlli di bias di curvatura avanzati:</b> Nuovi punti di controllo del bias posizionati tra il punto di controllo centrale e i due punti di controllo finali forniscono una regolazione fine della curvatura. Questi controlli appaiono come piccoli quadrati con un'icona triangolare o circolare all'interno, permettendoti di regolare indipendentemente l'influenza della curva da ciascun lato verso il centro per una modellazione più precisa dei trefoli.</li>
-            <li style="font-size:15px;"><b>Impostazioni di curvatura avanzate:</b> Tre nuovi parametri di curvatura ti danno il controllo completo sulle curve dei trefoli:
+            <li style="font-size:15px;"><b>Sistema di frecce completo:</b> Funzionalità freccia completa con molteplici proprietà personalizzabili:
                 <ul style="margin-left: 20px;">
-                    <li><b>Influenza del punto di controllo:</b> Regola la forza di attrazione dei punti di controllo (1.0=normale, fino a 3.0=molto forte)</li>
-                    <li><b>Amplificazione della distanza:</b> Ingrandisce le curve moltiplicando il fattore di distanza (1.0=nessuna amplificazione, fino a 5.0=amplificazione 5x)</li>
-                    <li><b>Forma della curva:</b> Controlla il tipo di risposta della curva (1.0=netto/lineare, 3.0=liscio/cubico)</li>
+                    <li><b>Colore freccia:</b> Controllo colore indipendente per le frecce, separato dal colore del trefolo</li>
+                    <li><b>Trasparenza freccia:</b> Opacità freccia regolabile (0-100%)</li>
+                    <li><b>Texture punta freccia:</b> Opzioni multiple di texture (Nessuna, Strisce, Punti, Tratteggio)</li>
+                    <li><b>Stile linea freccia:</b> Vari motivi di linea (Solida, A strisce, A punti, Piastrelle)</li>
+                    <li><b>Supporto ombra:</b> Le frecce possono proiettare ombre con l'opzione "La freccia proietta ombra"</li>
+                    <li><b>Visibilità punta:</b> Opzione per mostrare/nascondere le punte delle frecce indipendentemente</li>
+                    <li><b>Controlli dimensione:</b> Larghezza/lunghezza punta freccia, larghezza linea e impostazioni spazio</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Visualizzazione progressiva dei punti di controllo:</b> Durante la creazione di nuovi trefoli, inizialmente è visibile solo il punto di controllo iniziale. I punti di controllo aggiuntivi (punti finali, punto centrale e controlli di bias) appaiono progressivamente quando inizi a muovere il trefolo, riducendo il disordine visivo durante il posizionamento iniziale.</li>
-            <li style="font-size:15px;"><b>Rendering delle ombreggiature migliorato:</b> Risolti vari problemi di ombreggiatura per una migliore qualità visiva e una rappresentazione più accurata delle ombre in tutte le configurazioni dei trefoli.</li>
+            <li style="font-size:15px;"><b>Selezione intelligente gruppi maschera:</b> Durante la creazione di gruppi con trefoli mascherati (es. 1_1_2_1), la selezione di un componente include automaticamente il suo partner di maschera. Per esempio, selezionando il trefolo "1" includerà automaticamente il trefolo "2" quando condividono una maschera, garantendo che l'integrità della maschera sia mantenuta nelle operazioni di gruppo.</li>
+            <li style="font-size:15px;"><b>Sistema di pittura migliorato:</b> Corretti i problemi di rendering dove i percorsi dei trefoli e i trefoli attaccati non venivano dipinti correttamente durante le operazioni di disegno. Il pittore ora renderizza correttamente sia il percorso di Bézier del trefolo che il suo contorno di tratto, garantendo una rappresentazione visiva coerente durante tutte le operazioni di modifica.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.103</p>
         ''',
 
 
@@ -1872,20 +1884,23 @@ translations = {
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.102</h2>
+        <h2>Novedades de la versión 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Controles de sesgo de curvatura mejorados:</b> Nuevos puntos de control de sesgo posicionados entre el punto de control central y los dos puntos de control finales proporcionan un ajuste fino de la curvatura. Estos controles aparecen como pequeños cuadrados con un icono de triángulo o círculo en su interior, permitiéndote ajustar independientemente la influencia de la curva desde cada lado hacia el centro para un modelado más preciso de las hebras.</li>
-            <li style="font-size:15px;"><b>Configuración de curvatura avanzada:</b> Tres nuevos parámetros de curvatura te dan control completo sobre las curvas de las hebras:
+            <li style="font-size:15px;"><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables:
                 <ul style="margin-left: 20px;">
-                    <li><b>Influencia del punto de control:</b> Ajusta la fuerza de atracción de los puntos de control (1.0=normal, hasta 3.0=muy fuerte)</li>
-                    <li><b>Amplificación de distancia:</b> Magnifica las curvas multiplicando el factor de distancia (1.0=sin amplificación, hasta 5.0=amplificación 5x)</li>
-                    <li><b>Forma de curva:</b> Controla el tipo de respuesta de curva (1.0=agudo/lineal, 3.0=suave/cúbico)</li>
+                    <li><b>Color de flecha:</b> Control de color independiente para flechas, separado del color del cordón</li>
+                    <li><b>Transparencia de flecha:</b> Opacidad de flecha ajustable (0-100%)</li>
+                    <li><b>Textura de punta de flecha:</b> Múltiples opciones de textura (Ninguna, Rayas, Puntos, Tramado)</li>
+                    <li><b>Estilo de línea de flecha:</b> Varios patrones de línea (Sólida, Rayas, Puntos, Azulejos)</li>
+                    <li><b>Soporte de sombra:</b> Las flechas pueden proyectar sombras con la opción "La flecha proyecta sombra"</li>
+                    <li><b>Visibilidad de punta:</b> Opción para mostrar/ocultar puntas de flecha independientemente</li>
+                    <li><b>Controles de dimensión:</b> Ancho/largo de punta de flecha, ancho de línea y configuración de espacios</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Visualización progresiva de puntos de control:</b> Al crear nuevas hebras, inicialmente solo es visible el punto de control inicial. Los puntos de control adicionales (puntos finales, punto central y controles de sesgo) aparecen progresivamente cuando comienzas a mover la hebra, reduciendo el desorden visual durante la colocación inicial.</li>
-            <li style="font-size:15px;"><b>Renderizado de sombreado mejorado:</b> Se corrigieron varios problemas de sombreado para obtener mejor calidad visual y una representación más precisa de las sombras en todas las configuraciones de hebras.</li>
+            <li style="font-size:15px;"><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con cordones enmascarados (ej. 1_1_2_1), seleccionar un componente automáticamente incluye su compañero de máscara. Por ejemplo, seleccionar el cordón "1" incluirá automáticamente el cordón "2" cuando comparten una máscara, asegurando que la integridad de la máscara se mantenga en las operaciones grupales.</li>
+            <li style="font-size:15px;"><b>Sistema de pintura mejorado:</b> Se corrigieron problemas de renderizado donde las rutas de cordones y cordones adjuntos no se pintaban correctamente durante las operaciones de dibujo. El pintor ahora renderiza correctamente tanto la ruta de Bézier del cordón como su contorno de trazo, asegurando una representación visual consistente durante todas las operaciones de edición.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.103</p>
 
         ''',
  
@@ -2310,20 +2325,23 @@ translations = {
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.102</h2>
+        <h2>Novidades da versão 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Controles de viés de curvatura aprimorados:</b> Novos pontos de controle de viés posicionados entre o ponto de controle central e os dois pontos de controle finais fornecem ajuste fino de curvatura. Esses controles aparecem como pequenos quadrados com um ícone de triângulo ou círculo dentro, permitindo ajustar independentemente a influência da curva de cada lado em direção ao centro para modelagem mais precisa dos fios.</li>
-            <li style="font-size:15px;"><b>Configurações de curvatura avançadas:</b> Três novos parâmetros de curvatura dão controle completo sobre as curvas dos fios:
+            <li style="font-size:15px;"><b>Sistema de setas completo:</b> Recurso de seta completo com múltiplas propriedades personalizáveis:
                 <ul style="margin-left: 20px;">
-                    <li><b>Influência do ponto de controle:</b> Ajusta a força de atração dos pontos de controle (1.0=normal, até 3.0=muito forte)</li>
-                    <li><b>Amplificação de distância:</b> Amplifica as curvas multiplicando o fator de distância (1.0=sem amplificação, até 5.0=amplificação 5x)</li>
-                    <li><b>Forma da curva:</b> Controla o tipo de resposta da curva (1.0=acentuado/linear, 3.0=suave/cúbico)</li>
+                    <li><b>Cor da seta:</b> Controle de cor independente para setas, separado da cor da mecha</li>
+                    <li><b>Transparência da seta:</b> Opacidade da seta ajustável (0-100%)</li>
+                    <li><b>Textura da ponta da seta:</b> Múltiplas opções de textura (Nenhuma, Listras, Pontos, Hachurado)</li>
+                    <li><b>Estilo da linha da seta:</b> Vários padrões de linha (Sólida, Listras, Pontos, Telhas)</li>
+                    <li><b>Suporte de sombra:</b> As setas podem projetar sombras com a opção "A seta projeta sombra"</li>
+                    <li><b>Visibilidade da ponta:</b> Opção para mostrar/ocultar pontas de seta independentemente</li>
+                    <li><b>Controles de dimensão:</b> Largura/comprimento da ponta da seta, largura da linha e configurações de espaço</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Exibição progressiva de pontos de controle:</b> Ao criar novos fios, apenas o ponto de controle inicial é visível inicialmente. Pontos de controle adicionais (pontos finais, ponto central e controles de viés) aparecem progressivamente quando você começa a mover o fio, reduzindo a desordem visual durante o posicionamento inicial.</li>
-            <li style="font-size:15px;"><b>Renderização de sombreamento aprimorada:</b> Vários problemas de sombreamento foram corrigidos para melhor qualidade visual e representação mais precisa de sombras em todas as configurações de fios.</li>
+            <li style="font-size:15px;"><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com mechas mascaradas (ex. 1_1_2_1), selecionar um componente automaticamente inclui seu parceiro de máscara. Por exemplo, selecionar a mecha "1" incluirá automaticamente a mecha "2" quando compartilham uma máscara, garantindo que a integridade da máscara seja mantida nas operações de grupo.</li>
+            <li style="font-size:15px;"><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização onde os caminhos das mechas e mechas anexadas não eram pintados corretamente durante as operações de desenho. O pintor agora renderiza corretamente tanto o caminho de Bézier da mecha quanto seu contorno de traço, garantindo representação visual consistente durante todas as operações de edição.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.103</p>
         ''',
 
 
@@ -2753,20 +2771,23 @@ translations = {
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.102</h2>
+        <h2>מה חדש בגרסה 1.103</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>בקרות משופרות להטיית עקמומיות:</b> נקודות בקרה חדשות להטיה הממוקמות בין נקודת הבקרה המרכזית לשתי נקודות הקצה מספקות התאמה מדויקת של העקמומיות. בקרות אלו מופיעות כריבועים קטנים עם משולש או עיגול בפנים, המאפשרות לך להתאים באופן עצמאי את השפעת העקומה מכל צד לכיוון המרכז לעיצוב חוטים מדויק יותר.</li>
-            <li style="font-size:15px;"><b>הגדרות עקמומיות מתקדמות:</b> שלושה פרמטרים חדשים לעקמומיות נותנים לך שליטה מלאה על עקומות החוטים:
+            <li style="font-size:15px;"><b>מערכת חצים מלאה:</b> תכונת חץ מקיפה עם מאפיינים ניתנים להתאמה אישית רבים:
                 <ul style="margin-left: 20px;">
-                    <li><b>השפעת נקודת בקרה:</b> מכוונת את עוצמת המשיכה של נקודות הבקרה (1.0=רגיל, עד 3.0=חזק מאוד)</li>
-                    <li><b>הגברת מרחק:</b> מגדילה עקומות על ידי הכפלת גורם המרחק (1.0=ללא הגברה, עד 5.0=הגברה פי 5)</li>
-                    <li><b>צורת עקומה:</b> שולטת בסוג תגובת העקומה (1.0=חד/ליניארי, 3.0=חלק/קובי)</li>
+                    <li><b>צבע חץ:</b> בקרת צבע עצמאית לחצים, נפרדת מצבע החוט</li>
+                    <li><b>שקיפות חץ:</b> אטימות חץ ניתנת להתאמה (0-100%)</li>
+                    <li><b>מרקם ראש חץ:</b> אפשרויות מרקם מרובות (ללא, פסים, נקודות, בריבוע)</li>
+                    <li><b>סגנון קו חץ:</b> דפוסי קו שונים (מלא, פסים, נקודות, אריחים)</li>
+                    <li><b>תמיכה בצל:</b> חצים יכולים להטיל צללים עם אפשרות "החץ מטיל צל"</li>
+                    <li><b>נראות ראש:</b> אפשרות להצגה/הסתרה של ראשי חץ באופן עצמאי</li>
+                    <li><b>בקרות מימד:</b> רוחב/אורך ראש חץ, רוחב קו והגדרות רווחים</li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>תצוגת נקודות בקרה מתקדמת:</b> בעת יצירת חוטים חדשים, רק נקודת הבקרה ההתחלתית נראית בהתחלה. נקודות בקרה נוספות (נקודות קצה, נקודה מרכזית ובקרות הטיה) מופיעות בהדרגה כשאתה מתחיל להזיז את החוט, מה שמפחית עומס ויזואלי במהלך המיקום הראשוני.</li>
-            <li style="font-size:15px;"><b>עיבוד הצללה משופר:</b> תוקנו בעיות הצללה שונות לאיכות ויזואלית טובה יותר וייצוג צלליות מדויק יותר בכל הגדרות החוטים.</li>
+            <li style="font-size:15px;"><b>בחירה חכמה של קבוצת מסכה:</b> בעת יצירת קבוצות עם חוטים ממוסכים (למשל 1_1_2_1), בחירה ברכיב אחד כוללת אוטומטית את שותף המסכה שלו. לדוגמה, בחירה בחוט "1" תכלול אוטומטית את חוט "2" כאשר הם חולקים מסכה, מה שמבטיח ששלמות המסכה נשמרת בפעולות קבוצתיות.</li>
+            <li style="font-size:15px;"><b>מערכת ציור משופרת:</b> תוקנו בעיות רינדור שבהן נתיבי חוטים וחוטים מחוברים לא נצבעו כראוי במהלך פעולות ציור. הצייר כעת מרנדר נכון הן את נתיב Bézier של החוט והן את מתאר הקו שלו, מה שמבטיח ייצוג ויזואלי עקבי במהלך כל פעולות העריכה.</li>
         </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - גרסה 1.102</p>
+        <p style="font-size:13px;">© 2025 OpenStrand Studio - גרסה 1.103</p>
         </div>
         ''',
 

@@ -983,28 +983,23 @@ class NumberedLayerButton(QPushButton):
             if initial_arrow_state is None and current_arrow_state['full_arrow_visible']:
                 # Arrow was just enabled
                 state_changed = True
-                print(f"Arrow was enabled with: shaft={current_arrow_state['arrow_shaft_style']}, texture={current_arrow_state['arrow_texture']}")
             elif initial_arrow_state is not None and not current_arrow_state['full_arrow_visible']:
                 # Arrow was disabled
                 state_changed = True
-                print(f"Arrow was disabled")
             elif initial_arrow_state is not None and current_arrow_state['full_arrow_visible']:
                 # Check if any property changed
                 for key in initial_arrow_state:
                     if initial_arrow_state[key] != current_arrow_state[key]:
                         state_changed = True
-                        print(f"Arrow property '{key}' changed from {initial_arrow_state[key]} to {current_arrow_state[key]}")
                         break
 
             if state_changed and layer_panel and hasattr(layer_panel, 'canvas'):
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     # Force save with detailed logging
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    print(f"Saving arrow state after menu close: visible={current_arrow_state['full_arrow_visible']}, shaft={current_arrow_state['arrow_shaft_style']}, texture={current_arrow_state['arrow_texture']}")
                     layer_panel.canvas.undo_redo_manager.save_state()
-                    print(f"State saved for strand {strand.layer_name}")
             elif not state_changed:
-                print(f"No arrow state changes detected for strand {strand.layer_name}")
+                pass
     def setText(self, text):
         """
         Set the text of the button and trigger a repaint.
@@ -2328,27 +2323,21 @@ class NumberedLayerButton(QPushButton):
             current_visibility = getattr(strand, attr_name)
             new_visibility = not current_visibility
             setattr(strand, attr_name, new_visibility)
-            print(f"Set {strand.layer_name} {attr_name} to {new_visibility}") # Debug print
 
             if layer_panel and hasattr(layer_panel, 'canvas'):
                 layer_panel.canvas.update() # Request canvas repaint
             else:
-                 print("Warning: Could not find canvas to update after toggling full arrow visibility.")
                  self.update() # Fallback update
-        else:
-            print(f"Warning: Strand {strand.layer_name} does not have attribute {attr_name}")
     # --- END NEW ---
 
     # --- NEW: Add circle visibility toggles ---
     def toggle_strand_circle_visibility(self, strand, circle_type, layer_panel):
         """Toggles the visibility (presence) of the start or end circle of a strand."""
         if not hasattr(strand, 'has_circles') or not isinstance(strand.has_circles, (list, tuple)):
-            print(f"Warning: Strand {strand.layer_name} does not have has_circles attribute")
             return
 
         index = 0 if circle_type == 'start' else 1
         if index >= len(strand.has_circles):
-            print(f"Warning: Invalid circle index {index} for strand {strand.layer_name}")
             return
 
         # Toggle circle presence

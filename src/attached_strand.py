@@ -3197,7 +3197,84 @@ class AttachedStrand(Strand):
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
-      # Draw ending circle ON TOP of everything if needed
+
+        # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
+        if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
+            painter.save()
+
+            # --- Draw Arrowhead extending outward from the endpoint ---
+            arrow_head_len = getattr(self.canvas, 'arrow_head_length', 20)
+            arrow_head_width = getattr(self.canvas, 'arrow_head_width', 10)
+
+            # Use custom arrow color if set, otherwise default to strand color
+            default_arrow_head_fill_color = self.color if self.color else QColor(Qt.black)
+            if hasattr(self, 'arrow_color'):
+                arrow_head_fill_color = self.arrow_color
+            else:
+                arrow_head_fill_color = self.canvas.default_arrow_fill_color if hasattr(self.canvas, 'use_default_arrow_color') and not self.canvas.use_default_arrow_color else default_arrow_head_fill_color
+
+            # Apply transparency if set
+            if hasattr(self, 'arrow_transparency'):
+                transparency = self.arrow_transparency / 100.0  # Convert from percentage to 0-1
+                arrow_head_fill_color = QColor(arrow_head_fill_color)
+                arrow_head_fill_color.setAlphaF(transparency)
+
+            arrow_head_border_pen = QPen(self.stroke_color, getattr(self.canvas, 'arrow_head_stroke_width', 4))
+            arrow_head_border_pen.setJoinStyle(Qt.MiterJoin)
+            arrow_head_border_pen.setCapStyle(Qt.FlatCap)
+
+            # Calculate the tangent at the endpoint to determine arrow direction
+            # Use a point very close to the end to get the tangent
+            tangent_at_end = self.calculate_cubic_tangent(0.999)
+            len_at_end = math.hypot(tangent_at_end.x(), tangent_at_end.y())
+
+            if len_at_end > 0:
+                # Unit vector pointing along the curve at the endpoint
+                unit_vector_shaft = QPointF(tangent_at_end.x() / len_at_end, tangent_at_end.y() / len_at_end)
+
+                # Perpendicular vector to the shaft direction (for arrow width)
+                perp_vector = QPointF(-unit_vector_shaft.y(), unit_vector_shaft.x())
+
+                # Calculate the two base corners at the endpoint
+                left_point = self.end + perp_vector * (arrow_head_width / 2)
+                right_point = self.end - perp_vector * (arrow_head_width / 2)
+
+                # Calculate tip position extending outward from the endpoint
+                # The tip should be arrow_head_len away from the endpoint along the shaft direction
+                tip = self.end + unit_vector_shaft * arrow_head_len
+
+                # --- Draw Shaft (the entire strand path) ---
+                full_arrow_shaft_line_width = getattr(self.canvas, 'arrow_line_width', 10)
+                # Use custom arrow color for shaft if set
+                shaft_color = getattr(self, 'arrow_color', self.stroke_color)
+                if hasattr(self, 'arrow_transparency'):
+                    shaft_color = QColor(shaft_color)
+                    shaft_color.setAlphaF(self.arrow_transparency / 100.0)
+
+                # Use the exact strand path as the shaft
+                shaft_path = self.get_path()  # This uses all the control points and bias settings
+
+                # Draw the shaft with pattern (entire strand path)
+                self.draw_arrow_shaft_with_pattern(painter, shaft_path, shaft_color, full_arrow_shaft_line_width)
+                # --- End Shaft ---
+
+                # Create the arrow polygon
+                arrow_head_poly = QPolygonF([tip, left_point, right_point])
+
+                # Fill the arrow with optional texture (only if arrow head is visible)
+                if getattr(self, 'arrow_head_visible', True):
+                    painter.setPen(Qt.NoPen)
+                    self.apply_arrow_texture_brush(painter, arrow_head_fill_color)
+                    painter.drawPolygon(arrow_head_poly)
+
+                    # Draw the border
+                    painter.setPen(arrow_head_border_pen)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawPolygon(arrow_head_poly)
+            painter.restore()
+        # --- END Draw full strand arrow on TOP ---
+
+        # Draw ending circle ON TOP of everything if needed
         # For attached strands, check the attachment side to determine which closed_connection to use
         attachment_side = getattr(self, 'attachment_side', 1)
         is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]                

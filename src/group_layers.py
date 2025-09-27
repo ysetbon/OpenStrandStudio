@@ -2250,7 +2250,11 @@ class GroupPanel(QWidget):
             new_strand.end_line_visible = original.end_line_visible
         if hasattr(original, 'control_point_center_locked'):
             new_strand.control_point_center_locked = original.control_point_center_locked
-        
+
+        # Copy control point movement state flag - CRITICAL for control point visibility
+        if hasattr(original, 'triangle_has_moved'):
+            new_strand.triangle_has_moved = original.triangle_has_moved
+
         # Copy attachment status
         if hasattr(original, 'start_attached'):
             new_strand.start_attached = original.start_attached

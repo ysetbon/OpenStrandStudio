@@ -908,6 +908,16 @@ class GroupPanel(QWidget):
             'main_strands': main_strands,
             'control_points': {}
         }
+
+        # Also update canvas.groups to ensure zoom and other canvas operations work correctly
+        if self.canvas and hasattr(self.canvas, 'groups'):
+            self.canvas.groups[group_name] = {
+                'strands': strands,
+                'layers': [strand.layer_name for strand in strands],
+                'main_strands': main_strands,
+                'control_points': {},
+                'data': []
+            }
         pass
         pass
 
@@ -1674,38 +1684,27 @@ class GroupPanel(QWidget):
                     if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
                         self.canvas.strand_colors[new_strand.set_number] = new_strand.color
             
-            # Add strands to layer panel 
+            # Add strands to layer panel
             # Note: Strands have already been added to canvas.strands in the duplication loops above
             # Now we need to create their layer buttons
             if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
-                
                 for new_strand in duplicated_strands:
-                    # Check if strand is already in canvas.strands
-                    if new_strand not in self.canvas.strands:
-                        
-                        self.canvas.strands.append(new_strand)
+                    # Strands are already in canvas.strands from add_strand() calls above
+                    # Just create the layer buttons
                     self.canvas.layer_panel.on_strand_created(new_strand)
                     
-            
-            # Create group in canvas.groups first (required for move/rotate operations)
-            if self.canvas and hasattr(self.canvas, 'groups'):
-                self.canvas.groups[new_group_name] = {
-                    'strands': duplicated_strands,
-                    'layers': [strand.layer_name for strand in duplicated_strands if hasattr(strand, 'layer_name')],
-                    'main_strands': new_main_strands,
-                    'control_points': {},
-                    'data': []
-                }
-                
             
             # Update knot connections for duplicated strands BEFORE creating UI elements
             # This ensures deletable state is calculated correctly when buttons are created
             self.update_knot_connections_for_duplicated_group(strand_mapping)
-            
-            # Use the existing group creation mechanism for UI
-            
-         
+
+            # Use the existing group creation mechanism for both data and UI
+            # This ensures canvas references are properly set
             self.create_group(new_group_name, duplicated_strands)
+
+            # Add additional group metadata that create_group doesn't set
+            if new_group_name in self.groups:
+                self.groups[new_group_name]['data'] = []
             
             # Force the new group widget to be visible and properly sized
             if new_group_name in self.groups and self.groups[new_group_name]['widget']:

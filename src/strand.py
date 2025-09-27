@@ -2914,6 +2914,7 @@ class Strand:
                 
                 painter.restore()
 
+            painter.restore() # Top Level Restore - MUST restore before returning!
             return # Skip drawing strand body etc.
         # --- END Handle hidden state ---
 

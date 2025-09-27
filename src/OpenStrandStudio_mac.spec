@@ -54,14 +54,14 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='OpenStrandStudio.app',
-    icon='box_stitch.icns',
+    icon='/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/box_stitch.icns',
     bundle_identifier='com.yonatan.openstrandstudio',
     info_plist={
         'CFBundleDisplayName': 'OpenStrandStudio',
         'CFBundleName': 'OpenStrandStudio',
         'CFBundlePackageType': 'APPL',
-        'CFBundleShortVersionString': '1.102',
-        'CFBundleVersion': '1.102',
+        'CFBundleShortVersionString': '1.103',
+        'CFBundleVersion': '1.103',
         'CFBundleExecutable': 'OpenStrandStudio',
         'CFBundleIconFile': 'box_stitch.icns',
         'NSHighResolutionCapable': True,

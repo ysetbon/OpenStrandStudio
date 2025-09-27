@@ -458,3 +458,26 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
+## Version 1.103 (Sortie : 27/09/2025)
+
+### Améliorations et Corrections de Bugs :
+
+1. **Correction des problèmes de duplication de groupe :**
+   - La visibilité des points de contrôle est maintenant correctement préservée lors de la duplication de groupes
+   - Correction du comportement du zoom pour les groupes dupliqués - les brins zooment maintenant correctement
+   - Résolution des problèmes de référence de canevas dans les widgets de groupe dupliqués
+
+2. **Correction de l'affichage des flèches complètes :**
+   - Correction du rendu des flèches complètes pour les brins attachés dans les vues zoomées/déplacées
+   - Les flèches s'affichent maintenant correctement dans les modes de dessin normal et direct
+
+3. **Nettoyage du code :**
+   - Suppression des messages de débogage pour une sortie console plus propre
+   - Élimination des messages de débogage liés aux flèches du code de production
+
+4. **Stabilité améliorée :**
+   - Meilleure gestion des flux de travail de création et de duplication de groupes
+   - Correction des ajouts de brins dupliqués au canevas pendant les opérations de groupe
+
+------
+

@@ -457,3 +457,26 @@ These updates focus on performance improvements and visual enhancements to provi
    - Faster application startup with leaner executable
 
 ------
+
+## Version 1.103 (Released: 27/09/2025)
+
+### Improvements and Bug Fixes:
+
+1. **Fixed Group Duplication Issues:**
+   - Control point visibility now correctly preserved when duplicating groups
+   - Fixed zoom behavior for duplicated groups - strands now zoom properly
+   - Resolved canvas reference issues in duplicated group widgets
+
+2. **Full Arrow Drawing Fix:**
+   - Fixed full arrow rendering for attached strands in zoomed/panned views
+   - Arrow now displays correctly in both normal and direct drawing modes
+
+3. **Code Cleanup:**
+   - Removed debug logging statements for cleaner console output
+   - Eliminated arrow-related debug messages from production code
+
+4. **Improved Stability:**
+   - Better handling of group creation and duplication workflows
+   - Fixed duplicate strand additions to canvas during group operations
+
+------

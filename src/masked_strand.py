@@ -80,8 +80,14 @@ class MaskedStrand(Strand):
     def has_circles(self, value):
         self._has_circles = [False, False]
     def update_shape(self):
- 
+
         pass
+
+    def force_path_update(self):
+        """Override force_path_update for MaskedStrand since it doesn't use path caching."""
+        # MaskedStrand doesn't cache paths, so nothing to clear
+        pass
+
     def get_path(self):
         """Get the path representing the masked strand as a straight line."""
         path = QPainterPath()

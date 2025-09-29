@@ -2724,18 +2724,62 @@ class StrandDrawingCanvas(QWidget):
             painter.drawLine(int(x), int(top), int(x), int(bottom))
             x += self.grid_size
             
-        # Draw horizontal lines  
+        # Draw horizontal lines
         y = start_y
         while y <= bottom:
             painter.drawLine(int(left), int(y), int(right), int(y))
             y += self.grid_size
+
+    def _calculate_strand_curve_center(self, strand):
+        """Calculate the actual center point on the Bézier curve path.
+
+        For strands with three control points (when control_point_center is locked),
+        the center is the junction point between the two cubic Bézier segments.
+
+        For standard strands with two control points, we calculate the point at t=0.5
+        on the virtual cubic Bézier curve.
+
+        For straight lines (unmoved control points), we use the linear midpoint.
+        """
+        # Check if using three control points mode
+        if (hasattr(strand, 'canvas') and strand.canvas and
+            hasattr(strand.canvas, 'enable_third_control_point') and
+            strand.canvas.enable_third_control_point and
+            hasattr(strand, 'control_point_center_locked') and
+            strand.control_point_center_locked):
+            # The center control point IS the midpoint of the curve
+            return strand.control_point_center
+
+        # Check if control points are at their default positions (unmoved)
+        cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and
+                       abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+        cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and
+                       abs(strand.control_point2.y() - strand.start.y()) < 1.0)
+
+        if cp1_at_start and cp2_at_start:
+            # Straight line - linear midpoint is correct
+            return (strand.start + strand.end) / 2
+
+        # For standard two-control-point mode, calculate the virtual center point
+        # This matches the logic in strand.get_path() lines 1238-1240
+        virtual_center = QPointF(
+            (strand.control_point1.x() + strand.control_point2.x()) / 2,
+            (strand.control_point1.y() + strand.control_point2.y()) / 2
+        )
+
+        # The virtual center is used to create two cubic Bézier segments
+        # The actual midpoint of the curve is at the junction between these segments
+        # which is the virtual center point itself when the curve passes through it
+        return virtual_center
+
     def draw_strand_label(self, painter, strand):
         """Draw the label for a strand."""
         if isinstance(strand, MaskedStrand):
             mask_path = strand.get_mask_path()
             center = mask_path.boundingRect().center()
         else:
-            center = (strand.start + strand.end) / 2
+            # Calculate the actual center point ON the Bézier curve path
+            center = self._calculate_strand_curve_center(strand)
 
         text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
         font = painter.font()

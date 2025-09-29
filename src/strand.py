@@ -2028,39 +2028,40 @@ class Strand:
             pass
         finally:
             painter.restore() # RESTORE 2
-            # Reduced high-frequency logging for performance
+        # Reduced high-frequency logging for performance
         # logging.info(f"Strand {self.layer_name}: After shadow restore()")
-            # Draw dashed extension lines under the strand (below base paths)
-            painter.save()
-            # Setup extension parameters from canvas or defaults
-            ext_len = getattr(self.canvas, 'extension_length', 100)
-            dash_count = getattr(self.canvas, 'extension_dash_count', 10)
-            line_w = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
-            dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
-            # Extension color same as side color with original alpha
-            ext_color = QColor(self.stroke_color)
-            ext_color.setAlpha(self.color.alpha())
-            
-            # Create path for dashed line
-            dash_path = QPainterPath()
-            dash_path.setFillRule(Qt.WindingFill)
-            
-            # Create stroker to give the path width
-            stroker = QPainterPathStroker()
-            stroker.setWidth(line_w)
-            stroker.setCapStyle(Qt.FlatCap)
-            
-            # Get configured gap length between dashes or default to dash segment, invert for offset
-            dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
-            dash_gap = -dash_gap
-            # Setup pen for dashed line
-            dash_pen = QPen(ext_color, line_w, Qt.CustomDashLine)
-            # Uniform dash pattern: equal on/off lengths based on dash_seg
-            pattern_len = dash_seg / line_w if line_w > 0 else dash_seg
-            dash_pen.setDashPattern([pattern_len, pattern_len])
-            painter.setPen(dash_pen)
-     
-            painter.restore()
+
+        # Draw dashed extension lines under the strand (below base paths)
+        painter.save()
+        # Setup extension parameters from canvas or defaults
+        ext_len = getattr(self.canvas, 'extension_length', 100)
+        dash_count = getattr(self.canvas, 'extension_dash_count', 10)
+        line_w = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
+        dash_seg = ext_len / (2 * dash_count) if dash_count > 0 else ext_len
+        # Extension color same as side color with original alpha
+        ext_color = QColor(self.stroke_color)
+        ext_color.setAlpha(self.color.alpha())
+
+        # Create path for dashed line
+        dash_path = QPainterPath()
+        dash_path.setFillRule(Qt.WindingFill)
+
+        # Create stroker to give the path width
+        stroker = QPainterPathStroker()
+        stroker.setWidth(line_w)
+        stroker.setCapStyle(Qt.FlatCap)
+
+        # Get configured gap length between dashes or default to dash segment, invert for offset
+        dash_gap = getattr(self.canvas, 'extension_dash_gap_length', dash_seg)
+        dash_gap = -dash_gap
+        # Setup pen for dashed line
+        dash_pen = QPen(ext_color, line_w, Qt.CustomDashLine)
+        # Uniform dash pattern: equal on/off lengths based on dash_seg
+        pattern_len = dash_seg / line_w if line_w > 0 else dash_seg
+        dash_pen.setDashPattern([pattern_len, pattern_len])
+        painter.setPen(dash_pen)
+
+        painter.restore()
 
         # Only draw highlight if this is not a MaskedStrand
         if self.is_selected and not isinstance(self, MaskedStrand):

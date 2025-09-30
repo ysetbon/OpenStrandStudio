@@ -63,7 +63,7 @@ class SettingsDialog(QDialog):
         self.extension_dash_count = getattr(canvas, 'extension_dash_count', 10)
         self.extension_dash_width = getattr(canvas, 'extension_dash_width', getattr(canvas, 'extension_line_width', 2))  # Default dash width
         self.extension_dash_gap_length = getattr(canvas, 'extension_dash_gap_length', 5.0)  # Default gap length for extension dashes
-        self.num_steps = 3  # Default shadow blur steps
+        self.num_steps = 2  # Default shadow blur steps
         self.max_blur_radius = 29.99  # Default shadow blur radius
         # Arrow head parameters
         self.arrow_head_length = getattr(canvas, 'arrow_head_length', 20.0)

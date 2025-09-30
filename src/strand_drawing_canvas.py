@@ -101,12 +101,12 @@ class StrandDrawingCanvas(QWidget):
         self.stroke_width = 4  # Width of the black outline
         self.group_layer_manager = None
         # --- Load Shadow Blur Settings --- 
-        self.num_steps = 3 # Default
+        self.num_steps = 2 # Default
         self.max_blur_radius = 29.99 # Default
         # Control point influence parameters
-        self.curve_response_exponent = 1.5 # Default exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
-        self.control_point_base_fraction = 0.4 # Default base fraction (was 0.333, now 0.4 for 20% more influence)
-        self.distance_multiplier = 1.2 # Default distance boost (1.0=no boost, up to 10.0=10x boost)
+        self.curve_response_exponent = 2.0 # Default exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
+        self.control_point_base_fraction = 1.0 # Default base fraction (was 0.333, now 0.4 for 20% more influence)
+        self.distance_multiplier = 2.0 # Default distance boost (1.0=no boost, up to 10.0=10x boost)
         self.load_shadow_blur_settings() # Call helper to load from file
         # --- End Load Shadow Blur Settings ---
         # In strand_drawing_canvas.py

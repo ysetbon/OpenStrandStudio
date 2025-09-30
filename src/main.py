@@ -59,9 +59,9 @@ def load_user_settings():
     default_stroke_color = QColor(0, 0, 0, 255)  # Default black
 
     # Initialize curve parameters with defaults
-    control_point_base_fraction = 0.4  # Default base fraction
-    distance_multiplier = 1.2  # Default distance multiplier
-    curve_response_exponent = 1.5  # Default curve response exponent
+    control_point_base_fraction = 1.0  # Default base fraction
+    distance_multiplier = 2.0  # Default distance multiplier
+    curve_response_exponent = 2.0  # Default curve response exponent
     
     # Try to load from settings file
     shadow_color_loaded = False

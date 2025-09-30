@@ -82,7 +82,7 @@
         "selected_strand_name": "1_1",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -164,7 +164,7 @@
         "selected_strand_name": "1_1",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -319,7 +319,7 @@
         "selected_strand_name": "1_2",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -547,7 +547,7 @@
         "selected_strand_name": "1_3",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -795,7 +795,7 @@
         "selected_strand_name": "1_3",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -1043,7 +1043,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -1291,7 +1291,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -1539,7 +1539,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -1787,7 +1787,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -2035,7 +2035,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -2283,7 +2283,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -2531,7 +2531,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -2848,7 +2848,7 @@
         "selected_strand_name": "2_1",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -3165,7 +3165,7 @@
         "selected_strand_name": "2_1",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -3482,7 +3482,7 @@
         "selected_strand_name": "2_1",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -3872,7 +3872,7 @@
         "selected_strand_name": "2_2",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -4335,7 +4335,7 @@
         "selected_strand_name": "2_3",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -4871,7 +4871,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -5427,7 +5427,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -5983,7 +5983,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -6539,7 +6539,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -7095,7 +7095,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -7651,7 +7651,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -8207,7 +8207,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -8763,7 +8763,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -9319,7 +9319,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -9875,7 +9875,7 @@
         "selected_strand_name": "2_4",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -10431,7 +10431,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -10987,7 +10987,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -11543,7 +11543,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -12099,7 +12099,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -12655,7 +12655,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -13211,7 +13211,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -13767,7 +13767,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -14323,7 +14323,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -14879,7 +14879,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -15435,7 +15435,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -15991,7 +15991,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -16547,7 +16547,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -17103,7 +17103,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -17659,7 +17659,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -18215,7 +18215,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -18771,7 +18771,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -19327,7 +19327,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -19883,7 +19883,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -20439,7 +20439,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -20995,7 +20995,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -21551,7 +21551,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -22107,7 +22107,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -22663,7 +22663,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -23219,7 +23219,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -23775,7 +23775,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -24331,7 +24331,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -24887,7 +24887,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -25443,7 +25443,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -25999,7 +25999,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -26555,7 +26555,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -27111,7 +27111,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -27667,7 +27667,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -28223,7 +28223,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -28779,7 +28779,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -29335,7 +29335,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -29891,7 +29891,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -30447,7 +30447,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -31003,7 +31003,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -31559,7 +31559,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -32115,7 +32115,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -32671,7 +32671,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -33227,7 +33227,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -33783,7 +33783,7 @@
         "selected_strand_name": null,
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     },
@@ -34423,7 +34423,7 @@
         "selected_strand_name": "1_3",
         "locked_layers": [],
         "lock_mode": false,
-        "shadow_enabled": true,
+        "shadow_enabled": false,
         "show_control_points": true
       }
     }

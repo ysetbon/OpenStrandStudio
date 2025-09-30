@@ -66,6 +66,6 @@
   "selected_strand_name": null,
   "locked_layers": [],
   "lock_mode": false,
-  "shadow_enabled": true,
+  "shadow_enabled": false,
   "show_control_points": false
 }

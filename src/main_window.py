@@ -300,7 +300,7 @@ class MainWindow(QMainWindow):
         # Create the toggle shadow button
         self.toggle_shadow_button = QPushButton("Toggle Shadow")
         self.toggle_shadow_button.setCheckable(True)
-        self.toggle_shadow_button.setChecked(True)  # Shadow is enabled by default
+        self.toggle_shadow_button.setChecked(False)  # Shadow is disabled by default
         self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
         
         # Add buttons to the button layout
@@ -543,7 +543,7 @@ class MainWindow(QMainWindow):
 
         # Connect the toggle shadow button
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
-        self.toggle_shadow_button.setChecked(True)  # Start with shadows enabled
+        self.toggle_shadow_button.setChecked(False)  # Start with shadows disabled
 
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
@@ -1414,7 +1414,7 @@ class MainWindow(QMainWindow):
 
         # Connect the toggle shadow button
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
-        self.toggle_shadow_button.setChecked(True)  # Start with shadows enabled
+        self.toggle_shadow_button.setChecked(False)  # Start with shadows disabled
 
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)

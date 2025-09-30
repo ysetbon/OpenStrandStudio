@@ -1251,7 +1251,7 @@ class StrandDrawingCanvas(QWidget):
         self.erase_start_pos = None  # Start position for erase operations
         
         # Shadow rendering
-        self.shadow_enabled = True  # Flag to enable/disable shadow rendering
+        self.shadow_enabled = False  # Flag to enable/disable shadow rendering
         self.current_erase_rect = None  # Current erase rectangle
         self.eraser_size = 20  # Size of the eraser tool
         

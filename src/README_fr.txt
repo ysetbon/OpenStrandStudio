@@ -458,7 +458,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.103 (Sortie : 27/09/2025)
+## Version 1.103 (Sortie : 30/09/2025)
 
 ### Améliorations et Corrections de Bugs :
 

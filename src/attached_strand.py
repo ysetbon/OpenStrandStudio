@@ -1171,7 +1171,13 @@ class AttachedStrand(Strand):
                 combined_fill_path.addPath(just_inner)
 
         # End endpoint half-circle (only if circle is enabled)
-        if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands):
+        has_attached_at_end_draw = any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+        strand_label = getattr(self, 'layer_name', f'0x{id(self):x}')
+        print(f"[draw {strand_label}] END circle check: has_circles[1]={self.has_circles[1]}, "
+              f"has_attached_at_end={has_attached_at_end_draw}, end={self.end}")
+        if has_attached_at_end_draw:
+            print(f"[draw {strand_label}] Attached children at end: {[getattr(child, 'layer_name', f'0x{id(child):x}') for child in self.attached_strands if isinstance(child, AttachedStrand) and child.start == self.end]}")
+        if self.has_circles[1] and has_attached_at_end_draw:
             tangent = self.calculate_cubic_tangent(1.0)
             angle_end = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
@@ -1189,12 +1195,14 @@ class AttachedStrand(Strand):
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
             clip.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
+            print(f"[draw {strand_label}] END half-circle ADDED: clip elements={clip.elementCount()}")
             # Add to combined stroke path - use end_circle_stroke_color for consistency
             combined_stroke_path.addPath(clip)
-            
+
             # Add the inner circle (fill) to combined fill path
             inner = QPainterPath()
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            print(f"[draw {strand_label}] END inner circle ADDED: inner elements={inner.elementCount()}")
             combined_fill_path.addPath(inner)
 
             # Add side line to combined fill path (only when stroke is visible)
@@ -1252,12 +1260,13 @@ class AttachedStrand(Strand):
             start_side_line_path.lineTo(corner4)
             start_side_line_path.closeSubpath()
 
-            # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
-            # For a true geometric union, reassign the result back to combined_fill_path.
-            combined_fill_path = combined_fill_path.united(start_side_line_path)
-            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+            # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
+            print(f"[draw {strand_label}] Before START addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
+            combined_fill_path.addPath(start_side_line_path)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
+            print(f"[draw {strand_label}] After START addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
 
-        if self.has_circles[1] :
+        if self.has_circles[1]:
             t_end = 1.0
             tangent_end = self.calculate_cubic_tangent(t_end)
             if tangent_end.manhattanLength() == 0:
@@ -1286,41 +1295,17 @@ class AttachedStrand(Strand):
             end_side_line_path.lineTo(end_corner4)
             end_side_line_path.closeSubpath()
 
-            combined_fill_path = combined_fill_path.united(end_side_line_path)
-            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+            print(f"[draw {strand_label}] Before END addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
+            combined_fill_path.addPath(end_side_line_path)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
+            print(f"[draw {strand_label}] After END addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
 
-        # End side cover rectangle (only when there is an end circle)
-        if self.has_circles[1]:
-            t_end = 1.0
-            tangent_end = self.calculate_cubic_tangent(t_end)
-            if tangent_end.manhattanLength() == 0:
-                tangent_end = self.end - self.start
-
-            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-            perp_angle_end = angle_end + math.pi / 2
-            half_total_width_end = (self.width) / 2
-            dx_end = half_total_width_end * math.cos(perp_angle_end)
-            dy_end = half_total_width_end * math.sin(perp_angle_end)
-
-            half_stroke_width_end = self.stroke_width / 2
-            dx_tangent_end = half_stroke_width_end * math.cos(angle_end)
-            dy_tangent_end = half_stroke_width_end * math.sin(angle_end)
-
-            # Arrange corners in order at the end anchor
-            end_corner1 = QPointF(self.end.x() - dx_end - dx_tangent_end, self.end.y() - dy_end - dy_tangent_end)
-            end_corner2 = QPointF(self.end.x() + dx_end - dx_tangent_end, self.end.y() + dy_end - dy_tangent_end)
-            end_corner3 = QPointF(self.end.x() + dx_end + dx_tangent_end, self.end.y() + dy_end + dy_tangent_end)
-            end_corner4 = QPointF(self.end.x() - dx_end + dx_tangent_end, self.end.y() - dy_end + dy_tangent_end)
-
-            end_side_line_path = QPainterPath()
-            end_side_line_path.moveTo(end_corner1)
-            end_side_line_path.lineTo(end_corner2)
-            end_side_line_path.lineTo(end_corner3)
-            end_side_line_path.lineTo(end_corner4)
-            end_side_line_path.closeSubpath()
-
-            combined_fill_path = combined_fill_path.united(end_side_line_path)
-            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+        # DEBUG: Check path validity before painting
+        print(f"[draw {strand_label}] combined_stroke_path isEmpty: {combined_stroke_path.isEmpty()}, "
+              f"elementCount: {combined_stroke_path.elementCount()}")
+        print(f"[draw {strand_label}] combined_fill_path isEmpty: {combined_fill_path.isEmpty()}, "
+              f"elementCount: {combined_fill_path.elementCount()}")
+        print(f"[draw {strand_label}] has_circles: {self.has_circles}")
 
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
@@ -1329,6 +1314,7 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
+        print(f"[draw {strand_label}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
        
         # Draw the end line conditionally
@@ -3053,6 +3039,11 @@ class AttachedStrand(Strand):
                 
         # End endpoint half-circle (only if circle is enabled)
         has_attached_at_end = any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+        strand_label_direct = getattr(self, 'layer_name', f'0x{id(self):x}')
+        print(f"[_draw_direct {strand_label_direct}] END circle check: has_circles[1]={self.has_circles[1]}, "
+              f"has_attached_at_end={has_attached_at_end}, end={self.end}")
+        if has_attached_at_end:
+            print(f"[_draw_direct {strand_label_direct}] Attached children at end: {[getattr(child, 'layer_name', f'0x{id(child):x}') for child in self.attached_strands if isinstance(child, AttachedStrand) and child.start == self.end]}")
         if self.has_circles[1] and has_attached_at_end:
             tangent = self.calculate_cubic_tangent(1.0)
             angle_end = math.atan2(tangent.y(), tangent.x())
@@ -3073,6 +3064,8 @@ class AttachedStrand(Strand):
             inner_full = QPainterPath(); inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
             ring_half = outer_half.subtracted(inner_full)
             ring_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
+            print(f"[_draw_direct {strand_label_direct}] END half-circle ADDED: ring_half elements={ring_half.elementCount()}, "
+                  f"inner_full elements={inner_full.elementCount()}")
             combined_stroke_path.addPath(ring_half)
             combined_fill_path.addPath(inner_full)
 
@@ -3132,10 +3125,19 @@ class AttachedStrand(Strand):
             start_side_line_path.lineTo(corner4)
             start_side_line_path.closeSubpath()
 
-            # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
-            # For a true geometric union, reassign the result back to combined_fill_path.
-            combined_fill_path = combined_fill_path.united(start_side_line_path)
-            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+            # NOTE: addPath keeps the rectangle as its own sub-path without triggering boolean simplification.
+            print(f"[_draw_direct {strand_label_direct}] Before addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
+            combined_fill_path.addPath(start_side_line_path)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
+            print(f"[_draw_direct {strand_label_direct}] After addPath(): combined_fill_path elements={combined_fill_path.elementCount()}")
+
+        # DEBUG: Check path validity before painting
+        print(f"[_draw_direct {strand_label_direct}] combined_stroke_path isEmpty: {combined_stroke_path.isEmpty()}, "
+              f"elementCount: {combined_stroke_path.elementCount()}")
+        print(f"[_draw_direct {strand_label_direct}] combined_fill_path isEmpty: {combined_fill_path.isEmpty()}, "
+              f"elementCount: {combined_fill_path.elementCount()}")
+        print(f"[_draw_direct {strand_label_direct}] has_circles: {self.has_circles}, "
+              f"has_attached_at_start: {has_attached_at_start}, has_attached_at_end: {has_attached_at_end}")
 
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
@@ -3144,8 +3146,9 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
+        print(f"[_draw_direct {strand_label_direct}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
-        
+
         # Draw the end line conditionally
         if self.end_line_visible and not self.has_circles[1]:
             side_pen = QPen(self.stroke_color, self.stroke_width)

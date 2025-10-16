@@ -1998,6 +1998,7 @@ class Strand:
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         stroke_path = stroke_stroker.createStroke(path)
+        stroke_path.setFillRule(Qt.WindingFill)
 
         # Draw shadow for overlapping strands - using the utility function
         # Reduced high-frequency logging for performance
@@ -2195,6 +2196,7 @@ class Strand:
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
         fill_path = fill_stroker.createStroke(path)
+        fill_path.setFillRule(Qt.WindingFill)
 
         # --- START: Skip strand body drawing in shadow-only mode ---
         if not getattr(self, 'shadow_only', False):
@@ -2934,6 +2936,7 @@ class Strand:
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
+        stroke_path.setFillRule(Qt.WindingFill)
 
         # Draw shadow for overlapping strands - using the utility function
         try:
@@ -3221,6 +3224,7 @@ class Strand:
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
+        fill_path.setFillRule(Qt.WindingFill)
         painter.setBrush(self.color)
         painter.drawPath(fill_path)
 

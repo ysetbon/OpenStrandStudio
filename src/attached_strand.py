@@ -806,6 +806,7 @@ class AttachedStrand(Strand):
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
+        stroke_path.setFillRule(Qt.WindingFill)
         # --- END ADD BACK ---
 
         # Draw shadow for overlapping strands - using the utility function
@@ -1122,6 +1123,7 @@ class AttachedStrand(Strand):
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
+        fill_path.setFillRule(Qt.WindingFill)
         combined_fill_path = QPainterPath()
         combined_fill_path.setFillRule(Qt.WindingFill)
         combined_fill_path.addPath(fill_path)  # Add the main strand fill
@@ -2960,6 +2962,7 @@ class AttachedStrand(Strand):
         fill_stroker.setJoinStyle(Qt.MiterJoin)
         fill_stroker.setCapStyle(Qt.FlatCap)
         fill_path = fill_stroker.createStroke(path)
+        fill_path.setFillRule(Qt.WindingFill)
         combined_fill_path = QPainterPath()
         combined_fill_path.setFillRule(Qt.WindingFill)
         combined_fill_path.addPath(fill_path)  # Add the main strand fill
@@ -3332,4 +3335,3 @@ class AttachedStrand(Strand):
                     tr_inner_end.rotate(math.degrees(angle_end))
                     just_inner_end = tr_inner_end.map(just_inner_end)
                     painter.drawPath(just_inner_end)
-

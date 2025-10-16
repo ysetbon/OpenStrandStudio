@@ -2271,22 +2271,21 @@ class MoveMode:
                 
                 # If both control points are at start (initial triangle state), auto-adjust them
                 if cp1_at_start and cp2_at_start:
-                    # Move circle control point (control_point2) near the ending point
-                    # Use tiny epsilon offset to avoid degeneracy when CP2 == end
-                    try:
-                        epsilon = 1
-                        # Derive a direction from current geometry if possible
-                        base_vec = QPointF(s.end.x() - s.start.x(), s.end.y() - s.start.y())
-                        length = math.hypot(base_vec.x(), base_vec.y())
-                        if length < 1e-6:
-                            # Fallback direction
-                            dir_x, dir_y = 1.0, 0.0
-                        else:
-                            dir_x, dir_y = base_vec.x() / length, base_vec.y() / length
-                        s.control_point2 = QPointF(s.end.x() - dir_x * epsilon, s.end.y() - dir_y * epsilon)
-                    except Exception:
-                        # Safe fallback: tiny horizontal nudge
-                        s.control_point2 = QPointF(s.end.x() - 1, s.end.y())
+                    # Position control_point2 at 0.1 units before the end point along the tangent direction
+                    # Calculate the tangent direction from start to end
+                    dx = s.end.x() - s.start.x()
+                    dy = s.end.y() - s.start.y()
+                    length = math.hypot(dx, dy)
+
+                    if length > 1e-6:
+                        # Normalize the direction vector
+                        dir_x = dx / length
+                        dir_y = dy / length
+                        # Move 0.1 units backward from end along the tangent
+                        s.control_point2 = QPointF(s.end.x() - dir_x * 0.01, s.end.y() - dir_y * 0.1)
+                    else:
+                        # Fallback: if start and end are too close, just use end point
+                        s.control_point2 = QPointF(s.end.x(), s.end.y())
                     
                     # If third control point (rectangle) is enabled and active, move it to center
                     if (hasattr(self.canvas, 'enable_third_control_point') and 

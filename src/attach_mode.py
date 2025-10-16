@@ -394,7 +394,7 @@ class AttachMode(QObject):
             # Just constrain and snap
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             
-            final_snapped_pos = self.canvas.snap_to_grid_for_attach(constrained_pos)
+            final_snapped_pos = self._get_snapped_attachment_position(constrained_pos)
             self.canvas.current_strand.end = final_snapped_pos
             self.canvas.current_strand.update_shape()
             self.target_pos = final_snapped_pos
@@ -583,7 +583,7 @@ class AttachMode(QObject):
             # Just constrain coordinates to stay within visible viewport when zoomed out
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
 
-            snapped_pos = self.canvas.snap_to_grid_for_attach(constrained_pos)
+            snapped_pos = self._get_snapped_attachment_position(constrained_pos)
             self.canvas.current_strand.end = snapped_pos
             self.canvas.current_strand.update_shape()
             self.target_pos = snapped_pos
@@ -613,7 +613,7 @@ class AttachMode(QObject):
         new_x = self.last_snapped_pos.x() + step_x
         new_y = self.last_snapped_pos.y() + step_y
 
-        new_pos = self.canvas.snap_to_grid_for_attach(QPointF(new_x, new_y))
+        new_pos = self._get_snapped_attachment_position(QPointF(new_x, new_y))
 
         if new_pos != self.last_snapped_pos:
             # Update the strand position and cursor
@@ -657,7 +657,7 @@ class AttachMode(QObject):
         # Calculate the new end position
         new_x = self.start_pos.x() + new_length * math.cos(math.radians(rounded_angle))
         new_y = self.start_pos.y() + new_length * math.sin(math.radians(rounded_angle))
-        new_end = self.canvas.snap_to_grid_for_attach(QPointF(new_x, new_y))
+        new_end = self._get_snapped_attachment_position(QPointF(new_x, new_y))
 
         # Update the strand
         self.canvas.current_strand.end = new_end
@@ -731,6 +731,53 @@ class AttachMode(QObject):
                 constrained_y = max(top_left_canvas.y() + margin, min(pos.y(), bottom_right_canvas.y() - margin))
             
             return QPointF(constrained_x, constrained_y)
+
+    def _get_snapped_attachment_position(self, raw_pos):
+        """Return a snapped position that never collapses back onto the strand start."""
+        if not self.canvas.current_strand:
+            return self.canvas.snap_to_grid_for_attach(raw_pos)
+
+        snapped = self.canvas.snap_to_grid_for_attach(raw_pos)
+
+        # If snapping is disabled or we already have a non-zero length, keep it as-is
+        if (not getattr(self.canvas, 'snap_to_grid_attach_enabled', False) or
+                snapped != self.canvas.current_strand.start):
+            return snapped
+
+        start_point = self.canvas.current_strand.start
+        grid = getattr(self.canvas, 'grid_size', 28)
+
+        delta_x = raw_pos.x() - start_point.x()
+        delta_y = raw_pos.y() - start_point.y()
+
+        # If the raw pos is exactly on the start point, pick a default direction
+        if abs(delta_x) < 1e-6 and abs(delta_y) < 1e-6:
+            delta_x = grid
+            delta_y = 0.0
+
+        offsets = []
+        if abs(delta_x) >= abs(delta_y):
+            offsets.append(QPointF(grid if delta_x >= 0 else -grid, 0))
+            offsets.append(QPointF(0, grid if delta_y >= 0 else -grid))
+        else:
+            offsets.append(QPointF(0, grid if delta_y >= 0 else -grid))
+            offsets.append(QPointF(grid if delta_x >= 0 else -grid, 0))
+
+        # Diagonal fallback
+        offsets.append(QPointF(
+            grid if delta_x >= 0 else -grid,
+            grid if delta_y >= 0 else -grid
+        ))
+
+        for offset in offsets:
+            candidate = QPointF(start_point.x() + offset.x(), start_point.y() + offset.y())
+            snapped_candidate = self.canvas.snap_to_grid_for_attach(candidate)
+            if snapped_candidate != start_point:
+                return snapped_candidate
+
+        # Final fallback: step one grid unit along +X
+        fallback = QPointF(start_point.x() + grid, start_point.y())
+        return self.canvas.snap_to_grid_for_attach(fallback)
 
     def handle_strand_attachment(self, pos):
         """Handle the attachment of a new strand to an existing one."""

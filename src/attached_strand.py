@@ -1194,9 +1194,11 @@ class AttachedStrand(Strand):
             # Add to combined stroke path - use end_circle_stroke_color for consistency
             combined_stroke_path.addPath(clip)
 
+
             # Add the inner circle (fill) to combined fill path
             inner = QPainterPath()
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            print(f"[draw {strand_label}] END inner circle ADDED: inner elements={inner.elementCount()}")
             combined_fill_path.addPath(inner)
 
             # Add side line to combined fill path (only when stroke is visible)
@@ -1234,7 +1236,7 @@ class AttachedStrand(Strand):
             dx_start = half_total_width * math.cos(perp_angle_start)
             dy_start = half_total_width * math.sin(perp_angle_start)
 
-            half_stroke_width = self.stroke_width / 2
+            half_stroke_width = self.stroke_width 
             dx_tangent = half_stroke_width * math.cos(angle_start)
             dy_tangent = half_stroke_width * math.sin(angle_start)
 
@@ -1247,6 +1249,8 @@ class AttachedStrand(Strand):
             corner3 = QPointF(self.start.x() + dx_start + dx_tangent, self.start.y() + dy_start + dy_tangent)  # right-front
             corner4 = QPointF(self.start.x() - dx_start + dx_tangent, self.start.y() - dy_start + dy_tangent)  # left-front
 
+
+
             start_side_line_path = QPainterPath()
             start_side_line_path.moveTo(corner1)
             start_side_line_path.lineTo(corner2)
@@ -1255,7 +1259,10 @@ class AttachedStrand(Strand):
             start_side_line_path.closeSubpath()
 
             # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
-            combined_fill_path.addPath(start_side_line_path)
+                        # Add inner circle to combined fill path at start
+            inner_circle_start = QPainterPath()
+            inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner_circle_start)
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
         if self.has_circles[1]:
@@ -1287,7 +1294,14 @@ class AttachedStrand(Strand):
             end_side_line_path.lineTo(end_corner4)
             end_side_line_path.closeSubpath()
 
+            # Add inner circle to combined fill path
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner_circle_end)
+
             combined_fill_path.addPath(end_side_line_path)
+
+            
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
 
@@ -1298,6 +1312,7 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
+        print(f"[draw {strand_label}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
        
         # Draw the end line conditionally
@@ -3105,7 +3120,10 @@ class AttachedStrand(Strand):
             start_side_line_path.closeSubpath()
 
             # NOTE: addPath keeps the rectangle as its own sub-path without triggering boolean simplification.
-            combined_fill_path.addPath(start_side_line_path)
+            #combined_fill_path.addPath(start_side_line_path)
+            inner_circle_start = QPainterPath()
+            inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner_circle_start)
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
 
@@ -3116,6 +3134,7 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
+        print(f"[_draw_direct {strand_label_direct}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
 
         # Draw the end line conditionally

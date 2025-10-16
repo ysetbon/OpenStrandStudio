@@ -1151,6 +1151,7 @@ class AttachedStrand(Strand):
             outer_circle = QPainterPath()
             outer_circle.addEllipse(self.start, circle_radius, circle_radius)
             outer_mask = outer_circle.subtracted(mask_rect)
+            outer_mask.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
 
             # Add outer circle to combined stroke path
             combined_stroke_path.addPath(outer_mask)
@@ -1187,6 +1188,7 @@ class AttachedStrand(Strand):
             outer = QPainterPath()
             outer.addEllipse(self.end, radius, radius)
             clip = outer.subtracted(mask)
+            clip.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
             # Add to combined stroke path - use end_circle_stroke_color for consistency
             combined_stroke_path.addPath(clip)
             
@@ -1253,7 +1255,8 @@ class AttachedStrand(Strand):
             # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
             # For a true geometric union, reassign the result back to combined_fill_path.
             combined_fill_path = combined_fill_path.united(start_side_line_path)
-        
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+
         if self.has_circles[1] :
             t_end = 1.0
             tangent_end = self.calculate_cubic_tangent(t_end)
@@ -1284,7 +1287,8 @@ class AttachedStrand(Strand):
             end_side_line_path.closeSubpath()
 
             combined_fill_path = combined_fill_path.united(end_side_line_path)
-         
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
+
         # End side cover rectangle (only when there is an end circle)
         if self.has_circles[1]:
             t_end = 1.0
@@ -1316,13 +1320,14 @@ class AttachedStrand(Strand):
             end_side_line_path.closeSubpath()
 
             combined_fill_path = combined_fill_path.united(end_side_line_path)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
 
-   
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.stroke_color)
         painter.drawPath(combined_stroke_path)
-        
+
+        painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
         painter.drawPath(combined_fill_path)
        
@@ -2675,6 +2680,7 @@ class AttachedStrand(Strand):
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
+        stroke_path.setFillRule(Qt.WindingFill)
 
         # Draw shadow for overlapping strands - using the utility function
         painter.save()  # Protect painter state from shadow drawing modifications
@@ -2989,6 +2995,7 @@ class AttachedStrand(Strand):
             outer_circle = QPainterPath()
             outer_circle.addEllipse(self.start, circle_radius, circle_radius)
             outer_mask = outer_circle.subtracted(mask_rect)
+            outer_mask.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
 
             # Add outer circle to combined stroke path
             combined_stroke_path.addPath(outer_mask)
@@ -3026,9 +3033,11 @@ class AttachedStrand(Strand):
             mask = tr.map(mask)
             outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
             outer_half = outer.subtracted(mask)
+            outer_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
             # Subtract inner to make a ring half for the stroke
             inner_full = QPainterPath(); inner_full.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             ring_half = outer_half.subtracted(inner_full)
+            ring_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
             # Add ring to stroke and full inner to fill
             combined_stroke_path.addPath(ring_half)
             combined_fill_path.addPath(inner_full)
@@ -3060,8 +3069,10 @@ class AttachedStrand(Strand):
             mask = tr.map(mask)
             outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
             outer_half = outer.subtracted(mask)
+            outer_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
             inner_full = QPainterPath(); inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
             ring_half = outer_half.subtracted(inner_full)
+            ring_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
             combined_stroke_path.addPath(ring_half)
             combined_fill_path.addPath(inner_full)
 
@@ -3124,12 +3135,14 @@ class AttachedStrand(Strand):
             # Note: QPainterPath.united(...) returns a NEW path; it does not modify in-place.
             # For a true geometric union, reassign the result back to combined_fill_path.
             combined_fill_path = combined_fill_path.united(start_side_line_path)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Restore fill rule after union
 
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.stroke_color)
         painter.drawPath(combined_stroke_path)
-        
+
+        painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
         painter.drawPath(combined_fill_path)
         
